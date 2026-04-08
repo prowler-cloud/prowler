@@ -19,7 +19,7 @@ class kms_key_not_publicly_accessible(Check):
                 if is_policy_public(
                     key.policy,
                     kms_client.audited_account,
-                    not_allowed_actions=["kms:*"],
+                    not_allowed_actions=[],
                 ):
                     report.status = "FAIL"
                     report.status_extended = (

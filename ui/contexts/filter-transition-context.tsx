@@ -1,16 +1,17 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import {
   createContext,
   ReactNode,
-  TransitionStartFunction,
   useContext,
-  useTransition,
+  useEffect,
+  useState,
 } from "react";
 
 interface FilterTransitionContextType {
   isPending: boolean;
-  startTransition: TransitionStartFunction;
+  signalFilterChange: () => void;
 }
 
 const FilterTransitionContext = createContext<
@@ -39,13 +40,33 @@ interface FilterTransitionProviderProps {
   children: ReactNode;
 }
 
+/**
+ * Provides a shared pending state for filter changes.
+ *
+ * Filter components signal the start of navigation via signalFilterChange(),
+ * and use their own local useTransition() for the actual router.push().
+ * This avoids a known Next.js production bug where a shared useTransition()
+ * wrapping router.push() causes the navigation to be silently reverted.
+ *
+ * The pending state auto-resets when searchParams change (navigation completed).
+ */
 export const FilterTransitionProvider = ({
   children,
 }: FilterTransitionProviderProps) => {
-  const [isPending, startTransition] = useTransition();
+  const searchParams = useSearchParams();
+  const [isPending, setIsPending] = useState(false);
+
+  // Auto-reset pending state when searchParams change (navigation completed)
+  useEffect(() => {
+    setIsPending(false);
+  }, [searchParams]);
+
+  const signalFilterChange = () => {
+    setIsPending(true);
+  };
 
   return (
-    <FilterTransitionContext.Provider value={{ isPending, startTransition }}>
+    <FilterTransitionContext.Provider value={{ isPending, signalFilterChange }}>
       {children}
     </FilterTransitionContext.Provider>
   );

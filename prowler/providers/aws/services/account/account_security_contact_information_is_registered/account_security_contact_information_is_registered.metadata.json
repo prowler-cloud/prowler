@@ -17,7 +17,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/account_alternate_contact",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_19/",
     "https://support.icompaas.com/support/solutions/articles/62000234161-1-2-ensure-security-contact-information-is-registered-manual-",
     "https://www.plerion.com/cloud-knowledge-base/ensure-security-contact-information-is-registered",
     "https://repost.aws/articles/ARDFbpt-bvQ8iuErnqVVcCXQ/managing-aws-organization-alternate-contacts-via-csv"

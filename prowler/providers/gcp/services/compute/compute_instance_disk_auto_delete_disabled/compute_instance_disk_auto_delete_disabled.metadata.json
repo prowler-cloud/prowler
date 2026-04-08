@@ -12,8 +12,7 @@
   "Risk": "With auto-delete enabled, persistent disks are automatically deleted when the associated VM instance is terminated.\n\nThis could result in:\n- **Permanent data loss** if the instance is accidentally or intentionally deleted\n- **Recovery challenges** for mission-critical workloads\n- **Compliance violations** where data retention is required",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/compute/docs/disks/add-persistent-disk",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/ComputeEngine/disable-auto-delete.html"
+    "https://cloud.google.com/compute/docs/disks/add-persistent-disk"
   ],
   "Remediation": {
     "Code": {

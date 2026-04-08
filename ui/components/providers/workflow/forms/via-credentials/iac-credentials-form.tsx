@@ -1,6 +1,6 @@
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { IacCredentials } from "@/types";
 
 export const IacCredentialsForm = ({
@@ -18,7 +18,7 @@ export const IacCredentialsForm = ({
           Provide an access token if the repository is private (optional).
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name="access_token"
         label="Access Token (Optional)"

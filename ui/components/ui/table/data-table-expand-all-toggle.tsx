@@ -52,7 +52,7 @@ export function DataTableExpandAllToggle<TData>({
     <button
       onClick={() => table.toggleAllRowsExpanded(!isAllExpanded)}
       className={cn(
-        "rounded p-1 transition-colors",
+        "rounded transition-colors",
         "hover:bg-prowler-white/10",
         "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
       )}

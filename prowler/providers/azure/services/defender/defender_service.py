@@ -136,6 +136,7 @@ class Defender(AzureService):
                         {
                             setting.name: Setting(
                                 resource_id=setting.id,
+                                resource_name=setting.name or setting.id,
                                 resource_type=setting.type,
                                 kind=setting.kind,
                                 enabled=setting.enabled,
@@ -311,6 +312,7 @@ class Assesment(BaseModel):
 
 class Setting(BaseModel):
     resource_id: str
+    resource_name: str
     resource_type: str
     kind: str
     enabled: bool

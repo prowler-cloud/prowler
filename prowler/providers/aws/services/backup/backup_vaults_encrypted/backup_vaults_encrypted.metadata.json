@@ -21,7 +21,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/aws-backup/latest/devguide/encryption.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Athena/encrypted-with-cmk.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Athena/encrypted-with-cmk.html"
   ],
   "Remediation": {
     "Code": {

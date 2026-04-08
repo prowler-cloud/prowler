@@ -1,8 +1,10 @@
 "use client";
 
-import { Chip } from "@heroui/chip";
 import { ExternalLink } from "lucide-react";
 import { ReactNode } from "react";
+
+import { Badge } from "@/components/shadcn";
+import { cn } from "@/lib/utils";
 
 interface IntegrationCardHeaderProps {
   icon: ReactNode;
@@ -10,14 +12,7 @@ interface IntegrationCardHeaderProps {
   subtitle?: string;
   chips?: Array<{
     label: string;
-    color?:
-      | "default"
-      | "primary"
-      | "secondary"
-      | "success"
-      | "warning"
-      | "danger";
-    variant?: "solid" | "bordered" | "light" | "flat" | "faded" | "shadow";
+    className?: string;
   }>;
   connectionStatus?: {
     connected: boolean;
@@ -63,25 +58,30 @@ export const IntegrationCardHeader = ({
       {(chips.length > 0 || connectionStatus) && (
         <div className="flex flex-wrap items-center gap-2">
           {chips.map((chip, index) => (
-            <Chip
+            <Badge
               key={index}
-              size="sm"
-              variant={chip.variant || "flat"}
-              color={chip.color || "default"}
-              className="text-xs"
+              variant="outline"
+              className={cn(
+                "border-border-neutral-secondary bg-bg-neutral-secondary text-text-neutral-primary text-xs font-normal",
+                chip.className,
+              )}
             >
               {chip.label}
-            </Chip>
+            </Badge>
           ))}
           {connectionStatus && (
-            <Chip
-              size="sm"
-              color={connectionStatus.connected ? "success" : "danger"}
-              variant="flat"
+            <Badge
+              variant="outline"
+              className={cn(
+                "text-xs font-normal",
+                connectionStatus.connected
+                  ? "bg-bg-pass-secondary text-text-success-primary border-transparent"
+                  : "bg-bg-danger-secondary text-text-danger border-transparent",
+              )}
             >
               {connectionStatus.label ||
                 (connectionStatus.connected ? "Connected" : "Disconnected")}
-            </Chip>
+            </Badge>
           )}
         </div>
       )}

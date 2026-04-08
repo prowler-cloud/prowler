@@ -31,7 +31,10 @@
     {
       "Id": "1.1.2",
       "Description": "Emergency access or \"break glass\" accounts are limited for emergency scenarios where normal administrative accounts are unavailable. They are not assigned to a specific user and will have a combination of physical and technical controls to prevent them from being accessed outside a true emergency. These emergencies could be due to several things, including:- Technical failures of a cellular provider or Microsoft related service such as MFA.- The last remaining Global Administrator account is inaccessible.Ensure two `Emergency Access` accounts have been defined.**Note:** Microsoft provides several recommendations for these accounts and how to configure them. For more information on this, please refer to the references section. The CIS Benchmark outlines the more critical things to consider.",
-      "Checks": [],
+      "Checks": [
+        "entra_break_glass_account_fido2_security_key_registered",
+        "entra_emergency_access_exclusion"
+      ],
       "Attributes": [
         {
           "Section": "1 Microsoft 365 admin center",
@@ -318,7 +321,9 @@
     {
       "Id": "2.1.1",
       "Description": "Enabling Safe Links policy for Office applications allows URL's that exist inside of Office documents and email applications opened by Office, Office Online and Office mobile to be processed against Defender for Office time-of-click verification and rewritten if required.**Note:** E5 Licensing includes a number of Built-in Protection policies. When auditing policies note which policy you are viewing, and keep in mind CIS recommendations often extend the Default or Build-in Policies provided by MS. In order to **Pass** the highest priority policy must match all settings recommended.",
-      "Checks": [],
+      "Checks": [
+        "defender_safelinks_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -385,7 +390,9 @@
     {
       "Id": "2.1.4",
       "Description": "The Safe Attachments policy helps protect users from malware in email attachments by scanning attachments for viruses, malware, and other malicious content. When an email attachment is received by a user, Safe Attachments will scan the attachment in a secure environment and provide a verdict on whether the attachment is safe or not.",
-      "Checks": [],
+      "Checks": [
+        "defender_safe_attachments_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -406,7 +413,9 @@
     {
       "Id": "2.1.5",
       "Description": "Safe Attachments for SharePoint, OneDrive, and Microsoft Teams scans these services for malicious files.",
-      "Checks": [],
+      "Checks": [
+        "defender_atp_safe_attachments_and_docs_configured"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -977,6 +986,7 @@
       "Id": "5.1.5.1",
       "Description": "Control when end users and group owners are allowed to grant consent to applications, and when they will be required to request administrator review and approval. Allowing users to grant apps access to data helps them acquire useful applications and be productive but can represent a risk in some situations if it's not monitored and controlled carefully.",
       "Checks": [
+        "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_restricts_user_consent_for_apps"
       ],
       "Attributes": [
@@ -1205,7 +1215,8 @@
       "Id": "5.2.2.5",
       "Description": "Authentication strength is a Conditional Access control that allows administrators to specify which combination of authentication methods can be used to access a resource. For example, they can make only phishing-resistant authentication methods available to access a sensitive resource. But to access a non-sensitive resource, they can allow less secure multifactor authentication (MFA) combinations, such as password + SMS.Microsoft has 3 built-in authentication strengths. MFA strength, Passwordless MFA strength, and Phishing-resistant MFA strength. Ensure administrator roles are using a CA policy with `Phishing-resistant MFA strength`.Administrators can then enroll using one of 3 methods:- FIDO2 Security Key- Windows Hello for Business- Certificate-based authentication (Multi-Factor)**Note:** Additional steps to configure methods such as FIDO2 keys are not covered here but can be found in related MS articles in the references section. The Conditional Access policy only ensures 1 of the 3 methods is used.**Warning:** Administrators should be pre-registered for a strong authentication mechanism before this Conditional Access Policy is enforced. Additionally, as stated elsewhere in the CIS Benchmark a break-glass administrator account should be excluded from this policy to ensure unfettered access in the case of an emergency.",
       "Checks": [
-        "entra_admin_users_phishing_resistant_mfa_enabled"
+        "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_break_glass_account_fido2_security_key_registered"
       ],
       "Attributes": [
         {

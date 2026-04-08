@@ -33,6 +33,7 @@ class Test_monitor_alert_create_update_security_solution:
     def test_no_alert_rules(self):
         monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {AZURE_SUBSCRIPTION_ID: []}
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -52,8 +53,8 @@ class Test_monitor_alert_create_update_security_solution:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "Monitor"
-            assert result[0].resource_id == "Monitor"
+            assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
             assert (
                 result[0].status_extended
                 == f"There is not an alert for creating/updating Public IP address rule in subscription {AZURE_SUBSCRIPTION_ID}."

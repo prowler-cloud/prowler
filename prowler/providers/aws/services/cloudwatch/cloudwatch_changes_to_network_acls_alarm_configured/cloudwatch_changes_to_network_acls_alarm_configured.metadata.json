@@ -19,7 +19,7 @@
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
     "https://www.clouddefense.ai/compliance-rules/cis-v130/monitoring/cis-v130-4-11",
     "https://support.icompaas.com/support/solutions/articles/62000084031-ensure-a-log-metric-filter-and-alarm-exist-for-changes-to-network-access-control-lists-nacl-",
-    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/network-acl-changes-alarm.html",
+    "https://trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudWatchLogs/network-acl-changes-alarm.html",
     "https://support.icompaas.com/support/solutions/articles/62000233134-4-11-ensure-network-access-control-list-nacl-changes-are-monitored-manual-"
   ],
   "Remediation": {

@@ -18,7 +18,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/AutoFailover.html",
     "https://repost.aws/knowledge-center/multi-az-replication-redis",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/ElastiCache/elasticache-multi-az.html#"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement-staging/knowledge-base/aws/ElastiCache/elasticache-multi-az.html#"
   ],
   "Remediation": {
     "Code": {

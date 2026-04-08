@@ -4,7 +4,7 @@
   "CheckTitle": "EC2 instance does not allow ingress from the Internet to TCP port 3306 (MySQL)",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "TTPs/Initial Access/Unauthorized Access",
     "Effects/Data Exposure"
   ],
@@ -19,7 +19,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/unrestricted-mysql-access.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EC2/unrestricted-mysql-access.html"
   ],
   "Remediation": {
     "Code": {

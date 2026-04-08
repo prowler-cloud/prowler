@@ -5,6 +5,7 @@ import {
   type TimeRange,
 } from "@/app/(prowler)/_overview/severity-over-time/_constants/time-range.constants";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 import { adaptSeverityTrendsResponse } from "./severity-trends.adapter";
@@ -27,11 +28,7 @@ const getFindingsSeverityTrends = async ({
 
   const url = new URL(`${apiBaseUrl}/overviews/findings_severity/timeseries`);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined) {
-      url.searchParams.append(key, String(value));
-    }
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {

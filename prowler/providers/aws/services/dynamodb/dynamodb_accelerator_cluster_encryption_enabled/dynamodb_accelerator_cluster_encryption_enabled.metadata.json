@@ -18,7 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAXEncryptionAtRest.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DAX/encryption-enabled.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/DAX/encryption-enabled.html",
     "https://docs.aws.amazon.com/prescriptive-guidance/latest/encryption-best-practices/dynamodb.html"
   ],
   "Remediation": {

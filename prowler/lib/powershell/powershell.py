@@ -193,9 +193,20 @@ class PowerShellSession:
             result = default
 
         if error_result:
-            logger.error(f"PowerShell error output: {error_result}")
+            self._process_error(error_result)
 
         return result
+
+    def _process_error(self, error_result: str) -> None:
+        """
+        Process error output from the PowerShell command.
+
+        Subclasses can override this to provide custom error handling.
+
+        Args:
+            error_result (str): The error output from the PowerShell command.
+        """
+        logger.error(f"PowerShell error output: {error_result}")
 
     def json_parse_output(self, output: str) -> dict:
         """

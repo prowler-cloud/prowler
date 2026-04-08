@@ -15,7 +15,7 @@
   "Risk": "Without **Multi-AZ**, an Availability Zone or instance failure can cause extended downtime and rely on restores, risking loss of recent writes. This degrades **availability** and may affect **integrity**, interrupting applications and breaching SLAs.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-multi-az.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/rds-multi-az.html",
     "https://aws.amazon.com/rds/features/multi-az/"
   ],
   "Remediation": {

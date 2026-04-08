@@ -13,6 +13,7 @@ from prowler.providers.aws.services.iam.lib.policy import (
     is_condition_block_restrictive_organization,
     is_condition_block_restrictive_sns_endpoint,
     is_condition_restricting_from_private_ip,
+    is_condition_restricting_to_trusted_ips,
     is_policy_public,
 )
 
@@ -1412,6 +1413,115 @@ class Test_Policy:
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
+    def test_condition_parser_string_equals_aws_CalledVia_str(self):
+        condition_statement = {
+            "StringEquals": {"aws:CalledVia": "cloudformation.amazonaws.com"}
+        }
+        assert is_condition_block_restrictive(
+            condition_statement,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=True,
+        )
+
+    def test_condition_parser_string_equals_aws_CalledViaFirst_str(self):
+        condition_statement = {
+            "StringEquals": {"aws:CalledViaFirst": "cloudformation.amazonaws.com"}
+        }
+        assert is_condition_block_restrictive(
+            condition_statement,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=True,
+        )
+
+    def test_condition_parser_string_equals_aws_CalledViaLast_str(self):
+        condition_statement = {
+            "StringEquals": {"aws:CalledViaLast": "glue.amazonaws.com"}
+        }
+        assert is_condition_block_restrictive(
+            condition_statement,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=True,
+        )
+
+    def test_condition_parser_string_like_aws_CalledVia_str(self):
+        condition_statement = {"StringLike": {"aws:CalledVia": "*.amazonaws.com"}}
+        assert is_condition_block_restrictive(
+            condition_statement,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=True,
+        )
+
+    def test_condition_parser_string_equals_kms_CallerAccount_str(self):
+        condition_statement = {
+            "StringEquals": {"kms:CallerAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_kms_CallerAccount_str_not_valid(self):
+        condition_statement = {
+            "StringEquals": {"kms:CallerAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert not is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_kms_CallerAccount_list(self):
+        condition_statement = {
+            "StringEquals": {"kms:CallerAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]}
+        }
+        assert is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_kms_CallerAccount_list_not_valid(self):
+        condition_statement = {
+            "StringEquals": {
+                "kms:CallerAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
+        }
+        assert not is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_equals_kms_ViaService_str(self):
+        condition_statement = {
+            "StringEquals": {"kms:ViaService": "glue.eu-central-1.amazonaws.com"}
+        }
+        assert is_condition_block_restrictive(
+            condition_statement,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=True,
+        )
+
+    def test_condition_parser_string_like_kms_CallerAccount_str(self):
+        condition_statement = {
+            "StringLike": {"kms:CallerAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_like_kms_CallerAccount_str_not_valid(self):
+        condition_statement = {
+            "StringLike": {"kms:CallerAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert not is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_condition_parser_string_like_kms_ViaService_str(self):
+        condition_statement = {"StringLike": {"kms:ViaService": "glue.*.amazonaws.com"}}
+        assert is_condition_block_restrictive(
+            condition_statement,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            is_cross_account_allowed=True,
+        )
+
     def test_condition_parser_two_lists_unrestrictive(self):
         condition_statement = {
             "StringLike": {
@@ -1982,6 +2092,49 @@ class Test_Policy:
         }
         assert not is_condition_restricting_from_private_ip(condition_from_invalid_ip)
 
+    def test_is_condition_restricting_to_trusted_ips_no_trusted_ips(self):
+        condition = {"IpAddress": {"aws:SourceIp": "1.2.3.4"}}
+        assert not is_condition_restricting_to_trusted_ips(condition)
+
+    def test_is_condition_restricting_to_trusted_ips_empty_trusted_ips(self):
+        condition = {"IpAddress": {"aws:SourceIp": "1.2.3.4"}}
+        assert not is_condition_restricting_to_trusted_ips(condition, [])
+
+    def test_is_condition_restricting_to_trusted_ips_matching(self):
+        condition = {"IpAddress": {"aws:SourceIp": "1.2.3.4"}}
+        assert is_condition_restricting_to_trusted_ips(condition, ["1.2.3.4"])
+
+    def test_is_condition_restricting_to_trusted_ips_not_matching(self):
+        condition = {"IpAddress": {"aws:SourceIp": "5.6.7.8"}}
+        assert not is_condition_restricting_to_trusted_ips(condition, ["1.2.3.4"])
+
+    def test_is_condition_restricting_to_trusted_ips_wildcard(self):
+        condition = {"IpAddress": {"aws:SourceIp": "*"}}
+        assert not is_condition_restricting_to_trusted_ips(condition, ["1.2.3.4"])
+
+    def test_is_condition_restricting_to_trusted_ips_open_cidr(self):
+        condition = {"IpAddress": {"aws:SourceIp": "0.0.0.0/0"}}
+        assert not is_condition_restricting_to_trusted_ips(condition, ["1.2.3.4"])
+
+    def test_is_condition_restricting_to_trusted_ips_multiple_ips_all_trusted(self):
+        condition = {"IpAddress": {"aws:SourceIp": ["1.2.3.4", "5.6.7.8"]}}
+        assert is_condition_restricting_to_trusted_ips(
+            condition, ["1.2.3.4", "5.6.7.8"]
+        )
+
+    def test_is_condition_restricting_to_trusted_ips_multiple_ips_partial_trusted(self):
+        condition = {"IpAddress": {"aws:SourceIp": ["1.2.3.4", "9.9.9.9"]}}
+        assert not is_condition_restricting_to_trusted_ips(
+            condition, ["1.2.3.4", "5.6.7.8"]
+        )
+
+    def test_is_condition_restricting_to_trusted_ips_cidr_range(self):
+        condition = {"IpAddress": {"aws:SourceIp": "10.0.0.0/8"}}
+        assert is_condition_restricting_to_trusted_ips(condition, ["10.0.0.0/8"])
+
+    def test_is_condition_restricting_to_trusted_ips_no_condition(self):
+        assert not is_condition_restricting_to_trusted_ips({}, ["1.2.3.4"])
+
     def test_is_policy_public_(self):
         policy = {
             "Statement": [
@@ -2270,6 +2423,113 @@ class Test_Policy:
             ],
         }
         assert is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_is_policy_public_with_trusted_ips(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": ["*"],
+                    "Condition": {
+                        "IpAddress": {"aws:SourceIp": ["1.2.3.4", "5.6.7.8"]}
+                    },
+                    "Resource": "*",
+                }
+            ],
+        }
+        assert not is_policy_public(
+            policy,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            trusted_ips=["1.2.3.4", "5.6.7.8"],
+        )
+
+    def test_is_policy_public_with_trusted_ips_partial_match(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": ["*"],
+                    "Condition": {
+                        "IpAddress": {"aws:SourceIp": ["1.2.3.4", "9.9.9.9"]}
+                    },
+                    "Resource": "*",
+                }
+            ],
+        }
+        assert is_policy_public(
+            policy,
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            trusted_ips=["1.2.3.4", "5.6.7.8"],
+        )
+
+    def test_is_policy_public_kms_caller_account_and_via_service(self):
+        policy = {
+            "Version": "2008-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": [
+                        "kms:Encrypt",
+                        "kms:Decrypt",
+                        "kms:ReEncrypt*",
+                        "kms:GenerateDataKey*",
+                        "kms:CreateGrant",
+                        "kms:DescribeKey",
+                    ],
+                    "Resource": "*",
+                    "Condition": {
+                        "StringEquals": {
+                            "kms:ViaService": "glue.eu-central-1.amazonaws.com",
+                            "kms:CallerAccount": TRUSTED_AWS_ACCOUNT_NUMBER,
+                        }
+                    },
+                },
+            ],
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_is_policy_public_kms_caller_account_only(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": ["kms:Decrypt"],
+                    "Resource": "*",
+                    "Condition": {
+                        "StringEquals": {
+                            "kms:CallerAccount": TRUSTED_AWS_ACCOUNT_NUMBER,
+                        }
+                    },
+                },
+            ],
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
+
+    def test_is_policy_public_kms_via_service_without_account_restriction(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "*"},
+                    "Action": ["kms:Decrypt"],
+                    "Resource": "*",
+                    "Condition": {
+                        "StringEquals": {
+                            "kms:ViaService": "glue.eu-central-1.amazonaws.com",
+                        }
+                    },
+                },
+            ],
+        }
+        assert not is_policy_public(policy, TRUSTED_AWS_ACCOUNT_NUMBER)
 
     def test_check_admin_access(self):
         policy = {

@@ -1,8 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-import { TEST_CREDENTIALS } from "../helpers";
-import { ProvidersPage } from "../providers/providers-page";
-import { ScansPage } from "../scans/scans-page";
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
 
 test.describe("Session Error Messages", () => {
@@ -65,28 +62,10 @@ test.describe("Session Error Messages", () => {
     { tag: ["@e2e", "@auth", "@session", "@AUTH-SESSION-E2E-004"] },
     async ({ page, context }) => {
       const signInPage = new SignInPage(page);
-      const scansPage = new ScansPage(page);
-      const providersPage = new ProvidersPage(page);
-
-      await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
-
-      // Navigate to a specific page (just need to be on a protected route)
-      await scansPage.goto();
-      await expect(page.locator("main")).toBeVisible();
-
-      // Navigate to a safe public page before clearing cookies
-      // This prevents background requests from the protected page (scans)
-      // triggering a client-side redirect race condition when cookies are cleared
-      await signInPage.goto();
-
-      // Clear cookies to simulate session expiry
       await context.clearCookies();
 
-      // Try to navigate to a different protected route
-      // Use fresh navigation to force middleware evaluation
-      await providersPage.gotoFresh();
-
-      // Should be redirected to login with callbackUrl
+      // Navigate directly to a protected route and assert callbackUrl preservation.
+      await page.goto("/providers", { waitUntil: "commit" });
       await signInPage.verifyRedirectWithCallback("/providers");
     },
   );

@@ -2,14 +2,16 @@ from datetime import datetime, timezone
 from typing import Any
 
 from cartography.config import Config as CartographyConfig
-
-from api.db_utils import rls_transaction
-from api.models import (
-    AttackPathsScan as ProwlerAPIAttackPathsScan,
-    Provider as ProwlerAPIProvider,
-    StateChoices,
-)
+from celery.utils.log import get_task_logger
 from tasks.jobs.attack_paths.config import is_provider_available
+
+from api.attack_paths import database as graph_database
+from api.db_utils import rls_transaction
+from api.models import AttackPathsScan as ProwlerAPIAttackPathsScan
+from api.models import Provider as ProwlerAPIProvider
+from api.models import StateChoices
+
+logger = get_task_logger(__name__)
 
 
 def can_provider_run_attack_paths_scan(tenant_id: str, provider_id: int) -> bool:
@@ -28,12 +30,21 @@ def create_attack_paths_scan(
         return None
 
     with rls_transaction(tenant_id):
+        # Inherit graph_data_ready from the previous scan for this provider,
+        # so queries remain available while the new scan runs.
+        previous_data_ready = ProwlerAPIAttackPathsScan.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            graph_data_ready=True,
+        ).exists()
+
         attack_paths_scan = ProwlerAPIAttackPathsScan.objects.create(
             tenant_id=tenant_id,
             provider_id=provider_id,
             scan_id=scan_id,
             state=StateChoices.SCHEDULED,
             started_at=datetime.now(tz=timezone.utc),
+            graph_data_ready=previous_data_ready,
         )
         attack_paths_scan.save()
 
@@ -66,7 +77,6 @@ def starting_attack_paths_scan(
         attack_paths_scan.state = StateChoices.EXECUTING
         attack_paths_scan.started_at = datetime.now(tz=timezone.utc)
         attack_paths_scan.update_tag = cartography_config.update_tag
-        attack_paths_scan.graph_database = cartography_config.neo4j_database
 
         attack_paths_scan.save(
             update_fields=[
@@ -74,9 +84,36 @@ def starting_attack_paths_scan(
                 "state",
                 "started_at",
                 "update_tag",
-                "graph_database",
             ]
         )
+
+
+def _mark_scan_finished(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+    state: StateChoices,
+    ingestion_exceptions: dict[str, Any],
+) -> None:
+    """Set terminal fields on a scan. Caller must be inside a transaction."""
+    now = datetime.now(tz=timezone.utc)
+    duration = (
+        int((now - attack_paths_scan.started_at).total_seconds())
+        if attack_paths_scan.started_at
+        else 0
+    )
+    attack_paths_scan.state = state
+    attack_paths_scan.progress = 100
+    attack_paths_scan.completed_at = now
+    attack_paths_scan.duration = duration
+    attack_paths_scan.ingestion_exceptions = ingestion_exceptions
+    attack_paths_scan.save(
+        update_fields=[
+            "state",
+            "progress",
+            "completed_at",
+            "duration",
+            "ingestion_exceptions",
+        ]
+    )
 
 
 def finish_attack_paths_scan(
@@ -85,24 +122,7 @@ def finish_attack_paths_scan(
     ingestion_exceptions: dict[str, Any],
 ) -> None:
     with rls_transaction(attack_paths_scan.tenant_id):
-        now = datetime.now(tz=timezone.utc)
-        duration = int((now - attack_paths_scan.started_at).total_seconds())
-
-        attack_paths_scan.state = state
-        attack_paths_scan.progress = 100
-        attack_paths_scan.completed_at = now
-        attack_paths_scan.duration = duration
-        attack_paths_scan.ingestion_exceptions = ingestion_exceptions
-
-        attack_paths_scan.save(
-            update_fields=[
-                "state",
-                "progress",
-                "completed_at",
-                "duration",
-                "ingestion_exceptions",
-            ]
-        )
+        _mark_scan_finished(attack_paths_scan, state, ingestion_exceptions)
 
 
 def update_attack_paths_scan_progress(
@@ -114,33 +134,93 @@ def update_attack_paths_scan_progress(
         attack_paths_scan.save(update_fields=["progress"])
 
 
-def get_old_attack_paths_scans(
-    tenant_id: str,
-    provider_id: str,
-    attack_paths_scan_id: str,
-) -> list[ProwlerAPIAttackPathsScan]:
-    """
-    An `old_attack_paths_scan` is any `completed` Attack Paths scan for the same provider,
-    with its graph database not deleted, excluding the current Attack Paths scan.
-    """
+def set_graph_data_ready(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+    ready: bool,
+) -> None:
+    with rls_transaction(attack_paths_scan.tenant_id):
+        attack_paths_scan.graph_data_ready = ready
+        attack_paths_scan.save(update_fields=["graph_data_ready"])
 
-    with rls_transaction(tenant_id):
-        completed_scans_qs = (
-            ProwlerAPIAttackPathsScan.objects.filter(
-                provider_id=provider_id,
-                state=StateChoices.COMPLETED,
-                is_graph_database_deleted=False,
+
+def set_provider_graph_data_ready(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+    ready: bool,
+) -> None:
+    """
+    Set `graph_data_ready` for ALL scans of the same provider.
+
+    Used before drop/sync so that older scan IDs cannot bypass the query gate while the graph is being replaced.
+    """
+    with rls_transaction(attack_paths_scan.tenant_id):
+        ProwlerAPIAttackPathsScan.objects.filter(
+            tenant_id=attack_paths_scan.tenant_id,
+            provider_id=attack_paths_scan.provider_id,
+        ).update(graph_data_ready=ready)
+        attack_paths_scan.refresh_from_db(fields=["graph_data_ready"])
+
+
+def recover_graph_data_ready(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+) -> None:
+    """
+    Best-effort recovery of `graph_data_ready` after a scan failure.
+
+    Queries Neo4j to check if the provider still has data in the tenant
+    database. If data exists, restores `graph_data_ready=True` for all scans
+    of this provider. Never raises.
+
+    Trade-off: if the worker crashed mid-sync, partial data may exist and
+    this will re-enable queries against it. We accept that because leaving
+    `graph_data_ready=False` permanently (blocking all queries until the
+    next successful scan) is a worse outcome for the user.
+    """
+    try:
+        tenant_db = graph_database.get_database_name(attack_paths_scan.tenant_id)
+        if graph_database.has_provider_data(
+            tenant_db, str(attack_paths_scan.provider_id)
+        ):
+            set_provider_graph_data_ready(attack_paths_scan, True)
+            logger.info(
+                f"Recovered `graph_data_ready` for provider {attack_paths_scan.provider_id}"
             )
-            .exclude(id=attack_paths_scan_id)
-            .all()
+
+    except Exception:
+        logger.exception(
+            f"Failed to recover `graph_data_ready` for provider {attack_paths_scan.provider_id}"
         )
 
-        return list(completed_scans_qs)
 
-
-def update_old_attack_paths_scan(
-    old_attack_paths_scan: ProwlerAPIAttackPathsScan,
+def fail_attack_paths_scan(
+    tenant_id: str,
+    scan_id: str,
+    error: str,
 ) -> None:
-    with rls_transaction(old_attack_paths_scan.tenant_id):
-        old_attack_paths_scan.is_graph_database_deleted = True
-        old_attack_paths_scan.save(update_fields=["is_graph_database_deleted"])
+    """
+    Mark the `AttackPathsScan` row as `FAILED` unless it's already `COMPLETED` or `FAILED`.
+    Used as a safety net when the Celery task fails outside the job's own error handling.
+    """
+    attack_paths_scan = retrieve_attack_paths_scan(tenant_id, scan_id)
+    if not attack_paths_scan:
+        return
+
+    tmp_db_name = graph_database.get_database_name(attack_paths_scan.id, temporary=True)
+    try:
+        graph_database.drop_database(tmp_db_name)
+    except Exception:
+        logger.exception(
+            f"Failed to drop temp database {tmp_db_name} during failure handling"
+        )
+
+    with rls_transaction(tenant_id):
+        try:
+            fresh = ProwlerAPIAttackPathsScan.objects.select_for_update().get(
+                id=attack_paths_scan.id
+            )
+        except ProwlerAPIAttackPathsScan.DoesNotExist:
+            return
+        if fresh.state in (StateChoices.COMPLETED, StateChoices.FAILED):
+            return
+        _mark_scan_finished(fresh, StateChoices.FAILED, {"global_error": error})
+
+    recover_graph_data_ready(fresh)

@@ -17,7 +17,7 @@
   "Risk": "Allowing HTTP exposes traffic to **man-in-the-middle** interception and **session hijacking**, enabling theft of cookies, tokens, or PII. Attackers can **tamper** with responses, inject malware, or perform **downgrade/strip** attacks, undermining confidentiality and integrity.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/security-policy.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudFront/security-policy.html",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https.html"
   ],

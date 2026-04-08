@@ -80,6 +80,8 @@ def load_csv_files(csv_files):
                 result = result.replace("_M65", " - M65")
             if "ALIBABACLOUD" in result:
                 result = result.replace("_ALIBABACLOUD", " - ALIBABACLOUD")
+            if "ORACLECLOUD" in result:
+                result = result.replace("_ORACLECLOUD", " - ORACLECLOUD")
             results.append(result)
 
     unique_results = set(results)
@@ -284,6 +286,11 @@ def display_data(
     # Rename the column LOCATION to REGION for Alibaba Cloud
     if "alibabacloud" in analytics_input:
         data = data.rename(columns={"LOCATION": "REGION"})
+
+    # Rename the column TENANCYID to ACCOUNTID for Oracle Cloud
+    if "oraclecloud" in analytics_input:
+        data.rename(columns={"TENANCYID": "ACCOUNTID"}, inplace=True)
+
     # Filter the chosen level of the CIS
     if is_level_1:
         data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"].str.contains("Level 1")]
