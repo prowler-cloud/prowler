@@ -44,11 +44,11 @@ Available Cloud Providers:
     oraclecloud         Oracle Cloud Infrastructure Provider
     openstack           OpenStack Provider
     alibabacloud        Alibaba Cloud Provider
-    iac                 IaC Provider (Beta)
+    iac                 IaC Provider
     llm                 LLM Provider (Beta)
     image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
-    mongodbatlas        MongoDB Atlas Provider (Beta)
+    mongodbatlas        MongoDB Atlas Provider
     vercel              Vercel Provider
 
 Available components:
