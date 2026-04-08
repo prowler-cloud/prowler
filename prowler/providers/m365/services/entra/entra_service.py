@@ -331,6 +331,65 @@ class Entra(M365Service):
                         authentication_flows=self._parse_authentication_flows(
                             raw_auth_flows_map.get(policy.id)
                         ),
+                        device_conditions=DeviceConditions(
+                            device_filter_mode=(
+                                DeviceFilterMode(
+                                    getattr(
+                                        getattr(
+                                            getattr(
+                                                policy.conditions,
+                                                "devices",
+                                                None,
+                                            ),
+                                            "device_filter",
+                                            None,
+                                        ),
+                                        "mode",
+                                        None,
+                                    )
+                                )
+                                if getattr(
+                                    getattr(
+                                        policy.conditions, "devices", None
+                                    ),
+                                    "device_filter",
+                                    None,
+                                )
+                                and getattr(
+                                    getattr(
+                                        getattr(
+                                            policy.conditions, "devices", None
+                                        ),
+                                        "device_filter",
+                                        None,
+                                    ),
+                                    "mode",
+                                    None,
+                                )
+                                else None
+                            ),
+                            device_filter_rule=(
+                                getattr(
+                                    getattr(
+                                        getattr(
+                                            policy.conditions, "devices", None
+                                        ),
+                                        "device_filter",
+                                        None,
+                                    ),
+                                    "rule",
+                                    None,
+                                )
+                                if getattr(
+                                    getattr(
+                                        policy.conditions, "devices", None
+                                    ),
+                                    "device_filter",
+                                    None,
+                                )
+                                else None
+                            ),
+                        ),
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -992,6 +1051,20 @@ class InsiderRiskLevel(Enum):
     ELEVATED = "elevated"
 
 
+class DeviceFilterMode(Enum):
+    """Mode for device filter in Conditional Access policies."""
+
+    INCLUDE = "include"
+    EXCLUDE = "exclude"
+
+
+class DeviceConditions(BaseModel):
+    """Model representing device conditions for Conditional Access policies."""
+
+    device_filter_mode: Optional[DeviceFilterMode] = None
+    device_filter_rule: Optional[str] = None
+
+
 class PlatformConditions(BaseModel):
     """Model representing platform conditions for Conditional Access policies."""
 
@@ -1013,6 +1086,8 @@ class AuthenticationFlows(BaseModel):
 
 
 class Conditions(BaseModel):
+    """Model representing conditions for Conditional Access policies."""
+
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
@@ -1021,6 +1096,7 @@ class Conditions(BaseModel):
     insider_risk_levels: Optional[InsiderRiskLevel] = None
     platform_conditions: Optional[PlatformConditions] = None
     authentication_flows: Optional[AuthenticationFlows] = None
+    device_conditions: Optional[DeviceConditions] = None
 
 
 class PersistentBrowser(BaseModel):

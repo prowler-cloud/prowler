@@ -20,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `calendar_external_sharing_primary_calendar`, `calendar_external_sharing_secondary_calendar`, and `calendar_external_invitations_warning` checks for Google Workspace provider using the Cloud Identity Policy API [(#10597)](https://github.com/prowler-cloud/prowler/pull/10597)
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
 - `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
+- `entra_conditional_access_policy_sign_in_frequency_enforced` check for m365 provider [(#10618)](https://github.com/prowler-cloud/prowler/pull/10618)
 - `Vercel` provider support with 30 checks [(#10189)](https://github.com/prowler-cloud/prowler/pull/10189)
 
 ### 🔄 Changed
