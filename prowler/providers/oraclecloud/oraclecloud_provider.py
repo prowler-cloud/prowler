@@ -130,7 +130,7 @@ class OraclecloudProvider(Provider):
         # Check if the configuration is scanning a single region
         single_region = None
         if region:
-            single_region = list(region)[0]
+            single_region = list(region)[0] if len(region) >= 1 else None
 
         # Setup OCI Session
         logger.info("Setting up OCI session ...")
