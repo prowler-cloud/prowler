@@ -2,8 +2,8 @@
 
 import { Icon } from "@iconify/react";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
 import { acceptInvitation } from "@/actions/invitations";
