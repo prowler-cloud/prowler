@@ -10,6 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Filter RBAC role lookup by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
 - `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
 - `Vercel` provider support [(#10190)](https://github.com/prowler-cloud/prowler/pull/10190)
+- Finding groups list and latest endpoints support `sort=delta`, ordering by `new_count` then `changed_count` so groups with the most new findings rank highest [(#10606)](https://github.com/prowler-cloud/prowler/pull/10606)
 
 ### 🔄 Changed
 
