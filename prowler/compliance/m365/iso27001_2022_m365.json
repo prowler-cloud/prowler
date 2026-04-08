@@ -207,6 +207,7 @@
         "entra_admin_portals_access_restriction",
         "entra_admin_users_phishing_resistant_mfa_enabled",
         "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+        "entra_conditional_access_policy_block_unknown_device_platforms",
         "entra_policy_guest_users_access_restrictions",
         "entra_seamless_sso_disabled"
       ]
@@ -249,6 +250,7 @@
         "entra_all_apps_conditional_access_coverage",
         "entra_conditional_access_policy_device_registration_mfa_required",
         "entra_intune_enrollment_sign_in_frequency_every_time",
+        "entra_conditional_access_policy_block_unknown_device_platforms",
         "entra_conditional_access_policy_device_code_flow_blocked",
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
@@ -626,6 +628,7 @@
         "entra_admin_users_phishing_resistant_mfa_enabled",
         "entra_conditional_access_policy_approved_client_app_required_for_mobile",
         "entra_conditional_access_policy_app_enforced_restrictions",
+        "entra_conditional_access_policy_block_unknown_device_platforms",
         "entra_conditional_access_policy_device_registration_mfa_required",
         "entra_intune_enrollment_sign_in_frequency_every_time",
         "entra_managed_device_required_for_authentication",
@@ -686,6 +689,7 @@
         "entra_conditional_access_policy_app_enforced_restrictions",
         "entra_conditional_access_policy_block_elevated_insider_risk",
         "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+        "entra_conditional_access_policy_block_unknown_device_platforms",
         "entra_policy_guest_users_access_restrictions",
         "sharepoint_external_sharing_restricted"
       ]
@@ -710,6 +714,7 @@
         "entra_intune_enrollment_sign_in_frequency_every_time",
         "entra_break_glass_account_fido2_security_key_registered",
         "entra_conditional_access_policy_approved_client_app_required_for_mobile",
+        "entra_conditional_access_policy_block_unknown_device_platforms",
         "entra_conditional_access_policy_device_code_flow_blocked",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_managed_device_required_for_authentication",

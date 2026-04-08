@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_block_unknown_device_platforms",
+  "CheckTitle": "Conditional Access policy blocks access from unknown or unsupported device platforms",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** can block sign-ins from device platforms that the organization does not recognize or support. A policy that includes **all** platforms and excludes the known ones (Android, iOS, Windows, macOS, Linux) effectively blocks any **unknown or unsupported** platform, reducing the attack surface from unmanaged or unexpected devices.",
+  "Risk": "Without blocking unknown device platforms, attackers may authenticate from **spoofed or uncommon operating systems** that bypass platform-specific security controls. This increases the risk of **unauthorized access** and makes it harder to enforce device compliance, potentially leading to **credential theft** or **data exfiltration** from unmanaged environments.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-policy-unknown-unsupported-device",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-conditions#device-platforms",
+    "https://maester.dev/docs/tests/MT.1015"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Select **New policy**.\n4. Under **Users**, include the desired scope (e.g., **All users**).\n5. Under **Target resources**, include **All cloud apps** or the applications you want to protect.\n6. Under **Conditions** > **Device platforms**, set **Configure** to **Yes**.\n7. Under **Include**, select **Any device**.\n8. Under **Exclude**, select **Android**, **iOS**, **Windows**, **macOS**, and **Linux**.\n9. Under **Grant**, select **Block access**.\n10. Set **Enable policy** to **On** and click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a Conditional Access policy that includes **all device platforms** and excludes the known ones (Android, iOS, Windows, macOS, Linux), then set the grant control to **Block access**. This ensures that only recognized platforms can authenticate, following a **zero-trust** approach to device management.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_block_unknown_device_platforms"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check corresponds to Maester test **MT.1015** (`Test-MtCaBlockUnknownOrUnsupportedDevicePlatform`). The recommended policy includes all platforms and excludes the five known platforms (Android, iOS, Windows, macOS, Linux) so that only unknown or unsupported platforms are blocked. The check requires the policy to be fully enabled; report-only policies are treated as non-compliant."
+}
