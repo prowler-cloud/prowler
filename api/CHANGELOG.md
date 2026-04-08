@@ -10,6 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Filter RBAC role lookup by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
 - `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
 - `Vercel` provider support [(#10190)](https://github.com/prowler-cloud/prowler/pull/10190)
+- Install zizmor v1.23.1 in API Docker image for GitHub Actions workflow scanning [(#10607)](https://github.com/prowler-cloud/prowler/pull/10607)
 
 ### 🔄 Changed
 
