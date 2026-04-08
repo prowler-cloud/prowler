@@ -486,8 +486,16 @@ class Test_Entra_Service:
 
         registration_details_response = SimpleNamespace(
             value=[
-                SimpleNamespace(id="user-1", is_mfa_capable=True),
-                SimpleNamespace(id="user-6", is_mfa_capable=True),
+                SimpleNamespace(
+                    id="user-1",
+                    is_mfa_capable=True,
+                    methods_registered=["fido2SecurityKey"],
+                ),
+                SimpleNamespace(
+                    id="user-6",
+                    is_mfa_capable=True,
+                    methods_registered=["mobilePhone"],
+                ),
             ],
             odata_next_link=None,
         )
@@ -520,19 +528,31 @@ class Test_Entra_Service:
         assert users["user-6"].account_enabled is False
         assert users["user-1"].is_mfa_capable is True
         assert users["user-2"].is_mfa_capable is False
+        assert users["user-1"].authentication_methods == ["fido2SecurityKey"]
+        assert users["user-6"].authentication_methods == ["mobilePhone"]
+        assert users["user-2"].authentication_methods == []
 
     def test__get_user_registration_details_handles_pagination(self):
         entra_service = Entra.__new__(Entra)
 
         registration_response_page_one = SimpleNamespace(
             value=[
-                SimpleNamespace(id="user-1", is_mfa_capable=True),
+                SimpleNamespace(
+                    id="user-1",
+                    is_mfa_capable=True,
+                    methods_registered=[
+                        "fido2SecurityKey",
+                        "microsoftAuthenticatorPush",
+                    ],
+                ),
             ],
             odata_next_link="next-link",
         )
         registration_response_page_two = SimpleNamespace(
             value=[
-                SimpleNamespace(id="user-2", is_mfa_capable=False),
+                SimpleNamespace(
+                    id="user-2", is_mfa_capable=False, methods_registered=[]
+                ),
             ],
             odata_next_link=None,
         )
@@ -557,7 +577,19 @@ class Test_Entra_Service:
             entra_service._get_user_registration_details()
         )
 
-        assert registration_details == {"user-1": True, "user-2": False}
+        assert registration_details == {
+            "user-1": {
+                "is_mfa_capable": True,
+                "authentication_methods": [
+                    "fido2SecurityKey",
+                    "microsoftAuthenticatorPush",
+                ],
+            },
+            "user-2": {
+                "is_mfa_capable": False,
+                "authentication_methods": [],
+            },
+        }
         registration_builder.get.assert_awaited()
         registration_builder.with_url.assert_called_once_with("next-link")
         registration_builder_next.get.assert_awaited()

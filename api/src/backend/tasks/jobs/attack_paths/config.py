@@ -1,25 +1,30 @@
 from dataclasses import dataclass
 from typing import Callable
+from uuid import UUID
 
 from config.env import env
-
 from tasks.jobs.attack_paths import aws
 
-
-# Batch size for Neo4j operations
+# Batch size for Neo4j write operations (resource labeling, cleanup)
 BATCH_SIZE = env.int("ATTACK_PATHS_BATCH_SIZE", 1000)
+# Batch size for Postgres findings fetch (keyset pagination page size)
+FINDINGS_BATCH_SIZE = env.int("ATTACK_PATHS_FINDINGS_BATCH_SIZE", 500)
+# Batch size for temp-to-tenant graph sync (nodes and relationships per cursor page)
+SYNC_BATCH_SIZE = env.int("ATTACK_PATHS_SYNC_BATCH_SIZE", 250)
 
 # Neo4j internal labels (Prowler-specific, not provider-specific)
+# - `Internet`: Singleton node representing external internet access for exposed-resource queries
 # - `ProwlerFinding`: Label for finding nodes created by Prowler and linked to cloud resources
 # - `_ProviderResource`: Added to ALL synced nodes for provider isolation and drop/query ops
-# - `Internet`: Singleton node representing external internet access for exposed-resource queries
+INTERNET_NODE_LABEL = "Internet"
 PROWLER_FINDING_LABEL = "ProwlerFinding"
 PROVIDER_RESOURCE_LABEL = "_ProviderResource"
-INTERNET_NODE_LABEL = "Internet"
 
-# Phase 1 dual-write: deprecated label kept for drop_subgraph and infrastructure queries
-# Remove in Phase 2 once all nodes use the private label exclusively
-DEPRECATED_PROVIDER_RESOURCE_LABEL = "ProviderResource"
+# Dynamic isolation labels that contain entity UUIDs and are added to every synced node during sync
+# Format: _Tenant_{uuid_no_hyphens}, _Provider_{uuid_no_hyphens}
+TENANT_LABEL_PREFIX = "_Tenant_"
+PROVIDER_LABEL_PREFIX = "_Provider_"
+DYNAMIC_ISOLATION_PREFIXES = [TENANT_LABEL_PREFIX, PROVIDER_LABEL_PREFIX]
 
 
 @dataclass(frozen=True)
@@ -31,7 +36,6 @@ class ProviderConfig:
     uid_field: str  # e.g., "arn"
     # Label for resources connected to the account node, enabling indexed finding lookups.
     resource_label: str  # e.g., "_AWSResource"
-    deprecated_resource_label: str  # e.g., "AWSResource"
     ingestion_function: Callable
 
 
@@ -43,7 +47,6 @@ AWS_CONFIG = ProviderConfig(
     root_node_label="AWSAccount",
     uid_field="arn",
     resource_label="_AWSResource",
-    deprecated_resource_label="AWSResource",
     ingestion_function=aws.start_aws_ingestion,
 )
 
@@ -56,18 +59,14 @@ PROVIDER_CONFIGS: dict[str, ProviderConfig] = {
 INTERNAL_LABELS: list[str] = [
     "Tenant",  # From Cartography, but it looks like it's ours
     PROVIDER_RESOURCE_LABEL,
-    DEPRECATED_PROVIDER_RESOURCE_LABEL,
-    # Add all provider-specific resource labels
     *[config.resource_label for config in PROVIDER_CONFIGS.values()],
-    *[config.deprecated_resource_label for config in PROVIDER_CONFIGS.values()],
 ]
 
 # Provider isolation properties
+PROVIDER_ELEMENT_ID_PROPERTY = "_provider_element_id"
+
 PROVIDER_ISOLATION_PROPERTIES: list[str] = [
-    "_provider_id",
-    "_provider_element_id",
-    "provider_id",
-    "provider_element_id",
+    PROVIDER_ELEMENT_ID_PROPERTY,
 ]
 
 # Cartography bookkeeping metadata
@@ -117,7 +116,25 @@ def get_provider_resource_label(provider_type: str) -> str:
     return config.resource_label if config else "_UnknownProviderResource"
 
 
-def get_deprecated_provider_resource_label(provider_type: str) -> str:
-    """Get the deprecated resource label for a provider type (e.g., `AWSResource`)."""
-    config = PROVIDER_CONFIGS.get(provider_type)
-    return config.deprecated_resource_label if config else "UnknownProviderResource"
+# Dynamic Isolation Label Helpers
+# --------------------------------
+
+
+def _normalize_uuid(value: str | UUID) -> str:
+    """Strip hyphens from a UUID string for use in Neo4j labels."""
+    return str(value).replace("-", "")
+
+
+def get_tenant_label(tenant_id: str | UUID) -> str:
+    """Get the Neo4j label for a tenant (e.g., `_Tenant_019c41ee7df37deca684d839f95619f8`)."""
+    return f"{TENANT_LABEL_PREFIX}{_normalize_uuid(tenant_id)}"
+
+
+def get_provider_label(provider_id: str | UUID) -> str:
+    """Get the Neo4j label for a provider (e.g., `_Provider_019c41ee7df37deca684d839f95619f8`)."""
+    return f"{PROVIDER_LABEL_PREFIX}{_normalize_uuid(provider_id)}"
+
+
+def is_dynamic_isolation_label(label: str) -> bool:
+    """Check if a label is a dynamic tenant/provider isolation label."""
+    return any(label.startswith(prefix) for prefix in DYNAMIC_ISOLATION_PREFIXES)

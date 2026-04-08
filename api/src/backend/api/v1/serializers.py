@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
@@ -959,6 +960,26 @@ class ProviderCreateSerializer(RLSSerializer, BaseWriteSerializer):
             },
         }
 
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except DjangoValidationError as e:
+            if "unique_provider_uids" in str(e):
+                raise ConflictException(
+                    detail="Provider already exists.",
+                    pointer="/data/attributes/uid",
+                )
+            raise
+        except IntegrityError as e:
+            # Handle race conditions where the unique constraint is enforced at the DB level
+            # after validation has already passed.
+            if "unique_provider_uids" in str(e):
+                raise ConflictException(
+                    detail="Provider already exists.",
+                    pointer="/data/attributes/uid",
+                )
+            raise
+
 
 class ProviderUpdateSerializer(BaseWriteSerializer):
     """
@@ -1220,7 +1241,7 @@ class AttackPathsQueryRunRequestSerializer(BaseSerializerV1):
 
 
 class AttackPathsCustomQueryRunRequestSerializer(BaseSerializerV1):
-    query = serializers.CharField()
+    query = serializers.CharField(max_length=10000, min_length=1, trim_whitespace=True)
 
     class JSONAPIMeta:
         resource_name = "attack-paths-custom-query-run-requests"
@@ -1520,6 +1541,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = AzureProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GCP.value:
                 serializer = GCPProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
+                serializer = GoogleWorkspaceProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GITHUB.value:
                 serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IAC.value:
@@ -1550,6 +1573,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = OpenStackCloudsYamlProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IMAGE.value:
                 serializer = ImageProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.VERCEL.value:
+                serializer = VercelProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1655,6 +1680,14 @@ class GCPServiceAccountProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
+class GoogleWorkspaceProviderSecret(serializers.Serializer):
+    credentials_content = serializers.CharField()
+    delegated_user = serializers.EmailField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
 class MongoDBAtlasProviderSecret(serializers.Serializer):
     atlas_public_key = serializers.CharField()
     atlas_private_key = serializers.CharField()
@@ -1746,6 +1779,13 @@ class ImageProviderSecret(serializers.Serializer):
                     "registry_username is required when registry_password is provided."
                 )
         return attrs
+
+
+class VercelProviderSecret(serializers.Serializer):
+    api_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
 
 
 class AlibabaCloudProviderSecret(serializers.Serializer):
@@ -2682,11 +2722,11 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 )
             config_serializer = JiraConfigSerializer
             # Create non-editable configuration for JIRA integration
-            default_jira_issue_types = ["Task"]
+            # issue_types will be populated per project when connection is tested
             configuration.update(
                 {
                     "projects": {},
-                    "issue_types": default_jira_issue_types,
+                    "issue_types": {},
                     "domain": credentials.get("domain"),
                 }
             )
@@ -2901,13 +2941,25 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         return representation
 
 
+class IntegrationJiraIssueTypesSerializer(BaseSerializerV1):
+    """
+    Serializer for Jira issue types response.
+    """
+
+    project_key = serializers.CharField(read_only=True)
+    issue_types = serializers.ListField(child=serializers.CharField(), read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "jira-issue-types"
+
+
 class IntegrationJiraDispatchSerializer(BaseSerializerV1):
     """
     Serializer for dispatching findings to JIRA integration.
     """
 
     project_key = serializers.CharField(required=True)
-    issue_type = serializers.ChoiceField(required=True, choices=["Task"])
+    issue_type = serializers.CharField(required=True)
 
     class JSONAPIMeta:
         resource_name = "integrations-jira-dispatches"
@@ -2933,6 +2985,23 @@ class IntegrationJiraDispatchSerializer(BaseSerializerV1):
                 {
                     "project_key": "The given project key is not available for this JIRA integration. Refresh the "
                     "connection if this is an error."
+                }
+            )
+
+        issue_type = attrs.get("issue_type")
+        available_issue_types = integration_instance.configuration.get(
+            "issue_types", {}
+        )
+        # Handle old format where issue_types was a flat list (e.g., ["Task"])
+        if not isinstance(available_issue_types, dict):
+            available_issue_types = {}
+        project_issue_types = available_issue_types.get(project_key, [])
+        if project_issue_types and issue_type not in project_issue_types:
+            raise ValidationError(
+                {
+                    "issue_type": f"The issue type '{issue_type}' is not available for project '{project_key}'. "
+                    f"Available types: {', '.join(project_issue_types)}. "
+                    "Refresh the connection if this is an error."
                 }
             )
 
@@ -4149,6 +4218,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     severity = serializers.CharField()
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    muted_reason = serializers.CharField(required=False, allow_null=True)
 
     class JSONAPIMeta:
         resource_name = "finding-group-resources"
@@ -4162,6 +4232,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
                 "service": {"type": "string"},
                 "region": {"type": "string"},
                 "type": {"type": "string"},
+                "resource_group": {"type": "string"},
             },
         }
     )
@@ -4173,6 +4244,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
             "service": obj.get("resource_service", ""),
             "region": obj.get("resource_region", ""),
             "type": obj.get("resource_type", ""),
+            "resource_group": obj.get("resource_group", ""),
         }
 
     @extend_schema_field(

@@ -442,3 +442,78 @@ class TestThreadSafety:
         # All threads got the same driver instance
         assert all(r is mock_driver for r in results)
         assert len(results) == 10
+
+
+class TestHasProviderData:
+    """Test has_provider_data helper for checking provider nodes in Neo4j."""
+
+    def test_returns_true_when_nodes_exist(self):
+        import api.attack_paths.database as db_module
+
+        mock_session = MagicMock()
+        mock_result = MagicMock()
+        mock_result.single.return_value = MagicMock()  # non-None record
+        mock_session.run.return_value = mock_result
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = mock_session
+        session_ctx.__exit__.return_value = False
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            assert db_module.has_provider_data("db-tenant-abc", "provider-123") is True
+
+        mock_session.run.assert_called_once()
+
+    def test_returns_false_when_no_nodes(self):
+        import api.attack_paths.database as db_module
+
+        mock_session = MagicMock()
+        mock_result = MagicMock()
+        mock_result.single.return_value = None
+        mock_session.run.return_value = mock_result
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = mock_session
+        session_ctx.__exit__.return_value = False
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            assert db_module.has_provider_data("db-tenant-abc", "provider-123") is False
+
+    def test_returns_false_when_database_not_found(self):
+        import api.attack_paths.database as db_module
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.side_effect = db_module.GraphDatabaseQueryException(
+            message="Database does not exist",
+            code="Neo.ClientError.Database.DatabaseNotFound",
+        )
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            assert (
+                db_module.has_provider_data("db-tenant-gone", "provider-123") is False
+            )
+
+    def test_raises_on_other_errors(self):
+        import api.attack_paths.database as db_module
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.side_effect = db_module.GraphDatabaseQueryException(
+            message="Connection refused",
+            code="Neo.TransientError.General.UnknownError",
+        )
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            with pytest.raises(db_module.GraphDatabaseQueryException):
+                db_module.has_provider_data("db-tenant-abc", "provider-123")

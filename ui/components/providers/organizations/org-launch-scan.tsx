@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
 import { ToastAction, useToast } from "@/components/ui";
 import { useOrgSetupStore } from "@/store/organizations/store";
@@ -121,7 +121,7 @@ export function OrgLaunchScan({
       {isLaunching ? (
         <div className="flex min-h-[220px] items-center justify-center">
           <div className="flex items-center gap-3 py-2">
-            <TreeSpinner className="size-6" />
+            <Spinner className="size-6" />
             <p className="text-sm font-medium">Launching scans...</p>
           </div>
         </div>

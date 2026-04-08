@@ -4,7 +4,7 @@
   "CheckTitle": "Inline IAM policy does not allow kms:* privileges",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "TTPs/Privilege Escalation",
     "Effects/Data Exposure"
   ],

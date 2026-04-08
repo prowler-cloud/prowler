@@ -23,6 +23,9 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.github.github_provider import GithubProvider
+from prowler.providers.googleworkspace.googleworkspace_provider import (
+    GoogleworkspaceProvider,
+)
 from prowler.providers.iac.iac_provider import IacProvider
 from prowler.providers.image.image_provider import ImageProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
@@ -30,6 +33,7 @@ from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
 from prowler.providers.openstack.openstack_provider import OpenstackProvider
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
+from prowler.providers.vercel.vercel_provider import VercelProvider
 
 
 class TestMergeDicts:
@@ -113,6 +117,7 @@ class TestReturnProwlerProvider:
         [
             (Provider.ProviderChoices.AWS.value, AwsProvider),
             (Provider.ProviderChoices.GCP.value, GcpProvider),
+            (Provider.ProviderChoices.GOOGLEWORKSPACE.value, GoogleworkspaceProvider),
             (Provider.ProviderChoices.AZURE.value, AzureProvider),
             (Provider.ProviderChoices.KUBERNETES.value, KubernetesProvider),
             (Provider.ProviderChoices.M365.value, M365Provider),
@@ -124,6 +129,7 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.CLOUDFLARE.value, CloudflareProvider),
             (Provider.ProviderChoices.OPENSTACK.value, OpenstackProvider),
             (Provider.ProviderChoices.IMAGE.value, ImageProvider),
+            (Provider.ProviderChoices.VERCEL.value, VercelProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -215,6 +221,24 @@ class TestProwlerProviderConnectionTest:
         )
 
     @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_vercel_provider(
+        self, mock_return_prowler_provider
+    ):
+        """Test connection test for Vercel provider passes team_id."""
+        provider = MagicMock()
+        provider.uid = "team_abcdef1234567890"
+        provider.provider = Provider.ProviderChoices.VERCEL.value
+        provider.secret.secret = {"api_token": "vercel_token_123"}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            api_token="vercel_token_123",
+            team_id="team_abcdef1234567890",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_image_provider_no_creds(
         self, mock_return_prowler_provider
     ):
@@ -249,6 +273,10 @@ class TestGetProwlerProviderKwargs:
                 {"project_ids": ["provider_uid"]},
             ),
             (
+                Provider.ProviderChoices.GOOGLEWORKSPACE.value,
+                {},
+            ),
+            (
                 Provider.ProviderChoices.KUBERNETES.value,
                 {"context": "provider_uid"},
             ),
@@ -275,6 +303,10 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.OPENSTACK.value,
                 {},
+            ),
+            (
+                Provider.ProviderChoices.VERCEL.value,
+                {"team_id": "provider_uid"},
             ),
         ],
     )
@@ -774,11 +806,15 @@ class TestProwlerIntegrationConnectionTest:
         }
         integration.configuration = {}
 
-        # Mock successful JIRA connection with projects
+        # Mock successful JIRA connection with projects and issue types
         mock_connection = MagicMock()
         mock_connection.is_connected = True
         mock_connection.error = None
         mock_connection.projects = {"PROJ1": "Project 1", "PROJ2": "Project 2"}
+        mock_connection.issue_types = {
+            "PROJ1": ["Task", "Bug"],
+            "PROJ2": ["Task", "Story"],
+        }
         mock_jira_class.test_connection.return_value = mock_connection
 
         # Mock rls_transaction context manager
@@ -807,6 +843,12 @@ class TestProwlerIntegrationConnectionTest:
             "PROJ2": "Project 2",
         }
 
+        # Verify issue types were saved to integration configuration
+        assert integration.configuration["issue_types"] == {
+            "PROJ1": ["Task", "Bug"],
+            "PROJ2": ["Task", "Story"],
+        }
+
         # Verify integration.save() was called
         integration.save.assert_called_once()
 
@@ -830,6 +872,7 @@ class TestProwlerIntegrationConnectionTest:
         mock_connection.is_connected = False
         mock_connection.error = Exception("Authentication failed: Invalid credentials")
         mock_connection.projects = {}  # Empty projects when connection fails
+        mock_connection.issue_types = {}  # Empty issue types when connection fails
         mock_jira_class.test_connection.return_value = mock_connection
 
         # Mock rls_transaction context manager
@@ -855,6 +898,9 @@ class TestProwlerIntegrationConnectionTest:
         # Verify empty projects dict was saved to integration configuration
         assert integration.configuration["projects"] == {}
 
+        # Verify empty issue types dict was saved to integration configuration
+        assert integration.configuration["issue_types"] == {}
+
         # Verify integration.save() was called even on connection failure
         integration.save.assert_called_once()
 
@@ -873,17 +919,21 @@ class TestProwlerIntegrationConnectionTest:
             "domain": "example.atlassian.net",
         }
         integration.configuration = {
-            "issue_types": ["Task"],  # Existing configuration
+            "issue_types": {"OLD_PROJ": ["Task"]},  # Existing configuration
             "projects": {"OLD_PROJ": "Old Project"},  # Will be overwritten
         }
 
-        # Mock successful JIRA connection with new projects
+        # Mock successful JIRA connection with new projects and issue types
         mock_connection = MagicMock()
         mock_connection.is_connected = True
         mock_connection.error = None
         mock_connection.projects = {
             "NEW_PROJ1": "New Project 1",
             "NEW_PROJ2": "New Project 2",
+        }
+        mock_connection.issue_types = {
+            "NEW_PROJ1": ["Task", "Bug"],
+            "NEW_PROJ2": ["Story"],
         }
         mock_jira_class.test_connection.return_value = mock_connection
 
@@ -902,8 +952,11 @@ class TestProwlerIntegrationConnectionTest:
             "NEW_PROJ2": "New Project 2",
         }
 
-        # Verify other configuration fields were preserved
-        assert integration.configuration["issue_types"] == ["Task"]
+        # Verify issue types were also updated
+        assert integration.configuration["issue_types"] == {
+            "NEW_PROJ1": ["Task", "Bug"],
+            "NEW_PROJ2": ["Story"],
+        }
 
         # Verify integration.save() was called
         integration.save.assert_called_once()

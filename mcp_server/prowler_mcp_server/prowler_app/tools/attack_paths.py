@@ -8,6 +8,7 @@ through cloud infrastructure relationships.
 from typing import Any, Literal
 
 from prowler_mcp_server.prowler_app.models.attack_paths import (
+    AttackPathCartographySchema,
     AttackPathQuery,
     AttackPathQueryResult,
     AttackPathScansListResponse,
@@ -225,3 +226,53 @@ class AttackPathsTools(BaseTool):
                 f"Failed to run attack paths query '{query_id}' on scan {scan_id}: {e}"
             )
             return {"error": f"Failed to run attack paths query '{query_id}': {str(e)}"}
+
+    async def get_attack_paths_cartography_schema(
+        self,
+        scan_id: str = Field(
+            description="UUID of a COMPLETED attack paths scan. Use `prowler_app_list_attack_paths_scans` with state=['completed'] to find scan IDs"
+        ),
+    ) -> dict[str, Any]:
+        """Retrieve the Cartography graph schema for a completed attack paths scan.
+
+        This tool fetches the full Cartography schema (node labels, relationships,
+        and properties) so the LLM can write accurate custom openCypher queries
+        for attack paths analysis.
+
+        Two-step flow:
+        1. Calls the Prowler API to get schema metadata (provider, version, URLs)
+        2. Fetches the raw Cartography schema markdown from GitHub
+
+        Returns:
+        - id: Schema resource identifier
+        - provider: Cloud provider type
+        - cartography_version: Schema version
+        - schema_url: GitHub page URL for reference
+        - raw_schema_url: Raw markdown URL
+        - schema_content: Full Cartography schema markdown with node/relationship definitions
+
+        Workflow:
+        1. Use prowler_app_list_attack_paths_scans to find a completed scan
+        2. Use this tool to get the schema for the scan's provider
+        3. Use the schema to craft custom openCypher queries
+        4. Execute queries with prowler_app_run_attack_paths_query
+        """
+        try:
+            api_response = await self.api_client.get(
+                f"/attack-paths-scans/{scan_id}/schema"
+            )
+
+            schema = AttackPathCartographySchema.from_api_response(api_response)
+
+            schema_content = await self.api_client.fetch_external_url(
+                schema.raw_schema_url
+            )
+
+            return schema.model_copy(
+                update={"schema_content": schema_content}
+            ).model_dump()
+        except Exception as e:
+            self.logger.error(
+                f"Failed to get cartography schema for scan {scan_id}: {e}"
+            )
+            return {"error": f"Failed to get cartography schema: {str(e)}"}

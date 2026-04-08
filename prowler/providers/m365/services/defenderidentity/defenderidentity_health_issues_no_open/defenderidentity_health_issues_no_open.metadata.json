@@ -7,9 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Defender for Identity Health Issue",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Microsoft Defender for Identity (MDI) monitors your hybrid identity infrastructure and detects advanced threats targeting Active Directory. This check verifies that MDI sensors are deployed and that there are no unresolved health issues that may affect the ability to detect identity-based attacks.",
+  "Description": "**Microsoft Defender for Identity (MDI)** monitors your hybrid identity infrastructure and detects advanced threats targeting Active Directory. This check verifies that MDI sensors are deployed and that there are no unresolved health issues that may affect the ability to detect identity-based attacks.",
   "Risk": "Without deployed MDI sensors or with unresolved health issues, organizations face critical gaps in threat detection. Misconfigured or missing sensors fail to monitor domain controllers, allowing identity-based attacks like Pass-the-Hash, Golden Ticket, or lateral movement to go undetected. Attackers commonly exploit these blind spots to compromise hybrid environments while evading detection.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -2,7 +2,6 @@ import {
   CloudCog,
   Cog,
   GitBranch,
-  Group,
   Mail,
   MessageCircleQuestion,
   Puzzle,
@@ -84,7 +83,7 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
       groupLabel: "",
       menus: [
         {
-          href: "/findings?filter[muted]=false",
+          href: "/findings?filter[muted]=false&filter[status__in]=FAIL",
           label: "Findings",
           icon: Tag,
         },
@@ -115,7 +114,6 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               icon: VolumeX,
               active: pathname === "/mutelist",
             },
-            { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/roles", label: "Roles", icon: UserCog },

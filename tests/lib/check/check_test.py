@@ -24,7 +24,7 @@ from prowler.lib.check.check import (
     remove_custom_checks_module,
     update_audit_metadata,
 )
-from prowler.lib.check.models import load_check_metadata
+from prowler.lib.check.models import CheckMetadata, load_check_metadata
 from prowler.lib.check.utils import (
     list_modules,
     recover_checks_from_provider,
@@ -412,7 +412,7 @@ class TestCheck:
                 },
                 "expected": {
                     "CheckID": "iam_user_accesskey_unused",
-                    "CheckTitle": "Ensure Access Keys unused are disabled",
+                    "CheckTitle": "Access Keys unused should be disabled",
                     "ServiceName": "iam",
                     "Severity": "low",
                 },
@@ -502,7 +502,7 @@ class TestCheck:
             "ResourceType": "AwsCustomResource",
             "Description": "A test custom check",
             "Risk": "Test risk",
-            "RelatedUrl": "https://example.com",
+            "RelatedUrl": "",
             "Remediation": {
                 "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
                 "Recommendation": {"Text": "", "Url": ""},
@@ -614,7 +614,7 @@ class TestCheck:
             "forensics-ready",
             "encryption",
             "internet-exposed",
-            "trustboundaries",
+            "trust-boundaries",
         }
         listed_categories = list_categories(test_bulk_checks_metadata)
         assert listed_categories == expected_categories
@@ -958,7 +958,98 @@ class TestCheck:
         )
         self.verify_metadata_check_id(base_directory)
 
+    def test_alibabacloud_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/alibabacloud/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_cloudflare_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/cloudflare/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_github_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/github/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_googleworkspace_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/googleworkspace/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_m365_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/m365/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_mongodbatlas_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/mongodbatlas/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_nhn_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/nhn/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_openstack_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/openstack/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_oraclecloud_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/oraclecloud/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
     def verify_metadata_check_id(self, provider_path):
+        errors = []
         # Walk through the base directory to find all service directories
         for root, dirs, _ in os.walk(provider_path):
             # We only want to look at directories that are direct children of the base directory
@@ -984,9 +1075,51 @@ class TestCheck:
                                 check_id = data.get("CheckID", None)
 
                                 # Compare CheckID to the check name
-                                assert (
-                                    check_id == check_dir
-                                ), f"CheckID in metadata does not match the check name in {check_directory}. Found CheckID: {check_id}"
+                                if check_id != check_dir:
+                                    errors.append(
+                                        f"CheckID in metadata does not match the check name in {check_directory}. Found CheckID: {check_id}"
+                                    )
+
+                                # Validate metadata against Pydantic validators
+                                try:
+                                    CheckMetadata.parse_file(metadata_file_path)
+                                except Exception as e:
+                                    errors.append(
+                                        f"Metadata validation failed for {metadata_file_path}: {e}"
+                                    )
+
+        assert not errors, "\n\n".join(errors)
+
+    def test_execute_oraclecloud_mutelist_passes_tenancy_id(self):
+        """Test that execute() passes tenancy_id to is_finding_muted for OCI provider."""
+        tenancy_id = "ocid1.tenancy.oc1..aaaaaaaexample"
+
+        finding = Mock()
+        finding.status = "PASS"
+        finding.muted = False
+
+        check = Mock()
+        check.CheckID = "oci_test_check"
+        check.execute = Mock(return_value=[finding])
+
+        provider = mock.MagicMock()
+        provider.type = "oraclecloud"
+        provider.identity.tenancy_id = tenancy_id
+        provider.mutelist.mutelist = {"Accounts": {tenancy_id: {}}}
+        provider.mutelist.is_finding_muted = Mock(return_value=True)
+
+        findings = execute(
+            check=check,
+            global_provider=provider,
+            custom_checks_metadata=None,
+            output_options=None,
+        )
+
+        provider.mutelist.is_finding_muted.assert_called_once_with(
+            tenancy_id=tenancy_id,
+            finding=finding,
+        )
+        assert findings[0].muted is True
 
     def test_execute_check_exception_only_logs(self, caplog):
         caplog.set_level(ERROR)

@@ -7,9 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Conditional Access Policy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "At least one Conditional Access policy is configured to target **all cloud apps**. This ensures comprehensive security coverage and automatic protection for newly onboarded applications without requiring policy updates.",
+  "Description": "Microsoft Entra **Conditional Access** has at least one policy configured to target **all cloud apps**. This ensures comprehensive security coverage and automatic protection for newly onboarded applications without requiring policy updates.",
   "Risk": "Without a policy targeting **all cloud apps**, newly integrated applications may not be protected by **Conditional Access**. This creates security gaps where users could access sensitive resources without proper authentication controls.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -1,10 +1,9 @@
 "use client";
 
-import { RadioGroup } from "@heroui/radio";
-import React from "react";
 import { Control, Controller } from "react-hook-form";
 
-import { CustomRadio } from "@/components/ui/custom";
+import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupGitHubViaCredentialsFormProps = {
@@ -27,53 +26,35 @@ export const RadioGroupGitHubViaCredentialsTypeForm = ({
       render={({ field }) => (
         <>
           <RadioGroup
-            className="flex flex-wrap"
-            isInvalid={isInvalid}
-            {...field}
+            name={field.name}
             value={field.value || ""}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               field.onChange(value);
-              if (onChange) {
-                onChange(value);
-              }
+              onChange?.(value);
             }}
           >
-            <div className="flex flex-col gap-4">
-              <span className="text-default-500 text-sm">
-                Personal Access Token
-              </span>
-              <CustomRadio
-                description="Use a personal access token for authentication"
-                value="personal_access_token"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">Personal Access Token</span>
-                </div>
-              </CustomRadio>
+            <span className="text-default-500 text-sm">
+              Personal Access Token
+            </span>
+            <WizardRadioCard
+              value="personal_access_token"
+              isInvalid={isInvalid}
+            >
+              Personal Access Token
+            </WizardRadioCard>
 
-              <span className="text-default-500 text-sm">OAuth App</span>
-              <CustomRadio
-                description="Use OAuth App token for authentication"
-                value="oauth_app"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">OAuth App Token</span>
-                </div>
-              </CustomRadio>
+            <span className="text-default-500 text-sm">OAuth App</span>
+            <WizardRadioCard value="oauth_app" isInvalid={isInvalid}>
+              OAuth App Token
+            </WizardRadioCard>
 
-              <span className="text-default-500 text-sm">GitHub App</span>
-              <CustomRadio
-                description="Use GitHub App ID and private key for authentication"
-                value="github_app"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">GitHub App</span>
-                </div>
-              </CustomRadio>
-            </div>
+            <span className="text-default-500 text-sm">GitHub App</span>
+            <WizardRadioCard value="github_app" isInvalid={isInvalid}>
+              GitHub App
+            </WizardRadioCard>
           </RadioGroup>
           {errorMessage && (
-            <FormMessage className="text-text-error">
+            <FormMessage className="text-text-error-primary">
               {errorMessage}
             </FormMessage>
           )}

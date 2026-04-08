@@ -51,7 +51,8 @@
         "iam_no_service_roles_at_project_level",
         "bigquery_dataset_public_access",
         "bigquery_dataset_cmek_encryption",
-        "kms_key_rotation_enabled"
+        "kms_key_rotation_enabled",
+        "gemini_api_disabled"
       ]
     },
     {
@@ -201,6 +202,36 @@
         "cloudsql_instance_automatic_backups_enabled",
         "cloudsql_instance_point_in_time_recovery_enabled",
         "cloudstorage_bucket_object_versioning"
+      ]
+    },
+    {
+      "Id": "164_308_b_1",
+      "Name": "164.308(b)(1) Business associate contracts and other arrangements",
+      "Description": "A covered entity may permit a business associate to create, receive, maintain, or transmit electronic protected health information on the covered entity's behalf only if the covered entity obtains satisfactory assurances, in accordance with § 164.314(a), that the business associate will appropriately safeguard the information. A covered entity is not required to obtain such satisfactory assurances from a business associate that is a subcontractor.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_b_1",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "gemini_api_disabled"
+      ]
+    },
+    {
+      "Id": "164_308_b_2",
+      "Name": "164.308(b)(2)",
+      "Description": "A business associate may permit a business associate that is a subcontractor to create, receive, maintain, or transmit electronic protected health information on its behalf only if the business associate obtains satisfactory assurances, in accordance with § 164.314(a), that the subcontractor will appropriately safeguard the information.",
+      "Attributes": [
+        {
+          "ItemId": "164_308_b_2",
+          "Section": "164.308 Administrative Safeguards",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "gemini_api_disabled"
       ]
     },
     {

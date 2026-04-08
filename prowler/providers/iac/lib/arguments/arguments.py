@@ -1,5 +1,7 @@
 import re
 
+SENSITIVE_ARGUMENTS = frozenset({"--personal-access-token", "--oauth-app-token"})
+
 SCANNERS_CHOICES = [
     "vuln",
     "misconfig",
@@ -74,7 +76,7 @@ def init_parser(self):
         "--provider-uid",
         dest="provider_uid",
         default=None,
-        help="Unique identifier for the IaC provider. Required when using --export-ocsf.",
+        help="Unique identifier for the IaC provider. Required when using --push-to-cloud.",
     )
 
 
@@ -88,12 +90,12 @@ def validate_arguments(arguments):
                 False,
                 "--scan-path (-P) and --scan-repository-url (-R) are mutually exclusive. Please specify only one.",
             )
-    export_ocsf = getattr(arguments, "export_ocsf", False)
+    push_to_cloud = getattr(arguments, "push_to_cloud", False)
     provider_uid = getattr(arguments, "provider_uid", None)
-    if export_ocsf and not provider_uid:
+    if push_to_cloud and not provider_uid:
         return (
             False,
-            "--provider-uid is required when using --export-ocsf with the IAC provider.",
+            "--provider-uid is required when using --push-to-cloud with the IAC provider.",
         )
     if provider_uid and not re.match(
         r"^(https?://|git@|ssh://)[^\s/]+[^\s]*\.git$|^(https?://)[^\s/]+[^\s]*$",

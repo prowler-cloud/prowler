@@ -60,6 +60,7 @@ htmlcov/
 **/mcp-config.json
 **/mcpServers.json
 .mcp/
+.mcp.json
 
 # AI Coding Assistants - Cursor
 .cursorignore
@@ -163,3 +164,6 @@ GEMINI.md
 .codex/skills
 .github/skills
 .gemini/skills
+
+# Claude Code
+.claude/*

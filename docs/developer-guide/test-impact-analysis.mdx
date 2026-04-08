@@ -1,0 +1,315 @@
+---
+title: 'Test Impact Analysis'
+---
+
+Test impact analysis (TIA) determines which tests to run based on the files changed in a pull request. Instead of running the full test suite on every pull request, TIA maps changed files to the specific Prowler SDK, API, and end-to-end (E2E) tests that cover them. This approach reduces continuous integration (CI) time and resource usage while maintaining confidence that relevant code paths are tested.
+
+## Architecture
+
+### Components
+
+| Component | Path | Role |
+|-----------|------|------|
+| Configuration | `.github/test-impact.yml` | Defines ignored, critical, and module path mappings |
+| Analysis engine | `.github/scripts/test-impact.py` | Python script that evaluates changed files against the configuration |
+| Reusable workflow | `.github/workflows/test-impact-analysis.yml` | GitHub Actions reusable workflow that orchestrates the analysis |
+| E2E consumer | `.github/workflows/ui-e2e-tests-v2.yml` | Consumes TIA outputs to run targeted Playwright tests |
+
+### Flow Diagram
+
+```
+PR opened/updated
+       |
+       v
++-------------------------------+
+| tj-actions/changed-files      |  Gets list of changed files from PR
++-------------------------------+
+       |
+       v
++-------------------------------+
+| test-impact.py                |
+|                               |
+|  1. Filter ignored paths      |  docs/**, *.md, .gitignore, etc.
+|  2. Check critical paths      |  prowler/lib/**, ui/lib/**, .github/workflows/**
+|  3. Match modules             |  Map remaining files to module definitions
+|  4. Categorize tests          |  Split into sdk-tests, api-tests, ui-e2e
++-------------------------------+
+       |
+       v
++-------------------------------+
+| GitHub Actions Outputs        |
+|                               |
+|  run-all: true/false          |
+|  sdk-tests: "tests/providers/aws/**"
+|  api-tests: "api/src/backend/api/tests/**"
+|  ui-e2e: "ui/tests/providers/**"
+|  modules: "sdk-aws,ui-providers"
+|  has-tests: true/false        |
+|  has-sdk-tests: true/false    |
+|  has-api-tests: true/false    |
+|  has-ui-e2e: true/false       |
++-------------------------------+
+       |
+       v
++-------------------------------+
+| Consumer Workflows            |
+|                               |
+|  ui-e2e-tests-v2.yml:         |
+|    - Path resolution pipeline |
+|    - Playwright execution     |
++-------------------------------+
+```
+
+## Configuration Reference
+
+The configuration lives in `.github/test-impact.yml` and contains three sections.
+
+### `ignored` — Paths That Never Trigger Tests
+
+Files matching these patterns are filtered out before any analysis takes place. This section is intended for non-code files.
+
+```yaml
+ignored:
+  paths:
+    - docs/**
+    - "*.md"
+    - .gitignore
+    - skills/**
+    - ui/tests/setups/**   # E2E auth setup helpers (not runnable tests)
+```
+
+### `critical` — Paths That Trigger All Tests
+
+If any changed file matches a critical path, the system short-circuits and outputs `run-all: true`. All downstream consumers then run their complete test suites.
+
+```yaml
+critical:
+  paths:
+    - prowler/lib/**           # SDK core
+    - ui/lib/**                # UI shared utilities
+    - ui/playwright.config.ts  # Test infrastructure
+    - .github/workflows/**     # CI changes
+    - .github/test-impact.yml  # This config itself
+```
+
+### `modules` — Path-to-Test Mappings
+
+Each module maps source file patterns to the tests that cover them.
+
+```yaml
+- name: ui-providers           # Unique identifier
+  match:                       # Source file glob patterns
+    - ui/components/providers/**
+    - ui/actions/providers/**
+    - ui/app/**/providers/**
+    - ui/tests/providers/**    # Test file changes also trigger themselves
+  tests: []                    # SDK/API unit test patterns (empty for UI modules)
+  e2e:                         # Playwright E2E test patterns
+    - ui/tests/providers/**
+```
+
+#### Module Schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | `string` | Unique module identifier (for example, `sdk-aws`, `ui-providers`, `api-views`) |
+| `match` | `list[glob]` | Source file patterns that trigger this module |
+| `tests` | `list[glob]` | Prowler SDK (`tests/`) or API (`api/`) unit test patterns to run |
+| `e2e` | `list[glob]` | UI E2E test patterns (`ui/tests/`) to run |
+
+#### Module Categories
+
+- **`sdk-*`:** Provider and lib modules. These only produce `tests` output, not `e2e`.
+- **`api-*`:** API views, serializers, filters, and role-based access control (RBAC). These produce `tests` and sometimes `e2e` (API changes can affect UI flows).
+- **`ui-*`:** UI feature modules. These only produce `e2e` output, not `tests`.
+
+## Path Resolution Pipeline
+
+The E2E consumer workflow (`.github/workflows/ui-e2e-tests-v2.yml`, lines 202–253) transforms the `ui-e2e` output from glob patterns into paths that Playwright can execute. This transformation follows a multi-step shell pipeline.
+
+### Step 1: Check Run Mode
+
+```bash
+if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
+  pnpm run test:e2e    # Run everything, skip pipeline
+fi
+```
+
+### Step 2: Strip the `ui/` Prefix and `**` Suffix
+
+```bash
+# "ui/tests/providers/**" -> "tests/providers/"
+TEST_PATHS=$(echo "$E2E_TEST_PATHS" | sed 's|ui/||g' | sed 's|\*\*||g')
+```
+
+### Step 3: Filter Out Setup Paths
+
+```bash
+# Remove auth setup helpers (not runnable test suites)
+TEST_PATHS=$(echo "$TEST_PATHS" | grep -v '^tests/setups/')
+```
+
+### Step 4: Safety Net for Bare `tests/`
+
+If the pattern `ui/tests/**` was present in the output (from a critical path or a broad module like `ui-shadcn`), it resolves to bare `tests/` after stripping. This would cause Playwright to discover setup files in `tests/setups/`, so it gets expanded instead:
+
+```bash
+if echo "$TEST_PATHS" | grep -qx 'tests/'; then
+  # Expand to specific subdirs, excluding tests/setups/
+  for dir in tests/*/; do
+    [[ "$dir" == "tests/setups/" ]] && continue
+    SPECIFIC_DIRS="${SPECIFIC_DIRS}${dir}"
+  done
+fi
+```
+
+### Step 5: Empty Directory Check
+
+Directories that do not contain any `.spec.ts` or `.test.ts` files are skipped. This handles forward-looking patterns where a module is configured but tests have not been written yet.
+
+```bash
+if find "$p" -name '*.spec.ts' -o -name '*.test.ts' | head -1 | grep -q .; then
+  VALID_PATHS="${VALID_PATHS}${p}"
+else
+  echo "Skipping empty test directory: $p"
+fi
+```
+
+### Step 6: Execute Playwright
+
+```bash
+pnpm exec playwright test $TEST_PATHS
+# For example: pnpm exec playwright test tests/providers/ tests/scans/
+```
+
+## Playwright Project Mapping
+
+Playwright discovers tests by scanning the directories passed to it. The `playwright.config.ts` file defines projects with `testMatch` patterns that control which spec files each project claims:
+
+```
+tests/providers/providers.spec.ts  -> "providers" project  -> depends on admin.auth.setup
+tests/scans/scans.spec.ts          -> "scans" project      -> depends on admin.auth.setup
+tests/sign-in-base/*.spec.ts       -> "sign-in-base"       -> no auth dependency
+tests/auth/*.spec.ts               -> "auth"               -> no auth dependency
+tests/sign-up/sign-up.spec.ts      -> "sign-up"            -> no auth dependency
+tests/invitations/invitations.spec.ts -> "invitations"      -> depends on admin.auth.setup
+```
+
+Auth setup projects (`admin.auth.setup`, `manage-scans.auth.setup`, and others) create authenticated browser state files. Projects that declare them as `dependencies` wait for the setup to complete before running.
+
+When TIA runs only `tests/providers/`, Playwright still automatically runs `admin.auth.setup` because the `providers` project declares it as a dependency.
+
+## Edge Cases and Known Considerations
+
+### Forward-Looking Patterns (Empty Test Directories)
+
+A module can reference `ui/tests/attack-paths/**` before any tests exist there. The empty directory check (step 5) gracefully skips it instead of failing.
+
+### Broad Patterns and the Safety Net
+
+Modules like `ui-shadcn` and `api-views` list every E2E test suite explicitly to avoid using `ui/tests/**`. If a broad pattern does produce bare `tests/`, the safety net expands it to specific subdirectories, excluding `tests/setups/`.
+
+### Setup Files and Auth Dependencies
+
+`ui/tests/setups/**` is listed in the `ignored` section and also filtered in the path resolution pipeline. This double protection ensures setup files are never passed as test targets to Playwright. Auth setups run only when declared as project dependencies.
+
+### Critical Path Triggering Run-All
+
+Changes to `.github/workflows/**` or `.github/test-impact.yml` trigger `run-all: true`. This means editing any workflow file (even unrelated ones) runs the full test suite. This behavior is intentional — CI infrastructure changes should be validated broadly.
+
+### Unmatched Files
+
+Files that do not match any ignored, critical, or module pattern produce no test output. The `has-tests` flag is set to `false` and consumer workflows skip entirely via the `skip-e2e` job.
+
+## Adding New Test Modules
+
+To add tests for a new UI feature (for example, `dashboards`):
+
+1. **Add the module to `.github/test-impact.yml`:**
+
+```yaml
+- name: ui-dashboards
+  match:
+    - ui/components/dashboards/**
+    - ui/actions/dashboards/**
+    - ui/app/**/dashboards/**
+    - ui/tests/dashboards/**
+  tests: []
+  e2e:
+    - ui/tests/dashboards/**
+```
+
+2. **Create the test directory and spec file:**
+
+```
+ui/tests/dashboards/dashboards.spec.ts
+```
+
+3. **Add a Playwright project in `ui/playwright.config.ts`:**
+
+```typescript
+{
+  name: "dashboards",
+  testMatch: "dashboards.spec.ts",
+  dependencies: ["admin.auth.setup"],  // if tests need auth
+},
+```
+
+4. **Register E2E paths in shared UI modules (if applicable):**
+
+   If the feature uses shared UI components, add the E2E path to the `ui-shadcn` module so that changes to shared components also trigger dashboard tests:
+
+```yaml
+- name: ui-shadcn
+  match:
+    - ui/components/shadcn/**
+    - ui/components/ui/**
+  e2e:
+    - ui/tests/dashboards/**   # Add here
+    # ... existing paths
+```
+
+5. **Register E2E paths in API modules (if applicable):**
+
+   If API changes affect this feature, add the E2E path to the relevant `api-*` module (for example, `api-views`).
+
+## Troubleshooting
+
+### Tests Not Running When Expected
+
+1. Check whether the changed file matches an `ignored` pattern. The script logs `[IGNORED]` to stderr.
+2. Verify the file matches a module's `match` pattern. To test locally, run:
+   ```bash
+   python .github/scripts/test-impact.py path/to/changed/file.ts
+   ```
+3. Confirm the module has non-empty `e2e` (for E2E) or `tests` (for unit tests).
+4. Check the `has-ui-e2e` output — the consumer workflow gates on this flag.
+
+### Unexpected Auth Setup Errors
+
+Auth setup projects run automatically when a test project declares them as `dependencies`. If auth failures occur:
+
+- **Verify secrets:** Confirm that the `E2E_ADMIN_USER` and `E2E_ADMIN_PASSWORD` secrets are set.
+- **Check setup file existence:** Ensure the auth setup file exists in `ui/tests/setups/`.
+- **Validate test match patterns:** Ensure the `testMatch` pattern in `playwright.config.ts` correctly matches the setup file.
+
+### "No Tests Found" Errors
+
+This typically means the path resolution pipeline produced valid directories but Playwright could not match any spec files to a project:
+
+- **Check project configuration:** Verify that `playwright.config.ts` has a project with a `testMatch` pattern for the spec files in that directory.
+- **Verify file naming:** Confirm the spec file naming matches the expected pattern (for example, `feature.spec.ts`).
+
+### "No Runnable E2E Test Paths After Filtering Setups"
+
+All resolved paths were under `tests/setups/`. This indicates the module's `e2e` patterns only point to setup files, which is a configuration error. The module should be updated to point to actual test directories.
+
+### Debugging Locally
+
+```bash
+# See what the analysis engine produces for specific files
+python .github/scripts/test-impact.py ui/components/providers/some-file.tsx
+
+# Output goes to stderr (analysis log) and GITHUB_OUTPUT (structured output)
+# Without the GITHUB_OUTPUT env var, results print to stderr only
+```

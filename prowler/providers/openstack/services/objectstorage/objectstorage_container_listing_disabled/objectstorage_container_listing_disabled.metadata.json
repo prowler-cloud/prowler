@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "objectstorage_container_listing_disabled",
+  "CheckTitle": "Object storage container listings are not publicly accessible",
+  "CheckType": [],
+  "ServiceName": "objectstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OS::Swift::Container",
+  "ResourceGroup": "storage",
+  "Description": "**OpenStack Swift containers** are evaluated to verify that **public container listings** are disabled. The `.rlistings` ACL allows users with read access to list all objects within the container. When combined with `.r:*`, this enables unauthenticated users to enumerate all objects, facilitating targeted data exfiltration.",
+  "Risk": "Containers with `.rlistings` enabled allow attackers to enumerate all object names, sizes, and modification dates. This **metadata exposure** aids **targeted attacks**, reveals application structure, and can expose sensitive file names. Combined with public read access, it enables complete **data exfiltration**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/swift/latest/overview_acl.html",
+    "https://docs.openstack.org/security-guide/object-storage.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "swift post <container_name> --read-acl ''",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Object Store > Containers**\n2. Select the container with public listing\n3. Edit the container metadata\n4. Remove `.rlistings` from the Read ACL\n5. Save changes",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove `.rlistings` from container read ACLs to prevent **public object enumeration**. Listings should only be available to **authenticated project members**. If external access is needed, implement application-level access control with authenticated APIs.",
+      "Url": "https://hub.prowler.com/check/objectstorage_container_listing_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The `.rlistings` ACL controls whether container listings (GET on container) are allowed. Even without `.rlistings`, individual objects may still be readable if `.r:*` is set. Both ACLs should be removed for full protection."
+}

@@ -42,6 +42,19 @@ vi.mock("../../workflow/forms/update-via-service-account-key-form", () => ({
   UpdateViaServiceAccountForm: () => <div>update-via-service-account-form</div>,
 }));
 
+vi.mock("@/actions/providers/providers", () => ({
+  checkConnectionProvider: vi.fn(),
+}));
+
+vi.mock("@/actions/task/tasks", () => ({
+  getTask: vi.fn(),
+}));
+
+vi.mock("@/lib/helper", () => ({
+  checkTaskStatus: vi.fn(),
+  getAuthHeaders: vi.fn(),
+}));
+
 describe("CredentialsStep", () => {
   beforeEach(() => {
     sessionStorage.clear();

@@ -27,6 +27,7 @@ from prowler.lib.check.check import (
     list_categories,
     list_checks_json,
     list_fixers,
+    list_resource_groups,
     list_services,
     load_custom_checks_metadata,
     parse_checks_from_file,
@@ -36,6 +37,7 @@ from prowler.lib.check.check import (
     print_compliance_frameworks,
     print_compliance_requirements,
     print_fixers,
+    print_resource_groups,
     print_services,
     remove_custom_checks_module,
     run_fixer,
@@ -65,7 +67,11 @@ from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
+from prowler.lib.outputs.compliance.cis.cis_googleworkspace import GoogleWorkspaceCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
+from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
+    GoogleWorkspaceCISASCuBA,
+)
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
@@ -139,6 +145,7 @@ from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
 from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
+from prowler.providers.vercel.models import VercelOutputOptions
 
 
 def prowler():
@@ -161,6 +168,7 @@ def prowler():
     excluded_services = args.excluded_service
     services = args.service
     categories = args.category
+    resource_groups = args.resource_group
     checks_file = args.checks_file
     checks_folder = args.checks_folder
     severities = args.severity
@@ -170,6 +178,7 @@ def prowler():
         not checks
         and not services
         and not categories
+        and not resource_groups
         and not excluded_checks
         and not excluded_services
         and not severities
@@ -215,6 +224,10 @@ def prowler():
         print_categories(list_categories(bulk_checks_metadata))
         sys.exit()
 
+    if args.list_resource_groups:
+        print_resource_groups(list_resource_groups(bulk_checks_metadata))
+        sys.exit()
+
     bulk_compliance_frameworks = {}
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
@@ -256,7 +269,10 @@ def prowler():
         severities=severities,
         compliance_frameworks=compliance_framework,
         categories=categories,
+        resource_groups=resource_groups,
         provider=provider,
+        list_checks=getattr(args, "list_checks", False)
+        or getattr(args, "list_checks_json", False),
     )
 
     # if --list-checks-json, dump a json file and exit
@@ -383,6 +399,10 @@ def prowler():
         )
     elif provider == "openstack":
         output_options = OpenStackOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "vercel":
+        output_options = VercelOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 
@@ -529,7 +549,7 @@ def prowler():
                     provider=global_provider, stats=stats
                 )
 
-    if getattr(args, "export_ocsf", False):
+    if getattr(args, "push_to_cloud", False):
         if not ocsf_output or not getattr(ocsf_output, "file_path", None):
             tmp_ocsf = tempfile.NamedTemporaryFile(
                 suffix=json_ocsf_file_suffix, delete=False
@@ -541,49 +561,50 @@ def prowler():
             tmp_ocsf.close()
             ocsf_output.batch_write_data_to_file()
         print(
-            f"{Style.BRIGHT}\nExporting OCSF to Prowler Cloud, please wait...{Style.RESET_ALL}"
+            f"{Style.BRIGHT}\nPushing findings to Prowler Cloud, please wait...{Style.RESET_ALL}"
         )
         try:
             response = send_ocsf_to_api(ocsf_output.file_path)
         except ValueError:
             print(
-                f"{Style.BRIGHT}{Fore.YELLOW}\nOCSF export skipped: no API key configured. "
-                "Set the PROWLER_API_KEY environment variable to enable it. "
+                f"{Style.BRIGHT}{Fore.YELLOW}\nPush to Prowler Cloud skipped: no API key configured. "
+                "Set the PROWLER_CLOUD_API_KEY environment variable to enable it. "
                 f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
             )
         except requests.ConnectionError:
             print(
-                f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed: could not reach the Prowler Cloud API at "
+                f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: could not reach the Prowler Cloud API at "
                 f"{cloud_api_base_url}. Check the URL and your network connection. "
                 f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
             )
         except requests.HTTPError as http_err:
             if http_err.response.status_code == 402:
                 print(
-                    f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed: "
+                    f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: "
                     "this feature is only available with a Prowler Cloud subscription. "
                     f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
                 )
             else:
                 print(
-                    f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed: the API returned HTTP {http_err.response.status_code}. "
+                    f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: the API returned HTTP {http_err.response.status_code}. "
                     "Verify your API key is valid and has the right permissions. "
                     f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
                 )
         except Exception as error:
             print(
-                f"{Style.BRIGHT}{Fore.RED}\nOCSF export failed unexpectedly: {error}. "
+                f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed unexpectedly: {error}. "
                 f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
             )
         else:
             job_id = response.get("data", {}).get("id") if response else None
             if job_id:
                 print(
-                    f"{Style.BRIGHT}{Fore.GREEN}\nOCSF export accepted. Ingestion job: {job_id}{Style.RESET_ALL}"
+                    f"{Style.BRIGHT}{Fore.GREEN}\nFindings successfully pushed to Prowler Cloud. Ingestion job: {job_id}"
+                    f"\nSee more details here: https://cloud.prowler.com/scans{Style.RESET_ALL}"
                 )
             else:
                 logger.warning(
-                    "OCSF export: unexpected API response (missing ingestion job ID). "
+                    "Push to Prowler Cloud: unexpected API response (missing ingestion job ID). "
                     f"Scan results were saved to {ocsf_output.file_path}"
                 )
 
@@ -1114,6 +1135,48 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "googleworkspace":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = GoogleWorkspaceCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            elif compliance_name.startswith("cisa_scuba_"):
+                # Generate CISA SCuBA Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cisa_scuba = GoogleWorkspaceCISASCuBA(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cisa_scuba)
+                cisa_scuba.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"

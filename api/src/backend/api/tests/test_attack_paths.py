@@ -9,6 +9,10 @@ from rest_framework.exceptions import APIException, PermissionDenied, Validation
 
 from api.attack_paths import database as graph_database
 from api.attack_paths import views_helpers
+from tasks.jobs.attack_paths.config import (
+    PROVIDER_ELEMENT_ID_PROPERTY,
+    get_provider_label,
+)
 
 
 def _make_neo4j_error(message, code):
@@ -49,7 +53,7 @@ def test_prepare_parameters_includes_provider_and_casts(
     )
 
     assert result["provider_uid"] == "123456789012"
-    assert result["provider_id"] == "test-provider-id"
+    assert "provider_id" not in result
     assert result["limit"] == 5
 
 
@@ -103,12 +107,12 @@ def test_execute_query_serializes_graph(
     parameters = {"provider_uid": "123"}
 
     provider_id = "test-provider-123"
+    plabel = get_provider_label(provider_id)
     node = attack_paths_graph_stub_classes.Node(
         element_id="node-1",
-        labels=["AWSAccount"],
+        labels=["AWSAccount", plabel],
         properties={
             "name": "account",
-            "provider_id": provider_id,
             "complex": {
                 "items": [
                     attack_paths_graph_stub_classes.NativeValue("value"),
@@ -117,15 +121,13 @@ def test_execute_query_serializes_graph(
             },
         },
     )
-    node_2 = attack_paths_graph_stub_classes.Node(
-        "node-2", ["RDSInstance"], {"provider_id": provider_id}
-    )
+    node_2 = attack_paths_graph_stub_classes.Node("node-2", ["RDSInstance", plabel], {})
     relationship = attack_paths_graph_stub_classes.Relationship(
         element_id="rel-1",
         rel_type="OWNS",
         start_node=node,
         end_node=node_2,
-        properties={"weight": 1, "provider_id": provider_id},
+        properties={"weight": 1},
     )
     graph = SimpleNamespace(nodes=[node, node_2], relationships=[relationship])
 
@@ -209,29 +211,27 @@ def test_execute_query_raises_permission_denied_on_read_only(
             )
 
 
-def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes):
+def test_serialize_graph_filters_by_provider_label(attack_paths_graph_stub_classes):
     provider_id = "provider-keep"
+    plabel = get_provider_label(provider_id)
+    other_label = get_provider_label("provider-other")
 
-    node_keep = attack_paths_graph_stub_classes.Node(
-        "n1", ["AWSAccount"], {"provider_id": provider_id}
-    )
+    node_keep = attack_paths_graph_stub_classes.Node("n1", ["AWSAccount", plabel], {})
     node_drop = attack_paths_graph_stub_classes.Node(
-        "n2", ["AWSAccount"], {"provider_id": "provider-other"}
+        "n2", ["AWSAccount", other_label], {}
     )
 
     rel_keep = attack_paths_graph_stub_classes.Relationship(
-        "r1", "OWNS", node_keep, node_keep, {"provider_id": provider_id}
+        "r1", "OWNS", node_keep, node_keep, {}
     )
-    rel_drop_by_provider = attack_paths_graph_stub_classes.Relationship(
-        "r2", "OWNS", node_keep, node_drop, {"provider_id": "provider-other"}
-    )
+    # Relationship connecting a kept node to a dropped node — filtered by endpoint check
     rel_drop_orphaned = attack_paths_graph_stub_classes.Relationship(
-        "r3", "OWNS", node_keep, node_drop, {"provider_id": provider_id}
+        "r2", "OWNS", node_keep, node_drop, {}
     )
 
     graph = SimpleNamespace(
         nodes=[node_keep, node_drop],
-        relationships=[rel_keep, rel_drop_by_provider, rel_drop_orphaned],
+        relationships=[rel_keep, rel_drop_orphaned],
     )
 
     result = views_helpers._serialize_graph(graph, provider_id)
@@ -350,15 +350,20 @@ def test_serialize_properties_filters_internal_fields():
         "_module_name": "cartography:aws",
         "_module_version": "0.98.0",
         # Provider isolation
-        "_provider_id": "42",
-        "_provider_element_id": "42:abc123",
-        "provider_id": "42",
-        "provider_element_id": "42:abc123",
+        PROVIDER_ELEMENT_ID_PROPERTY: "42:abc123",
     }
 
     result = views_helpers._serialize_properties(properties)
 
     assert result == {"name": "prod"}
+
+
+def test_filter_labels_strips_dynamic_isolation_labels():
+    labels = ["AWSRole", "_Tenant_abc123", "_Provider_def456", "_ProviderResource"]
+
+    result = views_helpers._filter_labels(labels)
+
+    assert result == ["AWSRole"]
 
 
 def test_serialize_graph_as_text_node_without_properties():
@@ -439,14 +444,11 @@ def test_execute_custom_query_serializes_graph(
     attack_paths_graph_stub_classes,
 ):
     provider_id = "test-provider-123"
-    node_1 = attack_paths_graph_stub_classes.Node(
-        "node-1", ["AWSAccount"], {"provider_id": provider_id}
-    )
-    node_2 = attack_paths_graph_stub_classes.Node(
-        "node-2", ["RDSInstance"], {"provider_id": provider_id}
-    )
+    plabel = get_provider_label(provider_id)
+    node_1 = attack_paths_graph_stub_classes.Node("node-1", ["AWSAccount", plabel], {})
+    node_2 = attack_paths_graph_stub_classes.Node("node-2", ["RDSInstance", plabel], {})
     relationship = attack_paths_graph_stub_classes.Relationship(
-        "rel-1", "OWNS", node_1, node_2, {"provider_id": provider_id}
+        "rel-1", "OWNS", node_1, node_2, {}
     )
 
     graph_result = MagicMock()
@@ -461,10 +463,11 @@ def test_execute_custom_query_serializes_graph(
             "db-tenant-test", "MATCH (n) RETURN n", provider_id
         )
 
-    mock_execute.assert_called_once_with(
-        database="db-tenant-test",
-        cypher="MATCH (n) RETURN n",
-    )
+    mock_execute.assert_called_once()
+    call_kwargs = mock_execute.call_args[1]
+    assert call_kwargs["database"] == "db-tenant-test"
+    # The cypher is rewritten with the provider label injection
+    assert plabel in call_kwargs["cypher"]
     assert len(result["nodes"]) == 2
     assert result["relationships"][0]["label"] == "OWNS"
     assert result["truncated"] is False

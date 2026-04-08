@@ -139,8 +139,20 @@ class GithubProvider(Provider):
         logging.getLogger("github.GithubRetry").setLevel(logging.CRITICAL)
 
         # Set repositories and organizations for scoping
-        self._repositories = repositories or []
-        self._organizations = organizations or []
+        # Normalize single strings into lists (argparse sometimes passes str for singular flags)
+        if repositories is None:
+            self._repositories = []
+        elif isinstance(repositories, str):
+            self._repositories = [repositories]
+        else:
+            self._repositories = list(repositories)
+
+        if organizations is None:
+            self._organizations = []
+        elif isinstance(organizations, str):
+            self._organizations = [organizations]
+        else:
+            self._organizations = list(organizations)
 
         self._session = GithubProvider.setup_session(
             personal_access_token,
