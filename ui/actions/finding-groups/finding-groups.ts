@@ -61,7 +61,8 @@ function normalizeFindingGroupResourceFilters(
   return normalized;
 }
 
-const DEFAULT_FINDING_GROUPS_SORT = "-severity,-delta,-fail_count,-last_seen_at";
+const DEFAULT_FINDING_GROUPS_SORT =
+  "-severity,-delta,-fail_count,-last_seen_at";
 
 export const getFindingGroups = async ({
   page = 1,

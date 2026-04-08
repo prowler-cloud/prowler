@@ -107,7 +107,10 @@ export function useInfiniteResources({
         return;
       }
 
-      const resources = adaptFindingGroupResourcesResponse(response, forCheckId);
+      const resources = adaptFindingGroupResourcesResponse(
+        response,
+        forCheckId,
+      );
       const totalPages = response?.meta?.pagination?.pages ?? 1;
       const hasMore = page < totalPages;
       totalCountRef.current = response?.meta?.pagination?.count ?? null;
@@ -210,5 +213,10 @@ export function useInfiniteResources({
     fetchPage(1, false, currentCheckIdRef.current, controller.signal);
   }
 
-  return { sentinelRef, refresh, loadMore: loadNextPage, totalCount: totalCountRef.current };
+  return {
+    sentinelRef,
+    refresh,
+    loadMore: loadNextPage,
+    totalCount: totalCountRef.current,
+  };
 }
