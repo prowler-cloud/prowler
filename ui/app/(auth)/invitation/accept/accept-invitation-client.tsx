@@ -2,23 +2,27 @@
 
 import { Icon } from "@iconify/react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { acceptInvitation } from "@/actions/invitations";
 import { Button } from "@/components/shadcn";
+import {
+  INVITATION_ACTION_PARAM,
+  INVITATION_SIGNUP_ACTION,
+} from "@/lib/invitation-routing";
 
 type AcceptState =
-  | { kind: "loading" }
   | { kind: "no-token" }
   | { kind: "accepting" }
-  | { kind: "success" }
-  | { kind: "error"; message: string; canRetry: boolean }
+  | { kind: "error"; message: string; canRetry: boolean; needsSignOut: boolean }
   | { kind: "choose" };
 
 function mapApiError(status: number | undefined): {
   message: string;
   canRetry: boolean;
+  needsSignOut: boolean;
 } {
   switch (status) {
     case 410:
@@ -26,22 +30,26 @@ function mapApiError(status: number | undefined): {
         message:
           "This invitation has expired. Please contact your administrator for a new one.",
         canRetry: false,
+        needsSignOut: false,
       };
     case 400:
       return {
         message: "This invitation has already been used.",
         canRetry: false,
+        needsSignOut: false,
       };
     case 404:
       return {
         message:
           "This invitation was sent to a different email address. Please sign in with the correct account.",
         canRetry: false,
+        needsSignOut: true,
       };
     default:
       return {
         message: "Something went wrong while accepting the invitation.",
         canRetry: true,
+        needsSignOut: false,
       };
   }
 }
@@ -57,7 +65,7 @@ export function AcceptInvitationClient({
   const [state, setState] = useState<AcceptState>(() => {
     if (!token) return { kind: "no-token" };
     if (!isAuthenticated) return { kind: "choose" };
-    return { kind: "loading" };
+    return { kind: "accepting" };
   });
   const hasStartedRef = useRef(false);
 
@@ -68,12 +76,18 @@ export function AcceptInvitationClient({
     const result = await acceptInvitation(token);
 
     if (result?.error) {
-      const { message, canRetry } = mapApiError(result.status);
-      setState({ kind: "error", message, canRetry });
+      const { message, canRetry, needsSignOut } = mapApiError(result.status);
+      setState({ kind: "error", message, canRetry, needsSignOut });
     } else {
-      setState({ kind: "success" });
       router.push("/");
     }
+  }
+
+  async function handleSignOutAndRedirect() {
+    if (!token) return;
+    const callbackPath = `/invitation/accept?invitation_token=${encodeURIComponent(token)}`;
+    await signOut({ redirect: false });
+    router.push(`/sign-in?callbackUrl=${encodeURIComponent(callbackPath)}`);
   }
 
   useEffect(() => {
@@ -95,18 +109,6 @@ export function AcceptInvitationClient({
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6 text-center">
-        {/* Loading */}
-        {state.kind === "loading" && (
-          <div className="flex flex-col items-center gap-4">
-            <Icon
-              icon="eos-icons:loading"
-              className="text-default-500"
-              width={48}
-            />
-            <p className="text-default-500">Loading...</p>
-          </div>
-        )}
-
         {/* No token */}
         {state.kind === "no-token" && (
           <div className="flex flex-col items-center gap-4">
@@ -141,19 +143,6 @@ export function AcceptInvitationClient({
           </div>
         )}
 
-        {/* Success (brief — redirects to dashboard) */}
-        {state.kind === "success" && (
-          <div className="flex flex-col items-center gap-4">
-            <Icon
-              icon="solar:check-circle-bold"
-              className="text-success"
-              width={48}
-            />
-            <h1 className="text-xl font-semibold">Invitation Accepted!</h1>
-            <p className="text-default-500">Redirecting to dashboard...</p>
-          </div>
-        )}
-
         {/* Error */}
         {state.kind === "error" && (
           <div className="flex flex-col items-center gap-4">
@@ -168,9 +157,15 @@ export function AcceptInvitationClient({
             <p className="text-default-500">{state.message}</p>
             <div className="flex gap-3">
               {state.canRetry && <Button onClick={doAccept}>Retry</Button>}
-              <Button asChild variant="outline">
-                <Link href="/sign-in">Go to Sign In</Link>
-              </Button>
+              {state.needsSignOut ? (
+                <Button variant="outline" onClick={handleSignOutAndRedirect}>
+                  Sign in with a different account
+                </Button>
+              ) : (
+                <Button asChild variant="outline">
+                  <Link href="/sign-in">Go to Sign In</Link>
+                </Button>
+              )}
             </div>
           </div>
         )}
@@ -209,7 +204,7 @@ export function AcceptInvitationClient({
                 className="w-full"
                 onClick={() => {
                   router.push(
-                    `/sign-up?invitation_token=${encodeURIComponent(token!)}&action=signup`,
+                    `/sign-up?invitation_token=${encodeURIComponent(token!)}&${INVITATION_ACTION_PARAM}=${INVITATION_SIGNUP_ACTION}`,
                   );
                 }}
               >

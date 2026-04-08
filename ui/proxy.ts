@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth.config";
+import { INVITATION_ACTION_PARAM } from "@/lib/invitation-routing";
 
 const publicRoutes = [
   "/sign-in",
@@ -25,7 +26,7 @@ export default auth((req: NextRequest & { auth: any }) => {
   if (
     pathname === "/sign-up" &&
     req.nextUrl.searchParams.has("invitation_token") &&
-    !req.nextUrl.searchParams.has("action")
+    !req.nextUrl.searchParams.has(INVITATION_ACTION_PARAM)
   ) {
     const acceptUrl = new URL("/invitation/accept", req.url);
     acceptUrl.searchParams.set(
