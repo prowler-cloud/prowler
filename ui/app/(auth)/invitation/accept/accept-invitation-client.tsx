@@ -3,7 +3,7 @@
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { acceptInvitation } from "@/actions/invitations";
 import { Button } from "@/components/shadcn";
@@ -61,7 +61,7 @@ export function AcceptInvitationClient({
   });
   const hasStartedRef = useRef(false);
 
-  const doAccept = useCallback(async () => {
+  async function doAccept() {
     if (!token) return;
     setState({ kind: "accepting" });
 
@@ -74,7 +74,7 @@ export function AcceptInvitationClient({
       setState({ kind: "success" });
       router.push("/");
     }
-  }, [token, router]);
+  }
 
   useEffect(() => {
     if (hasStartedRef.current) return;
@@ -90,7 +90,7 @@ export function AcceptInvitationClient({
     } else {
       setState({ kind: "choose" });
     }
-  }, [token, isAuthenticated, doAccept]);
+  }, [token, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
