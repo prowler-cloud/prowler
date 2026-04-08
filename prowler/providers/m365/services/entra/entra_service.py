@@ -1004,6 +1004,9 @@ class PlatformConditions(BaseModel):
         allow_population_by_field_name = True
 
 
+KNOWN_PLATFORMS = frozenset({"android", "ios", "windows", "macos", "linux"})
+
+
 class TransferMethod(Enum):
     """Transfer methods for authentication flows in Conditional Access policies."""
 

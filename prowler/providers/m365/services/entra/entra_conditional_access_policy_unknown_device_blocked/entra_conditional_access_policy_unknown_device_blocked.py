@@ -1,11 +1,10 @@
 from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.entra.entra_client import entra_client
 from prowler.providers.m365.services.entra.entra_service import (
+    KNOWN_PLATFORMS,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
 )
-
-KNOWN_PLATFORMS = {"android", "iOS", "windows", "macOS", "linux"}
 
 
 class entra_conditional_access_policy_unknown_device_blocked(Check):
