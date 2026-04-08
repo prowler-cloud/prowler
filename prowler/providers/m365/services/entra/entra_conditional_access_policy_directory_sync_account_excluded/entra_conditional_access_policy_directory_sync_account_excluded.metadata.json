@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_directory_sync_account_excluded",
+  "CheckTitle": "Conditional Access policy excludes Directory Synchronization Accounts to protect Entra Connect sync",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Conditional Access policies scoped to **all users** and **all cloud applications** are evaluated to confirm the **Directory Synchronization Accounts** role is explicitly excluded. The Microsoft Entra Connect Sync Account does not support multifactor authentication, so it must be excluded from restrictive policies to maintain directory synchronization.",
+  "Risk": "If the Directory Synchronization Accounts role is not excluded from Conditional Access policies requiring MFA or blocking access, the Entra Connect Sync Account will be unable to authenticate. This breaks hybrid identity synchronization between on-premises Active Directory and Entra ID, potentially causing authentication failures and identity inconsistencies.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-all-users-mfa",
+    "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/reference-connect-accounts-permissions",
+    "https://maester.dev/docs/tests/MT.1020"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Open each policy that targets **All users** and **All cloud apps**.\n4. Under **Users** > **Exclude**, select **Directory roles** and add the **Directory Synchronization Accounts** role.\n5. Save the policy.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Exclude the Directory Synchronization Accounts role from all Conditional Access policies that target all users and all cloud applications. This prevents breaking Entra Connect directory synchronization while maintaining security controls for interactive users.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_directory_sync_account_excluded"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_conditional_access_policy_require_mfa_for_management_api"
+  ],
+  "Notes": "This check corresponds to Maester test MT.1020 (Test-MtCaExclusionForDirectorySyncAccount). The Directory Synchronization Accounts role template ID is d29b2b05-8046-44ba-8758-1e26182fcf32."
+}
