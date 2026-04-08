@@ -7219,6 +7219,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         "check_id": "check_id",
         "check_title": "check_title",
         "severity": "severity_order",
+        "delta": "delta_order",
         "fail_count": "fail_count",
         "pass_count": "pass_count",
         "muted_count": "muted_count",
@@ -7569,7 +7570,20 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 sort_param, self._FINDING_GROUP_SORT_MAP
             )
             if ordering:
-                aggregated_queryset = aggregated_queryset.order_by(*ordering)
+                # delta_order is a virtual sort field: expand it to a
+                # lexicographic ordering by (new_count, changed_count) so groups
+                # with more new findings rank higher, with changed_count as the
+                # tie-breaker (preserves the "new > changed" priority used by
+                # the resources endpoint, but driven by the actual counters).
+                expanded_ordering = []
+                for field in ordering:
+                    if field.lstrip("-") == "delta_order":
+                        sign = "-" if field.startswith("-") else ""
+                        expanded_ordering.append(f"{sign}new_count")
+                        expanded_ordering.append(f"{sign}changed_count")
+                    else:
+                        expanded_ordering.append(field)
+                aggregated_queryset = aggregated_queryset.order_by(*expanded_ordering)
         else:
             aggregated_queryset = aggregated_queryset.order_by(
                 "-fail_count", "-severity_order", "check_id"
