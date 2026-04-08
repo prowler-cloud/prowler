@@ -476,7 +476,6 @@
       "Description": "Checks if internet gateways are attached to an authorized virtual private cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
-        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -1164,7 +1163,6 @@
       "Description": "Checks if internet gateways are attached to an authorized virtual private cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
-        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -1880,7 +1878,6 @@
       "Description": "Checks if internet gateways are attached to an authorized virtual private cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
-        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -2378,7 +2375,6 @@
       "Description": "Checks if internet gateways are attached to an authorized virtual private cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
-        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -2703,7 +2699,6 @@
       "Description": "Checks if internet gateways are attached to an authorized virtual private cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
-        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -3243,7 +3238,6 @@
       "Description": "Checks if internet gateways are attached to an authorized virtual private cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
-        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -3582,7 +3576,6 @@
       "Description": "Checks if internet gateways are attached to an authorized virtual private cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
-        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -21420,7 +21413,6 @@
       "Description": "Checks if internet gateways are attached to an authorized virtual private cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
-        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [

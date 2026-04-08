@@ -1718,7 +1718,6 @@
         "sagemaker_notebook_instance_root_access_disabled",
         "ses_identity_not_publicly_accessible",
         "ssm_documents_set_as_public",
-        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries"
       ],
       "Attributes": [
@@ -3286,7 +3285,6 @@
         "storagegateway_fileshare_encryption_enabled",
         "transfer_server_in_transit_encryption_enabled",
         "trustedadvisor_errors_and_warnings",
-        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_for_ec2_enabled",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",

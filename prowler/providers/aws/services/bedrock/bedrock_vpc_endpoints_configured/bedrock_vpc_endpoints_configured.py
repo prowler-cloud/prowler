@@ -1,15 +1,28 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.bedrock.bedrock_agent_client import (
+    bedrock_agent_client,
+)
+from prowler.providers.aws.services.bedrock.bedrock_client import bedrock_client
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
+
+BEDROCK_ENDPOINT_SERVICES = {
+    "bedrock": "Bedrock control plane",
+    "bedrock-runtime": "Bedrock runtime",
+    "bedrock-agent": "Bedrock agent control plane",
+    "bedrock-agent-runtime": "Bedrock agent runtime",
+}
 
 
 class bedrock_vpc_endpoints_configured(Check):
-    """Ensure VPC endpoints are configured for Bedrock runtime and agent services.
+    """Ensure VPC endpoints are configured for Bedrock services.
 
-    This check verifies that each VPC has interface VPC endpoints for both
-    Amazon Bedrock runtime and Bedrock agent runtime services, ensuring that
-    traffic to these services remains within the AWS network.
-    - PASS: The VPC has VPC endpoints for both Bedrock runtime and Bedrock agent runtime.
-    - FAIL: The VPC is missing one or both Bedrock VPC endpoints.
+    This check verifies that each VPC in regions with Bedrock activity has
+    interface VPC endpoints for all Amazon Bedrock services (control plane,
+    runtime, agent, and agent runtime), ensuring that traffic to these
+    services remains within the AWS network.
+    - PASS: The VPC has VPC endpoints for all four Bedrock services.
+    - FAIL: The VPC is missing one or more Bedrock VPC endpoints.
+    VPCs in regions without Bedrock activity are skipped.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -19,34 +32,56 @@ class bedrock_vpc_endpoints_configured(Check):
             A list of reports containing the result of the check.
         """
         findings = []
+        bedrock_regions = self._get_bedrock_active_regions()
+
         for vpc_id, vpc in vpc_client.vpcs.items():
-            if vpc_client.provider.scan_unused_services or vpc.in_use:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource=vpc
+            if not (vpc_client.provider.scan_unused_services or vpc.in_use):
+                continue
+
+            if vpc.region not in bedrock_regions:
+                continue
+
+            report = Check_Report_AWS(metadata=self.metadata(), resource=vpc)
+            report.status = "FAIL"
+
+            found_services = set()
+
+            for endpoint in vpc_client.vpc_endpoints:
+                if endpoint.vpc_id == vpc_id and endpoint.state == "available":
+                    for svc_suffix in BEDROCK_ENDPOINT_SERVICES:
+                        if endpoint.service_name.endswith(f".{svc_suffix}"):
+                            found_services.add(svc_suffix)
+
+            missing_services = set(BEDROCK_ENDPOINT_SERVICES) - found_services
+
+            if not missing_services:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"VPC {vpc.id} has VPC endpoints for all Bedrock services."
                 )
-                report.status = "FAIL"
+            else:
+                missing_labels = [
+                    BEDROCK_ENDPOINT_SERVICES[svc] for svc in sorted(missing_services)
+                ]
+                report.status_extended = f"VPC {vpc.id} does not have VPC endpoints for the following Bedrock services: {', '.join(missing_labels)}."
 
-                has_bedrock_runtime = False
-                has_bedrock_agent_runtime = False
-
-                for endpoint in vpc_client.vpc_endpoints:
-                    if endpoint.vpc_id == vpc_id:
-                        if "bedrock-runtime" in endpoint.service_name:
-                            has_bedrock_runtime = True
-                        if "bedrock-agent-runtime" in endpoint.service_name:
-                            has_bedrock_agent_runtime = True
-
-                if has_bedrock_runtime and has_bedrock_agent_runtime:
-                    report.status = "PASS"
-                    report.status_extended = f"VPC {vpc.id} has VPC endpoints for both Bedrock runtime and Bedrock agent runtime services."
-                else:
-                    missing = []
-                    if not has_bedrock_runtime:
-                        missing.append("Bedrock runtime")
-                    if not has_bedrock_agent_runtime:
-                        missing.append("Bedrock agent runtime")
-                    report.status_extended = f"VPC {vpc.id} does not have VPC endpoints for the following Bedrock services: {', '.join(missing)}."
-
-                findings.append(report)
+            findings.append(report)
 
         return findings
+
+    @staticmethod
+    def _get_bedrock_active_regions() -> set[str]:
+        """Return regions where Bedrock resources or logging are configured."""
+        active_regions = set()
+
+        for region, config in bedrock_client.logging_configurations.items():
+            if config.enabled:
+                active_regions.add(region)
+
+        for guardrail in bedrock_client.guardrails.values():
+            active_regions.add(guardrail.region)
+
+        for agent in bedrock_agent_client.agents.values():
+            active_regions.add(agent.region)
+
+        return active_regions
