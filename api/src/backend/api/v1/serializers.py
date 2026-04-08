@@ -4216,6 +4216,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     provider = serializers.SerializerMethodField()
     status = serializers.CharField()
     severity = serializers.CharField()
+    delta = serializers.CharField(required=False, allow_null=True)
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     muted_reason = serializers.CharField(required=False, allow_null=True)

@@ -16839,6 +16839,39 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         assert len(data) > 0
 
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_delta(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+    ):
+        """Sort by delta orders by new_count then changed_count (lexicographic)."""
+        params = {"sort": "-delta"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        def delta_key(item):
+            attrs = item["attributes"]
+            return (attrs.get("new_count", 0), attrs.get("changed_count", 0))
+
+        desc_keys = [delta_key(item) for item in data]
+        assert desc_keys == sorted(desc_keys, reverse=True)
+
+        # Ascending order produces the inverse arrangement
+        params["sort"] = "delta"
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        asc_keys = [delta_key(item) for item in response.json()["data"]]
+        assert asc_keys == sorted(asc_keys)
+
     def test_finding_groups_latest_ignores_date_filters(
         self, authenticated_client, finding_groups_fixture
     ):
