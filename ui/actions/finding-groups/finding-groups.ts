@@ -61,10 +61,12 @@ function normalizeFindingGroupResourceFilters(
   return normalized;
 }
 
+const DEFAULT_FINDING_GROUPS_SORT = "-severity,-delta,-fail_count,-last_seen_at";
+
 export const getFindingGroups = async ({
   page = 1,
   pageSize = 10,
-  sort = "",
+  sort = DEFAULT_FINDING_GROUPS_SORT,
   filters = {},
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -91,7 +93,7 @@ export const getFindingGroups = async ({
 export const getLatestFindingGroups = async ({
   page = 1,
   pageSize = 10,
-  sort = "",
+  sort = DEFAULT_FINDING_GROUPS_SORT,
   filters = {},
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -135,8 +137,7 @@ export const getFindingGroupResources = async ({
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  // Keep FAIL-first ordering when multiple statuses are returned.
-  url.searchParams.append("sort", "-status");
+  url.searchParams.append("sort", "-severity,-delta,-last_seen_at");
 
   appendSanitizedProviderFilters(url, normalizedFilters);
 
@@ -172,8 +173,7 @@ export const getLatestFindingGroupResources = async ({
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  // Keep FAIL-first ordering when multiple statuses are returned.
-  url.searchParams.append("sort", "-status");
+  url.searchParams.append("sort", "-severity,-delta,-last_seen_at");
 
   appendSanitizedProviderFilters(url, normalizedFilters);
 

@@ -83,7 +83,7 @@ export function FindingsGroupDrillDown({
     setIsLoading(loading);
   };
 
-  const { sentinelRef, refresh, loadMore } = useInfiniteResources({
+  const { sentinelRef, refresh, loadMore, totalCount } = useInfiniteResources({
     checkId: group.checkId,
     hasDateOrScanFilter: hasDateOrScan,
     filters,
@@ -96,7 +96,7 @@ export function FindingsGroupDrillDown({
   const drawer = useResourceDetailDrawer({
     resources,
     checkId: group.checkId,
-    totalResourceCount: group.resourcesTotal,
+    totalResourceCount: totalCount ?? group.resourcesTotal,
     onRequestMoreResources: loadMore,
   });
 

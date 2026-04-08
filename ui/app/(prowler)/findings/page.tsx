@@ -120,12 +120,8 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
-  const defaultSort = "-fail_count,-severity,-last_seen_at";
 
-  const { encodedSort } = extractSortAndKey({
-    ...searchParams,
-    sort: searchParams.sort ?? defaultSort,
-  });
+  const { encodedSort } = extractSortAndKey(searchParams);
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(searchParams);
 
@@ -135,7 +131,7 @@ const SSRDataTable = async ({
 
   const findingGroupsData = await fetchFindingGroups({
     page,
-    sort: encodedSort,
+    ...(encodedSort && { sort: encodedSort }),
     filters,
     pageSize,
   });

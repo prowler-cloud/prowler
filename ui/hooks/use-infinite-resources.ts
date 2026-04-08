@@ -32,6 +32,8 @@ interface UseInfiniteResourcesReturn {
   refresh: () => void;
   /** Imperatively load the next page (e.g. from drawer navigation). */
   loadMore: () => void;
+  /** Total number of resources matching current filters (from API pagination). */
+  totalCount: number | null;
 }
 
 /**
@@ -60,6 +62,7 @@ export function useInfiniteResources({
   const currentCheckIdRef = useRef(checkId);
   const controllerRef = useRef<AbortController | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const totalCountRef = useRef<number | null>(null);
 
   // Store latest values in refs so the fetch function always reads current values
   // without being recreated on every render
@@ -104,12 +107,10 @@ export function useInfiniteResources({
         return;
       }
 
-      const resources = adaptFindingGroupResourcesResponse(
-        response,
-        forCheckId,
-      );
+      const resources = adaptFindingGroupResourcesResponse(response, forCheckId);
       const totalPages = response?.meta?.pagination?.pages ?? 1;
       const hasMore = page < totalPages;
+      totalCountRef.current = response?.meta?.pagination?.count ?? null;
 
       // Commit the page number only after a successful (non-aborted) fetch.
       // This prevents a premature pageRef increment from loadNextPage being
@@ -209,5 +210,5 @@ export function useInfiniteResources({
     fetchPage(1, false, currentCheckIdRef.current, controller.signal);
   }
 
-  return { sentinelRef, refresh, loadMore: loadNextPage };
+  return { sentinelRef, refresh, loadMore: loadNextPage, totalCount: totalCountRef.current };
 }
