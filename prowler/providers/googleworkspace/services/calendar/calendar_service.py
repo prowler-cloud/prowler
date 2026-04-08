@@ -96,9 +96,12 @@ class Calendar(GoogleWorkspaceService):
             )
 
         except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            self._handle_api_error(
+                error,
+                "fetching calendar policies",
+                self.provider.identity.customer_id,
             )
+            self.policies_fetched = False
 
 
 class CalendarPolicies(BaseModel):
