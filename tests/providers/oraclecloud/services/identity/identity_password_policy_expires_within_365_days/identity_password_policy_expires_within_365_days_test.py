@@ -293,7 +293,7 @@ class Test_identity_password_policy_expires_within_365_days:
             check = identity_password_policy_expires_within_365_days(
                 {
                     region: "us-ashburn-1",
-                    identity_client
+                    client: identity_client
                 }
             )
             result = check.execute()
