@@ -1,10 +1,16 @@
 from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.entra.entra_client import entra_client
 from prowler.providers.m365.services.entra.entra_service import (
+    MOBILE_PLATFORMS,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     GrantControlOperator,
 )
+
+MOBILE_APP_GRANT_CONTROLS = {
+    ConditionalAccessGrantControl.APPROVED_APPLICATION,
+    ConditionalAccessGrantControl.COMPLIANT_APPLICATION,
+}
 
 
 class entra_conditional_access_policy_approved_client_app_required_for_mobile(Check):
@@ -16,19 +22,6 @@ class entra_conditional_access_policy_approved_client_app_required_for_mobile(Ch
     - PASS: An enabled policy requires approved client apps or app protection for iOS/Android.
     - FAIL: No policy restricts mobile app access to approved or protected apps.
     """
-
-    REQUIRED_MOBILE_PLATFORMS = {"android", "ios"}
-    MOBILE_APP_GRANT_CONTROLS = {
-        ConditionalAccessGrantControl.APPROVED_APPLICATION,
-        ConditionalAccessGrantControl.COMPLIANT_APPLICATION,
-    }
-
-    @staticmethod
-    def _normalize_platform(platform: object) -> str:
-        normalized_platform = getattr(platform, "value", platform)
-        return (
-            normalized_platform.lower() if isinstance(normalized_platform, str) else ""
-        )
 
     def execute(self) -> list[CheckReportM365]:
         """Execute the check logic.
@@ -54,43 +47,22 @@ class entra_conditional_access_policy_approved_client_app_required_for_mobile(Ch
             if not policy.conditions.platform_conditions:
                 continue
 
-            included_platforms = {
-                normalized_platform
-                for normalized_platform in map(
-                    self._normalize_platform,
-                    policy.conditions.platform_conditions.include_platforms,
-                )
-                if normalized_platform
-            }
-            excluded_platforms = {
-                normalized_platform
-                for normalized_platform in map(
-                    self._normalize_platform,
-                    policy.conditions.platform_conditions.exclude_platforms,
-                )
-                if normalized_platform
-            }
+            included = set(policy.conditions.platform_conditions.include_platforms)
+            excluded = set(policy.conditions.platform_conditions.exclude_platforms)
 
-            targets_mobile_platforms = (
-                "all" in included_platforms
-                or self.REQUIRED_MOBILE_PLATFORMS.issubset(included_platforms)
-            ) and not (
-                "all" in excluded_platforms
-                or self.REQUIRED_MOBILE_PLATFORMS.intersection(excluded_platforms)
-            )
-            if not targets_mobile_platforms:
+            targets_mobile = (
+                "all" in included or MOBILE_PLATFORMS.issubset(included)
+            ) and not ("all" in excluded or MOBILE_PLATFORMS.intersection(excluded))
+            if not targets_mobile:
                 continue
 
             built_in_controls = set(policy.grant_controls.built_in_controls)
-            has_mobile_app_control = bool(
-                self.MOBILE_APP_GRANT_CONTROLS.intersection(built_in_controls)
-            )
-            if not has_mobile_app_control:
+            if not MOBILE_APP_GRANT_CONTROLS.intersection(built_in_controls):
                 continue
 
             if (
                 policy.grant_controls.operator == GrantControlOperator.OR
-                and not built_in_controls.issubset(self.MOBILE_APP_GRANT_CONTROLS)
+                and not built_in_controls.issubset(MOBILE_APP_GRANT_CONTROLS)
             ):
                 continue
 
