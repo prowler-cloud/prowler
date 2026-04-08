@@ -33,6 +33,7 @@ def _make_domain(password_policies=None):
         password_policies=password_policies or [],
     )
 
+
 def _make_domain_non_home(password_policies=None):
     return IdentityDomain(
         id=DOMAIN_ID,
@@ -46,6 +47,7 @@ def _make_domain_non_home(password_policies=None):
         region="not-home",
         password_policies=password_policies or [],
     )
+
 
 class Test_identity_password_policy_expires_within_365_days:
     def test_no_domains(self):
@@ -248,6 +250,7 @@ class Test_identity_password_policy_expires_within_365_days:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_id == POLICY_ID
+
 
 def test_non_home_domains_excluded(self):
         """Identity domains should not be scanned outside their home region
