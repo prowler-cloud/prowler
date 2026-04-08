@@ -8,7 +8,7 @@ CHECK_MODULE_PATH = "prowler.providers.m365.services.intune.intune_device_compli
 
 class Test_intune_device_compliance_policy_unassigned_devices_not_compliant_by_default:
     def test_secure_by_default_true(self):
-        intune_client = mock.MagicMock
+        intune_client = mock.MagicMock()
         intune_client.audited_tenant = "audited_tenant"
         intune_client.audited_domain = DOMAIN
 
@@ -24,6 +24,7 @@ class Test_intune_device_compliance_policy_unassigned_devices_not_compliant_by_d
             )
 
             intune_client.settings = IntuneSettings(secure_by_default=True)
+            intune_client.verification_error = None
 
             result = (
                 intune_device_compliance_policy_unassigned_devices_not_compliant_by_default().execute()
@@ -37,7 +38,7 @@ class Test_intune_device_compliance_policy_unassigned_devices_not_compliant_by_d
             )
 
     def test_secure_by_default_false(self):
-        intune_client = mock.MagicMock
+        intune_client = mock.MagicMock()
         intune_client.audited_tenant = "audited_tenant"
         intune_client.audited_domain = DOMAIN
 
@@ -53,6 +54,7 @@ class Test_intune_device_compliance_policy_unassigned_devices_not_compliant_by_d
             )
 
             intune_client.settings = IntuneSettings(secure_by_default=False)
+            intune_client.verification_error = None
 
             result = (
                 intune_device_compliance_policy_unassigned_devices_not_compliant_by_default().execute()
@@ -67,7 +69,7 @@ class Test_intune_device_compliance_policy_unassigned_devices_not_compliant_by_d
             )
 
     def test_secure_by_default_none(self):
-        intune_client = mock.MagicMock
+        intune_client = mock.MagicMock()
         intune_client.audited_tenant = "audited_tenant"
         intune_client.audited_domain = DOMAIN
 
@@ -83,6 +85,7 @@ class Test_intune_device_compliance_policy_unassigned_devices_not_compliant_by_d
             )
 
             intune_client.settings = IntuneSettings(secure_by_default=None)
+            intune_client.verification_error = None
 
             result = (
                 intune_device_compliance_policy_unassigned_devices_not_compliant_by_default().execute()
@@ -97,7 +100,7 @@ class Test_intune_device_compliance_policy_unassigned_devices_not_compliant_by_d
             )
 
     def test_settings_is_none(self):
-        intune_client = mock.MagicMock
+        intune_client = mock.MagicMock()
         intune_client.audited_tenant = "audited_tenant"
         intune_client.audited_domain = DOMAIN
 
@@ -113,6 +116,7 @@ class Test_intune_device_compliance_policy_unassigned_devices_not_compliant_by_d
             )
 
             intune_client.settings = None
+            intune_client.verification_error = None
 
             result = (
                 intune_device_compliance_policy_unassigned_devices_not_compliant_by_default().execute()
@@ -127,7 +131,7 @@ class Test_intune_device_compliance_policy_unassigned_devices_not_compliant_by_d
             )
 
     def test_verification_error_returns_manual(self):
-        intune_client = mock.MagicMock
+        intune_client = mock.MagicMock()
         intune_client.audited_tenant = "audited_tenant"
         intune_client.audited_domain = DOMAIN
 
