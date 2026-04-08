@@ -17,7 +17,7 @@ def _mock_aws_globally():
 
 
 @pytest.fixture(autouse=True)
-def _detect_aws_leaks(request):
+def _detect_aws_leaks():
     """Fail the test if any HTTP request reaches a real AWS endpoint."""
     calls = []
     original_send = None

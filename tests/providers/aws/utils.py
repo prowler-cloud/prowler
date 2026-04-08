@@ -119,7 +119,7 @@ def set_mocked_aws_provider(
     if audited_regions is None:
         raise ValueError(
             "audited_regions is None, which means all 36 regions will be used. "
-            "If this is intentional, pass allow_all_regions=True."
+            "Pass an explicit list of regions instead."
         )
 
     if create_default_organization:
