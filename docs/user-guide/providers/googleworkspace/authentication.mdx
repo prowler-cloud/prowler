@@ -17,11 +17,8 @@ Prowler requests the following read-only OAuth 2.0 scopes:
 | `https://www.googleapis.com/auth/admin.directory.user.readonly` | Read access to user accounts and their admin status |
 | `https://www.googleapis.com/auth/admin.directory.domain.readonly` | Read access to domain information |
 | `https://www.googleapis.com/auth/admin.directory.customer.readonly` | Read access to customer information (Customer ID) |
-<<<<<<< PROWLER-1274-implement-calendar-service-checks-for-google-workspace-provider
 | `https://www.googleapis.com/auth/cloud-identity.policies.readonly` | Read access to domain-level application policies (required for Calendar service checks) |
-=======
 | `https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly` | Read access to admin roles and role assignments |
->>>>>>> master
 
 <Warning>
 The delegated user must be a **super administrator** in your Google Workspace organization. Using a non-admin account will result in permission errors when accessing the Admin SDK.
@@ -89,11 +86,7 @@ This JSON key grants access to your Google Workspace organization. Never commit 
 6. In the **OAuth scopes** field, enter the following scopes as a comma-separated list:
 
 ```
-<<<<<<< PROWLER-1274-implement-calendar-service-checks-for-google-workspace-provider
-https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.customer.readonly,https://www.googleapis.com/auth/cloud-identity.policies.readonly
-=======
-https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.customer.readonly,https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly
->>>>>>> master
+https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.customer.readonly,https://www.googleapis.com/auth/cloud-identity.policies.readonly,https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly
 ```
 
 7. Click **Authorize**
