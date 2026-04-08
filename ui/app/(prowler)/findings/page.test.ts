@@ -9,14 +9,8 @@ describe("findings page", () => {
   const pagePath = path.join(currentDir, "page.tsx");
   const source = readFileSync(pagePath, "utf8");
 
-  it("defaults the finding groups table sort to FAIL-first when no sort is provided", () => {
-    expect(source).toContain(
-      'const defaultSort = "-fail_count,-severity,-last_seen_at";',
-    );
-  });
-
-  it("still lets an explicit frontend sort override the default order", () => {
-    expect(source).toContain("sort: searchParams.sort ?? defaultSort");
+  it("only passes sort to fetchFindingGroups when the user has an explicit sort param", () => {
+    expect(source).toContain("...(encodedSort && { sort: encodedSort })");
   });
 
   it("normalizes scan filters with the required inserted_at params before fetching historical finding groups", () => {

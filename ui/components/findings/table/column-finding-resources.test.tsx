@@ -55,7 +55,18 @@ vi.mock("@/components/ui/entities", () => ({
 }));
 
 vi.mock("@/components/ui/entities/entity-info", () => ({
-  EntityInfo: () => null,
+  EntityInfo: ({
+    entityAlias,
+    entityId,
+  }: {
+    entityAlias?: string;
+    entityId?: string;
+  }) => (
+    <div>
+      <span>{entityAlias}</span>
+      <span>{entityId}</span>
+    </div>
+  ),
 }));
 
 vi.mock("@/components/ui/table", () => ({
@@ -101,6 +112,7 @@ function makeResource(
     providerAlias: "production",
     providerUid: "123456789",
     resourceName: "my-bucket",
+    resourceType: "bucket",
     resourceGroup: "default",
     resourceUid: "arn:aws:s3:::my-bucket",
     service: "s3",
@@ -156,5 +168,36 @@ describe("column-finding-resources", () => {
         isMuted: false,
       }),
     );
+  });
+
+  it("should render the resource EntityInfo with resourceName as alias", () => {
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+
+    const resourceColumn = columns.find(
+      (col) => (col as { id?: string }).id === "resource",
+    );
+    if (!resourceColumn?.cell) {
+      throw new Error("resource column not found");
+    }
+
+    const CellComponent = resourceColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource(),
+          },
+        })}
+      </div>,
+    );
+
+    expect(screen.getByText("my-bucket")).toBeInTheDocument();
+    expect(screen.getByText("arn:aws:s3:::my-bucket")).toBeInTheDocument();
   });
 });
