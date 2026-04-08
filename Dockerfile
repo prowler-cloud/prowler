@@ -61,10 +61,11 @@ RUN ARCH=$(uname -m) && \
         echo "Unsupported architecture for zizmor: $ARCH" && exit 1 ; \
     fi && \
     wget --progress=dot:giga "https://github.com/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-${ZIZMOR_ARCH}.tar.gz" -O /tmp/zizmor.tar.gz && \
-    tar zxf /tmp/zizmor.tar.gz -C /tmp && \
-    mv /tmp/zizmor /usr/local/bin/zizmor && \
+    mkdir -p /tmp/zizmor-extract && \
+    tar zxf /tmp/zizmor.tar.gz -C /tmp/zizmor-extract && \
+    mv /tmp/zizmor-extract/zizmor /usr/local/bin/zizmor && \
     chmod +x /usr/local/bin/zizmor && \
-    rm /tmp/zizmor.tar.gz
+    rm -rf /tmp/zizmor.tar.gz /tmp/zizmor-extract
 
 # Add prowler user
 RUN addgroup --gid 1000 prowler && \
