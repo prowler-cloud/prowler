@@ -127,7 +127,7 @@ class OraclecloudProvider(Provider):
 
         logger.info("Initializing OCI provider ...")
 
-        # Check if the configuration is scanning a single region
+        # Use a known region if regions are specified
         single_region = None
         if region:
             single_region = list(region)[0] if len(region) >= 1 else None
