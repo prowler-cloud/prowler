@@ -98,6 +98,7 @@ interface FindingGroupResourceAttributes {
   resource: ResourceInfo;
   provider: ProviderInfo;
   status: string;
+  delta?: string | null;
   severity: string;
   first_seen_at: string | null;
   last_seen_at: string | null;
@@ -143,6 +144,7 @@ export function adaptFindingGroupResourcesResponse(
     region: item.attributes.resource?.region || "-",
     severity: (item.attributes.severity || "informational") as Severity,
     status: item.attributes.status,
+    delta: item.attributes.delta || null,
     isMuted: item.attributes.status === "MUTED",
     // TODO: remove fallback once the API returns muted_reason in finding-group-resources
     mutedReason: item.attributes.muted_reason || undefined,

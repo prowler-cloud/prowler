@@ -27,7 +27,10 @@ import { FindingResourceRow } from "@/types";
 
 import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
-import { NotificationIndicator } from "./notification-indicator";
+import {
+  type DeltaType,
+  NotificationIndicator,
+} from "./notification-indicator";
 
 const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const resource = row.original;
@@ -173,6 +176,7 @@ export function getColumnFindingResources({
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <NotificationIndicator
+            delta={row.original.delta as DeltaType | undefined}
             isMuted={row.original.isMuted}
             mutedReason={row.original.mutedReason}
           />

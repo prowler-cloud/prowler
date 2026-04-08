@@ -40,6 +40,7 @@ export interface FindingResourceRow {
   region: string;
   severity: Severity;
   status: string;
+  delta?: string | null;
   isMuted: boolean;
   mutedReason?: string;
   firstSeenAt: string | null;
