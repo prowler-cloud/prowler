@@ -178,7 +178,7 @@ class Test_githubactions_workflow_security_scan:
             )
             assert (
                 result[0].check_metadata.CheckTitle
-                == "GitHub Actions workflow template-injection"
+                == "GitHub Actions workflows free of template-injection issues"
             )
             assert result[0].check_metadata.Severity == "high"
             assert result[0].check_metadata.Risk == "Template Injection Vulnerability"

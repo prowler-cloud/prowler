@@ -1,7 +1,7 @@
 {
   "Provider": "github",
   "CheckID": "githubactions_workflow_security_scan",
-  "CheckTitle": "Check GitHub Actions workflows for security issues using zizmor",
+  "CheckTitle": "GitHub Actions workflows have no security issues detected by zizmor",
   "CheckType": [],
   "ServiceName": "githubactions",
   "SubServiceName": "",

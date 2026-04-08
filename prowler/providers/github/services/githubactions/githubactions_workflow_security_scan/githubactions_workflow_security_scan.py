@@ -30,7 +30,7 @@ class githubactions_workflow_security_scan(Check):
                     metadata_dict = {
                         "Provider": "github",
                         "CheckID": f.finding_id,
-                        "CheckTitle": f"GitHub Actions workflow {f.ident}",
+                        "CheckTitle": f"GitHub Actions workflows free of {f.ident} issues",
                         "CheckType": [],
                         "ServiceName": "githubactions",
                         "SubServiceName": "",

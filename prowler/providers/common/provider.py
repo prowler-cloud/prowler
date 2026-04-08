@@ -266,6 +266,7 @@ class Provider(ABC):
                             arguments, "no_github_actions", False
                         ),
                         exclude_workflows=getattr(arguments, "exclude_workflows", []),
+                        fixer_config=fixer_config,
                     )
                 elif "googleworkspace" in provider_class_name.lower():
                     provider_class(

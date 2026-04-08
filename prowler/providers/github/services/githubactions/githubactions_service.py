@@ -103,9 +103,12 @@ class GithubActions(GithubService):
             porcelain.clone(auth_url, temp_dir, depth=1, errstream=io.BytesIO())
             return temp_dir
         except Exception as error:
+            error_msg = str(error)
+            if token:
+                error_msg = error_msg.replace(token, "***")
             logger.error(
                 f"Failed to clone {repository_url}: "
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error_msg}"
             )
             return None
 
@@ -115,6 +118,7 @@ class GithubActions(GithubService):
                 ["zizmor", directory, "--format", "json"],
                 capture_output=True,
                 text=True,
+                timeout=1800,
             )
 
             if process.stderr:
@@ -175,7 +179,7 @@ class GithubActions(GithubService):
                     if isinstance(local, dict) and "given_path" in local:
                         return local["given_path"]
 
-            logger.warning(f"Could not extract workflow file from location: {location}")
+            logger.debug(f"Could not extract workflow file from location: {location}")
             return None
         except Exception as error:
             logger.error(
