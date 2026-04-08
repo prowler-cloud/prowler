@@ -1,14 +1,14 @@
-name: 'SDK: Tests'
+name: "SDK: Tests"
 
 on:
   push:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
   pull_request:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,9 +24,9 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
+          - "3.10"
+          - "3.11"
+          - "3.12"
 
     steps:
       - name: Harden Runner
@@ -99,7 +99,7 @@ jobs:
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
+          cache: "poetry"
 
       - name: Install dependencies
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -216,11 +216,11 @@ jobs:
           echo "AWS service_paths='${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}'"
 
           if [ "${STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL}" = "true" ]; then
-            poetry run pytest -p no:randomly -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
+            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
           elif [ -z "${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}" ]; then
             echo "No AWS service paths detected; skipping AWS tests."
           else
-            poetry run pytest -p no:randomly -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}
+            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}
           fi
         env:
           STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL: ${{ steps.aws-services.outputs.run_all }}
