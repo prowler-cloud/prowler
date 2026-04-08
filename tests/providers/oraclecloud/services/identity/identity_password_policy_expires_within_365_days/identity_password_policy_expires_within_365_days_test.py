@@ -40,9 +40,7 @@ def _make_domain_non_home(password_policies=None):
         display_name=DOMAIN_NAME,
         description="Default identity domain",
         url=DOMAIN_URL,
-        home_region= OCIRegionalClient(
-                        client=MagicMock(),
-                    "not home"),
+        home_region="us-phoenix-1",
         compartment_id=OCI_COMPARTMENT_ID,
         lifecycle_state="ACTIVE",
         time_created=datetime.now(timezone.utc),
