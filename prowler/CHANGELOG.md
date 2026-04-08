@@ -20,6 +20,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `calendar_external_sharing_primary_calendar`, `calendar_external_sharing_secondary_calendar`, and `calendar_external_invitations_warning` checks for Google Workspace provider using the Cloud Identity Policy API [(#10597)](https://github.com/prowler-cloud/prowler/pull/10597)
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
 - `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
+- `entra_conditional_access_policy_unknown_device_blocked` check for M365 provider [(#10235)](https://github.com/prowler-cloud/prowler/pull/10235)
 - `Vercel` provider support with 30 checks [(#10189)](https://github.com/prowler-cloud/prowler/pull/10189)
 
 ### 🔄 Changed
@@ -190,7 +191,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `--provider-uid` CLI flag for IaC provider, used as `cloud.account.uid` in OCSF output and required with `--export-ocsf` [(#10233)](https://github.com/prowler-cloud/prowler/pull/10233)
 - `unmapped.provider_uid` field in OCSF output to match CLI scan results with API provider entities during ingestion [(#10231)](https://github.com/prowler-cloud/prowler/pull/10231)
 - `unmapped.provider` field in OCSF output for provider name availability in non-cloud providers like Kubernetes [(#10240)](https://github.com/prowler-cloud/prowler/pull/10240)
-- `entra_conditional_access_policy_unknown_device_blocked` check for M365 provider [(#10235)](https://github.com/prowler-cloud/prowler/pull/10235)
 
 ### 🔄 Changed
 
