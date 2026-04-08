@@ -1146,6 +1146,7 @@
       "Id": "5.2.2.2",
       "Description": "Enable multifactor authentication for all users in the Microsoft 365 tenant. Users will be prompted to authenticate with a second factor upon logging in to Microsoft 365 services. The second factor is most commonly a text message to a registered mobile phone number where they type in an authorization code, or with a mobile application like Microsoft Authenticator.",
       "Checks": [
+        "entra_conditional_access_policy_mfa_enforced_for_guest_users",
         "entra_users_mfa_enabled"
       ],
       "Attributes": [

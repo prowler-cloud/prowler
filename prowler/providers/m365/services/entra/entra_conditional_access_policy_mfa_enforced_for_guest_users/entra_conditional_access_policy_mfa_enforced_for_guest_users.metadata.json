@@ -1,0 +1,43 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+  "CheckTitle": "Conditional Access Policy enforces MFA for guest and external users",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** is verified to have at least one **enabled** policy that requires **multifactor authentication** for all **guest and external user types** across all cloud applications. This includes internal guests, B2B collaboration guests and members, B2B direct connect users, other external users, and service providers.",
+  "Risk": "Without MFA for guest users, compromised external accounts can access tenant resources using only a password. Attackers may exploit **B2B collaboration**, **direct connect**, or **service provider** accounts to exfiltrate data, escalate privileges, or move laterally across the organization.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-alt-require-mfa-guest-access",
+    "https://maester.dev/docs/tests/MT.1016"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center (https://entra.microsoft.com).\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Click **New policy**.\n4. Under **Users**, select **Include** > **Select users and groups** > check **Guest or external users** > select all guest user types.\n5. Under **Target resources**, select **Include** > **All cloud apps**.\n6. Under **Grant**, select **Grant access** > check **Require multifactor authentication** > click **Select**.\n7. Set the policy to **Report-only** until validated, then enable it.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce **MFA** via **Conditional Access** for all **guest and external user types** across all cloud applications. Prefer **phishing-resistant** methods, monitor guest sign-ins, and regularly review external collaboration settings.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_mfa_enforced_for_guest_users"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_policy_guest_users_access_restrictions",
+    "entra_policy_guest_invite_only_for_admin_roles",
+    "entra_dynamic_group_for_guests_created"
+  ],
+  "Notes": "Conditional Access policies require Microsoft Entra ID P1 or P2 licenses. This check corresponds to Maester test MT.1016 (Test-MtCaMfaForGuest)."
+}
