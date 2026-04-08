@@ -109,7 +109,7 @@ export function FindingsGroupDrillDown({
   const selectedFindingIds = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
     .map((idx) => resources[parseInt(idx)]?.findingId)
-    .filter(Boolean);
+    .filter((id): id is string => id !== null && id !== undefined && id !== "");
 
   /** Converts resource_ids (display) → resourceUids → finding UUIDs via API. */
   const resolveResourceIds = async (ids: string[]) => {

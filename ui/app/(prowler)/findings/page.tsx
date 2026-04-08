@@ -143,7 +143,7 @@ const SSRDataTable = async ({
 
   return (
     <>
-      {findingGroupsData?.errors && (
+      {findingGroupsData?.errors?.length > 0 && (
         <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
           <p>{findingGroupsData.errors[0].detail}</p>

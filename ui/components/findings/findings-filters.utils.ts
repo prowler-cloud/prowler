@@ -68,7 +68,11 @@ export function getFindingsFilterDisplayValue(
   if (filterKey === "filter[resource_groups__in]") {
     return getGroupLabel(value);
   }
-  if (filterKey === "filter[inserted_at]") {
+  if (
+    filterKey === "filter[inserted_at]" ||
+    filterKey === "filter[inserted_at__gte]" ||
+    filterKey === "filter[inserted_at__lte]"
+  ) {
     return value;
   }
 

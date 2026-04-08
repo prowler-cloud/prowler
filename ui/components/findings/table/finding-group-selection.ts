@@ -6,9 +6,8 @@ interface FindingGroupSelectionState {
 
 export function canMuteFindingGroup({
   resourcesFail,
-  resourcesTotal,
   mutedCount,
 }: FindingGroupSelectionState): boolean {
-  const allMuted = mutedCount > 0 && mutedCount === resourcesTotal;
+  const allMuted = mutedCount > 0 && mutedCount === resourcesFail;
   return resourcesFail > 0 && !allMuted;
 }

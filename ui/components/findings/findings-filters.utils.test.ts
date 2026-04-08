@@ -125,4 +125,24 @@ describe("getFindingsFilterDisplayValue", () => {
       }),
     ).toBe("missing-scan");
   });
+
+  it("passes through date values for inserted_at__gte filters", () => {
+    expect(
+      getFindingsFilterDisplayValue(
+        "filter[inserted_at__gte]",
+        "2026-04-03",
+        {},
+      ),
+    ).toBe("2026-04-03");
+  });
+
+  it("passes through date values for inserted_at__lte filters", () => {
+    expect(
+      getFindingsFilterDisplayValue(
+        "filter[inserted_at__lte]",
+        "2026-04-07",
+        {},
+      ),
+    ).toBe("2026-04-07");
+  });
 });

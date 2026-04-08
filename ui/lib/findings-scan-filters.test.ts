@@ -17,6 +17,14 @@ describe("buildFindingScanDateFilters", () => {
     });
   });
 
+  it("ignores whitespace-only date strings", () => {
+    expect(buildFindingScanDateFilters(["  ", "2026-04-07T10:00:00Z"])).toEqual(
+      {
+        "filter[inserted_at]": "2026-04-07",
+      },
+    );
+  });
+
   it("uses a date range when selected scans span multiple days", () => {
     expect(
       buildFindingScanDateFilters([

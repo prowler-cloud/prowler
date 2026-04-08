@@ -26,7 +26,7 @@ function getScanFilterIds(filters: Record<string, string>): string[] {
 function formatScanDate(dateTime?: string): string | null {
   if (!dateTime) return null;
   const [date] = dateTime.split("T");
-  return date || null;
+  return date?.trim() || null;
 }
 
 function hasInsertedAtFilter(filters: Record<string, string>): boolean {

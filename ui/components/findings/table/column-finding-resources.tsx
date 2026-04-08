@@ -219,8 +219,12 @@ export function getColumnFindingResources({
       ),
       cell: ({ row }) => {
         const rawStatus = row.original.status;
-        const status =
-          rawStatus === "MUTED" ? "FAIL" : (rawStatus as FindingStatus);
+        const status: FindingStatus =
+          rawStatus === "MUTED" || rawStatus === "FAIL"
+            ? "FAIL"
+            : rawStatus === "PASS"
+              ? "PASS"
+              : "FAIL";
         return <StatusFindingBadge status={status} />;
       },
       enableSorting: false,

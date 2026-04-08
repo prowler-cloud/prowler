@@ -73,6 +73,7 @@ export function useInfiniteResources({
   const onSetLoadingRef = useRef(onSetLoading);
 
   // Keep refs in sync with latest props
+  currentCheckIdRef.current = checkId;
   hasDateOrScanRef.current = hasDateOrScanFilter;
   filtersRef.current = filters;
   onSetResourcesRef.current = onSetResources;
