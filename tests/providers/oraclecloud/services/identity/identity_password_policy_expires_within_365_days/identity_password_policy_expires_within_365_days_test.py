@@ -252,47 +252,47 @@ class Test_identity_password_policy_expires_within_365_days:
             assert result[0].resource_id == POLICY_ID
 
 
-def test_non_home_domains_excluded(self):
-    """Identity domains should not be scanned outside their home region
+    def test_non_home_domains_excluded(self):
+        """Identity domains should not be scanned outside their home region
 
-    This is a simple test to see if anything is returned
-    """
-    identity_client = mock.MagicMock()
-    identity_client.audited_tenancy = OCI_TENANCY_ID
-    # Only user-configurable policy in the domain (system ones filtered by service)
-    identity_client.domains = [
-        _make_domain_non_home(
-            [
-                DomainPasswordPolicy(
-                    id=POLICY_ID,
-                    name=POLICY_NAME,
-                    description="Custom policy",
-                    min_length=14,
-                    password_expires_after=90,
-                    num_passwords_in_history=24,
-                    password_expire_warning=7,
-                    min_password_age=1,
-                )
-            ]
-        )
-    ]
+        This is a simple test to see if anything is returned
+        """
+        identity_client = mock.MagicMock()
+        identity_client.audited_tenancy = OCI_TENANCY_ID
+        # Only user-configurable policy in the domain (system ones filtered by service)
+        identity_client.domains = [
+            _make_domain_non_home(
+                [
+                    DomainPasswordPolicy(
+                        id=POLICY_ID,
+                        name=POLICY_NAME,
+                        description="Custom policy",
+                        min_length=14,
+                        password_expires_after=90,
+                        num_passwords_in_history=24,
+                        password_expire_warning=7,
+                        min_password_age=1,
+                    )
+                ]
+            )
+        ]
 
-    with (
-        mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=set_mocked_oraclecloud_provider(),
-        ),
-        mock.patch(
-            "prowler.providers.oraclecloud.services.identity.identity_password_policy_expires_within_365_days.identity_password_policy_expires_within_365_days.identity_client",
-            new=identity_client,
-        ),
-    ):
-        from prowler.providers.oraclecloud.services.identity.identity_password_policy_expires_within_365_days.identity_password_policy_expires_within_365_days import (
-            identity_password_policy_expires_within_365_days,
-        )
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_oraclecloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.oraclecloud.services.identity.identity_password_policy_expires_within_365_days.identity_password_policy_expires_within_365_days.identity_client",
+                new=identity_client,
+            ),
+        ):
+            from prowler.providers.oraclecloud.services.identity.identity_password_policy_expires_within_365_days.identity_password_policy_expires_within_365_days import (
+                identity_password_policy_expires_within_365_days,
+            )
 
-        check = identity_password_policy_expires_within_365_days()
-        result = check.execute()
+            check = identity_password_policy_expires_within_365_days()
+            result = check.execute()
 
-        # Should not find anything
-        assert len(result) == 0
+            # Should not find anything
+            assert len(result) == 0
