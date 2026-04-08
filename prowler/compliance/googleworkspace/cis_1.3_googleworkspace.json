@@ -54,7 +54,9 @@
     {
       "Id": "1.1.3",
       "Description": "Ensure super admin accounts are used only for super admin activities",
-      "Checks": [],
+      "Checks": [
+        "directory_super_admin_only_admin_roles"
+      ],
       "Attributes": [
         {
           "Section": "1 Directory",

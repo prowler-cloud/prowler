@@ -76,6 +76,7 @@ jobs:
             "StylusFrost"
             "toniblyx"
             "davidm4r"
+            "pfe-nazaries"
           )
 
           echo "Checking if $AUTHOR is a member of prowler-cloud organization"

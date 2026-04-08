@@ -66,6 +66,7 @@ class GoogleworkspaceProvider(Provider):
         "https://www.googleapis.com/auth/admin.directory.customer.readonly",
         # Cloud Identity Policy API (calendar and other app policies)
         "https://www.googleapis.com/auth/cloud-identity.policies.readonly",
+        "https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly",
     ]
 
     def __init__(
