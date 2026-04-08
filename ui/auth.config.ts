@@ -281,7 +281,8 @@ export const authConfig = {
       const sessionError = auth?.error;
       const isSignUpPage = nextUrl.pathname === "/sign-up";
       const isSignInPage = nextUrl.pathname === "/sign-in";
-      const isInvitationPage = nextUrl.pathname.startsWith("/invitation/accept");
+      const isInvitationPage =
+        nextUrl.pathname.startsWith("/invitation/accept");
 
       // Allow access to sign-up, sign-in, and invitation pages
       if (isSignUpPage || isSignInPage || isInvitationPage) return true;
