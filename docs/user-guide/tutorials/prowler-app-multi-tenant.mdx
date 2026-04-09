@@ -23,6 +23,8 @@ When a new account is created without an invitation, a default organization is a
 
 To view all organizations associated with an account, navigate to the **Profile** page. The **Organizations** card displays every organization the user belongs to, including the role, name, join date, and whether it is the currently active organization.
 
+<img src="/images/prowler-app/multi-tenant/organizations-card.png" alt="Organizations card in profile page" width="700" />
+
 ## Creating an Organization
 
 To create a new organization:
@@ -31,7 +33,11 @@ To create a new organization:
 
 2. In the **Organizations** card, click the **Create organization** button.
 
+    <img src="/images/prowler-app/multi-tenant/create-organization-button.png" alt="Create organization button" width="700" />
+
 3. Enter a name for the new organization (maximum 100 characters).
+
+    <img src="/images/prowler-app/multi-tenant/create-organization-modal.png" alt="Create organization modal" width="700" />
 
 4. Click **Create**. The session automatically switches to the newly created organization.
 
@@ -52,6 +58,8 @@ To switch the active organization:
 
 4. Confirm the switch in the dialog. The page reloads with the new organization's context, and all subsequent actions apply to it.
 
+    <img src="/images/prowler-app/multi-tenant/switch-organization-modal.png" alt="Switch organization confirmation modal" width="700" />
+
 <Note>
 The currently active organization is indicated by an **Active** badge. Switching updates the session tokens, so the page will reload automatically.
 
@@ -67,6 +75,8 @@ Organization owners with the **Manage Account** permission can rename an organiz
 
 3. Update the name and save the changes.
 
+    <img src="/images/prowler-app/multi-tenant/edit-organization-modal.png" alt="Edit organization name modal" width="700" />
+
 ## Deleting an Organization
 
 Organization owners with the **Manage Account** permission can delete an organization, provided they belong to at least two organizations (the last remaining organization cannot be deleted).
@@ -78,6 +88,8 @@ Organization owners with the **Manage Account** permission can delete an organiz
 2. Click the **Delete** button next to the organization to remove.
 
 3. Type the organization name to confirm deletion.
+
+    <img src="/images/prowler-app/multi-tenant/delete-organization-modal.png" alt="Delete organization confirmation modal" width="700" />
 
 4. Click **Delete**. The organization and all its associated data (providers, scans, findings) are permanently removed.
 
@@ -92,6 +104,8 @@ When deleting the currently active organization, an additional step is required:
 3. Select which organization to switch to after deletion.
 
 4. Type the organization name to confirm.
+
+    <img src="/images/prowler-app/multi-tenant/delete-active-organization-modal.png" alt="Delete active organization modal with target selection" width="700" />
 
 5. Click **Delete**. The session switches to the selected organization, and the deleted organization's data is permanently removed.
 
@@ -109,7 +123,11 @@ When invited to join an organization, the invited user receives a link to accept
 
 2. If already authenticated, the invitation is accepted automatically and the user is redirected to Prowler App.
 
+    <img src="/images/prowler-app/multi-tenant/invitation-accept-loading.png" alt="Invitation being accepted automatically" width="700" />
+
 3. If not authenticated, choose **I have an account -- Sign in**, authenticate with existing credentials, and the invitation is accepted upon sign-in.
+
+    <img src="/images/prowler-app/multi-tenant/invitation-accept-choose.png" alt="Invitation smart routing - choose sign in or sign up" width="700" />
 
 ### New Users
 
