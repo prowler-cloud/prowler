@@ -1,5 +1,4 @@
 from json import dump
-from typing import List
 
 from prowler.config.config import prowler_version
 from prowler.lib.logger import logger
@@ -29,18 +28,20 @@ SEVERITY_TO_SECURITY_SEVERITY = {
 class SARIF(Output):
     """Generates SARIF 2.1.0 output compatible with GitHub Code Scanning."""
 
-    def transform(self, findings: List[Finding]) -> None:
+    def transform(self, findings: list[Finding]) -> None:
         rules = {}
+        rule_indices = {}
         results = []
 
         for finding in findings:
-            if finding.status != "FAIL":
+            if finding.status != "FAIL" or finding.muted:
                 continue
 
             check_id = finding.metadata.CheckID
             severity = finding.metadata.Severity.lower()
 
             if check_id not in rules:
+                rule_indices[check_id] = len(rules)
                 rule = {
                     "id": check_id,
                     "name": check_id,
@@ -71,7 +72,7 @@ class SARIF(Output):
                     rule["helpUri"] = finding.metadata.RelatedUrl
                 rules[check_id] = rule
 
-            rule_index = list(rules.keys()).index(check_id)
+            rule_index = rule_indices[check_id]
             result = {
                 "ruleId": check_id,
                 "ruleIndex": rule_index,
@@ -105,7 +106,7 @@ class SARIF(Output):
             ],
         }
 
-        self._data = sarif_document
+        self._data = [sarif_document]
 
     def batch_write_data_to_file(self) -> None:
         try:
@@ -114,7 +115,7 @@ class SARIF(Output):
                 and not self._file_descriptor.closed
                 and self._data
             ):
-                dump(self._data, self._file_descriptor, indent=2)
+                dump(self._data[0], self._file_descriptor, indent=2)
                 self._file_descriptor.close()
         except Exception as error:
             logger.error(
@@ -126,7 +127,7 @@ class SARIF(Output):
         """Build a SARIF physicalLocation from a Finding.
 
         Uses resource_name as the artifact URI and resource_line_range
-        (stored in finding.raw for IaC findings) for region info.
+        (stored in finding.raw for IaC findings) for line range info.
         """
         if not finding.resource_name:
             return {}

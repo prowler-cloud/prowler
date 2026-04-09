@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 
 import pytest
@@ -20,11 +21,11 @@ class TestSARIF:
         )
         sarif = SARIF(findings=[finding], file_path=None)
 
-        assert sarif.data["$schema"] == SARIF_SCHEMA_URL
-        assert sarif.data["version"] == SARIF_VERSION
-        assert len(sarif.data["runs"]) == 1
+        assert sarif.data[0]["$schema"] == SARIF_SCHEMA_URL
+        assert sarif.data[0]["version"] == SARIF_VERSION
+        assert len(sarif.data[0]["runs"]) == 1
 
-        run = sarif.data["runs"][0]
+        run = sarif.data[0]["runs"][0]
         assert run["tool"]["driver"]["name"] == "Prowler"
         assert len(run["tool"]["driver"]["rules"]) == 1
         assert len(run["results"]) == 1
@@ -45,15 +46,16 @@ class TestSARIF:
         finding = generate_finding_output(status="PASS", severity="high")
         sarif = SARIF(findings=[finding], file_path=None)
 
-        run = sarif.data["runs"][0]
+        run = sarif.data[0]["runs"][0]
         assert len(run["results"]) == 0
         assert len(run["tool"]["driver"]["rules"]) == 0
 
     def test_transform_muted_finding_excluded(self):
         finding = generate_finding_output(status="FAIL", severity="high", muted=True)
         sarif = SARIF(findings=[finding], file_path=None)
-        run = sarif.data["runs"][0]
-        assert len(run["results"]) == 1
+        run = sarif.data[0]["runs"][0]
+        assert len(run["results"]) == 0
+        assert len(run["tool"]["driver"]["rules"]) == 0
 
     @pytest.mark.parametrize(
         "severity,expected_level,expected_security_severity",
@@ -74,7 +76,7 @@ class TestSARIF:
         )
         sarif = SARIF(findings=[finding], file_path=None)
 
-        run = sarif.data["runs"][0]
+        run = sarif.data[0]["runs"][0]
         result = run["results"][0]
         rule = run["tool"]["driver"]["rules"][0]
 
@@ -97,7 +99,7 @@ class TestSARIF:
         ]
         sarif = SARIF(findings=findings, file_path=None)
 
-        run = sarif.data["runs"][0]
+        run = sarif.data[0]["runs"][0]
         assert len(run["tool"]["driver"]["rules"]) == 1
         assert len(run["results"]) == 2
         assert run["results"][0]["ruleIndex"] == 0
@@ -120,7 +122,7 @@ class TestSARIF:
         ]
         sarif = SARIF(findings=findings, file_path=None)
 
-        run = sarif.data["runs"][0]
+        run = sarif.data[0]["runs"][0]
         assert len(run["tool"]["driver"]["rules"]) == 2
         assert run["results"][0]["ruleIndex"] == 0
         assert run["results"][1]["ruleIndex"] == 1
@@ -134,7 +136,7 @@ class TestSARIF:
 
         sarif = SARIF(findings=[finding], file_path=None)
 
-        result = sarif.data["runs"][0]["results"][0]
+        result = sarif.data[0]["runs"][0]["results"][0]
         location = result["locations"][0]["physicalLocation"]
         assert location["artifactLocation"]["uri"] == "modules/s3/main.tf"
         assert location["region"]["startLine"] == 10
@@ -147,7 +149,7 @@ class TestSARIF:
         )
         sarif = SARIF(findings=[finding], file_path=None)
 
-        result = sarif.data["runs"][0]["results"][0]
+        result = sarif.data[0]["runs"][0]["results"][0]
         location = result["locations"][0]["physicalLocation"]
         assert location["artifactLocation"]["uri"] == "main.tf"
         assert "region" not in location
@@ -159,7 +161,7 @@ class TestSARIF:
         )
         sarif = SARIF(findings=[finding], file_path=None)
 
-        result = sarif.data["runs"][0]["results"][0]
+        result = sarif.data[0]["runs"][0]["results"][0]
         assert "locations" not in result
 
     def test_batch_write_data_to_file(self):
@@ -187,6 +189,8 @@ class TestSARIF:
         assert content["version"] == SARIF_VERSION
         assert len(content["runs"][0]["results"]) == 1
 
+        os.unlink(tmp_path)
+
     def test_sarif_schema_structure(self):
         finding = generate_finding_output(
             status="FAIL",
@@ -201,7 +205,7 @@ class TestSARIF:
         finding.raw = {"resource_line_range": "5:15"}
 
         sarif = SARIF(findings=[finding], file_path=None)
-        doc = sarif.data
+        doc = sarif.data[0]
 
         assert "$schema" in doc
         assert "version" in doc
@@ -241,9 +245,48 @@ class TestSARIF:
         assert "startLine" in loc["region"]
         assert "endLine" in loc["region"]
 
-    def test_empty_findings(self):
-        sarif = SARIF(findings=[], file_path=None)
-        assert sarif.data == []
+    def test_transform_helpuri_present_when_related_url_set(self):
+        finding = generate_finding_output(
+            status="FAIL",
+            provider="iac",
+            related_url="https://docs.example.com/check",
+        )
+        sarif = SARIF(findings=[finding], file_path=None)
+        rule = sarif.data[0]["runs"][0]["tool"]["driver"]["rules"][0]
+        assert rule["helpUri"] == "https://docs.example.com/check"
+
+    def test_transform_helpuri_absent_when_related_url_empty(self):
+        finding = generate_finding_output(
+            status="FAIL",
+            related_url="",
+        )
+        sarif = SARIF(findings=[finding], file_path=None)
+        rule = sarif.data[0]["runs"][0]["tool"]["driver"]["rules"][0]
+        assert "helpUri" not in rule
+
+    def test_location_with_non_numeric_line_range(self):
+        finding = generate_finding_output(
+            status="FAIL",
+            resource_name="main.tf",
+        )
+        finding.raw = {"resource_line_range": "abc:def"}
+        sarif = SARIF(findings=[finding], file_path=None)
+        location = sarif.data[0]["runs"][0]["results"][0]["locations"][0][
+            "physicalLocation"
+        ]
+        assert "region" not in location
+
+    def test_location_with_single_value_line_range(self):
+        finding = generate_finding_output(
+            status="FAIL",
+            resource_name="main.tf",
+        )
+        finding.raw = {"resource_line_range": "10"}
+        sarif = SARIF(findings=[finding], file_path=None)
+        location = sarif.data[0]["runs"][0]["results"][0]["locations"][0][
+            "physicalLocation"
+        ]
+        assert "region" not in location
 
     def test_only_pass_findings(self):
         findings = [
@@ -252,6 +295,6 @@ class TestSARIF:
         ]
         sarif = SARIF(findings=findings, file_path=None)
 
-        run = sarif.data["runs"][0]
+        run = sarif.data[0]["runs"][0]
         assert len(run["results"]) == 0
         assert len(run["tool"]["driver"]["rules"]) == 0
