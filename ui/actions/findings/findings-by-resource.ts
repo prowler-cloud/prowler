@@ -416,7 +416,7 @@ export const getLatestFindingsByResourceUid = async ({
   url.searchParams.append("filter[resource_uid]", resourceUid);
   url.searchParams.append("filter[status]", "FAIL");
   url.searchParams.append("filter[muted]", "include");
-  url.searchParams.append("sort", "-severity,status,-updated_at");
+  url.searchParams.append("sort", "-severity,-updated_at");
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
 
