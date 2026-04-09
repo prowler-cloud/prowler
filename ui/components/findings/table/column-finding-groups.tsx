@@ -13,6 +13,7 @@ import { cn } from "@/lib";
 import { FindingGroupRow, ProviderType } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
+import { canMuteFindingGroup } from "./finding-group-selection";
 import { ImpactedProvidersCell } from "./impacted-providers-cell";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
@@ -25,6 +26,9 @@ interface GetColumnFindingGroupsOptions {
   /** True when the expanded group has individually selected resources */
   hasResourceSelection?: boolean;
 }
+
+const VISIBLE_DISABLED_CHECKBOX_CLASS =
+  "disabled:opacity-100 disabled:bg-bg-input-primary/60 disabled:border-border-input-primary/70";
 
 export function getColumnFindingGroups({
   rowSelection,
@@ -56,6 +60,7 @@ export function getColumnFindingGroups({
             <div className="w-4" />
             <Checkbox
               size="sm"
+              className={VISIBLE_DISABLED_CHECKBOX_CLASS}
               checked={headerChecked}
               onCheckedChange={(checked) =>
                 table.toggleAllPageRowsSelected(checked === true)
@@ -80,7 +85,12 @@ export function getColumnFindingGroups({
               ? DeltaValues.CHANGED
               : DeltaValues.NONE;
 
-        const canExpand = group.resourcesFail > 0;
+        const canExpand = group.resourcesTotal > 0;
+        const canSelect = canMuteFindingGroup({
+          resourcesFail: group.resourcesFail,
+          resourcesTotal: group.resourcesTotal,
+          mutedCount: group.mutedCount,
+        });
 
         return (
           <div className="flex items-center gap-2">
@@ -104,11 +114,13 @@ export function getColumnFindingGroups({
             )}
             <Checkbox
               size="sm"
+              className={VISIBLE_DISABLED_CHECKBOX_CLASS}
               checked={
                 rowSelection[row.id] && isExpanded && hasResourceSelection
                   ? "indeterminate"
                   : !!rowSelection[row.id]
               }
+              disabled={!canSelect}
               onCheckedChange={(checked) => {
                 // When indeterminate (resources selected), clicking deselects the group
                 if (
@@ -155,7 +167,7 @@ export function getColumnFindingGroups({
       ),
       cell: ({ row }) => {
         const group = row.original;
-        const canExpand = group.resourcesFail > 0;
+        const canExpand = group.resourcesTotal > 0;
 
         return (
           <div>
