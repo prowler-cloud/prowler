@@ -29,6 +29,15 @@ class SARIF(Output):
     """Generates SARIF 2.1.0 output compatible with GitHub Code Scanning."""
 
     def transform(self, findings: list[Finding]) -> None:
+        """Transform findings into a SARIF 2.1.0 document.
+
+        Only FAIL findings that are not muted are included. Each unique
+        check ID produces one rule entry; multiple findings for the same
+        check share the rule via ruleIndex.
+
+        Args:
+            findings: List of Finding objects to transform.
+        """
         rules = {}
         rule_indices = {}
         results = []
@@ -109,6 +118,7 @@ class SARIF(Output):
         self._data = [sarif_document]
 
     def batch_write_data_to_file(self) -> None:
+        """Write the SARIF document to the output file as JSON."""
         try:
             if (
                 getattr(self, "_file_descriptor", None)
@@ -116,7 +126,8 @@ class SARIF(Output):
                 and self._data
             ):
                 dump(self._data[0], self._file_descriptor, indent=2)
-                self._file_descriptor.close()
+                if self.close_file or self._from_cli:
+                    self._file_descriptor.close()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
