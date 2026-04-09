@@ -42,7 +42,7 @@ class TestIdentityService:
 
             identity_client = Identity(None)
             identity_client.service = "identity"
-            identity_client.provider = None
+            identity_client.provider = set_mocked_oraclecloud_provider()
             identity_client.audited_compartments = {}
             identity_client.regional_clients = {}
             identity_client.session_config = {}
