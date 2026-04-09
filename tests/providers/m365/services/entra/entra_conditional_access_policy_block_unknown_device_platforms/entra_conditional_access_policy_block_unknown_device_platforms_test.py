@@ -480,6 +480,77 @@ class Test_entra_conditional_access_policy_block_unknown_device_platforms:
             assert len(result) == 1
             assert result[0].status == "FAIL"
 
+    def test_policy_limited_to_specific_users_and_apps(self):
+        """Test FAIL when the policy only protects a subset of users and apps."""
+        policy_id = str(uuid4())
+        display_name = "Scoped Unknown Platform Block"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_block_unknown_device_platforms.entra_conditional_access_policy_block_unknown_device_platforms import (
+                entra_conditional_access_policy_block_unknown_device_platforms,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                policy_id: ConditionalAccessPolicy(
+                    id=policy_id,
+                    display_name=display_name,
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=[
+                                "00000000-0000-0000-0000-000000000001"
+                            ],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=["11111111-1111-1111-1111-111111111111"],
+                            excluded_groups=[],
+                            included_users=[],
+                            excluded_users=[],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                        client_app_types=[],
+                        user_risk_levels=[],
+                        platform_conditions=PlatformConditions(
+                            include_platforms=["all"],
+                            exclude_platforms=KNOWN_PLATFORMS,
+                        ),
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.OR,
+                        authentication_strength=None,
+                    ),
+                    session_controls=_make_session_controls(),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                )
+            }
+
+            check = entra_conditional_access_policy_block_unknown_device_platforms()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "No Conditional Access Policy blocks access from unknown or unsupported device platforms."
+            )
+
     def test_policy_enabled_and_compliant(self):
         """Test PASS when an enabled policy blocks unknown device platforms correctly."""
         policy_id = str(uuid4())
