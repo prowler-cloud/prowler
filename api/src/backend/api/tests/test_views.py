@@ -15445,10 +15445,14 @@ class TestFindingGroupViewSet:
         # iam_password_policy has only PASS findings
         assert data[0]["attributes"]["status"] == "PASS"
 
-    def test_finding_groups_status_muted_all(
+    def test_finding_groups_fully_muted_group_reflects_underlying_status(
         self, authenticated_client, finding_groups_fixture
     ):
-        """Test that MUTED status returned when all findings are muted."""
+        """A fully-muted group still surfaces its underlying status (no MUTED).
+
+        rds_encryption has 2 muted FAIL findings, so the group must report
+        status=FAIL (the orthogonal `muted` boolean signals it isn't actionable).
+        """
         response = authenticated_client.get(
             reverse("finding-group-list"),
             {"filter[inserted_at]": TODAY, "filter[check_id]": "rds_encryption"},
@@ -15456,8 +15460,11 @@ class TestFindingGroupViewSet:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 1
-        # rds_encryption has all muted findings
-        assert data[0]["attributes"]["status"] == "MUTED"
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "FAIL"
+        assert attrs["muted"] is True
+        assert attrs["fail_count"] == 2
+        assert attrs["muted_count"] == 2
 
     def test_finding_groups_status_filter(
         self, authenticated_client, finding_groups_fixture
@@ -15949,7 +15956,7 @@ class TestFindingGroupViewSet:
         "extra_filters",
         [
             {},
-            {"filter[muted]": "include"},
+            {"filter[delta]": "new"},
         ],
         ids=["summary_path", "finding_level_path"],
     )
@@ -15967,7 +15974,8 @@ class TestFindingGroupViewSet:
 
         Parametrized to cover both aggregation paths:
         - summary_path: default, uses _CheckTitleToCheckIdMixin on summaries
-        - finding_level_path: filter[muted]=include forces CommonFindingFilters
+        - finding_level_path: filter[delta]=new forces _aggregate_findings via
+          CommonFindingFilters (delta is finding-level, not summary-level)
         """
         params = {
             "filter[inserted_at]": TODAY,
@@ -16885,3 +16893,166 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         # Should still return data, not filtered by the old date
         assert len(data) == 5
+
+    # ------------------------------------------------------------------
+    # status / muted refactor: status ∈ {FAIL, PASS, MANUAL}, muted is its
+    # own boolean attribute orthogonal to status, mirroring /findings.
+    # ------------------------------------------------------------------
+
+    def test_finding_groups_status_choices_no_muted(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Every returned group must have status ∈ {FAIL, PASS, MANUAL}."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        statuses = {item["attributes"]["status"] for item in response.json()["data"]}
+        assert statuses, "fixture should produce at least one group"
+        assert statuses <= {"FAIL", "PASS", "MANUAL"}
+        assert "MUTED" not in statuses
+
+    def test_finding_groups_serializer_exposes_muted_and_manual_count(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /finding-groups payload must expose `muted` and `manual_count`."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[check_id]": "iam_password_policy"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attrs = response.json()["data"][0]["attributes"]
+        assert "muted" in attrs and isinstance(attrs["muted"], bool)
+        assert "manual_count" in attrs and isinstance(attrs["manual_count"], int)
+        assert attrs["muted"] is False  # iam_password_policy has only non-muted PASS
+        assert attrs["manual_count"] == 0
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_filter_status_muted_is_rejected(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`filter[status]=MUTED` is no longer a valid status value."""
+        params = {"filter[status]": "MUTED"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_filter_muted_true(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`filter[muted]=true` returns only fully-muted groups."""
+        params = {"filter[muted]": "true"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        # Only rds_encryption is fully muted in the fixture
+        assert check_ids == {"rds_encryption"}
+        assert all(item["attributes"]["muted"] is True for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_filter_muted_false(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`filter[muted]=false` returns only groups with actionable findings."""
+        params = {"filter[muted]": "false"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert "rds_encryption" not in check_ids
+        assert check_ids == {
+            "s3_bucket_public_access",
+            "ec2_instance_public_ip",
+            "iam_password_policy",
+            "cloudtrail_enabled",
+        }
+        assert all(item["attributes"]["muted"] is False for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_status(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """sort=status orders by aggregated status (FAIL > PASS > MANUAL)."""
+        priority = {"FAIL": 3, "PASS": 2, "MANUAL": 1}
+        params = {"sort": "-status"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "fixture should produce groups"
+
+        desc_keys = [priority[item["attributes"]["status"]] for item in data]
+        assert desc_keys == sorted(desc_keys, reverse=True)
+
+        params["sort"] = "status"
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        asc_keys = [
+            priority[item["attributes"]["status"]]
+            for item in response.json()["data"]
+        ]
+        assert asc_keys == sorted(asc_keys)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_muted(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """sort=muted orders by the boolean muted attribute."""
+        # Need include_muted=true so the fully-muted group is part of the result
+        params = {"sort": "-muted", "filter[include_muted]": "true"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "fixture should produce groups"
+
+        muted_values = [item["attributes"]["muted"] for item in data]
+        # Descending boolean: True (1) before False (0)
+        assert muted_values == sorted(muted_values, reverse=True)
+
+    def test_finding_groups_resources_serializer_exposes_muted(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /finding-groups/<id>/resources payload must expose `muted`."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources",
+                kwargs={"pk": "rds_encryption"},
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "rds_encryption should expose its resources"
+        for item in data:
+            attrs = item["attributes"]
+            assert "muted" in attrs and isinstance(attrs["muted"], bool)
+            # rds_encryption has all muted findings
+            assert attrs["muted"] is True
+            # Status reflects the underlying check outcome (FAIL), not MUTED
+            assert attrs["status"] == "FAIL"

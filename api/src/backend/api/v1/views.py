@@ -26,10 +26,11 @@ from config.settings.social_login import (
 )
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
-from django.contrib.postgres.aggregates import ArrayAgg, StringAgg
+from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import (
+    BooleanField,
     Case,
     CharField,
     Count,
@@ -7076,7 +7077,12 @@ class FindingGroupViewSet(BaseRLSViewSet):
             severity_order=Max("severity_order"),
             pass_count=Sum("pass_count"),
             fail_count=Sum("fail_count"),
+            manual_count=Sum("manual_count"),
             muted_count=Sum("muted_count"),
+            # The group is muted only if every contributing daily summary is
+            # itself fully muted. BoolAnd returns False as soon as one row has
+            # at least one actionable finding.
+            muted=BoolAnd("muted"),
             new_count=Sum("new_count"),
             changed_count=Sum("changed_count"),
             resources_total=Sum("resources_total"),
@@ -7104,39 +7110,56 @@ class FindingGroupViewSet(BaseRLSViewSet):
             output_field=IntegerField(),
         )
 
-        return queryset.values("check_id").annotate(
-            severity_order=Max(severity_case),
-            pass_count=Count("id", filter=Q(status="PASS", muted=False)),
-            fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
-            muted_count=Count("id", filter=Q(muted=True)),
-            new_count=Count("id", filter=Q(delta="new", muted=False)),
-            changed_count=Count("id", filter=Q(delta="changed", muted=False)),
-            resources_total=Count("resources__id", distinct=True),
-            resources_fail=Count(
-                "resources__id",
-                distinct=True,
-                filter=Q(status="FAIL", muted=False),
-            ),
-            impacted_providers_str=StringAgg(
-                Cast("scan__provider__provider", CharField()),
-                delimiter=",",
-                distinct=True,
-                default="",
-            ),
-            agg_first_seen_at=Min("first_seen_at"),
-            agg_last_seen_at=Max("inserted_at"),
-            agg_failing_since=Min(
-                "first_seen_at", filter=Q(status="FAIL", muted=False)
-            ),
-            check_title=Coalesce(
-                Max(KeyTextTransform("checktitle", "check_metadata")),
-                Max(KeyTextTransform("CheckTitle", "check_metadata")),
-                Max(KeyTextTransform("Checktitle", "check_metadata")),
-            ),
-            check_description=Coalesce(
-                Max(KeyTextTransform("description", "check_metadata")),
-                Max(KeyTextTransform("Description", "check_metadata")),
-            ),
+        # `pass_count`, `fail_count` and `manual_count` count *every* finding
+        # for the check (muted or not) so the aggregated `status` reflects the
+        # underlying check outcome regardless of mute state. Whether the group
+        # is actionable is signalled by the orthogonal `muted` flag below.
+        return (
+            queryset.values("check_id")
+            .annotate(
+                severity_order=Max(severity_case),
+                pass_count=Count("id", filter=Q(status="PASS")),
+                fail_count=Count("id", filter=Q(status="FAIL")),
+                manual_count=Count("id", filter=Q(status="MANUAL")),
+                muted_count=Count("id", filter=Q(muted=True)),
+                nonmuted_count=Count("id", filter=Q(muted=False)),
+                new_count=Count("id", filter=Q(delta="new", muted=False)),
+                changed_count=Count("id", filter=Q(delta="changed", muted=False)),
+                resources_total=Count("resources__id", distinct=True),
+                resources_fail=Count(
+                    "resources__id",
+                    distinct=True,
+                    filter=Q(status="FAIL", muted=False),
+                ),
+                impacted_providers_str=StringAgg(
+                    Cast("scan__provider__provider", CharField()),
+                    delimiter=",",
+                    distinct=True,
+                    default="",
+                ),
+                agg_first_seen_at=Min("first_seen_at"),
+                agg_last_seen_at=Max("inserted_at"),
+                agg_failing_since=Min(
+                    "first_seen_at", filter=Q(status="FAIL", muted=False)
+                ),
+                check_title=Coalesce(
+                    Max(KeyTextTransform("checktitle", "check_metadata")),
+                    Max(KeyTextTransform("CheckTitle", "check_metadata")),
+                    Max(KeyTextTransform("Checktitle", "check_metadata")),
+                ),
+                check_description=Coalesce(
+                    Max(KeyTextTransform("description", "check_metadata")),
+                    Max(KeyTextTransform("Description", "check_metadata")),
+                ),
+            )
+            .annotate(
+                # Group is muted only if it has zero non-muted findings.
+                muted=Case(
+                    When(nonmuted_count=0, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                ),
+            )
         )
 
     def _split_computed_aggregate_filters(
@@ -7148,6 +7171,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
             "status__in",
             "severity",
             "severity__in",
+            "muted",
             "include_muted",
         }
         finding_params = QueryDict(mutable=True)
@@ -7179,7 +7203,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
         Post-process aggregation results to add computed fields.
 
         - Converts severity integer back to string
-        - Computes aggregated status (FAIL > PASS > MUTED)
+        - Computes aggregated status (FAIL > PASS > MANUAL); the orthogonal
+          ``muted`` boolean is already on the row from the SQL aggregation
         - Converts provider string to list
         """
         results = []
@@ -7197,13 +7222,19 @@ class FindingGroupViewSet(BaseRLSViewSet):
             if "agg_failing_since" in row:
                 row["failing_since"] = row.pop("agg_failing_since")
 
-            # Compute aggregated status
+            # Drop the helper count we use to derive `muted` in the
+            # finding-level aggregation path.
+            row.pop("nonmuted_count", None)
+
+            # Compute aggregated status. Counts are inclusive of muted findings,
+            # so the underlying check outcome surfaces even when the group is
+            # fully muted.
             if row.get("fail_count", 0) > 0:
                 row["status"] = "FAIL"
             elif row.get("pass_count", 0) > 0:
                 row["status"] = "PASS"
             else:
-                row["status"] = "MUTED"
+                row["status"] = "MANUAL"
 
             # Convert provider string to list
             providers_str = row.pop("impacted_providers_str", "") or ""
@@ -7219,9 +7250,12 @@ class FindingGroupViewSet(BaseRLSViewSet):
         "check_id": "check_id",
         "check_title": "check_title",
         "severity": "severity_order",
+        "status": "status_order",
+        "muted": "muted",
         "delta": "delta_order",
         "fail_count": "fail_count",
         "pass_count": "pass_count",
+        "manual_count": "manual_count",
         "muted_count": "muted_count",
         "new_count": "new_count",
         "changed_count": "changed_count",
@@ -7276,7 +7310,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         return ordering
 
     def _apply_aggregated_computed_filters(self, queryset, computed_params: QueryDict):
-        """Apply computed filters (status/severity) on aggregated finding-group rows."""
+        """Apply computed filters (status/severity/muted) on aggregated finding-group rows."""
         if not computed_params:
             return queryset
 
@@ -7285,14 +7319,16 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 aggregated_status=Case(
                     When(fail_count__gt=0, then=Value("FAIL")),
                     When(pass_count__gt=0, then=Value("PASS")),
-                    default=Value("MUTED"),
+                    default=Value("MANUAL"),
                     output_field=CharField(),
                 )
             )
 
-        # Exclude fully-muted groups by default unless include_muted is set
-        if "include_muted" not in computed_params:
-            queryset = queryset.exclude(fail_count=0, pass_count=0, muted_count__gt=0)
+        # Exclude fully-muted groups by default unless the caller has opted in
+        # via either `include_muted` or an explicit `muted` filter (the latter
+        # gives the caller direct control over the column).
+        if "include_muted" not in computed_params and "muted" not in computed_params:
+            queryset = queryset.exclude(muted=True)
 
         filterset = FindingGroupAggregatedComputedFilter(
             computed_params, queryset=queryset
@@ -7347,18 +7383,14 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 provider_type=Max("resource__provider__provider"),
                 provider_uid=Max("resource__provider__uid"),
                 provider_alias=Max("resource__provider__alias"),
+                # status_order considers ALL findings (muted or not) so it
+                # surfaces FAIL/PASS/MANUAL based on the underlying check
+                # outcome. Whether the resource is actionable is signalled by
+                # the orthogonal `muted` flag below.
                 status_order=Max(
                     Case(
-                        When(
-                            finding__status="FAIL",
-                            finding__muted=False,
-                            then=Value(3),
-                        ),
-                        When(
-                            finding__status="PASS",
-                            finding__muted=False,
-                            then=Value(2),
-                        ),
+                        When(finding__status="FAIL", then=Value(3)),
+                        When(finding__status="PASS", then=Value(2)),
                         default=Value(1),
                         output_field=IntegerField(),
                     )
@@ -7390,6 +7422,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 ),
                 first_seen_at=Min("finding__first_seen_at"),
                 last_seen_at=Max("finding__inserted_at"),
+                # True only if every finding for this resource+check is muted.
+                muted=BoolAnd("finding__muted"),
                 # Max() on muted_reason / check_metadata is safe because
                 # all findings for the same resource+check share identical
                 # values (mute rules and metadata are applied per-check).
@@ -7405,8 +7439,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
     _RESOURCE_SORT_ANNOTATIONS = {
         "status_order": lambda: Max(
             Case(
-                When(finding__status="FAIL", finding__muted=False, then=Value(3)),
-                When(finding__status="PASS", finding__muted=False, then=Value(2)),
+                When(finding__status="FAIL", then=Value(3)),
+                When(finding__status="PASS", then=Value(2)),
                 default=Value(1),
                 output_field=IntegerField(),
             )
@@ -7480,7 +7514,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
             elif status_order == 2:
                 status = "PASS"
             else:
-                status = "MUTED"
+                status = "MANUAL"
 
             delta_order = row.get("delta_order", 0)
             if delta_order == 2:
@@ -7508,6 +7542,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     "delta": delta,
                     "first_seen_at": row["first_seen_at"],
                     "last_seen_at": row["last_seen_at"],
+                    "muted": bool(row.get("muted", False)),
                     "muted_reason": row.get("muted_reason"),
                     "resource_group": row.get("resource_group", ""),
                 }
@@ -7570,6 +7605,21 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 sort_param, self._FINDING_GROUP_SORT_MAP
             )
             if ordering:
+                # status_order is annotated on demand so groups can be sorted by
+                # their aggregated status (FAIL > PASS > MANUAL), mirroring the
+                # priority used in _post_process_aggregation. Counts are
+                # inclusive of muted findings, so the underlying check outcome
+                # surfaces even for fully muted groups.
+                if any(field.lstrip("-") == "status_order" for field in ordering):
+                    aggregated_queryset = aggregated_queryset.annotate(
+                        status_order=Case(
+                            When(fail_count__gt=0, then=Value(3)),
+                            When(pass_count__gt=0, then=Value(2)),
+                            default=Value(1),
+                            output_field=IntegerField(),
+                        )
+                    )
+
                 # delta_order is a virtual sort field: expand it to a
                 # lexicographic ordering by (new_count, changed_count) so groups
                 # with more new findings rank higher, with changed_count as the

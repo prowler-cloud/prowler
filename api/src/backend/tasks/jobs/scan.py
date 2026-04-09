@@ -1803,7 +1803,12 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
             output_field=IntegerField(),
         )
 
-        # Aggregate findings by check_id for this scan
+        # Aggregate findings by check_id for this scan.
+        # `pass_count`, `fail_count` and `manual_count` count *every* finding
+        # in this group, regardless of mute state, so the aggregated `status`
+        # always reflects the underlying check outcome (FAIL > PASS > MANUAL)
+        # even when the group is fully muted. The orthogonal `muted` flag is
+        # what tells whether the group has any actionable (non-muted) findings.
         aggregated = (
             Finding.objects.filter(
                 tenant_id=tenant_id,
@@ -1812,9 +1817,11 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
             .values("check_id")
             .annotate(
                 severity_order=Max(severity_case),
-                pass_count=Count("id", filter=Q(status="PASS", muted=False)),
-                fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                pass_count=Count("id", filter=Q(status="PASS")),
+                fail_count=Count("id", filter=Q(status="FAIL")),
+                manual_count=Count("id", filter=Q(status="MANUAL")),
                 muted_count=Count("id", filter=Q(muted=True)),
+                nonmuted_count=Count("id", filter=Q(muted=False)),
                 new_count=Count("id", filter=Q(delta="new", muted=False)),
                 changed_count=Count("id", filter=Q(delta="changed", muted=False)),
                 resources_total=Count("resources__id", distinct=True),
@@ -1895,7 +1902,9 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                     severity_order=row["severity_order"] or 1,
                     pass_count=row["pass_count"],
                     fail_count=row["fail_count"],
+                    manual_count=row["manual_count"],
                     muted_count=row["muted_count"],
+                    muted=row["nonmuted_count"] == 0,
                     new_count=row["new_count"],
                     changed_count=row["changed_count"],
                     resources_total=row["resources_total"],
@@ -1917,7 +1926,9 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                     "severity_order",
                     "pass_count",
                     "fail_count",
+                    "manual_count",
                     "muted_count",
+                    "muted",
                     "new_count",
                     "changed_count",
                     "resources_total",

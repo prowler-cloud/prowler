@@ -4185,6 +4185,7 @@ class FindingGroupSerializer(BaseSerializerV1):
     check_description = serializers.CharField(required=False, allow_null=True)
     severity = serializers.CharField()
     status = serializers.CharField()
+    muted = serializers.BooleanField()
     impacted_providers = serializers.ListField(
         child=serializers.CharField(), required=False
     )
@@ -4192,6 +4193,7 @@ class FindingGroupSerializer(BaseSerializerV1):
     resources_total = serializers.IntegerField()
     pass_count = serializers.IntegerField()
     fail_count = serializers.IntegerField()
+    manual_count = serializers.IntegerField()
     muted_count = serializers.IntegerField()
     new_count = serializers.IntegerField()
     changed_count = serializers.IntegerField()
@@ -4216,6 +4218,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     provider = serializers.SerializerMethodField()
     status = serializers.CharField()
     severity = serializers.CharField()
+    muted = serializers.BooleanField()
     delta = serializers.CharField(required=False, allow_null=True)
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
