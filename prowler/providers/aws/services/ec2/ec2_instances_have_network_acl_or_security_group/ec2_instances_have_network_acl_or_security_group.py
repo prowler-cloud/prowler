@@ -8,14 +8,11 @@ class ec2_instances_have_network_acl_or_security_group(Check):
         findings = []
         for instance in ec2_client.instances:
             report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
-            report.region = instance.region
-            report.resource_id = instance.id
-            report.resource_arn = instance.arn
             report.resource_tags = instance.tags
             report.status = "PASS"
             report.status_extended = f"Instance {instance.id} has network ACLs and/or security groups attached."
 
-        # Check if the instance has security groups
+            # Check if the instance has security groups
             if instance.security_groups:
                 findings.append(report)
                 continue

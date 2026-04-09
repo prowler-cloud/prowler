@@ -14,9 +14,6 @@ class ec2_securitygroup_exposes_ports_80_443_only(Check):
                 security_group = security_group_map.get(sg)
                 if security_group:
                     report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
-                    report.region = instance.region
-                    report.resource_id = instance.id
-                    report.resource_arn = instance.arn
                     report.resource_tags = instance.tags
                     report.status = "PASS"
                     report.status_extended = f"Security group {security_group.name} ({security_group.id}) exposes only ports 80 and 443 to the public internet."

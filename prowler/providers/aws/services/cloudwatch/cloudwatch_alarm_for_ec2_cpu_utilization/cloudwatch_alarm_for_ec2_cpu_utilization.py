@@ -13,9 +13,6 @@ class cloudwatch_alarm_for_ec2_cpu_utilization(Check):
 
         for instance in ec2_client.instances:
             report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
-            report.region = instance.region
-            report.resource_id = instance.id
-            report.resource_arn = instance.arn
             report.resource_tags = instance.tags
             report.status = "FAIL"
             report.status_extended = f"No CloudWatch alarms found for EC2 instance '{instance.id}' CPU utilization."

@@ -16,10 +16,7 @@ class cloudwatch_alarm_for_dynamodb_write_capacity(Check):
 
         # Initialize a report for each table
         for table in dynamodb_tables:
-            report = Check_Report_AWS(metadata=self.metadata(), resource=table)
-            report.region = table.region
-            report.resource_id = table.name
-            report.resource_arn = table.arn
+            report = Check_Report_AWS(metadata=self.metadata(),resource=table)
             report.resource_tags = table.tags
             report.status = "FAIL"
             report.status_extended = f"No CloudWatch alarms found for DynamoDB table '{table.name}' write capacity changes."
