@@ -380,8 +380,9 @@ describe("resolveFindingIds — Fix 4: page[size] explicit cap at MAX_PAGE_SIZE=
     expect(calledUrl.searchParams.get("page[size]")).toBe("3");
   });
 
-  it("should cap page[size] at 500 when the chunk has exactly 500 UIDs (boundary value)", async () => {
-    // Given — exactly 500 unique UIDs (at the cap boundary)
+  it("keeps every request page[size] at or below 500 when resolving a 500-UID batch", async () => {
+    // Given — exactly 500 unique UIDs. The resolver may split earlier than 500
+    // to keep the resource_uid__in query string at a safe size.
     const resourceUids = Array.from({ length: 500 }, (_, i) => `resource-${i}`);
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
     handleApiResponseMock.mockResolvedValue({ data: [] });
@@ -392,16 +393,19 @@ describe("resolveFindingIds — Fix 4: page[size] explicit cap at MAX_PAGE_SIZE=
       resourceUids,
     });
 
-    // Then — page[size] must be exactly 500 (not capped lower)
-    const firstUrl = new URL(fetchMock.mock.calls[0][0] as string);
-    expect(firstUrl.searchParams.get("page[size]")).toBe("500");
+    // Then — every request must stay under the defensive cap and preserve FAIL filtering
+    const pageSizes = fetchMock.mock.calls.map(
+      ([url]) => Number(new URL(url as string).searchParams.get("page[size]")),
+    );
+    expect(pageSizes.every((pageSize) => pageSize > 0 && pageSize <= 500)).toBe(
+      true,
+    );
+    expect(pageSizes.reduce((sum, pageSize) => sum + pageSize, 0)).toBe(500);
   });
 
-  it("should cap page[size] at 500 even when a chunk would exceed 500 — Math.min guard in URL builder", async () => {
-    // Given — 501 UIDs. The chunker splits into [500, 1].
-    // The FIRST chunk has 500 UIDs → page[size] should be 500 (Math.min(500, 500)).
-    // The SECOND chunk has 1 UID → page[size] should be 1 (Math.min(1, 500)).
-    // This proves the Math.min cap fires correctly on every chunk.
+  it("keeps every request page[size] at or below 500 when resolving more than 500 UIDs", async () => {
+    // Given — 501 UIDs. The resolver can split by count and/or URL length,
+    // but no request may exceed the page-size cap.
     const resourceUids = Array.from({ length: 501 }, (_, i) => `resource-${i}`);
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
     handleApiResponseMock.mockResolvedValue({ data: [] });
@@ -412,11 +416,63 @@ describe("resolveFindingIds — Fix 4: page[size] explicit cap at MAX_PAGE_SIZE=
       resourceUids,
     });
 
-    // Then — two fetch calls: one for 500 UIDs, one for 1 UID
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // Then
+    const pageSizes = fetchMock.mock.calls.map(
+      ([url]) => Number(new URL(url as string).searchParams.get("page[size]")),
+    );
+    expect(pageSizes.every((pageSize) => pageSize > 0 && pageSize <= 500)).toBe(
+      true,
+    );
+    expect(pageSizes.reduce((sum, pageSize) => sum + pageSize, 0)).toBe(501);
+  });
+
+  it("splits long resource UID batches into multiple requests before the URL becomes too large", async () => {
+    // Given — 100 long UIDs would fit under the 500-count cap but produce
+    // an oversized resource_uid__in query string if sent in a single request.
+    const resourceUids = Array.from(
+      { length: 100 },
+      (_, i) => `arn:aws:ec2:eu-west-1:123456789012:instance/i-${`${i}`.padStart(17, "0")}`,
+    );
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+
+    // When
+    await resolveFindingIds({
+      checkId: "check-1",
+      resourceUids,
+    });
+
+    // Then
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
     const firstUrl = new URL(fetchMock.mock.calls[0][0] as string);
-    const secondUrl = new URL(fetchMock.mock.calls[1][0] as string);
-    expect(firstUrl.searchParams.get("page[size]")).toBe("500");
-    expect(secondUrl.searchParams.get("page[size]")).toBe("1");
+    expect(firstUrl.searchParams.get("page[size]")).not.toBe("100");
+  });
+
+  it("keeps each resolution request URL under the safe maximum for long ECS task definition ARNs", async () => {
+    // Given — these ARNs match the failing production shape closely enough to
+    // reproduce the oversized query-string bug.
+    const resourceUids = Array.from(
+      { length: 120 },
+      (_, i) =>
+        `arn:aws:ecs:eu-west-1:106908755756:task-definition/prowler-cloud-dev-workers:${500 - i}`,
+    );
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+
+    // When
+    await resolveFindingIds({
+      checkId: "ecs_task_definitions_no_environment_secrets",
+      resourceUids,
+      filters: {
+        "filter[status__in]": "FAIL",
+        "filter[muted]": "false",
+      },
+    });
+
+    // Then — every backend request must stay comfortably below common proxy
+    // limits for the full URL, not just the raw CSV length.
+    const requestUrls = fetchMock.mock.calls.map(([url]) => String(url));
+    expect(requestUrls.length).toBeGreaterThan(1);
+    expect(requestUrls.every((url) => url.length <= 3800)).toBe(true);
   });
 });

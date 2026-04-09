@@ -13,6 +13,7 @@ const FINDING_IDS_RESOLUTION_PAGE_SIZE = 500;
 const FINDING_IDS_RESOLUTION_CONCURRENCY = 4;
 const FINDING_GROUP_RESOURCES_RESOLUTION_PAGE_SIZE = 500;
 const FINDING_FIELDS = "uid";
+const MAX_RESOURCE_FINDING_RESOLUTION_URL_LENGTH = 3800;
 
 /** Explicit upper bound for page[size] in resource-finding resolution requests. */
 const MAX_RESOURCE_FINDING_PAGE_SIZE = 500;
@@ -100,11 +101,43 @@ async function fetchFindingIdsPage({
   };
 }
 
-function chunkValues<T>(values: T[], chunkSize: number): T[][] {
-  const chunks: T[][] = [];
-  for (let index = 0; index < values.length; index += chunkSize) {
-    chunks.push(values.slice(index, index + chunkSize));
+function chunkResourceUidsForResolution({
+  checkId,
+  resourceUids,
+  filters = {},
+  hasDateOrScanFilter = false,
+}: ResolveFindingIdsParams): string[][] {
+  const uniqueResourceUids = Array.from(new Set(resourceUids));
+  const chunks: string[][] = [];
+  let currentChunk: string[] = [];
+
+  for (const resourceUid of uniqueResourceUids) {
+    const nextChunk = [...currentChunk, resourceUid];
+    const nextChunkUrl = createResourceFindingResolutionUrl({
+      checkId,
+      resourceUids: nextChunk,
+      filters,
+      hasDateOrScanFilter,
+    });
+
+    if (
+      currentChunk.length > 0 &&
+      (nextChunk.length > FINDING_IDS_RESOLUTION_PAGE_SIZE ||
+        nextChunkUrl.toString().length >
+          MAX_RESOURCE_FINDING_RESOLUTION_URL_LENGTH)
+    ) {
+      chunks.push(currentChunk);
+      currentChunk = [resourceUid];
+      continue;
+    }
+
+    currentChunk = nextChunk;
   }
+
+  if (currentChunk.length > 0) {
+    chunks.push(currentChunk);
+  }
+
   return chunks;
 }
 
@@ -224,10 +257,12 @@ export const resolveFindingIds = async ({
   }
 
   const headers = await getAuthHeaders({ contentType: false });
-  const resourceUidChunks = chunkValues(
-    Array.from(new Set(resourceUids)),
-    FINDING_IDS_RESOLUTION_PAGE_SIZE,
-  );
+  const resourceUidChunks = chunkResourceUidsForResolution({
+    checkId,
+    resourceUids,
+    filters,
+    hasDateOrScanFilter,
+  });
 
   try {
     const results = await runWithConcurrencyLimit(
