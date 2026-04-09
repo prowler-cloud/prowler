@@ -184,7 +184,7 @@ class Test_entra_conditional_access_policy_mfa_enforced_for_guest_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Conditional Access Policy 'MFA for All Users' requires MFA for guest users."
+                == "Conditional Access Policy MFA for All Users requires MFA for guest users."
             )
             assert result[0].resource_id == policy.id
             assert result[0].resource_name == "MFA for All Users"
@@ -222,7 +222,7 @@ class Test_entra_conditional_access_policy_mfa_enforced_for_guest_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Conditional Access Policy 'MFA for Guest Users' requires MFA for guest users."
+                == "Conditional Access Policy MFA for Guest Users requires MFA for guest users."
             )
             assert result[0].resource_id == policy.id
 
@@ -594,7 +594,7 @@ class Test_entra_conditional_access_policy_mfa_enforced_for_guest_users:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Conditional Access Policy 'MFA for Guests Report Only' targets guest users with MFA but is only in report-only mode."
+                == "Conditional Access Policy MFA for Guests Report Only targets guest users with MFA but is only in report-only mode."
             )
             assert result[0].resource_id == policy.id
             assert result[0].resource_name == "MFA for Guests Report Only"

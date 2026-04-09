@@ -120,7 +120,7 @@ class entra_conditional_access_policy_mfa_enforced_for_guest_users(Check):
                     resource_id=policy.id,
                 )
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' requires MFA for guest users."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} requires MFA for guest users."
                 break
 
             if (
@@ -137,7 +137,7 @@ class entra_conditional_access_policy_mfa_enforced_for_guest_users(Check):
                 resource_id=reporting_policy.id,
             )
             report.status = "FAIL"
-            report.status_extended = f"Conditional Access Policy '{reporting_policy.display_name}' targets guest users with MFA but is only in report-only mode."
+            report.status_extended = f"Conditional Access Policy {reporting_policy.display_name} targets guest users with MFA but is only in report-only mode."
 
         findings.append(report)
         return findings
