@@ -56,7 +56,7 @@ class TestIdentityService:
                     "compartment_id": "ocid1.compartment.oc1..aaaaaaaexample",
                     "lifecycle_state": "ACTIVE",
                     "time_created": None,
-                    "region": "us-ashburn-1",
+                    "region": "us-phoenix-1",
                     "password_policies": [],
                 }
             ]
