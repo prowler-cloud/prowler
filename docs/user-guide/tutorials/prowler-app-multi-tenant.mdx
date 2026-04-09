@@ -1,0 +1,135 @@
+---
+title: 'Managing Organizations (Multi-Tenant)'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.5.0" />
+
+Prowler App supports multi-tenancy through **Organizations**, allowing users to belong to multiple isolated environments within a single account. Each organization maintains its own providers, scans, findings, and user memberships, ensuring complete data separation between teams or business units.
+
+## Key Concepts
+
+* **Organization (Tenant):** An isolated workspace containing its own providers, scans, findings, roles, and users. Every Prowler account operates within at least one organization.
+* **Membership:** The association between a user and an organization, including the assigned role (e.g., `owner`, or a custom role).
+* **Active Organization:** The organization currently in use for the session. All actions (scans, findings, provider management) apply to the active organization.
+
+<Note>
+When a new account is created without an invitation, a default organization is automatically provisioned. Accounts created through an invitation join the inviter's organization instead.
+
+</Note>
+
+## Viewing Organizations
+
+To view all organizations associated with an account, navigate to the **Profile** page. The **Organizations** card displays every organization the user belongs to, including the role, name, join date, and whether it is the currently active organization.
+
+## Creating an Organization
+
+To create a new organization:
+
+1. Navigate to the **Profile** page.
+
+2. In the **Organizations** card, click the **Create organization** button.
+
+3. Enter a name for the new organization (maximum 100 characters).
+
+4. Click **Create**. The session automatically switches to the newly created organization.
+
+<Note>
+Creating an organization requires being authenticated. Any user can create a new organization regardless of their current role.
+
+</Note>
+
+## Switching Between Organizations
+
+To switch the active organization:
+
+1. Navigate to the **Profile** page.
+
+2. In the **Organizations** card, locate the organization to switch to.
+
+3. Click the **Switch** button next to the desired organization.
+
+4. Confirm the switch in the dialog. The page reloads with the new organization's context, and all subsequent actions apply to it.
+
+<Note>
+The currently active organization is indicated by an **Active** badge. Switching updates the session tokens, so the page will reload automatically.
+
+</Note>
+
+## Editing an Organization Name
+
+Organization owners with the **Manage Account** permission can rename an organization:
+
+1. Navigate to the **Profile** page.
+
+2. In the **Organizations** card, click the **Edit** button next to the organization.
+
+3. Update the name and save the changes.
+
+## Deleting an Organization
+
+Organization owners with the **Manage Account** permission can delete an organization, provided they belong to at least two organizations (the last remaining organization cannot be deleted).
+
+### Deleting a Non-Active Organization
+
+1. Navigate to the **Profile** page.
+
+2. Click the **Delete** button next to the organization to remove.
+
+3. Type the organization name to confirm deletion.
+
+4. Click **Delete**. The organization and all its associated data (providers, scans, findings) are permanently removed.
+
+### Deleting the Active Organization
+
+When deleting the currently active organization, an additional step is required:
+
+1. Navigate to the **Profile** page.
+
+2. Click the **Delete** button next to the active organization.
+
+3. Select which organization to switch to after deletion.
+
+4. Type the organization name to confirm.
+
+5. Click **Delete**. The session switches to the selected organization, and the deleted organization's data is permanently removed.
+
+<Warning>
+Deleting an organization is irreversible. All providers, scans, findings, and configuration data within the organization are permanently deleted. Users who belong only to the deleted organization will lose access to Prowler.
+</Warning>
+
+## Accepting an Invitation to an Organization
+
+When invited to join an organization, the invited user receives a link to accept the invitation. The flow adapts depending on whether the user already has a Prowler account:
+
+### Existing Users
+
+1. Open the invitation link.
+
+2. If already authenticated, the invitation is accepted automatically and the user is redirected to Prowler App.
+
+3. If not authenticated, choose **I have an account -- Sign in**, authenticate with existing credentials, and the invitation is accepted upon sign-in.
+
+### New Users
+
+1. Open the invitation link.
+
+2. Choose **I'm new -- Create an account**.
+
+3. Complete the sign-up process. Upon account creation, the invitation is accepted and the user joins the inviter's organization.
+
+<Note>
+Invitations expire after 7 days. If an invitation has expired, contact the organization administrator to send a new one. For more details on invitation management, see [Managing Users and Role-Based Access Control (RBAC)](/user-guide/tutorials/prowler-app-rbac#invitations).
+
+</Note>
+
+## Permissions Reference
+
+| Action | Required Conditions |
+|--------|-------------------|
+| View organizations | Any authenticated user |
+| Create an organization | Any authenticated user |
+| Switch organizations | Any authenticated user |
+| Edit organization name | Organization owner with **Manage Account** permission |
+| Delete an organization | Organization owner with **Manage Account** permission; must belong to more than one organization |
