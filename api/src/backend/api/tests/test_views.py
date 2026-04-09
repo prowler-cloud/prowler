@@ -16894,11 +16894,6 @@ class TestFindingGroupViewSet:
         # Should still return data, not filtered by the old date
         assert len(data) == 5
 
-    # ------------------------------------------------------------------
-    # status / muted refactor: status ∈ {FAIL, PASS, MANUAL}, muted is its
-    # own boolean attribute orthogonal to status, mirroring /findings.
-    # ------------------------------------------------------------------
-
     def test_finding_groups_status_choices_no_muted(
         self, authenticated_client, finding_groups_fixture
     ):
