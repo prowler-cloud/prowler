@@ -45,11 +45,12 @@ def mock_make_api_call(self, operation_name, kwarg):
     elif operation_name == "ListBuildsForProject":
         return {"ids": [build_id]}
     elif operation_name == "BatchGetBuilds":
-        return {"builds": [{"endTime": last_invoked_time}]}
+        return {"builds": [{"id": build_id, "endTime": last_invoked_time}]}
     elif operation_name == "BatchGetProjects":
         return {
             "projects": [
                 {
+                    "arn": project_arn,
                     "source": {
                         "type": source_type,
                         "location": bitbucket_url,
