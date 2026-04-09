@@ -1,5 +1,6 @@
 from prowler.lib.check.compliance_models import (
     AWS_Well_Architected_Requirement_Attribute,
+    CCC_Requirement_Attribute,
     CIS_Requirement_Attribute,
     Compliance,
     Compliance_Requirement,
@@ -1019,6 +1020,172 @@ PROWLER_THREATSCORE_M365 = Compliance(
                 )
             ],
             Checks=[],
+        ),
+    ],
+)
+
+
+# CCC fixtures cover the three providers Prowler ships catalogs for. Each
+# fixture has one auto-evaluated requirement (with Checks) and one manual
+# requirement (Checks=[]) so test suites can exercise both paths.
+CCC_AWS_FIXTURE = Compliance(
+    Framework="CCC",
+    Name="Common Cloud Controls Catalog (CCC)",
+    Provider="AWS",
+    Version="v2025.10",
+    Description="Common Cloud Controls Catalog (CCC) for AWS",
+    Requirements=[
+        Compliance_Requirement(
+            Checks=["service_test_check_id"],
+            Id="CCC.Core.CN01.AR01",
+            Description="When a port is exposed for non-SSH network traffic, all traffic MUST include a TLS handshake AND be encrypted using TLS 1.3 or higher.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Data",
+                    FamilyDescription="The Data control family ensures the confidentiality, integrity, availability, and sovereignty of data across its lifecycle.",
+                    Section="CCC.Core.CN01 Encrypt Data for Transmission",
+                    SubSection="",
+                    SubSectionObjective="Ensure that all communications are encrypted in transit to protect data integrity and confidentiality.",
+                    Applicability=["tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="Most cloud services enable TLS 1.3 by default.",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.Core.TH02"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "CCM", "Identifiers": ["CEK-03", "CEK-04"]}
+                    ],
+                )
+            ],
+        ),
+        Compliance_Requirement(
+            Checks=[],
+            Id="CCC.IAM.CN01.AR01",
+            Description="When an identity policy for a non-administrative principal is evaluated, it MUST NOT grant permissions for creating credentials or generating temporary session tokens.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Identity and Access Management",
+                    FamilyDescription="Controls that restrict who can access and modify IAM resources.",
+                    Section="CCC.IAM.CN01 Restrict IAM User Credentials Creation",
+                    SubSection="",
+                    SubSectionObjective="Prevent non-administrative principals from creating new long-lived credentials.",
+                    Applicability=["tlp-clear", "tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.IAM.TH03"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "NIST-CSF", "Identifiers": ["PR.AA-05"]}
+                    ],
+                )
+            ],
+        ),
+    ],
+)
+
+CCC_AZURE_FIXTURE = Compliance(
+    Framework="CCC",
+    Name="Common Cloud Controls Catalog (CCC)",
+    Provider="Azure",
+    Version="v2025.10",
+    Description="Common Cloud Controls Catalog (CCC) for Azure",
+    Requirements=[
+        Compliance_Requirement(
+            Checks=["service_test_check_id"],
+            Id="CCC.Core.CN01.AR01",
+            Description="When a port is exposed for non-SSH network traffic, all traffic MUST include a TLS handshake AND be encrypted using TLS 1.3 or higher.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Data",
+                    FamilyDescription="The Data control family ensures the confidentiality, integrity, availability, and sovereignty of data across its lifecycle.",
+                    Section="CCC.Core.CN01 Encrypt Data for Transmission",
+                    SubSection="",
+                    SubSectionObjective="Ensure that all communications are encrypted in transit to protect data integrity and confidentiality.",
+                    Applicability=["tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="Most cloud services enable TLS 1.3 by default.",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.Core.TH02"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "CCM", "Identifiers": ["CEK-03", "CEK-04"]}
+                    ],
+                )
+            ],
+        ),
+        Compliance_Requirement(
+            Checks=[],
+            Id="CCC.IAM.CN01.AR01",
+            Description="When an identity policy for a non-administrative principal is evaluated, it MUST NOT grant permissions for creating credentials.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Identity and Access Management",
+                    FamilyDescription="Controls that restrict who can access and modify IAM resources.",
+                    Section="CCC.IAM.CN01 Restrict IAM User Credentials Creation",
+                    SubSection="",
+                    SubSectionObjective="Prevent non-administrative principals from creating new long-lived credentials.",
+                    Applicability=["tlp-clear", "tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.IAM.TH03"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "NIST-CSF", "Identifiers": ["PR.AA-05"]}
+                    ],
+                )
+            ],
+        ),
+    ],
+)
+
+CCC_GCP_FIXTURE = Compliance(
+    Framework="CCC",
+    Name="Common Cloud Controls Catalog (CCC)",
+    Provider="GCP",
+    Version="v2025.10",
+    Description="Common Cloud Controls Catalog (CCC) for GCP",
+    Requirements=[
+        Compliance_Requirement(
+            Checks=["service_test_check_id"],
+            Id="CCC.Core.CN01.AR01",
+            Description="When a port is exposed for non-SSH network traffic, all traffic MUST include a TLS handshake AND be encrypted using TLS 1.3 or higher.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Data",
+                    FamilyDescription="The Data control family ensures the confidentiality, integrity, availability, and sovereignty of data across its lifecycle.",
+                    Section="CCC.Core.CN01 Encrypt Data for Transmission",
+                    SubSection="",
+                    SubSectionObjective="Ensure that all communications are encrypted in transit to protect data integrity and confidentiality.",
+                    Applicability=["tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="Most cloud services enable TLS 1.3 by default.",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.Core.TH02"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "CCM", "Identifiers": ["CEK-03", "CEK-04"]}
+                    ],
+                )
+            ],
+        ),
+        Compliance_Requirement(
+            Checks=[],
+            Id="CCC.IAM.CN01.AR01",
+            Description="When an identity policy for a non-administrative principal is evaluated, it MUST NOT grant permissions for creating credentials.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Identity and Access Management",
+                    FamilyDescription="Controls that restrict who can access and modify IAM resources.",
+                    Section="CCC.IAM.CN01 Restrict IAM User Credentials Creation",
+                    SubSection="",
+                    SubSectionObjective="Prevent non-administrative principals from creating new long-lived credentials.",
+                    Applicability=["tlp-clear", "tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.IAM.TH03"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "NIST-CSF", "Identifiers": ["PR.AA-05"]}
+                    ],
+                )
+            ],
         ),
     ],
 )
