@@ -349,17 +349,13 @@ class Entra(M365Service):
                                     )
                                 )
                                 if getattr(
-                                    getattr(
-                                        policy.conditions, "devices", None
-                                    ),
+                                    getattr(policy.conditions, "devices", None),
                                     "device_filter",
                                     None,
                                 )
                                 and getattr(
                                     getattr(
-                                        getattr(
-                                            policy.conditions, "devices", None
-                                        ),
+                                        getattr(policy.conditions, "devices", None),
                                         "device_filter",
                                         None,
                                     ),
@@ -371,9 +367,7 @@ class Entra(M365Service):
                             device_filter_rule=(
                                 getattr(
                                     getattr(
-                                        getattr(
-                                            policy.conditions, "devices", None
-                                        ),
+                                        getattr(policy.conditions, "devices", None),
                                         "device_filter",
                                         None,
                                     ),
@@ -381,9 +375,7 @@ class Entra(M365Service):
                                     None,
                                 )
                                 if getattr(
-                                    getattr(
-                                        policy.conditions, "devices", None
-                                    ),
+                                    getattr(policy.conditions, "devices", None),
                                     "device_filter",
                                     None,
                                 )
