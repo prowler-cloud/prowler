@@ -14,6 +14,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔄 Changed
 
+- Finding groups list/latest/resources now expose `status` ∈ `{FAIL, PASS, MANUAL}` and `muted: bool` as orthogonal fields, mirroring `/findings`. The aggregated `status` reflects the underlying check outcome regardless of mute state, and `muted=true` signals that every finding in the group/resource is muted. New `manual_count` is exposed alongside `pass_count`/`fail_count`. New `filter[muted]=true|false` and `sort=status` (FAIL > PASS > MANUAL) / `sort=muted` are supported. `filter[status]=MUTED` is no longer accepted [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
 - Attack Paths: Periodic cleanup of stale scans with dead-worker detection via Celery inspect, marking orphaned `EXECUTING` scans as `FAILED` and recovering `graph_data_ready` [(#10387)](https://github.com/prowler-cloud/prowler/pull/10387)
 - Attack Paths: Replace `_provider_id` property with `_Provider_{uuid}` label for provider isolation, add regex-based label injection for custom queries [(#10402)](https://github.com/prowler-cloud/prowler/pull/10402)
 
