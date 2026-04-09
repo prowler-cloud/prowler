@@ -41,6 +41,7 @@ def _make_conditions(
     included_users=None,
     excluded_applications=None,
     excluded_users=None,
+    excluded_groups=None,
     excluded_roles=None,
 ):
     """Return Conditions with the given application and user scopes."""
@@ -52,7 +53,7 @@ def _make_conditions(
         ),
         user_conditions=UsersConditions(
             included_groups=[],
-            excluded_groups=[],
+            excluded_groups=excluded_groups or [],
             included_users=included_users or ["All"],
             excluded_users=excluded_users or [],
             included_roles=[],
@@ -152,6 +153,59 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
             assert result[0].resource_id == "conditionalAccessPolicies"
+            assert result[0].location == "global"
+
+    def test_policy_excluding_roles(self):
+        policy_id = str(uuid4())
+        display_name = "All Users Except Role Policy"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_all_apps_all_users.entra_conditional_access_policy_all_apps_all_users import (
+                entra_conditional_access_policy_all_apps_all_users,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                policy_id: ConditionalAccessPolicy(
+                    id=policy_id,
+                    display_name=display_name,
+                    conditions=_make_conditions(
+                        excluded_roles=["62e90394-69f5-4237-9190-012177145e10"],
+                    ),
+                    grant_controls=_make_grant_controls(),
+                    session_controls=_make_session_controls(),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                )
+            }
+
+            check = entra_conditional_access_policy_all_apps_all_users()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"Conditional Access Policy '{display_name}' targets all cloud apps and all users but includes exclusions. Review excluded users/groups/roles/applications and verify compensating policies protect excluded identities and apps."
+            )
+            assert (
+                result[0].resource
+                == entra_client.conditional_access_policies[policy_id].dict()
+            )
+            assert result[0].resource_name == display_name
+            assert result[0].resource_id == policy_id
             assert result[0].location == "global"
 
     def test_policy_not_targeting_all_apps(self):
@@ -294,14 +348,17 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
             check = entra_conditional_access_policy_all_apps_all_users()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy covers all cloud apps and all users."
+                == f"Conditional Access Policy '{display_name}' targets all cloud apps and all users but includes exclusions. Review excluded users/groups/roles/applications and verify compensating policies protect excluded identities and apps."
             )
-            assert result[0].resource == {}
-            assert result[0].resource_name == "Conditional Access Policies"
-            assert result[0].resource_id == "conditionalAccessPolicies"
+            assert (
+                result[0].resource
+                == entra_client.conditional_access_policies[policy_id].dict()
+            )
+            assert result[0].resource_name == display_name
+            assert result[0].resource_id == policy_id
             assert result[0].location == "global"
 
     def test_policy_excluding_users(self):
@@ -344,14 +401,17 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
             check = entra_conditional_access_policy_all_apps_all_users()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy covers all cloud apps and all users."
+                == f"Conditional Access Policy '{display_name}' targets all cloud apps and all users but includes exclusions. Review excluded users/groups/roles/applications and verify compensating policies protect excluded identities and apps."
             )
-            assert result[0].resource == {}
-            assert result[0].resource_name == "Conditional Access Policies"
-            assert result[0].resource_id == "conditionalAccessPolicies"
+            assert (
+                result[0].resource
+                == entra_client.conditional_access_policies[policy_id].dict()
+            )
+            assert result[0].resource_name == display_name
+            assert result[0].resource_id == policy_id
             assert result[0].location == "global"
 
     def test_policy_only_password_change(self):

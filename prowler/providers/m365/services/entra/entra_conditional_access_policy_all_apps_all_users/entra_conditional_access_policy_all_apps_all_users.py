@@ -14,7 +14,8 @@ class entra_conditional_access_policy_all_apps_all_users(Check):
     across the entire tenant. Policies that only require a password change are
     excluded because they do not provide meaningful access control.
 
-    - PASS: An enabled Conditional Access policy covers all apps and all users.
+    - PASS: An enabled Conditional Access policy covers all apps and all users with no exclusions.
+    - MANUAL: A policy targets all apps and all users but includes exclusions that require review.
     - FAIL: No Conditional Access policy provides coverage for all apps and all users.
     """
 
@@ -34,6 +35,9 @@ class entra_conditional_access_policy_all_apps_all_users(Check):
         report.status = "FAIL"
         report.status_extended = "No Conditional Access Policy covers all cloud apps and all users."
 
+        manual_policy = None
+        reporting_only_policy = None
+
         for policy in entra_client.conditional_access_policies.values():
             if policy.state == ConditionalAccessPolicyState.DISABLED:
                 continue
@@ -46,13 +50,7 @@ class entra_conditional_access_policy_all_apps_all_users(Check):
             if "All" not in application_conditions.included_applications:
                 continue
 
-            if application_conditions.excluded_applications != []:
-                continue
-
             if "All" not in user_conditions.included_users:
-                continue
-
-            if user_conditions.excluded_users != [] or user_conditions.excluded_roles != []:
                 continue
 
             # Exclude policies that only require a password change,
@@ -62,6 +60,13 @@ class entra_conditional_access_policy_all_apps_all_users(Check):
             ]:
                 continue
 
+            has_exclusions = bool(
+                application_conditions.excluded_applications
+                or user_conditions.excluded_users
+                or user_conditions.excluded_groups
+                or user_conditions.excluded_roles
+            )
+
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource=policy,
@@ -69,13 +74,45 @@ class entra_conditional_access_policy_all_apps_all_users(Check):
                 resource_id=policy.id,
             )
 
+            if has_exclusions:
+                if manual_policy is None:
+                    manual_policy = policy
+                continue
+
             if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
-                report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' covers all cloud apps and all users but is only in report-only mode."
+                if reporting_only_policy is None:
+                    reporting_only_policy = policy
             else:
                 report.status = "PASS"
                 report.status_extended = f"Conditional Access Policy '{policy.display_name}' covers all cloud apps and all users."
                 break
+        else:
+            if manual_policy is not None:
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource=manual_policy,
+                    resource_name=manual_policy.display_name,
+                    resource_id=manual_policy.id,
+                )
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Conditional Access Policy '{manual_policy.display_name}' "
+                    "targets all cloud apps and all users but includes exclusions. "
+                    "Review excluded users/groups/roles/applications and verify "
+                    "compensating policies protect excluded identities and apps."
+                )
+            elif reporting_only_policy is not None:
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource=reporting_only_policy,
+                    resource_name=reporting_only_policy.display_name,
+                    resource_id=reporting_only_policy.id,
+                )
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Conditional Access Policy '{reporting_only_policy.display_name}' "
+                    "covers all cloud apps and all users but is only in report-only mode."
+                )
 
         findings.append(report)
         return findings
