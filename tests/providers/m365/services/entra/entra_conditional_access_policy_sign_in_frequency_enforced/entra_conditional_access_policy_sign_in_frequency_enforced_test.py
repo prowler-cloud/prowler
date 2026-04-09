@@ -147,7 +147,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                     display_name="Disabled Policy",
                     state=ConditionalAccessPolicyState.DISABLED,
                     device_filter_mode=DeviceFilterMode.INCLUDE,
-                    device_filter_rule="device.isCompliant -ne True -or device.trustType -ne \"ServerAD\"",
+                    device_filter_rule='device.isCompliant -ne True -or device.trustType -ne "ServerAD"',
                 )
             }
 
@@ -187,7 +187,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                     display_name=display_name,
                     state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
                     device_filter_mode=DeviceFilterMode.INCLUDE,
-                    device_filter_rule="device.isCompliant -ne True -or device.trustType -ne \"ServerAD\"",
+                    device_filter_rule='device.isCompliant -ne True -or device.trustType -ne "ServerAD"',
                 )
             }
 
@@ -499,6 +499,80 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                     display_name="Unrelated Filter Policy",
                     device_filter_mode=DeviceFilterMode.INCLUDE,
                     device_filter_rule='device.displayName -contains "kiosk"',
+                )
+            }
+
+            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_name == "Conditional Access Policies"
+
+    def test_entra_policy_device_filter_include_corporate_devices(self):
+        """Test FAIL when include mode targets only corporate devices."""
+        policy_id = str(uuid4())
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_sign_in_frequency_enforced,
+            )
+
+            entra_client.conditional_access_policies = {
+                policy_id: _make_policy(
+                    policy_id=policy_id,
+                    display_name="Corporate Devices Policy",
+                    device_filter_mode=DeviceFilterMode.INCLUDE,
+                    device_filter_rule="device.isCompliant -eq True",
+                )
+            }
+
+            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_name == "Conditional Access Policies"
+
+    def test_entra_policy_device_filter_exclude_non_corporate_devices(self):
+        """Test FAIL when exclude mode excludes non-corporate devices."""
+        policy_id = str(uuid4())
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_sign_in_frequency_enforced,
+            )
+
+            entra_client.conditional_access_policies = {
+                policy_id: _make_policy(
+                    policy_id=policy_id,
+                    display_name="Exclude Unmanaged Devices Policy",
+                    device_filter_mode=DeviceFilterMode.EXCLUDE,
+                    device_filter_rule="device.isCompliant -eq False",
                 )
             }
 

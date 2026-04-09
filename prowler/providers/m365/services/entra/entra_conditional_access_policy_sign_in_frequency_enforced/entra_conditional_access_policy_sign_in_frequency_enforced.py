@@ -1,3 +1,5 @@
+import re
+
 from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.entra.entra_client import entra_client
 from prowler.providers.m365.services.entra.entra_service import (
@@ -19,6 +21,18 @@ class entra_conditional_access_policy_sign_in_frequency_enforced(Check):
     - FAIL: No enabled policy meets the sign-in frequency enforcement criteria for
             non-corporate devices.
     """
+
+    NON_CORPORATE_INCLUDE_PATTERNS = (
+        r"device\.iscompliant\s*-ne\s*true",
+        r"device\.iscompliant\s*-eq\s*false",
+        r'device\.trusttype\s*-ne\s*"serverad"',
+        r"device\.trusttype\s*-ne\s*'serverad'",
+    )
+    CORPORATE_EXCLUDE_PATTERNS = (
+        r"device\.iscompliant\s*-eq\s*true",
+        r'device\.trusttype\s*-eq\s*"serverad"',
+        r"device\.trusttype\s*-eq\s*'serverad'",
+    )
 
     def _targets_all_users(self, included_users: list[str]) -> bool:
         """Check if the policy targets all users.
@@ -61,17 +75,15 @@ class entra_conditional_access_policy_sign_in_frequency_enforced(Check):
             return False
         if not device_conditions.device_filter_rule:
             return False
+        rule = device_conditions.device_filter_rule.lower()
         if device_conditions.device_filter_mode == DeviceFilterMode.INCLUDE:
-            rule = device_conditions.device_filter_rule.lower()
-            return (
-                "device.iscompliant" in rule or "device.trusttype" in rule
-            )
+            return self._rule_matches_any(rule, self.NON_CORPORATE_INCLUDE_PATTERNS)
         elif device_conditions.device_filter_mode == DeviceFilterMode.EXCLUDE:
-            rule = device_conditions.device_filter_rule.lower()
-            return (
-                "device.iscompliant" in rule or "device.trusttype" in rule
-            )
+            return self._rule_matches_any(rule, self.CORPORATE_EXCLUDE_PATTERNS)
         return False
+
+    def _rule_matches_any(self, rule: str, patterns: tuple[str, ...]) -> bool:
+        return any(re.search(pattern, rule) for pattern in patterns)
 
     def execute(self) -> list[CheckReportM365]:
         """Execute the check for sign-in frequency enforcement in Conditional Access policies.
