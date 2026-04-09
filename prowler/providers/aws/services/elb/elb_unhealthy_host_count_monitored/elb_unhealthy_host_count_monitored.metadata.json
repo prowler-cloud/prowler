@@ -1,35 +1,35 @@
 {
-    "Provider": "aws",
-    "CheckID": "elb_unhealthy_host_count_monitored",
-    "CheckTitle": "Monitor Load Balancer Unhealthy Host Count",
-    "CheckType": [
-      "Monitoring"
-    ],
-    "ServiceName": "elb",
-    "SubServiceName": "",
-    "ResourceIdTemplate": "arn:aws:elasticloadbalancing:region:account-id:loadbalancer/lb-name",
-    "Severity": "medium",
-    "ResourceType": "AwsElbLoadBalancer",
-    "Description": "Ensure that CloudWatch alarms are set to monitor the unhealthy host count for all Elastic Load Balancers.",
-    "Risk": "Not monitoring unhealthy hosts can lead to undetected failures and impact service availability.",
-    "RelatedUrl": "",
-    "Remediation": {
-      "Code": {
-        "CLI": "",
-        "NativeIaC": "",
-        "Other": "",
-        "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm"
-      },
-      "Recommendation": {
-        "Text": "Set up a CloudWatch alarm to monitor the unhealthy host count for your load balancer(s).",
-        "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-alarms.html"
-      }
+  "Provider": "aws",
+  "CheckID": "elb_unhealthy_host_count_monitored",
+  "CheckTitle": "Monitor Load Balancer Unhealthy Host Count",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
+  ],
+  "ServiceName": "elb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:elasticloadbalancing:region:account-id:loadbalancer/lb-name",
+  "Severity": "medium",
+  "ResourceType": "AwsElbLoadBalancer",
+  "Description": "Ensure that CloudWatch alarms are set to monitor the unhealthy host count for all Elastic Load Balancers.",
+  "Risk": "Not monitoring unhealthy hosts can lead to undetected failures and impact service availability.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm"
     },
-    "Categories": [
-      "availability"
-    ],
-    "DependsOn": [],
-    "RelatedTo": [],
-    "Notes": ""
-  }
+    "Recommendation": {
+      "Text": "Set up a CloudWatch alarm to monitor the unhealthy host count for your load balancer(s).",
+      "Url": ""
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
   

@@ -1,30 +1,34 @@
 {
-    "Provider": "aws",
-    "CheckID": "cloudwatch_alarm_for_lambda_error_rate",
-    "CheckTitle": "Ensure CloudWatch Alarms are Set for Lambda Function Error Rate",
-    "CheckType": ["Infrastructure Security"],
-    "ServiceName": "cloudwatch",
-    "SubServiceName": "error_rate",
-    "ResourceIdTemplate": "arn:aws:lambda:region:account-id:function:function-name",
-    "Severity": "high",
-    "ResourceType": "AWS::Lambda::Function",
-    "Description": "Ensure that CloudWatch alarms are configured to monitor the error rate of Lambda functions to detect issues or failures.",
-    "Risk": "Lack of monitoring for Lambda function error rates can lead to undetected issues or failures in your serverless applications.",
-    "RelatedUrl": "https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions.html",
-    "Remediation": {
-        "Code": {
-            "CLI": "aws cloudwatch describe-alarms --query 'MetricAlarms[?MetricName==`Errors` && Namespace==`AWS/Lambda`]'",
-            "NativeIaC": "",
-            "Other": "",
-            "Terraform": ""
-        },
-        "Recommendation": {
-            "Text": "Ensure CloudWatch alarms are configured to monitor the error rate of all Lambda functions.",
-            "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Alarms.html"
-        }
+  "Provider": "aws",
+  "CheckID": "cloudwatch_alarm_for_lambda_error_rate",
+  "CheckTitle": "CloudWatch Alarms are Set for Lambda Function Error Rate",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
+  ],
+  "ServiceName": "cloudwatch",
+  "SubServiceName": "error_rate",
+  "ResourceIdTemplate": "arn:aws:lambda:region:account-id:function:function-name",
+  "Severity": "high",
+  "ResourceType": "AWS::Lambda::Function",
+  "Description": "Ensure that CloudWatch alarms are configured to monitor the error rate of Lambda functions to detect issues or failures.",
+  "Risk": "Lack of monitoring for Lambda function error rates can lead to undetected issues or failures in your serverless applications.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudwatch describe-alarms --query 'MetricAlarms[?MetricName==`Errors` && Namespace==`AWS/Lambda`]'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
     },
-    "Categories": ["monitoring"],
-    "DependsOn": [],
-    "RelatedTo": [],
-    "Notes": ""
+    "Recommendation": {
+      "Text": "Ensure CloudWatch alarms are configured to monitor the error rate of all Lambda functions.",
+      "Url": ""
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
 }

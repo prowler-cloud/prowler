@@ -1,8 +1,10 @@
 {
   "Provider": "aws",
   "CheckID": "ec2_securitygroup_exposes_ports_80_443_only",
-  "CheckTitle": "Ensure EC2 Security Groups only expose ports 80 and 443 to the public internet.",
-  "CheckType": ["Infrastructure Security"],
+  "CheckTitle": "EC2 Security Groups only expose ports 80 and 443 to the public internet.",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Security"
+  ],
   "ServiceName": "ec2",
   "SubServiceName": "security-group",
   "ResourceIdTemplate": "arn:aws:ec2:region:account-id:security-group/security-group-id",
@@ -10,7 +12,7 @@
   "ResourceType": "AWS::EC2::SecurityGroup",
   "Description": "This check ensures that EC2 Security Groups are configured to only expose ports 80 (HTTP) and 443 (HTTPS) to the public internet, minimizing the attack surface.",
   "Risk": "Exposing unnecessary ports to the public internet increases the risk of unauthorized access and potential security breaches.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "aws ec2 describe-security-groups --group-ids security-group-id",
@@ -20,10 +22,12 @@
     },
     "Recommendation": {
       "Text": "Ensure that EC2 Security Groups are configured to allow only necessary ports (80, 443) to the public internet.",
-      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html"
+      "Url": ""
     }
   },
-  "Categories": ["network-security"],
+  "Categories": [
+    "container-security"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

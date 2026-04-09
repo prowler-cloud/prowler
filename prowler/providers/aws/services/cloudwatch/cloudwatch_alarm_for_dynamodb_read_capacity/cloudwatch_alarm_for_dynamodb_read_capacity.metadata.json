@@ -1,33 +1,34 @@
 {
-    "Provider": "aws",
-    "CheckID": "cloudwatch_alarm_for_dynamodb_read_capacity",
-    "CheckTitle": "Ensure CloudWatch Alarms are Set for DynamoDB Read Capacity Changes",
-    "CheckType": [
-      "Infrastructure Security"
-    ],
-    "ServiceName": "cloudwatch",
-    "SubServiceName": "",
-    "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
-    "Severity": "medium",
-    "ResourceType": "AwsCloudTrailTrail",
-    "Description": "Ensure CloudWatch metric filters and alarms are set for changes to DynamoDB read capacity to detect unauthorized or unintended changes.",
-    "Risk": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
-    "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "Remediation": {
-      "Code": {
-        "CLI": "aws cloudwatch describe-alarms --query 'MetricAlarms[?MetricName==`ConsumedReadCapacityUnits`]'",
-        "NativeIaC": "",
-        "Other": "",
-        "Terraform": ""
-      },
-      "Recommendation": {
-            "Text": "Ensure CloudWatch metric filters and alarms are configured to monitor read capacity changes in DynamoDB tables.",
-            "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Events.html"
-        }
+  "Provider": "aws",
+  "CheckID": "cloudwatch_alarm_for_dynamodb_read_capacity",
+  "CheckTitle": "CloudWatch Alarms are Set for DynamoDB Read Capacity Changes",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
+  ],
+  "ServiceName": "cloudwatch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsCloudTrailTrail",
+  "Description": "Ensure CloudWatch metric filters and alarms are set for changes to DynamoDB read capacity to detect unauthorized or unintended changes.",
+  "Risk": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudwatch describe-alarms --query 'MetricAlarms[?MetricName==`ConsumedReadCapacityUnits`]'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
     },
-    "Categories": ["monitoring"],
-    "DependsOn": [],
-    "RelatedTo": [],
-    "Notes": "Logging and Monitoring"
-  }
-  
+    "Recommendation": {
+      "Text": "Ensure CloudWatch metric filters and alarms are configured to monitor read capacity changes in DynamoDB tables.",
+      "Url": ""
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Logging and Monitoring"
+}
