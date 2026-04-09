@@ -21,7 +21,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Select **New policy**.\n4. Under **Users**, include the desired scope (e.g., **All users**).\n5. Under **Target resources**, include **All cloud apps** or the applications you want to protect.\n6. Under **Conditions** > **Device platforms**, set **Configure** to **Yes**.\n7. Under **Include**, select **Any device**.\n8. Under **Exclude**, select **Android**, **iOS**, **Windows**, **macOS**, and **Linux**.\n9. Under **Grant**, select **Block access**.\n10. Set **Enable policy** to **On** and click **Create**.",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Select **New policy**.\n4. Under **Users**, include the desired scope. Microsoft recommends **All users** with appropriate exclusions.\n5. Under **Target resources**, include the applications or resources you want to protect. Microsoft recommends **All resources / All cloud apps**.\n6. Under **Conditions** > **Device platforms**, set **Configure** to **Yes**.\n7. Under **Include**, select **Any device**.\n8. Under **Exclude**, select **Android**, **iOS**, **Windows**, **macOS**, and **Linux**.\n9. Under **Grant**, select **Block access**.\n10. Set **Enable policy** to **On** and click **Create**.",
       "Terraform": ""
     },
     "Recommendation": {
@@ -35,5 +35,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check corresponds to Maester test **MT.1015** (`Test-MtCaBlockUnknownOrUnsupportedDevicePlatform`). The recommended policy includes all platforms and excludes the five known platforms (Android, iOS, Windows, macOS, Linux) so that only unknown or unsupported platforms are blocked. The check requires the policy to be fully enabled; report-only policies are treated as non-compliant."
+  "Notes": "This check corresponds to Maester test **MT.1015** (`Test-MtCaBlockUnknownOrUnsupportedDevicePlatform`). The policy must include all platforms and exclude the five known platforms (Android, iOS, Windows, macOS, Linux) so that only unknown or unsupported platforms are blocked. The check requires the policy to be fully enabled; report-only policies are treated as non-compliant. Microsoft recommends applying this policy broadly to **All users** and **All resources / All cloud apps**, but that broader scope is guidance rather than a requirement enforced by this check."
 }

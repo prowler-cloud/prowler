@@ -481,7 +481,7 @@ class Test_entra_conditional_access_policy_block_unknown_device_platforms:
             assert result[0].status == "FAIL"
 
     def test_policy_limited_to_specific_users_and_apps(self):
-        """Test FAIL when the policy only protects a subset of users and apps."""
+        """Test PASS when a scoped policy still blocks unknown device platforms."""
         policy_id = str(uuid4())
         display_name = "Scoped Unknown Platform Block"
         entra_client = mock.MagicMock
@@ -545,10 +545,10 @@ class Test_entra_conditional_access_policy_block_unknown_device_platforms:
             check = entra_conditional_access_policy_block_unknown_device_platforms()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "No Conditional Access Policy blocks access from unknown or unsupported device platforms."
+                == "Conditional Access Policy 'Scoped Unknown Platform Block' blocks access from unknown or unsupported device platforms."
             )
 
     def test_policy_enabled_and_compliant(self):

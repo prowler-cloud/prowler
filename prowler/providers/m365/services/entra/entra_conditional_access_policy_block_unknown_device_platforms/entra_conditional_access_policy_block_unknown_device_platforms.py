@@ -42,7 +42,6 @@ class entra_conditional_access_policy_block_unknown_device_platforms(Check):
 
         A candidate policy must:
         - Not be disabled.
-        - Target all users and all cloud apps.
         - Have platform conditions configured.
         - Include all platforms.
         - Exclude all known platforms so only unknown ones are affected.
@@ -55,21 +54,6 @@ class entra_conditional_access_policy_block_unknown_device_platforms(Check):
             True if the policy is a candidate, False otherwise.
         """
         if policy.state == ConditionalAccessPolicyState.DISABLED:
-            return False
-
-        if not policy.conditions.user_conditions:
-            return False
-
-        if "All" not in policy.conditions.user_conditions.included_users:
-            return False
-
-        if not policy.conditions.application_conditions:
-            return False
-
-        if "All" not in policy.conditions.application_conditions.included_applications:
-            return False
-
-        if policy.conditions.application_conditions.included_user_actions:
             return False
 
         if not policy.conditions.platform_conditions:
