@@ -55,6 +55,12 @@ tools:
     - tree
     - diff
 
+steps:
+  - name: Harden Runner
+    uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+    with:
+      egress-policy: audit
+
 mcp-servers:
   prowler:
     url: "https://mcp.prowler.com/mcp"
