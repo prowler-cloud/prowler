@@ -6,19 +6,17 @@ from prowler.providers.aws.services.stepfunctions.stepfunctions_client import (
 
 
 class stepfunctions_statemachine_no_secrets_in_definition(Check):
-    def execute(self):
+    """Check that AWS Step Functions state machine definitions contain no hardcoded secrets."""
+
+    def execute(self) -> list[Check_Report_AWS]:
         findings = []
         secrets_ignore_patterns = stepfunctions_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
         for state_machine in stepfunctions_client.state_machines.values():
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource=state_machine
-            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=state_machine)
             report.status = "PASS"
-            report.status_extended = (
-                f"No secrets found in Step Functions state machine {state_machine.name} definition."
-            )
+            report.status_extended = f"No secrets found in Step Functions state machine {state_machine.name} definition."
 
             if state_machine.definition:
                 detect_secrets_output = detect_secrets_scan(
