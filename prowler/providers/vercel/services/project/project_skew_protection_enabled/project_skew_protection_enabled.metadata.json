@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable skew protection to ensure that all client requests during a deployment rollout are routed to the same deployment version that served the initial page. This prevents version mismatch errors and ensures a consistent user experience during deployments.",
-      "Url": "https://hub.prowler.com/checks/vercel/project_skew_protection_enabled"
+      "Url": "https://hub.prowler.com/check/project_skew_protection_enabled"
     }
   },
   "Categories": [

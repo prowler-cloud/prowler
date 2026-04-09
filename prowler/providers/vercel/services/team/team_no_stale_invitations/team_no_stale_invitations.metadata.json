@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Regularly review and revoke stale team invitations. Establish a process to follow up on pending invitations within a reasonable timeframe and revoke those that are no longer needed to reduce the risk of unauthorized access.",
-      "Url": "https://hub.prowler.com/checks/vercel/team_no_stale_invitations"
+      "Url": "https://hub.prowler.com/check/team_no_stale_invitations"
     }
   },
   "Categories": [

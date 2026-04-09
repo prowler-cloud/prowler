@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Remove expired tokens and create new ones with appropriate expiration dates. Implement a token rotation schedule to ensure tokens are refreshed before they expire. Update all integrations and automation that depend on the replaced tokens.",
-      "Url": "https://hub.prowler.com/checks/vercel/authentication_token_not_expired"
+      "Url": "https://hub.prowler.com/check/authentication_token_not_expired"
     }
   },
   "Categories": [
