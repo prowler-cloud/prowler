@@ -39,21 +39,24 @@ def _make_session_controls():
 def _make_conditions(
     included_applications=None,
     included_users=None,
+    excluded_applications=None,
+    excluded_users=None,
+    excluded_roles=None,
 ):
     """Return Conditions with the given application and user scopes."""
     return Conditions(
         application_conditions=ApplicationsConditions(
             included_applications=included_applications or ["All"],
-            excluded_applications=[],
+            excluded_applications=excluded_applications or [],
             included_user_actions=[],
         ),
         user_conditions=UsersConditions(
             included_groups=[],
             excluded_groups=[],
             included_users=included_users or ["All"],
-            excluded_users=[],
+            excluded_users=excluded_users or [],
             included_roles=[],
-            excluded_roles=[],
+            excluded_roles=excluded_roles or [],
         ),
         client_app_types=[],
         user_risk_levels=[],
@@ -231,6 +234,106 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
                     display_name=display_name,
                     conditions=_make_conditions(
                         included_users=["some-user-id"],
+                    ),
+                    grant_controls=_make_grant_controls(),
+                    session_controls=_make_session_controls(),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                )
+            }
+
+            check = entra_conditional_access_policy_all_apps_all_users()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "No Conditional Access Policy covers all cloud apps and all users."
+            )
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
+            assert result[0].location == "global"
+
+    def test_policy_excluding_applications(self):
+        policy_id = str(uuid4())
+        display_name = "All Apps Except One Policy"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_all_apps_all_users.entra_conditional_access_policy_all_apps_all_users import (
+                entra_conditional_access_policy_all_apps_all_users,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                policy_id: ConditionalAccessPolicy(
+                    id=policy_id,
+                    display_name=display_name,
+                    conditions=_make_conditions(
+                        excluded_applications=["excluded-app-id"],
+                    ),
+                    grant_controls=_make_grant_controls(),
+                    session_controls=_make_session_controls(),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                )
+            }
+
+            check = entra_conditional_access_policy_all_apps_all_users()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "No Conditional Access Policy covers all cloud apps and all users."
+            )
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
+            assert result[0].location == "global"
+
+    def test_policy_excluding_users(self):
+        policy_id = str(uuid4())
+        display_name = "All Users Except One Policy"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_all_apps_all_users.entra_conditional_access_policy_all_apps_all_users import (
+                entra_conditional_access_policy_all_apps_all_users,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                policy_id: ConditionalAccessPolicy(
+                    id=policy_id,
+                    display_name=display_name,
+                    conditions=_make_conditions(
+                        excluded_users=["excluded-user-id"],
                     ),
                     grant_controls=_make_grant_controls(),
                     session_controls=_make_session_controls(),
@@ -552,6 +655,63 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
                             included_roles=[],
                             excluded_roles=[],
                         ),
+                        client_app_types=[],
+                        user_risk_levels=[],
+                    ),
+                    grant_controls=_make_grant_controls(),
+                    session_controls=_make_session_controls(),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                )
+            }
+
+            check = entra_conditional_access_policy_all_apps_all_users()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "No Conditional Access Policy covers all cloud apps and all users."
+            )
+            assert result[0].resource == {}
+            assert result[0].resource_name == "Conditional Access Policies"
+            assert result[0].resource_id == "conditionalAccessPolicies"
+            assert result[0].location == "global"
+
+    def test_policy_no_user_conditions(self):
+        policy_id = str(uuid4())
+        display_name = "No User Conditions Policy"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_all_apps_all_users.entra_conditional_access_policy_all_apps_all_users import (
+                entra_conditional_access_policy_all_apps_all_users,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                policy_id: ConditionalAccessPolicy(
+                    id=policy_id,
+                    display_name=display_name,
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=None,
                         client_app_types=[],
                         user_risk_levels=[],
                     ),

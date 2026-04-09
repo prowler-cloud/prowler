@@ -38,16 +38,21 @@ class entra_conditional_access_policy_all_apps_all_users(Check):
             if policy.state == ConditionalAccessPolicyState.DISABLED:
                 continue
 
-            if not policy.conditions.application_conditions:
+            application_conditions = policy.conditions.application_conditions
+            user_conditions = policy.conditions.user_conditions
+            if not application_conditions or not user_conditions:
                 continue
 
-            if (
-                "All"
-                not in policy.conditions.application_conditions.included_applications
-            ):
+            if "All" not in application_conditions.included_applications:
                 continue
 
-            if "All" not in policy.conditions.user_conditions.included_users:
+            if application_conditions.excluded_applications != []:
+                continue
+
+            if "All" not in user_conditions.included_users:
+                continue
+
+            if user_conditions.excluded_users != [] or user_conditions.excluded_roles != []:
                 continue
 
             # Exclude policies that only require a password change,
