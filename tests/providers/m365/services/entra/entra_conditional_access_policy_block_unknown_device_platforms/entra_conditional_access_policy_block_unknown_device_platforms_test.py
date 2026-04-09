@@ -212,7 +212,7 @@ class Test_entra_conditional_access_policy_block_unknown_device_platforms:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Conditional Access Policy 'Block Unknown Platforms' reports blocking unknown or unsupported device platforms but does not enforce it."
+                == "Conditional Access Policy Block Unknown Platforms reports blocking unknown or unsupported device platforms but does not enforce it."
             )
             assert result[0].resource_name == "Block Unknown Platforms"
             assert result[0].resource_id == policy_id
@@ -548,7 +548,7 @@ class Test_entra_conditional_access_policy_block_unknown_device_platforms:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Conditional Access Policy 'Scoped Unknown Platform Block' blocks access from unknown or unsupported device platforms."
+                == "Conditional Access Policy Scoped Unknown Platform Block blocks access from unknown or unsupported device platforms."
             )
 
     def test_policy_enabled_and_compliant(self):
@@ -617,7 +617,7 @@ class Test_entra_conditional_access_policy_block_unknown_device_platforms:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Conditional Access Policy 'Block Unknown Platforms' blocks access from unknown or unsupported device platforms."
+                == "Conditional Access Policy Block Unknown Platforms blocks access from unknown or unsupported device platforms."
             )
             assert result[0].resource_name == "Block Unknown Platforms"
             assert result[0].resource_id == policy_id
