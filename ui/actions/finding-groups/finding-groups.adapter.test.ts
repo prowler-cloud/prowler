@@ -163,6 +163,7 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
               alias: "production",
             },
             status: "FAIL",
+            delta: "new",
             severity: "critical",
             first_seen_at: null,
             last_seen_at: "2024-01-01T00:00:00Z",
@@ -178,5 +179,6 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
     expect(result).toHaveLength(1);
     expect(result[0].checkId).toBe("s3_check");
     expect(result[0].resourceName).toBe("my-bucket");
+    expect(result[0].delta).toBe("new");
   });
 });

@@ -34,12 +34,14 @@ export interface FindingResourceRow {
   providerAlias: string;
   providerUid: string;
   resourceName: string;
+  resourceType: string;
   resourceGroup: string;
   resourceUid: string;
   service: string;
   region: string;
   severity: Severity;
   status: string;
+  delta?: string | null;
   isMuted: boolean;
   mutedReason?: string;
   firstSeenAt: string | null;

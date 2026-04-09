@@ -28,6 +28,7 @@ import { FindingGroupRow, FindingResourceRow } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingResources } from "./column-finding-resources";
+import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
@@ -82,7 +83,7 @@ export function FindingsGroupDrillDown({
     setIsLoading(loading);
   };
 
-  const { sentinelRef, refresh, loadMore } = useInfiniteResources({
+  const { sentinelRef, refresh, loadMore, totalCount } = useInfiniteResources({
     checkId: group.checkId,
     hasDateOrScanFilter: hasDateOrScan,
     filters,
@@ -95,7 +96,7 @@ export function FindingsGroupDrillDown({
   const drawer = useResourceDetailDrawer({
     resources,
     checkId: group.checkId,
-    totalResourceCount: group.resourcesTotal,
+    totalResourceCount: totalCount ?? group.resourcesTotal,
     onRequestMoreResources: loadMore,
   });
 
@@ -108,7 +109,7 @@ export function FindingsGroupDrillDown({
   const selectedFindingIds = Object.keys(rowSelection)
     .filter((key) => rowSelection[key])
     .map((idx) => resources[parseInt(idx)]?.findingId)
-    .filter(Boolean);
+    .filter((id): id is string => id !== null && id !== undefined && id !== "");
 
   /** Converts resource_ids (display) → resourceUids → finding UUIDs via API. */
   const resolveResourceIds = async (ids: string[]) => {
@@ -124,10 +125,10 @@ export function FindingsGroupDrillDown({
     });
   };
 
-  const selectableRowCount = resources.filter((r) => !r.isMuted).length;
+  const selectableRowCount = resources.filter(canMuteFindingResource).length;
 
   const getRowCanSelect = (row: Row<FindingResourceRow>): boolean => {
-    return !row.original.isMuted;
+    return canMuteFindingResource(row.original);
   };
 
   const clearSelection = () => {

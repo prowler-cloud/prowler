@@ -22,6 +22,7 @@ import { hasDateOrScanFilter } from "@/lib";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
 
 import { getColumnFindingResources } from "./column-finding-resources";
+import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   ResourceDetailDrawer,
@@ -180,7 +181,7 @@ export function InlineResourceContainer({
     setIsLoading(loading);
   };
 
-  const { sentinelRef, refresh, loadMore } = useInfiniteResources({
+  const { sentinelRef, refresh, loadMore, totalCount } = useInfiniteResources({
     checkId: group.checkId,
     hasDateOrScanFilter: hasDateOrScan,
     filters,
@@ -194,7 +195,7 @@ export function InlineResourceContainer({
   const drawer = useResourceDetailDrawer({
     resources,
     checkId: group.checkId,
-    totalResourceCount: group.resourcesTotal,
+    totalResourceCount: totalCount ?? group.resourcesTotal,
     onRequestMoreResources: loadMore,
   });
 
@@ -222,10 +223,10 @@ export function InlineResourceContainer({
     });
   };
 
-  const selectableRowCount = resources.filter((r) => !r.isMuted).length;
+  const selectableRowCount = resources.filter(canMuteFindingResource).length;
 
   const getRowCanSelect = (row: Row<FindingResourceRow>): boolean => {
-    return !row.original.isMuted;
+    return canMuteFindingResource(row.original);
   };
 
   const clearSelection = () => {

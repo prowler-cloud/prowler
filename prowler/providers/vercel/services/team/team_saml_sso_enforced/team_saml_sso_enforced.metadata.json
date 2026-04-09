@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enforce SAML SSO for all team members to ensure authentication is managed exclusively through your identity provider. This prevents credential bypass, enforces MFA policies, and provides centralized access control and audit capabilities.",
-      "Url": "https://hub.prowler.com/checks/vercel/team_saml_sso_enforced"
+      "Url": "https://hub.prowler.com/check/team_saml_sso_enforced"
     }
   },
   "Categories": [
