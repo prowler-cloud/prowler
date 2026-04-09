@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Complete domain verification by configuring the required DNS records at your domain registrar. Remove any domains that are no longer needed to reduce the attack surface. Regularly audit domain configurations to ensure all domains remain verified.",
-      "Url": "https://hub.prowler.com/checks/vercel/domain_verified"
+      "Url": "https://hub.prowler.com/check/domain_verified"
     }
   },
   "Categories": [

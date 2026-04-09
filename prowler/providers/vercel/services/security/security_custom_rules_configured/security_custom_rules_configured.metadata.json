@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure custom firewall rules to protect application-specific endpoints and enforce security policies. Focus on protecting admin panels, API routes, authentication endpoints, and any paths that handle sensitive data.",
-      "Url": "https://hub.prowler.com/checks/vercel/security_custom_rules_configured"
+      "Url": "https://hub.prowler.com/check/security_custom_rules_configured"
     }
   },
   "Categories": [
