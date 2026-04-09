@@ -25,6 +25,10 @@ import { getColumnFindingResources } from "./column-finding-resources";
 import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
+  getFilteredFindingGroupResourceCount,
+  getFindingGroupSkeletonCount,
+} from "./inline-resource-container.utils";
+import {
   ResourceDetailDrawer,
   useResourceDetailDrawer,
 } from "./resource-detail-drawer";
@@ -55,11 +59,17 @@ interface InlineResourceContainerProps {
 /** Max skeleton rows that fit in the 440px scroll container */
 const MAX_SKELETON_ROWS = 7;
 
-function ResourceSkeletonRow() {
+function ResourceSkeletonRow({
+  isEmptyStateSized = false,
+}: {
+  isEmptyStateSized?: boolean;
+}) {
+  const cellClassName = isEmptyStateSized ? "h-24 py-3" : "py-3";
+
   return (
     <TableRow className="hover:bg-transparent">
       {/* Select: indicator + corner arrow + checkbox */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-1.5 rounded-full" />
           <Skeleton className="size-4 rounded" />
@@ -67,55 +77,55 @@ function ResourceSkeletonRow() {
         </div>
       </TableCell>
       {/* Resource: icon + name + uid */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-4 rounded" />
-          <div className="space-y-1">
-            <Skeleton className="h-3.5 w-32 rounded" />
-            <Skeleton className="h-3 w-20 rounded" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-32 rounded" />
+            <Skeleton className="h-3.5 w-20 rounded" />
           </div>
         </div>
       </TableCell>
       {/* Status */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <Skeleton className="h-6 w-11 rounded-md" />
       </TableCell>
       {/* Service */}
-      <TableCell>
-        <Skeleton className="h-4 w-16 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-16 rounded" />
       </TableCell>
       {/* Region */}
-      <TableCell>
-        <Skeleton className="h-4 w-20 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-20 rounded" />
       </TableCell>
       {/* Severity */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-2 rounded-full" />
-          <Skeleton className="h-4 w-12 rounded" />
+          <Skeleton className="h-4.5 w-12 rounded" />
         </div>
       </TableCell>
       {/* Account: provider icon + alias + uid */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-4 rounded" />
-          <div className="space-y-1">
-            <Skeleton className="h-3.5 w-24 rounded" />
-            <Skeleton className="h-3 w-16 rounded" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-24 rounded" />
+            <Skeleton className="h-3.5 w-16 rounded" />
           </div>
         </div>
       </TableCell>
       {/* Last seen */}
-      <TableCell>
-        <Skeleton className="h-4 w-24 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-24 rounded" />
       </TableCell>
       {/* Failing for */}
-      <TableCell>
-        <Skeleton className="h-4 w-16 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-16 rounded" />
       </TableCell>
       {/* Actions */}
-      <TableCell>
-        <Skeleton className="size-6 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="size-8 rounded-md" />
       </TableCell>
     </TableRow>
   );
@@ -160,6 +170,16 @@ export function InlineResourceContainer({
   if (resourceSearch) {
     filters["filter[name__icontains]"] = resourceSearch;
   }
+
+  const skeletonRowCount = getFindingGroupSkeletonCount(
+    group,
+    filters,
+    MAX_SKELETON_ROWS,
+  );
+  const filteredResourceCount = getFilteredFindingGroupResourceCount(
+    group,
+    filters,
+  );
 
   const handleSetResources = (
     newResources: FindingResourceRow[],
@@ -310,12 +330,12 @@ export function InlineResourceContainer({
                   <table className="-mt-2.5 w-full border-separate border-spacing-y-4">
                     <tbody>
                       {isLoading && rows.length === 0 ? (
-                        Array.from({
-                          length: Math.min(
-                            group.resourcesTotal,
-                            MAX_SKELETON_ROWS,
-                          ),
-                        }).map((_, i) => <ResourceSkeletonRow key={i} />)
+                        Array.from({ length: skeletonRowCount }).map((_, i) => (
+                          <ResourceSkeletonRow
+                            key={i}
+                            isEmptyStateSized={filteredResourceCount === 0}
+                          />
+                        ))
                       ) : rows.length > 0 ? (
                         rows.map((row) => (
                           <TableRow
