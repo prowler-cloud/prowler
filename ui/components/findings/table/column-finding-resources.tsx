@@ -66,6 +66,14 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const handleMuteClick = async () => {
     const displayIds = getDisplayIds();
 
+    // Single resource: findingId is already a real finding UUID
+    if (displayIds.length === 1) {
+      setResolvedIds(displayIds);
+      setIsMuteModalOpen(true);
+      return;
+    }
+
+    // Multi-select: resolve through context
     if (resolveMuteIds) {
       setIsResolving(true);
       const ids = await resolveMuteIds(displayIds);

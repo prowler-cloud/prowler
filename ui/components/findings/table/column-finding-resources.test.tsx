@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -25,8 +26,21 @@ vi.mock("@/components/findings/mute-findings-modal", () => ({
   MuteFindingsModal: () => null,
 }));
 
+
 vi.mock("@/components/findings/send-to-jira-modal", () => ({
-  SendToJiraModal: () => null,
+  SendToJiraModal: ({
+    findingId,
+    isOpen,
+  }: {
+    findingId: string;
+    isOpen: boolean;
+  }) => (
+    <div
+      data-testid="jira-modal"
+      data-finding-id={findingId}
+      data-open={isOpen ? "true" : "false"}
+    />
+  ),
 }));
 
 vi.mock("@/components/icons/services/IconServices", () => ({
@@ -37,8 +51,18 @@ vi.mock("@/components/shadcn/dropdown", () => ({
   ActionDropdown: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
   ),
-  ActionDropdownItem: ({ label }: { label: string }) => (
-    <button>{label}</button>
+  ActionDropdownItem: ({
+    label,
+    onSelect,
+    disabled,
+  }: {
+    label: string;
+    onSelect?: () => void;
+    disabled?: boolean;
+  }) => (
+    <button disabled={disabled} onClick={onSelect}>
+      {label}
+    </button>
   ),
 }));
 
@@ -199,5 +223,51 @@ describe("column-finding-resources", () => {
 
     expect(screen.getByText("my-bucket")).toBeInTheDocument();
     expect(screen.getByText("arn:aws:s3:::my-bucket")).toBeInTheDocument();
+  });
+
+  it("should open Send to Jira modal with finding UUID directly", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+
+    const actionColumn = columns.find(
+      (col) => (col as { id?: string }).id === "actions",
+    );
+    if (!actionColumn?.cell) {
+      throw new Error("actions column not found");
+    }
+
+    const CellComponent = actionColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({
+              findingId: "real-finding-uuid",
+            }),
+          },
+        })}
+      </div>,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    expect(screen.getByTestId("jira-modal")).toHaveAttribute(
+      "data-finding-id",
+      "real-finding-uuid",
+    );
+    expect(screen.getByTestId("jira-modal")).toHaveAttribute(
+      "data-open",
+      "true",
+    );
   });
 });
