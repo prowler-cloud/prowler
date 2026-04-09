@@ -32,9 +32,13 @@ from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
+from prowler.lib.outputs.compliance.cis.cis_googleworkspace import GoogleWorkspaceCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
+from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
+    GoogleWorkspaceCISASCuBA,
+)
 from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
 from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
@@ -132,6 +136,10 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "github": [
         (lambda name: name.startswith("cis_"), GithubCIS),
+    ],
+    "googleworkspace": [
+        (lambda name: name.startswith("cis_"), GoogleWorkspaceCIS),
+        (lambda name: name.startswith("cisa_scuba_"), GoogleWorkspaceCISASCuBA),
     ],
     "iac": [
         # IaC provider doesn't have specific compliance frameworks yet
