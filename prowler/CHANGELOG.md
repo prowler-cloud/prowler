@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.23.0] (Prowler UNRELEASED)
+## [5.23.0] (Prowler v5.23.0)
 
 ### 🚀 Added
 
@@ -19,15 +19,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
 - `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
 - `Vercel` provider support with 30 checks [(#10189)](https://github.com/prowler-cloud/prowler/pull/10189)
+- `internet-exposed` category for 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 
 ### 🔄 Changed
 
-- Added `internet-exposed` category to 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 - Minimum Python version from 3.9 to 3.10 and updated classifiers to reflect supported versions (3.10, 3.11, 3.12) [(#10464)](https://github.com/prowler-cloud/prowler/pull/10464)
 
 ### 🐞 Fixed
 
-- OCI mutelist support: pass `tenancy_id` to `is_finding_muted` and update `oraclecloud_mutelist_example.yaml` to use `Accounts` key [(#10565)](https://github.com/prowler-cloud/prowler/issues/10565)
+- OCI mutelist support: pass `tenancy_id` to `is_finding_muted` and update `oraclecloud_mutelist_example.yaml` to use `Accounts` key [(#10566)](https://github.com/prowler-cloud/prowler/pull/10566)
 - `return` statements in `finally` blocks replaced across IAM, Organizations, GCP provider, and custom checks metadata to stop silently swallowing exceptions [(#10102)](https://github.com/prowler-cloud/prowler/pull/10102)
 - `JiraConnection` now includes issue types per project fetched during `test_connection`, fixing `JiraInvalidIssueTypeError` on non-English Jira instances [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
 - `--list-checks` and `--list-checks-json` now include `threat-detection` category checks in their output [(#10578)](https://github.com/prowler-cloud/prowler/pull/10578)
@@ -35,27 +35,20 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Azure Key Vault checks emitting incorrect findings for keys, secrets, and vault logging [(#10332)](https://github.com/prowler-cloud/prowler/pull/10332)
 - `_enabled_regions` empty-set bug in `AwsProvider.generate_regional_clients` creating boto3 clients for all 36 AWS regions instead of the audited ones, causing random CI timeouts and slow test runs [(#10598)](https://github.com/prowler-cloud/prowler/pull/10598)
 - Retrieve only the latest version from a package in AWS CodeArtifact [(#10243)](https://github.com/prowler-cloud/prowler/pull/10243)
+- AWS global services (CloudFront, Route53, Shield, FMS) now use the partition's global region instead of the profile's default region [(#10458)](https://github.com/prowler-cloud/prowler/pull/10458)
+- Oracle Cloud `events_rule_idp_group_mapping_changes` now recognizes the CIS 3.1 `add/remove` event names to avoid false positives [(#10416)](https://github.com/prowler-cloud/prowler/pull/10416)
+- Oracle Cloud password policy checks now exclude immutable system-managed policies (`SimplePasswordPolicy`, `StandardPasswordPolicy`) to avoid false positives [(#10453)](https://github.com/prowler-cloud/prowler/pull/10453)
+- Oracle Cloud `kms_key_rotation_enabled` now checks current key version age to avoid false positives on vaults without auto-rotation support [(#10450)](https://github.com/prowler-cloud/prowler/pull/10450)
+- OCI filestorage, blockstorage, KMS, and compute services now honor `--region` for scanning outside the tenancy home region [(#10472)](https://github.com/prowler-cloud/prowler/pull/10472)
+- OCI provider now supports multi-region filtering via `--region` [(#10473)](https://github.com/prowler-cloud/prowler/pull/10473)
+- `prowler image --registry` failing with `ImageNoImagesProvidedError` due to registry arguments not being forwarded to `ImageProvider` in `init_global_provider` [(#10470)](https://github.com/prowler-cloud/prowler/pull/10470)
+- OCI multi-region support for identity client configuration in blockstorage, identity, and filestorage services [(#10520)](https://github.com/prowler-cloud/prowler/pull/10520)
 
 ### 🔐 Security
 
 - Sensitive CLI flag values (tokens, keys, passwords) in HTML output "Parameters used" field now redacted to prevent credential leaks [(#10518)](https://github.com/prowler-cloud/prowler/pull/10518)
 - `authlib` bumped from 1.6.5 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
 - `cryptography` bumped from 44.0.3 to 46.0.6 ([CVE-2026-26007](https://github.com/pyca/cryptography/security/advisories/GHSA-r6ph-v2qm-q3c2), [CVE-2026-34073](https://github.com/pyca/cryptography/security/advisories/GHSA-m959-cc7f-wv43)), `oci` to 2.169.0, and `alibabacloud-tea-openapi` to 0.4.4 [(#10535)](https://github.com/prowler-cloud/prowler/pull/10535)
-
----
-
-## [5.22.1] (Prowler UNRELEASED)
-
-### 🐞 Fixed
-
-- AWS global services (CloudFront, Route53, Shield, FMS) now use the partition's global region instead of the profile's default region [(#10458)](https://github.com/prowler-cloud/prowler/issues/10458)
-- Oracle Cloud `events_rule_idp_group_mapping_changes` now recognizes the CIS 3.1 `add/remove` event names to avoid false positives [(#10416)](https://github.com/prowler-cloud/prowler/pull/10416)
-- Oracle Cloud password policy checks now exclude immutable system-managed policies (`SimplePasswordPolicy`, `StandardPasswordPolicy`) to avoid false positives [(#10453)](https://github.com/prowler-cloud/prowler/pull/10453)
-- Oracle Cloud `kms_key_rotation_enabled` now checks current key version age to avoid false positives on vaults without auto-rotation support [(#10450)](https://github.com/prowler-cloud/prowler/pull/10450)
-- Oracle Cloud patch for filestorage, blockstorage, kms, and compute services in OCI to allow for region scanning outside home [(#10455)](https://github.com/prowler-cloud/prowler/pull/10472)
-- Oracle cloud provider now supports multi-region filtering [(#10435)](https://github.com/prowler-cloud/prowler/pull/10473)
-- `prowler image --registry` failing with `ImageNoImagesProvidedError` due to registry arguments not being forwarded to `ImageProvider` in `init_global_provider` [(#10457)](https://github.com/prowler-cloud/prowler/issues/10457)
-- Oracle Cloud multi-region support for identity client configuration in blockstorage, identity, and filestorage services [(#10519)](https://github.com/prowler-cloud/prowler/pull/10520)
 
 ---
 

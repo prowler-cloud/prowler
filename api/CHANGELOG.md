@@ -2,12 +2,11 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.24.0] (Prowler UNRELEASED)
+## [1.24.0] (Prowler v5.23.0)
 
 ### 🚀 Added
 
-- Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
-- Filter RBAC role lookup by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
+- RBAC role lookup filtered by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
 - `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
 - `Vercel` provider support [(#10190)](https://github.com/prowler-cloud/prowler/pull/10190)
 
