@@ -7,6 +7,7 @@ import {
   getComplianceRequirements,
 } from "@/actions/compliances";
 import { getThreatScore } from "@/actions/overview";
+import { getScan } from "@/actions/scans";
 import {
   ClientAccordionWrapper,
   ComplianceDownloadContainer,
@@ -37,7 +38,6 @@ interface ComplianceDetailSearchParams {
   complianceId: string;
   version?: string;
   scanId?: string;
-  scanData?: string;
   "filter[region__in]"?: string;
   "filter[cis_profile_level]"?: string;
   page?: string;
@@ -53,7 +53,7 @@ export default async function ComplianceDetail({
 }) {
   const { compliancetitle } = await params;
   const resolvedSearchParams = await searchParams;
-  const { complianceId, version, scanId, scanData } = resolvedSearchParams;
+  const { complianceId, version, scanId } = resolvedSearchParams;
   const regionFilter = resolvedSearchParams["filter[region__in]"];
   const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
@@ -72,21 +72,34 @@ export default async function ComplianceDetail({
     : `${formattedTitle}`;
 
   let selectedScan: ScanEntity | null = null;
+  const selectedScanId = scanId || null;
 
-  if (scanData) {
-    selectedScan = JSON.parse(decodeURIComponent(scanData));
-  }
-
-  const selectedScanId = scanId || selectedScan?.id || null;
-
-  const [metadataInfoData, attributesData] = await Promise.all([
+  const [metadataInfoData, attributesData, selectedScanResponse] =
+    await Promise.all([
     getComplianceOverviewMetadataInfo({
       filters: {
         "filter[scan_id]": selectedScanId,
       },
     }),
     getComplianceAttributes(complianceId),
+    selectedScanId ? getScan(selectedScanId) : Promise.resolve(null),
   ]);
+
+  if (selectedScanResponse?.data) {
+    const scan = selectedScanResponse.data;
+    selectedScan = {
+      id: scan.id,
+      providerInfo: {
+        provider: scan.providerInfo?.provider || "aws",
+        alias: scan.providerInfo?.alias,
+        uid: scan.providerInfo?.uid,
+      },
+      attributes: {
+        name: scan.attributes.name,
+        completed_at: scan.attributes.completed_at,
+      },
+    };
+  }
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
