@@ -557,17 +557,70 @@ for p in $catalogs; do
 done
 ```
 
-### Step 2 — Write a generator script
+### Step 2 — Run the generic sync runner against a framework config
 
-See [assets/sync_ccc_template.py](assets/sync_ccc_template.py) as a working template (the actual script used to sync Prowler's CCC JSONs with FINOS v2025.10). The skeleton handles:
+The sync tooling is split into three layers so adding a new framework only takes a YAML config (and optionally a new parser module for an unfamiliar upstream format):
 
-- **Multiple upstream YAML shapes**. Most FINOS CCC catalogs use `control-families: [...]`, but `storage/object` uses a top-level `controls: [...]` with a `family: "CCC.X.Y"` reference id and no human-readable family name. A sync script that only handles shape 1 **silently drops the shape-2 catalog** — this exact bug dropped ObjStor from Prowler for a full iteration. Handle both shapes or explicitly reject unknown shapes.
-- **Whitespace collapse**. Upstream YAML multi-line block scalars (`|`) preserve newlines. Prowler stores descriptions single-line. Collapse with `" ".join(value.split())` before writing to JSON.
-- **Foreign-prefix AR id rewriting**. Upstream sometimes aliases requirements across catalogs by keeping the original prefix (e.g., `CCC.AuditLog.CN08.AR01` appears under both `management/auditlog.yaml` and `management/logging.yaml`, nested under `CCC.Logging.CN03`). Prowler's Pydantic model requires unique ids within a catalog file — rewrite the foreign id to fit its parent control: `CCC.AuditLog.CN08.AR01` inside `CCC.Logging.CN03` → `CCC.Logging.CN03.AR01`.
-- **Genuine upstream collision renumbering**. Sometimes upstream has a real typo where two different requirements share the same id (e.g., `CCC.Core.CN14.AR02` defined twice for 30-day and 14-day backup variants). Renumber the second copy to the next free AR number (`.AR03`). **Preserve the check mappings** by matching on `(Section, frozenset(Applicability))` since the renumbered id won't match by id.
-- **Existing check mapping preservation**. Build TWO lookup maps from the legacy JSON before overwriting: `by_id` (`ar_id → [checks]`) and `by_section` (`(Section, frozenset(Applicability)) → [checks]`). Look up by id first; if the id was rewritten, fall back to section+applicability.
-- **FamilyName normalization**. Collapse variants like `"Logging & Monitoring"` / `"Logging and Metrics Publication"` / `"Logging and Monitoring"` to a single canonical value. The UI groups by `Attributes[0].FamilyName` exactly — each variant becomes a separate tree branch.
-- **Populate `Version`**. Empty Version breaks `get_check_compliance()` key construction. Use the upstream catalog version (e.g., `"v2025.10"`).
+```
+skills/prowler-compliance/assets/
+├── sync_framework.py          # generic runner — works for any framework
+├── configs/
+│   └── ccc.yaml               # per-framework config (canonical example)
+└── parsers/
+    ├── __init__.py
+    └── finos_ccc.py           # parser module for FINOS CCC YAML
+```
+
+**For frameworks that already have a config + parser** (today: FINOS CCC), run:
+
+```bash
+python skills/prowler-compliance/assets/sync_framework.py \
+       skills/prowler-compliance/assets/configs/ccc.yaml
+```
+
+The runner loads the config, validates it, dynamically imports the parser declared in `parser.module`, calls `parser.parse_upstream(config) -> list[dict]`, then applies generic post-processing (id uniqueness safety net, `FamilyName` normalization, legacy check-mapping preservation) and writes the provider JSONs.
+
+**To add a new framework sync**:
+
+1. **Write a config file** at `skills/prowler-compliance/assets/configs/{framework}.yaml`. See `configs/ccc.yaml` as the canonical example. Required top-level sections:
+   - `framework` — `name`, `display_name`, `version` (**never empty** — empty Version silently breaks `get_check_compliance()` key construction, so the runner refuses to start), `description_template` (accepts `{provider_display}`, `{provider_key}`, `{framework_name}`, `{framework_display}`, `{version}` placeholders).
+   - `providers` — list of `{key, display}` pairs, one per Prowler provider the framework targets.
+   - `output.path_template` — supports `{provider}`, `{framework}`, `{version}` placeholders. Examples: `"prowler/compliance/{provider}/ccc_{provider}.json"` for unversioned file names, `"prowler/compliance/{provider}/cis_{version}_{provider}.json"` for versioned ones.
+   - `upstream.dir` — local cache directory (populate via Step 1).
+   - `parser.module` — name of the module under `parsers/` to load (without `.py`). Everything else under `parser.` is opaque to the runner and passed to the parser as config.
+   - `post_processing.check_preservation.primary_key` — top-level field name for the primary legacy-mapping lookup (almost always `Id`).
+   - `post_processing.check_preservation.fallback_keys` — **config-driven fallback keys** for preserving check mappings when ids change. Each entry is a list of `Attributes[0]` field names composed into a tuple. Examples:
+     - CCC: `- [Section, Applicability]` (because `Applicability` is a CCC-only attribute, verified in `compliance_models.py:213`).
+     - CIS would use `- [Section, Profile]`.
+     - NIST would use `- [ItemId]`.
+     - List-valued fields (like `Applicability`) are automatically frozen to `frozenset` so the tuple is hashable.
+   - `post_processing.family_name_normalization` (optional) — map of raw → canonical `FamilyName` values. The UI groups by `Attributes[0].FamilyName` exactly, so inconsistent upstream variants otherwise become separate tree branches.
+
+2. **Reuse an existing parser** if the upstream format matches one (currently only `finos_ccc` exists). Otherwise, **write a new parser** at `parsers/{name}.py` implementing:
+
+   ```python
+   def parse_upstream(config: dict) -> list[dict]:
+       """Return Prowler-format requirements {Id, Description, Attributes: [...], Checks: []}.
+
+       Ids MUST be unique in the returned list. The runner raises ValueError
+       on duplicates — it does NOT silently renumber, because mutating a
+       canonical upstream id (e.g. CIS '1.1.1' or NIST 'AC-2(1)') would be
+       catastrophic. The parser owns all upstream-format quirks: foreign-prefix
+       rewriting, genuine collision renumbering, shape handling.
+       """
+   ```
+
+   The parser reads its own settings from `config['upstream']` and `config['parser']`. It does NOT load existing Prowler JSONs (the runner does that for check preservation) and does NOT write output (the runner does that too).
+
+**Gotchas the runner already handles for you** (learned from the FINOS CCC v2025.10 sync — they're documented here so you don't re-discover them):
+
+- **Multiple upstream YAML shapes**. Most FINOS CCC catalogs use `control-families: [...]`, but `storage/object` uses a top-level `controls: [...]` with a `family: "CCC.X.Y"` reference id and no human-readable family name. A parser that only handles shape 1 silently drops the shape-2 catalog — this exact bug dropped ObjStor from Prowler for a full iteration. `parsers/finos_ccc.py` handles both shapes; if you write a new parser for a similar format, test with at least one file of each shape.
+- **Whitespace collapse**. Upstream YAML multi-line block scalars (`|`) preserve newlines. Prowler stores descriptions single-line. Collapse with `" ".join(value.split())` before emitting (see `parsers/finos_ccc.py::clean()`).
+- **Foreign-prefix AR id rewriting**. Upstream sometimes aliases requirements across catalogs by keeping the original prefix (e.g., `CCC.AuditLog.CN08.AR01` appears nested under `CCC.Logging.CN03`). Rewrite the foreign id to fit its parent control: `CCC.Logging.CN03.AR01`. This logic is parser-specific because the id structure varies per framework (CCC uses 3-dot depth; CIS uses numeric dots; NIST uses `AC-2(1)`).
+- **Genuine upstream collision renumbering**. Sometimes upstream has a real typo where two different requirements share the same id (e.g., `CCC.Core.CN14.AR02` defined twice for 30-day and 14-day backup variants). Renumber the second copy to the next free AR number (`.AR03`). The parser handles this; the runner asserts the final list has unique ids as a safety net.
+- **Existing check mapping preservation**. The runner uses the `primary_key` + `fallback_keys` declared in config to look up the old `Checks` list for each requirement. For CCC this means primary index by `Id` plus fallback index by `(Section, frozenset(Applicability))` — the fallback recovers mappings for requirements whose ids were rewritten or renumbered by the parser.
+- **FamilyName normalization**. Configured via `post_processing.family_name_normalization` — no code changes needed to collapse upstream variants like `"Logging & Monitoring"` → `"Logging and Monitoring"`.
+- **Populate `Version`**. The runner refuses to start on empty `framework.version` — fail-fast replaces the silent bug where `get_check_compliance()` would build the key as just `"{Framework}"`.
 
 ### Step 3 — Validate before committing
 
@@ -983,8 +1036,12 @@ prowler aws --compliance cis_5.0_aws -M csv json html
 ## Resources
 
 - **JSON Templates:** See [assets/](assets/) for framework JSON templates (cis, ens, iso27001, mitre_attack, prowler_threatscore, generic)
+- **Config-driven compliance sync** (any upstream-backed framework):
+  - [assets/sync_framework.py](assets/sync_framework.py) — generic runner. Loads a YAML config, dynamically imports the declared parser, applies generic post-processing (id uniqueness safety net, `FamilyName` normalization, legacy check-mapping preservation with config-driven fallback keys), and writes the provider JSONs with Pydantic post-validation. Framework-agnostic — works for any compliance framework.
+  - [assets/configs/ccc.yaml](assets/configs/ccc.yaml) — canonical config example (FINOS CCC v2025.10). Copy and adapt for new frameworks.
+  - [assets/parsers/finos_ccc.py](assets/parsers/finos_ccc.py) — FINOS CCC YAML parser. Handles both upstream shapes (`control-families` and top-level `controls`), foreign-prefix AR rewriting, and genuine collision renumbering. Exposes `parse_upstream(config) -> list[dict]`.
+  - [assets/parsers/](assets/parsers/) — add new parser modules here for unfamiliar upstream formats (NIST OSCAL JSON, MITRE STIX, CIS Benchmarks, etc.). Each parser is a `{name}.py` file implementing `parse_upstream(config) -> list[dict]` with guaranteed-unique ids.
 - **Reusable audit tooling** (added April 2026 after the FINOS CCC v2025.10 sync):
-  - [assets/sync_ccc_template.py](assets/sync_ccc_template.py) — upstream YAML → Prowler JSON generator. Handles multiple upstream shapes, foreign-prefix AR rewriting, genuine collision renumbering, check mapping preservation by id or (Section, Applicability).
   - [assets/audit_framework_template.py](assets/audit_framework_template.py) — explicit REPLACE decision ledger with pre-validation against the per-provider inventory. Drop-in template for auditing any framework.
   - [assets/query_checks.py](assets/query_checks.py) — keyword/service/id query helper over `/tmp/checks_{provider}.json`.
   - [assets/dump_section.py](assets/dump_section.py) — dumps every AR for a given id prefix across all 3 providers with current check mappings.

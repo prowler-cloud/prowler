@@ -1,0 +1,111 @@
+# FINOS Common Cloud Controls (CCC) sync config for sync_framework.py.
+#
+# Usage:
+#   python skills/prowler-compliance/assets/sync_framework.py \
+#          skills/prowler-compliance/assets/configs/ccc.yaml
+#
+# Prerequisite: run the upstream fetch step from SKILL.md Workflow A Step 1 to
+# populate upstream.dir with the raw FINOS catalog YAML files.
+
+framework:
+  name: CCC
+  display_name: Common Cloud Controls Catalog (CCC)
+  version: v2025.10
+  # The {provider_display} placeholder is replaced at output time with the
+  # per-provider display string from the providers list below.
+  description_template: "Common Cloud Controls Catalog (CCC) for {provider_display}"
+
+providers:
+  - key: aws
+    display: AWS
+  - key: azure
+    display: Azure
+  - key: gcp
+    display: GCP
+
+output:
+  # Supported placeholders: {provider}, {framework}, {version}.
+  # For versioned frameworks like CIS the template would be
+  # "prowler/compliance/{provider}/cis_{version}_{provider}.json".
+  path_template: "prowler/compliance/{provider}/ccc_{provider}.json"
+
+upstream:
+  # Directory containing the cached FINOS catalog YAMLs. Populate via
+  # SKILL.md Workflow A Step 1 (gh api raw download commands).
+  dir: /tmp/ccc_upstream
+  fetch_docs: "See SKILL.md Workflow A Step 1 for gh api fetch commands"
+
+parser:
+  # Name of the parser module under parsers/ (loaded dynamically by the
+  # runner). For FINOS CCC YAML this is always finos_ccc.
+  module: finos_ccc
+
+  # FINOS CCC catalog files in load order. Core first so its ARs render
+  # first in the output JSON.
+  catalog_files:
+    - core_ccc.yaml
+    - management_auditlog.yaml
+    - management_logging.yaml
+    - management_monitoring.yaml
+    - storage_object.yaml
+    - networking_loadbalancer.yaml
+    - networking_vpc.yaml
+    - crypto_key.yaml
+    - crypto_secrets.yaml
+    - database_warehouse.yaml
+    - database_vector.yaml
+    - database_relational.yaml
+    - devtools_build.yaml
+    - devtools_container-registry.yaml
+    - identity_iam.yaml
+    - ai-ml_gen-ai.yaml
+    - ai-ml_mlde.yaml
+    - app-integration_message.yaml
+    - compute_serverless-computing.yaml
+
+  # Shape-2 catalogs (storage/object) reference the family via id only
+  # (e.g. "CCC.ObjStor.Data") with no human-readable title or description
+  # in the YAML. Map the suffix (after the last dot) to a canonical title
+  # and description so the generated JSON has consistent FamilyName fields
+  # regardless of upstream shape.
+  family_id_title:
+    Data: Data
+    IAM: Identity and Access Management
+    Identity: Identity and Access Management
+    Encryption: Encryption
+    Logging: Logging and Monitoring
+    Network: Network Security
+    Availability: Availability
+    Integrity: Integrity
+    Confidentiality: Confidentiality
+  family_id_description:
+    Data: "The Data control family ensures the confidentiality, integrity, availability, and sovereignty of data across its lifecycle."
+    IAM: "The Identity and Access Management control family ensures that only trusted and authenticated entities can access resources."
+
+post_processing:
+  # Collapse FamilyName variants that appear inconsistently across upstream
+  # catalogs. The Prowler UI groups by Attributes[0].FamilyName exactly,
+  # so each variant would otherwise become a separate tree branch.
+  family_name_normalization:
+    "Logging & Monitoring": "Logging and Monitoring"
+    "Logging and Metrics Publication": "Logging and Monitoring"
+
+  # Preserve existing Checks lists from the legacy Prowler JSON when
+  # regenerating. The runner builds two lookup tables from the legacy
+  # output: a primary index by Id, and fallback indexes composed of
+  # attribute field names.
+  #
+  # primary_key: the top-level requirement field to use as the primary
+  #   lookup key (almost always "Id")
+  # fallback_keys: a list of composite keys. Each composite key is a list
+  #   of Attributes[0] field names to join into a tuple. List-valued fields
+  #   (like Applicability) are frozen to frozenset so the tuple is hashable.
+  #
+  # CCC uses (Section, Applicability) because Applicability is a CCC-only
+  # top-level attribute field. CIS would use (Section, Profile). NIST would
+  # use (ItemId,). The fallback is how renumbered or rewritten ids still
+  # recover their check mappings.
+  check_preservation:
+    primary_key: Id
+    fallback_keys:
+      - [Section, Applicability]
