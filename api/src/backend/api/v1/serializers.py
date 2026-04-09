@@ -4231,6 +4231,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     id = serializers.UUIDField(source="resource_id")
     resource = serializers.SerializerMethodField()
     provider = serializers.SerializerMethodField()
+    finding_id = serializers.UUIDField()
     status = serializers.CharField()
     severity = serializers.CharField()
     muted = serializers.BooleanField()

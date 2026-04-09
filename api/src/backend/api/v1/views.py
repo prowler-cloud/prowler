@@ -7485,6 +7485,12 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 resource_group=Max(
                     KeyTextTransform("resourcegroup", "finding__check_metadata")
                 ),
+                # Most recent matching Finding for this (resource, check):
+                # Finding.id is a UUIDv7 (time-ordered in its high 48 bits).
+                # Cast to text first because PostgreSQL has no built-in
+                # `max(uuid)` aggregate; on the canonical lowercase form a
+                # lexicographic Max() still resolves to the latest snapshot.
+                finding_id=Max(Cast("finding__id", output_field=CharField())),
             )
             .filter(resource_id__isnull=False)
         )
@@ -7599,6 +7605,9 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     "muted": bool(row.get("muted", False)),
                     "muted_reason": row.get("muted_reason"),
                     "resource_group": row.get("resource_group", ""),
+                    "finding_id": (
+                        str(row["finding_id"]) if row.get("finding_id") else None
+                    ),
                 }
             )
 

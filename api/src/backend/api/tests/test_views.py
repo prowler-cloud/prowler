@@ -17137,3 +17137,55 @@ class TestFindingGroupViewSet:
             assert attrs["muted"] is True
             # Status reflects the underlying check outcome (FAIL), not MUTED
             assert attrs["status"] == "FAIL"
+
+    def test_finding_groups_resources_exposes_finding_id(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /resources payload exposes the most recent matching finding_id.
+
+        rds_encryption has 2 findings, one per resource. Each resource row must
+        report the UUID of its corresponding Finding (UUIDv7 ordering means
+        Max(finding__id) resolves to the latest snapshot in time).
+        """
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources",
+                kwargs={"pk": "rds_encryption"},
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "rds_encryption should expose its resources"
+
+        rds_finding_ids = {
+            str(f.id) for f in finding_groups_fixture if f.check_id == "rds_encryption"
+        }
+        assert rds_finding_ids, "fixture sanity"
+
+        for item in data:
+            attrs = item["attributes"]
+            assert "finding_id" in attrs
+            assert attrs["finding_id"] in rds_finding_ids
+
+    def test_finding_groups_latest_resources_exposes_finding_id(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /latest/.../resources payload also exposes finding_id."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": "rds_encryption"},
+            ),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "rds_encryption should expose its resources via /latest"
+
+        rds_finding_ids = {
+            str(f.id) for f in finding_groups_fixture if f.check_id == "rds_encryption"
+        }
+        for item in data:
+            attrs = item["attributes"]
+            assert "finding_id" in attrs
+            assert attrs["finding_id"] in rds_finding_ids
