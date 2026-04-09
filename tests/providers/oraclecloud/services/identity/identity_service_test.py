@@ -48,20 +48,15 @@ class TestIdentityService:
             identity_client.session_config = {}
             identity_client.session_signer = None
             identity_client.password_policy = {}
-            identity_client.domains = [
-                {
-                    "id": "ocid1.domain.oc1.iad.aaaaaaaaexampleuniqueID",
-                    "display_name": "exampledomain",
-                    "description": "example",
-                    "url": "https://idcs-example.identity.oraclecloud.com",
-                    "home_region": "us-phoenix-1",
-                    "compartment_id": "ocid1.compartment.oc1..aaaaaaaexample",
-                    "lifecycle_state": "ACTIVE",
-                    "time_created": None,
-                    "region": "us-phoenix-1",
-                    "password_policies": [],
-                }
-            ]
+            domain = MagicMock()
+            domain.id = "ocid1.domain.oc1.iad.aaaaaaaaexampleuniqueID"
+            domain.display_name = "exampledomain"
+            domain.description = "example"
+            domain.url = "https://idcs-example.identity.oraclecloud.com"
+            domain.home_region = "us-phoenix-1"
+            domain.lifecycle_state = "ACTIVE"
+            domain.time_created = None
+            identity_client.domains = [domain]
             regional_client = MagicMock()
             regional_client.region = "us-ashburn-1"
             # Ensure the domain is skipped since region != home_region
