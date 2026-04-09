@@ -6,6 +6,7 @@ from prowler.providers.m365.services.entra.entra_service import (
     ALL_GUEST_USER_TYPES,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
+    ExternalTenantsMembershipKind,
 )
 
 
@@ -53,10 +54,9 @@ class entra_conditional_access_policy_mfa_enforced_for_guest_users(Check):
             has_auth_strength = (
                 policy.grant_controls.authentication_strength is not None
             )
-            only_password_change = (
-                policy.grant_controls.built_in_controls
-                == [ConditionalAccessGrantControl.PASSWORD_CHANGE]
-            )
+            only_password_change = policy.grant_controls.built_in_controls == [
+                ConditionalAccessGrantControl.PASSWORD_CHANGE
+            ]
 
             if not (has_mfa or has_auth_strength) or only_password_change:
                 continue
@@ -80,6 +80,10 @@ class entra_conditional_access_policy_mfa_enforced_for_guest_users(Check):
                 "GuestsOrExternalUsers"
                 in policy.conditions.user_conditions.included_users
             )
+            excludes_all_guests = (
+                "GuestsOrExternalUsers"
+                in policy.conditions.user_conditions.excluded_users
+            )
 
             included_guests = (
                 policy.conditions.user_conditions.included_guests_or_external_users
@@ -87,6 +91,8 @@ class entra_conditional_access_policy_mfa_enforced_for_guest_users(Check):
             targets_all_guest_types = included_guests is not None and (
                 ALL_GUEST_USER_TYPES
                 <= set(included_guests.guest_or_external_user_types)
+                and included_guests.external_tenants_membership_kind
+                in (None, ExternalTenantsMembershipKind.ALL)
             )
 
             if not (
@@ -100,7 +106,7 @@ class entra_conditional_access_policy_mfa_enforced_for_guest_users(Check):
             excluded_guests = (
                 policy.conditions.user_conditions.excluded_guests_or_external_users
             )
-            if (
+            if excludes_all_guests or (
                 excluded_guests is not None
                 and excluded_guests.guest_or_external_user_types
             ):

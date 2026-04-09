@@ -7,10 +7,11 @@ from prowler.providers.m365.services.entra.entra_service import (
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
     Conditions,
-    GuestOrExternalUserType,
-    GuestsOrExternalUsers,
+    ExternalTenantsMembershipKind,
     GrantControlOperator,
     GrantControls,
+    GuestOrExternalUserType,
+    GuestsOrExternalUsers,
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
@@ -27,6 +28,7 @@ def build_policy(
     state: ConditionalAccessPolicyState,
     included_applications: list[str] | None = None,
     included_users: list[str] | None = None,
+    excluded_users: list[str] | None = None,
     built_in_controls: list[ConditionalAccessGrantControl] | None = None,
     authentication_strength: str | None = None,
     included_guests_or_external_users: GuestsOrExternalUsers | None = None,
@@ -50,7 +52,7 @@ def build_policy(
                 included_groups=[],
                 excluded_groups=[],
                 included_users=included_users or [],
-                excluded_users=[],
+                excluded_users=excluded_users or [],
                 included_roles=[],
                 excluded_roles=[],
                 included_guests_or_external_users=included_guests_or_external_users,
@@ -468,6 +470,82 @@ class Test_entra_conditional_access_policy_mfa_enforced_for_guest_users:
                     guest_or_external_user_types=[
                         GuestOrExternalUserType.SERVICE_PROVIDER,
                     ],
+                ),
+            )
+            entra_client.conditional_access_policies = {policy.id: policy}
+
+            result = (
+                entra_conditional_access_policy_mfa_enforced_for_guest_users().execute()
+            )
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "No Conditional Access Policy requires MFA for guest users."
+            )
+
+    def test_policy_excluding_guests_via_excluded_users_fails(self):
+        """Test FAIL when the policy excludes GuestsOrExternalUsers."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_mfa_enforced_for_guest_users.entra_conditional_access_policy_mfa_enforced_for_guest_users import (
+                entra_conditional_access_policy_mfa_enforced_for_guest_users,
+            )
+
+            policy = build_policy(
+                display_name="MFA for Users Except Guests",
+                state=ConditionalAccessPolicyState.ENABLED,
+                included_users=["All"],
+                excluded_users=["GuestsOrExternalUsers"],
+                built_in_controls=[ConditionalAccessGrantControl.MFA],
+            )
+            entra_client.conditional_access_policies = {policy.id: policy}
+
+            result = (
+                entra_conditional_access_policy_mfa_enforced_for_guest_users().execute()
+            )
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "No Conditional Access Policy requires MFA for guest users."
+            )
+
+    def test_policy_with_selected_external_tenants_fails(self):
+        """Test FAIL when the policy only targets selected external tenants."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(f"{CHECK_MODULE_PATH}.entra_client", new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_mfa_enforced_for_guest_users.entra_conditional_access_policy_mfa_enforced_for_guest_users import (
+                entra_conditional_access_policy_mfa_enforced_for_guest_users,
+            )
+
+            policy = build_policy(
+                display_name="MFA for Selected External Tenants",
+                state=ConditionalAccessPolicyState.ENABLED,
+                built_in_controls=[ConditionalAccessGrantControl.MFA],
+                included_guests_or_external_users=GuestsOrExternalUsers(
+                    guest_or_external_user_types=list(ALL_GUEST_USER_TYPES),
+                    external_tenants_membership_kind=ExternalTenantsMembershipKind.ENUMERATED,
                 ),
             )
             entra_client.conditional_access_policies = {policy.id: policy}

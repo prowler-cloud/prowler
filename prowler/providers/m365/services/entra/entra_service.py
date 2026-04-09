@@ -579,16 +579,36 @@ class Entra(M365Service):
             return None
 
         raw_types = getattr(sdk_obj, "guest_or_external_user_types", None) or []
+        raw_membership_kind = getattr(
+            getattr(sdk_obj, "external_tenants", None),
+            "membership_kind",
+            None,
+        )
+        membership_kind = None
+        if raw_membership_kind is not None:
+            raw_membership_kind = getattr(
+                raw_membership_kind,
+                "value",
+                raw_membership_kind,
+            )
+            try:
+                membership_kind = ExternalTenantsMembershipKind(raw_membership_kind)
+            except ValueError:
+                logger.warning(
+                    f"Unknown external tenants membership kind: {raw_membership_kind}"
+                )
+
         guest_types: list[GuestOrExternalUserType] = []
         for raw_type in raw_types:
             try:
                 guest_types.append(GuestOrExternalUserType(raw_type.value))
             except (ValueError, AttributeError):
-                logger.warning(
-                    f"Unknown guest or external user type: {raw_type}"
-                )
+                logger.warning(f"Unknown guest or external user type: {raw_type}")
 
-        return GuestsOrExternalUsers(guest_or_external_user_types=guest_types)
+        return GuestsOrExternalUsers(
+            guest_or_external_user_types=guest_types,
+            external_tenants_membership_kind=membership_kind,
+        )
 
     @staticmethod
     def _parse_app_management_restrictions(restrictions):
@@ -1016,6 +1036,14 @@ class GuestOrExternalUserType(Enum):
     SERVICE_PROVIDER = "serviceProvider"
 
 
+class ExternalTenantsMembershipKind(Enum):
+    """External tenant scope for guest or external user conditions."""
+
+    ALL = "all"
+    ENUMERATED = "enumerated"
+    UNKNOWN_FUTURE_VALUE = "unknownFutureValue"
+
+
 # All guest/external user types that represent actual guest or external users.
 ALL_GUEST_USER_TYPES = {
     GuestOrExternalUserType.INTERNAL_GUEST,
@@ -1031,6 +1059,7 @@ class GuestsOrExternalUsers(BaseModel):
     """Model representing guest or external user conditions in Conditional Access policies."""
 
     guest_or_external_user_types: List[GuestOrExternalUserType] = []
+    external_tenants_membership_kind: Optional[ExternalTenantsMembershipKind] = None
 
 
 class UsersConditions(BaseModel):
