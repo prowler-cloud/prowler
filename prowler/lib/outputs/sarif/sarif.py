@@ -162,6 +162,6 @@ class SARIF(Output):
                     "endLine": end_line,
                 }
             except (ValueError, IndexError):
-                pass
+                pass  # Malformed line range — skip region, keep location
 
         return location
