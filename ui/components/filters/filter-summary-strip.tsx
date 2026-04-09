@@ -21,8 +21,6 @@ export interface FilterSummaryStripProps {
   chips: FilterChip[];
   /** Called when the user clicks the X on a chip */
   onRemove: (key: string, value: string) => void;
-  /** Called when the user clicks "Clear all" */
-  onClearAll: () => void;
   /** Optional extra class names for the outer wrapper */
   className?: string;
 }
@@ -33,13 +31,11 @@ export interface FilterSummaryStripProps {
  *
  * - Hidden when `chips` is empty.
  * - Each chip carries its own X button to remove that single value.
- * - A "Clear all" link removes everything at once.
  * - Reusable: no Findings-specific logic, driven entirely by props.
  */
 export const FilterSummaryStrip = ({
   chips,
   onRemove,
-  onClearAll,
   className,
 }: FilterSummaryStripProps) => {
   if (chips.length === 0) return null;
@@ -54,7 +50,7 @@ export const FilterSummaryStrip = ({
       {chips.map((chip) => (
         <Badge
           key={`${chip.key}-${chip.value}`}
-          variant="outline"
+          variant="tag"
           className="flex items-center gap-1 pr-1"
         >
           <span className="text-text-neutral-primary text-xs">
@@ -71,14 +67,6 @@ export const FilterSummaryStrip = ({
           </button>
         </Badge>
       ))}
-
-      <button
-        type="button"
-        onClick={onClearAll}
-        className="text-text-neutral-secondary hover:text-text-neutral-primary text-xs underline-offset-2 hover:underline focus-visible:ring-1 focus-visible:ring-offset-1 focus-visible:outline-none"
-      >
-        Clear all
-      </button>
     </div>
   );
 };

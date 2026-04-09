@@ -1,0 +1,39 @@
+{
+  "Provider": "vercel",
+  "CheckID": "team_saml_sso_enabled",
+  "CheckTitle": "Vercel team has SAML SSO enabled for centralized identity management",
+  "CheckType": [],
+  "ServiceName": "team",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Vercel team** is assessed for **SAML single sign-on (SSO)** enablement. SAML SSO enables centralized identity management through an external identity provider, ensuring consistent authentication policies across the organization.",
+  "Risk": "Without **SAML SSO**, team members authenticate using individual Vercel credentials that are not centrally managed. This increases the risk of **credential sprawl**, inconsistent password policies, and inability to enforce organization-wide authentication controls such as **MFA**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/accounts/team-members-and-roles",
+    "https://vercel.com/docs/security/saml"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to your Vercel team settings\n2. Go to the Security section\n3. Configure SAML SSO with your identity provider (Okta, Azure AD, etc.)\n4. Complete the SAML connection setup and verify it is linked",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable SAML SSO for the Vercel team to centralize authentication through your organization's identity provider. This ensures consistent security policies, simplifies user lifecycle management, and enables enforcement of MFA and other access controls.",
+      "Url": "https://hub.prowler.com/checks/vercel/team_saml_sso_enabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "team_saml_sso_enforced"
+  ],
+  "Notes": ""
+}

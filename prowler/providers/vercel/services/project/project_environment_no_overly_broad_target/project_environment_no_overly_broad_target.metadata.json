@@ -1,0 +1,38 @@
+{
+  "Provider": "vercel",
+  "CheckID": "project_environment_no_overly_broad_target",
+  "CheckTitle": "Vercel project has no environment variables targeting all three environments",
+  "CheckType": [],
+  "ServiceName": "project",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Vercel project environment variables** are assessed for **overly broad targeting** by checking whether any variable targets all three environments (production, preview, development) simultaneously, which violates the principle of least privilege.",
+  "Risk": "Environment variables targeting **all environments** share the same values across production, preview, and development, increasing **blast radius** if credentials are compromised. Production secrets are exposed to weaker environments, making it harder to isolate and track unauthorized changes.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/environment-variables"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to your Vercel project dashboard\n2. Go to Settings > Environment Variables\n3. Identify variables that target all three environments (Production, Preview, Development)\n4. Edit each variable to target only the specific environments where it is needed\n5. Create separate variables with environment-specific values where different credentials are needed per environment",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Follow the **principle of least privilege** for environment variable targeting.\n- Assign each variable to only the environments where it is actually needed\n- Use different credentials for production, preview, and development environments\n- Non-sensitive configuration (e.g. feature flags, public URLs) may be acceptable in multiple environments but should still be reviewed\n- Regularly audit environment variable targets to prevent scope creep",
+      "Url": "https://hub.prowler.com/checks/vercel/project_environment_no_overly_broad_target"
+    }
+  },
+  "Categories": [
+    "secrets"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "project_environment_production_vars_not_in_preview"
+  ],
+  "Notes": "This check flags any variable targeting all three environments regardless of its type. Even non-sensitive configuration shared across all environments may indicate a lack of environment-specific configuration management."
+}

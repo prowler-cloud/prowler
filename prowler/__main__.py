@@ -67,7 +67,11 @@ from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
+from prowler.lib.outputs.compliance.cis.cis_googleworkspace import GoogleWorkspaceCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
+from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
+    GoogleWorkspaceCISASCuBA,
+)
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
@@ -141,6 +145,7 @@ from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
 from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
+from prowler.providers.vercel.models import VercelOutputOptions
 
 
 def prowler():
@@ -266,6 +271,8 @@ def prowler():
         categories=categories,
         resource_groups=resource_groups,
         provider=provider,
+        list_checks=getattr(args, "list_checks", False)
+        or getattr(args, "list_checks_json", False),
     )
 
     # if --list-checks-json, dump a json file and exit
@@ -392,6 +399,10 @@ def prowler():
         )
     elif provider == "openstack":
         output_options = OpenStackOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "vercel":
+        output_options = VercelOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 
@@ -1124,6 +1135,48 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "googleworkspace":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = GoogleWorkspaceCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            elif compliance_name.startswith("cisa_scuba_"):
+                # Generate CISA SCuBA Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cisa_scuba = GoogleWorkspaceCISASCuBA(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cisa_scuba)
+                cisa_scuba.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"

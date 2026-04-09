@@ -516,6 +516,13 @@ class TestTenantViewSet:
             response.json()["data"]["attributes"]["name"]
             == valid_tenant_payload["name"]
         )
+        new_tenant_id = response.json()["data"]["id"]
+        user = authenticated_client.user
+        assert UserRoleRelationship.objects.filter(
+            user=user,
+            tenant_id=new_tenant_id,
+            role__name="admin",
+        ).exists()
 
     def test_tenants_invalid_create(self, authenticated_client, invalid_tenant_payload):
         response = authenticated_client.post(
@@ -575,22 +582,66 @@ class TestTenantViewSet:
             Tenant.objects.filter(pk=kwargs.get("tenant_id")).delete()
 
         delete_tenant_mock.side_effect = _delete_tenant
+        # Use tenant2 where the user is OWNER
+        _, tenant2, _ = tenants_fixture
+        response = authenticated_client.delete(
+            reverse("tenant-detail", kwargs={"pk": tenant2.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert Membership.objects.filter(tenant_id=tenant2.id).count() == 0
+        # User is not deleted because it has another membership (tenant1)
+        assert User.objects.count() == 1
+
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_tenants_delete_as_member_forbidden(
+        self, delete_tenant_mock, authenticated_client, tenants_fixture
+    ):
+        # tenant1: user is MEMBER, not OWNER -> should be forbidden
         tenant1, *_ = tenants_fixture
         response = authenticated_client.delete(
             reverse("tenant-detail", kwargs={"pk": tenant1.id})
         )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        delete_tenant_mock.assert_not_called()
+
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_tenants_delete_cross_tenant(
+        self, delete_tenant_mock, authenticated_client, tenants_fixture
+    ):
+        # tenant3: user has no membership -> should be 404
+        _, _, tenant3 = tenants_fixture
+        response = authenticated_client.delete(
+            reverse("tenant-detail", kwargs={"pk": tenant3.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        delete_tenant_mock.assert_not_called()
+
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_tenants_delete_only_removes_exclusive_users(
+        self, delete_tenant_mock, authenticated_client, tenants_fixture, extra_users
+    ):
+        def _delete_tenant(kwargs):
+            Tenant.objects.filter(pk=kwargs.get("tenant_id")).delete()
+
+        delete_tenant_mock.side_effect = _delete_tenant
+        _, tenant2, _ = tenants_fixture
+        # extra_users adds user2 (OWNER in tenant2) and user3 (MEMBER in tenant2)
+        # user2 and user3 are ONLY in tenant2, so they should be deleted
+        # The test user is in tenant1 + tenant2, so should NOT be deleted
+        initial_user_count = User.objects.count()  # test_user + user2 + user3 = 3
+        assert initial_user_count == 3
+
+        response = authenticated_client.delete(
+            reverse("tenant-detail", kwargs={"pk": tenant2.id})
+        )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert Tenant.objects.count() == len(tenants_fixture) - 1
-        assert Membership.objects.filter(tenant_id=tenant1.id).count() == 0
-        # User is not deleted because it has another membership
+        # user2 and user3 are deleted (no other memberships), test_user remains
         assert User.objects.count() == 1
 
     def test_tenants_delete_invalid(self, authenticated_client):
         response = authenticated_client.delete(
             reverse("tenant-detail", kwargs={"pk": "random_id"})
         )
-        # To change if we implement RBAC
-        # (user might not have permissions to see if the tenant exists or not -> 200 empty)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_tenants_list_filter_search(self, authenticated_client, tenants_fixture):
@@ -694,7 +745,6 @@ class TestTenantViewSet:
         # Test user + 2 extra users for tenant 2
         assert len(response.json()["data"]) == 3
 
-    @patch("api.v1.views.TenantMembersViewSet.required_permissions", [])
     def test_tenants_list_memberships_as_member(
         self, authenticated_client, tenants_fixture, extra_users
     ):
@@ -806,6 +856,30 @@ class TestTenantViewSet:
             reverse("tenant-membership-list", kwargs={"tenant_pk": tenant4.id})
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_tenants_delete_membership_cross_tenant(
+        self, authenticated_client, tenants_fixture
+    ):
+        # Create a tenant with a different user's membership
+        other_tenant = Tenant.objects.create(name="Other Tenant")
+        other_user = User.objects.create_user(
+            name="other", password=TEST_PASSWORD, email="other@test.com"
+        )
+        other_membership = Membership.objects.create(
+            user=other_user,
+            tenant=other_tenant,
+            role=Membership.RoleChoices.OWNER,
+        )
+
+        # Authenticated user is NOT a member of other_tenant -> 404
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": other_tenant.id, "pk": other_membership.id},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert Membership.objects.filter(id=other_membership.id).exists()
 
     def test_tenants_list_no_permissions(
         self, authenticated_client_no_permissions_rbac, tenants_fixture
@@ -1715,6 +1789,46 @@ class TestProviderViewSet:
                     "min_length",
                     "uid",
                 ),
+                # Vercel UID validation - missing team_ prefix
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "abcdef1234567890abcdef12",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
+                # Vercel UID validation - too short after prefix
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "team_abc123",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
+                # Vercel UID validation - contains special characters
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "team_abcdef-1234567890ab",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
+                # Vercel UID validation - too long (33 chars after prefix)
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "team_abcdefghijklmnopqrstuvwxyz1234567",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
                 # Google Workspace UID validation - missing 'C' prefix
                 (
                     {
@@ -1918,21 +2032,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    11,
+                    12,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 12),
+                ("inserted_at", TODAY, 13),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    12,
+                    13,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    12,
+                    13,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2555,6 +2669,14 @@ class TestProviderSecretViewSet:
                 {
                     "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
                     "delegated_user": "admin@example.com",
+                },
+            ),
+            # Vercel with API Token
+            (
+                Provider.ProviderChoices.VERCEL.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "api_token": "fake-vercel-api-token-for-testing",
                 },
             ),
         ],
@@ -3234,6 +3356,29 @@ class TestScanViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 3
+
+    def test_scan_filter_by_id_exact(self, authenticated_client, scans_fixture):
+        scan1, *_ = scans_fixture
+        response = authenticated_client.get(
+            reverse("scan-list"),
+            {"filter[id]": str(scan1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == str(scan1.id)
+
+    def test_scan_filter_by_id_in(self, authenticated_client, scans_fixture):
+        scan1, scan2, *_ = scans_fixture
+        response = authenticated_client.get(
+            reverse("scan-list"),
+            {"filter[id.in]": f"{scan1.id},{scan2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        returned_ids = {item["id"] for item in data}
+        assert returned_ids == {str(scan1.id), str(scan2.id)}
 
     def test_scans_filter_state_failed(self, authenticated_client, scans_fixture):
         """Ensure state filter matches only FAILED scans."""
@@ -4142,7 +4287,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value=graph_payload,
             ) as mock_execute,
-            patch("api.v1.views.graph_database.clear_cache") as mock_clear_cache,
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4169,7 +4313,6 @@ class TestAttackPathsScanViewSet:
             prepared_parameters,
             provider_id,
         )
-        mock_clear_cache.assert_called_once_with(expected_db_name)
         result = response.json()["data"]
         attributes = result["attributes"]
         assert attributes["nodes"] == graph_payload["nodes"]
@@ -4224,7 +4367,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value=graph_payload,
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4308,7 +4450,6 @@ class TestAttackPathsScanViewSet:
                     "truncated": False,
                 },
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
             patch(
                 "api.v1.views.graph_database.get_database_name", return_value="db-test"
             ),
@@ -4363,7 +4504,6 @@ class TestAttackPathsScanViewSet:
                     "truncated": False,
                 },
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
             patch(
                 "api.v1.views.graph_database.get_database_name", return_value="db-test"
             ),
@@ -4443,7 +4583,6 @@ class TestAttackPathsScanViewSet:
                     "truncated": False,
                 },
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4509,7 +4648,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4566,7 +4704,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4613,7 +4750,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4963,9 +5099,6 @@ class TestAttackPathsScanViewSet:
             patch(
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
-            ),
-            patch(
-                "api.v1.views.graph_database.clear_cache",
             ),
         ):
             for i in range(11):
@@ -8097,6 +8230,8 @@ class TestUserRoleRelationshipViewSet:
             manage_scans=False,
             unlimited_visibility=False,
         )
+        # Assign the role to the user
+        UserRoleRelationship.objects.create(user=user, role=only_role, tenant=tenant)
 
         # Switch token to this tenant
         serializer = TokenSerializer(
@@ -16011,6 +16146,191 @@ class TestFindingGroupViewSet:
         # Should still return the 2 resources within the date range
         assert len(response.json()["data"]) == 2
 
+    def test_resources_status_filter_returns_empty_not_404(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that filtering by status on a valid check returns empty list, not 404."""
+        # s3_bucket_public_access has only FAIL findings, filtering by PASS should return []
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY, "filter[status]": "PASS"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_resources_nonexistent_check_still_404(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that a truly nonexistent check_id still returns 404."""
+        response = authenticated_client.get(
+            reverse("finding-group-resources", kwargs={"pk": "totally_fake_check"}),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_resources_sort_by_status_ascending(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test sort=status returns PASS before FAIL."""
+        # ec2_instance_public_ip has 1 PASS (resource1) and 1 FAIL (resource2)
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources",
+                kwargs={"pk": "ec2_instance_public_ip"},
+            ),
+            {"filter[inserted_at]": TODAY, "sort": "status"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert data[0]["attributes"]["status"] == "PASS"
+        assert data[1]["attributes"]["status"] == "FAIL"
+
+    def test_resources_sort_by_status_descending(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test sort=-status returns FAIL before PASS."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources",
+                kwargs={"pk": "ec2_instance_public_ip"},
+            ),
+            {"filter[inserted_at]": TODAY, "sort": "-status"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert data[0]["attributes"]["status"] == "FAIL"
+        assert data[1]["attributes"]["status"] == "PASS"
+
+    def test_resources_sort_invalid_field_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test that an invalid sort field returns 400."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY, "sort": "invalid_field"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_latest_resources_status_filter_returns_empty_not_404(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test latest resources with status filter on valid check returns empty, not 404."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": "s3_bucket_public_access"},
+            ),
+            {"filter[status]": "PASS"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_latest_resources_sort_by_status(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Test latest resources sort=status returns PASS before FAIL."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": "ec2_instance_public_ip"},
+            ),
+            {"sort": "status"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert data[0]["attributes"]["status"] == "PASS"
+        assert data[1]["attributes"]["status"] == "FAIL"
+
+    def test_resources_nonexistent_check_missing_date_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Nonexistent check_id with missing required date filter returns 400, not 404."""
+        response = authenticated_client.get(
+            reverse("finding-group-resources", kwargs={"pk": "totally_fake_check"}),
+        )
+        # FindingGroupFilter requires inserted_at — validation fires before existence check
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_resources_nonexistent_check_invalid_sort_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Nonexistent check_id with invalid sort returns 400, not 404."""
+        response = authenticated_client.get(
+            reverse("finding-group-resources", kwargs={"pk": "totally_fake_check"}),
+            {"filter[inserted_at]": TODAY, "sort": "invalid_field"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_resources_empty_sort_falls_back_to_default_order(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Degenerate sort values should behave like no sort, not raise 500."""
+        all_ids = set()
+        for page_num in (1, 2):
+            response = authenticated_client.get(
+                reverse(
+                    "finding-group-resources",
+                    kwargs={"pk": "s3_bucket_public_access"},
+                ),
+                {
+                    "filter[inserted_at]": TODAY,
+                    "sort": ",",
+                    "page[size]": 1,
+                    "page[number]": page_num,
+                },
+            )
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()["data"]
+            assert len(data) == 1
+            all_ids.add(data[0]["id"])
+        assert len(all_ids) == 2
+
+    def test_resources_sort_pagination_stability(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Sort with small page size returns all resources without duplicates or gaps."""
+        # s3_bucket_public_access has 2 resources, both FAIL — they tie on status
+        all_ids = set()
+        for page_num in (1, 2):
+            response = authenticated_client.get(
+                reverse(
+                    "finding-group-resources",
+                    kwargs={"pk": "s3_bucket_public_access"},
+                ),
+                {
+                    "filter[inserted_at]": TODAY,
+                    "sort": "status",
+                    "page[size]": 1,
+                    "page[number]": page_num,
+                },
+            )
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()["data"]
+            assert len(data) == 1
+            all_ids.add(data[0]["id"])
+        # Both pages should return different resources (no duplicates)
+        assert len(all_ids) == 2
+
+    def test_latest_resources_nonexistent_check_invalid_sort_returns_400(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Nonexistent check_id with invalid sort on latest returns 400, not 404."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": "totally_fake_check"},
+            ),
+            {"sort": "invalid_field"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     # Test provider_id filter actually filters data
     def test_finding_groups_provider_id_filter_actually_filters(
         self, authenticated_client, finding_groups_fixture, providers_fixture
@@ -16518,6 +16838,39 @@ class TestFindingGroupViewSet:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) > 0
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_delta(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+    ):
+        """Sort by delta orders by new_count then changed_count (lexicographic)."""
+        params = {"sort": "-delta"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        def delta_key(item):
+            attrs = item["attributes"]
+            return (attrs.get("new_count", 0), attrs.get("changed_count", 0))
+
+        desc_keys = [delta_key(item) for item in data]
+        assert desc_keys == sorted(desc_keys, reverse=True)
+
+        # Ascending order produces the inverse arrangement
+        params["sort"] = "delta"
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        asc_keys = [delta_key(item) for item in response.json()["data"]]
+        assert asc_keys == sorted(asc_keys)
 
     def test_finding_groups_latest_ignores_date_filters(
         self, authenticated_client, finding_groups_fixture

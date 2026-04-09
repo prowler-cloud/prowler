@@ -76,7 +76,7 @@ class Test_CodePipeline_Service:
     )
     @mock_aws
     def test_codepipeline_service(self):
-        codepipeline = CodePipeline(set_mocked_aws_provider())
+        codepipeline = CodePipeline(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
 
         assert codepipeline.session.__class__.__name__ == "Session"
         assert codepipeline.service == "codepipeline"

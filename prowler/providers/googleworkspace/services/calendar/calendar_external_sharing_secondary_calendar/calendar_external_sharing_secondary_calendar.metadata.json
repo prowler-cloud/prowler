@@ -1,0 +1,41 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "calendar_external_sharing_secondary_calendar",
+  "CheckTitle": "External sharing for secondary calendars is restricted to free/busy only",
+  "CheckType": [],
+  "ServiceName": "calendar",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Secondary calendars in the Google Workspace domain share **only free/busy information** with external users. Secondary calendars are additional calendars users create beyond their primary calendar (e.g., for projects, teams, or personal events), and are commonly used to organize sensitive or focused activities that should not be visible to external parties.",
+  "Risk": "Overly permissive external sharing of secondary calendars exposes **project-specific or team-specific event details** to users outside the organization. Because secondary calendars often hold more targeted activities (e.g., product launches, internal reviews), unrestricted external sharing increases the risk of **information disclosure** and **competitive intelligence leakage**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/60765",
+    "https://knowledge.workspace.google.com/admin/calendar/set-google-calendar-sharing-options",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Calendar**\n3. Click **Sharing settings**\n4. Under **External sharing options for secondary calendars**, select **Only free/busy information (hide event details)**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict external sharing of secondary calendars to free/busy information only. This preserves scheduling interoperability with external collaborators while preventing exposure of sensitive event details in user-created calendars.",
+      "Url": "https://hub.prowler.com/check/calendar_external_sharing_secondary_calendar"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "calendar_external_sharing_primary_calendar",
+    "calendar_external_invitations_warning"
+  ],
+  "Notes": ""
+}
