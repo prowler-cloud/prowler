@@ -95,6 +95,7 @@ interface ProviderInfo {
 }
 
 interface FindingGroupResourceAttributes {
+  finding_id: string;
   resource: ResourceInfo;
   provider: ProviderInfo;
   status: string;
@@ -132,7 +133,7 @@ export function adaptFindingGroupResourcesResponse(
   return data.map((item) => ({
     id: item.id,
     rowType: FINDINGS_ROW_TYPE.RESOURCE,
-    findingId: item.id,
+    findingId: item.attributes.finding_id,
     checkId,
     providerType: (item.attributes.provider?.type || "aws") as ProviderType,
     providerAlias: item.attributes.provider?.alias || "",

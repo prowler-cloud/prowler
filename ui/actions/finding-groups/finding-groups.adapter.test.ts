@@ -149,6 +149,7 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
           id: "resource-row-1",
           type: "finding-group-resources",
           attributes: {
+            finding_id: "real-finding-uuid",
             resource: {
               uid: "arn:aws:s3:::my-bucket",
               name: "my-bucket",
@@ -177,6 +178,7 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
 
     // Then
     expect(result).toHaveLength(1);
+    expect(result[0].findingId).toBe("real-finding-uuid");
     expect(result[0].checkId).toBe("s3_check");
     expect(result[0].resourceName).toBe("my-bucket");
     expect(result[0].delta).toBe("new");
