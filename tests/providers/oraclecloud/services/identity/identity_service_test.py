@@ -67,3 +67,43 @@ class TestIdentityService:
             # Ensure the domain is skipped since region != home_region
             identity_client.__list_domain_password_policies__(regional_client)
             assert len(identity_client.password_policy) == 0
+
+    def test_list_domains_skipped_outside_home(self):
+        """Domains should be skipped when not in home region."""
+        with patch(
+            "prowler.providers.oraclecloud.services.identity.identity_service.Identity.__init__",
+            return_value=None,
+        ):
+            from prowler.providers.oraclecloud.services.identity.identity_service import (
+                Identity,
+            )
+
+            identity_client = Identity(None)
+            identity_client.service = "identity"
+            identity_client.provider = None
+            identity_client.audited_compartments = [
+                MagicMock(id="ocid1.compartment.oc1..aaaaaaaexample")
+            ]
+            identity_client.domains = []
+            regional_client = MagicMock()
+            regional_client.region = "us-ashburn-1"
+            domain = MagicMock()
+            domain.id = "ocid1.domain.oc1.iad.aaaaaaaaexampleuniqueID"
+            domain.display_name = "exampledomain"
+            domain.description = "example"
+            domain.url = "https://idcs-example.identity.oraclecloud.com"
+            domain.home_region = "us-phoenix-1"
+            domain.lifecycle_state = "ACTIVE"
+            domain.time_created = None
+            with (
+                patch(
+                    "prowler.providers.oraclecloud.services.identity.identity_service.Identity.__get_client__",
+                    return_value=MagicMock(),
+                ),
+                patch(
+                    "prowler.providers.oraclecloud.services.identity.identity_service.oci.pagination.list_call_get_all_results",
+                    return_value=MagicMock(data=[domain]),
+                ),
+            ):
+                identity_client.__list_domains__(regional_client)
+            assert len(identity_client.domains) == 0
