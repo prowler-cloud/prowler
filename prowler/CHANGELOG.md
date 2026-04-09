@@ -21,6 +21,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
 - `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
 - `Vercel` provider support with 30 checks [(#10189)](https://github.com/prowler-cloud/prowler/pull/10189)
+- `stepfunctions_statemachine_no_secrets_in_definition` check for hardcoded secrets in AWS Step Functions state machine definitions [(#10570)](https://github.com/prowler-cloud/prowler/pull/10570)
 - CCC improvements with the latest checks and new mappings [(#10625)](https://github.com/prowler-cloud/prowler/pull/10625)
 
 ### 🔄 Changed
