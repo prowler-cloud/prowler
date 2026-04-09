@@ -7219,6 +7219,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         "check_id": "check_id",
         "check_title": "check_title",
         "severity": "severity_order",
+        "status": "status_order",
         "delta": "delta_order",
         "fail_count": "fail_count",
         "pass_count": "pass_count",
@@ -7570,6 +7571,19 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 sort_param, self._FINDING_GROUP_SORT_MAP
             )
             if ordering:
+                # status_order is annotated on demand so groups can be sorted
+                # by their aggregated status (FAIL > PASS > MUTED), mirroring
+                # the priority used in _post_process_aggregation.
+                if any(field.lstrip("-") == "status_order" for field in ordering):
+                    aggregated_queryset = aggregated_queryset.annotate(
+                        status_order=Case(
+                            When(fail_count__gt=0, then=Value(3)),
+                            When(pass_count__gt=0, then=Value(2)),
+                            default=Value(1),
+                            output_field=IntegerField(),
+                        )
+                    )
+
                 # delta_order is a virtual sort field: expand it to a
                 # lexicographic ordering by (new_count, changed_count) so groups
                 # with more new findings rank higher, with changed_count as the

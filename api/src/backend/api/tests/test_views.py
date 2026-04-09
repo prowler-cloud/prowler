@@ -16872,6 +16872,68 @@ class TestFindingGroupViewSet:
         asc_keys = [delta_key(item) for item in response.json()["data"]]
         assert asc_keys == sorted(asc_keys)
 
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_status(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+    ):
+        """Sort by status orders by aggregated status (FAIL > PASS > MUTED)."""
+        status_order = {"FAIL": 3, "PASS": 2, "MUTED": 1}
+
+        # Descending: FAIL groups first, then PASS
+        params = {"sort": "-status"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        desc_statuses = [item["attributes"]["status"] for item in data]
+        desc_keys = [status_order[s] for s in desc_statuses]
+        assert desc_keys == sorted(desc_keys, reverse=True)
+
+        # Ascending: PASS groups first, then FAIL
+        params["sort"] = "status"
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        asc_statuses = [
+            item["attributes"]["status"] for item in response.json()["data"]
+        ]
+        asc_keys = [status_order[s] for s in asc_statuses]
+        assert asc_keys == sorted(asc_keys)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_status_includes_muted(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+    ):
+        """When include_muted is set, MUTED groups participate in status sort."""
+        status_order = {"FAIL": 3, "PASS": 2, "MUTED": 1}
+
+        params = {"sort": "status", "filter[include_muted]": "true"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        statuses = [item["attributes"]["status"] for item in data]
+        assert "MUTED" in statuses
+        assert statuses[0] == "MUTED"
+        keys = [status_order[s] for s in statuses]
+        assert keys == sorted(keys)
+
     def test_finding_groups_latest_ignores_date_filters(
         self, authenticated_client, finding_groups_fixture
     ):
