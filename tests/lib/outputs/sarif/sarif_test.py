@@ -288,6 +288,18 @@ class TestSARIF:
         ]
         assert "region" not in location
 
+    def test_location_with_zero_line_numbers(self):
+        finding = generate_finding_output(
+            status="FAIL",
+            resource_name="main.tf",
+        )
+        finding.raw = {"resource_line_range": "0:0"}
+        sarif = SARIF(findings=[finding], file_path=None)
+        location = sarif.data[0]["runs"][0]["results"][0]["locations"][0][
+            "physicalLocation"
+        ]
+        assert "region" not in location
+
     def test_only_pass_findings(self):
         findings = [
             generate_finding_output(status="PASS"),

@@ -1,4 +1,5 @@
 from json import dump
+from typing import Optional
 
 from prowler.config.config import prowler_version
 from prowler.lib.logger import logger
@@ -92,7 +93,7 @@ class SARIF(Output):
             }
 
             location = self._build_location(finding)
-            if location:
+            if location is not None:
                 result["locations"] = [location]
 
             results.append(result)
@@ -134,14 +135,17 @@ class SARIF(Output):
             )
 
     @staticmethod
-    def _build_location(finding: Finding) -> dict:
+    def _build_location(finding: Finding) -> Optional[dict]:
         """Build a SARIF physicalLocation from a Finding.
 
         Uses resource_name as the artifact URI and resource_line_range
         (stored in finding.raw for IaC findings) for line range info.
+
+        Returns:
+            A SARIF location dict, or None if resource_name is empty.
         """
         if not finding.resource_name:
-            return {}
+            return None
 
         location = {
             "physicalLocation": {
@@ -157,10 +161,11 @@ class SARIF(Output):
             try:
                 start_line = int(parts[0])
                 end_line = int(parts[1])
-                location["physicalLocation"]["region"] = {
-                    "startLine": start_line,
-                    "endLine": end_line,
-                }
+                if start_line >= 1 and end_line >= 1:
+                    location["physicalLocation"]["region"] = {
+                        "startLine": start_line,
+                        "endLine": end_line,
+                    }
             except (ValueError, IndexError):
                 pass  # Malformed line range — skip region, keep location
 
