@@ -9,7 +9,7 @@ from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
 )
-from pydantic.v1 import BaseModel
+from pydantic.v1 import BaseModel, validator
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -997,6 +997,19 @@ class PlatformConditions(BaseModel):
 
     include_platforms: List[str] = []
     exclude_platforms: List[str] = []
+
+    @validator("include_platforms", "exclude_platforms", pre=True)
+    def normalize_platforms(cls, values):
+        if not values:
+            return []
+
+        normalized = []
+        for platform in values:
+            value = getattr(platform, "value", platform)
+            if isinstance(value, str) and value:
+                normalized.append(value.lower())
+
+        return normalized
 
 
 class TransferMethod(Enum):

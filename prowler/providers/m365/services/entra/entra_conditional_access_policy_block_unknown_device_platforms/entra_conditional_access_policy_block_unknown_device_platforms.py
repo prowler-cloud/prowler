@@ -24,19 +24,6 @@ class entra_conditional_access_policy_block_unknown_device_platforms(Check):
 
     KNOWN_PLATFORMS = {"android", "ios", "windows", "macos", "linux"}
 
-    @staticmethod
-    def _normalize_platform(platform: object) -> str:
-        """Normalize a platform value to a lowercase string.
-
-        Args:
-            platform: A platform value that may be a string or an enum.
-
-        Returns:
-            The lowercase string representation of the platform.
-        """
-        normalized = getattr(platform, "value", platform)
-        return normalized.lower() if isinstance(normalized, str) else ""
-
     def _is_candidate_policy(self, policy: ConditionalAccessPolicy) -> bool:
         """Determine whether a policy is a candidate for blocking unknown device platforms.
 
@@ -59,26 +46,16 @@ class entra_conditional_access_policy_block_unknown_device_platforms(Check):
         if not policy.conditions.platform_conditions:
             return False
 
-        included_platforms = {
-            p
-            for p in map(
-                self._normalize_platform,
-                policy.conditions.platform_conditions.include_platforms,
-            )
-            if p
-        }
+        included_platforms = set(
+            policy.conditions.platform_conditions.include_platforms
+        )
 
         if "all" not in included_platforms:
             return False
 
-        excluded_platforms = {
-            p
-            for p in map(
-                self._normalize_platform,
-                policy.conditions.platform_conditions.exclude_platforms,
-            )
-            if p
-        }
+        excluded_platforms = set(
+            policy.conditions.platform_conditions.exclude_platforms
+        )
 
         if not self.KNOWN_PLATFORMS.issubset(excluded_platforms):
             return False

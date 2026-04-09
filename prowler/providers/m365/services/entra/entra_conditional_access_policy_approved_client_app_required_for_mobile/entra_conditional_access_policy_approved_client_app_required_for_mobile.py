@@ -23,13 +23,6 @@ class entra_conditional_access_policy_approved_client_app_required_for_mobile(Ch
         ConditionalAccessGrantControl.COMPLIANT_APPLICATION,
     }
 
-    @staticmethod
-    def _normalize_platform(platform: object) -> str:
-        normalized_platform = getattr(platform, "value", platform)
-        return (
-            normalized_platform.lower() if isinstance(normalized_platform, str) else ""
-        )
-
     def execute(self) -> list[CheckReportM365]:
         """Execute the check logic.
 
@@ -54,22 +47,12 @@ class entra_conditional_access_policy_approved_client_app_required_for_mobile(Ch
             if not policy.conditions.platform_conditions:
                 continue
 
-            included_platforms = {
-                normalized_platform
-                for normalized_platform in map(
-                    self._normalize_platform,
-                    policy.conditions.platform_conditions.include_platforms,
-                )
-                if normalized_platform
-            }
-            excluded_platforms = {
-                normalized_platform
-                for normalized_platform in map(
-                    self._normalize_platform,
-                    policy.conditions.platform_conditions.exclude_platforms,
-                )
-                if normalized_platform
-            }
+            included_platforms = set(
+                policy.conditions.platform_conditions.include_platforms
+            )
+            excluded_platforms = set(
+                policy.conditions.platform_conditions.exclude_platforms
+            )
 
             targets_mobile_platforms = (
                 "all" in included_platforms
