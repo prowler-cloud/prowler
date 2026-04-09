@@ -22,16 +22,22 @@ class entra_conditional_access_policy_sign_in_frequency_enforced(Check):
             non-corporate devices.
     """
 
-    NON_CORPORATE_INCLUDE_PATTERNS = (
-        r"device\.iscompliant\s*-ne\s*true",
-        r"device\.iscompliant\s*-eq\s*false",
-        r'device\.trusttype\s*-ne\s*"serverad"',
-        r"device\.trusttype\s*-ne\s*'serverad'",
+    NON_CORPORATE_INCLUDE_PATTERN_GROUPS = (
+        (
+            r"device\.iscompliant\s*-ne\s*true",
+            r"device\.iscompliant\s*-eq\s*false",
+        ),
+        (
+            r'device\.trusttype\s*-ne\s*"serverad"',
+            r"device\.trusttype\s*-ne\s*'serverad'",
+        ),
     )
-    CORPORATE_EXCLUDE_PATTERNS = (
-        r"device\.iscompliant\s*-eq\s*true",
-        r'device\.trusttype\s*-eq\s*"serverad"',
-        r"device\.trusttype\s*-eq\s*'serverad'",
+    CORPORATE_EXCLUDE_PATTERN_GROUPS = (
+        (r"device\.iscompliant\s*-eq\s*true",),
+        (
+            r'device\.trusttype\s*-eq\s*"serverad"',
+            r"device\.trusttype\s*-eq\s*'serverad'",
+        ),
     )
 
     def _targets_all_users(self, included_users: list[str]) -> bool:
@@ -77,13 +83,23 @@ class entra_conditional_access_policy_sign_in_frequency_enforced(Check):
             return False
         rule = device_conditions.device_filter_rule.lower()
         if device_conditions.device_filter_mode == DeviceFilterMode.INCLUDE:
-            return self._rule_matches_any(rule, self.NON_CORPORATE_INCLUDE_PATTERNS)
+            return self._rule_matches_required_groups(
+                rule, self.NON_CORPORATE_INCLUDE_PATTERN_GROUPS
+            )
         elif device_conditions.device_filter_mode == DeviceFilterMode.EXCLUDE:
-            return self._rule_matches_any(rule, self.CORPORATE_EXCLUDE_PATTERNS)
+            return self._rule_matches_required_groups(
+                rule, self.CORPORATE_EXCLUDE_PATTERN_GROUPS
+            )
         return False
 
-    def _rule_matches_any(self, rule: str, patterns: tuple[str, ...]) -> bool:
-        return any(re.search(pattern, rule) for pattern in patterns)
+    def _rule_matches_required_groups(
+        self, rule: str, pattern_groups: tuple[tuple[str, ...], ...]
+    ) -> bool:
+        """Return True when the rule matches at least one pattern from each group."""
+        return all(
+            any(re.search(pattern, rule) for pattern in group)
+            for group in pattern_groups
+        )
 
     def execute(self) -> list[CheckReportM365]:
         """Execute the check for sign-in frequency enforcement in Conditional Access policies.

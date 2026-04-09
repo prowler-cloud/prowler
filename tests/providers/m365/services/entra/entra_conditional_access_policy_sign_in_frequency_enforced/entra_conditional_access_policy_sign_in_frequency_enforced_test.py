@@ -616,7 +616,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                     policy_id=policy_id_2,
                     display_name=display_name_2,
                     device_filter_mode=DeviceFilterMode.INCLUDE,
-                    device_filter_rule='device.trustType -ne "ServerAD"',
+                    device_filter_rule='device.isCompliant -ne True -or device.trustType -ne "ServerAD"',
                 ),
             }
 
@@ -629,7 +629,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
             assert result[0].resource_id == policy_id_2
 
     def test_entra_policy_with_trust_type_only(self):
-        """Test PASS with device filter referencing only trustType."""
+        """Test FAIL when device filter references only trustType."""
         policy_id = str(uuid4())
         display_name = "TrustType Filter Policy"
         entra_client = mock.MagicMock
@@ -663,5 +663,5 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].resource_name == display_name
+            assert result[0].status == "FAIL"
+            assert result[0].resource_name == "Conditional Access Policies"

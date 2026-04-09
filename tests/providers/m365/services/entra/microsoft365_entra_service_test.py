@@ -18,12 +18,15 @@ from prowler.providers.m365.services.entra.entra_service import (
     CredentialRestriction,
     DefaultAppManagementPolicy,
     DefaultUserRolePermissions,
+    DeviceConditions,
+    DeviceFilterMode,
     Entra,
     GrantControlOperator,
     GrantControls,
     InvitationsFrom,
     Organization,
     PersistentBrowser,
+    PlatformConditions,
     SessionControls,
     SignInFrequency,
     SignInFrequencyInterval,
@@ -285,6 +288,130 @@ class Test_Entra_Service:
                 state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
             )
         }
+
+    def test__get_conditional_access_policies_parses_device_filter(self):
+        from msgraph.generated.models.filter_mode import FilterMode
+
+        entra_service = Entra.__new__(Entra)
+        entra_service._get_raw_authentication_flows = AsyncMock(return_value={})
+
+        policy = SimpleNamespace(
+            id="id-1",
+            display_name="Policy with Device Filter",
+            conditions=SimpleNamespace(
+                applications=SimpleNamespace(
+                    include_applications=["All"],
+                    exclude_applications=[],
+                    include_user_actions=[],
+                ),
+                users=SimpleNamespace(
+                    include_groups=[],
+                    exclude_groups=[],
+                    include_users=["All"],
+                    exclude_users=[],
+                    include_roles=[],
+                    exclude_roles=[],
+                ),
+                client_app_types=[],
+                user_risk_levels=[],
+                sign_in_risk_levels=[],
+                insider_risk_levels=None,
+                platforms=None,
+                devices=SimpleNamespace(
+                    device_filter=SimpleNamespace(
+                        mode=FilterMode.Include,
+                        rule='device.isCompliant -ne True -or device.trustType -ne "ServerAD"',
+                    )
+                ),
+            ),
+            grant_controls=SimpleNamespace(
+                built_in_controls=[],
+                operator="AND",
+                authentication_strength=None,
+            ),
+            session_controls=SimpleNamespace(
+                persistent_browser=SimpleNamespace(
+                    is_enabled=False,
+                    mode="always",
+                ),
+                sign_in_frequency=SimpleNamespace(
+                    is_enabled=True,
+                    value=1,
+                    type="hours",
+                    frequency_interval="timeBased",
+                ),
+                application_enforced_restrictions=SimpleNamespace(is_enabled=False),
+            ),
+            state="enabled",
+        )
+
+        entra_service.client = SimpleNamespace(
+            identity=SimpleNamespace(
+                conditional_access=SimpleNamespace(
+                    policies=SimpleNamespace(
+                        get=AsyncMock(return_value=SimpleNamespace(value=[policy]))
+                    )
+                )
+            )
+        )
+
+        conditional_access_policies = asyncio.run(
+            entra_service._get_conditional_access_policies()
+        )
+
+        assert conditional_access_policies["id-1"] == ConditionalAccessPolicy(
+            id="id-1",
+            display_name="Policy with Device Filter",
+            conditions=Conditions(
+                application_conditions=ApplicationsConditions(
+                    included_applications=["All"],
+                    excluded_applications=[],
+                    included_user_actions=[],
+                ),
+                user_conditions=UsersConditions(
+                    included_groups=[],
+                    excluded_groups=[],
+                    included_users=["All"],
+                    excluded_users=[],
+                    included_roles=[],
+                    excluded_roles=[],
+                ),
+                client_app_types=[],
+                user_risk_levels=[],
+                sign_in_risk_levels=[],
+                insider_risk_levels=None,
+                platform_conditions=PlatformConditions(
+                    include_platforms=[],
+                    exclude_platforms=[],
+                ),
+                authentication_flows=None,
+                device_conditions=DeviceConditions(
+                    device_filter_mode=DeviceFilterMode.INCLUDE,
+                    device_filter_rule='device.isCompliant -ne True -or device.trustType -ne "ServerAD"',
+                ),
+            ),
+            grant_controls=GrantControls(
+                built_in_controls=[],
+                operator=GrantControlOperator.AND,
+                authentication_strength=None,
+            ),
+            session_controls=SessionControls(
+                persistent_browser=PersistentBrowser(
+                    is_enabled=False,
+                    mode="always",
+                ),
+                sign_in_frequency=SignInFrequency(
+                    is_enabled=True,
+                    frequency=1,
+                    type=SignInFrequencyType.HOURS,
+                    interval=SignInFrequencyInterval.TIME_BASED,
+                ),
+                application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                    is_enabled=False
+                ),
+            ),
+            state=ConditionalAccessPolicyState.ENABLED,
+        )
 
     @patch(
         "prowler.providers.m365.services.entra.entra_service.Entra._get_groups",
