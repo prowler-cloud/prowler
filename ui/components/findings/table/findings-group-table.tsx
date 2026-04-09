@@ -14,6 +14,7 @@ import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingGroups } from "./column-finding-groups";
+import { canMuteFindingGroup } from "./finding-group-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   InlineResourceContainer,
@@ -88,13 +89,21 @@ export function FindingsGroupTable({
     .filter(Boolean);
 
   // Count of selectable rows (groups where not ALL findings are muted)
-  const selectableRowCount = safeData.filter(
-    (g) => !(g.mutedCount > 0 && g.mutedCount === g.resourcesTotal),
+  const selectableRowCount = safeData.filter((g) =>
+    canMuteFindingGroup({
+      resourcesFail: g.resourcesFail,
+      resourcesTotal: g.resourcesTotal,
+      mutedCount: g.mutedCount,
+    }),
   ).length;
 
   const getRowCanSelect = (row: Row<FindingGroupRow>): boolean => {
     const group = row.original;
-    return !(group.mutedCount > 0 && group.mutedCount === group.resourcesTotal);
+    return canMuteFindingGroup({
+      resourcesFail: group.resourcesFail,
+      resourcesTotal: group.resourcesTotal,
+      mutedCount: group.mutedCount,
+    });
   };
 
   const clearSelection = () => {
@@ -136,8 +145,8 @@ export function FindingsGroupTable({
   };
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
-    // No impacted resources → nothing to show, skip drill-down
-    if (group.resourcesFail === 0) return;
+    // No resources in the group → nothing to show, skip drill-down
+    if (group.resourcesTotal === 0) return;
 
     // Toggle: same group = collapse, different = switch
     if (expandedCheckId === checkId) {

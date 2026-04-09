@@ -25,11 +25,16 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { FindingResourceRow } from "@/types";
 
+import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
-import { NotificationIndicator } from "./notification-indicator";
+import {
+  type DeltaType,
+  NotificationIndicator,
+} from "./notification-indicator";
 
 const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const resource = row.original;
+  const canMute = canMuteFindingResource(resource);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
@@ -81,7 +86,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
 
   return (
     <>
-      {!resource.isMuted && (
+      {canMute && (
         <MuteFindingsModal
           isOpen={isMuteModalOpen}
           onOpenChange={setIsMuteModalOpen}
@@ -111,7 +116,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
               )
             }
             label={isResolving ? "Resolving..." : getMuteLabel()}
-            disabled={resource.isMuted || isResolving}
+            disabled={!canMute || isResolving}
             onSelect={handleMuteClick}
           />
           <ActionDropdownItem
@@ -171,6 +176,7 @@ export function getColumnFindingResources({
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <NotificationIndicator
+            delta={row.original.delta as DeltaType | undefined}
             isMuted={row.original.isMuted}
             mutedReason={row.original.mutedReason}
           />
@@ -178,7 +184,7 @@ export function getColumnFindingResources({
           <Checkbox
             size="sm"
             checked={!!rowSelection[row.id]}
-            disabled={row.original.isMuted}
+            disabled={!canMuteFindingResource(row.original)}
             onCheckedChange={(checked) => row.toggleSelected(checked === true)}
             onClick={(e) => e.stopPropagation()}
             aria-label="Select resource"
@@ -198,7 +204,7 @@ export function getColumnFindingResources({
         <div className="max-w-[240px]">
           <EntityInfo
             nameIcon={<Container className="size-4" />}
-            entityAlias={row.original.resourceGroup}
+            entityAlias={row.original.resourceName}
             entityId={row.original.resourceUid}
           />
         </div>
@@ -213,8 +219,12 @@ export function getColumnFindingResources({
       ),
       cell: ({ row }) => {
         const rawStatus = row.original.status;
-        const status =
-          rawStatus === "MUTED" ? "FAIL" : (rawStatus as FindingStatus);
+        const status: FindingStatus =
+          rawStatus === "MUTED" || rawStatus === "FAIL"
+            ? "FAIL"
+            : rawStatus === "PASS"
+              ? "PASS"
+              : "FAIL";
         return <StatusFindingBadge status={status} />;
       },
       enableSorting: false,
