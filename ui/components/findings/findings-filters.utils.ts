@@ -68,7 +68,9 @@ export function getFindingsFilterDisplayValue(
     );
   }
   if (filterKey === "filter[delta__in]") {
-    return FINDING_DELTA_DISPLAY_NAMES[value.toLowerCase()] ?? formatLabel(value);
+    return (
+      FINDING_DELTA_DISPLAY_NAMES[value.toLowerCase()] ?? formatLabel(value)
+    );
   }
   if (filterKey === "filter[category__in]") {
     return getCategoryLabel(value);

@@ -1,12 +1,7 @@
 "use client";
 
 import { Input, Textarea } from "@heroui/input";
-import {
-  Dispatch,
-  SetStateAction,
-  useState,
-  useTransition,
-} from "react";
+import { Dispatch, SetStateAction, useState, useTransition } from "react";
 
 import { createMuteRule } from "@/actions/mute-rules";
 import { MuteRuleActionState } from "@/actions/mute-rules/types";
@@ -45,7 +40,10 @@ export function MuteFindingsModal({
   };
 
   const isSubmitDisabled =
-    isPending || isPreparing || findingIds.length === 0 || Boolean(preparationError);
+    isPending ||
+    isPreparing ||
+    findingIds.length === 0 ||
+    Boolean(preparationError);
 
   return (
     <Modal

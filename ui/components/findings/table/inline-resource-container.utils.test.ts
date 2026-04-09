@@ -8,9 +8,7 @@ import {
   isFailOnlyStatusFilter,
 } from "./inline-resource-container.utils";
 
-function makeGroup(
-  overrides?: Partial<FindingGroupRow>,
-): FindingGroupRow {
+function makeGroup(overrides?: Partial<FindingGroupRow>): FindingGroupRow {
   return {
     id: "group-1",
     rowType: "group",

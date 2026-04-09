@@ -394,8 +394,8 @@ describe("resolveFindingIds — Fix 4: page[size] explicit cap at MAX_PAGE_SIZE=
     });
 
     // Then — every request must stay under the defensive cap and preserve FAIL filtering
-    const pageSizes = fetchMock.mock.calls.map(
-      ([url]) => Number(new URL(url as string).searchParams.get("page[size]")),
+    const pageSizes = fetchMock.mock.calls.map(([url]) =>
+      Number(new URL(url as string).searchParams.get("page[size]")),
     );
     expect(pageSizes.every((pageSize) => pageSize > 0 && pageSize <= 500)).toBe(
       true,
@@ -417,8 +417,8 @@ describe("resolveFindingIds — Fix 4: page[size] explicit cap at MAX_PAGE_SIZE=
     });
 
     // Then
-    const pageSizes = fetchMock.mock.calls.map(
-      ([url]) => Number(new URL(url as string).searchParams.get("page[size]")),
+    const pageSizes = fetchMock.mock.calls.map(([url]) =>
+      Number(new URL(url as string).searchParams.get("page[size]")),
     );
     expect(pageSizes.every((pageSize) => pageSize > 0 && pageSize <= 500)).toBe(
       true,
@@ -431,7 +431,8 @@ describe("resolveFindingIds — Fix 4: page[size] explicit cap at MAX_PAGE_SIZE=
     // an oversized resource_uid__in query string if sent in a single request.
     const resourceUids = Array.from(
       { length: 100 },
-      (_, i) => `arn:aws:ec2:eu-west-1:123456789012:instance/i-${`${i}`.padStart(17, "0")}`,
+      (_, i) =>
+        `arn:aws:ec2:eu-west-1:123456789012:instance/i-${`${i}`.padStart(17, "0")}`,
     );
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
     handleApiResponseMock.mockResolvedValue({ data: [] });

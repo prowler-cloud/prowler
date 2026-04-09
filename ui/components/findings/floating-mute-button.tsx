@@ -32,14 +32,12 @@ export function FloatingMuteButton({
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
   const [isPreparingMuteModal, setIsPreparingMuteModal] = useState(false);
-  const [mutePreparationError, setMutePreparationError] = useState<string | null>(
-    null,
-  );
+  const [mutePreparationError, setMutePreparationError] = useState<
+    string | null
+  >(null);
 
   const handleModalOpenChange = (
-    nextOpen:
-      | boolean
-      | ((previousOpen: boolean) => boolean),
+    nextOpen: boolean | ((previousOpen: boolean) => boolean),
   ) => {
     const resolvedOpen =
       typeof nextOpen === "function" ? nextOpen(isModalOpen) : nextOpen;

@@ -76,14 +76,14 @@ export default async function ComplianceDetail({
 
   const [metadataInfoData, attributesData, selectedScanResponse] =
     await Promise.all([
-    getComplianceOverviewMetadataInfo({
-      filters: {
-        "filter[scan_id]": selectedScanId,
-      },
-    }),
-    getComplianceAttributes(complianceId),
-    selectedScanId ? getScan(selectedScanId) : Promise.resolve(null),
-  ]);
+      getComplianceOverviewMetadataInfo({
+        filters: {
+          "filter[scan_id]": selectedScanId,
+        },
+      }),
+      getComplianceAttributes(complianceId),
+      selectedScanId ? getScan(selectedScanId) : Promise.resolve(null),
+    ]);
 
   if (selectedScanResponse?.data) {
     const scan = selectedScanResponse.data;

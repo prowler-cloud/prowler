@@ -45,8 +45,8 @@ vi.mock("@/components/shadcn/spinner/spinner", () => ({
   Spinner: () => <span>Loading</span>,
 }));
 
-import { FindingsSelectionContext } from "./findings-selection-context";
 import { DataTableRowActions } from "./data-table-row-actions";
+import { FindingsSelectionContext } from "./findings-selection-context";
 
 function deferredPromise<T>() {
   let resolve!: (value: T) => void;
@@ -81,17 +81,19 @@ describe("DataTableRowActions", () => {
         }}
       >
         <DataTableRowActions
-          row={{
-            original: {
-              id: "group-row-1",
-              rowType: "group",
-              checkId: "ecs_task_definitions_no_environment_secrets",
-              checkTitle: "ECS task definitions no environment secrets",
-              mutedCount: 0,
-              resourcesFail: 475,
-              resourcesTotal: 475,
-            },
-          } as never}
+          row={
+            {
+              original: {
+                id: "group-row-1",
+                rowType: "group",
+                checkId: "ecs_task_definitions_no_environment_secrets",
+                checkTitle: "ECS task definitions no environment secrets",
+                mutedCount: 0,
+                resourcesFail: 475,
+                resourcesTotal: 475,
+              },
+            } as never
+          }
         />
       </FindingsSelectionContext.Provider>,
     );
@@ -156,17 +158,19 @@ describe("DataTableRowActions", () => {
         }}
       >
         <DataTableRowActions
-          row={{
-            original: {
-              id: "group-row-2",
-              rowType: "group",
-              checkId: "check-with-zero-failures",
-              checkTitle: "Check with zero failures",
-              mutedCount: 0,
-              resourcesFail: 0,
-              resourcesTotal: 42,
-            },
-          } as never}
+          row={
+            {
+              original: {
+                id: "group-row-2",
+                rowType: "group",
+                checkId: "check-with-zero-failures",
+                checkTitle: "Check with zero failures",
+                mutedCount: 0,
+                resourcesFail: 0,
+                resourcesTotal: 42,
+              },
+            } as never
+          }
         />
       </FindingsSelectionContext.Provider>,
     );

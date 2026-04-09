@@ -73,9 +73,9 @@ export function DataTableRowActions<T extends FindingRowData>({
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isPreparingMuteModal, setIsPreparingMuteModal] = useState(false);
-  const [mutePreparationError, setMutePreparationError] = useState<string | null>(
-    null,
-  );
+  const [mutePreparationError, setMutePreparationError] = useState<
+    string | null
+  >(null);
 
   const { isMuted, canMute, title: findingTitle } = extractRowInfo(finding);
 
@@ -116,9 +116,7 @@ export function DataTableRowActions<T extends FindingRowData>({
   };
 
   const handleMuteModalOpenChange = (
-    nextOpen:
-      | boolean
-      | ((previousOpen: boolean) => boolean),
+    nextOpen: boolean | ((previousOpen: boolean) => boolean),
   ) => {
     const resolvedOpen =
       typeof nextOpen === "function" ? nextOpen(isMuteModalOpen) : nextOpen;
