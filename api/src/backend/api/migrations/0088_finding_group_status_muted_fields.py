@@ -14,7 +14,82 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="findinggroupdailysummary",
+            name="pass_muted_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="fail_muted_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="manual_muted_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
             name="muted",
             field=models.BooleanField(default=False),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="new_fail_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="new_fail_muted_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="new_pass_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="new_pass_muted_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="new_manual_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="new_manual_muted_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="changed_fail_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="changed_fail_muted_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="changed_pass_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="changed_pass_muted_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="changed_manual_count",
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name="findinggroupdailysummary",
+            name="changed_manual_muted_count",
+            field=models.IntegerField(default=0),
         ),
     ]

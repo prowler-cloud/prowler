@@ -2319,7 +2319,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
-                    # checks_to_execute=scan.scanner_args.get("checks_to_execute")
+                    "checks_to_execute": ["accessanalyzer_enabled"],
                 },
             )
 
@@ -7078,6 +7078,9 @@ class FindingGroupViewSet(BaseRLSViewSet):
             pass_count=Sum("pass_count"),
             fail_count=Sum("fail_count"),
             manual_count=Sum("manual_count"),
+            pass_muted_count=Sum("pass_muted_count"),
+            fail_muted_count=Sum("fail_muted_count"),
+            manual_muted_count=Sum("manual_muted_count"),
             muted_count=Sum("muted_count"),
             # The group is muted only if every contributing daily summary is
             # itself fully muted. BoolAnd returns False as soon as one row has
@@ -7085,6 +7088,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
             muted=BoolAnd("muted"),
             new_count=Sum("new_count"),
             changed_count=Sum("changed_count"),
+            new_fail_count=Sum("new_fail_count"),
+            new_fail_muted_count=Sum("new_fail_muted_count"),
+            new_pass_count=Sum("new_pass_count"),
+            new_pass_muted_count=Sum("new_pass_muted_count"),
+            new_manual_count=Sum("new_manual_count"),
+            new_manual_muted_count=Sum("new_manual_muted_count"),
+            changed_fail_count=Sum("changed_fail_count"),
+            changed_fail_muted_count=Sum("changed_fail_muted_count"),
+            changed_pass_count=Sum("changed_pass_count"),
+            changed_pass_muted_count=Sum("changed_pass_muted_count"),
+            changed_manual_count=Sum("changed_manual_count"),
+            changed_manual_muted_count=Sum("changed_manual_muted_count"),
             resources_total=Sum("resources_total"),
             resources_fail=Sum("resources_fail"),
             impacted_providers_str=StringAgg(
@@ -7121,10 +7136,49 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 pass_count=Count("id", filter=Q(status="PASS")),
                 fail_count=Count("id", filter=Q(status="FAIL")),
                 manual_count=Count("id", filter=Q(status="MANUAL")),
+                pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
+                fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
+                manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),
                 muted_count=Count("id", filter=Q(muted=True)),
                 nonmuted_count=Count("id", filter=Q(muted=False)),
                 new_count=Count("id", filter=Q(delta="new", muted=False)),
                 changed_count=Count("id", filter=Q(delta="changed", muted=False)),
+                new_fail_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=False)
+                ),
+                new_fail_muted_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=True)
+                ),
+                new_pass_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=False)
+                ),
+                new_pass_muted_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=True)
+                ),
+                new_manual_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=False)
+                ),
+                new_manual_muted_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=True)
+                ),
+                changed_fail_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=False)
+                ),
+                changed_fail_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=True)
+                ),
+                changed_pass_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=False)
+                ),
+                changed_pass_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=True)
+                ),
+                changed_manual_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=False)
+                ),
+                changed_manual_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=True)
+                ),
                 resources_total=Count("resources__id", distinct=True),
                 resources_fail=Count(
                     "resources__id",

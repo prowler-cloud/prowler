@@ -15452,6 +15452,8 @@ class TestFindingGroupViewSet:
 
         rds_encryption has 2 muted FAIL findings, so the group must report
         status=FAIL (the orthogonal `muted` boolean signals it isn't actionable).
+        The status×muted breakdown lets clients answer 'how many failing
+        findings are muted in this group'.
         """
         response = authenticated_client.get(
             reverse("finding-group-list"),
@@ -15464,7 +15466,17 @@ class TestFindingGroupViewSet:
         assert attrs["status"] == "FAIL"
         assert attrs["muted"] is True
         assert attrs["fail_count"] == 2
+        assert attrs["fail_muted_count"] == 2
+        assert attrs["pass_muted_count"] == 0
+        assert attrs["manual_muted_count"] == 0
         assert attrs["muted_count"] == 2
+        # Sanity: the per-status muted counts must add up to muted_count.
+        assert (
+            attrs["pass_muted_count"]
+            + attrs["fail_muted_count"]
+            + attrs["manual_muted_count"]
+            == attrs["muted_count"]
+        )
 
     def test_finding_groups_status_filter(
         self, authenticated_client, finding_groups_fixture
@@ -16911,7 +16923,9 @@ class TestFindingGroupViewSet:
     def test_finding_groups_serializer_exposes_muted_and_manual_count(
         self, authenticated_client, finding_groups_fixture
     ):
-        """The /finding-groups payload must expose `muted` and `manual_count`."""
+        """The /finding-groups payload must expose `muted`, `manual_count` and
+        the per-status muted siblings (`pass_muted_count`/`fail_muted_count`/
+        `manual_muted_count`)."""
         response = authenticated_client.get(
             reverse("finding-group-list"),
             {"filter[inserted_at]": TODAY, "filter[check_id]": "iam_password_policy"},
@@ -16922,6 +16936,9 @@ class TestFindingGroupViewSet:
         assert "manual_count" in attrs and isinstance(attrs["manual_count"], int)
         assert attrs["muted"] is False  # iam_password_policy has only non-muted PASS
         assert attrs["manual_count"] == 0
+        assert attrs["pass_muted_count"] == 0
+        assert attrs["fail_muted_count"] == 0
+        assert attrs["manual_muted_count"] == 0
 
     @pytest.mark.parametrize(
         "endpoint_name", ["finding-group-list", "finding-group-latest"]
@@ -17004,8 +17021,7 @@ class TestFindingGroupViewSet:
         response = authenticated_client.get(reverse(endpoint_name), params)
         assert response.status_code == status.HTTP_200_OK
         asc_keys = [
-            priority[item["attributes"]["status"]]
-            for item in response.json()["data"]
+            priority[item["attributes"]["status"]] for item in response.json()["data"]
         ]
         assert asc_keys == sorted(asc_keys)
 
@@ -17029,6 +17045,76 @@ class TestFindingGroupViewSet:
         muted_values = [item["attributes"]["muted"] for item in data]
         # Descending boolean: True (1) before False (0)
         assert muted_values == sorted(muted_values, reverse=True)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_delta_status_breakdown(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`new_*` and `changed_*` counters split by status and mute state.
+
+        s3_bucket_public_access has 1 new FAIL and 1 changed FAIL (both
+        non-muted) so the breakdown must reflect exactly that and the totals
+        must equal the sum of the buckets.
+        """
+        params = {"filter[check_id]": "s3_bucket_public_access"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+
+        assert attrs["new_fail_count"] == 1
+        assert attrs["new_fail_muted_count"] == 0
+        assert attrs["new_pass_count"] == 0
+        assert attrs["new_pass_muted_count"] == 0
+        assert attrs["new_manual_count"] == 0
+        assert attrs["new_manual_muted_count"] == 0
+        assert attrs["changed_fail_count"] == 1
+        assert attrs["changed_fail_muted_count"] == 0
+        assert attrs["changed_pass_count"] == 0
+        assert attrs["changed_pass_muted_count"] == 0
+        assert attrs["changed_manual_count"] == 0
+        assert attrs["changed_manual_muted_count"] == 0
+
+        new_total = (
+            attrs["new_fail_count"]
+            + attrs["new_fail_muted_count"]
+            + attrs["new_pass_count"]
+            + attrs["new_pass_muted_count"]
+            + attrs["new_manual_count"]
+            + attrs["new_manual_muted_count"]
+        )
+        changed_total = (
+            attrs["changed_fail_count"]
+            + attrs["changed_fail_muted_count"]
+            + attrs["changed_pass_count"]
+            + attrs["changed_pass_muted_count"]
+            + attrs["changed_manual_count"]
+            + attrs["changed_manual_muted_count"]
+        )
+        # The non-muted variants of the breakdown must sum to the legacy
+        # totals (new_count/changed_count are stored as non-muted).
+        assert (
+            attrs["new_fail_count"]
+            + attrs["new_pass_count"]
+            + attrs["new_manual_count"]
+            == attrs["new_count"]
+        )
+        assert (
+            attrs["changed_fail_count"]
+            + attrs["changed_pass_count"]
+            + attrs["changed_manual_count"]
+            == attrs["changed_count"]
+        )
+        # And the *full* breakdown (including the muted halves) is exposed
+        # so clients can also count muted-only deltas without losing data.
+        assert new_total >= attrs["new_count"]
+        assert changed_total >= attrs["changed_count"]
 
     def test_finding_groups_resources_serializer_exposes_muted(
         self, authenticated_client, finding_groups_fixture

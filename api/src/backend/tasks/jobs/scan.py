@@ -1820,10 +1820,49 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                 pass_count=Count("id", filter=Q(status="PASS")),
                 fail_count=Count("id", filter=Q(status="FAIL")),
                 manual_count=Count("id", filter=Q(status="MANUAL")),
+                pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
+                fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
+                manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),
                 muted_count=Count("id", filter=Q(muted=True)),
                 nonmuted_count=Count("id", filter=Q(muted=False)),
                 new_count=Count("id", filter=Q(delta="new", muted=False)),
                 changed_count=Count("id", filter=Q(delta="changed", muted=False)),
+                new_fail_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=False)
+                ),
+                new_fail_muted_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=True)
+                ),
+                new_pass_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=False)
+                ),
+                new_pass_muted_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=True)
+                ),
+                new_manual_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=False)
+                ),
+                new_manual_muted_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=True)
+                ),
+                changed_fail_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=False)
+                ),
+                changed_fail_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=True)
+                ),
+                changed_pass_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=False)
+                ),
+                changed_pass_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=True)
+                ),
+                changed_manual_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=False)
+                ),
+                changed_manual_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=True)
+                ),
                 resources_total=Count("resources__id", distinct=True),
                 resources_fail=Count(
                     "resources__id",
@@ -1903,10 +1942,25 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                     pass_count=row["pass_count"],
                     fail_count=row["fail_count"],
                     manual_count=row["manual_count"],
+                    pass_muted_count=row["pass_muted_count"],
+                    fail_muted_count=row["fail_muted_count"],
+                    manual_muted_count=row["manual_muted_count"],
                     muted_count=row["muted_count"],
                     muted=row["nonmuted_count"] == 0,
                     new_count=row["new_count"],
                     changed_count=row["changed_count"],
+                    new_fail_count=row["new_fail_count"],
+                    new_fail_muted_count=row["new_fail_muted_count"],
+                    new_pass_count=row["new_pass_count"],
+                    new_pass_muted_count=row["new_pass_muted_count"],
+                    new_manual_count=row["new_manual_count"],
+                    new_manual_muted_count=row["new_manual_muted_count"],
+                    changed_fail_count=row["changed_fail_count"],
+                    changed_fail_muted_count=row["changed_fail_muted_count"],
+                    changed_pass_count=row["changed_pass_count"],
+                    changed_pass_muted_count=row["changed_pass_muted_count"],
+                    changed_manual_count=row["changed_manual_count"],
+                    changed_manual_muted_count=row["changed_manual_muted_count"],
                     resources_total=row["resources_total"],
                     resources_fail=row["resources_fail"],
                     first_seen_at=row["agg_first_seen_at"],
@@ -1927,10 +1981,25 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                     "pass_count",
                     "fail_count",
                     "manual_count",
+                    "pass_muted_count",
+                    "fail_muted_count",
+                    "manual_muted_count",
                     "muted_count",
                     "muted",
                     "new_count",
                     "changed_count",
+                    "new_fail_count",
+                    "new_fail_muted_count",
+                    "new_pass_count",
+                    "new_pass_muted_count",
+                    "new_manual_count",
+                    "new_manual_muted_count",
+                    "changed_fail_count",
+                    "changed_fail_muted_count",
+                    "changed_pass_count",
+                    "changed_pass_muted_count",
+                    "changed_manual_count",
+                    "changed_manual_muted_count",
                     "resources_total",
                     "resources_fail",
                     "first_seen_at",
