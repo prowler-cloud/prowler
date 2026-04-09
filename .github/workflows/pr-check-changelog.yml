@@ -66,6 +66,17 @@ jobs:
               # Get files changed in this folder
               changed_in_folder=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | grep "^${folder}/" || true)
 
+              # Generated lockfiles are handled separately and should not force a changelog entry.
+              # They frequently move when dependency tooling is re-run without any user-facing behavior change.
+              case "$folder" in
+                api)
+                  changed_in_folder=$(echo "$changed_in_folder" | grep -vE "^api/poetry\\.lock$" || true)
+                  ;;
+                mcp_server)
+                  changed_in_folder=$(echo "$changed_in_folder" | grep -vE "^mcp_server/uv\\.lock$" || true)
+                  ;;
+              esac
+
               if [ -n "$changed_in_folder" ]; then
                 echo "Detected changes in ${folder}/"
 
