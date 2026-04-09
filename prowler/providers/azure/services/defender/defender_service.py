@@ -32,10 +32,16 @@ class Defender(AzureService):
         pricings = {}
         for subscription_name, client in self.clients.items():
             try:
+                pricings.update({subscription_name: {}})
+                if self.resource_groups:
+                    logger.warning(
+                        f"Subscription name: {subscription_name} -- Pricings are subscription-scoped and cannot be filtered by resource group. Skipping."
+                    )
+                    continue
+                pricings.update({subscription_name: {}})
                 pricings_list = client.pricings.list(
                     scope_id=f"subscriptions/{self.subscriptions[subscription_name]}"
                 )
-                pricings.update({subscription_name: {}})
                 for pricing in pricings_list.value:
                     pricings[subscription_name].update(
                         {
@@ -73,8 +79,13 @@ class Defender(AzureService):
         auto_provisioning = {}
         for subscription_name, client in self.clients.items():
             try:
-                auto_provisioning_settings = client.auto_provisioning_settings.list()
                 auto_provisioning.update({subscription_name: {}})
+                if self.resource_groups:
+                    logger.warning(
+                        f"Subscription name: {subscription_name} -- Auto provisioning settings are subscription-scoped and cannot be filtered by resource group. Skipping."
+                    )
+                    continue
+                auto_provisioning_settings = client.auto_provisioning_settings.list()
                 for ap in auto_provisioning_settings:
                     auto_provisioning[subscription_name].update(
                         {
@@ -102,10 +113,15 @@ class Defender(AzureService):
         assessments = {}
         for subscription_name, client in self.clients.items():
             try:
+                assessments.update({subscription_name: {}})
+                if self.resource_groups:
+                    logger.warning(
+                        f"Subscription name: {subscription_name} -- Assessments are subscription-scoped and cannot be filtered by resource group. Skipping."
+                    )
+                    continue
                 assessments_list = client.assessments.list(
                     f"subscriptions/{self.subscriptions[subscription_name]}"
                 )
-                assessments.update({subscription_name: {}})
                 for assessment in assessments_list:
                     assessments[subscription_name].update(
                         {
@@ -129,8 +145,13 @@ class Defender(AzureService):
         settings = {}
         for subscription_name, client in self.clients.items():
             try:
-                settings_list = client.settings.list()
                 settings.update({subscription_name: {}})
+                if self.resource_groups:
+                    logger.warning(
+                        f"Subscription name: {subscription_name} -- Defender settings are subscription-scoped and cannot be filtered by resource group. Skipping."
+                    )
+                    continue
+                settings_list = client.settings.list()
                 for setting in settings_list:
                     settings[subscription_name].update(
                         {
@@ -168,6 +189,11 @@ class Defender(AzureService):
         security_contacts = {}
         for subscription_name, subscription_id in self.subscriptions.items():
             try:
+                if self.resource_groups:
+                    logger.warning(
+                        f"Subscription name: {subscription_name} -- Security contacts are subscription-scoped and cannot be filtered by resource group. Skipping."
+                    )
+                    continue
                 url = f"https://management.azure.com/subscriptions/{subscription_id}/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
                 headers = {
                     "Authorization": f"Bearer {token}",
@@ -235,15 +261,23 @@ class Defender(AzureService):
 
                 if self.resource_groups:
                     rgs = self.resource_groups.get(subscription_name, [])
-                    for rg in rgs:
-                        try:
-                            iot_security_solutions_list += list(
-                                client.iot_security_solution.list_by_resource_group(
-                                    resource_group_name=rg
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription_name}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                iot_security_solutions_list += list(
+                                    client.iot_security_solution.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
                                 )
-                            )
-                        except Exception as error:
-                            logger.warning(f"Error in RG {rg}: {error}")
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
                 else:
                     iot_security_solutions_list = (
                         client.iot_security_solution.list_by_subscription()
@@ -285,15 +319,23 @@ class Defender(AzureService):
                 policies_list = []
                 if self.resource_groups:
                     rgs = self.resource_groups.get(subscription_name, [])
-                    for rg in rgs:
-                        try:
-                            policies_list += list(
-                                client.jit_network_access_policies.list_by_resource_group(
-                                    resource_group_name=rg
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription_name}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                policies_list += list(
+                                    client.jit_network_access_policies.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
                                 )
-                            )
-                        except Exception as error:
-                            logger.warning(f"RG {rg} filter failed: {error}")
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
                 else:
                     policies_list = client.jit_network_access_policies.list()
 

@@ -21,6 +21,11 @@ class Monitor(AzureService):
         diagnostics_settings = {}
         for subscription, client in self.clients.items():
             try:
+                if self.resource_groups:
+                    logger.warning(
+                        f"Subscription name: {subscription} -- Diagnostic settings are subscription-scoped and cannot be filtered by resource group. Skipping."
+                    )
+                    continue
                 diagnostics_settings_list = self.diagnostic_settings_with_uri(
                     subscription,
                     f"subscriptions/{self.subscriptions[subscription]}/",

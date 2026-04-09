@@ -104,7 +104,7 @@ class AzureProvider(Provider):
     _region_config: AzureRegionConfig
     _locations: dict
     _mutelist: AzureMutelist
-    _resource_groups: dict
+    _resource_groups: list
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -117,7 +117,7 @@ class AzureProvider(Provider):
         tenant_id: str = None,
         region: str = "AzureCloud",
         subscription_ids: list = [],
-        resource_groups: dict = {},
+        resource_groups: list = [],
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
@@ -345,7 +345,7 @@ class AzureProvider(Provider):
         return self._mutelist
 
     @property
-    def resource_groups(self) -> dict:
+    def resource_groups(self) -> list:
         """Returns the list of resource groups to be scanned."""
         return self._resource_groups
 
@@ -1103,6 +1103,12 @@ class AzureProvider(Provider):
             for rg in resource_groups:
                 if rg in existing_rgs:
                     rg_map[display_name].append(rg)
+
+        if not any(rgs for rgs in rg_map.values()):
+            logger.warning(
+                f"None of the provided resource groups {resource_groups} were found "
+                "in any subscription. Please check the resource group names and try again."
+            )
 
         return rg_map
 
