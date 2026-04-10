@@ -4,10 +4,7 @@ import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 
-import {
-  resolveFindingIds,
-  resolveFindingIdsByVisibleGroupResources,
-} from "@/actions/findings/findings-by-resource";
+import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { DataTable } from "@/components/ui/table";
 import { hasDateOrScanFilter } from "@/lib";
 import { FindingGroupRow, MetaDataProps } from "@/types";
@@ -93,6 +90,7 @@ export function FindingsGroupTable({
     canMuteFindingGroup({
       resourcesFail: g.resourcesFail,
       resourcesTotal: g.resourcesTotal,
+      muted: g.muted,
       mutedCount: g.mutedCount,
     }),
   ).length;
@@ -102,6 +100,7 @@ export function FindingsGroupTable({
     return canMuteFindingGroup({
       resourcesFail: group.resourcesFail,
       resourcesTotal: group.resourcesTotal,
+      muted: group.muted,
       mutedCount: group.mutedCount,
     });
   };
@@ -238,14 +237,8 @@ export function FindingsGroupTable({
               selectedCheckIds.length > 0
                 ? resolveGroupMuteIds(selectedCheckIds)
                 : Promise.resolve([]),
-              hasResourceSelection && expandedCheckId
-                ? resolveFindingIds({
-                    checkId: expandedCheckId,
-                    resourceUids: resourceSelection,
-                    filters,
-                    hasDateOrScanFilter: hasDateOrScan,
-                  })
-                : Promise.resolve([]),
+              // resourceSelection already contains real finding UUIDs
+              Promise.resolve(hasResourceSelection ? resourceSelection : []),
             ]);
             return [...groupIds, ...resourceIds];
           }}

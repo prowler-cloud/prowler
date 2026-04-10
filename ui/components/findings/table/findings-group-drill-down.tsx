@@ -11,7 +11,6 @@ import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
   Table,
@@ -24,6 +23,10 @@ import {
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { useInfiniteResources } from "@/hooks/use-infinite-resources";
 import { cn, hasDateOrScanFilter } from "@/lib";
+import {
+  getFindingGroupDelta,
+  isFindingGroupMuted,
+} from "@/lib/findings-groups";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
@@ -111,18 +114,9 @@ export function FindingsGroupDrillDown({
     .map((idx) => resources[parseInt(idx)]?.findingId)
     .filter((id): id is string => id !== null && id !== undefined && id !== "");
 
-  /** Converts resource_ids (display) → resourceUids → finding UUIDs via API. */
+  /** findingId values are already real finding UUIDs — no resolution needed. */
   const resolveResourceIds = async (ids: string[]) => {
-    const resourceUids = ids
-      .map((id) => resources.find((r) => r.findingId === id)?.resourceUid)
-      .filter(Boolean) as string[];
-    if (resourceUids.length === 0) return [];
-    return resolveFindingIds({
-      checkId: group.checkId,
-      resourceUids,
-      filters,
-      hasDateOrScanFilter: hasDateOrScan,
-    });
+    return ids.filter(Boolean);
   };
 
   const selectableRowCount = resources.filter(canMuteFindingResource).length;
@@ -162,15 +156,15 @@ export function FindingsGroupDrillDown({
   });
 
   // Delta for the sticky header
+  const deltaKey = getFindingGroupDelta(group);
   const delta =
-    group.newCount > 0
+    deltaKey === "new"
       ? DeltaValues.NEW
-      : group.changedCount > 0
+      : deltaKey === "changed"
         ? DeltaValues.CHANGED
         : DeltaValues.NONE;
 
-  const allMuted =
-    group.mutedCount > 0 && group.mutedCount === group.resourcesTotal;
+  const allMuted = isFindingGroupMuted(group);
 
   const rows = table.getRowModel().rows;
 
@@ -205,7 +199,11 @@ export function FindingsGroupDrillDown({
             </button>
 
             {/* Notification indicator */}
-            <NotificationIndicator delta={delta} isMuted={allMuted} />
+            <NotificationIndicator
+              delta={delta}
+              isMuted={allMuted}
+              showDeltaWhenMuted
+            />
 
             {/* Status badge */}
             <StatusFindingBadge status={group.status} />
