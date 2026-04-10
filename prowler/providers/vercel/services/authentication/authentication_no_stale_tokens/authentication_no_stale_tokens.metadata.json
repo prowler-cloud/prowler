@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Regularly audit API tokens and revoke any that have not been used within 90 days. Implement a token lifecycle management process that includes periodic reviews, automatic expiration dates, and documentation of each token's purpose and owner.",
-      "Url": "https://hub.prowler.com/checks/vercel/authentication_no_stale_tokens"
+      "Url": "https://hub.prowler.com/check/authentication_no_stale_tokens"
     }
   },
   "Categories": [

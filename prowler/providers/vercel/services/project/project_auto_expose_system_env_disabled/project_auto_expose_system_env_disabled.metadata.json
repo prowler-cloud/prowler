@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Disable automatic exposure of system environment variables and explicitly define only the variables required by your application. This follows the principle of least privilege and reduces the risk of leaking internal infrastructure details through client-side code.",
-      "Url": "https://hub.prowler.com/checks/vercel/project_auto_expose_system_env_disabled"
+      "Url": "https://hub.prowler.com/check/project_auto_expose_system_env_disabled"
     }
   },
   "Categories": [
