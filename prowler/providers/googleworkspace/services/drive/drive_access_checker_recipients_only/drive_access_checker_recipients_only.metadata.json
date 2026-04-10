@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "drive_access_checker_recipients_only",
+  "CheckTitle": "Drive Access Checker is configured to recipients only",
+  "CheckType": [],
+  "ServiceName": "drive",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "When a user shares a Drive file via a Google product other than Drive itself (e.g. by pasting a link in Gmail), the Access Checker can suggest who should be granted access. Setting Access Checker to **recipients only** ensures the suggestions never expand sharing to a wider audience or to anyone with the link.",
+  "Risk": "If Access Checker suggests broader audiences or public visibility, users may **inadvertently widen access** to a file beyond the people they intended to share with. This is a common cause of unintentional internal or external over-sharing.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/60781",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Click **Sharing settings** > **Sharing options**\n4. Under **Access Checker**, select **Recipients only**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the Drive Access Checker to suggest sharing only with the explicit recipients of a link. This prevents accidental over-sharing through Gmail and other Google integrations.",
+      "Url": "https://hub.prowler.com/check/drive_access_checker_recipients_only"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "drive_external_sharing_warn_users",
+    "drive_publishing_files_disabled"
+  ],
+  "Notes": ""
+}

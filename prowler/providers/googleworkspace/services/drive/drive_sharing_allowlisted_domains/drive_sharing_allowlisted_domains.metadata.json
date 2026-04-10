@@ -1,0 +1,41 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "drive_sharing_allowlisted_domains",
+  "CheckTitle": "Document sharing is restricted to allowlisted domains",
+  "CheckType": [],
+  "ServiceName": "drive",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "External sharing of Drive and Docs files is **restricted to a curated list of allowlisted domains**, rather than allowed to arbitrary external recipients. This converts external sharing from an open default into a controlled allow-list that aligns with documented business relationships.",
+  "Risk": "When external sharing is unrestricted, users can share organizational content with **any external Google account**, including untrusted or unknown parties. Restricting sharing to allowlisted domains drastically reduces the surface area for accidental and malicious data exfiltration through Drive.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/60781",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Click **Sharing settings** > **Sharing options**\n4. Under **Sharing outside of <Company>**, select **ALLOWLISTED DOMAINS - Files owned by users in <Company> can be shared with Google Accounts in compatible allowlisted domains**\n5. Configure the allowlisted domains list as appropriate for your organization\n6. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict Drive and Docs external sharing to allowlisted domains. This converts external sharing from an open default into a controlled allow-list aligned with documented business relationships and reduces the risk of accidental or malicious data exposure.",
+      "Url": "https://hub.prowler.com/check/drive_sharing_allowlisted_domains"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "drive_external_sharing_warn_users",
+    "drive_warn_sharing_with_allowlisted_domains",
+    "drive_publishing_files_disabled"
+  ],
+  "Notes": ""
+}

@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "drive_internal_users_distribute_content",
+  "CheckTitle": "Only internal users can distribute content outside the organization",
+  "CheckType": [],
+  "ServiceName": "drive",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Distributing organizational content to shared drives owned by **another organization** is restricted to eligible **internal users** only. This prevents external collaborators with manager access to internal shared drives from moving content out of the organization.",
+  "Risk": "If external users can move files from internal shared drives into shared drives owned by another organization, the organization **loses authoritative control** over its own data. This is a frequently overlooked path for unintentional or malicious data exfiltration through shared drive collaboration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/60781",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Click **Sharing settings** > **Sharing options**\n4. Under **Distributing content outside of <Company>**, select **Only users in <Company>**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict the ability to distribute content to shared drives owned by another organization to internal users only. This preserves authoritative control over organizational data and closes a common shared-drive exfiltration path.",
+      "Url": "https://hub.prowler.com/check/drive_internal_users_distribute_content"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "drive_external_sharing_warn_users",
+    "drive_publishing_files_disabled"
+  ],
+  "Notes": ""
+}

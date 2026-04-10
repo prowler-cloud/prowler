@@ -1089,7 +1089,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.1",
       "Description": "External sharing SHALL be restricted to allowlisted domains",
-      "Checks": [],
+      "Checks": [
+        "drive_sharing_allowlisted_domains"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1115,7 +1117,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.3",
       "Description": "Warnings SHALL be enabled when a user is attempting to share with someone not in allowlisted domains",
-      "Checks": [],
+      "Checks": [
+        "drive_warn_sharing_with_allowlisted_domains"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1141,7 +1145,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.5",
       "Description": "Any OUs that do allow external sharing SHOULD disable making content available to anyone with the link",
-      "Checks": [],
+      "Checks": [
+        "drive_publishing_files_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1154,7 +1160,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.6",
       "Description": "Agencies SHALL set access checking to recipients only",
-      "Checks": [],
+      "Checks": [
+        "drive_access_checker_recipients_only"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1167,7 +1175,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.7",
       "Description": "Users SHOULD NOT be allowed to upload or move content to shared drives owned by another organization",
-      "Checks": [],
+      "Checks": [
+        "drive_internal_users_distribute_content"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1193,7 +1203,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.9",
       "Description": "Out-of-Domain file-level warnings SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "drive_external_sharing_warn_users"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1232,7 +1244,9 @@
     {
       "Id": "GWS.DRIVEDOCS.2.1",
       "Description": "Agencies SHOULD NOT allow members with manager access to override shared Google Drive creation settings",
-      "Checks": [],
+      "Checks": [
+        "drive_shared_drive_managers_cannot_override"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
