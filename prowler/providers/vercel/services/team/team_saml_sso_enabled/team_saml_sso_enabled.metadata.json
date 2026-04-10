@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enable SAML SSO for the Vercel team to centralize authentication through your organization's identity provider. This ensures consistent security policies, simplifies user lifecycle management, and enables enforcement of MFA and other access controls.",
-      "Url": "https://hub.prowler.com/checks/vercel/team_saml_sso_enabled"
+      "Url": "https://hub.prowler.com/check/team_saml_sso_enabled"
     }
   },
   "Categories": [

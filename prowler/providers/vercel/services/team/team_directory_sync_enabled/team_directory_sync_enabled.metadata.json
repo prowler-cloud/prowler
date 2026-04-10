@@ -25,7 +25,7 @@
     },
     "Recommendation": {
       "Text": "Enable directory sync (SCIM) to automate user lifecycle management. This ensures that team membership stays synchronized with your identity provider, automatically provisioning new members and revoking access when employees leave or change roles.",
-      "Url": "https://hub.prowler.com/checks/vercel/team_directory_sync_enabled"
+      "Url": "https://hub.prowler.com/check/team_directory_sync_enabled"
     }
   },
   "Categories": [
