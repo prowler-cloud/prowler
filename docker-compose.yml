@@ -5,6 +5,13 @@
 #   docker compose -f docker-compose-dev.yml up
 #
 services:
+  api-init:
+    image: busybox:1.37.0
+    volumes:
+      - ./_data/api:/data
+    command: ["sh", "-c", "chown -R 1000:1000 /data"]
+    restart: "no"
+
   api:
     hostname: "prowler-api"
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
@@ -17,6 +24,8 @@ services:
       - ./_data/api:/home/prowler/.config/prowler-api
       - output:/tmp/prowler_api_output
     depends_on:
+      api-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       valkey:

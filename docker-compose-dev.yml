@@ -1,4 +1,11 @@
 services:
+  api-dev-init:
+    image: busybox:1.37.0
+    volumes:
+      - ./_data/api:/data
+    command: ["sh", "-c", "chown -R 1000:1000 /data"]
+    restart: "no"
+
   api-dev:
     hostname: "prowler-api"
     image: prowler-api-dev
@@ -21,6 +28,8 @@ services:
       - ./_data/api:/home/prowler/.config/prowler-api
       - outputs:/tmp/prowler_api_output
     depends_on:
+      api-dev-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       valkey:
