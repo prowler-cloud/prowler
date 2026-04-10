@@ -718,6 +718,10 @@ def execute(
                 is_finding_muted_args["team_id"] = (
                     team.id if team else global_provider.identity.user_id
                 )
+            elif global_provider.type == "oraclecloud":
+                is_finding_muted_args["tenancy_id"] = (
+                    global_provider.identity.tenancy_id
+                )
             for finding in check_findings:
                 if global_provider.type == "cloudflare":
                     is_finding_muted_args["account_id"] = finding.account_id

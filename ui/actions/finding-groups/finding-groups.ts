@@ -23,17 +23,71 @@ function mapSearchFilter(
   return mapped;
 }
 
-export const getFindingGroups = async ({
-  page = 1,
-  pageSize = 10,
-  sort = "",
-  filters = {},
-}) => {
+function splitCsvFilterValues(value: string | string[] | undefined): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((item) => item.split(","))
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function normalizeFindingGroupResourceFilters(
+  filters: Record<string, string | string[] | undefined>,
+): Record<string, string | string[] | undefined> {
+  const normalized = { ...filters };
+  const exactStatusFilter = normalized["filter[status]"];
+
+  if (exactStatusFilter !== undefined) {
+    delete normalized["filter[status__in]"];
+    return normalized;
+  }
+
+  const statusValues = splitCsvFilterValues(normalized["filter[status__in]"]);
+  if (statusValues.length === 1) {
+    normalized["filter[status]"] = statusValues[0];
+    delete normalized["filter[status__in]"];
+  }
+
+  return normalized;
+}
+
+const DEFAULT_FINDING_GROUPS_SORT =
+  "-status,-severity,-delta,-fail_count,-last_seen_at";
+
+const DEFAULT_FINDING_GROUP_RESOURCES_SORT =
+  "-status,-delta,-severity,-last_seen_at";
+
+interface FetchFindingGroupsParams {
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
+}
+
+async function fetchFindingGroupsEndpoint(
+  endpoint: string,
+  {
+    page = 1,
+    pageSize = 10,
+    sort = DEFAULT_FINDING_GROUPS_SORT,
+    filters = {},
+  }: FetchFindingGroupsParams,
+) {
   const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/findings");
 
-  const url = new URL(`${apiBaseUrl}/finding-groups`);
+  const url = new URL(`${apiBaseUrl}/${endpoint}`);
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
@@ -45,120 +99,60 @@ export const getFindingGroups = async ({
     const response = await fetch(url.toString(), { headers });
     return handleApiResponse(response);
   } catch (error) {
-    console.error("Error fetching finding groups:", error);
+    console.error(`Error fetching ${endpoint}:`, error);
     return undefined;
   }
-};
+}
 
-export const getLatestFindingGroups = async ({
-  page = 1,
-  pageSize = 10,
-  sort = "",
-  filters = {},
-}) => {
+export const getFindingGroups = async (params: FetchFindingGroupsParams = {}) =>
+  fetchFindingGroupsEndpoint("finding-groups", params);
+
+export const getLatestFindingGroups = async (
+  params: FetchFindingGroupsParams = {},
+) => fetchFindingGroupsEndpoint("finding-groups/latest", params);
+
+interface FetchFindingGroupResourcesParams {
+  checkId: string;
+  page?: number;
+  pageSize?: number;
+  filters?: Record<string, string | string[] | undefined>;
+}
+
+async function fetchFindingGroupResourcesEndpoint(
+  endpointPrefix: string,
+  {
+    checkId,
+    page = 1,
+    pageSize = 20,
+    filters = {},
+  }: FetchFindingGroupResourcesParams,
+) {
   const headers = await getAuthHeaders({ contentType: false });
+  const normalizedFilters = normalizeFindingGroupResourceFilters(filters);
 
-  if (isNaN(Number(page)) || page < 1) redirect("/findings");
-
-  const url = new URL(`${apiBaseUrl}/finding-groups/latest`);
+  const url = new URL(
+    `${apiBaseUrl}/${endpointPrefix}/${encodeURIComponent(checkId)}/resources`,
+  );
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  if (sort) url.searchParams.append("sort", sort);
+  url.searchParams.append("sort", DEFAULT_FINDING_GROUP_RESOURCES_SORT);
 
-  appendSanitizedProviderFilters(url, mapSearchFilter(filters));
+  appendSanitizedProviderFilters(url, normalizedFilters);
 
   try {
     const response = await fetch(url.toString(), { headers });
     return handleApiResponse(response);
   } catch (error) {
-    console.error("Error fetching latest finding groups:", error);
+    console.error(`Error fetching ${endpointPrefix} resources:`, error);
     return undefined;
   }
-};
+}
 
-export const getFindingGroupResources = async ({
-  checkId,
-  page = 1,
-  pageSize = 20,
-  filters = {},
-}: {
-  checkId: string;
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, string | string[] | undefined>;
-}) => {
-  const headers = await getAuthHeaders({ contentType: false });
+export const getFindingGroupResources = async (
+  params: FetchFindingGroupResourcesParams,
+) => fetchFindingGroupResourcesEndpoint("finding-groups", params);
 
-  const url = new URL(
-    `${apiBaseUrl}/finding-groups/${encodeURIComponent(checkId)}/resources`,
-  );
-
-  if (page) url.searchParams.append("page[number]", page.toString());
-  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  // sort=-status is kept for future-proofing: if the filter[status]=FAIL
-  // constraint is ever relaxed to allow multiple statuses, the sort ensures
-  // FAIL resources still appear first in the result set.
-  url.searchParams.append("sort", "-status");
-
-  appendSanitizedProviderFilters(url, filters);
-
-  // Use .set() AFTER appendSanitizedProviderFilters so our hardcoded FAIL
-  // always wins, even if the caller passed a different filter[status] value.
-  // Using .set() instead of .append() prevents duplicate filter[status] params.
-  url.searchParams.set("filter[status]", "FAIL");
-
-  try {
-    const response = await fetch(url.toString(), {
-      headers,
-    });
-
-    return handleApiResponse(response);
-  } catch (error) {
-    console.error("Error fetching finding group resources:", error);
-    return undefined;
-  }
-};
-
-export const getLatestFindingGroupResources = async ({
-  checkId,
-  page = 1,
-  pageSize = 20,
-  filters = {},
-}: {
-  checkId: string;
-  page?: number;
-  pageSize?: number;
-  filters?: Record<string, string | string[] | undefined>;
-}) => {
-  const headers = await getAuthHeaders({ contentType: false });
-
-  const url = new URL(
-    `${apiBaseUrl}/finding-groups/latest/${encodeURIComponent(checkId)}/resources`,
-  );
-
-  if (page) url.searchParams.append("page[number]", page.toString());
-  if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  // sort=-status is kept for future-proofing: if the filter[status]=FAIL
-  // constraint is ever relaxed to allow multiple statuses, the sort ensures
-  // FAIL resources still appear first in the result set.
-  url.searchParams.append("sort", "-status");
-
-  appendSanitizedProviderFilters(url, filters);
-
-  // Use .set() AFTER appendSanitizedProviderFilters so our hardcoded FAIL
-  // always wins, even if the caller passed a different filter[status] value.
-  // Using .set() instead of .append() prevents duplicate filter[status] params.
-  url.searchParams.set("filter[status]", "FAIL");
-
-  try {
-    const response = await fetch(url.toString(), {
-      headers,
-    });
-
-    return handleApiResponse(response);
-  } catch (error) {
-    console.error("Error fetching latest finding group resources:", error);
-    return undefined;
-  }
-};
+export const getLatestFindingGroupResources = async (
+  params: FetchFindingGroupResourcesParams,
+) => fetchFindingGroupResourcesEndpoint("finding-groups/latest", params);

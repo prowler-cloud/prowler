@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Limit the number of team owners to the minimum required for administration. Assign the least privileged role necessary for each member's responsibilities. Use MEMBER, DEVELOPER, or VIEWER roles for non-administrative team members.",
-      "Url": "https://hub.prowler.com/checks/vercel/team_member_role_least_privilege"
+      "Url": "https://hub.prowler.com/check/team_member_role_least_privilege"
     }
   },
   "Categories": [

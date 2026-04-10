@@ -163,6 +163,38 @@ describe("useInfiniteResources", () => {
         findingGroupActionsMock.getLatestFindingGroupResources,
       ).not.toHaveBeenCalled();
     });
+
+    it("should forward the active finding-group filters to the resources endpoint", async () => {
+      // Given
+      const apiResponse = makeApiResponse([], { pages: 1 });
+      const filters = {
+        "filter[status__in]": "PASS",
+        "filter[severity__in]": "medium",
+        "filter[provider_type__in]": "aws",
+      };
+      findingGroupActionsMock.getLatestFindingGroupResources.mockResolvedValue(
+        apiResponse,
+      );
+      findingGroupActionsMock.adaptFindingGroupResourcesResponse.mockReturnValue(
+        [],
+      );
+
+      // When
+      renderHook(() => useInfiniteResources(defaultOptions({ filters })));
+      await flushAsync();
+
+      // Then
+      expect(
+        findingGroupActionsMock.getLatestFindingGroupResources,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          checkId: "check_1",
+          page: 1,
+          pageSize: 10,
+          filters,
+        }),
+      );
+    });
   });
 
   describe("when all resources fit in one page", () => {

@@ -24,6 +24,17 @@ vi.mock("next/navigation", () => ({
 
 import { FloatingMuteButton } from "./floating-mute-button";
 
+function deferredPromise<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+}
+
 // ---------------------------------------------------------------------------
 // Fix 3: onBeforeOpen rejection resets isResolving
 // ---------------------------------------------------------------------------
@@ -31,7 +42,6 @@ import { FloatingMuteButton } from "./floating-mute-button";
 describe("FloatingMuteButton — onBeforeOpen error handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   it("should reset isResolving (re-enable button) when onBeforeOpen rejects", async () => {
@@ -58,11 +68,9 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     });
   });
 
-  it("should log the error when onBeforeOpen rejects", async () => {
+  it("should show the preparation error in the modal when onBeforeOpen rejects", async () => {
     // Given
-    const error = new Error("Fetch failed");
-    const onBeforeOpen = vi.fn().mockRejectedValue(error);
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const onBeforeOpen = vi.fn().mockRejectedValue(new Error("Fetch failed"));
     const user = userEvent.setup();
 
     render(
@@ -76,9 +84,26 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     // When
     await user.click(screen.getByRole("button"));
 
-    // Then — error was logged
+    // Then
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalled();
+      const lastCall = (
+        MuteFindingsModalMock.mock.calls as unknown as Array<
+          [
+            {
+              isOpen: boolean;
+              isPreparing?: boolean;
+              preparationError?: string | null;
+            },
+          ]
+        >
+      ).at(-1);
+
+      expect(lastCall?.[0]).toMatchObject({
+        isOpen: true,
+        isPreparing: false,
+        preparationError:
+          "We couldn't prepare this mute action. Please try again.",
+      });
     });
   });
 
@@ -102,10 +127,76 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     await waitFor(() => {
       const lastCall = (
         MuteFindingsModalMock.mock.calls as unknown as Array<
-          [{ isOpen: boolean; findingIds: string[] }]
+          [
+            {
+              isOpen: boolean;
+              findingIds: string[];
+              isPreparing?: boolean;
+            },
+          ]
         >
       ).at(-1);
       expect(lastCall?.[0]?.isOpen).toBe(true);
+    });
+  });
+
+  it("should open the modal immediately in preparing state while IDs are still resolving", async () => {
+    // Given
+    const deferred = deferredPromise<string[]>();
+    const onBeforeOpen = vi.fn().mockReturnValue(deferred.promise);
+    const user = userEvent.setup();
+
+    render(
+      <FloatingMuteButton
+        selectedCount={3}
+        selectedFindingIds={["group-1", "group-2", "group-3"]}
+        onBeforeOpen={onBeforeOpen}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then
+    const preparingCall = (
+      MuteFindingsModalMock.mock.calls as unknown as Array<
+        [
+          {
+            isOpen: boolean;
+            findingIds: string[];
+            isPreparing?: boolean;
+          },
+        ]
+      >
+    ).at(-1);
+
+    expect(preparingCall?.[0]).toMatchObject({
+      isOpen: true,
+      isPreparing: true,
+      findingIds: [],
+    });
+
+    // And when the IDs resolve
+    deferred.resolve(["id-1", "id-2"]);
+
+    await waitFor(() => {
+      const resolvedCall = (
+        MuteFindingsModalMock.mock.calls as unknown as Array<
+          [
+            {
+              isOpen: boolean;
+              findingIds: string[];
+              isPreparing?: boolean;
+            },
+          ]
+        >
+      ).at(-1);
+
+      expect(resolvedCall?.[0]).toMatchObject({
+        isOpen: true,
+        isPreparing: false,
+        findingIds: ["id-1", "id-2"],
+      });
     });
   });
 });
