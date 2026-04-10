@@ -146,14 +146,14 @@ Use the standard Prowler output options. The IaC provider also supports [SARIF](
 prowler iac --scan-path ./iac --output-formats csv json-ocsf html
 ```
 
-#### SARIF Output for GitHub Code Scanning
+#### SARIF Output
 
 <VersionBadge version="5.23.0" />
 
-To generate SARIF output compatible with GitHub Code Scanning:
+To generate SARIF output for integration with SARIF-compatible tools:
 
 ```sh
 prowler iac --scan-repository-url https://github.com/user/repo -M sarif
 ```
 
-The SARIF file can be uploaded to GitHub's Security tab using the `github/codeql-action/upload-sarif` action. Findings appear as code scanning alerts with file and line annotations. See the [SARIF reporting documentation](/user-guide/cli/tutorials/reporting#sarif-iac-only) for details.
+See the [SARIF reporting documentation](/user-guide/cli/tutorials/reporting#sarif-iac-only) for details on the format and severity mapping.

@@ -392,22 +392,6 @@ The SARIF output includes:
 * **Results:** Only failed (non-muted) findings are included, with file paths and line numbers for precise annotation.
 * **Severity mapping:** Prowler severities map to SARIF levels (`critical`/`high` → `error`, `medium` → `warning`, `low`/`informational` → `note`).
 
-#### GitHub Code Scanning Integration
-
-To upload SARIF results to GitHub Code Scanning, use the `github/codeql-action/upload-sarif` action in a GitHub Actions workflow:
-
-```yaml
-- name: Run Prowler IaC Scan
-  run: prowler iac --scan-repository-url ${{ github.server_url }}/${{ github.repository }} -M sarif
-
-- name: Upload SARIF to GitHub Security
-  uses: github/codeql-action/upload-sarif@v3
-  with:
-    sarif_file: output/
-```
-
-Findings appear natively in the repository's Security tab as code scanning alerts, with annotations pointing to the exact file and line.
-
 ## V4 Deprecations
 
 Some deprecations have been made to unify formats and improve outputs.
