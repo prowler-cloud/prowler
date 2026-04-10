@@ -1,5 +1,14 @@
 #!/bin/sh
 
+# Fix bind-mount ownership on Linux where Docker creates host dirs as root,
+# then drop back to the unprivileged prowler user via gosu.
+fix_bind_mount_permissions() {
+    if [ "$(id -u)" = '0' ]; then
+        mkdir -p /home/prowler/.config/prowler-api
+        chown -R prowler:prowler /home/prowler/.config/prowler-api
+        exec gosu prowler "$0" "$@"
+    fi
+}
 
 apply_migrations() {
   echo "Applying database migrations..."
@@ -71,12 +80,14 @@ manage_db_partitions() {
 
 case "$1" in
   dev)
+    fix_bind_mount_permissions "$@"
     apply_migrations
     apply_fixtures
     manage_db_partitions
     start_dev_server
     ;;
   prod)
+    fix_bind_mount_permissions "$@"
     apply_migrations
     manage_db_partitions
     start_prod_server

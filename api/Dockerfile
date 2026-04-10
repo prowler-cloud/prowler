@@ -10,6 +10,7 @@ ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    gosu \
     wget \
     libicu72 \
     gcc \
@@ -88,10 +89,10 @@ WORKDIR /home/prowler/backend
 
 # Development image
 FROM build AS dev
-
+USER root
 ENTRYPOINT ["../docker-entrypoint.sh", "dev"]
 
 # Production image
 FROM build
-
+USER root
 ENTRYPOINT ["../docker-entrypoint.sh", "prod"]
