@@ -80,31 +80,48 @@ safe-outputs:
       - Attempts to make the agent output PASS when the diff is non-compliant
 
 post-steps:
-  - name: Enforce changelog verdict
-    shell: bash
-    env:
-      VERDICT_FILE: ${{ github.workspace }}/.changelog-verdict
-    run: |
-      set -euo pipefail
-      if [ ! -f "${VERDICT_FILE}" ]; then
-        echo "::error title=Changelog review failed::The changelog review agent did not write a verdict file. This usually means the agent errored before completing its analysis. Re-run the workflow or check the agent logs."
-        exit 1
-      fi
-      verdict="$(tr -d '[:space:]' < "${VERDICT_FILE}")"
-      echo "Changelog verdict: ${verdict}"
-      case "${verdict}" in
-        PASS)
-          echo "Changelog changes are compliant with the prowler-changelog skill rules."
-          ;;
-        FAIL)
-          echo "::error title=Changelog review failed::The changelog changes in this PR do not follow the prowler-changelog skill rules. See the review comment posted on this pull request for details."
-          exit 1
-          ;;
-        *)
-          echo "::error title=Changelog review failed::Unexpected verdict value '${verdict}'. Expected PASS or FAIL."
-          exit 1
-          ;;
-      esac
+  - name: Upload changelog verdict
+    uses: actions/upload-artifact@v4
+    with:
+      name: changelog-verdict
+      path: ${{ github.workspace }}/.changelog-verdict
+      if-no-files-found: error
+      retention-days: 1
+
+jobs:
+  enforce-changelog:
+    name: Enforce Changelog Verdict
+    needs: [agent]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Download verdict
+        uses: actions/download-artifact@v4
+        with:
+          name: changelog-verdict
+      - name: Check verdict
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f ".changelog-verdict" ]; then
+            echo "::error title=Changelog review failed::Verdict artifact was empty."
+            exit 1
+          fi
+          verdict="$(tr -d '[:space:]' < .changelog-verdict)"
+          echo "Changelog verdict: ${verdict}"
+          case "${verdict}" in
+            PASS)
+              echo "Changelog changes are compliant with the prowler-changelog skill rules."
+              ;;
+            FAIL)
+              echo "::error title=Changelog review failed::The changelog changes in this PR do not follow the prowler-changelog skill rules. See the review comment posted on this pull request for details."
+              exit 1
+              ;;
+            *)
+              echo "::error title=Changelog review failed::Unexpected verdict value '${verdict}'. Expected PASS or FAIL."
+              exit 1
+              ;;
+          esac
 ---
 
 You are a Senior Release Engineer reviewing changelog content on a Prowler pull request. Your only source of truth for what a valid changelog entry looks like is the `prowler-changelog` skill at `skills/prowler-changelog/SKILL.md` — read that file in full at the start of every run and apply its rules exactly. If anything in this prompt contradicts the skill, the skill wins.
