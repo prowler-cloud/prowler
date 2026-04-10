@@ -54,7 +54,7 @@ class SARIF(Output):
                 rule_indices[check_id] = len(rules)
                 rule = {
                     "id": check_id,
-                    "name": check_id,
+                    "name": finding.metadata.CheckTitle,
                     "shortDescription": {"text": finding.metadata.CheckTitle},
                     "fullDescription": {
                         "text": finding.metadata.Description or check_id
@@ -63,6 +63,7 @@ class SARIF(Output):
                         "text": finding.metadata.Remediation.Recommendation.Text
                         or finding.metadata.Description
                         or check_id,
+                        "markdown": self._build_help_markdown(finding, severity),
                     },
                     "defaultConfiguration": {
                         "level": SEVERITY_TO_SARIF_LEVEL.get(severity, "note"),
@@ -133,6 +134,26 @@ class SARIF(Output):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    @staticmethod
+    def _build_help_markdown(finding: Finding, severity: str) -> str:
+        """Build a markdown help string for a SARIF rule."""
+        remediation = (
+            finding.metadata.Remediation.Recommendation.Text
+            or finding.metadata.Description
+            or finding.metadata.CheckID
+        )
+        lines = [
+            f"**{finding.metadata.CheckTitle}**\n",
+            f"| Severity | Remediation |",
+            f"| --- | --- |",
+            f"| {severity.upper()} | {remediation} |",
+        ]
+        if finding.metadata.RelatedUrl:
+            lines.append(
+                f"\n[More info]({finding.metadata.RelatedUrl})"
+            )
+        return "\n".join(lines)
 
     @staticmethod
     def _build_location(finding: Finding) -> Optional[dict]:
