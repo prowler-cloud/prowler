@@ -468,7 +468,7 @@ class TestGenerateComplianceReportsCIS:
         class _FakeManager:
             def filter(self, **kwargs):
                 class _Q:
-                    def exists(self_inner):
+                    def exists(self):
                         return True
 
                 return _Q()

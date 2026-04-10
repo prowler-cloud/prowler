@@ -265,7 +265,7 @@ class CISReportGenerator(BaseComplianceReportGenerator):
         elements.append(Spacer(1, 0.1 * inch))
         profile_counts = stats["profile_counts"]
         profile_table_data = [["Profile", "Passed", "Failed", "Manual", "Total"]]
-        for bucket in ("L1", "L2", "Other"):
+        for bucket in _PROFILE_BUCKET_ORDER:
             counts = profile_counts.get(bucket, {"passed": 0, "failed": 0, "manual": 0})
             total = counts["passed"] + counts["failed"] + counts["manual"]
             if total == 0:
@@ -311,7 +311,7 @@ class CISReportGenerator(BaseComplianceReportGenerator):
         elements.append(Spacer(1, 0.1 * inch))
         assessment_counts = stats["assessment_counts"]
         assessment_table_data = [["Assessment", "Passed", "Failed", "Manual", "Total"]]
-        for bucket in ("Automated", "Manual"):
+        for bucket in _ASSESSMENT_BUCKET_ORDER:
             counts = assessment_counts.get(
                 bucket, {"passed": 0, "failed": 0, "manual": 0}
             )
@@ -512,7 +512,7 @@ class CISReportGenerator(BaseComplianceReportGenerator):
             pass_series = []
             fail_series = []
             manual_series = []
-            for bucket in ("L1", "L2", "Other"):
+            for bucket in _PROFILE_BUCKET_ORDER:
                 counts = profile_counts.get(bucket)
                 if not counts:
                     continue
