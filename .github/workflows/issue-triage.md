@@ -1,4 +1,5 @@
 ---
+name: "Tools: [AI] Issue Triage"
 description: "[Experimental] AI-powered issue triage for Prowler - produces coding-agent-ready fix plans"
 labels: [triage, ai, issues]
 
@@ -42,7 +43,7 @@ network:
 
 tools:
   github:
-    lockdown: false
+    min-integrity: none
     toolsets: [default, code_security]
   bash:
     - grep

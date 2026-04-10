@@ -1,4 +1,5 @@
 ---
+name: "Tools: [AI] Changelog Review"
 description: "[Experimental] AI-powered changelog content review for Prowler PRs - validates CHANGELOG.md changes against the prowler-changelog skill"
 labels: [changelog, ai, review]
 
@@ -41,7 +42,7 @@ network:
 
 tools:
   github:
-    lockdown: false
+    min-integrity: none
     toolsets: [default]
   bash:
     - git

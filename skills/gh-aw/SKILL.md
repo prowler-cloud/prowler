@@ -59,11 +59,24 @@ When you need details on any gh-aw feature, read the upstream doc FIRST. Only us
     └── imports/               # Compile-time cache of cross-repo imports
 ```
 
-`.github/workflows/shared/` is the convention for reusable components imported by multiple workflows. See [references/docs.md](references/docs.md) for local examples.
+`.github/workflows/shared/` is the convention for reusable components imported by multiple workflows. See "Local examples in this repo" at the bottom of this file.
 
 ---
 
 ## Prowler-Specific Patterns
+
+### Workflow naming convention
+
+Follow the repo convention: `'{Component}: {Name}'` for component workflows, `'Tools: {Name}'` for tooling. Agentic workflows add `[AI]`:
+
+```yaml
+name: "Tools: [AI] Changelog Review"    # agentic tooling
+name: "Tools: [AI] Issue Triage"        # agentic tooling
+name: "Tools: Check Changelog"          # non-agentic tooling
+name: "SDK: Tests"                      # component CI
+```
+
+Always set `name:` explicitly — the compiler's auto-derivation from the filename is unreliable and can produce garbage names.
 
 ### Agent personas vs. skill-sourced workflows
 
