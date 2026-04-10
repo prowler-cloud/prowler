@@ -218,16 +218,12 @@ function buildComplianceDetailHref({
   version,
   scanId,
   regionFilter,
-  currentFinding,
-  includeScanData,
 }: {
   complianceId: string;
   framework: string;
   version: string;
   scanId: string;
   regionFilter: string | null;
-  currentFinding: ResourceDrawerFinding | null;
-  includeScanData: boolean;
 }): string {
   const params = new URLSearchParams();
   params.set("complianceId", complianceId);
@@ -238,24 +234,6 @@ function buildComplianceDetailHref({
 
   if (regionFilter) {
     params.set("filter[region__in]", regionFilter);
-  }
-
-  if (includeScanData && currentFinding?.scan?.completedAt) {
-    params.set(
-      "scanData",
-      JSON.stringify({
-        id: currentFinding.scan.id,
-        providerInfo: {
-          provider: currentFinding.providerType,
-          alias: currentFinding.providerAlias,
-          uid: currentFinding.providerUid,
-        },
-        attributes: {
-          name: currentFinding.scan.name,
-          completed_at: currentFinding.scan.completedAt,
-        },
-      }),
-    );
   }
 
   return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
@@ -377,8 +355,6 @@ export function ResourceDetailDrawerContent({
           version: complianceMatch.version,
           scanId: complianceScanId,
           regionFilter,
-          currentFinding: f,
-          includeScanData: f?.scan?.id === complianceScanId,
         }),
         "_blank",
         "noopener,noreferrer",

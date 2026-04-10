@@ -62,7 +62,10 @@ function normalizeFindingGroupResourceFilters(
 }
 
 const DEFAULT_FINDING_GROUPS_SORT =
-  "-severity,-delta,-fail_count,-last_seen_at";
+  "-status,-severity,-delta,-fail_count,-last_seen_at";
+
+const DEFAULT_FINDING_GROUP_RESOURCES_SORT =
+  "-status,-delta,-severity,-last_seen_at";
 
 interface FetchFindingGroupsParams {
   page?: number;
@@ -133,7 +136,7 @@ async function fetchFindingGroupResourcesEndpoint(
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  url.searchParams.append("sort", "-severity,-delta,-last_seen_at");
+  url.searchParams.append("sort", DEFAULT_FINDING_GROUP_RESOURCES_SORT);
 
   appendSanitizedProviderFilters(url, normalizedFilters);
 
