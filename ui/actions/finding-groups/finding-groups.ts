@@ -41,10 +41,25 @@ function splitCsvFilterValues(value: string | string[] | undefined): string[] {
   return [];
 }
 
+/**
+ * Filters that belong to finding-groups but are NOT valid for the
+ * finding-group resources sub-endpoint. These must be stripped before
+ * calling the resources API to avoid empty results.
+ */
+const FINDING_GROUP_ONLY_FILTERS = ["filter[service__in]"] as const;
+
 function normalizeFindingGroupResourceFilters(
   filters: Record<string, string | string[] | undefined>,
 ): Record<string, string | string[] | undefined> {
-  const normalized = { ...filters };
+  const normalized = Object.fromEntries(
+    Object.entries(filters).filter(
+      ([key]) =>
+        !FINDING_GROUP_ONLY_FILTERS.includes(
+          key as (typeof FINDING_GROUP_ONLY_FILTERS)[number],
+        ),
+    ),
+  );
+
   const exactStatusFilter = normalized["filter[status]"];
 
   if (exactStatusFilter !== undefined) {
@@ -62,7 +77,10 @@ function normalizeFindingGroupResourceFilters(
 }
 
 const DEFAULT_FINDING_GROUPS_SORT =
-  "-severity,-delta,-fail_count,-last_seen_at";
+  "-status,-severity,-delta,-fail_count,-last_seen_at";
+
+const DEFAULT_FINDING_GROUP_RESOURCES_SORT =
+  "-status,-delta,-severity,-last_seen_at";
 
 interface FetchFindingGroupsParams {
   page?: number;
@@ -133,7 +151,7 @@ async function fetchFindingGroupResourcesEndpoint(
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  url.searchParams.append("sort", "-severity,-delta,-last_seen_at");
+  url.searchParams.append("sort", DEFAULT_FINDING_GROUP_RESOURCES_SORT);
 
   appendSanitizedProviderFilters(url, normalizedFilters);
 
