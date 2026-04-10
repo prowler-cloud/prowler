@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib";
 import {
-  getFindingGroupDelta,
+  getFilteredFindingGroupDelta,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
 import { FindingGroupRow, ProviderType } from "@/types";
@@ -29,6 +29,8 @@ interface GetColumnFindingGroupsOptions {
   expandedCheckId?: string | null;
   /** True when the expanded group has individually selected resources */
   hasResourceSelection?: boolean;
+  /** Active URL filters — used to make the delta indicator status-aware */
+  filters?: Record<string, string | string[] | undefined>;
 }
 
 const VISIBLE_DISABLED_CHECKBOX_CLASS =
@@ -40,6 +42,7 @@ export function getColumnFindingGroups({
   onDrillDown,
   expandedCheckId,
   hasResourceSelection = false,
+  filters = {},
 }: GetColumnFindingGroupsOptions): ColumnDef<FindingGroupRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -80,7 +83,7 @@ export function getColumnFindingGroups({
         const group = row.original;
         const allMuted = isFindingGroupMuted(group);
         const isExpanded = expandedCheckId === group.checkId;
-        const deltaKey = getFindingGroupDelta(group);
+        const deltaKey = getFilteredFindingGroupDelta(group, filters);
         const delta =
           deltaKey === "new"
             ? DeltaValues.NEW

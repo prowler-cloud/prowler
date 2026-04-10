@@ -173,6 +173,7 @@ export function FindingsGroupTable({
     onDrillDown: handleDrillDown,
     expandedCheckId,
     hasResourceSelection,
+    filters,
   });
 
   const renderAfterRow = (row: Row<FindingGroupRow>) => {
