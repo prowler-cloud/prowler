@@ -53,7 +53,7 @@ describe("isFailOnlyStatusFilter", () => {
   });
 });
 
-describe("getFindingGroupSkeletonCount", () => {
+describe("getFilteredFindingGroupResourceCount", () => {
   it("returns zero filtered resources when FAIL is the only active status and none fail", () => {
     expect(
       getFilteredFindingGroupResourceCount(
@@ -62,7 +62,9 @@ describe("getFindingGroupSkeletonCount", () => {
       ),
     ).toBe(0);
   });
+});
 
+describe("getFindingGroupSkeletonCount", () => {
   it("uses the total resource count when FAIL is not the only active status", () => {
     expect(getFindingGroupSkeletonCount(makeGroup(), {}, 7)).toBe(7);
   });
