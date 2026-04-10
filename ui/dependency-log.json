@@ -1033,6 +1033,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "knip",
+    "from": "6.3.1",
+    "to": "6.3.1",
+    "strategy": "installed",
+    "generatedAt": "2026-04-10T11:55:26.693Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "lint-staged",
     "from": "15.5.2",
     "to": "15.5.2",
