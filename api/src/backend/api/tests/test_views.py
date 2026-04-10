@@ -32,6 +32,11 @@ from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.attack_paths import (
     AttackPathsQueryDefinition,
@@ -745,6 +750,39 @@ class TestTenantViewSet:
         # Test user + 2 extra users for tenant 2
         assert len(response.json()["data"]) == 3
 
+    def test_tenants_list_memberships_filter_by_user(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        response = authenticated_client.get(
+            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant2.id}),
+            {"filter[user]": str(user3.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == str(membership3.id)
+
+    def test_tenants_list_memberships_filter_by_user_no_match(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2, _ = tenants_fixture
+        unrelated_user = User.objects.create_user(
+            name="unrelated",
+            password=TEST_PASSWORD,
+            email="unrelated@gmail.com",
+        )
+
+        response = authenticated_client.get(
+            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant2.id}),
+            {"filter[user]": str(unrelated_user.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
     def test_tenants_list_memberships_as_member(
         self, authenticated_client, tenants_fixture, extra_users
     ):
@@ -802,6 +840,7 @@ class TestTenantViewSet:
     ):
         _, tenant2, _ = tenants_fixture
         user_membership = Membership.objects.get(tenant=tenant2, user__email=TEST_USER)
+        user_id = user_membership.user_id
         response = authenticated_client.delete(
             reverse(
                 "tenant-membership-detail",
@@ -810,6 +849,127 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert Membership.objects.filter(id=user_membership.id).exists()
+        assert User.objects.filter(id=user_id).exists()
+
+    def test_expel_user_deletes_account_if_last_membership(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        # TEST_USER is OWNER of tenant2; user3 is MEMBER only in tenant2
+        _, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        assert Membership.objects.filter(user=user3).count() == 1
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Membership.objects.filter(id=membership3.id).exists()
+        assert not User.objects.filter(id=user3.id).exists()
+
+    def test_expel_user_blacklists_refresh_tokens(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        # Issue two refresh tokens to simulate active sessions
+        RefreshToken.for_user(user3)
+        RefreshToken.for_user(user3)
+        outstanding_ids = list(
+            OutstandingToken.objects.filter(user=user3).values_list("id", flat=True)
+        )
+        assert len(outstanding_ids) == 2
+        assert not BlacklistedToken.objects.filter(
+            token_id__in=outstanding_ids
+        ).exists()
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert (
+            BlacklistedToken.objects.filter(token_id__in=outstanding_ids).count() == 2
+        )
+
+    def test_expel_user_blacklists_refresh_tokens_is_idempotent(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        # Regression test for the bulk blacklisting path: if one of the
+        # user's refresh tokens is already blacklisted when the expel
+        # endpoint runs, the remaining tokens must still be blacklisted
+        # and the already-blacklisted one must not be duplicated.
+        tenant1, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        # Keep the user alive after the expel so the assertions below can
+        # still query OutstandingToken by user_id.
+        Membership.objects.create(
+            user=user3,
+            tenant=tenant1,
+            role=Membership.RoleChoices.MEMBER,
+        )
+
+        RefreshToken.for_user(user3)
+        RefreshToken.for_user(user3)
+        outstanding_ids = list(
+            OutstandingToken.objects.filter(user=user3).values_list("id", flat=True)
+        )
+        assert len(outstanding_ids) == 2
+
+        # Pre-blacklist one of the two tokens to simulate a prior revocation.
+        BlacklistedToken.objects.create(token_id=outstanding_ids[0])
+        assert (
+            BlacklistedToken.objects.filter(token_id__in=outstanding_ids).count() == 1
+        )
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        blacklisted = BlacklistedToken.objects.filter(token_id__in=outstanding_ids)
+        assert blacklisted.count() == 2
+        assert set(blacklisted.values_list("token_id", flat=True)) == set(
+            outstanding_ids
+        )
+
+    def test_expel_user_keeps_account_if_has_other_memberships(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        tenant1, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        # Give user3 an additional membership in tenant1 so they are not orphaned
+        other_membership = Membership.objects.create(
+            user=user3,
+            tenant=tenant1,
+            role=Membership.RoleChoices.MEMBER,
+        )
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Membership.objects.filter(id=membership3.id).exists()
+        assert User.objects.filter(id=user3.id).exists()
+        assert Membership.objects.filter(id=other_membership.id).exists()
 
     def test_tenants_delete_another_membership_as_owner(
         self, authenticated_client, tenants_fixture, extra_users

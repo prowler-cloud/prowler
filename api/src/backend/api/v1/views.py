@@ -81,6 +81,10 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api import filters as jsonapi_filters
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
@@ -1339,6 +1343,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     http_method_names = ["get", "delete"]
     serializer_class = MembershipSerializer
     queryset = Membership.objects.none()
+    filterset_class = MembershipFilter
     # Authorization is handled by get_requesting_membership (owner/member checks),
     # not by RBAC, since the target tenant differs from the JWT tenant.
     required_permissions = []
@@ -1396,7 +1401,54 @@ class TenantMembersViewSet(BaseTenantViewset):
                     "You do not have permission to delete this membership."
                 )
 
-        membership_to_delete.delete()
+        user_to_check_id = membership_to_delete.user_id
+        # All writes run on the admin connection so that the uncommitted
+        # membership delete is visible to the subsequent "other memberships"
+        # check. Splitting the delete and the check across the default
+        # (prowler_user, RLS) and admin connections caused the admin side to
+        # miss the just-deleted row and leave the User row orphaned.
+        with transaction.atomic(using=MainRouter.admin_db):
+            Membership.objects.using(MainRouter.admin_db).filter(
+                id=membership_to_delete.id
+            ).delete()
+
+            # Revoke any refresh tokens the expelled user still holds so they
+            # cannot mint fresh access tokens. This must happen before the
+            # User row is deleted, because OutstandingToken.user is
+            # on_delete=SET_NULL in djangorestframework-simplejwt 5.5.1
+            # (see rest_framework_simplejwt/token_blacklist/models.py): once
+            # the user row is gone, user_id becomes NULL and we can no longer
+            # look up that user's outstanding tokens. Access tokens already
+            # issued remain valid until SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]
+            # expires.
+            outstanding_token_ids = list(
+                OutstandingToken.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_to_check_id)
+                .values_list("id", flat=True)
+            )
+            if outstanding_token_ids:
+                already_blacklisted = set(
+                    BlacklistedToken.objects.using(MainRouter.admin_db)
+                    .filter(token_id__in=outstanding_token_ids)
+                    .values_list("token_id", flat=True)
+                )
+                BlacklistedToken.objects.using(MainRouter.admin_db).bulk_create(
+                    [
+                        BlacklistedToken(token_id=token_id)
+                        for token_id in outstanding_token_ids
+                        if token_id not in already_blacklisted
+                    ]
+                )
+
+            has_other_memberships = (
+                Membership.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_to_check_id)
+                .exists()
+            )
+            if not has_other_memberships:
+                User.objects.using(MainRouter.admin_db).filter(
+                    id=user_to_check_id
+                ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

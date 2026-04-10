@@ -10,6 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Invitation link backward compatibility [(#10583)](https://github.com/prowler-cloud/prowler/pull/10583)
 - Updated invitation link to use smart router [(#10575)](https://github.com/prowler-cloud/prowler/pull/10575)
 - Multi-tenant organization management: create, switch, edit, and delete organizations from the profile page [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
+- Expel user action on the Users page to remove a member from the active organization, with account deletion when it is the user's last organization [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 - Findings grouped view with drill-down table showing resources per check, resource detail drawer, infinite scroll pagination, and bulk mute support [(#10425)](https://github.com/prowler-cloud/prowler/pull/10425)
 - Resource events tool to Lighthouse AI [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
 - Vercel provider: connect Vercel teams via API token, scan deployments, domains, projects, and team settings [(#10191)](https://github.com/prowler-cloud/prowler/pull/10191)
