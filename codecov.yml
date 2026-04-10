@@ -1,7 +1,3 @@
-flag_management:
-  default_rules:
-    carryforward: true
-
 component_management:
   individual_components:
     - component_id: "prowler"
