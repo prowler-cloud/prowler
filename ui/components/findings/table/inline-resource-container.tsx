@@ -12,7 +12,6 @@ import { ChevronsDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useImperativeHandle, useRef, useState } from "react";
 
-import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -44,8 +43,8 @@ interface InlineResourceContainerProps {
   group: FindingGroupRow;
   resourceSearch: string;
   columnCount: number;
-  /** Called with selected resource UIDs (not finding IDs) for parent-level mute resolution */
-  onResourceSelectionChange: (resourceUids: string[]) => void;
+  /** Called with selected finding IDs (real UUIDs) for parent-level mute */
+  onResourceSelectionChange: (findingIds: string[]) => void;
   ref?: React.Ref<InlineResourceContainerHandle>;
 }
 
@@ -231,16 +230,9 @@ export function InlineResourceContainer({
     .filter(Boolean);
 
   const resolveResourceIds = async (ids: string[]) => {
-    const resourceUids = ids
-      .map((id) => resources.find((r) => r.findingId === id)?.resourceUid)
-      .filter(Boolean) as string[];
-    if (resourceUids.length === 0) return [];
-    return resolveFindingIds({
-      checkId: group.checkId,
-      resourceUids,
-      filters,
-      hasDateOrScanFilter: hasDateOrScan,
-    });
+    // findingId values are already real finding UUIDs (from the group
+    // resources endpoint), so no second resolution round-trip is needed.
+    return ids.filter(Boolean);
   };
 
   const selectableRowCount = resources.filter(canMuteFindingResource).length;
@@ -274,11 +266,11 @@ export function InlineResourceContainer({
       typeof updater === "function" ? updater(rowSelection) : updater;
     setRowSelection(newSelection);
 
-    const newResourceUids = Object.keys(newSelection)
+    const newFindingIds = Object.keys(newSelection)
       .filter((key) => newSelection[key])
-      .map((idx) => resources[parseInt(idx)]?.resourceUid)
+      .map((idx) => resources[parseInt(idx)]?.findingId)
       .filter(Boolean);
-    onResourceSelectionChange(newResourceUids);
+    onResourceSelectionChange(newFindingIds);
   };
 
   const columns = getColumnFindingResources({

@@ -13,20 +13,9 @@ const FINDING_IDS_RESOLUTION_PAGE_SIZE = 500;
 const FINDING_IDS_RESOLUTION_CONCURRENCY = 4;
 const FINDING_GROUP_RESOURCES_RESOLUTION_PAGE_SIZE = 500;
 const FINDING_FIELDS = "uid";
-const MAX_RESOURCE_FINDING_RESOLUTION_URL_LENGTH = 3800;
-
-/** Explicit upper bound for page[size] in resource-finding resolution requests. */
-const MAX_RESOURCE_FINDING_PAGE_SIZE = 500;
 
 interface ResolveFindingIdsByCheckIdsParams {
   checkIds: string[];
-  filters?: Record<string, string>;
-  hasDateOrScanFilter?: boolean;
-}
-
-interface ResolveFindingIdsParams {
-  checkId: string;
-  resourceUids: string[];
   filters?: Record<string, string>;
   hasDateOrScanFilter?: boolean;
 }
@@ -43,8 +32,8 @@ interface FindingIdsPageResponse {
   totalPages: number;
 }
 
-interface FindingGroupResourceUidsPageResponse {
-  resourceUids: string[];
+interface FindingGroupResourceFindingIdsPageResponse {
+  findingIds: string[];
   totalPages: number;
 }
 
@@ -101,110 +90,7 @@ async function fetchFindingIdsPage({
   };
 }
 
-function chunkResourceUidsForResolution({
-  checkId,
-  resourceUids,
-  filters = {},
-  hasDateOrScanFilter = false,
-}: ResolveFindingIdsParams): string[][] {
-  const uniqueResourceUids = Array.from(new Set(resourceUids));
-  const chunks: string[][] = [];
-  let currentChunk: string[] = [];
-
-  for (const resourceUid of uniqueResourceUids) {
-    const nextChunk = [...currentChunk, resourceUid];
-    const nextChunkUrl = createResourceFindingResolutionUrl({
-      checkId,
-      resourceUids: nextChunk,
-      filters,
-      hasDateOrScanFilter,
-    });
-
-    if (
-      currentChunk.length > 0 &&
-      (nextChunk.length > FINDING_IDS_RESOLUTION_PAGE_SIZE ||
-        nextChunkUrl.toString().length >
-          MAX_RESOURCE_FINDING_RESOLUTION_URL_LENGTH)
-    ) {
-      chunks.push(currentChunk);
-      currentChunk = [resourceUid];
-      continue;
-    }
-
-    currentChunk = nextChunk;
-  }
-
-  if (currentChunk.length > 0) {
-    chunks.push(currentChunk);
-  }
-
-  return chunks;
-}
-
-function createResourceFindingResolutionUrl({
-  checkId,
-  resourceUids,
-  filters = {},
-  hasDateOrScanFilter = false,
-}: ResolveFindingIdsParams): URL {
-  const endpoint = hasDateOrScanFilter ? "findings" : "findings/latest";
-  const url = new URL(`${apiBaseUrl}/${endpoint}`);
-
-  url.searchParams.append("filter[check_id]", checkId);
-  url.searchParams.append("filter[resource_uid__in]", resourceUids.join(","));
-  url.searchParams.append("filter[muted]", "false");
-  url.searchParams.append(
-    "page[size]",
-    Math.min(resourceUids.length, MAX_RESOURCE_FINDING_PAGE_SIZE).toString(),
-  );
-
-  appendSanitizedProviderTypeFilters(url, filters);
-
-  // Hardcoded FAIL filter AFTER appendSanitizedProviderTypeFilters — .set()
-  // guarantees this wins even if the caller passes filter[status] in filters.
-  url.searchParams.set("filter[status]", "FAIL");
-
-  return url;
-}
-
-async function fetchFindingIdsForResourceUids({
-  headers,
-  ...params
-}: ResolveFindingIdsParams & {
-  headers: HeadersInit;
-}): Promise<string[]> {
-  const response = await fetch(
-    createResourceFindingResolutionUrl(params).toString(),
-    {
-      headers,
-    },
-  );
-  const data = await handleApiResponse(response);
-
-  if (!data?.data || !Array.isArray(data.data)) {
-    return [];
-  }
-
-  return data.data
-    .map((item: { id?: string }) => item.id)
-    .filter((id: string | undefined): id is string => Boolean(id));
-}
-
-function buildFindingGroupResourceFilters({
-  filters = {},
-  resourceSearch,
-}: Pick<
-  ResolveFindingIdsByVisibleGroupResourcesParams,
-  "filters" | "resourceSearch"
->): Record<string, string> {
-  const nextFilters = { ...filters };
-  if (resourceSearch) {
-    nextFilters["filter[name__icontains]"] = resourceSearch;
-  }
-  return nextFilters;
-}
-
-async function fetchFindingGroupResourceUidsPage({
+async function fetchFindingGroupResourceFindingIdsPage({
   checkId,
   filters = {},
   hasDateOrScanFilter = false,
@@ -212,78 +98,43 @@ async function fetchFindingGroupResourceUidsPage({
   resourceSearch,
 }: ResolveFindingIdsByVisibleGroupResourcesParams & {
   page: number;
-}): Promise<FindingGroupResourceUidsPageResponse> {
+}): Promise<FindingGroupResourceFindingIdsPageResponse> {
   const fetchFn = hasDateOrScanFilter
     ? getFindingGroupResources
     : getLatestFindingGroupResources;
+
+  const resolvedFilters: Record<string, string> = {
+    ...filters,
+    "filter[status]": "FAIL",
+    "filter[muted]": "false",
+  };
+  if (resourceSearch) {
+    resolvedFilters["filter[name__icontains]"] = resourceSearch;
+  }
 
   const response = await fetchFn({
     checkId,
     page,
     pageSize: FINDING_GROUP_RESOURCES_RESOLUTION_PAGE_SIZE,
-    filters: buildFindingGroupResourceFilters({ filters, resourceSearch }),
+    filters: resolvedFilters,
   });
 
   const data = response?.data;
 
   if (!data || !Array.isArray(data)) {
-    return { resourceUids: [], totalPages: 1 };
+    return { findingIds: [], totalPages: 1 };
   }
 
   return {
-    resourceUids: data
+    findingIds: data
       .map(
-        (item: { attributes?: { resource?: { uid?: string } } }) =>
-          item.attributes?.resource?.uid,
+        (item: { attributes?: { finding_id?: string } }) =>
+          item.attributes?.finding_id,
       )
-      .filter((uid: string | undefined): uid is string => Boolean(uid)),
+      .filter((id: string | undefined): id is string => Boolean(id)),
     totalPages: response?.meta?.pagination?.pages ?? 1,
   };
 }
-
-/**
- * Resolves resource UIDs + check ID into actual finding UUIDs.
- * Uses /findings/latest (or /findings when date/scan filters are active)
- * with check_id and resource_uid__in filters to batch-resolve actual finding IDs.
- */
-export const resolveFindingIds = async ({
-  checkId,
-  resourceUids,
-  filters = {},
-  hasDateOrScanFilter = false,
-}: ResolveFindingIdsParams): Promise<string[]> => {
-  if (resourceUids.length === 0) {
-    return [];
-  }
-
-  const headers = await getAuthHeaders({ contentType: false });
-  const resourceUidChunks = chunkResourceUidsForResolution({
-    checkId,
-    resourceUids,
-    filters,
-    hasDateOrScanFilter,
-  });
-
-  try {
-    const results = await runWithConcurrencyLimit(
-      resourceUidChunks,
-      FINDING_IDS_RESOLUTION_CONCURRENCY,
-      (resourceUidChunk) =>
-        fetchFindingIdsForResourceUids({
-          checkId,
-          resourceUids: resourceUidChunk,
-          filters,
-          hasDateOrScanFilter,
-          headers,
-        }),
-    );
-
-    return Array.from(new Set(results.flat()));
-  } catch (error) {
-    console.error("Error resolving finding IDs:", error);
-    return [];
-  }
-};
 
 /**
  * Resolves check IDs into actual finding UUIDs.
@@ -340,8 +191,12 @@ export const resolveFindingIdsByCheckIds = async ({
 };
 
 /**
- * Resolves a finding-group row to the actual findings for the resources
+ * Resolves a finding-group row to the actual finding UUIDs for the resources
  * currently visible in that group.
+ *
+ * Extracts finding_id directly from the group resources endpoint response,
+ * filtering server-side by status=FAIL and muted=false. No second resolution
+ * round-trip to /findings/latest is needed.
  */
 export const resolveFindingIdsByVisibleGroupResources = async ({
   checkId,
@@ -350,7 +205,7 @@ export const resolveFindingIdsByVisibleGroupResources = async ({
   resourceSearch,
 }: ResolveFindingIdsByVisibleGroupResourcesParams): Promise<string[]> => {
   try {
-    const firstPage = await fetchFindingGroupResourceUidsPage({
+    const firstPage = await fetchFindingGroupResourceFindingIdsPage({
       checkId,
       filters,
       hasDateOrScanFilter,
@@ -367,7 +222,7 @@ export const resolveFindingIdsByVisibleGroupResources = async ({
       remainingPages,
       FINDING_IDS_RESOLUTION_CONCURRENCY,
       (page) =>
-        fetchFindingGroupResourceUidsPage({
+        fetchFindingGroupResourceFindingIdsPage({
           checkId,
           filters,
           hasDateOrScanFilter,
@@ -376,19 +231,12 @@ export const resolveFindingIdsByVisibleGroupResources = async ({
         }),
     );
 
-    const resourceUids = Array.from(
+    return Array.from(
       new Set([
-        ...firstPage.resourceUids,
-        ...remainingResults.flatMap((result) => result.resourceUids),
+        ...firstPage.findingIds,
+        ...remainingResults.flatMap((result) => result.findingIds),
       ]),
     );
-
-    return resolveFindingIds({
-      checkId,
-      resourceUids,
-      filters,
-      hasDateOrScanFilter,
-    });
   } catch (error) {
     console.error(
       "Error resolving finding IDs from visible group resources:",
