@@ -41,10 +41,25 @@ function splitCsvFilterValues(value: string | string[] | undefined): string[] {
   return [];
 }
 
+/**
+ * Filters that belong to finding-groups but are NOT valid for the
+ * finding-group resources sub-endpoint. These must be stripped before
+ * calling the resources API to avoid empty results.
+ */
+const FINDING_GROUP_ONLY_FILTERS = ["filter[service__in]"] as const;
+
 function normalizeFindingGroupResourceFilters(
   filters: Record<string, string | string[] | undefined>,
 ): Record<string, string | string[] | undefined> {
-  const normalized = { ...filters };
+  const normalized = Object.fromEntries(
+    Object.entries(filters).filter(
+      ([key]) =>
+        !FINDING_GROUP_ONLY_FILTERS.includes(
+          key as (typeof FINDING_GROUP_ONLY_FILTERS)[number],
+        ),
+    ),
+  );
+
   const exactStatusFilter = normalized["filter[status]"];
 
   if (exactStatusFilter !== undefined) {

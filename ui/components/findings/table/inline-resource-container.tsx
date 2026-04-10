@@ -363,7 +363,9 @@ export function InlineResourceContainer({
                             colSpan={columns.length}
                             className="h-24 text-center"
                           >
-                            No resources found.
+                            {Object.keys(filters).length > 0
+                              ? "No resources found for the selected filters."
+                              : "No resources found."}
                           </TableCell>
                         </TableRow>
                       )}
