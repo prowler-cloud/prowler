@@ -18,8 +18,31 @@ class SQLServer(AzureService):
         sql_servers = {}
         for subscription, client in self.clients.items():
             try:
+                sql_servers_list = []
+
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                sql_servers_list += list(
+                                    client.servers.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    sql_servers_list = client.servers.list()
+
                 sql_servers.update({subscription: []})
-                sql_servers_list = client.servers.list()
                 for sql_server in sql_servers_list:
                     resource_group = self._get_resource_group(sql_server.id)
                     auditing_policies = self._get_server_blob_auditing_policies(

@@ -32,7 +32,6 @@ class Defender(AzureService):
         pricings = {}
         for subscription_name, client in self.clients.items():
             try:
-                pricings.update({subscription_name: {}})
                 if self.resource_groups:
                     logger.warning(
                         f"Subscription name: {subscription_name} -- Pricings are subscription-scoped and cannot be filtered by resource group. Skipping."
@@ -79,12 +78,12 @@ class Defender(AzureService):
         auto_provisioning = {}
         for subscription_name, client in self.clients.items():
             try:
-                auto_provisioning.update({subscription_name: {}})
                 if self.resource_groups:
                     logger.warning(
                         f"Subscription name: {subscription_name} -- Auto provisioning settings are subscription-scoped and cannot be filtered by resource group. Skipping."
                     )
                     continue
+                auto_provisioning.update({subscription_name: {}})
                 auto_provisioning_settings = client.auto_provisioning_settings.list()
                 for ap in auto_provisioning_settings:
                     auto_provisioning[subscription_name].update(
@@ -113,12 +112,12 @@ class Defender(AzureService):
         assessments = {}
         for subscription_name, client in self.clients.items():
             try:
-                assessments.update({subscription_name: {}})
                 if self.resource_groups:
                     logger.warning(
                         f"Subscription name: {subscription_name} -- Assessments are subscription-scoped and cannot be filtered by resource group. Skipping."
                     )
                     continue
+                assessments.update({subscription_name: {}})
                 assessments_list = client.assessments.list(
                     f"subscriptions/{self.subscriptions[subscription_name]}"
                 )
@@ -145,12 +144,12 @@ class Defender(AzureService):
         settings = {}
         for subscription_name, client in self.clients.items():
             try:
-                settings.update({subscription_name: {}})
                 if self.resource_groups:
                     logger.warning(
                         f"Subscription name: {subscription_name} -- Defender settings are subscription-scoped and cannot be filtered by resource group. Skipping."
                     )
                     continue
+                settings.update({subscription_name: {}})
                 settings_list = client.settings.list()
                 for setting in settings_list:
                     settings[subscription_name].update(
@@ -256,7 +255,6 @@ class Defender(AzureService):
         iot_security_solutions = {}
         for subscription_name, client in self.clients.items():
             try:
-                iot_security_solutions.update({subscription_name: {}})
                 iot_security_solutions_list = []
 
                 if self.resource_groups:
@@ -282,7 +280,7 @@ class Defender(AzureService):
                     iot_security_solutions_list = (
                         client.iot_security_solution.list_by_subscription()
                     )
-
+                iot_security_solutions.update({subscription_name: {}})
                 for iot_security_solution in iot_security_solutions_list:
                     iot_security_solutions[subscription_name].update(
                         {

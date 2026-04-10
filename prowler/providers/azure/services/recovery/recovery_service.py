@@ -55,9 +55,32 @@ class Recovery(AzureService):
         try:
             vaults_dict: dict[str, dict[str, BackupVault]] = {}
             for subscription_name, client in self.clients.items():
-                vaults = client.vaults.list_by_subscription_id()
+                vaults_list = []
+
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription_name, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription_name}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                vaults_list += list(
+                                    client.vaults.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    vaults_list = client.vaults.list_by_subscription_id()
+
                 vaults_dict[subscription_name] = {}
-                for vault in vaults:
+                for vault in vaults_list:
                     vault_obj = BackupVault(
                         id=vault.id,
                         name=vault.name,
