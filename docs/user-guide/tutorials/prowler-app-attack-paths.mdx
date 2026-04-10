@@ -3,7 +3,7 @@ title: "Attack Paths"
 description: "Identify privilege escalation chains and security misconfigurations across cloud environments using graph-based analysis."
 ---
 
-import { VersionBadge } from "/snippets/version-badge.mdx"
+import { VersionBadge } from "/snippets/version-badge.mdx";
 
 <VersionBadge version="5.17.0" />
 
@@ -121,41 +121,56 @@ Custom queries are sandboxed to keep the graph database safe and responsive:
 
 ### Example Queries
 
-The following examples are read-only and can be pasted directly into the editor.
+The following examples are read-only and can be pasted directly into the editor. Each one demonstrates a different graph traversal pattern.
 
-**List all S3 buckets in the scan:**
-
-```cypher
-MATCH (b:S3Bucket)
-RETURN b.name AS bucket, b.region AS region
-LIMIT 50
-```
-
-**Find IAM roles that can be assumed from the internet:**
+**Internet-exposed EC2 instances with their security group rules:**
 
 ```cypher
-MATCH (r:AWSRole)
-WHERE r.trust_policy CONTAINS '"Principal":"*"'
-RETURN r.arn AS role_arn, r.name AS role_name
+MATCH (i:EC2Instance)--(sg:EC2SecurityGroup)--(rule:IpPermissionInbound)
+WHERE i.exposed_internet = true
+RETURN i.instanceid AS instance, sg.name AS security_group,
+       rule.fromport AS from_port, rule.toport AS to_port
 LIMIT 25
 ```
 
-**Find EC2 instances exposed to the internet with attached IAM roles:**
+**EC2 instances that can assume IAM roles:**
 
 ```cypher
 MATCH (i:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(r:AWSRole)
 WHERE i.exposed_internet = true
-RETURN i.instanceid AS instance_id, r.arn AS role_arn
+RETURN i.instanceid AS instance, r.name AS role_name, r.arn AS role_arn
 LIMIT 25
 ```
 
-**Inspect Prowler findings linked to a specific resource type:**
+**IAM principals with wildcard Allow statements:**
 
 ```cypher
-MATCH (b:S3Bucket)-[:HAS_FINDING]->(f:ProwlerFinding)
-WHERE f.severity IN ['critical', 'high']
-RETURN b.name AS bucket, f.check_id AS check, f.severity AS severity
+MATCH (principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
+WHERE stmt.effect = 'Allow'
+  AND ANY(action IN stmt.action WHERE action = '*')
+RETURN principal.arn AS principal, policy.arn AS policy,
+       stmt.action AS actions, stmt.resource AS resources
+LIMIT 25
+```
+
+**Critical findings on internet-exposed resources:**
+
+```cypher
+MATCH (i:EC2Instance)-[:HAS_FINDING]->(f:ProwlerFinding)
+WHERE i.exposed_internet = true AND f.status = 'FAIL'
+  AND f.severity IN ['critical', 'high']
+RETURN i.instanceid AS instance, f.check_id AS check,
+       f.severity AS severity, f.status AS status
 LIMIT 50
+```
+
+**Roles trusting an AWS service (building block for PassRole escalation):**
+
+```cypher
+MATCH (r:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(p:AWSPrincipal)
+WHERE p.arn ENDS WITH '.amazonaws.com'
+RETURN r.name AS role_name, r.arn AS role_arn, p.arn AS trusted_service
+LIMIT 25
 ```
 
 ### Tips for Writing Queries
@@ -171,7 +186,7 @@ Attack Paths graphs are populated by [Cartography](https://github.com/cartograph
 
 For the complete catalogue of node labels and relationships available in custom queries, refer to the official Cartography schema documentation:
 
-- **AWS:** [Cartography AWS Schema](https://github.com/cartography-cncf/cartography/blob/master/docs/root/modules/aws/schema.md)
+- **AWS:** [Cartography AWS Schema](https://cartography-cncf.github.io/cartography/modules/aws/schema.html)
 
 In addition to the upstream schema, Prowler enriches the graph with:
 
@@ -315,105 +330,106 @@ Attack Paths currently supports the following built-in queries for AWS:
 
 #### Custom Attack Path Queries
 
-| Query | Description |
-|---|---|
+| Query                                             | Description                                                                              |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | **Internet-Exposed EC2 with Sensitive S3 Access** | Find SSH-exposed EC2 instances that can assume roles to read tagged sensitive S3 buckets |
 
 #### Basic Resource Queries
 
-| Query | Description |
-|---|---|
-| **RDS Instances Inventory** | List all provisioned RDS database instances in the account |
-| **Unencrypted RDS Instances** | Find RDS instances with storage encryption disabled |
-| **S3 Buckets with Anonymous Access** | Find S3 buckets that allow anonymous access |
-| **IAM Statements Allowing All Actions** | Find IAM policy statements that allow all actions via wildcard (\*) |
-| **IAM Statements Allowing Policy Deletion** | Find IAM policy statements that allow iam:DeletePolicy |
-| **IAM Statements Allowing Create Actions** | Find IAM policy statements that allow any create action |
+| Query                                       | Description                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------- |
+| **RDS Instances Inventory**                 | List all provisioned RDS database instances in the account          |
+| **Unencrypted RDS Instances**               | Find RDS instances with storage encryption disabled                 |
+| **S3 Buckets with Anonymous Access**        | Find S3 buckets that allow anonymous access                         |
+| **IAM Statements Allowing All Actions**     | Find IAM policy statements that allow all actions via wildcard (\*) |
+| **IAM Statements Allowing Policy Deletion** | Find IAM policy statements that allow iam:DeletePolicy              |
+| **IAM Statements Allowing Create Actions**  | Find IAM policy statements that allow any create action             |
 
 #### Network Exposure Queries
 
-| Query | Description |
-|---|---|
-| **Internet-Exposed EC2 Instances** | Find EC2 instances flagged as exposed to the internet |
+| Query                                                 | Description                                                                         |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **Internet-Exposed EC2 Instances**                    | Find EC2 instances flagged as exposed to the internet                               |
 | **Open Security Groups on Internet-Facing Resources** | Find internet-facing resources with security groups allowing inbound from 0.0.0.0/0 |
-| **Internet-Exposed Classic Load Balancers** | Find Classic Load Balancers exposed to the internet with their listeners |
-| **Internet-Exposed ALB/NLB Load Balancers** | Find ELBv2 (ALB/NLB) load balancers exposed to the internet with their listeners |
-| **Resource Lookup by Public IP** | Find the AWS resource associated with a given public IP address |
+| **Internet-Exposed Classic Load Balancers**           | Find Classic Load Balancers exposed to the internet with their listeners            |
+| **Internet-Exposed ALB/NLB Load Balancers**           | Find ELBv2 (ALB/NLB) load balancers exposed to the internet with their listeners    |
+| **Resource Lookup by Public IP**                      | Find the AWS resource associated with a given public IP address                     |
 
 #### Privilege Escalation Queries
 
 These queries are based on research from [pathfinding.cloud](https://pathfinding.cloud) by Datadog.
 
-| Query | Description |
-|---|---|
-| **App Runner Service Creation with Privileged Role (APPRUNNER-001)** | Create an App Runner service with a privileged IAM role to gain its permissions |
-| **App Runner Service Update for Role Access (APPRUNNER-002)** | Update an existing App Runner service to leverage its already-attached privileged role |
-| **Bedrock Code Interpreter with Privileged Role (BEDROCK-001)** | Create a Bedrock AgentCore Code Interpreter with a privileged role attached |
-| **Bedrock Code Interpreter Session Hijacking (BEDROCK-002)** | Start a session on an existing Bedrock code interpreter to exfiltrate its privileged role credentials |
-| **CloudFormation Stack Creation with Privileged Role (CLOUDFORMATION-001)** | Create a CloudFormation stack with a privileged role to provision arbitrary AWS resources |
-| **CloudFormation Stack Update for Role Access (CLOUDFORMATION-002)** | Update an existing CloudFormation stack to leverage its already-attached privileged service role |
-| **CloudFormation StackSet Creation with Privileged Role (CLOUDFORMATION-003)** | Create a CloudFormation StackSet with a privileged execution role to provision arbitrary resources across accounts |
-| **CloudFormation StackSet Update with Privileged Role (CLOUDFORMATION-004)** | Update an existing CloudFormation StackSet to inject malicious resources using a privileged execution role |
-| **CloudFormation Change Set Privilege Escalation (CLOUDFORMATION-005)** | Create and execute a change set on an existing stack to leverage its privileged service role |
-| **CodeBuild Project Creation with Privileged Role (CODEBUILD-001)** | Create a CodeBuild project with a privileged role to execute arbitrary code via a malicious buildspec |
-| **CodeBuild Buildspec Override for Role Access (CODEBUILD-002)** | Start a build on an existing CodeBuild project with a buildspec override to execute code with its privileged role |
-| **CodeBuild Batch Buildspec Override for Role Access (CODEBUILD-003)** | Start a batch build on an existing CodeBuild project with a buildspec override to execute code with its privileged role |
-| **CodeBuild Batch Project Creation with Privileged Role (CODEBUILD-004)** | Create a CodeBuild project configured for batch builds with a privileged role to execute arbitrary code via a malicious buildspec |
-| **Data Pipeline Creation with Privileged Role (DATAPIPELINE-001)** | Create a Data Pipeline with a privileged role to execute arbitrary commands on provisioned infrastructure |
-| **EC2 Instance Launch with Privileged Role (EC2-001)** | Launch EC2 instances with privileged IAM roles to gain their permissions via IMDS |
-| **EC2 Role Hijacking via UserData Injection (EC2-002)** | Inject malicious scripts into EC2 instance userData to gain the attached role's permissions |
-| **Spot Instance Launch with Privileged Role (EC2-003)** | Launch EC2 Spot Instances with privileged IAM roles to gain their permissions via IMDS |
-| **Launch Template Poisoning for Role Access (EC2-004)** | Inject malicious userData into launch templates that reference privileged roles, no PassRole needed |
-| **EC2 Instance Connect SSH Access for Role Credentials (EC2INSTANCECONNECT-003)** | Push a temporary SSH key to an EC2 instance via Instance Connect to access its attached role credentials through IMDS |
-| **ECS Service Creation with Privileged Role (ECS-001 - New Cluster)** | Create an ECS cluster and service with a privileged Fargate task role to execute arbitrary code |
-| **ECS Task Execution with Privileged Role (ECS-002 - New Cluster)** | Create an ECS cluster and run a one-off Fargate task with a privileged role to execute arbitrary code |
-| **ECS Service Creation with Privileged Role (ECS-003 - Existing Cluster)** | Deploy a Fargate service with a privileged role on an existing ECS cluster |
-| **ECS Task Execution with Privileged Role (ECS-004 - Existing Cluster)** | Run a one-off Fargate task with a privileged role on an existing ECS cluster |
-| **ECS Task Start with Privileged Role on EC2 (ECS-005 - Existing Cluster)** | Register a task definition with a privileged role and start it on an EC2 container instance to execute arbitrary code |
-| **ECS Exec Container Hijacking for Role Credentials (ECS-006)** | Shell into a running ECS container via ECS Exec to steal the attached task role's credentials |
-| **Glue Dev Endpoint with Privileged Role (GLUE-001)** | Create a Glue development endpoint with a privileged role attached to gain its permissions |
-| **Glue Dev Endpoint SSH Hijacking via Update (GLUE-002)** | Update an existing Glue development endpoint to inject an SSH public key and access its attached role credentials |
-| **Glue Job Creation with Privileged Role (GLUE-003)** | Create a Glue job with a privileged role and start it to execute arbitrary code with that role's permissions |
-| **Glue Job Creation with Scheduled Trigger and Privileged Role (GLUE-004)** | Create a Glue job with a privileged role and a scheduled trigger to persistently execute arbitrary code |
-| **Glue Job Hijacking via Update with Privileged Role (GLUE-005)** | Update an existing Glue job to attach a privileged role and inject malicious code, then start it to gain that role's permissions |
-| **Glue Job Hijacking with Scheduled Trigger and Privileged Role (GLUE-006)** | Update an existing Glue job to attach a privileged role and inject malicious code, then create a scheduled trigger for persistent automated execution |
-| **Policy Version Override for Self-Escalation (IAM-001)** | Create a new version of an attached policy with administrative permissions, instantly escalating the principal's own privileges |
-| **Access Key Creation for Lateral Movement (IAM-002)** | Create access keys for other IAM users to gain their permissions and move laterally across the account |
-| **Access Key Rotation Attack for Lateral Movement (IAM-003)** | Delete and recreate access keys for other IAM users to bypass the two-key limit and gain their permissions |
-| **Console Login Profile Creation for Lateral Movement (IAM-004)** | Create console login profiles for other IAM users to access the AWS Console with their permissions |
-| **Inline Policy Injection for Self-Escalation (IAM-005)** | Attach an inline policy with administrative permissions to your own role, instantly escalating privileges |
-| **Console Password Override for Lateral Movement (IAM-006)** | Change the console password of other IAM users to log in as them and gain their permissions |
-| **Inline Policy Injection on User for Self-Escalation (IAM-007)** | Attach an inline policy with administrative permissions to your own IAM user, instantly escalating privileges |
-| **Managed Policy Attachment on User for Self-Escalation (IAM-008)** | Attach existing managed policies with administrative permissions to your own IAM user, instantly escalating privileges |
-| **Managed Policy Attachment on Role for Self-Escalation (IAM-009)** | Attach existing managed policies with administrative permissions to your own IAM role, instantly escalating privileges |
-| **Managed Policy Attachment on Group for Self-Escalation (IAM-010)** | Attach existing managed policies with administrative permissions to a group you belong to, escalating privileges for all group members |
-| **Inline Policy Injection on Group for Self-Escalation (IAM-011)** | Attach an inline policy with administrative permissions to a group you belong to, escalating privileges for all group members |
-| **Trust Policy Hijacking for Role Assumption (IAM-012)** | Modify a role's trust policy to allow yourself to assume it, gaining the role's permissions |
-| **Group Membership Hijacking for Privilege Escalation (IAM-013)** | Add yourself to a privileged IAM group to inherit its permissions, gaining access to all policies attached to the group |
-| **Managed Policy Attachment with Role Assumption for Lateral Movement (IAM-014)** | Attach administrative managed policies to another role you can assume, then assume it to gain elevated privileges |
-| **Managed Policy Attachment with Access Key Creation for Lateral Movement (IAM-015)** | Attach administrative managed policies to another IAM user and create access keys for them to gain programmatic access with elevated privileges |
-| **Policy Version Override with Role Assumption for Lateral Movement (IAM-016)** | Create a new version of a customer-managed policy attached to another role with administrative permissions, then assume that role to gain elevated access |
-| **Inline Policy Injection with Role Assumption for Lateral Movement (IAM-017)** | Attach an inline policy with administrative permissions to another role you can assume, then assume it to gain elevated privileges |
-| **Inline Policy Injection with Access Key Creation for Lateral Movement (IAM-018)** | Attach an inline policy with administrative permissions to another IAM user and create access keys for them to gain programmatic access with elevated privileges |
-| **Managed Policy Attachment with Trust Policy Hijacking for Privilege Escalation (IAM-019)** | Attach administrative managed policies to a role and modify its trust policy to allow yourself to assume it, gaining elevated privileges without prior assume-role access |
-| **Policy Version Override with Trust Policy Hijacking for Privilege Escalation (IAM-020)** | Create a new version of a customer-managed policy attached to a role with administrative permissions and modify its trust policy to assume it, without prior assume-role access |
-| **Inline Policy Injection with Trust Policy Hijacking for Privilege Escalation (IAM-021)** | Add an inline policy with administrative permissions to a role and modify its trust policy to allow yourself to assume it, gaining elevated privileges without prior assume-role access |
-| **Lambda Function Creation with Privileged Role (LAMBDA-001)** | Create a Lambda function with a privileged IAM role and invoke it to execute code with that role's permissions |
-| **Lambda Function Creation with Event Source Trigger (LAMBDA-002)** | Create a Lambda function with a privileged IAM role and an event source mapping to trigger it automatically, executing code with the role's permissions |
-| **Lambda Function Code Injection (LAMBDA-003)** | Modify the code of an existing Lambda function to execute arbitrary commands with the function's execution role permissions |
-| **Lambda Function Code Injection with Direct Invocation (LAMBDA-004)** | Modify the code of an existing Lambda function and invoke it directly to execute arbitrary commands with the function's execution role permissions |
-| **Lambda Function Code Injection with Resource Policy Grant (LAMBDA-005)** | Modify the code of an existing Lambda function and grant yourself invocation permission via its resource-based policy to execute code with the function's execution role |
-| **Lambda Function Creation with Resource Policy Invocation (LAMBDA-006)** | Create a Lambda function with a privileged IAM role and grant yourself invocation permission via its resource-based policy to execute code with the role's permissions |
-| **SageMaker Notebook Creation with Privileged Role (SAGEMAKER-001)** | Create a SageMaker notebook instance with a privileged IAM role to execute arbitrary code with the role's permissions via the Jupyter environment |
-| **SageMaker Training Job Creation with Privileged Role (SAGEMAKER-002)** | Create a SageMaker training job with a privileged IAM role to execute arbitrary container code with the role's permissions |
-| **SageMaker Processing Job Creation with Privileged Role (SAGEMAKER-003)** | Create a SageMaker processing job with a privileged IAM role to execute arbitrary container code with the role's permissions |
-| **SageMaker Presigned Notebook URL for Privilege Escalation (SAGEMAKER-004)** | Generate a presigned URL to access an existing SageMaker notebook instance and execute code with its execution role's permissions |
-| **SageMaker Notebook Lifecycle Config Injection (SAGEMAKER-005)** | Inject a malicious lifecycle configuration into an existing SageMaker notebook to execute code with the notebook's execution role during startup |
-| **SSM Session Access for EC2 Role Credentials (SSM-001)** | Start an SSM session on an EC2 instance to access its attached role credentials through IMDS |
-| **SSM Send Command for EC2 Role Credentials (SSM-002)** | Execute commands on an EC2 instance via SSM Run Command to access its attached role credentials through IMDS |
-| **Role Assumption for Privilege Escalation (STS-001)** | Assume IAM roles with elevated permissions by exploiting bidirectional trust between the starting principal and the target role |
+| Query                                                                                        | Description                                                                                                                                                                             |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **App Runner Service Creation with Privileged Role (APPRUNNER-001)**                         | Create an App Runner service with a privileged IAM role to gain its permissions                                                                                                         |
+| **App Runner Service Update for Role Access (APPRUNNER-002)**                                | Update an existing App Runner service to leverage its already-attached privileged role                                                                                                  |
+| **Bedrock Code Interpreter with Privileged Role (BEDROCK-001)**                              | Create a Bedrock AgentCore Code Interpreter with a privileged role attached                                                                                                             |
+| **Bedrock Code Interpreter Session Hijacking (BEDROCK-002)**                                 | Start a session on an existing Bedrock code interpreter to exfiltrate its privileged role credentials                                                                                   |
+| **CloudFormation Stack Creation with Privileged Role (CLOUDFORMATION-001)**                  | Create a CloudFormation stack with a privileged role to provision arbitrary AWS resources                                                                                               |
+| **CloudFormation Stack Update for Role Access (CLOUDFORMATION-002)**                         | Update an existing CloudFormation stack to leverage its already-attached privileged service role                                                                                        |
+| **CloudFormation StackSet Creation with Privileged Role (CLOUDFORMATION-003)**               | Create a CloudFormation StackSet with a privileged execution role to provision arbitrary resources across accounts                                                                      |
+| **CloudFormation StackSet Update with Privileged Role (CLOUDFORMATION-004)**                 | Update an existing CloudFormation StackSet to inject malicious resources using a privileged execution role                                                                              |
+| **CloudFormation Change Set Privilege Escalation (CLOUDFORMATION-005)**                      | Create and execute a change set on an existing stack to leverage its privileged service role                                                                                            |
+| **CodeBuild Project Creation with Privileged Role (CODEBUILD-001)**                          | Create a CodeBuild project with a privileged role to execute arbitrary code via a malicious buildspec                                                                                   |
+| **CodeBuild Buildspec Override for Role Access (CODEBUILD-002)**                             | Start a build on an existing CodeBuild project with a buildspec override to execute code with its privileged role                                                                       |
+| **CodeBuild Batch Buildspec Override for Role Access (CODEBUILD-003)**                       | Start a batch build on an existing CodeBuild project with a buildspec override to execute code with its privileged role                                                                 |
+| **CodeBuild Batch Project Creation with Privileged Role (CODEBUILD-004)**                    | Create a CodeBuild project configured for batch builds with a privileged role to execute arbitrary code via a malicious buildspec                                                       |
+| **Data Pipeline Creation with Privileged Role (DATAPIPELINE-001)**                           | Create a Data Pipeline with a privileged role to execute arbitrary commands on provisioned infrastructure                                                                               |
+| **EC2 Instance Launch with Privileged Role (EC2-001)**                                       | Launch EC2 instances with privileged IAM roles to gain their permissions via IMDS                                                                                                       |
+| **EC2 Role Hijacking via UserData Injection (EC2-002)**                                      | Inject malicious scripts into EC2 instance userData to gain the attached role's permissions                                                                                             |
+| **Spot Instance Launch with Privileged Role (EC2-003)**                                      | Launch EC2 Spot Instances with privileged IAM roles to gain their permissions via IMDS                                                                                                  |
+| **Launch Template Poisoning for Role Access (EC2-004)**                                      | Inject malicious userData into launch templates that reference privileged roles, no PassRole needed                                                                                     |
+| **EC2 Instance Connect SSH Access for Role Credentials (EC2INSTANCECONNECT-003)**            | Push a temporary SSH key to an EC2 instance via Instance Connect to access its attached role credentials through IMDS                                                                   |
+| **ECS Service Creation with Privileged Role (ECS-001 - New Cluster)**                        | Create an ECS cluster and service with a privileged Fargate task role to execute arbitrary code                                                                                         |
+| **ECS Task Execution with Privileged Role (ECS-002 - New Cluster)**                          | Create an ECS cluster and run a one-off Fargate task with a privileged role to execute arbitrary code                                                                                   |
+| **ECS Service Creation with Privileged Role (ECS-003 - Existing Cluster)**                   | Deploy a Fargate service with a privileged role on an existing ECS cluster                                                                                                              |
+| **ECS Task Execution with Privileged Role (ECS-004 - Existing Cluster)**                     | Run a one-off Fargate task with a privileged role on an existing ECS cluster                                                                                                            |
+| **ECS Task Start with Privileged Role on EC2 (ECS-005 - Existing Cluster)**                  | Register a task definition with a privileged role and start it on an EC2 container instance to execute arbitrary code                                                                   |
+| **ECS Exec Container Hijacking for Role Credentials (ECS-006)**                              | Shell into a running ECS container via ECS Exec to steal the attached task role's credentials                                                                                           |
+| **Glue Dev Endpoint with Privileged Role (GLUE-001)**                                        | Create a Glue development endpoint with a privileged role attached to gain its permissions                                                                                              |
+| **Glue Dev Endpoint SSH Hijacking via Update (GLUE-002)**                                    | Update an existing Glue development endpoint to inject an SSH public key and access its attached role credentials                                                                       |
+| **Glue Job Creation with Privileged Role (GLUE-003)**                                        | Create a Glue job with a privileged role and start it to execute arbitrary code with that role's permissions                                                                            |
+| **Glue Job Creation with Scheduled Trigger and Privileged Role (GLUE-004)**                  | Create a Glue job with a privileged role and a scheduled trigger to persistently execute arbitrary code                                                                                 |
+| **Glue Job Hijacking via Update with Privileged Role (GLUE-005)**                            | Update an existing Glue job to attach a privileged role and inject malicious code, then start it to gain that role's permissions                                                        |
+| **Glue Job Hijacking with Scheduled Trigger and Privileged Role (GLUE-006)**                 | Update an existing Glue job to attach a privileged role and inject malicious code, then create a scheduled trigger for persistent automated execution                                   |
+| **Policy Version Override for Self-Escalation (IAM-001)**                                    | Create a new version of an attached policy with administrative permissions, instantly escalating the principal's own privileges                                                         |
+| **Access Key Creation for Lateral Movement (IAM-002)**                                       | Create access keys for other IAM users to gain their permissions and move laterally across the account                                                                                  |
+| **Access Key Rotation Attack for Lateral Movement (IAM-003)**                                | Delete and recreate access keys for other IAM users to bypass the two-key limit and gain their permissions                                                                              |
+| **Console Login Profile Creation for Lateral Movement (IAM-004)**                            | Create console login profiles for other IAM users to access the AWS Console with their permissions                                                                                      |
+| **Inline Policy Injection for Self-Escalation (IAM-005)**                                    | Attach an inline policy with administrative permissions to your own role, instantly escalating privileges                                                                               |
+| **Console Password Override for Lateral Movement (IAM-006)**                                 | Change the console password of other IAM users to log in as them and gain their permissions                                                                                             |
+| **Inline Policy Injection on User for Self-Escalation (IAM-007)**                            | Attach an inline policy with administrative permissions to your own IAM user, instantly escalating privileges                                                                           |
+| **Managed Policy Attachment on User for Self-Escalation (IAM-008)**                          | Attach existing managed policies with administrative permissions to your own IAM user, instantly escalating privileges                                                                  |
+| **Managed Policy Attachment on Role for Self-Escalation (IAM-009)**                          | Attach existing managed policies with administrative permissions to your own IAM role, instantly escalating privileges                                                                  |
+| **Managed Policy Attachment on Group for Self-Escalation (IAM-010)**                         | Attach existing managed policies with administrative permissions to a group you belong to, escalating privileges for all group members                                                  |
+| **Inline Policy Injection on Group for Self-Escalation (IAM-011)**                           | Attach an inline policy with administrative permissions to a group you belong to, escalating privileges for all group members                                                           |
+| **Trust Policy Hijacking for Role Assumption (IAM-012)**                                     | Modify a role's trust policy to allow yourself to assume it, gaining the role's permissions                                                                                             |
+| **Group Membership Hijacking for Privilege Escalation (IAM-013)**                            | Add yourself to a privileged IAM group to inherit its permissions, gaining access to all policies attached to the group                                                                 |
+| **Managed Policy Attachment with Role Assumption for Lateral Movement (IAM-014)**            | Attach administrative managed policies to another role you can assume, then assume it to gain elevated privileges                                                                       |
+| **Managed Policy Attachment with Access Key Creation for Lateral Movement (IAM-015)**        | Attach administrative managed policies to another IAM user and create access keys for them to gain programmatic access with elevated privileges                                         |
+| **Policy Version Override with Role Assumption for Lateral Movement (IAM-016)**              | Create a new version of a customer-managed policy attached to another role with administrative permissions, then assume that role to gain elevated access                               |
+| **Inline Policy Injection with Role Assumption for Lateral Movement (IAM-017)**              | Attach an inline policy with administrative permissions to another role you can assume, then assume it to gain elevated privileges                                                      |
+| **Inline Policy Injection with Access Key Creation for Lateral Movement (IAM-018)**          | Attach an inline policy with administrative permissions to another IAM user and create access keys for them to gain programmatic access with elevated privileges                        |
+| **Managed Policy Attachment with Trust Policy Hijacking for Privilege Escalation (IAM-019)** | Attach administrative managed policies to a role and modify its trust policy to allow yourself to assume it, gaining elevated privileges without prior assume-role access               |
+| **Policy Version Override with Trust Policy Hijacking for Privilege Escalation (IAM-020)**   | Create a new version of a customer-managed policy attached to a role with administrative permissions and modify its trust policy to assume it, without prior assume-role access         |
+| **Inline Policy Injection with Trust Policy Hijacking for Privilege Escalation (IAM-021)**   | Add an inline policy with administrative permissions to a role and modify its trust policy to allow yourself to assume it, gaining elevated privileges without prior assume-role access |
+| **Lambda Function Creation with Privileged Role (LAMBDA-001)**                               | Create a Lambda function with a privileged IAM role and invoke it to execute code with that role's permissions                                                                          |
+| **Lambda Function Creation with Event Source Trigger (LAMBDA-002)**                          | Create a Lambda function with a privileged IAM role and an event source mapping to trigger it automatically, executing code with the role's permissions                                 |
+| **Lambda Function Code Injection (LAMBDA-003)**                                              | Modify the code of an existing Lambda function to execute arbitrary commands with the function's execution role permissions                                                             |
+| **Lambda Function Code Injection with Direct Invocation (LAMBDA-004)**                       | Modify the code of an existing Lambda function and invoke it directly to execute arbitrary commands with the function's execution role permissions                                      |
+| **Lambda Function Code Injection with Resource Policy Grant (LAMBDA-005)**                   | Modify the code of an existing Lambda function and grant yourself invocation permission via its resource-based policy to execute code with the function's execution role                |
+| **Lambda Function Creation with Resource Policy Invocation (LAMBDA-006)**                    | Create a Lambda function with a privileged IAM role and grant yourself invocation permission via its resource-based policy to execute code with the role's permissions                  |
+| **SageMaker Notebook Creation with Privileged Role (SAGEMAKER-001)**                         | Create a SageMaker notebook instance with a privileged IAM role to execute arbitrary code with the role's permissions via the Jupyter environment                                       |
+| **SageMaker Training Job Creation with Privileged Role (SAGEMAKER-002)**                     | Create a SageMaker training job with a privileged IAM role to execute arbitrary container code with the role's permissions                                                              |
+| **SageMaker Processing Job Creation with Privileged Role (SAGEMAKER-003)**                   | Create a SageMaker processing job with a privileged IAM role to execute arbitrary container code with the role's permissions                                                            |
+| **SageMaker Presigned Notebook URL for Privilege Escalation (SAGEMAKER-004)**                | Generate a presigned URL to access an existing SageMaker notebook instance and execute code with its execution role's permissions                                                       |
+| **SageMaker Notebook Lifecycle Config Injection (SAGEMAKER-005)**                            | Inject a malicious lifecycle configuration into an existing SageMaker notebook to execute code with the notebook's execution role during startup                                        |
+| **SSM Session Access for EC2 Role Credentials (SSM-001)**                                    | Start an SSM session on an EC2 instance to access its attached role credentials through IMDS                                                                                            |
+| **SSM Send Command for EC2 Role Credentials (SSM-002)**                                      | Execute commands on an EC2 instance via SSM Run Command to access its attached role credentials through IMDS                                                                            |
+| **Role Assumption for Privilege Escalation (STS-001)**                                       | Assume IAM roles with elevated permissions by exploiting bidirectional trust between the starting principal and the target role                                                         |
 
 These tools enable workflows such as:
+
 - Asking an AI assistant to identify privilege escalation paths in a specific AWS account
 - Automating attack path analysis across multiple scans
 - Combining attack path data with findings and compliance information for comprehensive security reports
