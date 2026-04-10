@@ -6,10 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/shadcn/button/button";
 import { toast } from "@/components/ui";
 import type { ComplianceReportType } from "@/lib/compliance/compliance-report-types";
-import {
-  downloadComplianceCsv,
-  downloadComplianceReportPdf,
-} from "@/lib/helper";
+import { downloadComplianceCsv, downloadCompliancePdf } from "@/lib/helper";
 import { cn } from "@/lib/utils";
 
 interface ComplianceDownloadContainerProps {
@@ -44,7 +41,12 @@ export const ComplianceDownloadContainer = ({
     if (!reportType || isDownloadingPdf) return;
     setIsDownloadingPdf(true);
     try {
-      await downloadComplianceReportPdf(scanId, reportType, toast);
+      // The helper picks the right endpoint internally: single-version
+      // frameworks hit `/scans/{id}/{reportType}`, CIS variants hit
+      // `/scans/{id}/cis/{complianceId}`. The container stays
+      // framework-agnostic so future multi-variant frameworks only need a
+      // new ``reportType`` constant, not a new branch here.
+      await downloadCompliancePdf(scanId, reportType, toast, { complianceId });
     } finally {
       setIsDownloadingPdf(false);
     }

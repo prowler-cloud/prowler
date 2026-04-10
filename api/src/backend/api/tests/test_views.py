@@ -3829,6 +3829,84 @@ class TestScanViewSet:
             assert cd.startswith('attachment; filename="')
             assert cd.endswith(f'filename="{fname.name}"')
 
+    def test_cis_no_output(self, authenticated_client, scans_fixture):
+        """CIS PDF endpoint must 404 when the scan has no output_location."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = ""
+        scan.save()
+
+        url = reverse("scan-cis", kwargs={"pk": scan.id, "name": "cis_1.4_aws"})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            resp.json()["errors"]["detail"]
+            == "The scan has no reports, or the CIS report generation task has not started yet."
+        )
+
+    def test_cis_rejects_non_cis_name(self, authenticated_client, scans_fixture):
+        """A non-CIS framework name on the /cis/{name}/ endpoint must 404."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        url = reverse("scan-cis", kwargs={"pk": scan.id, "name": "ens_rd2022_aws"})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            resp.json()["errors"]["detail"]
+            == "CIS compliance 'ens_rd2022_aws' not found."
+        )
+
+    def test_cis_rejects_glob_chars_in_name(self, authenticated_client, scans_fixture):
+        """Glob metacharacters in the `name` path segment must be rejected.
+
+        Regression for the path-traversal gap flagged by the API jury: the
+        ``name`` segment is validated against ``get_compliance_frameworks``
+        before ever touching the filesystem/S3 glob.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = "dummy"
+        scan.save()
+
+        url = reverse("scan-cis", kwargs={"pk": scan.id, "name": "cis_*"})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_cis_local_file(self, authenticated_client, scans_fixture, monkeypatch):
+        """CIS PDF endpoint must serve the local PDF for the given variant."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            base = tmp_path / "reports"
+            cis_dir = base / "cis"
+            cis_dir.mkdir(parents=True, exist_ok=True)
+            fname = cis_dir / "prowler-output-aws-20260101000000_cis_1.4_aws_report.pdf"
+            fname.write_bytes(b"%PDF-1.4 fake pdf")
+
+            scan.output_location = str(base / "scan.zip")
+            scan.save()
+
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda p: (
+                    [str(fname)] if p.endswith("*_cis_1.4_aws_report.pdf") else []
+                ),
+            )
+
+            url = reverse("scan-cis", kwargs={"pk": scan.id, "name": "cis_1.4_aws"})
+            resp = authenticated_client.get(url)
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp["Content-Type"] == "application/pdf"
+            cd = resp["Content-Disposition"]
+            assert cd.startswith('attachment; filename="')
+            assert cd.endswith(f'filename="{fname.name}"')
+
     @patch("api.v1.views.Task.objects.get")
     @patch("api.v1.views.TaskSerializer")
     def test__get_task_status_returns_none_if_task_not_executing(

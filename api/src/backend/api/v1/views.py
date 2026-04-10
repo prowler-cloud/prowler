@@ -1906,6 +1906,9 @@ class ScanViewSet(BaseRLSViewSet):
         elif self.action == "csa":
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
+        elif self.action == "cis":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -2147,6 +2150,62 @@ class ScanViewSet(BaseRLSViewSet):
 
         content, filename = loader
         return self._serve_file(content, filename, "text/csv")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="cis/(?P<name>[^/]+)",
+        url_name="cis",
+    )
+    def cis(self, request, pk=None, name=None):
+        scan = self.get_object()
+
+        # Reject unknown or non-CIS framework names before touching the
+        # filesystem/S3. This prevents path-traversal / glob abuse via the
+        # `name` path segment (which accepts any non-slash character) and
+        # matches the validation performed by the sibling `compliance()`
+        # action at the top of its body.
+        if (
+            not name
+            or not name.startswith("cis_")
+            or name not in get_compliance_frameworks(scan.provider.provider)
+        ):
+            return Response(
+                {"detail": f"CIS compliance '{name}' not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the CIS report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "cis",
+                f"*_{name}_report.pdf",
+            )
+            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "cis", f"*_{name}_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
 
     @action(
         detail=True,

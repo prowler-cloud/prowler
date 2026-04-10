@@ -311,55 +311,74 @@ export const getExportsZip = async (scanId: string) => {
   }
 };
 
-export const getComplianceCsv = async (
+/**
+ * Shared binary-report fetcher used by CSV and PDF report downloads.
+ *
+ * All report endpoints (`/scans/{id}/compliance/{name}`,
+ * `/scans/{id}/{reportType}`, `/scans/{id}/cis/{complianceId}`) speak the
+ * same protocol: Bearer auth, 202 ACCEPTED while the generation task is
+ * still running, 2xx with a binary body when the artifact is ready, JSON
+ * error body otherwise. This helper encapsulates all of that so the public
+ * wrappers only have to build the URL and pick a filename.
+ *
+ * @param urlPath    Path segment under `{apiBaseUrl}/scans/{scanId}/`.
+ * @param filename   Download filename to surface to the user.
+ * @param errorLabel Friendly label used when the backend error body is empty.
+ * @returns A ``{ success, data, filename }`` object on 2xx, a
+ *          ``{ pending, state, taskId }`` object on 202, or
+ *          ``{ error }`` on any failure.
+ */
+const _fetchScanBinary = async (
   scanId: string,
-  complianceId: string,
+  urlPath: string,
+  filename: string,
+  errorLabel: string,
 ) => {
   const headers = await getAuthHeaders({ contentType: false });
-
-  const url = new URL(
-    `${apiBaseUrl}/scans/${scanId}/compliance/${complianceId}`,
-  );
+  const url = new URL(`${apiBaseUrl}/scans/${scanId}/${urlPath}`);
 
   try {
     const response = await fetch(url.toString(), { headers });
 
     if (response.status === 202) {
       const json = await response.json();
-      const taskId = json?.data?.id;
-      const state = json?.data?.attributes?.state;
       return {
         pending: true,
-        state,
-        taskId,
+        state: json?.data?.attributes?.state,
+        taskId: json?.data?.id,
       };
     }
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData?.errors?.detail ||
-          "Unable to retrieve compliance report. Contact support if the issue continues.",
+          `Unable to retrieve ${errorLabel}. Contact support if the issue continues.`,
       );
     }
 
     const arrayBuffer = await response.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
 
-    return {
-      success: true,
-      data: base64,
-      filename: `scan-${scanId}-compliance-${complianceId}.csv`,
-    };
+    return { success: true, data: base64, filename };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    return { error: getErrorMessage(error) };
   }
 };
 
+export const getComplianceCsv = async (scanId: string, complianceId: string) =>
+  _fetchScanBinary(
+    scanId,
+    `compliance/${complianceId}`,
+    `scan-${scanId}-compliance-${complianceId}.csv`,
+    "compliance report",
+  );
+
 /**
- * Generic function to get a compliance PDF report (ThreatScore, ENS, etc.)
+ * Get a compliance PDF report for a single-version framework (ThreatScore,
+ * ENS, NIS2, CSA CCM). For CIS — which ships multiple variants per provider
+ * — use {@link getCisPdfReport} instead.
+ *
  * @param scanId - The scan ID
  * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
  * @returns Promise with the PDF data or error
@@ -368,44 +387,32 @@ export const getCompliancePdfReport = async (
   scanId: string,
   reportType: ComplianceReportType,
 ) => {
-  const headers = await getAuthHeaders({ contentType: false });
-
-  const url = new URL(`${apiBaseUrl}/scans/${scanId}/${reportType}`);
-
-  try {
-    const response = await fetch(url.toString(), { headers });
-
-    if (response.status === 202) {
-      const json = await response.json();
-      const taskId = json?.data?.id;
-      const state = json?.data?.attributes?.state;
-      return {
-        pending: true,
-        state,
-        taskId,
-      };
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
-      throw new Error(
-        errorData?.errors?.detail ||
-          `Unable to retrieve ${reportName} PDF report. Contact support if the issue continues.`,
-      );
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-
-    return {
-      success: true,
-      data: base64,
-      filename: `scan-${scanId}-${reportType}.pdf`,
-    };
-  } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
-  }
+  const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
+  return _fetchScanBinary(
+    scanId,
+    reportType,
+    `scan-${scanId}-${reportType}.pdf`,
+    `${reportName} PDF report`,
+  );
 };
+
+/**
+ * Get a CIS Benchmark PDF report for the specific CIS variant of a scan.
+ *
+ * Unlike {@link getCompliancePdfReport} (which targets single-variant
+ * frameworks via `/scans/{id}/{reportType}`), CIS exposes multiple versions
+ * per provider (e.g. cis_1.4_aws, cis_5.0_aws, cis_6.0_aws) and the backend
+ * only generates the PDF for the latest one. The endpoint shape is
+ * `/scans/{id}/cis/{complianceId}`.
+ *
+ * @param scanId - The scan ID
+ * @param complianceId - The CIS variant identifier (e.g. "cis_5.0_aws")
+ * @returns Promise with the PDF data or error
+ */
+export const getCisPdfReport = async (scanId: string, complianceId: string) =>
+  _fetchScanBinary(
+    scanId,
+    `cis/${complianceId}`,
+    `scan-${scanId}-${complianceId}.pdf`,
+    "CIS PDF report",
+  );

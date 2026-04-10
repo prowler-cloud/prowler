@@ -1,3 +1,6 @@
+import gc
+import re
+from collections.abc import Iterable
 from pathlib import Path
 from shutil import rmtree
 
@@ -6,6 +9,7 @@ from config.django.base import DJANGO_TMP_OUTPUT_DIRECTORY
 from tasks.jobs.export import _generate_compliance_output_directory, _upload_to_s3
 from tasks.jobs.reports import (
     FRAMEWORK_REGISTRY,
+    CISReportGenerator,
     CSAReportGenerator,
     ENSReportGenerator,
     NIS2ReportGenerator,
@@ -17,9 +21,52 @@ from tasks.jobs.threatscore_utils import _aggregate_requirement_statistics_from_
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.models import Provider, ScanSummary, ThreatScoreSnapshot
+from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
+
+# Matches CIS compliance_ids like "cis_1.4_aws", "cis_5.0_azure",
+# "cis_1.10_kubernetes", "cis_3.0.1_aws". Requires at least one dotted
+# component so malformed inputs like "cis_._aws" or "cis_5._aws" are rejected
+# at the regex stage, rather than by a later ValueError fallback.
+_CIS_VARIANT_RE = re.compile(r"^cis_(?P<version>\d+(?:\.\d+)+)_(?P<provider>.+)$")
+
+
+def _pick_latest_cis_variant(compliance_ids: Iterable[str]) -> str | None:
+    """Return the CIS compliance_id with the highest semantic version.
+
+    CIS ships many variants per provider (e.g. cis_1.4_aws, ..., cis_6.0_aws).
+    A lexicographic sort is incorrect for version strings like ``1.10`` vs
+    ``1.2``; this helper parses the version into a tuple of ints so ``1.10``
+    is correctly ordered after ``1.2``. Malformed names are skipped so a
+    broken JSON cannot crash the whole CIS pipeline.
+
+    Args:
+        compliance_ids: Iterable of CIS compliance identifiers. Expected to
+            belong to a single provider (callers should pass the already
+            filtered keys from ``Compliance.get_bulk(provider_type)``).
+
+    Returns:
+        The compliance_id with the highest parsed version, or ``None`` if no
+        well-formed CIS identifier was found.
+    """
+    best_key: tuple[int, ...] | None = None
+    best_name: str | None = None
+    for name in compliance_ids:
+        match = _CIS_VARIANT_RE.match(name)
+        if not match:
+            continue
+        try:
+            key = tuple(int(part) for part in match.group("version").split("."))
+        except ValueError:
+            # Defensive: the regex already guarantees numeric chunks, but we
+            # keep the guard so a future regex change cannot crash callers.
+            continue
+        if best_key is None or key > best_key:
+            best_key = key
+            best_name = name
+    return best_name
 
 
 def generate_threatscore_report(
@@ -191,6 +238,53 @@ def generate_csa_report(
     )
 
 
+def generate_cis_report(
+    tenant_id: str,
+    scan_id: str,
+    compliance_id: str,
+    output_path: str,
+    provider_id: str,
+    only_failed: bool = True,
+    include_manual: bool = False,
+    provider_obj: Provider | None = None,
+    requirement_statistics: dict[str, dict[str, int]] | None = None,
+    findings_cache: dict[str, list[FindingOutput]] | None = None,
+) -> None:
+    """
+    Generate a PDF compliance report for a specific CIS Benchmark variant.
+
+    Unlike single-version frameworks (ENS, NIS2, CSA), CIS has multiple
+    variants per provider (e.g., cis_1.4_aws, cis_5.0_aws, cis_6.0_aws). This
+    wrapper is called once per variant, receiving the specific compliance_id.
+
+    Args:
+        tenant_id: The tenant ID for Row-Level Security context.
+        scan_id: ID of the scan executed by Prowler.
+        compliance_id: ID of the specific CIS variant (e.g., "cis_5.0_aws").
+        output_path: Output PDF file path.
+        provider_id: Provider ID for the scan.
+        only_failed: If True, only include failed requirements in detailed section.
+        include_manual: If True, include manual requirements in detailed section.
+        provider_obj: Pre-fetched Provider object to avoid duplicate queries.
+        requirement_statistics: Pre-aggregated requirement statistics.
+        findings_cache: Cache of already loaded findings to avoid duplicate queries.
+    """
+    generator = CISReportGenerator(FRAMEWORK_REGISTRY["cis"])
+
+    generator.generate(
+        tenant_id=tenant_id,
+        scan_id=scan_id,
+        compliance_id=compliance_id,
+        output_path=output_path,
+        provider_id=provider_id,
+        provider_obj=provider_obj,
+        requirement_statistics=requirement_statistics,
+        findings_cache=findings_cache,
+        only_failed=only_failed,
+        include_manual=include_manual,
+    )
+
+
 def generate_compliance_reports(
     tenant_id: str,
     scan_id: str,
@@ -199,6 +293,7 @@ def generate_compliance_reports(
     generate_ens: bool = True,
     generate_nis2: bool = True,
     generate_csa: bool = True,
+    generate_cis: bool = True,
     only_failed_threatscore: bool = True,
     min_risk_level_threatscore: int = 4,
     include_manual_ens: bool = True,
@@ -206,6 +301,8 @@ def generate_compliance_reports(
     only_failed_nis2: bool = True,
     only_failed_csa: bool = True,
     include_manual_csa: bool = False,
+    only_failed_cis: bool = True,
+    include_manual_cis: bool = False,
 ) -> dict[str, dict[str, bool | str]]:
     """
     Generate multiple compliance reports with shared database queries.
@@ -215,6 +312,12 @@ def generate_compliance_reports(
     - Aggregating requirement statistics once (shared across all reports)
     - Reusing compliance framework data when possible
 
+    For CIS a single PDF is produced per run: the one matching the highest
+    available CIS version for the scan's provider (picked dynamically from
+    ``Compliance.get_bulk`` via :func:`_pick_latest_cis_variant`). The
+    returned ``results["cis"]`` entry has the same flat shape as the other
+    frameworks, plus a ``compliance_id`` field identifying the chosen variant.
+
     Args:
         tenant_id: The tenant ID for Row-Level Security context.
         scan_id: The ID of the scan to generate reports for.
@@ -223,6 +326,8 @@ def generate_compliance_reports(
         generate_ens: Whether to generate ENS report.
         generate_nis2: Whether to generate NIS2 report.
         generate_csa: Whether to generate CSA CCM report.
+        generate_cis: Whether to generate a CIS Benchmark report for the
+            latest CIS version available for the provider.
         only_failed_threatscore: For ThreatScore, only include failed requirements.
         min_risk_level_threatscore: Minimum risk level for ThreatScore critical requirements.
         include_manual_ens: For ENS, include manual requirements.
@@ -230,22 +335,29 @@ def generate_compliance_reports(
         only_failed_nis2: For NIS2, only include failed requirements.
         only_failed_csa: For CSA CCM, only include failed requirements.
         include_manual_csa: For CSA CCM, include manual requirements.
+        only_failed_cis: For CIS, only include failed requirements in detailed section.
+        include_manual_cis: For CIS, include manual requirements in detailed section.
 
     Returns:
-        Dictionary with results for each report type.
+        Dictionary with results for each report type. Every value has the
+        same flat shape: ``{"upload": bool, "path": str, "error"?: str}``.
+        The CIS entry additionally carries ``"compliance_id"`` with the
+        specific variant that was picked, or is absent when CIS was not
+        requested / no variant is available for the provider.
     """
     logger.info(
         "Generating compliance reports for scan %s with provider %s"
-        " (ThreatScore: %s, ENS: %s, NIS2: %s, CSA: %s)",
+        " (ThreatScore: %s, ENS: %s, NIS2: %s, CSA: %s, CIS: %s)",
         scan_id,
         provider_id,
         generate_threatscore,
         generate_ens,
         generate_nis2,
         generate_csa,
+        generate_cis,
     )
 
-    results = {}
+    results: dict = {}
 
     # Validate that the scan has findings and get provider info
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
@@ -259,6 +371,8 @@ def generate_compliance_reports(
                 results["nis2"] = {"upload": False, "path": ""}
             if generate_csa:
                 results["csa"] = {"upload": False, "path": ""}
+            if generate_cis:
+                results["cis"] = {"upload": False, "path": ""}
             return results
 
         provider_obj = Provider.objects.get(id=provider_id)
@@ -299,11 +413,18 @@ def generate_compliance_reports(
         results["csa"] = {"upload": False, "path": ""}
         generate_csa = False
 
+    # For CIS we do NOT pre-check the provider against a hard-coded whitelist
+    # (that list drifts the moment a new CIS JSON ships). Instead, we let
+    # `_pick_latest_cis_variant` over `Compliance.get_bulk(provider_type)`
+    # return None for providers that lack CIS, and treat that as "nothing to
+    # do" below.
+
     if (
         not generate_threatscore
         and not generate_ens
         and not generate_nis2
         and not generate_csa
+        and not generate_cis
     ):
         return results
 
@@ -350,6 +471,13 @@ def generate_compliance_reports(
             scan_id,
             compliance_framework="csa",
         )
+        cis_path = _generate_compliance_output_directory(
+            DJANGO_TMP_OUTPUT_DIRECTORY,
+            provider_uid,
+            tenant_id,
+            scan_id,
+            compliance_framework="cis",
+        )
         out_dir = str(Path(threatscore_path).parent.parent)
     except Exception as e:
         logger.error("Error generating output directory: %s", e)
@@ -362,6 +490,8 @@ def generate_compliance_reports(
             results["nis2"] = error_dict.copy()
         if generate_csa:
             results["csa"] = error_dict.copy()
+        if generate_cis:
+            results["cis"] = error_dict.copy()
         return results
 
     # Generate ThreatScore report
@@ -569,12 +699,98 @@ def generate_compliance_reports(
             logger.error("Error generating CSA CCM report: %s", e)
             results["csa"] = {"upload": False, "path": "", "error": str(e)}
 
-    # Clean up temporary files if all reports were uploaded successfully
-    all_uploaded = all(
-        result.get("upload", False)
-        for result in results.values()
-        if result.get("upload") is not None
-    )
+    # Generate CIS Benchmark report for the latest available version only.
+    # CIS ships multiple versions per provider (e.g. cis_1.4_aws, cis_5.0_aws,
+    # cis_6.0_aws); we dynamically pick the highest semantic version at run
+    # time rather than hard-coding a per-provider mapping. `Compliance.get_bulk`
+    # is the single source of truth for which providers have CIS.
+    if generate_cis:
+        latest_cis: str | None = None
+        try:
+            frameworks_bulk = Compliance.get_bulk(provider_type)
+            latest_cis = _pick_latest_cis_variant(
+                name for name in frameworks_bulk.keys() if name.startswith("cis_")
+            )
+        except Exception as e:
+            logger.error("Error discovering CIS variants for %s: %s", provider_type, e)
+            results["cis"] = {"upload": False, "path": "", "error": str(e)}
+
+        if "cis" not in results:
+            if latest_cis is None:
+                logger.info("No CIS variants available for provider %s", provider_type)
+                results["cis"] = {"upload": False, "path": ""}
+            else:
+                logger.info(
+                    "Selected latest CIS variant for provider %s: %s",
+                    provider_type,
+                    latest_cis,
+                )
+                pdf_path_cis = f"{cis_path}_{latest_cis}_report.pdf"
+                try:
+                    generate_cis_report(
+                        tenant_id=tenant_id,
+                        scan_id=scan_id,
+                        compliance_id=latest_cis,
+                        output_path=pdf_path_cis,
+                        provider_id=provider_id,
+                        only_failed=only_failed_cis,
+                        include_manual=include_manual_cis,
+                        provider_obj=provider_obj,
+                        requirement_statistics=requirement_statistics,
+                        findings_cache=findings_cache,
+                    )
+
+                    upload_uri_cis = _upload_to_s3(
+                        tenant_id,
+                        scan_id,
+                        pdf_path_cis,
+                        f"cis/{Path(pdf_path_cis).name}",
+                    )
+
+                    if upload_uri_cis:
+                        results["cis"] = {
+                            "upload": True,
+                            "path": upload_uri_cis,
+                            "compliance_id": latest_cis,
+                        }
+                        logger.info(
+                            "CIS report %s uploaded to %s",
+                            latest_cis,
+                            upload_uri_cis,
+                        )
+                    else:
+                        results["cis"] = {
+                            "upload": False,
+                            "path": out_dir,
+                            "compliance_id": latest_cis,
+                        }
+                        logger.warning(
+                            "CIS report %s saved locally at %s",
+                            latest_cis,
+                            out_dir,
+                        )
+
+                except Exception as e:
+                    logger.error("Error generating CIS report %s: %s", latest_cis, e)
+                    results["cis"] = {
+                        "upload": False,
+                        "path": "",
+                        "error": str(e),
+                        "compliance_id": latest_cis,
+                    }
+                finally:
+                    # Free ReportLab/matplotlib memory before moving on.
+                    gc.collect()
+
+    # Clean up temporary files only if every requested report has been
+    # successfully uploaded. All result entries now share the same flat
+    # shape, so the check is a single comprehension.
+    upload_flags = [
+        bool(entry.get("upload", False))
+        for entry in results.values()
+        if isinstance(entry, dict) and entry.get("upload") is not None
+    ]
+    all_uploaded = bool(upload_flags) and all(upload_flags)
 
     if all_uploaded:
         try:
@@ -595,6 +811,7 @@ def generate_compliance_reports_job(
     generate_ens: bool = True,
     generate_nis2: bool = True,
     generate_csa: bool = True,
+    generate_cis: bool = True,
 ) -> dict[str, dict[str, bool | str]]:
     """
     Celery task wrapper for generate_compliance_reports.
@@ -607,9 +824,14 @@ def generate_compliance_reports_job(
         generate_ens: Whether to generate ENS report.
         generate_nis2: Whether to generate NIS2 report.
         generate_csa: Whether to generate CSA CCM report.
+        generate_cis: Whether to generate the CIS Benchmark report for the
+            latest CIS version available for the provider.
 
     Returns:
-        Dictionary with results for each report type.
+        Dictionary with results for each report type. Every entry shares the
+        same flat ``{"upload", "path", "error"?}`` shape; the CIS entry
+        additionally carries ``"compliance_id"`` identifying the picked
+        variant when one was available.
     """
     return generate_compliance_reports(
         tenant_id=tenant_id,
@@ -619,4 +841,5 @@ def generate_compliance_reports_job(
         generate_ens=generate_ens,
         generate_nis2=generate_nis2,
         generate_csa=generate_csa,
+        generate_cis=generate_cis,
     )

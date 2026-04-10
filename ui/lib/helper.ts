@@ -1,4 +1,5 @@
 import {
+  getCisPdfReport,
   getComplianceCsv,
   getCompliancePdfReport,
   getExportsZip,
@@ -8,6 +9,7 @@ import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
+  COMPLIANCE_REPORT_TYPES,
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
@@ -226,17 +228,34 @@ export const downloadComplianceCsv = async (
 };
 
 /**
- * Generic function to download a compliance PDF report (ThreatScore, ENS, etc.)
+ * Download a compliance PDF report, transparently handling both
+ * single-version frameworks (ThreatScore, ENS, NIS2, CSA) and multi-variant
+ * CIS.
+ *
+ * For single-version frameworks the call hits ``/scans/{id}/{reportType}``
+ * via {@link getCompliancePdfReport}. For CIS the call hits
+ * ``/scans/{id}/cis/{complianceId}`` via {@link getCisPdfReport}, since CIS
+ * ships many variants per provider and the backend only generates the PDF
+ * for the latest one.
+ *
  * @param scanId - The scan ID
  * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
  * @param toast - Toast notification function
+ * @param options.complianceId - Required for ``reportType === CIS``: the
+ *   specific CIS variant identifier (e.g. ``cis_5.0_aws``). Ignored for
+ *   every other report type.
  */
-export const downloadComplianceReportPdf = async (
+export const downloadCompliancePdf = async (
   scanId: string,
   reportType: ComplianceReportType,
   toast: ReturnType<typeof useToast>["toast"],
+  options: { complianceId?: string } = {},
 ): Promise<void> => {
-  const result = await getCompliancePdfReport(scanId, reportType);
+  const isCis = reportType === COMPLIANCE_REPORT_TYPES.CIS;
+  const result = isCis
+    ? await getCisPdfReport(scanId, options.complianceId ?? "")
+    : await getCompliancePdfReport(scanId, reportType);
+
   const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
   await downloadFile(
     result,
@@ -245,6 +264,16 @@ export const downloadComplianceReportPdf = async (
     toast,
   );
 };
+
+/**
+ * @deprecated Use {@link downloadCompliancePdf} instead. Kept as a thin
+ * wrapper for callers not yet migrated.
+ */
+export const downloadComplianceReportPdf = async (
+  scanId: string,
+  reportType: ComplianceReportType,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => downloadCompliancePdf(scanId, reportType, toast);
 
 export const isGoogleOAuthEnabled =
   !!process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_ID &&

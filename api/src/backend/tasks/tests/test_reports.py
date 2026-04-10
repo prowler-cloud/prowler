@@ -4,7 +4,11 @@ from unittest.mock import Mock, patch
 import matplotlib
 import pytest
 from reportlab.lib import colors
-from tasks.jobs.report import generate_compliance_reports, generate_threatscore_report
+from tasks.jobs.report import (
+    _pick_latest_cis_variant,
+    generate_compliance_reports,
+    generate_threatscore_report,
+)
 from tasks.jobs.reports import (
     CHART_COLOR_GREEN_1,
     CHART_COLOR_GREEN_2,
@@ -421,6 +425,266 @@ class TestGenerateComplianceReportsOptimized:
         mock_threatscore.assert_not_called()
         mock_ens.assert_not_called()
         mock_nis2.assert_not_called()
+
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_cis_report")
+    def test_no_findings_returns_flat_cis_entry(
+        self,
+        mock_cis,
+        mock_upload,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Scan with no findings and ``generate_cis=True`` must yield a flat
+        ``{"upload": False, "path": ""}`` entry, consistent with the other
+        frameworks (no nested dict, no sentinel keys)."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        result = generate_compliance_reports(
+            tenant_id=str(tenant.id),
+            scan_id=str(scan.id),
+            provider_id=str(provider.id),
+            generate_threatscore=False,
+            generate_ens=False,
+            generate_nis2=False,
+            generate_csa=False,
+            generate_cis=True,
+        )
+
+        assert result["cis"] == {"upload": False, "path": ""}
+        mock_cis.assert_not_called()
+
+
+@pytest.mark.django_db
+class TestGenerateComplianceReportsCIS:
+    """Test suite covering the CIS branch of generate_compliance_reports."""
+
+    def _force_scan_has_findings(self, monkeypatch):
+        """Bypass the ScanSummary.exists() early-return guard."""
+
+        class _FakeManager:
+            def filter(self, **kwargs):
+                class _Q:
+                    def exists(self_inner):
+                        return True
+
+                return _Q()
+
+        monkeypatch.setattr("tasks.jobs.report.ScanSummary.objects", _FakeManager())
+
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_cis_report")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    def test_cis_picks_latest_version(
+        self,
+        mock_get_bulk,
+        mock_cis,
+        mock_upload,
+        mock_stats,
+        monkeypatch,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """CIS branch should generate a single PDF for the highest version.
+
+        The returned ``results["cis"]`` must have the same flat shape as the
+        other frameworks (``{"upload", "path", "compliance_id"}``) with the
+        picked variant identified by ``compliance_id``.
+        """
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        self._force_scan_has_findings(monkeypatch)
+
+        mock_stats.return_value = {}
+        # Multiple CIS variants + a non-CIS framework that must be ignored.
+        # Includes 1.10 to verify the selection is not lexicographic.
+        mock_get_bulk.return_value = {
+            "cis_1.4_aws": Mock(),
+            "cis_1.10_aws": Mock(),
+            "cis_2.0_aws": Mock(),
+            "cis_5.0_aws": Mock(),
+            "ens_rd2022_aws": Mock(),
+        }
+        mock_upload.return_value = "s3://bucket/path"
+
+        result = generate_compliance_reports(
+            tenant_id=str(tenant.id),
+            scan_id=str(scan.id),
+            provider_id=str(provider.id),
+            generate_threatscore=False,
+            generate_ens=False,
+            generate_nis2=False,
+            generate_csa=False,
+            generate_cis=True,
+        )
+
+        # Exactly one call for the latest version, never for older variants
+        # or non-CIS frameworks.
+        assert mock_cis.call_count == 1
+        assert mock_cis.call_args.kwargs["compliance_id"] == "cis_5.0_aws"
+
+        assert result["cis"]["upload"] is True
+        assert result["cis"]["compliance_id"] == "cis_5.0_aws"
+        assert result["cis"]["path"] == "s3://bucket/path"
+
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_cis_report")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    def test_cis_latest_variant_failure_captured_in_results(
+        self,
+        mock_get_bulk,
+        mock_cis,
+        mock_upload,
+        mock_stats,
+        monkeypatch,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """A failure in the latest CIS variant must be surfaced in the flat results entry."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        self._force_scan_has_findings(monkeypatch)
+
+        mock_stats.return_value = {}
+        mock_get_bulk.return_value = {
+            "cis_1.4_aws": Mock(),
+            "cis_5.0_aws": Mock(),
+        }
+        mock_cis.side_effect = RuntimeError("boom")
+
+        result = generate_compliance_reports(
+            tenant_id=str(tenant.id),
+            scan_id=str(scan.id),
+            provider_id=str(provider.id),
+            generate_threatscore=False,
+            generate_ens=False,
+            generate_nis2=False,
+            generate_csa=False,
+            generate_cis=True,
+        )
+
+        # Only the latest variant is attempted; its failure lands in a flat
+        # entry keyed under "cis" with the same shape as sibling frameworks.
+        assert mock_cis.call_count == 1
+        assert result["cis"]["upload"] is False
+        assert result["cis"]["error"] == "boom"
+        assert result["cis"]["compliance_id"] == "cis_5.0_aws"
+
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_cis_report")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    def test_cis_provider_without_cis_skipped_cleanly(
+        self,
+        mock_get_bulk,
+        mock_cis,
+        mock_upload,
+        mock_stats,
+        monkeypatch,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """When ``Compliance.get_bulk`` returns no CIS entry the CIS branch
+        must skip cleanly and record a flat ``{"upload": False, "path": ""}``
+        entry — no hard-coded provider whitelist is consulted."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        self._force_scan_has_findings(monkeypatch)
+        mock_stats.return_value = {}
+        # No ``cis_*`` keys in the bulk → no variant picked.
+        mock_get_bulk.return_value = {"ens_rd2022_aws": Mock()}
+
+        result = generate_compliance_reports(
+            tenant_id=str(tenant.id),
+            scan_id=str(scan.id),
+            provider_id=str(provider.id),
+            generate_threatscore=False,
+            generate_ens=False,
+            generate_nis2=False,
+            generate_csa=False,
+            generate_cis=True,
+        )
+
+        assert result["cis"] == {"upload": False, "path": ""}
+        mock_cis.assert_not_called()
+
+
+class TestPickLatestCisVariant:
+    """Unit tests for `_pick_latest_cis_variant` helper."""
+
+    def test_empty_returns_none(self):
+        assert _pick_latest_cis_variant([]) is None
+
+    def test_single_variant(self):
+        assert _pick_latest_cis_variant(["cis_5.0_aws"]) == "cis_5.0_aws"
+
+    def test_numeric_not_lexicographic(self):
+        """1.10 must beat 1.2 (lex sort would pick 1.2)."""
+        variants = ["cis_1.2_kubernetes", "cis_1.10_kubernetes"]
+        assert _pick_latest_cis_variant(variants) == "cis_1.10_kubernetes"
+
+    def test_major_version_wins(self):
+        variants = ["cis_1.4_aws", "cis_2.0_aws", "cis_5.0_aws", "cis_6.0_aws"]
+        assert _pick_latest_cis_variant(variants) == "cis_6.0_aws"
+
+    def test_minor_version_breaks_tie(self):
+        variants = ["cis_3.0_aws", "cis_3.1_aws", "cis_2.9_aws"]
+        assert _pick_latest_cis_variant(variants) == "cis_3.1_aws"
+
+    def test_three_part_version(self):
+        """Versions like 3.0.1 must win over 3.0."""
+        variants = ["cis_3.0_aws", "cis_3.0.1_aws"]
+        assert _pick_latest_cis_variant(variants) == "cis_3.0.1_aws"
+
+    def test_malformed_names_ignored(self):
+        variants = ["notcis_1.0_aws", "cis_abc_aws", "cis_5.0_aws"]
+        assert _pick_latest_cis_variant(variants) == "cis_5.0_aws"
+
+    def test_only_malformed_returns_none(self):
+        variants = ["notcis_1.0_aws", "cis_abc_aws"]
+        assert _pick_latest_cis_variant(variants) is None
+
+    def test_multidigit_provider_name(self):
+        """Provider name with underscores (e.g. googleworkspace) must parse."""
+        variants = ["cis_1.3_googleworkspace"]
+        assert _pick_latest_cis_variant(variants) == "cis_1.3_googleworkspace"
+
+    def test_accepts_iterator(self):
+        """The helper must accept any iterable, not just lists."""
+
+        def _gen():
+            yield "cis_1.4_aws"
+            yield "cis_5.0_aws"
+
+        assert _pick_latest_cis_variant(_gen()) == "cis_5.0_aws"
+
+    def test_rejects_single_integer_version(self):
+        """The regex requires at least one dotted component. ``cis_5_aws``
+        without a minor version is malformed per the backend contract."""
+        assert _pick_latest_cis_variant(["cis_5_aws"]) is None
+
+    def test_rejects_trailing_dot(self):
+        """Inputs like ``cis_5._aws`` must be rejected at the regex stage
+        instead of silently normalising to ``(5, 0)``."""
+        assert _pick_latest_cis_variant(["cis_5._aws", "cis_1.0_aws"]) == "cis_1.0_aws"
+
+    def test_rejects_lone_dot_version(self):
+        """``cis_._aws`` has no numeric component and must be skipped."""
+        assert _pick_latest_cis_variant(["cis_._aws", "cis_1.0_aws"]) == "cis_1.0_aws"
 
 
 class TestOptimizationImprovements:

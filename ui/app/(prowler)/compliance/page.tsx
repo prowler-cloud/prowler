@@ -14,6 +14,7 @@ import {
 } from "@/components/compliance";
 import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
+import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
 import {
   ExpandedScanData,
   ScanEntity,
@@ -221,6 +222,16 @@ const SSRComplianceGrid = async ({
     );
   }
 
+  // Compute the set of latest CIS variants per provider once, so each card
+  // can gate its PDF button without re-parsing on every render. The backend
+  // only generates a CIS PDF for the latest version per provider, so any
+  // other CIS card must not expose the PDF download button.
+  const latestCisIds = pickLatestCisPerProvider(
+    compliancesData.data.map(
+      (compliance: ComplianceOverviewData) => compliance.id,
+    ),
+  );
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
       {compliancesData.data
@@ -253,6 +264,7 @@ const SSRComplianceGrid = async ({
               complianceId={id}
               id={id}
               selectedScan={selectedScan}
+              isLatestCisForProvider={latestCisIds.has(id)}
             />
           );
         })}
