@@ -121,41 +121,56 @@ Custom queries are sandboxed to keep the graph database safe and responsive:
 
 ### Example Queries
 
-The following examples are read-only and can be pasted directly into the editor.
+The following examples are read-only and can be pasted directly into the editor. Each one demonstrates a different graph traversal pattern.
 
-**List all S3 buckets in the scan:**
-
-```cypher
-MATCH (b:S3Bucket)
-RETURN b.name AS bucket, b.region AS region
-LIMIT 50
-```
-
-**Find IAM roles that can be assumed from the internet:**
+**Internet-exposed EC2 instances with their security group rules:**
 
 ```cypher
-MATCH (r:AWSRole)
-WHERE r.trust_policy CONTAINS '"Principal":"*"'
-RETURN r.arn AS role_arn, r.name AS role_name
+MATCH (i:EC2Instance)--(sg:EC2SecurityGroup)--(rule:IpPermissionInbound)
+WHERE i.exposed_internet = true
+RETURN i.instanceid AS instance, sg.name AS security_group,
+       rule.fromport AS from_port, rule.toport AS to_port
 LIMIT 25
 ```
 
-**Find EC2 instances exposed to the internet with attached IAM roles:**
+**EC2 instances that can assume IAM roles:**
 
 ```cypher
 MATCH (i:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(r:AWSRole)
 WHERE i.exposed_internet = true
-RETURN i.instanceid AS instance_id, r.arn AS role_arn
+RETURN i.instanceid AS instance, r.name AS role_name, r.arn AS role_arn
 LIMIT 25
 ```
 
-**Inspect Prowler findings linked to a specific resource type:**
+**IAM principals with wildcard Allow statements:**
 
 ```cypher
-MATCH (b:S3Bucket)-[:HAS_FINDING]->(f:ProwlerFinding)
-WHERE f.severity IN ['critical', 'high']
-RETURN b.name AS bucket, f.check_id AS check, f.severity AS severity
+MATCH (principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
+WHERE stmt.effect = 'Allow'
+  AND ANY(action IN stmt.action WHERE action = '*')
+RETURN principal.arn AS principal, policy.arn AS policy,
+       stmt.action AS actions, stmt.resource AS resources
+LIMIT 25
+```
+
+**Critical findings on internet-exposed resources:**
+
+```cypher
+MATCH (i:EC2Instance)-[:HAS_FINDING]->(f:ProwlerFinding)
+WHERE i.exposed_internet = true AND f.status = 'FAIL'
+  AND f.severity IN ['critical', 'high']
+RETURN i.instanceid AS instance, f.check_id AS check,
+       f.severity AS severity, f.status AS status
 LIMIT 50
+```
+
+**Roles trusting an AWS service (building block for PassRole escalation):**
+
+```cypher
+MATCH (r:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(p:AWSPrincipal)
+WHERE p.arn ENDS WITH '.amazonaws.com'
+RETURN r.name AS role_name, r.arn AS role_arn, p.arn AS trusted_service
+LIMIT 25
 ```
 
 ### Tips for Writing Queries
@@ -171,7 +186,7 @@ Attack Paths graphs are populated by [Cartography](https://github.com/cartograph
 
 For the complete catalogue of node labels and relationships available in custom queries, refer to the official Cartography schema documentation:
 
-- **AWS:** [Cartography AWS Schema](https://github.com/cartography-cncf/cartography/blob/master/docs/root/modules/aws/schema.md)
+- **AWS:** [Cartography AWS Schema](https://cartography-cncf.github.io/cartography/modules/aws/schema.html)
 
 In addition to the upstream schema, Prowler enriches the graph with:
 
