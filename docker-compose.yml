@@ -32,6 +32,12 @@ services:
         condition: service_healthy
       neo4j:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:${DJANGO_PORT:-8080}/api/v1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "prod"
@@ -123,9 +129,7 @@ services:
     volumes:
       - "output:/tmp/prowler_api_output"
     depends_on:
-      valkey:
-        condition: service_healthy
-      postgres:
+      api:
         condition: service_healthy
     ulimits:
       nofile:
@@ -141,9 +145,7 @@ services:
       - path: ./.env
         required: false
     depends_on:
-      valkey:
-        condition: service_healthy
-      postgres:
+      api:
         condition: service_healthy
     ulimits:
       nofile:
