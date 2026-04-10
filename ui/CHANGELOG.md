@@ -14,6 +14,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Resource events tool to Lighthouse AI [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
 - Vercel provider: connect Vercel teams via API token, scan deployments, domains, projects, and team settings [(#10191)](https://github.com/prowler-cloud/prowler/pull/10191)
 
+### 🛠️ Maintenance
+
+- Added knip for dead code detection with `lint:knip` and `lint:knip:fix` scripts [(#10654)](https://github.com/prowler-cloud/prowler/pull/10654)
+
 ### 🔄 Changed
 
 - Attack Paths custom openCypher queries now use a code editor with syntax highlighting and line numbers [(#10445)](https://github.com/prowler-cloud/prowler/pull/10445)
