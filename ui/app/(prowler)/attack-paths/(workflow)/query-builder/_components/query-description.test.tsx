@@ -16,27 +16,27 @@ const customQuery: AttackPathQuery = {
     provider: "aws",
     attribution: null,
     documentation_link: {
-      text: "Cartography schema used by Prowler for AWS graphs",
-      link: "https://example.com/schema",
+      text: "Learn how to write custom openCypher queries",
+      link: "https://example.com/docs",
     },
     parameters: [],
   },
 };
 
 describe("QueryDescription", () => {
-  it("renders the schema documentation link inside an info alert", () => {
+  it("renders the documentation link inside an info alert", () => {
     // Given
     render(<QueryDescription query={customQuery} />);
 
     // When
     const alert = screen.getByRole("alert");
     const link = screen.getByRole("link", {
-      name: /cartography schema used by prowler for aws graphs/i,
+      name: /learn how to write custom opencypher queries/i,
     });
 
     // Then
     expect(alert).toBeInTheDocument();
-    expect(link).toHaveAttribute("href", "https://example.com/schema");
+    expect(link).toHaveAttribute("href", "https://example.com/docs");
   });
 
   it("does not render unsafe documentation or attribution URLs as clickable links", () => {
@@ -46,7 +46,7 @@ describe("QueryDescription", () => {
       attributes: {
         ...customQuery.attributes,
         documentation_link: {
-          text: "Cartography schema used by Prowler for AWS graphs",
+          text: "Learn how to write custom openCypher queries",
           link: "javascript:alert('xss')",
         },
         attribution: {
@@ -62,14 +62,14 @@ describe("QueryDescription", () => {
     // Then
     expect(
       screen.queryByRole("link", {
-        name: /cartography schema used by prowler for aws graphs/i,
+        name: /learn how to write custom opencypher queries/i,
       }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: /unsafe source/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText(/cartography schema used by prowler for aws graphs/i),
+      screen.getByText(/learn how to write custom opencypher queries/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/unsafe source/i)).toBeInTheDocument();
   });

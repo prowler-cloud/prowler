@@ -66,6 +66,14 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const handleMuteClick = async () => {
     const displayIds = getDisplayIds();
 
+    // Single resource: findingId is already a real finding UUID
+    if (displayIds.length === 1) {
+      setResolvedIds(displayIds);
+      setIsMuteModalOpen(true);
+      return;
+    }
+
+    // Multi-select: resolve through context
     if (resolveMuteIds) {
       setIsResolving(true);
       const ids = await resolveMuteIds(displayIds);
@@ -179,6 +187,7 @@ export function getColumnFindingResources({
             delta={row.original.delta as DeltaType | undefined}
             isMuted={row.original.isMuted}
             mutedReason={row.original.mutedReason}
+            showDeltaWhenMuted
           />
           <CornerDownRight className="text-text-neutral-tertiary h-4 w-4 shrink-0" />
           <Checkbox
@@ -218,14 +227,9 @@ export function getColumnFindingResources({
         <DataTableColumnHeader column={column} title="Status" />
       ),
       cell: ({ row }) => {
-        const rawStatus = row.original.status;
-        const status: FindingStatus =
-          rawStatus === "MUTED" || rawStatus === "FAIL"
-            ? "FAIL"
-            : rawStatus === "PASS"
-              ? "PASS"
-              : "FAIL";
-        return <StatusFindingBadge status={status} />;
+        return (
+          <StatusFindingBadge status={row.original.status as FindingStatus} />
+        );
       },
       enableSorting: false,
     },

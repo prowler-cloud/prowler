@@ -187,7 +187,9 @@ describe("getFindingGroupResources — Blocker 1: FAIL-first sort", () => {
     // Then — the URL must contain the composite sort
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
   });
 
   it("should not force filter[status]=FAIL so PASS resources can also be shown", async () => {
@@ -223,7 +225,9 @@ describe("getLatestFindingGroupResources — Blocker 1: FAIL-first sort", () => 
     // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
   });
 
   it("should not force filter[status]=FAIL so PASS resources can also be shown", async () => {
@@ -265,7 +269,9 @@ describe("getFindingGroupResources — triangulation: params coexist", () => {
     const url = new URL(calledUrl);
     expect(url.searchParams.get("page[number]")).toBe("2");
     expect(url.searchParams.get("page[size]")).toBe("50");
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
     expect(url.searchParams.get("filter[status]")).toBeNull();
   });
 });
@@ -291,7 +297,9 @@ describe("getLatestFindingGroupResources — triangulation: params coexist", () 
     const url = new URL(calledUrl);
     expect(url.searchParams.get("page[number]")).toBe("3");
     expect(url.searchParams.get("page[size]")).toBe("20");
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
     expect(url.searchParams.get("filter[status]")).toBeNull();
   });
 });
@@ -360,7 +368,9 @@ describe("getFindingGroupResources — caller filters are preserved", () => {
     // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
     expect(url.searchParams.get("filter[name__icontains]")).toBe("bucket-prod");
     expect(url.searchParams.get("filter[severity__in]")).toBe("high");
   });
@@ -426,7 +436,9 @@ describe("getLatestFindingGroupResources — caller filters are preserved", () =
     // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
     expect(url.searchParams.get("filter[name__icontains]")).toBe(
       "instance-prod",
     );
