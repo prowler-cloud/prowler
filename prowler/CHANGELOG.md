@@ -50,6 +50,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cryptography` bumped from 44.0.3 to 46.0.6 ([CVE-2026-26007](https://github.com/pyca/cryptography/security/advisories/GHSA-r6ph-v2qm-q3c2), [CVE-2026-34073](https://github.com/pyca/cryptography/security/advisories/GHSA-m959-cc7f-wv43)), `oci` to 2.169.0, and `alibabacloud-tea-openapi` to 0.4.4 [(#10535)](https://github.com/prowler-cloud/prowler/pull/10535)
 - `aiohttp` bumped from 3.13.3 to 3.13.5 to fix CVE-2026-34520 (the C parser accepted null bytes and control characters in response headers) [(#10537)](https://github.com/prowler-cloud/prowler/pull/10537)
 
+### 🐞 Fixed
+
+- Kubernetes OCSF `provider_uid` now uses the cluster name instead of the context name, so `--cluster-name` is correctly reflected in findings [(#10483)](https://github.com/prowler-cloud/prowler/pull/10483)
+
 ---
 
 ## [5.22.1] (Prowler UNRELEASED)
