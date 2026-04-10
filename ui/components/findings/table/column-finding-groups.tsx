@@ -10,6 +10,10 @@ import {
   StatusFindingBadge,
 } from "@/components/ui/table";
 import { cn } from "@/lib";
+import {
+  getFindingGroupDelta,
+  isFindingGroupMuted,
+} from "@/lib/findings-groups";
 import { FindingGroupRow, ProviderType } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -74,14 +78,13 @@ export function getColumnFindingGroups({
       },
       cell: ({ row }) => {
         const group = row.original;
-        const allMuted =
-          group.mutedCount > 0 && group.mutedCount === group.resourcesTotal;
+        const allMuted = isFindingGroupMuted(group);
         const isExpanded = expandedCheckId === group.checkId;
-
+        const deltaKey = getFindingGroupDelta(group);
         const delta =
-          group.newCount > 0
+          deltaKey === "new"
             ? DeltaValues.NEW
-            : group.changedCount > 0
+            : deltaKey === "changed"
               ? DeltaValues.CHANGED
               : DeltaValues.NONE;
 
@@ -89,12 +92,17 @@ export function getColumnFindingGroups({
         const canSelect = canMuteFindingGroup({
           resourcesFail: group.resourcesFail,
           resourcesTotal: group.resourcesTotal,
+          muted: group.muted,
           mutedCount: group.mutedCount,
         });
 
         return (
           <div className="flex items-center gap-2">
-            <NotificationIndicator delta={delta} isMuted={allMuted} />
+            <NotificationIndicator
+              delta={delta}
+              isMuted={allMuted}
+              showDeltaWhenMuted
+            />
             {canExpand ? (
               <button
                 type="button"
@@ -149,9 +157,7 @@ export function getColumnFindingGroups({
         <DataTableColumnHeader column={column} title="Status" />
       ),
       cell: ({ row }) => {
-        const rawStatus = row.original.status as string;
-        const status = rawStatus === "MUTED" ? "FAIL" : row.original.status;
-        return <StatusFindingBadge status={status} />;
+        return <StatusFindingBadge status={row.original.status} />;
       },
       enableSorting: false,
     },

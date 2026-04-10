@@ -26,7 +26,6 @@ vi.mock("@/components/findings/mute-findings-modal", () => ({
   MuteFindingsModal: () => null,
 }));
 
-
 vi.mock("@/components/findings/send-to-jira-modal", () => ({
   SendToJiraModal: ({
     findingId,
