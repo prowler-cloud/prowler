@@ -710,7 +710,7 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
       scanId: "scan-from-finding",
     });
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/PCI-DSS?complianceId=compliance-2&version=4.0&scanId=scan-from-finding&scanData=%7B%22id%22%3A%22scan-from-finding%22%2C%22providerInfo%22%3A%7B%22provider%22%3A%22aws%22%2C%22alias%22%3A%22prod%22%2C%22uid%22%3A%22123456789%22%7D%2C%22attributes%22%3A%7B%22name%22%3A%22Nightly+scan%22%2C%22completed_at%22%3A%222026-03-30T10%3A05%3A00Z%22%7D%7D",
+      "/compliance/PCI-DSS?complianceId=compliance-2&version=4.0&scanId=scan-from-finding",
       "_blank",
       "noopener,noreferrer",
     );
@@ -786,7 +786,7 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
       scanId: "scan-from-finding",
     });
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/KISA-ISMS-P?complianceId=compliance-kisa&version=1.0&scanId=scan-from-finding&scanData=%7B%22id%22%3A%22scan-from-finding%22%2C%22providerInfo%22%3A%7B%22provider%22%3A%22aws%22%2C%22alias%22%3A%22prod%22%2C%22uid%22%3A%22123456789%22%7D%2C%22attributes%22%3A%7B%22name%22%3A%22Nightly+scan%22%2C%22completed_at%22%3A%222026-03-30T10%3A05%3A00Z%22%7D%7D",
+      "/compliance/KISA-ISMS-P?complianceId=compliance-kisa&version=1.0&scanId=scan-from-finding",
       "_blank",
       "noopener,noreferrer",
     );
