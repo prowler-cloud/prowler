@@ -19,6 +19,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Attack Paths custom openCypher queries now use a code editor with syntax highlighting and line numbers [(#10445)](https://github.com/prowler-cloud/prowler/pull/10445)
 - Filter summary strip: removed redundant "Clear all" link next to pills (use top-bar Clear Filters instead) and switched chip variant from `outline` to `tag` for consistency [(#10481)](https://github.com/prowler-cloud/prowler/pull/10481)
 
+### 🔐 Security
+
+- Bump `serialize-javascript` override from 7.0.3 to 7.0.5 to restore pnpm trusted publishing and patch CVE-2026-34043 [(#10653)](https://github.com/prowler-cloud/prowler/pull/10653)
+
 ### 🐞 Fixed
 
 - Preserve query parameters in callbackUrl during invitation flow [(#10571)](https://github.com/prowler-cloud/prowler/pull/10571)
