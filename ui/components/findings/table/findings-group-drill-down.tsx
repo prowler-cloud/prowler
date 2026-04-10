@@ -24,7 +24,7 @@ import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { useInfiniteResources } from "@/hooks/use-infinite-resources";
 import { cn, hasDateOrScanFilter } from "@/lib";
 import {
-  getFindingGroupDelta,
+  getFilteredFindingGroupDelta,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
@@ -156,7 +156,7 @@ export function FindingsGroupDrillDown({
   });
 
   // Delta for the sticky header
-  const deltaKey = getFindingGroupDelta(group);
+  const deltaKey = getFilteredFindingGroupDelta(group, filters);
   const delta =
     deltaKey === "new"
       ? DeltaValues.NEW

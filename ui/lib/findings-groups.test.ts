@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { FindingGroupRow } from "@/types";
 
-import { getFindingGroupDelta, isFindingGroupMuted } from "./findings-groups";
+import {
+  getActiveStatusFilter,
+  getFilteredFindingGroupDelta,
+  getFindingGroupDelta,
+  isFindingGroupMuted,
+} from "./findings-groups";
 
 function makeGroup(overrides?: Partial<FindingGroupRow>): FindingGroupRow {
   return {
@@ -96,6 +101,137 @@ describe("getFindingGroupDelta", () => {
           newCount: 1,
           changedCount: 0,
         }),
+      ),
+    ).toBe("new");
+  });
+});
+
+describe("getActiveStatusFilter", () => {
+  it("returns null when no status filter is active", () => {
+    expect(getActiveStatusFilter({})).toBeNull();
+  });
+
+  it("returns the single value from filter[status]", () => {
+    const result = getActiveStatusFilter({ "filter[status]": "FAIL" });
+    expect(result).toEqual(new Set(["FAIL"]));
+  });
+
+  it("returns the parsed set from filter[status__in]", () => {
+    const result = getActiveStatusFilter({
+      "filter[status__in]": "FAIL,MANUAL",
+    });
+    expect(result).toEqual(new Set(["FAIL", "MANUAL"]));
+  });
+
+  it("prefers filter[status] over filter[status__in] when both are present", () => {
+    const result = getActiveStatusFilter({
+      "filter[status]": "PASS",
+      "filter[status__in]": "FAIL,MANUAL",
+    });
+    expect(result).toEqual(new Set(["PASS"]));
+  });
+
+  it("ignores unknown status values and returns null if nothing remains", () => {
+    expect(
+      getActiveStatusFilter({ "filter[status__in]": "UNKNOWN,FOO" }),
+    ).toBeNull();
+  });
+});
+
+describe("getFilteredFindingGroupDelta", () => {
+  it("falls back to the aggregate delta when no status filter is active", () => {
+    expect(
+      getFilteredFindingGroupDelta(
+        makeGroup({
+          newPassCount: 2,
+        }),
+        {},
+      ),
+    ).toBe("new");
+  });
+
+  it("ignores deltas that belong to filtered-out statuses", () => {
+    // Filter is FAIL, but the only delta is a new PASS → should be hidden.
+    expect(
+      getFilteredFindingGroupDelta(
+        makeGroup({
+          newPassCount: 3,
+        }),
+        { "filter[status__in]": "FAIL" },
+      ),
+    ).toBe("none");
+  });
+
+  it("surfaces FAIL deltas when the filter is FAIL", () => {
+    expect(
+      getFilteredFindingGroupDelta(
+        makeGroup({
+          newFailCount: 1,
+        }),
+        { "filter[status]": "FAIL" },
+      ),
+    ).toBe("new");
+  });
+
+  it("counts muted breakdown counters towards the filtered status", () => {
+    // A muted new FAIL still belongs to the FAIL bucket — a FAIL filter
+    // should still light up the "new" indicator.
+    expect(
+      getFilteredFindingGroupDelta(
+        makeGroup({
+          newFailMutedCount: 1,
+        }),
+        { "filter[status]": "FAIL" },
+      ),
+    ).toBe("new");
+  });
+
+  it("sums multiple filtered statuses from filter[status__in]", () => {
+    // Filter is FAIL+MANUAL, new delta is only in MANUAL → should still show.
+    expect(
+      getFilteredFindingGroupDelta(
+        makeGroup({
+          newManualCount: 1,
+        }),
+        { "filter[status__in]": "FAIL,MANUAL" },
+      ),
+    ).toBe("new");
+  });
+
+  it("prefers new over changed within the filtered status", () => {
+    expect(
+      getFilteredFindingGroupDelta(
+        makeGroup({
+          newFailCount: 1,
+          changedFailCount: 2,
+        }),
+        { "filter[status]": "FAIL" },
+      ),
+    ).toBe("new");
+  });
+
+  it("returns changed when only changed counters match the filtered status", () => {
+    expect(
+      getFilteredFindingGroupDelta(
+        makeGroup({
+          newPassCount: 2, // filtered out
+          changedFailCount: 1,
+        }),
+        { "filter[status]": "FAIL" },
+      ),
+    ).toBe("changed");
+  });
+
+  it("falls back to the aggregate delta when breakdowns are missing (legacy API)", () => {
+    // No breakdown fields populated but legacy newCount is set. With a FAIL
+    // filter active we cannot know which status bucket it belongs to, so we
+    // fall back to showing the delta rather than silently hiding it.
+    expect(
+      getFilteredFindingGroupDelta(
+        makeGroup({
+          newCount: 1,
+        }),
+        { "filter[status]": "FAIL" },
       ),
     ).toBe("new");
   });
