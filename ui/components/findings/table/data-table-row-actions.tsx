@@ -13,6 +13,7 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { isFindingGroupMuted } from "@/lib/findings-groups";
 
 import { canMuteFindingGroup } from "./finding-group-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
@@ -29,6 +30,7 @@ export interface FindingRowData {
   rowType?: string;
   checkId?: string;
   checkTitle?: string;
+  muted?: boolean;
   mutedCount?: number;
   resourcesFail?: number;
   resourcesTotal?: number;
@@ -40,13 +42,19 @@ export interface FindingRowData {
  */
 function extractRowInfo(data: FindingRowData) {
   if (data.rowType === "group") {
-    const allMuted =
-      (data.mutedCount ?? 0) > 0 && data.mutedCount === data.resourcesTotal;
+    const isMuted = isFindingGroupMuted({
+      muted: data.muted,
+      mutedCount: data.mutedCount ?? 0,
+      resourcesFail: data.resourcesFail ?? 0,
+      resourcesTotal: data.resourcesTotal ?? 0,
+    });
+
     return {
-      isMuted: allMuted,
+      isMuted,
       canMute: canMuteFindingGroup({
         resourcesFail: data.resourcesFail ?? 0,
         resourcesTotal: data.resourcesTotal ?? 0,
+        muted: data.muted,
         mutedCount: data.mutedCount ?? 0,
       }),
       title: data.checkTitle || "Security Finding",
