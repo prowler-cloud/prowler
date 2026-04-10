@@ -7311,8 +7311,23 @@ class FindingGroupViewSet(BaseRLSViewSet):
         "pass_count": "pass_count",
         "manual_count": "manual_count",
         "muted_count": "muted_count",
+        "pass_muted_count": "pass_muted_count",
+        "fail_muted_count": "fail_muted_count",
+        "manual_muted_count": "manual_muted_count",
         "new_count": "new_count",
+        "new_fail_count": "new_fail_count",
+        "new_fail_muted_count": "new_fail_muted_count",
+        "new_pass_count": "new_pass_count",
+        "new_pass_muted_count": "new_pass_muted_count",
+        "new_manual_count": "new_manual_count",
+        "new_manual_muted_count": "new_manual_muted_count",
         "changed_count": "changed_count",
+        "changed_fail_count": "changed_fail_count",
+        "changed_fail_muted_count": "changed_fail_muted_count",
+        "changed_pass_count": "changed_pass_count",
+        "changed_pass_muted_count": "changed_pass_muted_count",
+        "changed_manual_count": "changed_manual_count",
+        "changed_manual_muted_count": "changed_manual_muted_count",
         "resources_total": "resources_total",
         "resources_fail": "resources_fail",
         "first_seen_at": "agg_first_seen_at",
@@ -7683,11 +7698,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
                         )
                     )
 
-                # delta_order is a virtual sort field: expand it to a
-                # lexicographic ordering by (new_count, changed_count) so groups
-                # with more new findings rank higher, with changed_count as the
-                # tie-breaker (preserves the "new > changed" priority used by
-                # the resources endpoint, but driven by the actual counters).
                 expanded_ordering = []
                 for field in ordering:
                     if field.lstrip("-") == "delta_order":
