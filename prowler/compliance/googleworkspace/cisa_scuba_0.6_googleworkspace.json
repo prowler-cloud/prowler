@@ -1310,7 +1310,9 @@
     {
       "Id": "GWS.CALENDAR.1.1",
       "Description": "External Sharing Options for Primary Calendars SHALL be configured to Only free/busy information (hide event details)",
-      "Checks": [],
+      "Checks": [
+        "calendar_external_sharing_primary_calendar"
+      ],
       "Attributes": [
         {
           "Section": "Calendar",
@@ -1323,7 +1325,9 @@
     {
       "Id": "GWS.CALENDAR.1.2",
       "Description": "External sharing options for secondary calendars SHALL be configured to Only free/busy information (hide event details)",
-      "Checks": [],
+      "Checks": [
+        "calendar_external_sharing_secondary_calendar"
+      ],
       "Attributes": [
         {
           "Section": "Calendar",
@@ -1336,7 +1340,9 @@
     {
       "Id": "GWS.CALENDAR.2.1",
       "Description": "External invitations warnings SHALL be enabled to prompt users before sending invitations",
-      "Checks": [],
+      "Checks": [
+        "calendar_external_invitations_warning"
+      ],
       "Attributes": [
         {
           "Section": "Calendar",

@@ -59,11 +59,14 @@ class GoogleworkspaceProvider(Provider):
     _mutelist: GoogleWorkspaceMutelist
     audit_metadata: Audit_Metadata
 
-    # Google Workspace Admin SDK OAuth2 scopes
-    DIRECTORY_SCOPES = [
+    # Google Workspace OAuth2 scopes
+    SCOPES = [
         "https://www.googleapis.com/auth/admin.directory.user.readonly",
         "https://www.googleapis.com/auth/admin.directory.domain.readonly",
         "https://www.googleapis.com/auth/admin.directory.customer.readonly",
+        # Cloud Identity Policy API (calendar and other app policies)
+        "https://www.googleapis.com/auth/cloud-identity.policies.readonly",
+        "https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly",
     ]
 
     def __init__(
@@ -214,7 +217,7 @@ class GoogleworkspaceProvider(Provider):
             try:
                 credentials = service_account.Credentials.from_service_account_file(
                     credentials_file,
-                    scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
+                    scopes=GoogleworkspaceProvider.SCOPES,
                 )
             except FileNotFoundError as error:
                 raise GoogleWorkspaceInvalidCredentialsError(
@@ -241,7 +244,7 @@ class GoogleworkspaceProvider(Provider):
             try:
                 credentials = service_account.Credentials.from_service_account_info(
                     credentials_data,
-                    scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
+                    scopes=GoogleworkspaceProvider.SCOPES,
                 )
             except ValueError as error:
                 raise GoogleWorkspaceInvalidCredentialsError(
@@ -264,7 +267,7 @@ class GoogleworkspaceProvider(Provider):
                 try:
                     credentials = service_account.Credentials.from_service_account_file(
                         env_file,
-                        scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
+                        scopes=GoogleworkspaceProvider.SCOPES,
                     )
                 except FileNotFoundError as error:
                     raise GoogleWorkspaceInvalidCredentialsError(
@@ -293,7 +296,7 @@ class GoogleworkspaceProvider(Provider):
                 try:
                     credentials = service_account.Credentials.from_service_account_info(
                         credentials_data,
-                        scopes=GoogleworkspaceProvider.DIRECTORY_SCOPES,
+                        scopes=GoogleworkspaceProvider.SCOPES,
                     )
                 except ValueError as error:
                     raise GoogleWorkspaceInvalidCredentialsError(
@@ -414,7 +417,7 @@ class GoogleworkspaceProvider(Provider):
             )
 
         # Fetch all domains (primary + aliases) to support domain aliases
-        # The scope admin.directory.domain.readonly is already in DIRECTORY_SCOPES
+        # The scope admin.directory.domain.readonly is already in SCOPES above
         try:
             domains_response = service.domains().list(customer="my_customer").execute()
             valid_domains = [
