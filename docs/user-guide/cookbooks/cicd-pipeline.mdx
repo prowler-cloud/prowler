@@ -231,6 +231,45 @@ prowler aws --push-to-cloud -M csv,html -o /tmp/prowler-reports
 
 This produces CSV and HTML files locally while also pushing OCSF findings to Prowler Cloud. The local files can be stored as CI/CD artifacts for archival purposes.
 
+### IaC Scanning with GitHub Code Scanning
+
+To scan Infrastructure as Code and upload findings to GitHub's Security tab as code scanning alerts:
+
+```yaml
+name: Prowler IaC Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  prowler-iac:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Prowler
+        run: pip install prowler
+
+      - name: Run Prowler IaC Scan
+        run: |
+          prowler iac --scan-repository-url ${{ github.server_url }}/${{ github.repository }} -M sarif
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: output/
+```
+
+<Note>
+The `security-events: write` permission is required to upload SARIF results. The `if: always()` condition ensures findings are uploaded even when Prowler exits with a non-zero code due to failing checks.
+</Note>
+
 ### Scanning Multiple AWS Accounts
 
 To scan multiple accounts sequentially in a single job, use [role assumption](/user-guide/providers/aws/role-assumption):

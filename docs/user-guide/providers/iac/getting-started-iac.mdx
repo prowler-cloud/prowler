@@ -29,7 +29,7 @@ Prowler IaC provider scans the following Infrastructure as Code configurations f
 - For remote repository scans, authentication can be provided via [git URL](https://git-scm.com/docs/git-clone#_git_urls), CLI flags or environment variables.
   - Check the [IaC Authentication](/user-guide/providers/iac/authentication) page for more details.
 - Mutelist logic ([filtering](https://trivy.dev/latest/docs/configuration/filtering/)) is handled by Trivy, not Prowler.
-- Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
+- Results are output in the same formats as other Prowler providers (CSV, JSON-OCSF, HTML), plus [SARIF](/user-guide/cli/tutorials/reporting#sarif-iac-only) for GitHub Code Scanning integration.
 
 ## Prowler App
 
@@ -140,8 +140,20 @@ prowler iac --scan-path ./my-iac-directory --exclude-path ./my-iac-directory/tes
 
 ### Output
 
-Use the standard Prowler output options, for example:
+Use the standard Prowler output options. The IaC provider also supports [SARIF](/user-guide/cli/tutorials/reporting#sarif-iac-only) output for GitHub Code Scanning integration:
 
 ```sh
-prowler iac --scan-path ./iac --output-formats csv json html
+prowler iac --scan-path ./iac --output-formats csv json-ocsf html
 ```
+
+#### SARIF Output for GitHub Code Scanning
+
+<VersionBadge version="5.23.0" />
+
+To generate SARIF output compatible with GitHub Code Scanning:
+
+```sh
+prowler iac --scan-repository-url https://github.com/user/repo -M sarif
+```
+
+The SARIF file can be uploaded to GitHub's Security tab using the `github/codeql-action/upload-sarif` action. Findings appear as code scanning alerts with file and line annotations. See the [SARIF reporting documentation](/user-guide/cli/tutorials/reporting#sarif-iac-only) for details.
