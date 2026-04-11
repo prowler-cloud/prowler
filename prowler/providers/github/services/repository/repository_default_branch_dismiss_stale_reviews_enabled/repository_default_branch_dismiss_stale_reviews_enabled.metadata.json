@@ -1,0 +1,38 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_default_branch_dismiss_stale_reviews_enabled",
+  "CheckTitle": "Repository default branch dismisses stale pull request approvals when new commits are pushed",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "devops",
+  "Description": "**GitHub repository default branch** uses **branch protection** to **dismiss stale pull request approvals** when new commits are pushed (`Dismiss stale pull request approvals when new commits are pushed`).\n\nEnsures that once a code change proposal is updated, all previously granted approvals are invalidated and fresh reviews are required before merging.",
+  "Risk": "Without dismissing stale approvals, a contributor can obtain a review on safe code and then push malicious or untested changes that merge under the original approval. This weakens **integrity** and **accountability**, enabling supply-chain tampering, backdoors, or regressions to reach the default branch without fresh human review.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-a-branch-protection-rule",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#dismiss-stale-pull-request-approvals"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gh api -X PATCH repos/<OWNER>/<REPO>/branches/<DEFAULT_BRANCH>/protection/required_pull_request_reviews -F dismiss_stale_reviews=true",
+      "NativeIaC": "",
+      "Other": "1. In GitHub, go to the repository > Settings\n2. Click Branches\n3. Edit the branch protection rule for the default branch (e.g., main)\n4. Under \"Require a pull request before merging\", check \"Dismiss stale pull request approvals when new commits are pushed\"\n5. Click Save changes",
+      "Terraform": "```hcl\nresource \"github_branch_protection\" \"<example_resource_name>\" {\n  repository_id = \"<example_resource_name>\"\n  pattern       = \"<default_branch_name>\"\n\n  required_pull_request_reviews {\n    dismiss_stale_reviews = true # Invalidate existing approvals when new commits are pushed\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable `Dismiss stale pull request approvals when new commits are pushed` on the default branch protection rule.\n\nAlso enforce:\n- Required approvals and CI status checks\n- Code owner reviews on critical paths\n- Apply protections to admins to prevent bypass",
+      "Url": "https://hub.prowler.com/check/repository_default_branch_dismiss_stale_reviews_enabled"
+    }
+  },
+  "Categories": [
+    "ci-cd",
+    "software-supply-chain"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
