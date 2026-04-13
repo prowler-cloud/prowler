@@ -6,7 +6,6 @@ from prowler.providers.azure.services.aisearch.aisearch_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
-    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -63,6 +62,8 @@ class Test_AISearch_Service:
             "aisearch_service_id-1"
         ].public_network_access
 
+
+class Test_AISearch_Service_get_aisearch_services:
     def test_get_aisearch_services_no_resource_groups(self):
         mock_service = MagicMock()
         mock_service.id = AISEARCH_SERVICE_ID
@@ -77,18 +78,18 @@ class Test_AISearch_Service:
             "prowler.providers.azure.services.aisearch.aisearch_service.AISearch._get_aisearch_services",
             return_value={},
         ):
-            aisearch = AISearch(set_mocked_azure_provider(resource_groups=None))
+            aisearch = AISearch(set_mocked_azure_provider())
 
-        aisearch.clients = {AZURE_SUBSCRIPTION_NAME: mock_client}
+        aisearch.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
         aisearch.resource_groups = None
 
         result = aisearch._get_aisearch_services()
 
         mock_client.services.list_by_subscription.assert_called_once()
         mock_client.services.list_by_resource_group.assert_not_called()
-        assert AZURE_SUBSCRIPTION_NAME in result
+        assert AZURE_SUBSCRIPTION_ID in result
         assert (
-            result[AZURE_SUBSCRIPTION_NAME][AISEARCH_SERVICE_ID].public_network_access
+            result[AZURE_SUBSCRIPTION_ID][AISEARCH_SERVICE_ID].public_network_access
             is True
         )
 
@@ -108,8 +109,8 @@ class Test_AISearch_Service:
         ):
             aisearch = AISearch(set_mocked_azure_provider())
 
-        aisearch.clients = {AZURE_SUBSCRIPTION_NAME: mock_client}
-        aisearch.resource_groups = {AZURE_SUBSCRIPTION_NAME: [RESOURCE_GROUP]}
+        aisearch.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        aisearch.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
 
         result = aisearch._get_aisearch_services()
 
@@ -118,7 +119,7 @@ class Test_AISearch_Service:
         )
         mock_client.services.list_by_subscription.assert_not_called()
         assert (
-            result[AZURE_SUBSCRIPTION_NAME][AISEARCH_SERVICE_ID].public_network_access
+            result[AZURE_SUBSCRIPTION_ID][AISEARCH_SERVICE_ID].public_network_access
             is False
         )
 
@@ -131,11 +132,11 @@ class Test_AISearch_Service:
         ):
             aisearch = AISearch(set_mocked_azure_provider())
 
-        aisearch.clients = {AZURE_SUBSCRIPTION_NAME: mock_client}
-        aisearch.resource_groups = {AZURE_SUBSCRIPTION_NAME: []}
+        aisearch.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        aisearch.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
 
         result = aisearch._get_aisearch_services()
 
         mock_client.services.list_by_resource_group.assert_not_called()
         mock_client.services.list_by_subscription.assert_not_called()
-        assert result[AZURE_SUBSCRIPTION_NAME] == {}
+        assert result[AZURE_SUBSCRIPTION_ID] == {}
