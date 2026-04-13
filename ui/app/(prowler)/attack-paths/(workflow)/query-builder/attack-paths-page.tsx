@@ -12,7 +12,6 @@ import {
   executeQuery,
   getAttackPathScans,
   getAvailableQueries,
-  getCartographySchema,
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
 import { AutoRefresh } from "@/components/scans";
@@ -144,14 +143,10 @@ export default function AttackPathsPage() {
 
       setQueriesLoading(true);
       try {
-        const [queriesData, schemaData] = await Promise.all([
-          getAvailableQueries(scanId),
-          getCartographySchema(scanId),
-        ]);
+        const queriesData = await getAvailableQueries(scanId);
 
         const availableQueries = buildAttackPathQueries(
           queriesData?.data ?? [],
-          schemaData?.data.attributes,
         );
 
         if (availableQueries.length > 0) {

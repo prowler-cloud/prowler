@@ -40,7 +40,6 @@ export const ThreatScoreBadge = ({
   score,
   scanId,
   provider,
-  selectedScan,
   sectionScores,
 }: ThreatScoreBadgeProps) => {
   const router = useRouter();
@@ -61,17 +60,6 @@ export const ThreatScoreBadge = ({
     params.set("complianceId", complianceId);
     params.set("version", version);
     params.set("scanId", scanId);
-
-    if (selectedScan) {
-      params.set(
-        "scanData",
-        JSON.stringify({
-          id: selectedScan.id,
-          providerInfo: selectedScan.providerInfo,
-          attributes: selectedScan.attributes,
-        }),
-      );
-    }
 
     const regionFilter = searchParams.get("filter[region__in]");
     if (regionFilter) {

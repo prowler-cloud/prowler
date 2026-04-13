@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable the Vercel Web Application Firewall to protect your application against common web attacks. Start with managed rulesets for baseline protection and add custom rules as needed based on your application's threat model.",
-      "Url": "https://hub.prowler.com/checks/vercel/security_waf_enabled"
+      "Url": "https://hub.prowler.com/check/security_waf_enabled"
     }
   },
   "Categories": [

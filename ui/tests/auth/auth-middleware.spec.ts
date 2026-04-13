@@ -65,7 +65,9 @@ test.describe("Middleware Error Handling", () => {
         await freshPage.goto(`/scans?e2e_mw=${cacheBuster}`, {
           waitUntil: "commit",
         });
-        await freshSignInPage.verifyRedirectWithCallback("/scans");
+        await freshSignInPage.verifyRedirectWithCallback(
+          `/scans?e2e_mw=${cacheBuster}`,
+        );
       } finally {
         await invalidSessionContext.close();
       }
