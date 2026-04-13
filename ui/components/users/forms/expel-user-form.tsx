@@ -1,6 +1,6 @@
 "use client";
 
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useTransition } from "react";
 
 import { removeUserFromTenant } from "@/actions/users/users";
 import { DeleteIcon } from "@/components/icons";
@@ -21,36 +21,35 @@ export const ExpelUserForm = ({
   setIsOpen,
 }: ExpelUserFormProps) => {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-  const handleExpel = async () => {
-    setIsSubmitting(true);
+  const handleExpel = () => {
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.append("userId", userId);
+      formData.append("tenantId", tenantId);
 
-    const formData = new FormData();
-    formData.append("userId", userId);
-    formData.append("tenantId", tenantId);
+      const data = await removeUserFromTenant(formData);
 
-    const data = await removeUserFromTenant(formData);
-    setIsSubmitting(false);
+      if (!data || !("success" in data) || data.success !== true) {
+        const detail =
+          data && "errors" in data && data.errors?.[0]?.detail
+            ? data.errors[0].detail
+            : "Failed to expel the user";
+        toast({
+          variant: "destructive",
+          title: "Oops! Something went wrong",
+          description: detail,
+        });
+        return;
+      }
 
-    if (!data || !("success" in data) || data.success !== true) {
-      const detail =
-        data && "errors" in data && data.errors?.[0]?.detail
-          ? data.errors[0].detail
-          : "Failed to expel the user";
       toast({
-        variant: "destructive",
-        title: "Oops! Something went wrong",
-        description: detail,
+        title: "User expelled",
+        description: `${userName ?? "The user"} was removed from this organization.`,
       });
-      return;
-    }
-
-    toast({
-      title: "User expelled",
-      description: `${userName ?? "The user"} was removed from this organization.`,
+      setIsOpen(false);
     });
-    setIsOpen(false);
   };
 
   const displayName = userName ?? "this user";
@@ -69,7 +68,7 @@ export const ExpelUserForm = ({
           variant="ghost"
           size="lg"
           onClick={() => setIsOpen(false)}
-          disabled={isSubmitting}
+          disabled={isPending}
         >
           Cancel
         </Button>
@@ -78,10 +77,10 @@ export const ExpelUserForm = ({
           variant="destructive"
           size="lg"
           onClick={handleExpel}
-          disabled={isSubmitting}
+          disabled={isPending}
         >
-          {!isSubmitting && <DeleteIcon size={24} aria-hidden="true" />}
-          {isSubmitting ? "Expelling…" : "Expel user"}
+          {!isPending && <DeleteIcon size={24} aria-hidden="true" />}
+          {isPending ? "Expelling…" : "Expel user"}
         </Button>
       </div>
     </div>

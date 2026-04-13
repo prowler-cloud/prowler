@@ -12,17 +12,6 @@ import {
   type TenantMembershipRole,
 } from "@/types/users";
 
-interface UserAttributes {
-  name?: string;
-  email?: string;
-  company_name?: string;
-  password?: string;
-}
-
-interface MembershipResource {
-  id: string;
-}
-
 const getUsersSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   query: z.string().default(""),
@@ -58,15 +47,12 @@ const updateUserRoleSchema = z.object({
   roleId: z.uuid(),
 });
 
-export const getUsers = async (
-  rawParams: {
-    page?: number | string;
-    query?: string;
-    sort?: string;
-    filters?: Record<string, string | string[] | number | undefined>;
-    pageSize?: number | string;
-  } = {},
-) => {
+type GetUsersInput = z.input<typeof getUsersSchema>;
+type UpdateUserData = z.infer<typeof updateUserSchema>;
+type UserAttributes = Omit<UpdateUserData, "userId">;
+type MembershipResource = { id: string };
+
+export const getUsers = async (rawParams: Partial<GetUsersInput> = {}) => {
   const parsed = getUsersSchema.safeParse(rawParams);
   if (!parsed.success) {
     console.error("Invalid getUsers params:", parsed.error.flatten());
