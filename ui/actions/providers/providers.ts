@@ -293,7 +293,7 @@ export const updateCredentialsProvider = async (
       }),
     });
 
-    return handleApiResponse(response, "/providers");
+    return handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);
   }
