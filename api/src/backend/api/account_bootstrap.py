@@ -41,11 +41,14 @@ ROLE_PRESETS = {
 
 
 def get_default_tenant_role_preset(role_name: str):
-    normalized_role_name = (role_name or "admin").strip().lower()
-    return ROLE_PRESETS.get(normalized_role_name, ROLE_PRESETS["admin"])
+    normalized_role_name = role_name.strip().lower()
+    try:
+        return ROLE_PRESETS[normalized_role_name]
+    except KeyError as error:
+        raise ValueError(f"Unsupported tenant role preset: {role_name}") from error
 
 
-def provision_default_tenant_access(user: User, role_name: str = "admin") -> Tenant:
+def provision_default_tenant_access(user: User, role_name: str) -> Tenant:
     role_preset = get_default_tenant_role_preset(role_name)
     tenant = Tenant.objects.using(MainRouter.admin_db).create(
         name=f"{user.email.split('@')[0]} default tenant"

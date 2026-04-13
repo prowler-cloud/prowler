@@ -19,10 +19,12 @@ class TestProwlerUaaBackend:
         assert ProwlerUaaBackend.get_role_name_for_email("reader@example.com") == "read"
 
     @override_settings(UAA_EMAIL_ROLE_MAP={"read": ["reader@example.com"]})
-    def test_get_role_name_for_email_defaults_to_admin(self):
-        assert ProwlerUaaBackend.get_role_name_for_email("other@example.com") == "admin"
+    def test_get_role_name_for_unmapped_email_denies_provisioning(self):
+        assert ProwlerUaaBackend.get_role_name_for_email("other@example.com") is None
+        assert not ProwlerUaaBackend.should_create_user_for_email("other@example.com")
 
-    def test_create_user_with_email_bootstraps_default_tenant_access(self):
+    @override_settings(UAA_EMAIL_ROLE_MAP={"read": ["person@example.com"]})
+    def test_create_user_with_email_bootstraps_explicit_tenant_access(self):
         with patch(
             "api.cloudgov.authentication.provision_default_tenant_access"
         ) as mock_bootstrap:
@@ -30,7 +32,7 @@ class TestProwlerUaaBackend:
 
         assert user.email == "person@example.com"
         assert user.name == "person"
-        mock_bootstrap.assert_called_once_with(user)
+        mock_bootstrap.assert_called_once_with(user, role_name="read")
 
     @override_settings(UAA_EMAIL_ROLE_MAP={"read": ["reader@example.com"]})
     def test_create_user_with_email_bootstraps_mapped_role(self):
@@ -41,6 +43,7 @@ class TestProwlerUaaBackend:
 
         mock_bootstrap.assert_called_once_with(user, role_name="read")
 
+    @override_settings(UAA_EMAIL_ROLE_MAP={"read": ["ab@example.com"]})
     def test_create_user_with_short_local_part_uses_valid_name(self):
         with patch(
             "api.cloudgov.authentication.provision_default_tenant_access"

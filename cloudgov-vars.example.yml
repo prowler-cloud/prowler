@@ -13,3 +13,6 @@ django_token_verifying_key: |
   -----BEGIN PUBLIC KEY-----
   replace-with-rs256-public-key
   -----END PUBLIC KEY-----
+ui_route: prowler-ui-gsa-10x-prototyping.app.cloud.gov
+ui_auth_secret: replace-with-nextauth-secret
+egress_proxy_url: http://<proxy-username>:<proxy-password>@<org>-<space>-egress-egress-proxy.apps.internal:8080

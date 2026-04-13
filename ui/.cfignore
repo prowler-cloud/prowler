@@ -1,0 +1,18 @@
+# Cloud Foundry deploy ignores for prowler-ui
+# Exclude heavy source dependencies — the buildpack does not install them
+node_modules/
+.pnp/
+.pnp.js
+coverage/
+out/
+build/
+.DS_Store
+*.pem
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# Keep .next/ — it contains the pre-built standalone output needed to run

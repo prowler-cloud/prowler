@@ -4,19 +4,20 @@ applications:
     buildpacks:
       - python_buildpack
     memory: 1024M
-    disk_quota: 4G
+    disk_quota: 6G
     instances: 1
     command: ./bin/cloudgov-web.sh
     routes:
       - route: ((api_route))
+      - route: prowler-api-web.apps.internal
     services:
       - prowler-api-db
       - prowler-api-redis
     env:
       DISABLE_COLLECTSTATIC: 1
       DJANGO_SETTINGS_MODULE: config.django.production
-      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,((api_route))
-      DJANGO_CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1,https://((api_route))
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,((api_route)),prowler-api-web.apps.internal
+      DJANGO_CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1,https://((api_route)),https://((ui_route)),http://prowler-api-web.apps.internal
       DJANGO_BIND_ADDRESS: 0.0.0.0
       DJANGO_LOGGING_FORMATTER: human_readable
       DJANGO_LOGGING_LEVEL: INFO
@@ -27,7 +28,10 @@ applications:
       UAA_AUTH_URL: https://login.fr.cloud.gov/oauth/authorize
       UAA_TOKEN_URL: https://uaa.fr.cloud.gov/oauth/token
       UAA_APPROVED_DOMAINS: ((uaa_approved_domains))
-      UAA_LOGIN_REDIRECT_URL: ((uaa_login_redirect_url))
+      UAA_LOGIN_REDIRECT_URL: /auth/complete/cloudgov/
+      UAA_EMAIL_ROLE_MAP: ((uaa_email_role_map))
+      AUTH_URL: https://((ui_route))
+      SAML_SSO_CALLBACK_URL: https://((ui_route))/api/auth/callback/saml
       SECRET_KEY: ((django_secret_key))
       DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
       DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
@@ -38,13 +42,21 @@ applications:
       NEO4J_PASSWORD: ''
       SENTRY_ENVIRONMENT: cloudgov
       SENTRY_RELEASE: cloudgov
+      DJANGO_WORKERS: 2
+      PIP_NO_DEPS: "1"
+      no_proxy: "buildpacks.cloudfoundry.org,packages.cloudfoundry.org"
+      NO_PROXY: "buildpacks.cloudfoundry.org,packages.cloudfoundry.org"
+      https_proxy: ((egress_proxy_url))
+      HTTPS_PROXY: ((egress_proxy_url))
+      http_proxy: ((egress_proxy_url))
+      HTTP_PROXY: ((egress_proxy_url))
 
   - name: prowler-api-worker
     path: api
     buildpacks:
       - python_buildpack
     memory: 1024M
-    disk_quota: 4G
+    disk_quota: 6G
     instances: 1
     no-route: true
     health-check-type: process
@@ -55,8 +67,8 @@ applications:
     env:
       DISABLE_COLLECTSTATIC: 1
       DJANGO_SETTINGS_MODULE: config.django.production
-      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,((api_route))
-      DJANGO_CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1,https://((api_route))
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,((api_route)),prowler-api-web.apps.internal
+      DJANGO_CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1,https://((api_route)),https://((ui_route)),http://prowler-api-web.apps.internal:8080
       DJANGO_LOGGING_FORMATTER: human_readable
       DJANGO_LOGGING_LEVEL: INFO
       CLOUDGOV_UAA_ENABLED: true
@@ -65,7 +77,10 @@ applications:
       UAA_AUTH_URL: https://login.fr.cloud.gov/oauth/authorize
       UAA_TOKEN_URL: https://uaa.fr.cloud.gov/oauth/token
       UAA_APPROVED_DOMAINS: ((uaa_approved_domains))
-      UAA_LOGIN_REDIRECT_URL: ((uaa_login_redirect_url))
+      UAA_LOGIN_REDIRECT_URL: /auth/complete/cloudgov/
+      UAA_EMAIL_ROLE_MAP: ((uaa_email_role_map))
+      AUTH_URL: https://((ui_route))
+      SAML_SSO_CALLBACK_URL: https://((ui_route))/api/auth/callback/saml
       SECRET_KEY: ((django_secret_key))
       DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
       DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
@@ -76,13 +91,20 @@ applications:
       NEO4J_PASSWORD: ''
       SENTRY_ENVIRONMENT: cloudgov
       SENTRY_RELEASE: cloudgov
+      PIP_NO_DEPS: "1"
+      no_proxy: "buildpacks.cloudfoundry.org,packages.cloudfoundry.org"
+      NO_PROXY: "buildpacks.cloudfoundry.org,packages.cloudfoundry.org"
+      https_proxy: ((egress_proxy_url))
+      HTTPS_PROXY: ((egress_proxy_url))
+      http_proxy: ((egress_proxy_url))
+      HTTP_PROXY: ((egress_proxy_url))
 
   - name: prowler-api-beat
     path: api
     buildpacks:
       - python_buildpack
     memory: 512M
-    disk_quota: 4G
+    disk_quota: 6G
     instances: 1
     no-route: true
     health-check-type: process
@@ -93,8 +115,8 @@ applications:
     env:
       DISABLE_COLLECTSTATIC: 1
       DJANGO_SETTINGS_MODULE: config.django.production
-      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,((api_route))
-      DJANGO_CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1,https://((api_route))
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,((api_route)),prowler-api-web.apps.internal
+      DJANGO_CORS_ALLOWED_ORIGINS: http://localhost,http://127.0.0.1,https://((api_route)),https://((ui_route)),http://prowler-api-web.apps.internal:8080
       DJANGO_LOGGING_FORMATTER: human_readable
       DJANGO_LOGGING_LEVEL: INFO
       CLOUDGOV_UAA_ENABLED: true
@@ -103,7 +125,10 @@ applications:
       UAA_AUTH_URL: https://login.fr.cloud.gov/oauth/authorize
       UAA_TOKEN_URL: https://uaa.fr.cloud.gov/oauth/token
       UAA_APPROVED_DOMAINS: ((uaa_approved_domains))
-      UAA_LOGIN_REDIRECT_URL: ((uaa_login_redirect_url))
+      UAA_LOGIN_REDIRECT_URL: /auth/complete/cloudgov/
+      UAA_EMAIL_ROLE_MAP: ((uaa_email_role_map))
+      AUTH_URL: https://((ui_route))
+      SAML_SSO_CALLBACK_URL: https://((ui_route))/api/auth/callback/saml
       SECRET_KEY: ((django_secret_key))
       DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
       DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
@@ -114,24 +139,31 @@ applications:
       NEO4J_PASSWORD: ''
       SENTRY_ENVIRONMENT: cloudgov
       SENTRY_RELEASE: cloudgov
+      PIP_NO_DEPS: "1"
+      no_proxy: "buildpacks.cloudfoundry.org,packages.cloudfoundry.org"
+      NO_PROXY: "buildpacks.cloudfoundry.org,packages.cloudfoundry.org"
+      https_proxy: ((egress_proxy_url))
+      HTTPS_PROXY: ((egress_proxy_url))
+      http_proxy: ((egress_proxy_url))
+      HTTP_PROXY: ((egress_proxy_url))
   - name: prowler-ui
-    path: ui
+    path: ui/.next/standalone
     buildpacks:
       - nodejs_buildpack
     memory: 512M
     disk_quota: 4G
     instances: 1
-    command: node .next/standalone/server.js
+    command: "rm -rf node_modules && mv .node_modules node_modules && node server.js"
     routes:
       - route: ((ui_route))
     env:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
-      BP_NODE_PACKAGE_MANAGER: pnpm
-      PORT: "3000"
       HOSTNAME: 0.0.0.0
+      NPM_CONFIG_IGNORE_SCRIPTS: "true"
       NEXT_PUBLIC_API_BASE_URL: https://((api_route))/api/v1
       NEXT_PUBLIC_API_DOCS_URL: https://((api_route))/api/v1/docs
-      API_BASE_URL: https://((api_route))/api/v1
+      API_BASE_URL: http://prowler-api-web.apps.internal:8080/api/v1
       AUTH_URL: https://((ui_route))
       AUTH_SECRET: ((ui_auth_secret))
+      NEXT_PUBLIC_CLOUDGOV_SSO_URL: https://((api_route))/auth/login

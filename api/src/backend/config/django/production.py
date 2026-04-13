@@ -1,4 +1,9 @@
 from config.django.base import *  # noqa
+from config.cloudfoundry import (
+    build_django_databases_from_vcap_services,
+    get_database_settings_from_vcap_services,
+    parse_environment_json,
+)
 from config.env import env
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
@@ -65,5 +70,15 @@ DATABASES = {
 }
 
 DATABASES["default"] = DATABASES["prowler_user"]
+
+vcap_services = parse_environment_json(env.str("VCAP_SERVICES", default=""))
+if get_database_settings_from_vcap_services(
+    vcap_services, env.str("DATABASE_URL", default="")
+):
+    neo4j_settings = DATABASES["neo4j"]
+    DATABASES = build_django_databases_from_vcap_services(
+        vcap_services, env.str("DATABASE_URL", default="")
+    ) or DATABASES
+    DATABASES["neo4j"] = neo4j_settings
 
 label_postgres_connections(DATABASES)  # noqa: F405

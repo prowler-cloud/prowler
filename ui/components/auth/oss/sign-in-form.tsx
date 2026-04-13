@@ -46,6 +46,7 @@ export const SignInForm = ({
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const callbackUrl = getSafeCallbackPath(searchParams, "callbackUrl");
+  const cloudGovSsoUrl = process.env.NEXT_PUBLIC_CLOUDGOV_SSO_URL;
   const socialCallbackUrl = appendAttributionToCallbackPath(
     callbackUrl,
     extractUtmParams(searchParams),
@@ -209,6 +210,18 @@ export const SignInForm = ({
       </Form>
 
       <AuthDivider />
+
+      {!isSamlMode && cloudGovSsoUrl && (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => {
+            window.location.assign(cloudGovSsoUrl);
+          }}
+        >
+          Sign in with Cloud.gov
+        </Button>
+      )}
 
       <div className="flex gap-2">
         {!isSamlMode && (

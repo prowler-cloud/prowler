@@ -36,6 +36,9 @@ tags
 # Prowler found secrets
 secrets-*/
 
+# Cloud.gov deployment variables (contains sensitive data)
+cloudgov-vars.yml
+
 # JUnit Reports
 junit-reports/
 

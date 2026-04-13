@@ -1,5 +1,10 @@
 from datetime import timedelta
 
+from config.cloudfoundry import (
+    get_allowed_hosts_from_vcap_application,
+    get_cors_origins_from_vcap_application,
+    parse_environment_json,
+)
 from config.custom_logging import LOGGING  # noqa
 from config.env import BASE_DIR, env  # noqa
 from config.settings.celery import *  # noqa
@@ -11,7 +16,10 @@ from django.core.exceptions import ImproperlyConfigured
 
 SECRET_KEY = env("SECRET_KEY", default="secret")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+VCAP_APPLICATION = parse_environment_json(env.str("VCAP_APPLICATION", default=""))
+ALLOWED_HOSTS = get_allowed_hosts_from_vcap_application(
+    ["localhost", "127.0.0.1"], VCAP_APPLICATION
+)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
 
@@ -47,6 +55,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "drf_simple_apikey",
     "django_eventstream",
+    *CLOUDGOV_UAA_INSTALLED_APPS,
 ]
 
 MIDDLEWARE = [
@@ -66,7 +75,9 @@ MIDDLEWARE = [
 
 SITE_ID = 1
 
-CORS_ALLOWED_ORIGINS = ["http://localhost", "http://127.0.0.1"]
+CORS_ALLOWED_ORIGINS = get_cors_origins_from_vcap_application(
+    ["http://localhost", "http://127.0.0.1"], VCAP_APPLICATION
+)
 
 ROOT_URLCONF = "config.urls"
 

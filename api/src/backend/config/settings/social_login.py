@@ -28,11 +28,16 @@ GITHUB_OAUTH_CALLBACK_URL = env("SOCIAL_GITHUB_OAUTH_CALLBACK_URL", default="")
 
 CLOUDGOV_UAA_ENABLED = env.bool("CLOUDGOV_UAA_ENABLED", default=False)
 CLOUDGOV_UAA_INSTALLED_APPS = ["uaa_client"] if CLOUDGOV_UAA_ENABLED else []
-CLOUDGOV_UAA_MIDDLEWARE = (
-    ["uaa_client.middleware.UaaRefreshMiddleware"] if CLOUDGOV_UAA_ENABLED else []
-)
+# UaaRefreshMiddleware is intentionally disabled: it calls request.user.username
+# which does not exist on Prowler's custom User model (USERNAME_FIELD = "email").
+# Session refresh is not needed because /auth/complete/cloudgov immediately
+# exchanges the django session for Prowler JWT tokens.
+CLOUDGOV_UAA_MIDDLEWARE = []
 
 if CLOUDGOV_UAA_ENABLED:
+    # Disable UAA middleware since it's incompatible with Prowler's User model
+    UAA_CLIENT_MIDDLEWARE = False
+    
     UAA_CLIENT_ID = env("UAA_CLIENT_ID")
     UAA_CLIENT_SECRET = env("UAA_CLIENT_SECRET")
     UAA_AUTH_URL = env(

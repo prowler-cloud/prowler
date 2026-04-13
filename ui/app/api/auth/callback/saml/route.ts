@@ -3,8 +3,12 @@
 import { NextResponse } from "next/server";
 
 import { signIn } from "@/auth.config";
+<<<<<<< HEAD
 import { getSafeCallbackPath } from "@/lib/auth-callback-url";
 import { apiBaseUrl, baseUrl } from "@/lib/helper";
+=======
+import { baseUrl } from "@/lib/helper";
+>>>>>>> 0fd405c70 (Successfully UAA SAML deployment)
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -17,6 +21,12 @@ export async function GET(req: Request) {
       { status: 400 },
     );
   }
+
+  // Use API_BASE_URL (runtime env var) rather than NEXT_PUBLIC_API_BASE_URL
+  // which is baked into the bundle at build time and may contain the Docker
+  // Compose hostname (prowler-api) instead of the deployed public URL.
+  const apiBaseUrl =
+    process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
 
   try {
     const response = await fetch(`${apiBaseUrl}/tokens/saml?id=${id}`, {
