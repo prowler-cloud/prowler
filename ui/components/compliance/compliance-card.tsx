@@ -39,7 +39,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   scanId,
   complianceId,
   id,
-  selectedScan,
   isLatestCisForProvider = false,
 }) => {
   const searchParams = useSearchParams();
