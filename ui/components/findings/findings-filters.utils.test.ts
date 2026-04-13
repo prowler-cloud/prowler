@@ -101,6 +101,24 @@ describe("getFindingsFilterDisplayValue", () => {
     ).toBe("Scan Account");
   });
 
+  it("normalizes finding statuses for display", () => {
+    expect(getFindingsFilterDisplayValue("filter[status__in]", "FAIL")).toBe(
+      "Fail",
+    );
+  });
+
+  it("normalizes severities for display", () => {
+    expect(
+      getFindingsFilterDisplayValue("filter[severity__in]", "critical"),
+    ).toBe("Critical");
+  });
+
+  it("formats delta values for display", () => {
+    expect(getFindingsFilterDisplayValue("filter[delta__in]", "new")).toBe(
+      "New",
+    );
+  });
+
   it("falls back to the scan provider uid when the alias is missing", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-2", {

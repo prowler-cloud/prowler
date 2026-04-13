@@ -86,7 +86,14 @@ export const FindingsFilters = ({
 
   // Custom filters for the expandable section (removed Provider - now using AccountsSelector)
   const customFilters = [
-    ...filterFindings,
+    ...filterFindings.map((filter) => ({
+      ...filter,
+      labelFormatter: (value: string) =>
+        getFindingsFilterDisplayValue(`filter[${filter.key}]`, value, {
+          providers,
+          scans: scanDetails,
+        }),
+    })),
     {
       key: FilterType.REGION,
       labelCheckboxGroup: "Regions",
@@ -124,6 +131,11 @@ export const FindingsFilters = ({
       labelCheckboxGroup: "Scan ID",
       values: completedScanIds,
       valueLabelMapping: scanDetails,
+      labelFormatter: (value: string) =>
+        getFindingsFilterDisplayValue(`filter[${FilterType.SCAN}]`, value, {
+          providers,
+          scans: scanDetails,
+        }),
       index: 7,
     },
   ];

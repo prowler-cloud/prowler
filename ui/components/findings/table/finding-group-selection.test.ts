@@ -7,23 +7,21 @@ describe("canMuteFindingGroup", () => {
     expect(
       canMuteFindingGroup({
         resourcesFail: 0,
-        resourcesTotal: 2,
-        mutedCount: 0,
+        muted: false,
       }),
     ).toBe(false);
   });
 
-  it("returns false when all resources are already muted", () => {
+  it("returns false when the explicit muted flag marks the group as fully muted", () => {
     expect(
       canMuteFindingGroup({
         resourcesFail: 3,
-        resourcesTotal: 3,
-        mutedCount: 3,
+        muted: true,
       }),
     ).toBe(false);
   });
 
-  it("returns false when all failing resources are muted even if PASS resources exist", () => {
+  it("returns false when legacy counters indicate all failing resources are muted", () => {
     expect(
       canMuteFindingGroup({
         resourcesFail: 2,
@@ -37,8 +35,7 @@ describe("canMuteFindingGroup", () => {
     expect(
       canMuteFindingGroup({
         resourcesFail: 2,
-        resourcesTotal: 5,
-        mutedCount: 1,
+        muted: false,
       }),
     ).toBe(true);
   });

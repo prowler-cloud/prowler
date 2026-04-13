@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable deployment protection on preview deployments to require authentication before visitors can access preview URLs. Use 'Standard Protection' for Vercel Authentication or configure trusted IP ranges for more granular control.",
-      "Url": "https://hub.prowler.com/checks/vercel/project_deployment_protection_enabled"
+      "Url": "https://hub.prowler.com/check/project_deployment_protection_enabled"
     }
   },
   "Categories": [
