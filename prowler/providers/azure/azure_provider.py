@@ -1104,6 +1104,13 @@ class AzureProvider(Provider):
                 if rg in existing_rgs:
                     rg_map[display_name].append(rg)
 
+        for rg in resource_groups:
+            if not any(rg in rgs for rgs in rg_map.values()):
+                logger.warning(
+                    f"Resource group '{rg}' was not found in any subscription. "
+                    "Please check the resource group name and try again."
+                )
+
         if not any(rgs for rgs in rg_map.values()):
             logger.warning(
                 f"None of the provided resource groups {resource_groups} were found "
