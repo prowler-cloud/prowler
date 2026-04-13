@@ -98,7 +98,7 @@ describe("providers actions", () => {
     expect(handleApiResponseMock).toHaveBeenCalledWith(expect.any(Response));
   });
 
-  it("should revalidate providers after checking connection", async () => {
+  it("should not revalidate providers when checking connection from the wizard", async () => {
     // Given
     const formData = new FormData();
     formData.set("providerId", "provider-1");
@@ -107,9 +107,6 @@ describe("providers actions", () => {
     await checkConnectionProvider(formData);
 
     // Then
-    expect(handleApiResponseMock).toHaveBeenCalledWith(
-      expect.any(Response),
-      "/providers",
-    );
+    expect(handleApiResponseMock).toHaveBeenCalledWith(expect.any(Response));
   });
 });

@@ -309,7 +309,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
     const response = await fetch(url.toString(), { method: "POST", headers });
     await wait(2000);
 
-    return handleApiResponse(response, "/providers");
+    return handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);
   }
