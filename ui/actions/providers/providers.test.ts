@@ -45,7 +45,11 @@ vi.mock("@/lib/server-actions-helper", () => ({
   handleApiResponse: handleApiResponseMock,
 }));
 
-import { addCredentialsProvider, updateCredentialsProvider } from "./providers";
+import {
+  addCredentialsProvider,
+  checkConnectionProvider,
+  updateCredentialsProvider,
+} from "./providers";
 
 describe("providers actions", () => {
   beforeEach(() => {
@@ -92,5 +96,20 @@ describe("providers actions", () => {
 
     // Then
     expect(handleApiResponseMock).toHaveBeenCalledWith(expect.any(Response));
+  });
+
+  it("should revalidate providers after checking connection", async () => {
+    // Given
+    const formData = new FormData();
+    formData.set("providerId", "provider-1");
+
+    // When
+    await checkConnectionProvider(formData);
+
+    // Then
+    expect(handleApiResponseMock).toHaveBeenCalledWith(
+      expect.any(Response),
+      "/providers",
+    );
   });
 });

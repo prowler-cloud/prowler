@@ -293,6 +293,7 @@ export const updateCredentialsProvider = async (
       }),
     });
 
+    // No revalidation — keeps the wizard modal open until checkConnectionProvider revalidates
     return handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);

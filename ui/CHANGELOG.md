@@ -44,6 +44,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Clear Filters now resets all filters including muted findings and auto-applies, Clear all in pills only removes pill-visible sub-filters, and the discard icon is now an Undo text button [(#10446)](https://github.com/prowler-cloud/prowler/pull/10446)
 - Send to Jira modal now dynamically fetches and displays available issue types per project instead of hardcoding `"Task"`, fixing failures on non-English Jira instances [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
 - Exclude service filter from finding group resources endpoint to prevent empty results when a service filter is active [(#10652)](https://github.com/prowler-cloud/prowler/pull/10652)
+- Update credentials wizard no longer closes prematurely; revalidation deferred to the connection test step [(#10675)](https://github.com/prowler-cloud/prowler/pull/10675)
 
 ---
 
