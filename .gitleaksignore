@@ -1,0 +1,42 @@
+# Gitleaks Ignore File
+# Suppress false positives from gitleaks scanning
+
+# Build artifacts and compiled code
+ui/.next/**
+**/node_modules/**
+**/__pycache__/**
+**/*.pyc
+
+# Test files with fake credentials/fixtures
+**/tests/**/*test*.py
+**/tests/**/*fixture*.py
+**/fixtures/**/*.json
+**/*_test.py
+**/test_*.py
+
+# Django migrations (often contain test data)
+**/migrations/*.py
+
+# Example/template files (intentionally contain placeholder credentials)
+**/*.example.yml
+**/*.example.yaml
+**/*.example.json
+**/*.example.env
+**/*-example.*
+**/examples/**
+
+# CI/CD workflows (may contain placeholder tokens for documentation)
+.github/workflows/**/*.yml
+
+# Documentation with example credentials
+**/docs/**/*.md
+**/*.md:generic-api-key
+
+# Development config files (already in .gitignore, but mark as known)
+**/config/**/devel.py
+**/config/**/testing.py
+api/src/backend/config/django/devel.py
+api/src/backend/config/django/testing.py
+
+# Compiled Python bytecode
+**/*.cpython-*.pyc
