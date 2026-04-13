@@ -110,6 +110,6 @@ class Test_security_waf_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Project {PROJECT_NAME} ({PROJECT_ID}) does not have the Web Application Firewall enabled."
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) does not have the Web Application Firewall enabled. This feature is only available on Vercel Pro/Enterprise plans."
             )
             assert result[0].team_id == TEAM_ID

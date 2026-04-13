@@ -102,6 +102,6 @@ class Test_team_directory_sync_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Team {TEAM_NAME} does not have directory sync (SCIM) enabled. User provisioning and deprovisioning must be managed manually."
+                == f"Team {TEAM_NAME} does not have directory sync (SCIM) enabled. User provisioning and deprovisioning must be managed manually. This feature is only available on Vercel Enterprise plans."
             )
             assert result[0].team_id == ""

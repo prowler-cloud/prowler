@@ -34,7 +34,8 @@ class security_custom_rules_configured(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Project {config.project_name} ({config.project_id}) "
-                    f"does not have any custom firewall rules configured."
+                    f"does not have any custom firewall rules configured. "
+                    f"This feature is only available on Vercel Pro/Enterprise plans."
                 )
 
             findings.append(report)

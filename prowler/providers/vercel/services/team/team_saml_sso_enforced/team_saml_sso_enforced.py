@@ -38,11 +38,13 @@ class team_saml_sso_enforced(Check):
                 if team.saml and team.saml.status == "enabled":
                     report.status_extended = (
                         f"Team {team.name} has SAML SSO enabled but does not enforce it. "
-                        f"Members can still authenticate without SSO."
+                        f"Members can still authenticate without SSO. This feature is "
+                        f"only available on Vercel Pro/Enterprise plans."
                     )
                 else:
                     report.status_extended = (
-                        f"Team {team.name} does not have SAML SSO enforced."
+                        f"Team {team.name} does not have SAML SSO enforced. "
+                        f"This feature is only available on Vercel Pro/Enterprise plans."
                     )
 
             findings.append(report)

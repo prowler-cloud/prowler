@@ -108,6 +108,6 @@ class Test_security_rate_limiting_configured:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Project {PROJECT_NAME} ({PROJECT_ID}) does not have any rate limiting rules configured."
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) does not have any rate limiting rules configured. This feature is only available on Vercel Pro/Enterprise plans."
             )
             assert result[0].team_id == TEAM_ID

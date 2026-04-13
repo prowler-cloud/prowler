@@ -34,5 +34,5 @@
   "RelatedTo": [
     "security_waf_enabled"
   ],
-  "Notes": "This check is plan-gated. If the Vercel API returns a 403 for managed rulesets, the check reports MANUAL status indicating that an Enterprise plan is required."
+  "Notes": "Required billing plan: Enterprise."
 }

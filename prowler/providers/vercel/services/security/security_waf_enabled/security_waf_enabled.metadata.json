@@ -35,5 +35,5 @@
     "security_managed_rulesets_enabled",
     "security_custom_rules_configured"
   ],
-  "Notes": ""
+  "Notes": "Required billing plan: Pro."
 }

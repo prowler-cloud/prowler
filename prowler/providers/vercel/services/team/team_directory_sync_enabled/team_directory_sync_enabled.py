@@ -39,7 +39,8 @@ class team_directory_sync_enabled(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Team {team.name} does not have directory sync (SCIM) enabled. "
-                    f"User provisioning and deprovisioning must be managed manually."
+                    f"User provisioning and deprovisioning must be managed manually. "
+                    f"This feature is only available on Vercel Enterprise plans."
                 )
 
             findings.append(report)

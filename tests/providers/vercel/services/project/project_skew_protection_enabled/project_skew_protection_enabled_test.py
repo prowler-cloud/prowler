@@ -102,6 +102,6 @@ class Test_project_skew_protection_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Project {PROJECT_NAME} does not have skew protection enabled, which may cause version mismatches during deployments."
+                == f"Project {PROJECT_NAME} does not have skew protection enabled, which may cause version mismatches during deployments. This feature is only available on Vercel Pro/Enterprise plans."
             )
             assert result[0].team_id == TEAM_ID

@@ -42,7 +42,8 @@ class security_waf_enabled(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Project {config.project_name} ({config.project_id}) "
-                    f"does not have the Web Application Firewall enabled."
+                    f"does not have the Web Application Firewall enabled. "
+                    f"This feature is only available on Vercel Pro/Enterprise plans."
                 )
 
             findings.append(report)

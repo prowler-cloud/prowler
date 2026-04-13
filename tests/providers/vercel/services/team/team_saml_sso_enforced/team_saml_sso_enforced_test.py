@@ -102,7 +102,7 @@ class Test_team_saml_sso_enforced:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Team {TEAM_NAME} has SAML SSO enabled but does not enforce it. Members can still authenticate without SSO."
+                == f"Team {TEAM_NAME} has SAML SSO enabled but does not enforce it. Members can still authenticate without SSO. This feature is only available on Vercel Pro/Enterprise plans."
             )
             assert result[0].team_id == ""
 
@@ -139,6 +139,6 @@ class Test_team_saml_sso_enforced:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Team {TEAM_NAME} does not have SAML SSO enforced."
+                == f"Team {TEAM_NAME} does not have SAML SSO enforced. This feature is only available on Vercel Pro/Enterprise plans."
             )
             assert result[0].team_id == ""

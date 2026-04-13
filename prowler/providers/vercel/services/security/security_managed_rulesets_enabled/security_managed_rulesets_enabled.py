@@ -28,11 +28,11 @@ class security_managed_rulesets_enabled(Check):
             report = CheckReportVercel(metadata=self.metadata(), resource=config)
 
             if config.managed_rulesets is None:
-                report.status = "MANUAL"
+                report.status = "FAIL"
                 report.status_extended = (
                     f"Project {config.project_name} ({config.project_id}) "
-                    f"could not be assessed for managed rulesets. "
-                    f"Enterprise plan required to access this feature."
+                    f"does not have managed WAF rulesets enabled. "
+                    f"This feature is only available on Vercel Enterprise plans."
                 )
             elif config.managed_rulesets:
                 report.status = "PASS"
@@ -44,7 +44,8 @@ class security_managed_rulesets_enabled(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Project {config.project_name} ({config.project_id}) "
-                    f"does not have managed WAF rulesets enabled."
+                    f"does not have managed WAF rulesets enabled. "
+                    f"This feature is only available on Vercel Enterprise plans."
                 )
 
             findings.append(report)
