@@ -1175,9 +1175,7 @@
     {
       "Id": "GWS.DRIVEDOCS.1.7",
       "Description": "Users SHOULD NOT be allowed to upload or move content to shared drives owned by another organization",
-      "Checks": [
-        "drive_internal_users_distribute_content"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Drive and Docs",

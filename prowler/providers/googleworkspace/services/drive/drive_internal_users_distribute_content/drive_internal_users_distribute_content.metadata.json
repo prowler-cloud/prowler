@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Distributing organizational content to shared drives owned by **another organization** is restricted to eligible **internal users** only. This prevents external collaborators with manager access to internal shared drives from moving content out of the organization.",
+  "Description": "The domain-wide default restricts distributing organizational content to shared drives owned by **another organization** to eligible **internal users** only. This prevents external collaborators with manager access to internal shared drives from moving content out of the organization.",
   "Risk": "If external users can move files from internal shared drives into shared drives owned by another organization, the organization **loses authoritative control** over its own data. This is a frequently overlooked path for unintentional or malicious data exfiltration through shared drive collaboration.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Even when external sharing is restricted to allowlisted domains, Google Drive **warns users** before they share a file with a user in an allowlisted domain. This second-step prompt helps users recognize when they are crossing the organizational boundary, even within permitted destinations.",
+  "Description": "At the domain level, even when external sharing is restricted to allowlisted domains, Google Drive **warns users** before they share a file with a user in an allowlisted domain. This second-step prompt helps users recognize when they are crossing the organizational boundary, even within permitted destinations.",
   "Risk": "Allowlisted domains are still external. Users may not realize that even an allowlisted recipient is outside the organization, leading to **unintentional disclosure of sensitive content** to legitimate but external collaborators. A warning prompt at share time mitigates that without preventing the sharing itself.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Users in the Google Workspace domain are **not allowed to publish files to the web** or make them visible to the world as public or unlisted. Publishing a file to the web exposes its content to anyone on the internet, often without any audit trail, making it one of the highest-impact misconfigurations available to end users.",
+  "Description": "The domain-wide Drive and Docs default **prevents users from publishing files to the web** or making them visible to the world as public or unlisted. Publishing a file to the web exposes its content to anyone on the internet, often without any audit trail, making it one of the highest-impact misconfigurations available to end users.",
   "Risk": "Allowing users to publish Drive files to the web creates a path for **unbounded data exposure**. Sensitive documents, intellectual property, customer data, or internal communications can be made publicly accessible — and indexed by search engines — with a single click, often unintentionally.",
   "RelatedUrl": "",
   "AdditionalURLs": [

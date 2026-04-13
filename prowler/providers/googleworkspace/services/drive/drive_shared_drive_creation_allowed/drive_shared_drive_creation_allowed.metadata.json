@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Users in the Google Workspace domain are **allowed to create new shared drives**. Shared drives are owned by the organization (not the individual user), so content stored in them survives the deletion of the original creator's account, supporting data continuity and reducing the risk of accidental data loss.",
+  "Description": "The domain-wide default **allows users to create new shared drives**. Shared drives are owned by the organization (not the individual user), so content stored in them survives the deletion of the original creator's account, supporting data continuity and reducing the risk of accidental data loss.",
   "Risk": "When users cannot create shared drives, they store collaborative content in their personal **My Drive** instead. When that user account is deleted, the data is also deleted, leading to **unintentional data loss** of organizationally significant information. Allowing shared drive creation makes data survivable across account lifecycle events.",
   "RelatedUrl": "",
   "AdditionalURLs": [

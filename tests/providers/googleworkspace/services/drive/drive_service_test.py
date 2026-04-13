@@ -257,3 +257,93 @@ class TestDriveService:
         assert policies.allow_non_member_access is False
         assert policies.allowed_parties_for_download_print_copy == "EDITORS_ONLY"
         assert policies.allow_drive_for_desktop is False
+
+    def test_drive_fetch_policies_ignores_ou_and_group_level(self):
+        """Test that OU-level and group-level policies are skipped, only customer-level used"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        # Response includes 3 policies of the same type at different org levels:
+        # customer-level (no policyQuery), OU-level, and group-level
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    # Customer-level: no policyQuery → should be used
+                    "setting": {
+                        "type": "settings/drive_and_docs.external_sharing",
+                        "value": {
+                            "externalSharingMode": "ALLOWLISTED_DOMAINS",
+                            "warnForExternalSharing": True,
+                        },
+                    }
+                },
+                {
+                    # OU-level: has policyQuery.orgUnit → should be skipped
+                    "policyQuery": {"orgUnit": "orgUnits/sales_team"},
+                    "setting": {
+                        "type": "settings/drive_and_docs.external_sharing",
+                        "value": {
+                            "externalSharingMode": "ALLOWED",
+                            "warnForExternalSharing": False,
+                        },
+                    },
+                },
+                {
+                    # Group-level: has policyQuery.group → should be skipped
+                    "policyQuery": {"group": "groups/contractors"},
+                    "setting": {
+                        "type": "settings/drive_and_docs.external_sharing",
+                        "value": {
+                            "externalSharingMode": "DISALLOWED",
+                            "warnForExternalSharing": False,
+                        },
+                    },
+                },
+                {
+                    # Customer-level shared drive creation
+                    "setting": {
+                        "type": "settings/drive_and_docs.shared_drive_creation",
+                        "value": {"allowSharedDriveCreation": True},
+                    }
+                },
+                {
+                    # OU-level shared drive creation → should be skipped
+                    "policyQuery": {"orgUnit": "orgUnits/engineering"},
+                    "setting": {
+                        "type": "settings/drive_and_docs.shared_drive_creation",
+                        "value": {"allowSharedDriveCreation": False},
+                    },
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.drive.drive_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.drive.drive_service import (
+                Drive,
+            )
+
+            drive = Drive(mock_provider)
+
+            assert drive.policies_fetched is True
+            # Customer-level values should be stored
+            assert drive.policies.external_sharing_mode == "ALLOWLISTED_DOMAINS"
+            assert drive.policies.warn_for_external_sharing is True
+            assert drive.policies.allow_shared_drive_creation is True
+            # OU/group-level values (ALLOWED, False, False) should NOT have overwritten

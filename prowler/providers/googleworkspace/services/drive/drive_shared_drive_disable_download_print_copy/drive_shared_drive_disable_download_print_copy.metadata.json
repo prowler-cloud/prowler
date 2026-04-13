@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Viewers and commenters of files stored in shared drives are **not allowed to download, print, or copy** the file contents. They can only read and comment on the existing content, preventing bulk extraction of sensitive material from shared drives.",
+  "Description": "The domain-wide default prevents viewers and commenters of files stored in shared drives from **downloading, printing, or copying** the file contents. They can only read and comment on the existing content, preventing bulk extraction of sensitive material from shared drives.",
   "Risk": "When viewers and commenters can download, print, or copy shared drive files, they can **bulk-extract sensitive content** — including intellectual property, personally identifiable information, and confidential business documents — using nothing more than read access. This is one of the most direct paths to data exfiltration through Drive.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "External sharing of Drive and Docs files is **restricted to a curated list of allowlisted domains**, rather than allowed to arbitrary external recipients. This converts external sharing from an open default into a controlled allow-list that aligns with documented business relationships.",
+  "Description": "The domain-wide default restricts external sharing of Drive and Docs files to **a curated list of allowlisted domains**, rather than allowing sharing with arbitrary external recipients. This converts external sharing from an open default into a controlled allow-list that aligns with documented business relationships.",
   "Risk": "When external sharing is unrestricted, users can share organizational content with **any external Google account**, including untrusted or unknown parties. Restricting sharing to allowlisted domains drastically reduces the surface area for accidental and malicious data exfiltration through Drive.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "When a user shares a Drive file via a Google product other than Drive itself (e.g. by pasting a link in Gmail), the Access Checker can suggest who should be granted access. Setting Access Checker to **recipients only** ensures the suggestions never expand sharing to a wider audience or to anyone with the link.",
+  "Description": "The domain-wide Access Checker configuration ensures that when a user shares a Drive file via a Google product other than Drive itself (e.g. by pasting a link in Gmail), the suggestions never expand sharing to a wider audience or to anyone with the link. Access Checker is set to **recipients only**.",
   "Risk": "If Access Checker suggests broader audiences or public visibility, users may **inadvertently widen access** to a file beyond the people they intended to share with. This is a common cause of unintentional internal or external over-sharing.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "**Google Drive for desktop is disabled** for the organization. The Drive for desktop client synchronizes Drive content to local devices and uses its own \"offline\" mechanism that does not respect the central offline-access device policy, so disabling it closes a synchronization channel that would otherwise place organizational content on potentially unmanaged endpoints.",
+  "Description": "The domain-wide default **disables Google Drive for desktop** for the organization. The Drive for desktop client synchronizes Drive content to local devices and uses its own \"offline\" mechanism that does not respect the central offline-access device policy, so disabling it closes a synchronization channel that would otherwise place organizational content on potentially unmanaged endpoints.",
   "Risk": "When Drive for desktop is enabled, organizational files are **synchronized to local devices** and remain accessible if the device is lost, stolen, or compromised. Because Drive for desktop bypasses the central offline-access controls, this channel is a frequently overlooked path for sensitive data to leave organization-managed environments.",
   "RelatedUrl": "",
   "AdditionalURLs": [

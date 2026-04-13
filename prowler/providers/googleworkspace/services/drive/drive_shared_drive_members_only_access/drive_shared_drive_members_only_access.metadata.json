@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Files within a shared drive can only be accessed by **explicit members** of that shared drive. Non-members cannot be added to individual files inside the drive, preserving the shared drive's membership boundary as the authoritative access control surface.",
+  "Description": "The domain-wide default restricts shared drive file access to **explicit members** only. Non-members cannot be added to individual files inside the drive, preserving the shared drive's membership boundary as the authoritative access control surface.",
   "Risk": "If non-members can be added to files inside a shared drive, the **drive's membership becomes meaningless** as a security control. Sensitive content scoped to a specific team can be silently extended to users who were never granted access to the drive itself, leading to unintended information disclosure.",
   "RelatedUrl": "",
   "AdditionalURLs": [

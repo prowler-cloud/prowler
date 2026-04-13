@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Members with **manager access** to a shared drive cannot override the default shared drive settings established by administrators. This ensures that security controls — such as external access, member-only access, and download restrictions — cannot be relaxed at the individual shared drive level by non-administrators.",
+  "Description": "The domain-wide default prevents members with **manager access** to a shared drive from overriding the shared drive settings established by administrators. This ensures that security controls — such as external access, member-only access, and download restrictions — cannot be relaxed at the individual shared drive level.",
   "Risk": "If shared drive managers can override organizational defaults, **unauthorized data exposure** can occur when a manager intentionally or accidentally weakens a shared drive's security posture (for example, allowing external members or enabling download for viewers).",
   "RelatedUrl": "",
   "AdditionalURLs": [
