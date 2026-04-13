@@ -9,7 +9,6 @@ import {
 } from "@tanstack/react-table";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useImperativeHandle, useRef, useState } from "react";
 
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
@@ -17,7 +16,6 @@ import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useInfiniteResources } from "@/hooks/use-infinite-resources";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
-import { hasDateFilter } from "@/lib";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
 
 import { getColumnFindingResources } from "./column-finding-resources";
@@ -41,6 +39,8 @@ export interface InlineResourceContainerHandle {
 
 interface InlineResourceContainerProps {
   group: FindingGroupRow;
+  resolvedFilters: Record<string, string>;
+  hasHistoricalData: boolean;
   resourceSearch: string;
   columnCount: number;
   /** Called with selected finding IDs (real UUIDs) for parent-level mute */
@@ -132,12 +132,13 @@ function ResourceSkeletonRow({
 
 export function InlineResourceContainer({
   group,
+  resolvedFilters,
+  hasHistoricalData,
   resourceSearch,
   columnCount,
   onResourceSelectionChange,
   ref,
 }: InlineResourceContainerProps) {
-  const searchParams = useSearchParams();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [resources, setResources] = useState<FindingResourceRow[]>([]);
@@ -155,17 +156,7 @@ export function InlineResourceContainer({
     scrollHintContainerRef(node);
   };
 
-  // Derive hasDateOrScan from current URL params
-  const currentParams = Object.fromEntries(searchParams.entries());
-  const hasDateFilterActive = hasDateFilter(currentParams);
-
-  // Extract filter params from search params, merge with local resource search
-  const filters: Record<string, string> = {};
-  searchParams.forEach((value, key) => {
-    if (key.startsWith("filter[") || key.includes("__in")) {
-      filters[key] = value;
-    }
-  });
+  const filters: Record<string, string> = { ...resolvedFilters };
   if (resourceSearch) {
     filters["filter[name__icontains]"] = resourceSearch;
   }
@@ -202,7 +193,7 @@ export function InlineResourceContainer({
 
   const { sentinelRef, refresh, loadMore, totalCount } = useInfiniteResources({
     checkId: group.checkId,
-    hasDateOrScanFilter: hasDateFilterActive,
+    hasDateOrScanFilter: hasHistoricalData,
     filters,
     onSetResources: handleSetResources,
     onAppendResources: handleAppendResources,
