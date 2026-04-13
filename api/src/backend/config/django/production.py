@@ -26,64 +26,65 @@ CORS_ALLOWED_ORIGINS = get_cors_origins_from_vcap_application(
 
 # Database
 # TODO Use Django database routers https://docs.djangoproject.com/en/5.0/topics/db/multi-db/#automatic-database-routing
-default_db_name = env("POSTGRES_DB", default="")
-default_db_user = env("POSTGRES_USER", default="")
-default_db_password = env("POSTGRES_PASSWORD", default="")
-default_db_host = env("POSTGRES_HOST", default="")
-default_db_port = env("POSTGRES_PORT", default="")
+# When not using VCAP_SERVICES (Cloud Foundry), these settings are required
+# and will fail fast if missing, preventing harder-to-debug runtime errors
 neo4j_settings = get_neo4j_settings_from_environment()
-
-DATABASES = {
-    "prowler_user": {
-        "ENGINE": "psqlextra.backend",
-        "NAME": default_db_name,
-        "USER": default_db_user,
-        "PASSWORD": default_db_password,
-        "HOST": default_db_host,
-        "PORT": default_db_port,
-    },
-    "admin": {
-        "ENGINE": "psqlextra.backend",
-        "NAME": default_db_name,
-        "USER": env("POSTGRES_ADMIN_USER", default=default_db_user),
-        "PASSWORD": env("POSTGRES_ADMIN_PASSWORD", default=default_db_password),
-        "HOST": default_db_host,
-        "PORT": default_db_port,
-    },
-    "replica": {
-        "ENGINE": "psqlextra.backend",
-        "NAME": env("POSTGRES_REPLICA_DB", default=default_db_name),
-        "USER": env("POSTGRES_REPLICA_USER", default=default_db_user),
-        "PASSWORD": env("POSTGRES_REPLICA_PASSWORD", default=default_db_password),
-        "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
-        "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
-    },
-    "admin_replica": {
-        "ENGINE": "psqlextra.backend",
-        "NAME": env("POSTGRES_REPLICA_DB", default=default_db_name),
-        "USER": env("POSTGRES_ADMIN_USER", default=default_db_user),
-        "PASSWORD": env("POSTGRES_ADMIN_PASSWORD", default=default_db_password),
-        "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
-        "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
-    },
-    "neo4j": {
-        "HOST": neo4j_settings["HOST"],
-        "PORT": neo4j_settings["PORT"],
-        "USER": neo4j_settings["USER"],
-        "PASSWORD": neo4j_settings["PASSWORD"],
-    },
-}
-
-DATABASES["default"] = DATABASES["prowler_user"]
 
 cloudfoundry_database_settings = get_database_settings_from_vcap_services(
     parse_environment_json(env.str("VCAP_SERVICES", default="")),
     env.str("DATABASE_URL", default=""),
 )
+
 if cloudfoundry_database_settings:
-    neo4j_settings = DATABASES["neo4j"]
+    # Cloud Foundry deployment: use VCAP_SERVICES-derived database configuration
+    neo4j_settings_backup = neo4j_settings
     DATABASES = build_django_databases_from_vcap_services(
         parse_environment_json(env.str("VCAP_SERVICES", default="")),
         env.str("DATABASE_URL", default=""),
     ) or DATABASES
-    DATABASES["neo4j"] = neo4j_settings
+    DATABASES["neo4j"] = neo4j_settings_backup
+else:
+    # Non-Cloud Foundry deployment: require explicit database configuration
+    default_db_name = env("POSTGRES_DB")
+    default_db_user = env("POSTGRES_USER")
+    default_db_password = env("POSTGRES_PASSWORD")
+    default_db_host = env("POSTGRES_HOST")
+    default_db_port = env("POSTGRES_PORT")
+
+    DATABASES = {
+        "prowler_user": {
+            "ENGINE": "psqlextra.backend",
+            "NAME": default_db_name,
+            "USER": default_db_user,
+            "PASSWORD": default_db_password,
+            "HOST": default_db_host,
+            "PORT": default_db_port,
+        },
+        "admin": {
+            "ENGINE": "psqlextra.backend",
+            "NAME": default_db_name,
+            "USER": env("POSTGRES_ADMIN_USER", default=default_db_user),
+            "PASSWORD": env("POSTGRES_ADMIN_PASSWORD", default=default_db_password),
+            "HOST": default_db_host,
+            "PORT": default_db_port,
+        },
+        "replica": {
+            "ENGINE": "psqlextra.backend",
+            "NAME": env("POSTGRES_REPLICA_DB", default=default_db_name),
+            "USER": env("POSTGRES_REPLICA_USER", default=default_db_user),
+            "PASSWORD": env("POSTGRES_REPLICA_PASSWORD", default=default_db_password),
+            "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
+            "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
+        },
+        "admin_replica": {
+            "ENGINE": "psqlextra.backend",
+            "NAME": env("POSTGRES_REPLICA_DB", default=default_db_name),
+            "USER": env("POSTGRES_ADMIN_USER", default=default_db_user),
+            "PASSWORD": env("POSTGRES_ADMIN_PASSWORD", default=default_db_password),
+            "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
+            "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
+        },
+        "neo4j": neo4j_settings,
+    }
+
+    DATABASES["default"] = DATABASES["prowler_user"]

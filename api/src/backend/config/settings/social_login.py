@@ -50,6 +50,7 @@ if CLOUDGOV_UAA_ENABLED:
     UAA_EMAIL_ROLE_MAP = _load_uaa_email_role_map()
     AUTHENTICATION_BACKENDS = [
         "api.cloudgov.authentication.ProwlerUaaBackend",
+        "allauth.account.auth_backends.AuthenticationBackend",
         "django.contrib.auth.backends.ModelBackend",
     ]
     LOGIN_URL = "uaa_client:login"

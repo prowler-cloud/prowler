@@ -1,0 +1,358 @@
+---
+title: Cloud.gov Architecture & Integration Guide
+---
+
+## Overview
+
+This guide describes the architecture and technical integration patterns for deploying Prowler to Cloud Foundry platforms, specifically Cloud.gov. It covers UAA authentication, Cloud Foundry service bindings, database configuration patterns, and production deployment best practices.
+
+## Architecture Components
+
+### Application Topology
+
+Prowler on Cloud.gov consists of four Cloud Foundry applications:
+
+| Application | Purpose | Routes | Health Check |
+|-------------|---------|---------|--------------|
+| `prowler-api-web` | Django REST API with Gunicorn | Public + Internal | HTTP |
+| `prowler-api-worker` | Celery worker for async tasks | None | Process |
+| `prowler-api-beat` | Celery beat scheduler | None | Process |
+| `prowler-ui` | Next.js frontend | Public | HTTP |
+
+### Service Bindings
+
+**Required Services:**
+- PostgreSQL 15+ with SSL (`aws-rds` broker)
+- Redis 6+ with TLS (`aws-elasticache-redis` broker)
+
+**Optional Services:**
+- Neo4j (for Attack Paths feature - must be user-managed)
+
+## UAA Authentication Integration
+
+### Custom Backend Implementation
+
+Prowler integrates Cloud Foundry UAA with its existing authentication system through a custom Django authentication backend that:
+
+1. Delegates OAuth flow to Cloud Foundry UAA
+2. Maps UAA user attributes to Prowler user model
+3. Assigns roles based on email domain/patterns
+4. Maintains compatibility with django-allauth social providers
+
+**Key Configuration:**
+
+```python
+# settings/social_login.py
+AUTHENTICATION_BACKENDS = [
+    "api.cloudgov.authentication.ProwlerUaaBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",  # Preserved
+    "django.contrib.auth.backends.ModelBackend",
+]
+```
+
+This ordering ensures:
+- UAA authentication is attempted first
+- Fallback to social providers (Google, GitHub, SAML) remains functional
+- Local Django authentication works as last resort
+
+### UAA Session Handling
+
+**Important:** Prowler disables `UaaRefreshMiddleware` because it calls `request.user.username`, which does not exist on Prowler's custom User model (`USERNAME_FIELD = "email"`).
+
+Instead, authentication flow:
+1. User redirects to `/auth/login` (UAA OAuth)
+2. UAA callback to `/auth/complete/cloudgov/`
+3. Django session immediately exchanged for JWT tokens
+4. Subsequent requests use JWT bearer tokens (no session refresh needed)
+
+### Email-Role Mapping
+
+Configure role assignment via `UAA_EMAIL_ROLE_MAP` environment variable:
+
+```json
+{
+  "admin@*.gov": "admin",
+  "*.contractor@example.com": "editor",
+  "*": "viewer"
+}
+```
+
+Patterns support:
+- Wildcard domains: `name@*.gov`
+- Wildcard usernames: `*.contractor@domain.com`
+- Default fallback: `"*": "viewer"`
+
+## Database Configuration
+
+### Cloud Foundry Service Binding Pattern
+
+Prowler detects Cloud Foundry environment via `VCAP_SERVICES` and automatically configures databases:
+
+```python
+# config/django/production.py
+cloudfoundry_database_settings = get_database_settings_from_vcap_services(
+    parse_environment_json(env.str("VCAP_SERVICES", default="")),
+    env.str("DATABASE_URL", default=""),
+)
+
+if cloudfoundry_database_settings:
+    # Use VCAP_SERVICES
+    DATABASES = build_django_databases_from_vcap_services(...)
+else:
+    # Require explicit configuration - fail fast
+    default_db_name = env("POSTGRES_DB")  # No default, raises if missing
+    default_db_user = env("POSTGRES_USER")
+    # ...
+```
+
+### SSL/TLS Requirements
+
+Cloud.gov RDS PostgreSQL 15+ **requires SSL**. Prowler enforces `sslmode=require` when `VCAP_SERVICES` is present.
+
+Redis connections use `rediss://` (TLS) URIs when broker provides them.
+
+### Database Aliases
+
+Prowler uses multiple database aliases for Row-Level Security (RLS):
+
+- `default` / `prowler_user`: Main application database (RLS enforced)
+- `admin`: Admin operations bypassing RLS
+- `replica`: Read replica (optional)
+- `admin_replica`: Admin read replica (optional)
+- `neo4j`: Graph database for Attack Paths
+
+## Manifest Configuration
+
+### YAML Anchor Pattern (DRY)
+
+To reduce duplication across API processes, use YAML anchors:
+
+```yaml
+---
+# Shared environment for all API processes
+x-prowler-api-env: &prowler-api-env
+  DJANGO_SETTINGS_MODULE: config.django.production
+  CLOUDGOV_UAA_ENABLED: true
+  UAA_CLIENT_ID: ((uaa_client_id))
+  # ... all shared vars
+
+applications:
+  - name: prowler-api-web
+    env:
+      <<: *prowler-api-env
+      DJANGO_BIND_ADDRESS: 0.0.0.0
+      RUN_DB_MIGRATIONS: 0
+
+  - name: prowler-api-worker
+    env:
+      <<: *prowler-api-env
+
+  - name: prowler-api-beat
+    env:
+      <<: *prowler-api-env
+```
+
+This ensures consistent configuration across web/worker/beat processes.
+
+### Internal Routing
+
+Web API includes internal route for backend-to-frontend communication:
+
+```yaml
+routes:
+  - route: ((api_route))  # Public
+  - route: prowler-api-web.apps.internal  # Internal
+```
+
+UI app uses internal route: `API_BASE_URL: http://prowler-api-web.apps.internal:8080/api/v1`
+
+This keeps server-side API calls within Cloud Foundry network, reducing latency and egress costs.
+
+## Migration Strategy
+
+### Avoiding Race Conditions
+
+Prowler disables automatic migrations on web process startup to prevent race conditions when scaling:
+
+```yaml
+env:
+  RUN_DB_MIGRATIONS: 0  # Disabled
+```
+
+Instead, run migrations as one-off tasks:
+
+```bash
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && RUN_DB_MIGRATIONS=1 python manage.py migrate'"
+```
+
+This ensures:
+- Migrations run exactly once
+- No downtime during rolling deploys
+- Safe horizontal scaling of web instances
+
+## Environment Variables
+
+### Required Variables
+
+**Django Core:**
+- `SECRET_KEY`: Django secret (50+ chars random)
+- `DJANGO_SECRETS_ENCRYPTION_KEY`: For encrypting provider credentials
+- `DJANGO_TOKEN_SIGNING_KEY`: RSA private key (RS256)
+- `DJANGO_TOKEN_VERIFYING_KEY`: RSA public key (RS256)
+
+**UAA OAuth:**
+- `UAA_CLIENT_ID`: Cloud Foundry UAA client ID
+- `UAA_CLIENT_SECRET`: Cloud Foundry UAA client secret
+- `UAA_APPROVED_DOMAINS`: Comma-separated email domains (e.g., `gsa.gov,*.contractor.com`)
+- `UAA_EMAIL_ROLE_MAP`: JSON mapping emails to roles
+
+**CORS/Auth:**
+- `AUTH_URL`: UI base URL (e.g., `https://prowler.app.cloud.gov`)
+- `DJANGO_ALLOWED_HOSTS`: API hostnames (auto-extended from `VCAP_APPLICATION`)
+- `DJANGO_CORS_ALLOWED_ORIGINS`: UI origins (auto-extended from `VCAP_APPLICATION`)
+
+### Optional Variables
+
+- `NEO4J_HOST`, `NEO4J_PORT`, `NEO4J_USER`, `NEO4J_PASSWORD`: Attack Paths graph database (leave empty if unused)
+- `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`: Error tracking integration
+
+## Deployment Workflow
+
+### Standard Deployment
+
+```bash
+# Deploy all processes
+cf push --vars-file cloudgov-vars.yml
+
+# Run migrations
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && RUN_DB_MIGRATIONS=1 python manage.py migrate'"
+
+# Verify
+cf apps
+cf logs prowler-api-web --recent
+```
+
+### Iterative Development
+
+```bash
+# Deploy web only for quick iteration
+cf push prowler-api-web --vars-file cloudgov-vars.yml
+
+# Test, then deploy full stack
+cf push --vars-file cloudgov-vars.yml
+```
+
+### Rolling Deployments
+
+For zero-downtime:
+
+```bash
+cf push prowler-api-web --vars-file cloudgov-vars.yml --strategy rolling
+```
+
+## Operational Considerations
+
+### VCAP_APPLICATION Auto-Configuration
+
+Prowler extends `ALLOWED_HOSTS` and `CORS_ALLOWED_ORIGINS` with Cloud Foundry application routes from `VCAP_APPLICATION`. This eliminates need to manually list routes in environment variables.
+
+### Egress Proxy
+
+Cloud.gov requires egress proxy for external API calls:
+
+```yaml
+env:
+  https_proxy: ((egress_proxy_url))
+  HTTPS_PROXY: ((egress_proxy_url))
+  no_proxy: "buildpacks.cloudfoundry.org,packages.cloudfoundry.org"
+```
+
+### Buildpack Configuration
+
+```yaml
+env:
+  DISABLE_COLLECTSTATIC: 1  # Skip Django collectstatic during staging
+  PIP_NO_DEPS: "1"  # Use vendored dependencies (api/vendor/)
+```
+
+### Neo4j Integration
+
+Cloud.gov does not provide managed Neo4j. Options:
+1. Use external managed Neo4j (e.g., Neo4j Aura)
+2. Self-manage on IaaS
+3. Run in Cloud Foundry container (not recommended for production)
+4. Disable Attack Paths feature (leave Neo4j vars empty)
+
+## Security Best Practices
+
+### Secrets Management
+
+**Never commit:**
+- `cloudgov-vars.yml` (contains real credentials)
+- `.env` (if contains production secrets)
+
+**Use Cloud Foundry user-provided services for secrets:**
+
+```bash
+cf cups prowler-secrets -p '{"SECRET_KEY":"...", "UAA_CLIENT_SECRET":"..."}'
+cf bind-service prowler-api-web prowler-secrets
+cf restage prowler-api-web
+```
+
+### RS256 Key Generation
+
+```bash
+# Generate RSA key pair for JWT
+openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
+openssl rsa -pubout -in private.pem -out public.pem
+
+# Extract for environment variables (remove headers/newlines)
+cat private.pem | grep -v "PRIVATE KEY" | tr -d '\n'
+cat public.pem | grep -v "PUBLIC KEY" | tr -d '\n'
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Authentication redirects to wrong URL:**
+- Verify `UAA_LOGIN_REDIRECT_URL: /auth/complete/cloudgov/`
+- Check `AUTH_URL` matches UI route
+
+**Database connection failures:**
+- Verify service binding: `cf service prowler-api-db`
+- Check SSL mode in connection string
+
+**Worker not processing tasks:**
+- Verify Redis service binding
+- Check Celery worker logs: `cf logs prowler-api-worker --recent`
+
+**CORS errors:**
+- Verify `DJANGO_CORS_ALLOWED_ORIGINS` includes UI route
+- Check `VCAP_APPLICATION` auto-detection logic
+
+### Debugging Commands
+
+```bash
+# View environment
+cf env prowler-api-web
+
+# SSH into container
+cf ssh prowler-api-web
+
+# Run Django shell
+cf ssh prowler-api-web -c "cd src/backend && python manage.py shell"
+
+# Check service bindings
+cf services
+cf service prowler-api-db
+```
+
+## References
+
+- [Cloud.gov Documentation](https://cloud.gov/docs/)
+- [Cloud Foundry UAA](https://docs.cloudfoundry.org/concepts/architecture/uaa.html)
+- [Django Multi-DB](https://docs.djangoproject.com/en/5.1/topics/db/multi-db/)
+- [Celery on Cloud Foundry](https://docs.cloudfoundry.org/buildpacks/python/index.html#worker-processes)
