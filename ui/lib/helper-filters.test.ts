@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { hasDateFilter, hasDateOrScanFilter } from "./helper-filters";
+import {
+  hasDateFilter,
+  hasDateOrScanFilter,
+  hasHistoricalFindingFilter,
+} from "./helper-filters";
 
 describe("hasDateOrScanFilter", () => {
   it("returns true for scan filters", () => {
@@ -23,5 +27,25 @@ describe("hasDateFilter", () => {
 
   it("returns false for scan filters only", () => {
     expect(hasDateFilter({ "filter[scan__in]": "scan-1" })).toBe(false);
+  });
+});
+
+describe("hasHistoricalFindingFilter", () => {
+  it("returns true for inserted_at filters", () => {
+    expect(
+      hasHistoricalFindingFilter({ "filter[inserted_at__gte]": "2026-04-01" }),
+    ).toBe(true);
+  });
+
+  it("returns true for scan filters", () => {
+    expect(hasHistoricalFindingFilter({ "filter[scan__in]": "scan-1" })).toBe(
+      true,
+    );
+  });
+
+  it("returns false when neither date nor scan filters are active", () => {
+    expect(
+      hasHistoricalFindingFilter({ "filter[provider_type__in]": "aws" }),
+    ).toBe(false);
   });
 });

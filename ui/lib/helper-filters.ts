@@ -35,6 +35,15 @@ export const hasDateOrScanFilter = (searchParams: Record<string, unknown>) =>
   );
 
 /**
+ * Returns true when finding views must use historical endpoints.
+ * Scan filters are resolved to inserted_at server-side, but client drill-downs
+ * still need to treat raw scan params as historical to stay aligned.
+ */
+export const hasHistoricalFindingFilter = (
+  searchParams: Record<string, unknown>,
+) => hasDateOrScanFilter(searchParams);
+
+/**
  * Returns true when inserted_at filters are active.
  * Used by resources drill-down endpoints that support date scoping but not scan filters.
  */

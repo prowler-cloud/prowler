@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { useInfiniteResources } from "@/hooks/use-infinite-resources";
-import { cn, hasDateFilter } from "@/lib";
+import { cn, hasHistoricalFindingFilter } from "@/lib";
 import {
   getFilteredFindingGroupDelta,
   isFindingGroupMuted,
@@ -54,9 +54,9 @@ export function FindingsGroupDrillDown({
   const [resources, setResources] = useState<FindingResourceRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Derive hasDateOrScan from current URL params
+  // Keep drill-down endpoint selection aligned with the grouped findings page.
   const currentParams = Object.fromEntries(searchParams.entries());
-  const hasDateFilterActive = hasDateFilter(currentParams);
+  const hasHistoricalFilterActive = hasHistoricalFindingFilter(currentParams);
 
   // Extract filter params from search params
   const filters: Record<string, string> = {};
@@ -88,7 +88,7 @@ export function FindingsGroupDrillDown({
 
   const { sentinelRef, refresh, loadMore, totalCount } = useInfiniteResources({
     checkId: group.checkId,
-    hasDateOrScanFilter: hasDateFilterActive,
+    hasDateOrScanFilter: hasHistoricalFilterActive,
     filters,
     onSetResources: handleSetResources,
     onAppendResources: handleAppendResources,
