@@ -12,6 +12,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Finding groups list and latest endpoints support `sort=delta`, ordering by `new_count` then `changed_count` so groups with the most new findings rank highest [(#10606)](https://github.com/prowler-cloud/prowler/pull/10606)
 - Finding group resources endpoints (`/finding-groups/{check_id}/resources` and `/finding-groups/latest/{check_id}/resources`) now expose `finding_id` per row, pointing to the most recent matching Finding for each resource. UUIDv7 ordering guarantees `Max(finding__id)` resolves to the latest snapshot [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
 - Handle CIS and CISA SCuBA compliance framework from google workspace [(#10629)](https://github.com/prowler-cloud/prowler/pull/10629)
+- Sort support for all finding group counter fields: `pass_muted_count`, `fail_muted_count`, `manual_muted_count`, and all `new_*`/`changed_*` status-mute breakdown counters [(#10655)](https://github.com/prowler-cloud/prowler/pull/10655)
 
 ### 🔄 Changed
 
