@@ -331,7 +331,7 @@ class Test_entra_conditional_access_policy_directory_sync_account_excluded:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' does not exclude the Directory Synchronization Accounts role, which may break Entra Connect sync."
+                == f"Conditional Access Policy {display_name} does not exclude the Directory Synchronization Accounts role, which may break Entra Connect sync."
             )
             assert (
                 result[0].resource
@@ -399,7 +399,7 @@ class Test_entra_conditional_access_policy_directory_sync_account_excluded:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' does not exclude the Directory Synchronization Accounts role, which may break Entra Connect sync."
+                == f"Conditional Access Policy {display_name} does not exclude the Directory Synchronization Accounts role, which may break Entra Connect sync."
             )
             assert (
                 result[0].resource
@@ -469,7 +469,7 @@ class Test_entra_conditional_access_policy_directory_sync_account_excluded:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' excludes the Directory Synchronization Accounts role."
+                == f"Conditional Access Policy {display_name} excludes the Directory Synchronization Accounts role."
             )
             assert (
                 result[0].resource
@@ -540,7 +540,7 @@ class Test_entra_conditional_access_policy_directory_sync_account_excluded:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' excludes the Directory Synchronization Accounts role."
+                == f"Conditional Access Policy {display_name} excludes the Directory Synchronization Accounts role."
             )
 
     def test_multiple_policies_mixed_results(self):
@@ -637,14 +637,14 @@ class Test_entra_conditional_access_policy_directory_sync_account_excluded:
             assert pass_results[0].resource_id == policy_id_pass
             assert (
                 pass_results[0].status_extended
-                == f"Conditional Access Policy '{display_name_pass}' excludes the Directory Synchronization Accounts role."
+                == f"Conditional Access Policy {display_name_pass} excludes the Directory Synchronization Accounts role."
             )
 
             assert fail_results[0].resource_name == display_name_fail
             assert fail_results[0].resource_id == policy_id_fail
             assert (
                 fail_results[0].status_extended
-                == f"Conditional Access Policy '{display_name_fail}' does not exclude the Directory Synchronization Accounts role, which may break Entra Connect sync."
+                == f"Conditional Access Policy {display_name_fail} does not exclude the Directory Synchronization Accounts role, which may break Entra Connect sync."
             )
 
     def test_policy_with_wrong_excluded_role(self):
@@ -705,7 +705,7 @@ class Test_entra_conditional_access_policy_directory_sync_account_excluded:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' does not exclude the Directory Synchronization Accounts role, which may break Entra Connect sync."
+                == f"Conditional Access Policy {display_name} does not exclude the Directory Synchronization Accounts role, which may break Entra Connect sync."
             )
             assert result[0].resource_name == display_name
             assert result[0].resource_id == policy_id
