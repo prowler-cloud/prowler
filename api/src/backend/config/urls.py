@@ -6,4 +6,13 @@ urlpatterns = [
 ]
 
 if settings.CLOUDGOV_UAA_ENABLED:
+    from api.cloudgov.views import CloudGovCompleteView
+
     urlpatterns.append(path("auth/", include("uaa_client.urls")))
+    urlpatterns.append(
+        path(
+            "auth/complete/cloudgov/",
+            CloudGovCompleteView.as_view(),
+            name="cloudgov-complete",
+        )
+    )

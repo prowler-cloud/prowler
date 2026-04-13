@@ -3,7 +3,7 @@
 import { AuthError } from "next-auth";
 
 import { signIn, signOut } from "@/auth.config";
-import { apiBaseUrl } from "@/lib";
+import { apiBaseUrl, serverApiBaseUrl } from "@/lib";
 import { addAuthEvent } from "@/lib/sentry-breadcrumbs";
 import type { SignInFormData, SignUpFormData } from "@/types";
 
@@ -95,7 +95,7 @@ export const createNewUser = async (formData: SignUpFormData) => {
 };
 
 export const getToken = async (formData: SignInFormData) => {
-  const url = new URL(`${apiBaseUrl}/tokens`);
+  const url = new URL(`${serverApiBaseUrl}/tokens`);
 
   const bodyData = {
     data: {
@@ -133,7 +133,7 @@ export const getToken = async (formData: SignInFormData) => {
 };
 
 export const getUserByMe = async (accessToken: string) => {
-  const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
+  const url = new URL(`${serverApiBaseUrl}/users/me?include=roles`);
 
   try {
     const response = await fetch(url.toString(), {

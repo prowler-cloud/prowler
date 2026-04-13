@@ -11,7 +11,7 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { getToken, getUserByMe } from "./actions/auth";
-import { apiBaseUrl } from "./lib";
+import { apiBaseUrl, serverApiBaseUrl } from "./lib";
 import type { RolePermissionAttributes } from "./types/users";
 
 interface CustomJwtPayload extends JwtPayload {
@@ -116,7 +116,7 @@ const refreshAccessToken = async (token: AuthToken): Promise<AuthToken> => {
     return existingPromise;
   }
 
-  const url = new URL(`${apiBaseUrl}/tokens/refresh`);
+  const url = new URL(`${serverApiBaseUrl}/tokens/refresh`);
 
   const bodyData = {
     data: {

@@ -67,3 +67,25 @@ class ProwlerUaaBackend(UaaBackend):
             if cls.should_create_user_for_email(normalized_email):
                 return cls.create_user_with_email(normalized_email)
             return None
+
+    @classmethod
+    def should_create_user_for_email(cls, email: str) -> bool:
+        """Allow creation if the email is in UAA_EMAIL_ROLE_MAP or the domain is approved."""
+        normalized = email.strip().lower()
+        email_role_map = getattr(settings, "UAA_EMAIL_ROLE_MAP", {}) or {}
+        for configured_emails in email_role_map.values():
+            if isinstance(configured_emails, list):
+                if normalized in {
+                    e.strip().lower()
+                    for e in configured_emails
+                    if isinstance(e, str)
+                }:
+                    return True
+        # Fall through to the parent domain-based check
+        from django.conf import settings as _settings
+
+        approved_domains = getattr(_settings, "UAA_APPROVED_DOMAINS", [])
+        email_parts = normalized.split("@")
+        if len(email_parts) != 2:
+            return False
+        return email_parts[1] in approved_domains

@@ -185,29 +185,23 @@ export const SignInForm = ({
             isGithubOAuthEnabled={isGithubOAuthEnabled}
           />
         )}
-        <Button
-          variant="outline"
-          className="w-full gap-2"
-          onClick={() => {
-            form.setValue("isSamlMode", !isSamlMode);
-          }}
-        >
-          {!isSamlMode && (
-            <Icon
-              className="text-default-500"
-              icon="mdi:shield-key"
-              width={24}
-            />
-          )}
-          {isSamlMode ? "Back" : "Continue with SAML SSO"}
-        </Button>
+        {!isSamlMode && process.env.NEXT_PUBLIC_CLOUDGOV_SSO_URL && (
+          <a href={process.env.NEXT_PUBLIC_CLOUDGOV_SSO_URL}>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              type="button"
+            >
+              <Icon
+                className="text-default-500"
+                icon="simple-icons:cloudfoundry"
+                width={20}
+              />
+              Sign in with Cloud.gov
+            </Button>
+          </a>
+        )}
       </div>
-
-      <AuthFooterLink
-        text="Need to create an account?"
-        linkText="Sign up"
-        href="/sign-up"
-      />
     </AuthLayout>
   );
 };

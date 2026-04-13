@@ -160,6 +160,11 @@ class User(AbstractBaseUser):
 
     objects = CustomUserManager()
 
+    @property
+    def username(self):
+        """Compatibility property for UAA middleware. Returns email."""
+        return self.email
+
     def is_member_of_tenant(self, tenant_id):
         return self.memberships.filter(tenant_id=tenant_id).exists()
 
