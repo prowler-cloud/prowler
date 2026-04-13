@@ -35,7 +35,9 @@ function getScanDisplayValue(
     return scanId;
   }
 
-  return scan.providerInfo.alias || scan.providerInfo.uid || scanId;
+  return (
+    scan.attributes.name || scan.providerInfo.alias || scan.providerInfo.uid || scanId
+  );
 }
 
 export function getFindingsFilterDisplayValue(

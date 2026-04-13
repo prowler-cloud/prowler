@@ -17,7 +17,7 @@ import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useInfiniteResources } from "@/hooks/use-infinite-resources";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
-import { hasDateOrScanFilter } from "@/lib";
+import { hasDateFilter } from "@/lib";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
 
 import { getColumnFindingResources } from "./column-finding-resources";
@@ -157,7 +157,7 @@ export function InlineResourceContainer({
 
   // Derive hasDateOrScan from current URL params
   const currentParams = Object.fromEntries(searchParams.entries());
-  const hasDateOrScan = hasDateOrScanFilter(currentParams);
+  const hasDateFilterActive = hasDateFilter(currentParams);
 
   // Extract filter params from search params, merge with local resource search
   const filters: Record<string, string> = {};
@@ -202,7 +202,7 @@ export function InlineResourceContainer({
 
   const { sentinelRef, refresh, loadMore, totalCount } = useInfiniteResources({
     checkId: group.checkId,
-    hasDateOrScanFilter: hasDateOrScan,
+    hasDateOrScanFilter: hasDateFilterActive,
     filters,
     onSetResources: handleSetResources,
     onAppendResources: handleAppendResources,

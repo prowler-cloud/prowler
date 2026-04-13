@@ -374,6 +374,28 @@ describe("getFindingGroupResources — caller filters are preserved", () => {
     expect(url.searchParams.get("filter[name__icontains]")).toBe("bucket-prod");
     expect(url.searchParams.get("filter[severity__in]")).toBe("high");
   });
+
+  it("should strip scan filters that the group resources endpoint does not accept", async () => {
+    // Given
+    const checkId = "s3_bucket_public_access";
+    const filters = {
+      "filter[scan__in]": "scan-1",
+      "filter[scan_id]": "scan-1",
+      "filter[scan_id__in]": "scan-1,scan-2",
+      "filter[region__in]": "eu-west-1",
+    };
+
+    // When
+    await getFindingGroupResources({ checkId, filters });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("filter[scan__in]")).toBeNull();
+    expect(url.searchParams.get("filter[scan_id]")).toBeNull();
+    expect(url.searchParams.get("filter[scan_id__in]")).toBeNull();
+    expect(url.searchParams.get("filter[region__in]")).toBe("eu-west-1");
+  });
 });
 
 describe("getLatestFindingGroupResources — caller filters are preserved", () => {
@@ -443,5 +465,25 @@ describe("getLatestFindingGroupResources — caller filters are preserved", () =
       "instance-prod",
     );
     expect(url.searchParams.get("filter[status__in]")).toBe("PASS,FAIL");
+  });
+
+  it("should strip scan filters before calling latest group resources", async () => {
+    // Given
+    const checkId = "iam_user_mfa_enabled";
+    const filters = {
+      "filter[scan__in]": "scan-1",
+      "filter[scan_id]": "scan-1",
+      "filter[region__in]": "us-east-1",
+    };
+
+    // When
+    await getLatestFindingGroupResources({ checkId, filters });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("filter[scan__in]")).toBeNull();
+    expect(url.searchParams.get("filter[scan_id]")).toBeNull();
+    expect(url.searchParams.get("filter[region__in]")).toBe("us-east-1");
   });
 });

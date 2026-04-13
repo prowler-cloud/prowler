@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/table";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { useInfiniteResources } from "@/hooks/use-infinite-resources";
-import { cn, hasDateOrScanFilter } from "@/lib";
+import { cn, hasDateFilter } from "@/lib";
 import {
   getFilteredFindingGroupDelta,
   isFindingGroupMuted,
@@ -56,7 +56,7 @@ export function FindingsGroupDrillDown({
 
   // Derive hasDateOrScan from current URL params
   const currentParams = Object.fromEntries(searchParams.entries());
-  const hasDateOrScan = hasDateOrScanFilter(currentParams);
+  const hasDateFilterActive = hasDateFilter(currentParams);
 
   // Extract filter params from search params
   const filters: Record<string, string> = {};
@@ -88,7 +88,7 @@ export function FindingsGroupDrillDown({
 
   const { sentinelRef, refresh, loadMore, totalCount } = useInfiniteResources({
     checkId: group.checkId,
-    hasDateOrScanFilter: hasDateOrScan,
+    hasDateOrScanFilter: hasDateFilterActive,
     filters,
     onSetResources: handleSetResources,
     onAppendResources: handleAppendResources,

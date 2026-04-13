@@ -35,6 +35,13 @@ export const hasDateOrScanFilter = (searchParams: Record<string, unknown>) =>
   );
 
 /**
+ * Returns true when inserted_at filters are active.
+ * Used by resources drill-down endpoints that support date scoping but not scan filters.
+ */
+export const hasDateFilter = (searchParams: Record<string, unknown>) =>
+  Object.keys(searchParams).some((key) => key.includes("inserted_at"));
+
+/**
  * Encodes sort strings by removing leading "+" symbols.
  */
 export const encodeSort = (sort?: string) => sort?.replace(/^\+/, "") || "";

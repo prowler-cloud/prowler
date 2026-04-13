@@ -46,7 +46,12 @@ function splitCsvFilterValues(value: string | string[] | undefined): string[] {
  * finding-group resources sub-endpoint. These must be stripped before
  * calling the resources API to avoid empty results.
  */
-const FINDING_GROUP_ONLY_FILTERS = ["filter[service__in]"] as const;
+const FINDING_GROUP_RESOURCE_UNSUPPORTED_FILTERS = [
+  "filter[service__in]",
+  "filter[scan__in]",
+  "filter[scan_id]",
+  "filter[scan_id__in]",
+] as const;
 
 function normalizeFindingGroupResourceFilters(
   filters: Record<string, string | string[] | undefined>,
@@ -54,8 +59,8 @@ function normalizeFindingGroupResourceFilters(
   const normalized = Object.fromEntries(
     Object.entries(filters).filter(
       ([key]) =>
-        !FINDING_GROUP_ONLY_FILTERS.includes(
-          key as (typeof FINDING_GROUP_ONLY_FILTERS)[number],
+        !FINDING_GROUP_RESOURCE_UNSUPPORTED_FILTERS.includes(
+          key as (typeof FINDING_GROUP_RESOURCE_UNSUPPORTED_FILTERS)[number],
         ),
     ),
   );

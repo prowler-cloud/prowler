@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { DataTable } from "@/components/ui/table";
-import { hasDateOrScanFilter } from "@/lib";
+import { hasDateFilter } from "@/lib";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
@@ -60,7 +60,7 @@ export function FindingsGroupTable({
   const safeData = data ?? [];
   const hasResourceSelection = resourceSelection.length > 0;
   const currentParams = Object.fromEntries(searchParams.entries());
-  const hasDateOrScan = hasDateOrScanFilter(currentParams);
+  const hasDateFilterActive = hasDateFilter(currentParams);
 
   const filters: Record<string, string> = {};
   searchParams.forEach((value, key) => {
@@ -119,7 +119,7 @@ export function FindingsGroupTable({
         resolveFindingIdsByVisibleGroupResources({
           checkId,
           filters,
-          hasDateOrScanFilter: hasDateOrScan,
+          hasDateOrScanFilter: hasDateFilterActive,
           resourceSearch:
             checkId === expandedCheckId && resourceSearch
               ? resourceSearch

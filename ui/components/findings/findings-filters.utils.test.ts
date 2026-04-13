@@ -98,7 +98,7 @@ describe("getFindingsFilterDisplayValue", () => {
   it("shows the resolved scan badge label for scan filters instead of formatting the raw scan id", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-1", { scans }),
-    ).toBe("Scan Account");
+    ).toBe("Nightly scan");
   });
 
   it("normalizes finding statuses for display", () => {
@@ -133,7 +133,28 @@ describe("getFindingsFilterDisplayValue", () => {
           }),
         ],
       }),
-    ).toBe("210987654321");
+    ).toBe("Weekly scan");
+  });
+
+  it("falls back to the provider alias when the scan name is missing", () => {
+    expect(
+      getFindingsFilterDisplayValue("filter[scan__in]", "scan-3", {
+        scans: [
+          ...scans,
+          makeScanMap("scan-3", {
+            providerInfo: {
+              provider: "aws",
+              alias: "Fallback Account",
+              uid: "333333333333",
+            },
+            attributes: {
+              name: "",
+              completed_at: "2026-04-08T10:00:00Z",
+            },
+          }),
+        ],
+      }),
+    ).toBe("Fallback Account");
   });
 
   it("keeps the raw scan value when the scan cannot be resolved", () => {
