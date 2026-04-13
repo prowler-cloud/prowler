@@ -36,7 +36,10 @@ function getScanDisplayValue(
   }
 
   return (
-    scan.attributes.name || scan.providerInfo.alias || scan.providerInfo.uid || scanId
+    scan.attributes.name ||
+    scan.providerInfo.alias ||
+    scan.providerInfo.uid ||
+    scanId
   );
 }
 
