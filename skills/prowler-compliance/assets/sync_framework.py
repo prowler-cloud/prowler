@@ -206,6 +206,13 @@ def load_legacy_check_maps(
     """Read the existing Prowler JSON and build lookup tables for check
     preservation.
 
+    Fails fast on ambiguous preservation keys. If two distinct legacy
+    requirements share the same primary value or the same fallback tuple,
+    merging their ``Checks`` silently would corrupt the preserved mapping
+    for unrelated requirements. Raises ``ValueError`` listing every
+    conflict so the user can either dedupe the legacy data or strengthen
+    ``check_preservation`` in the sync config.
+
     Returns
     -------
     by_primary : dict
@@ -223,17 +230,23 @@ def load_legacy_check_maps(
     with open(legacy_path) as f:
         data = json.load(f)
 
+    # Track which legacy requirement Ids contributed to each bucket so we
+    # can surface ambiguity after the scan completes.
+    primary_sources: dict[str, list[str]] = {}
+    fallback_sources: list[dict[tuple, list[str]]] = [{} for _ in fallback_keys]
+
     for req in data.get("Requirements") or []:
+        legacy_id = req.get("Id") or "<missing-Id>"
         checks = req.get("Checks") or []
-        # Primary index
+
         pv = req.get(primary_key)
         if pv:
+            primary_sources.setdefault(pv, []).append(legacy_id)
             bucket = by_primary.setdefault(pv, [])
             for c in checks:
                 if c not in bucket:
                     bucket.append(c)
 
-        # Fallback indexes — read from Attributes[0]
         attributes = req.get("Attributes") or []
         if not attributes:
             continue
@@ -242,10 +255,34 @@ def load_legacy_check_maps(
             key = _build_fallback_key(attrs, field_names)
             if key is None:
                 continue
+            fallback_sources[i].setdefault(key, []).append(legacy_id)
             bucket = by_fallback[i].setdefault(key, [])
             for c in checks:
                 if c not in bucket:
                     bucket.append(c)
+
+    conflicts: list[str] = []
+    for pv, ids in primary_sources.items():
+        if len(ids) > 1:
+            conflicts.append(
+                f"primary_key={primary_key!r} value={pv!r} shared by {ids}"
+            )
+    for i, field_names in enumerate(fallback_keys):
+        for key, ids in fallback_sources[i].items():
+            if len(ids) > 1:
+                conflicts.append(
+                    f"fallback_key={field_names} value={key!r} shared by {ids}"
+                )
+    if conflicts:
+        details = "\n  - ".join(conflicts)
+        raise ValueError(
+            f"ambiguous preservation keys in {legacy_path} — cannot "
+            f"faithfully preserve Checks across distinct requirements:\n"
+            f"  - {details}\n"
+            f"Fix: dedupe the legacy JSON, or strengthen "
+            f"'post_processing.check_preservation' in the sync config "
+            f"(e.g. add a more discriminating field to fallback_keys)."
+        )
 
     return by_primary, by_fallback
 

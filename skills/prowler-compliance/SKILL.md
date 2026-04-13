@@ -698,8 +698,8 @@ python assets/query_checks.py aws --id kms_cmk_rotation_enabled  # full metadata
 **Step 3 — Dump a framework section with current mappings** — see [assets/dump_section.py](assets/dump_section.py):
 
 ```bash
-python assets/dump_section.py "CCC.Core."      # all Core ARs across 3 providers
-python assets/dump_section.py "CCC.AuditLog."  # all AuditLog ARs
+python assets/dump_section.py ccc "CCC.Core."      # all Core ARs across 3 providers
+python assets/dump_section.py ccc "CCC.AuditLog."  # all AuditLog ARs
 ```
 
 **Step 4 — Encode explicit REPLACE decisions** — see [assets/audit_framework_template.py](assets/audit_framework_template.py). Structure:

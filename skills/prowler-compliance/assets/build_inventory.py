@@ -26,9 +26,8 @@ Usage:
     python skills/prowler-compliance/assets/build_inventory.py aws
 
 Output:
-    /tmp/checks_aws.json   (~586 checks)
-    /tmp/checks_azure.json (~167 checks)
-    /tmp/checks_gcp.json   (~102 checks)
+    /tmp/checks_{provider}.json for every provider discovered under
+    prowler/providers/ with a services/ directory.
 """
 from __future__ import annotations
 
@@ -36,9 +35,22 @@ import json
 import sys
 from pathlib import Path
 
-DEFAULT_PROVIDERS = ["aws", "azure", "gcp", "kubernetes", "m365", "github",
-                     "oraclecloud", "alibabacloud", "mongodbatlas", "nhn",
-                     "iac", "llm", "googleworkspace", "cloudflare"]
+PROVIDERS_ROOT = Path("prowler/providers")
+
+
+def discover_providers() -> list[str]:
+    """Return every provider that currently has a services/ directory.
+
+    Derived from the filesystem so new providers are picked up automatically
+    and stale hard-coded lists cannot drift from the repo.
+    """
+    if not PROVIDERS_ROOT.exists():
+        return []
+    return sorted(
+        p.name
+        for p in PROVIDERS_ROOT.iterdir()
+        if p.is_dir() and (p / "services").is_dir()
+    )
 
 
 def build_for_provider(provider: str) -> dict:
@@ -68,7 +80,13 @@ def build_for_provider(provider: str) -> dict:
 
 
 def main() -> int:
-    providers = sys.argv[1:] or DEFAULT_PROVIDERS
+    providers = sys.argv[1:] or discover_providers()
+    if not providers:
+        print(
+            f"error: no providers found under {PROVIDERS_ROOT}/",
+            file=sys.stderr,
+        )
+        return 1
     for provider in providers:
         inv = build_for_provider(provider)
         out_path = Path(f"/tmp/checks_{provider}.json")
