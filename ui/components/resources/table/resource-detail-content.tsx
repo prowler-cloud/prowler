@@ -1,8 +1,15 @@
 "use client";
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
-import { Check, Copy, ExternalLink, Link, Loader2 } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  Check,
+  Container,
+  Copy,
+  ExternalLink,
+  Link,
+  Loader2,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { getFindingById, getLatestFindings } from "@/actions/findings";
@@ -10,6 +17,7 @@ import { getResourceById } from "@/actions/resources";
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
 import { FindingDetail } from "@/components/findings/table/finding-detail";
 import {
+  Card,
   Tabs,
   TabsContent,
   TabsList,
@@ -18,18 +26,17 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import {
-  DateWithTime,
-  getProviderLogo,
-  InfoField,
-} from "@/components/ui/entities";
+import { DateWithTime } from "@/components/ui/entities/date-with-time";
+import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib";
 import { getGroupLabel } from "@/lib/categories";
 import { buildGitFileUrl } from "@/lib/iac-utils";
+import { getRegionFlag } from "@/lib/region-flags";
 import {
   FindingProps,
   MetaDataProps,
@@ -120,15 +127,13 @@ export const ResourceDetailContent = ({
   );
   const [findingDetailLoading, setFindingDetailLoading] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("findings");
   const [metadataCopied, setMetadataCopied] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   const findingFetchRef = useRef<AbortController | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   const resource = resourceDetails;
   const resourceId = resource.id;
@@ -137,7 +142,7 @@ export const ResourceDetailContent = ({
 
   // Reset to overview tab when switching resources
   useEffect(() => {
-    setActiveTab("overview");
+    setActiveTab("findings");
   }, [resourceId]);
 
   // Cleanup abort controller on unmount
@@ -148,9 +153,7 @@ export const ResourceDetailContent = ({
   }, []);
 
   const copyResourceUrl = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("resourceId", resourceId);
-    const url = `${window.location.origin}${pathname}?${params.toString()}`;
+    const url = `${window.location.origin}/resources?resourceId=${resourceId}`;
     navigator.clipboard.writeText(url);
   };
 
@@ -324,6 +327,21 @@ export const ResourceDetailContent = ({
 
   const findingTitle =
     findingDetails?.attributes?.check_metadata?.checktitle || "Finding Detail";
+  const resourceName =
+    typeof attributes.name === "string" && attributes.name.trim().length > 0
+      ? attributes.name
+      : "Unnamed resource";
+  const resourceRegion = renderValue(attributes.region);
+  const regionFlag = getRegionFlag(resourceRegion);
+  const groupValue =
+    attributes.groups && attributes.groups.length > 0
+      ? attributes.groups.map(getGroupLabel).join(", ")
+      : "-";
+  const parsedMetadata = parseMetadata(attributes.metadata);
+  const hasMetadata =
+    parsedMetadata !== null && Object.entries(parsedMetadata).length > 0;
+  const tagEntries = Object.entries(resourceTags);
+  const hasTags = tagEntries.length > 0;
 
   // Content when viewing a finding detail (breadcrumb navigation)
   if (selectedFindingId) {
@@ -354,17 +372,12 @@ export const ResourceDetailContent = ({
 
   // Main resource content
   return (
-    <div className="flex min-w-0 flex-col gap-4 rounded-lg">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="shrink-0">
-          {getProviderLogo(providerData.provider as ProviderType)}
-        </div>
-
+    <div className="flex h-full min-w-0 flex-col gap-4 overflow-hidden">
+      <div className="flex flex-col gap-2">
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-text-neutral-primary line-clamp-2 text-lg leading-tight font-medium">
-              {renderValue(attributes.name)}
+              {resourceName}
             </h2>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -399,158 +412,208 @@ export const ResourceDetailContent = ({
             )}
           </div>
 
-          <div className="text-text-neutral-tertiary text-sm">
+          <span className="text-text-neutral-tertiary text-sm">
             <span className="text-text-neutral-secondary mr-1">
-              Last Updated:
+              Last updated:
             </span>
             <DateWithTime inline dateTime={attributes.updated_at || "-"} />
-          </div>
+          </span>
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="findings">
-            Findings {totalFindings > 0 && `(${totalFindings})`}
-          </TabsTrigger>
-          <TabsTrigger value="events">Events</TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="flex flex-col gap-4">
-          <InfoField label="Resource UID" variant="simple">
-            <CodeSnippet value={attributes.uid} className="max-w-full" />
-          </InfoField>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Name">{renderValue(attributes.name)}</InfoField>
-            <InfoField label="Type">{renderValue(attributes.type)}</InfoField>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Group">
-              {attributes.groups && attributes.groups.length > 0
-                ? attributes.groups.map(getGroupLabel).join(", ")
-                : "-"}
-            </InfoField>
-            <InfoField label="Service">
-              {renderValue(attributes.service)}
-            </InfoField>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Region">
-              {renderValue(attributes.region)}
-            </InfoField>
-            <InfoField label="Partition">
-              {renderValue(attributes.partition)}
-            </InfoField>
-          </div>
-          <InfoField label="Details" variant="simple">
-            {renderValue(attributes.details)}
-          </InfoField>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Created At">
-              <DateWithTime inline dateTime={attributes.inserted_at} />
-            </InfoField>
-            <InfoField label="Last Updated">
-              <DateWithTime inline dateTime={attributes.updated_at} />
-            </InfoField>
-          </div>
-
-          {(() => {
-            const parsedMetadata = parseMetadata(attributes.metadata);
-            return parsedMetadata &&
-              Object.entries(parsedMetadata).length > 0 ? (
-              <InfoField label="Metadata" variant="simple">
-                <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary relative w-full rounded-lg border">
-                  <button
-                    type="button"
-                    onClick={() => copyMetadata(parsedMetadata)}
-                    className="text-text-neutral-secondary hover:text-text-neutral-primary absolute top-2 right-2 z-10 cursor-pointer transition-colors"
-                    aria-label="Copy metadata to clipboard"
-                  >
-                    {metadataCopied ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </button>
-                  <pre className="minimal-scrollbar mr-10 max-h-[200px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
-                    {JSON.stringify(parsedMetadata, null, 2)}
-                  </pre>
-                </div>
-              </InfoField>
-            ) : null;
-          })()}
-
-          {resourceTags && Object.entries(resourceTags).length > 0 ? (
-            <div className="flex flex-col gap-4">
-              <h4 className="text-text-neutral-secondary text-sm font-bold">
-                Tags
-              </h4>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {Object.entries(resourceTags).map(([key, value]) => (
-                  <InfoField key={key} label={key}>
-                    {renderValue(value)}
-                  </InfoField>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </TabsContent>
-
-        {/* Findings Tab */}
-        <TabsContent value="findings" className="flex flex-col gap-4">
-          {findingsLoading && !hasInitiallyLoaded ? (
-            <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <p className="text-text-neutral-secondary text-sm">
-                Loading findings...
-              </p>
-            </div>
-          ) : (
-            <>
-              <DataTable
-                columns={columns}
-                data={failedFindings}
-                metadata={findingsMetadata ?? undefined}
-                showSearch
-                disableScroll
-                enableRowSelection
-                rowSelection={rowSelection}
-                onRowSelectionChange={setRowSelection}
-                getRowCanSelect={getRowCanSelect}
-                controlledSearch={searchQuery}
-                onSearchChange={(value) => {
-                  setSearchQuery(value);
-                  setCurrentPage(1);
-                }}
-                controlledPage={currentPage}
-                controlledPageSize={pageSize}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={setPageSize}
-                isLoading={findingsLoading}
-              />
-              {selectedFindingIds.length > 0 && (
-                <FloatingMuteButton
-                  selectedCount={selectedFindingIds.length}
-                  selectedFindingIds={selectedFindingIds}
-                  onComplete={handleMuteComplete}
-                />
-              )}
-            </>
-          )}
-        </TabsContent>
-
-        {/* Events Tab */}
-        <TabsContent value="events" className="flex flex-col gap-4">
-          <EventsTimeline
-            resourceId={resourceId}
-            isAwsProvider={providerData.provider === "aws"}
+      <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
+          <EntityInfo
+            cloudProvider={providerData.provider as ProviderType}
+            entityAlias={providerData.alias ?? undefined}
+            entityId={providerData.uid}
           />
-        </TabsContent>
-      </Tabs>
+          <EntityInfo
+            nameIcon={<Container className="size-4" />}
+            entityAlias={resourceName}
+            entityId={attributes.uid}
+          />
+          <InfoField label="Service" variant="compact">
+            {renderValue(attributes.service)}
+          </InfoField>
+          <InfoField label="Region" variant="compact">
+            <span className="flex items-center gap-1.5">
+              {regionFlag && (
+                <span className="translate-y-px text-base leading-none">
+                  {regionFlag}
+                </span>
+              )}
+              {resourceRegion}
+            </span>
+          </InfoField>
+
+          <InfoField label="Type" variant="compact">
+            {renderValue(attributes.type)}
+          </InfoField>
+          <InfoField label="Group" variant="compact">
+            {groupValue}
+          </InfoField>
+          <InfoField label="Partition" variant="compact">
+            {renderValue(attributes.partition)}
+          </InfoField>
+          <InfoField label="Resource UID" variant="compact">
+            <CodeSnippet
+              value={attributes.uid}
+              transparent
+              className="max-w-full text-sm"
+            />
+          </InfoField>
+
+          <InfoField label="Created At" variant="compact">
+            <DateWithTime inline dateTime={attributes.inserted_at || "-"} />
+          </InfoField>
+          <InfoField label="Last Updated" variant="compact">
+            <DateWithTime inline dateTime={attributes.updated_at || "-"} />
+          </InfoField>
+          <InfoField label="Failed Findings" variant="compact">
+            {String(attributes.failed_findings_count ?? 0)}
+          </InfoField>
+        </div>
+
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="mt-2 flex min-h-0 w-full flex-1 flex-col"
+        >
+          <div className="mb-4 flex shrink-0 items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="findings">
+                Findings {totalFindings > 0 && `(${totalFindings})`}
+              </TabsTrigger>
+              <TabsTrigger value="metadata">Metadata</TabsTrigger>
+              <TabsTrigger value="tags">Tags</TabsTrigger>
+              <TabsTrigger value="events">Events</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="minimal-scrollbar min-h-0 flex-1 overflow-y-auto">
+            <TabsContent value="findings" className="flex flex-col gap-4">
+              {findingsLoading && !hasInitiallyLoaded ? (
+                <div className="flex items-center justify-center gap-2 py-8">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <p className="text-text-neutral-secondary text-sm">
+                    Loading findings...
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <DataTable
+                    columns={columns}
+                    data={failedFindings}
+                    metadata={findingsMetadata ?? undefined}
+                    showSearch
+                    disableScroll
+                    enableRowSelection
+                    rowSelection={rowSelection}
+                    onRowSelectionChange={setRowSelection}
+                    getRowCanSelect={getRowCanSelect}
+                    controlledSearch={searchQuery}
+                    onSearchChange={(value) => {
+                      setSearchQuery(value);
+                      setCurrentPage(1);
+                    }}
+                    controlledPage={currentPage}
+                    controlledPageSize={pageSize}
+                    onPageChange={setCurrentPage}
+                    onPageSizeChange={setPageSize}
+                    isLoading={findingsLoading}
+                  />
+                  {selectedFindingIds.length > 0 && (
+                    <FloatingMuteButton
+                      selectedCount={selectedFindingIds.length}
+                      selectedFindingIds={selectedFindingIds}
+                      onComplete={handleMuteComplete}
+                    />
+                  )}
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="metadata" className="flex flex-col gap-4">
+              {attributes.details && attributes.details.trim() !== "" && (
+                <Card variant="inner">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
+                      Details:
+                    </span>
+                    <p className="text-text-neutral-primary text-sm break-words whitespace-pre-wrap">
+                      {attributes.details}
+                    </p>
+                  </div>
+                </Card>
+              )}
+
+              {hasMetadata && parsedMetadata && (
+                <Card variant="inner">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
+                      Metadata:
+                    </span>
+                    <div className="border-border-neutral-secondary bg-bg-neutral-secondary relative w-full rounded-lg border">
+                      <button
+                        type="button"
+                        onClick={() => copyMetadata(parsedMetadata)}
+                        className="text-text-neutral-secondary hover:text-text-neutral-primary absolute top-2 right-2 z-10 cursor-pointer transition-colors"
+                        aria-label="Copy metadata to clipboard"
+                      >
+                        {metadataCopied ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </button>
+                      <pre className="minimal-scrollbar mr-10 max-h-[200px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
+                        {JSON.stringify(parsedMetadata, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {!attributes.details?.trim() && !hasMetadata && (
+                <p className="text-text-neutral-tertiary py-8 text-center text-sm">
+                  No metadata available for this resource.
+                </p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="tags" className="flex flex-col gap-4">
+              {hasTags ? (
+                <Card variant="inner">
+                  <div className="flex flex-col gap-3">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
+                      Tags:
+                    </span>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {tagEntries.map(([key, value]) => (
+                        <InfoField key={key} label={key} variant="compact">
+                          {renderValue(value)}
+                        </InfoField>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              ) : (
+                <p className="text-text-neutral-tertiary py-8 text-center text-sm">
+                  No tags available for this resource.
+                </p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="events" className="flex flex-col gap-4">
+              <EventsTimeline
+                resourceId={resourceId}
+                isAwsProvider={providerData.provider === "aws"}
+              />
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 };
