@@ -33,7 +33,9 @@ class entra_conditional_access_policy_all_apps_all_users(Check):
             resource_id="conditionalAccessPolicies",
         )
         report.status = "FAIL"
-        report.status_extended = "No Conditional Access Policy covers all cloud apps and all users."
+        report.status_extended = (
+            "No Conditional Access Policy covers all cloud apps and all users."
+        )
 
         manual_policy = None
         reporting_only_policy = None
@@ -67,13 +69,6 @@ class entra_conditional_access_policy_all_apps_all_users(Check):
                 or user_conditions.excluded_roles
             )
 
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource=policy,
-                resource_name=policy.display_name,
-                resource_id=policy.id,
-            )
-
             if has_exclusions:
                 if manual_policy is None:
                     manual_policy = policy
@@ -82,37 +77,45 @@ class entra_conditional_access_policy_all_apps_all_users(Check):
             if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                 if reporting_only_policy is None:
                     reporting_only_policy = policy
-            else:
-                report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' covers all cloud apps and all users."
-                break
-        else:
-            if manual_policy is not None:
-                report = CheckReportM365(
-                    metadata=self.metadata(),
-                    resource=manual_policy,
-                    resource_name=manual_policy.display_name,
-                    resource_id=manual_policy.id,
-                )
-                report.status = "MANUAL"
-                report.status_extended = (
-                    f"Conditional Access Policy '{manual_policy.display_name}' "
-                    "targets all cloud apps and all users but includes exclusions. "
-                    "Review excluded users/groups/roles/applications and verify "
-                    "compensating policies protect excluded identities and apps."
-                )
-            elif reporting_only_policy is not None:
-                report = CheckReportM365(
-                    metadata=self.metadata(),
-                    resource=reporting_only_policy,
-                    resource_name=reporting_only_policy.display_name,
-                    resource_id=reporting_only_policy.id,
-                )
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"Conditional Access Policy '{reporting_only_policy.display_name}' "
-                    "covers all cloud apps and all users but is only in report-only mode."
-                )
+                continue
+
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource=policy,
+                resource_name=policy.display_name,
+                resource_id=policy.id,
+            )
+            report.status = "PASS"
+            report.status_extended = f"Conditional Access Policy {policy.display_name} covers all cloud apps and all users."
+            findings.append(report)
+            return findings
+
+        if manual_policy is not None:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource=manual_policy,
+                resource_name=manual_policy.display_name,
+                resource_id=manual_policy.id,
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"Conditional Access Policy {manual_policy.display_name} "
+                "targets all cloud apps and all users but includes exclusions. "
+                "Review excluded users/groups/roles/applications and verify "
+                "compensating policies protect excluded identities and apps."
+            )
+        elif reporting_only_policy is not None:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource=reporting_only_policy,
+                resource_name=reporting_only_policy.display_name,
+                resource_id=reporting_only_policy.id,
+            )
+            report.status = "FAIL"
+            report.status_extended = (
+                f"Conditional Access Policy {reporting_only_policy.display_name} "
+                "covers all cloud apps and all users but is only in report-only mode."
+            )
 
         findings.append(report)
         return findings

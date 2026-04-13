@@ -198,7 +198,7 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
             assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' targets all cloud apps and all users but includes exclusions. Review excluded users/groups/roles/applications and verify compensating policies protect excluded identities and apps."
+                == f"Conditional Access Policy {display_name} targets all cloud apps and all users but includes exclusions. Review excluded users/groups/roles/applications and verify compensating policies protect excluded identities and apps."
             )
             assert (
                 result[0].resource
@@ -351,7 +351,7 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
             assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' targets all cloud apps and all users but includes exclusions. Review excluded users/groups/roles/applications and verify compensating policies protect excluded identities and apps."
+                == f"Conditional Access Policy {display_name} targets all cloud apps and all users but includes exclusions. Review excluded users/groups/roles/applications and verify compensating policies protect excluded identities and apps."
             )
             assert (
                 result[0].resource
@@ -404,7 +404,7 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
             assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' targets all cloud apps and all users but includes exclusions. Review excluded users/groups/roles/applications and verify compensating policies protect excluded identities and apps."
+                == f"Conditional Access Policy {display_name} targets all cloud apps and all users but includes exclusions. Review excluded users/groups/roles/applications and verify compensating policies protect excluded identities and apps."
             )
             assert (
                 result[0].resource
@@ -507,7 +507,7 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' covers all cloud apps and all users but is only in report-only mode."
+                == f"Conditional Access Policy {display_name} covers all cloud apps and all users but is only in report-only mode."
             )
             assert (
                 result[0].resource
@@ -558,7 +558,7 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' covers all cloud apps and all users."
+                == f"Conditional Access Policy {display_name} covers all cloud apps and all users."
             )
             assert (
                 result[0].resource
@@ -618,7 +618,7 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{enabled_name}' covers all cloud apps and all users."
+                == f"Conditional Access Policy {enabled_name} covers all cloud apps and all users."
             )
             assert (
                 result[0].resource
@@ -671,11 +671,74 @@ class Test_entra_conditional_access_policy_all_apps_all_users:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' covers all cloud apps and all users."
+                == f"Conditional Access Policy {display_name} covers all cloud apps and all users."
             )
             assert result[0].resource_name == display_name
             assert result[0].resource_id == policy_id
             assert result[0].location == "global"
+
+    def test_manual_policy_does_not_prevent_later_pass(self):
+        manual_policy_id = str(uuid4())
+        pass_policy_id = str(uuid4())
+        manual_display_name = "All Apps All Users With Exclusions"
+        pass_display_name = "All Apps All Users Enforced"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_all_apps_all_users.entra_conditional_access_policy_all_apps_all_users import (
+                entra_conditional_access_policy_all_apps_all_users,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                manual_policy_id: ConditionalAccessPolicy(
+                    id=manual_policy_id,
+                    display_name=manual_display_name,
+                    conditions=_make_conditions(
+                        excluded_users=["excluded-user-id"],
+                    ),
+                    grant_controls=_make_grant_controls(),
+                    session_controls=_make_session_controls(),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                ),
+                pass_policy_id: ConditionalAccessPolicy(
+                    id=pass_policy_id,
+                    display_name=pass_display_name,
+                    conditions=_make_conditions(),
+                    grant_controls=_make_grant_controls(),
+                    session_controls=_make_session_controls(),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                ),
+            }
+
+            check = entra_conditional_access_policy_all_apps_all_users()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Conditional Access Policy {pass_display_name} covers all cloud apps and all users."
+            )
+            assert (
+                result[0].resource
+                == entra_client.conditional_access_policies[pass_policy_id].dict()
+            )
+            assert result[0].resource_name == pass_display_name
+            assert result[0].resource_id == pass_policy_id
 
     def test_policy_no_application_conditions(self):
         policy_id = str(uuid4())
