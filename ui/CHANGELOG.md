@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.23.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Findings group resource filters now strip unsupported scan parameters, display scan name instead of provider alias in filter badges, migrate mute modal from HeroUI to shadcn, and add searchable accounts/provider type selectors [(#10662)](https://github.com/prowler-cloud/prowler/pull/10662)
+
+---
+
 ## [1.23.0] (Prowler v5.23.0)
 
 ### 🚀 Added
