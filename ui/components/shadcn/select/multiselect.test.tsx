@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -29,6 +29,26 @@ Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
 });
 
 describe("MultiSelect", () => {
+  it("shows preselected labels before the popover opens", () => {
+    // Given
+    render(
+      <MultiSelect values={["aws-prod"]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    // Then
+    expect(
+      within(screen.getByRole("combobox")).getByText("Production AWS"),
+    ).toBeInTheDocument();
+  });
+
   it("filters items without crashing when search is enabled", async () => {
     const user = userEvent.setup();
 
@@ -52,8 +72,12 @@ describe("MultiSelect", () => {
     await user.click(screen.getByRole("combobox"));
     await user.type(screen.getByPlaceholderText("Search accounts..."), "aws");
 
-    expect(screen.getByText("Production AWS")).toBeInTheDocument();
-    expect(screen.queryByText("Development Azure")).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole("dialog")).getByText("Production AWS"),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("dialog")).queryByText("Development Azure"),
+    ).not.toBeInTheDocument();
   });
 
   it("uses a normalized dropdown width instead of growing with the longest item", async () => {

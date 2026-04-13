@@ -283,6 +283,11 @@ export function MultiSelectContent({
 
   return (
     <>
+      <div className="hidden" aria-hidden="true">
+        <Command>
+          <CommandList>{children}</CommandList>
+        </Command>
+      </div>
       <PopoverContent
         align="start"
         data-slot="multiselect-content"
