@@ -20,7 +20,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Click **New policy**.\n4. Under **Users**, select **All users**.\n5. Under **Target resources**, select **All cloud apps**.\n6. Under **Conditions** > **Filter for devices**, configure a rule to target non-corporate devices (e.g., non-compliant and non-domain-joined).\n7. Under **Session**, enable **Sign-in frequency** and set it to the desired interval (e.g., 1 hour).\n8. Set the policy to **On** and click **Create**.",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Click **New policy**.\n4. Under **Users**, select **All users**.\n5. Under **Target resources**, select **All cloud apps**.\n6. Under **Conditions** > **Filter for devices**, select **Include filtered devices**.\n7. Set the rule to `device.isCompliant -eq False`.\n8. Under **Session**, enable **Sign-in frequency** and set it to **1 hour**.\n9. Set the policy to **On** and click **Create**.",
       "Terraform": ""
     },
     "Recommendation": {

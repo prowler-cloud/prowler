@@ -129,10 +129,10 @@ class entra_conditional_access_policy_sign_in_frequency_enforced(Check):
             )
             if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                 report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' reports sign-in frequency for non-corporate devices but does not enforce it."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} reports sign-in frequency for non-corporate devices but does not enforce it."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' enforces sign-in frequency for non-corporate devices."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} enforces sign-in frequency for non-corporate devices."
                 break
 
         findings.append(report)
