@@ -38,7 +38,7 @@ class team_saml_sso_enabled(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Team {team.name} does not have SAML SSO enabled. "
-                    f"This feature is only available on Vercel Pro/Enterprise plans."
+                    f"This feature is available on Vercel Enterprise and Pro plans."
                 )
 
             findings.append(report)

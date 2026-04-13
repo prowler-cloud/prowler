@@ -32,7 +32,7 @@ class Security(VercelService):
             )
 
             if data is None:
-                # 403 — plan limitation, store with managed_rulesets=None
+                # Firewall config endpoint unavailable for this project/token
                 self.firewall_configs[project.id] = VercelFirewallConfig(
                     project_id=project.id,
                     project_name=project.name,
@@ -118,7 +118,7 @@ class VercelFirewallConfig(BaseModel):
     project_name: Optional[str] = None
     team_id: Optional[str] = None
     firewall_enabled: bool = False
-    managed_rulesets: Optional[dict] = None  # None means plan-gated (403)
+    managed_rulesets: Optional[dict] = None  # None means config endpoint unavailable
     custom_rules: list[dict] = Field(default_factory=list)
     ip_blocking_rules: list[dict] = Field(default_factory=list)
     rate_limiting_rules: list[dict] = Field(default_factory=list)

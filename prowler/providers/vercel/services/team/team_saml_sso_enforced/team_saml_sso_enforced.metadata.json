@@ -35,5 +35,5 @@
   "RelatedTo": [
     "team_saml_sso_enabled"
   ],
-  "Notes": "Required billing plan: Pro."
+  "Notes": "Required billing plan: Pro or Enterprise."
 }

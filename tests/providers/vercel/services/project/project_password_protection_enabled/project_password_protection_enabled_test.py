@@ -102,7 +102,7 @@ class Test_project_password_protection_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Project {PROJECT_NAME} does not have password protection configured for deployments. This feature is only available on Vercel Pro/Enterprise plans."
+                == f"Project {PROJECT_NAME} does not have password protection configured for deployments. This feature is available on Vercel Enterprise plans, or as a paid add-on for Pro plans."
             )
             assert result[0].team_id == TEAM_ID
 
@@ -139,6 +139,6 @@ class Test_project_password_protection_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Project {PROJECT_NAME} does not have password protection configured for deployments. This feature is only available on Vercel Pro/Enterprise plans."
+                == f"Project {PROJECT_NAME} does not have password protection configured for deployments. This feature is available on Vercel Enterprise plans, or as a paid add-on for Pro plans."
             )
             assert result[0].team_id == TEAM_ID

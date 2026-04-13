@@ -109,7 +109,7 @@ class Test_project_production_deployment_protection_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Project {PROJECT_NAME} does not have deployment protection enabled on production deployments. This feature is only available on Vercel Pro/Enterprise plans."
+                == f"Project {PROJECT_NAME} does not have deployment protection enabled on production deployments. Protecting production deployments is available on Vercel Enterprise plans, or on Pro plans for supported deployment protection options."
             )
             assert result[0].team_id == TEAM_ID
 
@@ -146,6 +146,6 @@ class Test_project_production_deployment_protection_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Project {PROJECT_NAME} does not have deployment protection enabled on production deployments. This feature is only available on Vercel Pro/Enterprise plans."
+                == f"Project {PROJECT_NAME} does not have deployment protection enabled on production deployments. Protecting production deployments is available on Vercel Enterprise plans, or on Pro plans for supported deployment protection options."
             )
             assert result[0].team_id == TEAM_ID

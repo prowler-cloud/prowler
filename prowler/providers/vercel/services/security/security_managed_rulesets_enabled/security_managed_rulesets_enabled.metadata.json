@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "**Vercel projects** are assessed for **managed WAF ruleset** enablement. Managed rulesets are curated by Vercel and provide protection against known attack patterns including **OWASP Top 10** threats. This feature requires an Enterprise plan and reports MANUAL status when unavailable.",
+  "Description": "**Vercel projects** are assessed for **managed WAF ruleset** enablement. Managed rulesets are curated by Vercel and provide protection against known attack patterns including **OWASP Top 10** threats. Availability varies by ruleset, and the check reports MANUAL when the firewall configuration cannot be assessed from the API.",
   "Risk": "Without **managed rulesets** enabled, the firewall lacks curated protection rules against well-known attack patterns. The application relies solely on custom rules, which may miss **new or evolving threats** that managed rulesets are designed to detect and block automatically.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -19,11 +19,11 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > Security > Firewall\n3. Enable managed rulesets from the available options\n4. Review and configure ruleset sensitivity levels\n5. Note: This feature requires an Enterprise plan",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > Security > Firewall\n3. Enable the managed rulesets that are available for your plan\n4. Review and configure ruleset sensitivity levels\n5. If the API does not expose firewall configuration for the project, verify the rulesets manually in the dashboard",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable managed WAF rulesets to benefit from Vercel-curated protection against common attack patterns. If you are on a plan that does not support managed rulesets, consider upgrading to the Enterprise plan for enhanced security features.",
+      "Text": "Enable the managed WAF rulesets that are available for your Vercel plan to benefit from curated protection against common attack patterns. If the API does not expose firewall configuration for the project, verify the rulesets manually in the dashboard.",
       "Url": "https://hub.prowler.com/check/security_managed_rulesets_enabled"
     }
   },
@@ -34,5 +34,5 @@
   "RelatedTo": [
     "security_waf_enabled"
   ],
-  "Notes": "Required billing plan: Enterprise."
+  "Notes": "Managed ruleset availability varies by ruleset. OWASP Core Ruleset requires Enterprise, while Bot Protection and AI Bots managed rulesets are available on all plans."
 }

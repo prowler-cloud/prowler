@@ -37,8 +37,8 @@ class project_password_protection_enabled(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Project {project.name} does not have password protection "
-                    f"configured for deployments. This feature is only available "
-                    f"on Vercel Pro/Enterprise plans."
+                    f"configured for deployments. This feature is available on "
+                    f"Vercel Enterprise plans, or as a paid add-on for Pro plans."
                 )
 
             findings.append(report)

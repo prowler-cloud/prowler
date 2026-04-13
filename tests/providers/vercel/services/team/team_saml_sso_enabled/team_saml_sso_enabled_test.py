@@ -103,6 +103,6 @@ class Test_team_saml_sso_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Team {TEAM_NAME} does not have SAML SSO enabled. This feature is only available on Vercel Pro/Enterprise plans."
+                == f"Team {TEAM_NAME} does not have SAML SSO enabled. This feature is available on Vercel Enterprise and Pro plans."
             )
             assert result[0].team_id == ""

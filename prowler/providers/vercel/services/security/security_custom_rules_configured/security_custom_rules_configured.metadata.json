@@ -34,5 +34,5 @@
   "RelatedTo": [
     "security_waf_enabled"
   ],
-  "Notes": "Required billing plan: Pro."
+  "Notes": ""
 }

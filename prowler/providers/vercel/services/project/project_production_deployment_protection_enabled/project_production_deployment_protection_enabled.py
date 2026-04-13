@@ -37,8 +37,9 @@ class project_production_deployment_protection_enabled(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Project {project.name} does not have deployment protection "
-                    f"enabled on production deployments. This feature is only "
-                    f"available on Vercel Pro/Enterprise plans."
+                    f"enabled on production deployments. Protecting production "
+                    f"deployments is available on Vercel Enterprise plans, or on "
+                    f"Pro plans for supported deployment protection options."
                 )
 
             findings.append(report)

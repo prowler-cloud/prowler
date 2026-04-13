@@ -17,8 +17,8 @@ class security_managed_rulesets_enabled(Check):
         """Execute the Vercel Managed Rulesets Enabled check.
 
         Iterates over all firewall configurations and checks if managed
-        rulesets are enabled. Reports MANUAL status when the feature is
-        not available due to plan limitations.
+        rulesets are enabled. Reports MANUAL status when the firewall
+        configuration cannot be assessed from the API.
 
         Returns:
             List[CheckReportVercel]: A list of reports for each project.
@@ -28,11 +28,12 @@ class security_managed_rulesets_enabled(Check):
             report = CheckReportVercel(metadata=self.metadata(), resource=config)
 
             if config.managed_rulesets is None:
-                report.status = "FAIL"
+                report.status = "MANUAL"
                 report.status_extended = (
                     f"Project {config.project_name} ({config.project_id}) "
-                    f"does not have managed WAF rulesets enabled. "
-                    f"This feature is only available on Vercel Enterprise plans."
+                    f"could not be assessed for managed rulesets because the "
+                    f"firewall configuration endpoint was not accessible. "
+                    f"Manual verification is required."
                 )
             elif config.managed_rulesets:
                 report.status = "PASS"
@@ -44,8 +45,7 @@ class security_managed_rulesets_enabled(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Project {config.project_name} ({config.project_id}) "
-                    f"does not have managed WAF rulesets enabled. "
-                    f"This feature is only available on Vercel Enterprise plans."
+                    f"does not have managed WAF rulesets enabled."
                 )
 
             findings.append(report)

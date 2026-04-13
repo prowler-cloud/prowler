@@ -34,5 +34,5 @@
   "RelatedTo": [
     "project_deployment_protection_enabled"
   ],
-  "Notes": "Required billing plan: Pro."
+  "Notes": "Protecting production deployments requires Enterprise, or Pro plans with supported paid deployment protection options."
 }

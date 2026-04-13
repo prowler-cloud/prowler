@@ -108,6 +108,6 @@ class Test_security_custom_rules_configured:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Project {PROJECT_NAME} ({PROJECT_ID}) does not have any custom firewall rules configured. This feature is only available on Vercel Pro/Enterprise plans."
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) does not have any custom firewall rules configured."
             )
             assert result[0].team_id == TEAM_ID

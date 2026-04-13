@@ -34,7 +34,7 @@ class project_skew_protection_enabled(Check):
                 report.status_extended = (
                     f"Project {project.name} does not have skew protection enabled, "
                     f"which may cause version mismatches during deployments. This "
-                    f"feature is only available on Vercel Pro/Enterprise plans."
+                    f"feature is available on Vercel Enterprise and Pro plans."
                 )
 
             findings.append(report)
