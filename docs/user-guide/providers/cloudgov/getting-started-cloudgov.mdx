@@ -156,10 +156,7 @@ The manifest creates:
 * `prowler-api-worker`
 * `prowler-api-beat`
 
-The web process:
-
-* skips automatic migrations during normal startup
-* starts Gunicorn
+The web process starts Gunicorn with production settings. Migrations are disabled during normal startup to avoid race conditions when scaling multiple instances.
 
 Run migrations as a one-off task instead of on every web restart:
 
