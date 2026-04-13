@@ -4,6 +4,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.23.0] (Prowler v5.23.0)
 
+### 🐞 Fixed
+
+- Compliance detail page header now reflects the actual provider, alias and UID of the selected scan instead of always defaulting to AWS [(#10674)](https://github.com/prowler-cloud/prowler/pull/10674)
+
+---
+
+## [1.23.0] (Prowler v5.23.0)
+
 ### 🚀 Added
 
 - Invitation accept smart router for handling invitation flow routing [(#10573)](https://github.com/prowler-cloud/prowler/pull/10573)
