@@ -76,10 +76,17 @@ export const getScansByState = async () => {
   }
 };
 
-export const getScan = async (scanId: string) => {
+export const getScan = async (
+  scanId: string,
+  { include }: { include?: string } = {},
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/scans/${scanId}`);
+
+  if (include) {
+    url.searchParams.set("include", include);
+  }
 
   try {
     const response = await fetch(url.toString(), {
