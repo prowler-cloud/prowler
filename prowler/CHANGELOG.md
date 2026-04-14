@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `bedrock_vpc_endpoints_configured` check for AWS provider [(#10591)](https://github.com/prowler-cloud/prowler/pull/10591)
 - `exchange_organization_delicensing_resiliency_enabled` check for m365 provider [(#10608)](https://github.com/prowler-cloud/prowler/pull/10608)
 - `entra_conditional_access_policy_mfa_enforced_for_guest_users` check for M365 provider [(#10616)](https://github.com/prowler-cloud/prowler/pull/10616)
+- `entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced` check for m365 provider [(#10618)](https://github.com/prowler-cloud/prowler/pull/10618)
 - Support Python 3.13 and 3.14 [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
 
 ### 🔄 Changed
