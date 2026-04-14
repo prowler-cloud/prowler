@@ -84,9 +84,7 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                     principals = self.extract_field(statement.get("Principal", {}))
                     for principal in principals:
                         if isinstance(principal, str):
-                            match = re.match(
-                                iam_arn_with_account_pattern, principal
-                            )
+                            match = re.match(iam_arn_with_account_pattern, principal)
                             if match:
                                 principal_account = match.group(1)
                                 if (
@@ -98,13 +96,10 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                                 iam_root_arn_pattern, principal
                             ):
                                 condition = statement.get("Condition", {})
-                                if (
-                                    not condition
-                                    or not is_condition_block_restrictive(
-                                        condition,
-                                        secretsmanager_client.audited_account,
-                                        is_cross_account_allowed=False,
-                                    )
+                                if not condition or not is_condition_block_restrictive(
+                                    condition,
+                                    secretsmanager_client.audited_account,
+                                    is_cross_account_allowed=False,
                                 ):
                                     cross_account_principals.append(principal)
 
@@ -145,9 +140,7 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                     uses_arn_not_like = False
                     if "ArnNotLike" in condition:
                         arn_not_like_condition = condition.get("ArnNotLike", {})
-                        uses_arn_not_like = (
-                            "aws:PrincipalArn" in arn_not_like_condition
-                        )
+                        uses_arn_not_like = "aws:PrincipalArn" in arn_not_like_condition
 
                     # Update valid keys to include ArnNotLike
                     valid_keys = {"aws:PrincipalArn", "aws:PrincipalServiceName"}

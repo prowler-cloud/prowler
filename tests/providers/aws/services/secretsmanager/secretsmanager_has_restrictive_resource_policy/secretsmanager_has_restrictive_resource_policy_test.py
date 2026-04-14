@@ -1689,9 +1689,7 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                     {
                         "Sid": "AllowLogsAccess",
                         "Effect": "Allow",
-                        "Principal": {
-                            "Service": "logs.eu-central-1.amazonaws.com"
-                        },
+                        "Principal": {"Service": "logs.eu-central-1.amazonaws.com"},
                         "Action": ["secretsmanager:GetSecretValue"],
                         "Resource": "*",
                         "Condition": {
