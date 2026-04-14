@@ -44,7 +44,7 @@ export const ResourcesFilters = ({
       index: 2,
     },
     {
-      key: "resource_type__in",
+      key: "type__in",
       labelCheckboxGroup: "Types",
       values: uniqueResourceTypes,
       index: 3,

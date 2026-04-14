@@ -48,8 +48,7 @@ export default async function Resources({
   // Extract unique regions, services, groups from the metadata endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
-  const uniqueResourceTypes =
-    metadataInfoData?.data?.attributes?.resource_types || [];
+  const uniqueResourceTypes = metadataInfoData?.data?.attributes?.types || [];
   const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
 
   return (
