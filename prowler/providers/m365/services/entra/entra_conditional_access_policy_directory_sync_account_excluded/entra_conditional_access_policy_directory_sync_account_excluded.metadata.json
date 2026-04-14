@@ -36,5 +36,5 @@
   "RelatedTo": [
     "entra_conditional_access_policy_require_mfa_for_management_api"
   ],
-  "Notes": "This check corresponds to Maester test MT.1020 (Test-MtCaExclusionForDirectorySyncAccount). The Directory Synchronization Accounts role template ID is d29b2b05-8046-44ba-8758-1e26182fcf32."
+  "Notes": "The Directory Synchronization Accounts role template ID is d29b2b05-8046-44ba-8758-1e26182fcf32."
 }
