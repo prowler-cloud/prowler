@@ -12,6 +12,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `iam_role_access_not_stale_to_bedrock` and `iam_user_access_not_stale_to_bedrock` checks for AWS provider [(#10536)](https://github.com/prowler-cloud/prowler/pull/10536)
 - `iam_policy_no_wildcard_marketplace_subscribe` and `iam_inline_policy_no_wildcard_marketplace_subscribe` checks for AWS provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
 - `bedrock_vpc_endpoints_configured` check for AWS provider [(#10591)](https://github.com/prowler-cloud/prowler/pull/10591)
+- `exchange_organization_delicensing_resiliency_enabled` check for m365 provider [(#10608)](https://github.com/prowler-cloud/prowler/pull/10608)
 
 ---
 
@@ -25,7 +26,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `awslambda_function_no_dead_letter_queue`, `awslambda_function_using_cross_account_layers`, and `awslambda_function_env_vars_not_encrypted_with_cmk` checks for AWS Lambda [(#10381)](https://github.com/prowler-cloud/prowler/pull/10381)
 - `entra_conditional_access_policy_mdm_compliant_device_required` check for M365 provider [(#10220)](https://github.com/prowler-cloud/prowler/pull/10220)
 - `directory_super_admin_only_admin_roles` check for Google Workspace provider [(#10488)](https://github.com/prowler-cloud/prowler/pull/10488)
-- `exchange_organization_delicensing_resiliency_enabled` check for m365 provider [(#10608)](https://github.com/prowler-cloud/prowler/pull/10608)
 - `ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip` check for AWS provider using `ipaddress.is_global` for accurate public IP detection [(#10335)](https://github.com/prowler-cloud/prowler/pull/10335)
 - `entra_conditional_access_policy_block_o365_elevated_insider_risk` check for M365 provider [(#10232)](https://github.com/prowler-cloud/prowler/pull/10232)
 - `--resource-group` and `--list-resource-groups` CLI flags to filter checks by resource group across all providers [(#10479)](https://github.com/prowler-cloud/prowler/pull/10479)
