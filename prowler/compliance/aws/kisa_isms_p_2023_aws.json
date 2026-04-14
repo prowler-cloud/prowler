@@ -1389,6 +1389,8 @@
       "Checks": [
         "accessanalyzer_enabled",
         "accessanalyzer_enabled_without_findings",
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "bedrock_full_access_policy_attached",
         "iam_administrator_access_with_mfa",
         "iam_avoid_root_usage",

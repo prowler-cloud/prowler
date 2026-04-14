@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `bedrock_full_access_policy_attached` check for AWS provider [(#10577)](https://github.com/prowler-cloud/prowler/pull/10577)
 - `iam_role_access_not_stale_to_bedrock` and `iam_user_access_not_stale_to_bedrock` checks for AWS provider [(#10536)](https://github.com/prowler-cloud/prowler/pull/10536)
+- `iam_policy_no_wildcard_marketplace_subscribe` and `iam_inline_policy_no_wildcard_marketplace_subscribe` checks for AWS provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
 
 ---
 
