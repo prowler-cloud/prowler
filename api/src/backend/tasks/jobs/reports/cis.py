@@ -577,10 +577,10 @@ class CISReportGenerator(BaseComplianceReportGenerator):
 
         columns = [
             ColumnConfig("ID", 0.9 * inch, "id", align="LEFT"),
-            ColumnConfig("Description", 3.2 * inch, "description", align="LEFT"),
+            ColumnConfig("Description", 3.0 * inch, "description", align="LEFT"),
             ColumnConfig("Profile", 0.9 * inch, "profile"),
             ColumnConfig("Assessment", 1 * inch, "assessment"),
-            ColumnConfig("Status", 0.7 * inch, "status"),
+            ColumnConfig("Status", 0.9 * inch, "status"),
         ]
 
         for section in sections:
