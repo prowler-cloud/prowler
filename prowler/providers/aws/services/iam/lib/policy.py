@@ -1008,7 +1008,10 @@ def policy_allows_marketplace_subscribe_on_all_resources(
     statements on Resource ``*`` (via either ``Action`` or ``NotAction``)
     covering the same action take precedence. Conditional Deny statements
     are not treated as global cancellation because the condition scope is
-    request-dependent and is not evaluated here.
+    request-dependent and is not evaluated here. Conditional Allow
+    statements are still treated as potentially allowing access on
+    ``Resource:*``, since the wildcard scope remains risky even when
+    gated by a condition.
 
     Args:
         policy_document: The IAM policy document to analyse.
