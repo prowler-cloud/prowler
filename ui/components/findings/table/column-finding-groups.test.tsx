@@ -37,12 +37,6 @@ vi.mock("@/components/shadcn", () => ({
   ),
 }));
 
-vi.mock("@/components/shadcn/tooltip", () => ({
-  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipContent: ({ children }: { children: ReactNode }) => <>{children}</>,
-  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
-}));
-
 vi.mock("@/components/ui/table", () => ({
   DataTableColumnHeader: ({
     title,
@@ -176,27 +170,6 @@ function renderImpactedResourcesCell(overrides?: Partial<FindingGroupRow>) {
   render(<div>{CellComponent({ row: { original: group } })}</div>);
 }
 
-function renderImpactedResourcesHeader() {
-  const columns = getColumnFindingGroups({
-    rowSelection: {},
-    selectableRowCount: 1,
-    onDrillDown: vi.fn(),
-  });
-
-  const impactedResourcesColumn = columns.find(
-    (col) => (col as { id?: string }).id === "impactedResources",
-  );
-  if (!impactedResourcesColumn?.header) {
-    throw new Error("impactedResources column not found");
-  }
-
-  const HeaderComponent = impactedResourcesColumn.header as (props: {
-    column: unknown;
-  }) => ReactNode;
-
-  render(<div>{HeaderComponent({ column: {} })}</div>);
-}
-
 function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
   const toggleSelected = vi.fn();
   const columns = getColumnFindingGroups({
@@ -272,24 +245,6 @@ describe("column-finding-groups — accessibility of check title cell", () => {
     });
     expect(button).toBeInTheDocument();
     expect(button.tagName.toLowerCase()).toBe("button");
-  });
-
-  it("should render the Unique Impacted Resources header with info tooltip copy", () => {
-    // Given / When
-    renderImpactedResourcesHeader();
-
-    // Then
-    expect(screen.getByText("Unique Impacted Resources")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", {
-        name: "Unique Impacted Resources info",
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Some resources, such as IAM resources, can be shared across different accounts.",
-      ),
-    ).toBeInTheDocument();
   });
 
   it("should NOT render the check title as a <p> element", () => {

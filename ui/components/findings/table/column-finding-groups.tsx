@@ -1,14 +1,9 @@
 "use client";
 
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
-import { ChevronRight, CircleAlert } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 import { Checkbox } from "@/components/shadcn";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import {
   DataTableColumnHeader,
   SeverityBadge,
@@ -217,28 +212,7 @@ export function getColumnFindingGroups({
     {
       id: "impactedResources",
       header: ({ column }) => (
-        <div className="flex items-center gap-1">
-          <DataTableColumnHeader
-            column={column}
-            title="Unique Impacted Resources"
-          />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-label="Unique Impacted Resources info"
-                className="text-text-neutral-tertiary hover:text-text-neutral-secondary inline-flex size-3.5 items-center justify-center"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <CircleAlert className="size-3.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-64 text-xs">
-              Some resources, such as IAM resources, can be shared across
-              different accounts.
-            </TooltipContent>
-          </Tooltip>
-        </div>
+        <DataTableColumnHeader column={column} title="Impacted Resources" />
       ),
       cell: ({ row }) => {
         const group = row.original;
