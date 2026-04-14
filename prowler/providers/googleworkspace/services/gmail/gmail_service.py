@@ -49,10 +49,7 @@ class Gmail(GoogleWorkspaceService):
                             self.policies.enable_mail_delegation = value.get(
                                 "enableMailDelegation"
                             )
-                            logger.debug(
-                                "Gmail mail delegation setting fetched: "
-                                f"{self.policies.enable_mail_delegation}"
-                            )
+                            logger.debug("Gmail mail delegation setting fetched.")
 
                         elif setting_type == "gmail.email_attachment_safety":
                             self.policies.encrypted_attachment_protection_consequence = value.get(
@@ -64,12 +61,7 @@ class Gmail(GoogleWorkspaceService):
                             self.policies.anomalous_attachment_protection_consequence = value.get(
                                 "anomalousAttachmentProtectionConsequence"
                             )
-                            logger.debug(
-                                "Gmail attachment safety settings fetched: "
-                                f"encrypted={self.policies.encrypted_attachment_protection_consequence}, "
-                                f"script={self.policies.script_attachment_protection_consequence}, "
-                                f"anomalous={self.policies.anomalous_attachment_protection_consequence}"
-                            )
+                            logger.debug("Gmail attachment safety settings fetched.")
 
                         elif setting_type == "gmail.links_and_external_images":
                             self.policies.enable_shortener_scanning = value.get(
@@ -82,10 +74,7 @@ class Gmail(GoogleWorkspaceService):
                                 "enableAggressiveWarningsOnUntrustedLinks"
                             )
                             logger.debug(
-                                "Gmail links and external images settings fetched: "
-                                f"shortener={self.policies.enable_shortener_scanning}, "
-                                f"image={self.policies.enable_external_image_scanning}, "
-                                f"warnings={self.policies.enable_aggressive_warnings_on_untrusted_links}"
+                                "Gmail links and external images settings fetched."
                             )
 
                         elif setting_type == "gmail.spoofing_and_authentication":
@@ -105,48 +94,33 @@ class Gmail(GoogleWorkspaceService):
                                 "groupsSpoofingConsequence"
                             )
                             logger.debug(
-                                "Gmail spoofing and authentication settings fetched: "
-                                f"domain={self.policies.domain_spoofing_consequence}, "
-                                f"employee={self.policies.employee_name_spoofing_consequence}, "
-                                f"inbound={self.policies.inbound_domain_spoofing_consequence}, "
-                                f"unauth={self.policies.unauthenticated_email_consequence}, "
-                                f"groups={self.policies.groups_spoofing_consequence}"
+                                "Gmail spoofing and authentication settings fetched."
                             )
 
                         elif setting_type == "gmail.pop_access":
                             self.policies.enable_pop_access = value.get(
                                 "enablePopAccess"
                             )
-                            logger.debug(
-                                "Gmail POP access setting fetched: "
-                                f"{self.policies.enable_pop_access}"
-                            )
+                            logger.debug("Gmail POP access setting fetched.")
 
                         elif setting_type == "gmail.imap_access":
                             self.policies.enable_imap_access = value.get(
                                 "enableImapAccess"
                             )
-                            logger.debug(
-                                "Gmail IMAP access setting fetched: "
-                                f"{self.policies.enable_imap_access}"
-                            )
+                            logger.debug("Gmail IMAP access setting fetched.")
 
                         elif setting_type == "gmail.auto_forwarding":
                             self.policies.enable_auto_forwarding = value.get(
                                 "enableAutoForwarding"
                             )
-                            logger.debug(
-                                "Gmail auto-forwarding setting fetched: "
-                                f"{self.policies.enable_auto_forwarding}"
-                            )
+                            logger.debug("Gmail auto-forwarding setting fetched.")
 
                         elif setting_type == "gmail.per_user_outbound_gateway":
                             self.policies.allow_per_user_outbound_gateway = value.get(
                                 "allowUsersToUseExternalSmtpServers"
                             )
                             logger.debug(
-                                "Gmail per-user outbound gateway setting fetched: "
-                                f"{self.policies.allow_per_user_outbound_gateway}"
+                                "Gmail per-user outbound gateway setting fetched."
                             )
 
                         elif (
@@ -157,8 +131,7 @@ class Gmail(GoogleWorkspaceService):
                                 value.get("enableImprovedSuspiciousContentDetection")
                             )
                             logger.debug(
-                                "Gmail enhanced pre-delivery scanning setting fetched: "
-                                f"{self.policies.enable_enhanced_pre_delivery_scanning}"
+                                "Gmail enhanced pre-delivery scanning setting fetched."
                             )
 
                         elif setting_type == "gmail.comprehensive_mail_storage":
@@ -166,8 +139,7 @@ class Gmail(GoogleWorkspaceService):
                                 value.get("ruleId") is not None
                             )
                             logger.debug(
-                                "Gmail comprehensive mail storage setting fetched: "
-                                f"{self.policies.comprehensive_mail_storage_enabled}"
+                                "Gmail comprehensive mail storage setting fetched."
                             )
 
                     request = service.policies().list_next(request, response)
@@ -183,13 +155,7 @@ class Gmail(GoogleWorkspaceService):
 
             self.policies_fetched = fetch_succeeded
 
-            logger.info(
-                f"Gmail policies fetched - "
-                f"Mail delegation: {self.policies.enable_mail_delegation}, "
-                f"POP access: {self.policies.enable_pop_access}, "
-                f"IMAP access: {self.policies.enable_imap_access}, "
-                f"Auto-forwarding: {self.policies.enable_auto_forwarding}"
-            )
+            logger.info("Gmail policies fetched successfully.")
 
         except Exception as error:
             self._handle_api_error(
