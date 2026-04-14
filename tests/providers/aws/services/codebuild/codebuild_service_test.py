@@ -139,7 +139,7 @@ class Test_Codebuild_Service:
     )
     @mock_aws
     def test_codebuild_service(self):
-        codebuild = Codebuild(set_mocked_aws_provider())
+        codebuild = Codebuild(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
 
         assert codebuild.session.__class__.__name__ == "Session"
         assert codebuild.service == "codebuild"

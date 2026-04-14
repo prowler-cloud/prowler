@@ -271,6 +271,8 @@ def prowler():
         categories=categories,
         resource_groups=resource_groups,
         provider=provider,
+        list_checks=getattr(args, "list_checks", False)
+        or getattr(args, "list_checks_json", False),
     )
 
     # if --list-checks-json, dump a json file and exit

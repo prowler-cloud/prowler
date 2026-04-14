@@ -10,29 +10,20 @@ class keyvault_logging_enabled(Check):
             for keyvault in key_vaults:
                 report = Check_Report_Azure(metadata=self.metadata(), resource=keyvault)
                 report.subscription = subscription_name
-                if not keyvault.monitor_diagnostic_settings:
-                    report.status = "FAIL"
-                    report.status_extended = f"There are no diagnostic settings capturing audit logs for Key Vault {keyvault.name} in subscription {subscription_name}."
-                    findings.append(report)
-                else:
-                    for diagnostic_setting in keyvault.monitor_diagnostic_settings:
-                        report.resource_name = diagnostic_setting.name
-                        report.resource_id = diagnostic_setting.id
-                        report.location = keyvault.location
-                        report.status = "FAIL"
-                        report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault.name} in subscription {subscription_name} does not have audit logging."
-                        audit = False
-                        allLogs = False
-                        for log in diagnostic_setting.logs:
-                            if log.category_group == "audit" and log.enabled:
-                                audit = True
-                            if log.category_group == "allLogs" and log.enabled:
-                                allLogs = True
-                            if audit and allLogs:
-                                report.status = "PASS"
-                                report.status_extended = f"Diagnostic setting {diagnostic_setting.name} for Key Vault {keyvault.name} in subscription {subscription_name} has audit logging."
-                                break
-
-                    findings.append(report)
+                report.status = "FAIL"
+                report.status_extended = f"Key Vault {keyvault.name} in subscription {subscription_name} does not have a diagnostic setting with audit logging."
+                for diagnostic_setting in keyvault.monitor_diagnostic_settings or []:
+                    has_audit = False
+                    has_all_logs = False
+                    for log in diagnostic_setting.logs:
+                        if log.category_group == "audit" and log.enabled:
+                            has_audit = True
+                        if log.category_group == "allLogs" and log.enabled:
+                            has_all_logs = True
+                    if has_audit and has_all_logs:
+                        report.status = "PASS"
+                        report.status_extended = f"Key Vault {keyvault.name} in subscription {subscription_name} has a diagnostic setting with audit logging."
+                        break
+                findings.append(report)
 
         return findings

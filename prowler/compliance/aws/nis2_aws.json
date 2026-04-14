@@ -1910,6 +1910,8 @@
       "Id": "11.5.4",
       "Description": "The relevant entities shall regularly review the identities for network and information systems and their users and, if no longer needed, deactivate them without delay.",
       "Checks": [
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ],

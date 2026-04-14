@@ -31,15 +31,47 @@ export function FloatingMuteButton({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
+  const [isPreparingMuteModal, setIsPreparingMuteModal] = useState(false);
+  const [mutePreparationError, setMutePreparationError] = useState<
+    string | null
+  >(null);
+
+  const handleModalOpenChange = (
+    nextOpen: boolean | ((previousOpen: boolean) => boolean),
+  ) => {
+    const resolvedOpen =
+      typeof nextOpen === "function" ? nextOpen(isModalOpen) : nextOpen;
+    setIsModalOpen(resolvedOpen);
+
+    if (!resolvedOpen) {
+      setResolvedIds([]);
+      setIsPreparingMuteModal(false);
+      setMutePreparationError(null);
+    }
+  };
 
   const handleClick = async () => {
     if (onBeforeOpen) {
+      setResolvedIds([]);
+      setMutePreparationError(null);
+      setIsPreparingMuteModal(true);
+      setIsModalOpen(true);
       setIsResolving(true);
-      const ids = await onBeforeOpen();
-      setResolvedIds(ids);
-      setIsResolving(false);
-      if (ids.length > 0) {
-        setIsModalOpen(true);
+      try {
+        const ids = await onBeforeOpen();
+        setResolvedIds(ids);
+        setMutePreparationError(
+          ids.length === 0
+            ? "No findings could be resolved for this selection. Try refreshing the page and trying again."
+            : null,
+        );
+      } catch {
+        setMutePreparationError(
+          "We couldn't prepare this mute action. Please try again.",
+        );
+      } finally {
+        setIsPreparingMuteModal(false);
+        setIsResolving(false);
       }
     } else {
       setIsModalOpen(true);
@@ -57,10 +89,12 @@ export function FloatingMuteButton({
     <>
       <MuteFindingsModal
         isOpen={isModalOpen}
-        onOpenChange={setIsModalOpen}
+        onOpenChange={handleModalOpenChange}
         findingIds={findingIds}
         onComplete={handleComplete}
         isBulkOperation={isBulkOperation}
+        isPreparing={isPreparingMuteModal}
+        preparationError={mutePreparationError}
       />
 
       <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 duration-300">

@@ -4,16 +4,14 @@ import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 
-import {
-  resolveFindingIds,
-  resolveFindingIdsByVisibleGroupResources,
-} from "@/actions/findings/findings-by-resource";
+import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { DataTable } from "@/components/ui/table";
 import { hasDateOrScanFilter } from "@/lib";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingGroups } from "./column-finding-groups";
+import { canMuteFindingGroup } from "./finding-group-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   InlineResourceContainer,
@@ -49,6 +47,9 @@ export function FindingsGroupTable({
   const [expandedGroup, setExpandedGroup] = useState<FindingGroupRow | null>(
     null,
   );
+  // Separate display state (updates on keystroke) from committed search (updates on Enter only).
+  // This prevents InlineResourceContainer from remounting on every keystroke.
+  const [resourceSearchInput, setResourceSearchInput] = useState("");
   const [resourceSearch, setResourceSearch] = useState("");
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
   const inlineRef = useRef<InlineResourceContainerHandle>(null);
@@ -85,13 +86,23 @@ export function FindingsGroupTable({
     .filter(Boolean);
 
   // Count of selectable rows (groups where not ALL findings are muted)
-  const selectableRowCount = safeData.filter(
-    (g) => !(g.mutedCount > 0 && g.mutedCount === g.resourcesTotal),
+  const selectableRowCount = safeData.filter((g) =>
+    canMuteFindingGroup({
+      resourcesFail: g.resourcesFail,
+      resourcesTotal: g.resourcesTotal,
+      muted: g.muted,
+      mutedCount: g.mutedCount,
+    }),
   ).length;
 
   const getRowCanSelect = (row: Row<FindingGroupRow>): boolean => {
     const group = row.original;
-    return !(group.mutedCount > 0 && group.mutedCount === group.resourcesTotal);
+    return canMuteFindingGroup({
+      resourcesFail: group.resourcesFail,
+      resourcesTotal: group.resourcesTotal,
+      muted: group.muted,
+      mutedCount: group.mutedCount,
+    });
   };
 
   const clearSelection = () => {
@@ -133,6 +144,9 @@ export function FindingsGroupTable({
   };
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
+    // No resources in the group → nothing to show, skip drill-down
+    if (group.resourcesTotal === 0) return;
+
     // Toggle: same group = collapse, different = switch
     if (expandedCheckId === checkId) {
       handleCollapse();
@@ -140,6 +154,7 @@ export function FindingsGroupTable({
     }
     setExpandedCheckId(checkId);
     setExpandedGroup(group);
+    setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
   };
@@ -147,6 +162,7 @@ export function FindingsGroupTable({
   const handleCollapse = () => {
     setExpandedCheckId(null);
     setExpandedGroup(null);
+    setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
   };
@@ -157,6 +173,7 @@ export function FindingsGroupTable({
     onDrillDown: handleDrillDown,
     expandedCheckId,
     hasResourceSelection,
+    filters,
   });
 
   const renderAfterRow = (row: Row<FindingGroupRow>) => {
@@ -197,8 +214,9 @@ export function FindingsGroupTable({
         searchPlaceholder={
           expandedCheckId ? "Search resources..." : "Search by name"
         }
-        controlledSearch={expandedCheckId ? resourceSearch : undefined}
-        onSearchChange={expandedCheckId ? setResourceSearch : undefined}
+        controlledSearch={expandedCheckId ? resourceSearchInput : undefined}
+        onSearchChange={expandedCheckId ? setResourceSearchInput : undefined}
+        onSearchCommit={expandedCheckId ? setResourceSearch : undefined}
         searchBadge={
           expandedGroup
             ? { label: expandedGroup.checkTitle, onDismiss: handleCollapse }
@@ -220,14 +238,8 @@ export function FindingsGroupTable({
               selectedCheckIds.length > 0
                 ? resolveGroupMuteIds(selectedCheckIds)
                 : Promise.resolve([]),
-              hasResourceSelection && expandedCheckId
-                ? resolveFindingIds({
-                    checkId: expandedCheckId,
-                    resourceUids: resourceSelection,
-                    filters,
-                    hasDateOrScanFilter: hasDateOrScan,
-                  })
-                : Promise.resolve([]),
+              // resourceSelection already contains real finding UUIDs
+              Promise.resolve(hasResourceSelection ? resourceSelection : []),
             ]);
             return [...groupIds, ...resourceIds];
           }}

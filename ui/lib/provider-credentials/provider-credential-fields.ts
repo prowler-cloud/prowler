@@ -88,6 +88,9 @@ export const ProviderCredentialFields = {
   GOOGLEWORKSPACE_CUSTOMER_ID: "customer_id",
   GOOGLEWORKSPACE_CREDENTIALS_CONTENT: "credentials_content",
   GOOGLEWORKSPACE_DELEGATED_USER: "delegated_user",
+
+  // Vercel fields
+  VERCEL_API_TOKEN: "api_token",
 } as const;
 
 // Type for credential field values
@@ -146,6 +149,7 @@ export const ErrorPointers = {
   GOOGLEWORKSPACE_CREDENTIALS_CONTENT:
     "/data/attributes/secret/credentials_content",
   GOOGLEWORKSPACE_DELEGATED_USER: "/data/attributes/secret/delegated_user",
+  VERCEL_API_TOKEN: "/data/attributes/secret/api_token",
 } as const;
 
 export type ErrorPointer = (typeof ErrorPointers)[keyof typeof ErrorPointers];
