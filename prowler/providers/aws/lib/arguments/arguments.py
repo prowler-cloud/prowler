@@ -66,6 +66,16 @@ def init_parser(self):
         help="AWS region names to run Prowler against",
         choices=AwsProvider.get_regions(partition=None),
     )
+    aws_regions_subparser.add_argument(
+        "--excluded-region",
+        "--excluded-regions",
+        nargs="+",
+        help=(
+            "AWS region names to exclude from the scan. Overrides the "
+            "PROWLER_DISALLOWED_REGIONS environment variable when set."
+        ),
+        choices=AwsProvider.get_regions(partition=None),
+    )
     # AWS Organizations
     aws_orgs_subparser = aws_parser.add_argument_group("AWS Organizations")
     aws_orgs_subparser.add_argument(
