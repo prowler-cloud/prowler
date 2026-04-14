@@ -47,10 +47,7 @@ class entra_conditional_access_policy_block_unknown_device_platforms(Check):
             if not policy.conditions.platform_conditions:
                 continue
 
-            if (
-                "all"
-                not in policy.conditions.platform_conditions.include_platforms
-            ):
+            if "all" not in policy.conditions.platform_conditions.include_platforms:
                 continue
 
             if not self.KNOWN_PLATFORMS.issubset(
