@@ -17,6 +17,8 @@ concurrency:
 env:
   API_WORKING_DIR: ./api
 
+permissions: {}
+
 jobs:
   api-security-scans:
     runs-on: ubuntu-latest
