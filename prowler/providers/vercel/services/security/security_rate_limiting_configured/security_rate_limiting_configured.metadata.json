@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure rate limiting rules to protect critical endpoints such as authentication, API routes, and form submissions. Start with conservative thresholds and adjust based on traffic patterns to avoid blocking legitimate users.",
-      "Url": "https://hub.prowler.com/checks/vercel/security_rate_limiting_configured"
+      "Url": "https://hub.prowler.com/check/security_rate_limiting_configured"
     }
   },
   "Categories": [

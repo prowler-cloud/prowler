@@ -45,6 +45,34 @@ prowler/providers/{provider}/
             └── {check_name}.metadata.json
 ```
 
+## Sensitive CLI Arguments
+
+Flags that accept secrets (tokens, passwords, API keys) MUST follow these rules:
+
+1. **Use `nargs="?"` with `default=None`** — the flag accepts an optional value for backward compatibility; the recommended path is environment variables.
+2. **Set `metavar` to the environment variable name** users should use (e.g., `metavar="GITHUB_PERSONAL_ACCESS_TOKEN"`).
+3. **Add the flag to the `SENSITIVE_ARGUMENTS` frozenset** at the top of the provider's `arguments.py`. This set is used to redact values in HTML output and warn users who pass secrets directly.
+4. **Do not add new arguments that require passing secrets as CLI values** — secrets should come from environment variables. The flag accepts a value for backward compatibility, but CLI warns users to prefer env vars.
+
+### Pattern
+
+```python
+# prowler/providers/{provider}/lib/arguments/arguments.py
+
+SENSITIVE_ARGUMENTS = frozenset({"--my-api-key", "--my-password"})
+
+
+def init_parser(self):
+    auth_subparser = parser.add_argument_group("Authentication Modes")
+    auth_subparser.add_argument(
+        "--my-api-key",
+        nargs="?",
+        default=None,
+        metavar="MY_API_KEY",
+        help="API key for authentication. Use MY_API_KEY env var instead of passing directly.",
+    )
+```
+
 ## Provider Class Template
 
 ```python

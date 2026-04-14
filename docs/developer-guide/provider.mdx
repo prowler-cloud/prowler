@@ -750,6 +750,35 @@ def init_parser(self):
     # More arguments for the provider.
 ```
 
+##### Sensitive CLI Arguments
+
+CLI flags that accept secrets (tokens, passwords, API keys) require special handling to protect credentials from leaking in HTML output and process listings:
+
+1. **Use `nargs="?"` with `default=None`** so the flag works both with and without an inline value. This allows the provider to fall back to an environment variable when no value is passed.
+2. **Add a `SENSITIVE_ARGUMENTS` frozenset** at the top of the `arguments.py` file listing every flag that accepts secret values:
+
+    ```python
+    SENSITIVE_ARGUMENTS = frozenset({"--your-provider-password", "--your-provider-token"})
+    ```
+
+    Prowler automatically discovers these frozensets and uses them to redact values in HTML output and warn users who pass secrets directly on the command line.
+
+3. **Document the environment variable** in the `help` text so users know the recommended alternative:
+
+    ```python
+    <provider_name>_parser.add_argument(
+        "--your-provider-password",
+        nargs="?",
+        default=None,
+        metavar="PASSWORD",
+        help="Password for authentication. We recommend using the YOUR_PROVIDER_PASSWORD environment variable instead.",
+    )
+    ```
+
+<Warning>
+Do not add new arguments that require passing secrets as CLI values without an environment variable fallback. Prowler CLI warns users when sensitive flags receive explicit values on the command line.
+</Warning>
+
 #### Step 5: Implement Mutelist
 
 **Explanation:**

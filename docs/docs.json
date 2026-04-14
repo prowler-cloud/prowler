@@ -98,6 +98,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
+              "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-import-findings",
               {

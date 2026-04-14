@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Ensure domain DNS records are properly configured to point to Vercel. Once DNS is validated, Vercel automatically provisions and renews SSL/TLS certificates. Check the domain configuration in the Vercel dashboard if the certificate is not being issued.",
-      "Url": "https://hub.prowler.com/checks/vercel/domain_ssl_certificate_valid"
+      "Url": "https://hub.prowler.com/check/domain_ssl_certificate_valid"
     }
   },
   "Categories": [
