@@ -6,7 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `entra_conditional_access_policy_directory_sync_account_excluded` check and ISO 27001:2022 mappings for M365 provider [(#10620)](https://github.com/prowler-cloud/prowler/pull/10620)
+- `entra_conditional_access_policy_directory_sync_account_excluded` check for M365 provider [(#10620)](https://github.com/prowler-cloud/prowler/pull/10620)
 
 ---
 
