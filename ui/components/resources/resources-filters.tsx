@@ -33,25 +33,25 @@ export const ResourcesFilters = ({
   const customFilters = [
     {
       key: "region__in",
-      labelCheckboxGroup: "Region",
+      labelCheckboxGroup: "Regions",
       values: uniqueRegions,
       index: 1,
     },
     {
       key: "service__in",
-      labelCheckboxGroup: "Service",
+      labelCheckboxGroup: "Services",
       values: uniqueServices,
       index: 2,
     },
     {
       key: "resource_type__in",
-      labelCheckboxGroup: "Resource Type",
+      labelCheckboxGroup: "Types",
       values: uniqueResourceTypes,
       index: 3,
     },
     {
       key: "groups__in",
-      labelCheckboxGroup: "Group",
+      labelCheckboxGroup: "Groups",
       values: uniqueGroups,
       labelFormatter: getGroupLabel,
       index: 4,

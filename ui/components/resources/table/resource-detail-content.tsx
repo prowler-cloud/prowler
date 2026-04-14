@@ -26,7 +26,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
-import { InfoField } from "@/components/shadcn/info-field/info-field";
+import {
+  InfoField,
+  InfoTooltip,
+} from "@/components/shadcn/info-field/info-field";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
@@ -411,13 +414,6 @@ export const ResourceDetailContent = ({
               </Tooltip>
             )}
           </div>
-
-          <span className="text-text-neutral-tertiary text-sm">
-            <span className="text-text-neutral-secondary mr-1">
-              Last updated:
-            </span>
-            <DateWithTime inline dateTime={attributes.updated_at || "-"} />
-          </span>
         </div>
       </div>
 
@@ -483,7 +479,10 @@ export const ResourceDetailContent = ({
           <div className="mb-4 flex shrink-0 items-center justify-between">
             <TabsList>
               <TabsTrigger value="findings">
-                Findings {totalFindings > 0 && `(${totalFindings})`}
+                <span className="flex items-center gap-1">
+                  Findings {totalFindings > 0 && `(${totalFindings})`}
+                  <InfoTooltip content="This table also includes muted findings" />
+                </span>
               </TabsTrigger>
               <TabsTrigger value="metadata">Metadata</TabsTrigger>
               <TabsTrigger value="tags">Tags</TabsTrigger>
