@@ -32,8 +32,6 @@
     "identity-access"
   ],
   "DependsOn": [],
-  "RelatedTo": [
-    "entra_conditional_access_policy_require_mfa_for_management_api"
-  ],
+  "RelatedTo": [],
   "Notes": "Generic helper check intended to support other Conditional Access checks. Conditional Access policies require Microsoft Entra ID P1 or P2 licenses."
 }
