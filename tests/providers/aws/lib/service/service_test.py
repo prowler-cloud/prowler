@@ -78,7 +78,9 @@ class TestAWSService:
     def test_AWSService_non_global_service_uses_profile_region(self):
         """Non-global services should use the profile region when available."""
         service_name = "s3"
-        provider = set_mocked_aws_provider(profile_region=AWS_REGION_EU_WEST_1)
+        provider = set_mocked_aws_provider(
+            audited_regions=[], profile_region=AWS_REGION_EU_WEST_1
+        )
         service = AWSService(service_name, provider)
 
         assert service.region == AWS_REGION_EU_WEST_1

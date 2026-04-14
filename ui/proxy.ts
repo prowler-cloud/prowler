@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth.config";
+import { INVITATION_ACTION_PARAM } from "@/lib/invitation-routing";
 
 const publicRoutes = [
   "/sign-in",
   "/sign-up",
+  "/invitation/accept",
   // In Cloud uncomment the following lines:
   // "/reset-password",
   // "/email-verification",
@@ -18,6 +20,22 @@ const isPublicRoute = (pathname: string): boolean => {
 // NextAuth's auth() wrapper - renamed from middleware to proxy
 export default auth((req: NextRequest & { auth: any }) => {
   const { pathname } = req.nextUrl;
+
+  // Backward compatibility: redirect old invitation links to new smart router
+  // Skip redirect when the user explicitly chose "Create an account" from the smart router
+  if (
+    pathname === "/sign-up" &&
+    req.nextUrl.searchParams.has("invitation_token") &&
+    !req.nextUrl.searchParams.has(INVITATION_ACTION_PARAM)
+  ) {
+    const acceptUrl = new URL("/invitation/accept", req.url);
+    acceptUrl.searchParams.set(
+      "invitation_token",
+      req.nextUrl.searchParams.get("invitation_token")!,
+    );
+    return NextResponse.redirect(acceptUrl);
+  }
+
   const user = req.auth?.user;
   const sessionError = req.auth?.error;
 
@@ -25,13 +43,13 @@ export default auth((req: NextRequest & { auth: any }) => {
   if (sessionError && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("error", sessionError);
-    signInUrl.searchParams.set("callbackUrl", pathname);
+    signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
     return NextResponse.redirect(signInUrl);
   }
 
   if (!user && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("callbackUrl", pathname);
+    signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
     return NextResponse.redirect(signInUrl);
   }
 

@@ -30,14 +30,26 @@ interface NotificationIndicatorProps {
   delta?: DeltaType;
   isMuted?: boolean;
   mutedReason?: string;
+  showDeltaWhenMuted?: boolean;
 }
 
 export const NotificationIndicator = ({
   delta,
   isMuted = false,
   mutedReason,
+  showDeltaWhenMuted = false,
 }: NotificationIndicatorProps) => {
-  // Muted takes precedence over delta.
+  const hasDelta = delta === DeltaValues.NEW || delta === DeltaValues.CHANGED;
+
+  if (isMuted && hasDelta && showDeltaWhenMuted) {
+    return (
+      <div className="flex shrink-0 items-center gap-1">
+        <MutedIndicator mutedReason={mutedReason} />
+        <DeltaIndicator delta={delta} />
+      </div>
+    );
+  }
+
   // Uses Popover (not Tooltip) because the content has an interactive link.
   // Radix Tooltip does not support interactive content — clicks fall through.
   if (isMuted) {
@@ -45,55 +57,63 @@ export const NotificationIndicator = ({
   }
 
   // Show dot with tooltip for new or changed findings
-  if (delta === DeltaValues.NEW || delta === DeltaValues.CHANGED) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
-          >
-            <div
-              className={cn(
-                "size-1.5 rounded-full",
-                delta === DeltaValues.NEW
-                  ? "bg-system-severity-high"
-                  : "bg-system-severity-low",
-              )}
-            />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="flex items-center gap-1 text-xs">
-            <span>
-              {delta === DeltaValues.NEW
-                ? "New finding."
-                : "Status changed since the previous scan."}
-            </span>
-            <Button
-              aria-label="Learn more about findings"
-              variant="link"
-              size="default"
-              className="text-button-primary h-auto min-w-0 p-0 text-xs"
-              asChild
-            >
-              <a
-                href={DOCS_URLS.FINDINGS_ANALYSIS}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Learn more
-              </a>
-            </Button>
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    );
+  if (hasDelta) {
+    return <DeltaIndicator delta={delta} />;
   }
 
   // No indicator - return minimal width placeholder
   return <div className="w-2 shrink-0" />;
 };
+
+function DeltaIndicator({
+  delta,
+}: {
+  delta: typeof DeltaValues.NEW | typeof DeltaValues.CHANGED;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
+        >
+          <div
+            className={cn(
+              "size-1.5 rounded-full",
+              delta === DeltaValues.NEW
+                ? "bg-system-severity-high"
+                : "bg-system-severity-low",
+            )}
+          />
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <div className="flex items-center gap-1 text-xs">
+          <span>
+            {delta === DeltaValues.NEW
+              ? "New finding."
+              : "Status changed since the previous scan."}
+          </span>
+          <Button
+            aria-label="Learn more about findings"
+            variant="link"
+            size="default"
+            className="text-button-primary h-auto min-w-0 p-0 text-xs"
+            asChild
+          >
+            <a
+              href={DOCS_URLS.FINDINGS_ANALYSIS}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Learn more
+            </a>
+          </Button>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 /** Muted indicator with hover-triggered Popover for interactive link. */
 function MutedIndicator({ mutedReason }: { mutedReason?: string }) {
