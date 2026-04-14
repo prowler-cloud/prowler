@@ -4,9 +4,15 @@ import { ColumnDef } from "@tanstack/react-table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/shadcn/button/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/date-utils";
 import type { MetaDataProps, ProviderType } from "@/types";
 import type { AttackPathScan, ScanState } from "@/types/attack-paths";
@@ -57,8 +63,16 @@ const getSelectButtonLabel = (
     return "Select";
   }
 
-  if (WAITING_STATES.includes(scan.attributes.state)) {
-    return "Waiting...";
+  if (scan.attributes.state === SCAN_STATES.SCHEDULED) {
+    return "Scheduled";
+  }
+
+  if (scan.attributes.state === SCAN_STATES.AVAILABLE) {
+    return "Queued";
+  }
+
+  if (scan.attributes.state === SCAN_STATES.EXECUTING) {
+    return "Running...";
   }
 
   if (scan.attributes.state === SCAN_STATES.FAILED) {
@@ -66,6 +80,30 @@ const getSelectButtonLabel = (
   }
 
   return "Select";
+};
+
+const getDisabledTooltip = (scan: AttackPathScan): string | null => {
+  if (scan.attributes.graph_data_ready) {
+    return null;
+  }
+
+  if (scan.attributes.state === SCAN_STATES.SCHEDULED) {
+    return "Graph will be available once this scan runs and completes.";
+  }
+
+  if (scan.attributes.state === SCAN_STATES.AVAILABLE) {
+    return "This scan is queued. Graph will be available once it completes.";
+  }
+
+  if (scan.attributes.state === SCAN_STATES.EXECUTING) {
+    return "Scan is running. Graph will be available once it completes.";
+  }
+
+  if (scan.attributes.state === SCAN_STATES.FAILED) {
+    return "This scan failed. No graph data is available.";
+  }
+
+  return null;
 };
 
 const getSelectedRowSelection = (
@@ -108,11 +146,26 @@ const getColumns = ({
       <DataTableColumnHeader column={column} title="Account" />
     ),
     cell: ({ row }) => (
-      <EntityInfo
-        cloudProvider={row.original.attributes.provider_type as ProviderType}
-        entityAlias={row.original.attributes.provider_alias}
-        entityId={row.original.attributes.provider_uid}
-      />
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "inline-block size-2 shrink-0 rounded-full",
+            row.original.attributes.graph_data_ready
+              ? "bg-green-500"
+              : "bg-transparent",
+          )}
+          aria-label={
+            row.original.attributes.graph_data_ready
+              ? "Graph data available"
+              : undefined
+          }
+        />
+        <EntityInfo
+          cloudProvider={row.original.attributes.provider_type as ProviderType}
+          entityAlias={row.original.attributes.provider_alias}
+          entityId={row.original.attributes.provider_uid}
+        />
+      </div>
     ),
     enableSorting: false,
   },
@@ -170,21 +223,37 @@ const getColumns = ({
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => {
       const isDisabled = isSelectDisabled(row.original, selectedScanId);
+      const tooltip = getDisabledTooltip(row.original);
 
-      return (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            aria-label="Select scan"
-            disabled={isDisabled}
-            variant={isDisabled ? "secondary" : "default"}
-            onClick={() => onSelectScan(row.original.id)}
-            className="w-full max-w-24"
-          >
-            {getSelectButtonLabel(row.original, selectedScanId)}
-          </Button>
-        </div>
+      const button = (
+        <Button
+          type="button"
+          aria-label="Select scan"
+          disabled={isDisabled}
+          variant={isDisabled ? "secondary" : "default"}
+          onClick={() => onSelectScan(row.original.id)}
+          className="w-full max-w-24"
+        >
+          {getSelectButtonLabel(row.original, selectedScanId)}
+        </Button>
       );
+
+      if (isDisabled && tooltip) {
+        return (
+          <div className="flex justify-end">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="w-full max-w-24" tabIndex={0}>
+                  {button}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{tooltip}</TooltipContent>
+            </Tooltip>
+          </div>
+        );
+      }
+
+      return <div className="flex justify-end">{button}</div>;
     },
     enableSorting: false,
   },

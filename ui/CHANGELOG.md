@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.23.1] (Prowler UNRELEASED)
 
+### 🔄 Changed
+
+- Attack Paths scan selection: contextual button labels based on graph availability, tooltips on disabled actions, green dot indicator for selectable scans, and a warning banner when viewing data from a previous scan cycle [(#10685)](https://github.com/prowler-cloud/prowler/pull/10685)
+
 ### 🐞 Fixed
 
 - Compliance detail page header now reflects the actual provider, alias and UID of the selected scan instead of always defaulting to AWS [(#10674)](https://github.com/prowler-cloud/prowler/pull/10674)
