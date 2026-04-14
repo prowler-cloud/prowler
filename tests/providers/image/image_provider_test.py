@@ -1199,9 +1199,7 @@ class TestRegistryListMode:
 
     @patch("prowler.providers.image.image_provider.create_registry_adapter")
     @patch("prowler.providers.common.provider.load_and_validate_config_file")
-    def test_registry_list_does_not_crash(
-        self, mock_load_config, mock_adapter_factory
-    ):
+    def test_registry_list_does_not_crash(self, mock_load_config, mock_adapter_factory):
         """Reproduce the --registry-list crash by running the same sequence
         as __main__.py: init_global_provider, get_global_provider,
         then print_credentials."""
