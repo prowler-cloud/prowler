@@ -1185,3 +1185,60 @@ class TestInitGlobalProviderRegistryEnumeration:
             # The "other/lib" repo should be filtered out by --image-filter
             assert not any("other/lib" in img for img in provider.images)
             assert len(provider.images) == 3
+
+
+class TestRegistryListMode:
+    """Regression test: `prowler image --registry <url> --registry-list` crashes.
+
+    When --registry-list is passed, ImageProvider._enumerate_registry sets
+    _listing_only = True and __init__ returns early — before calling
+    Provider.set_global_provider(self). The caller in __main__.py then calls
+    global_provider.print_credentials() on a None reference, raising
+    AttributeError: 'NoneType' object has no attribute 'print_credentials'.
+    """
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    @patch("prowler.providers.common.provider.load_and_validate_config_file")
+    def test_registry_list_does_not_crash(
+        self, mock_load_config, mock_adapter_factory
+    ):
+        """Reproduce the --registry-list crash by running the same sequence
+        as __main__.py: init_global_provider, get_global_provider,
+        then print_credentials."""
+        mock_load_config.return_value = {}
+
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["myorg/app"]
+        adapter.list_tags.return_value = ["v1.0", "latest"]
+        mock_adapter_factory.return_value = adapter
+
+        arguments = Namespace(
+            provider="image",
+            config_file=None,
+            fixer_config=None,
+            images=None,
+            image_list_file=None,
+            scanners=["vuln"],
+            image_config_scanners=None,
+            trivy_severity=None,
+            ignore_unfixed=False,
+            timeout="5m",
+            registry="myregistry.io",
+            image_filter=None,
+            tag_filter=None,
+            max_images=0,
+            registry_insecure=False,
+            registry_list_images=True,
+        )
+
+        # Reproduce the exact crash sequence from __main__.py lines 289-294:
+        #   Provider.init_global_provider(args)
+        #   global_provider = Provider.get_global_provider()
+        #   global_provider.print_credentials()
+        with mock.patch.object(Provider, "_global", None):
+            Provider.init_global_provider(arguments)
+            global_provider = Provider.get_global_provider()
+
+            # This is the line that crashes: global_provider is None so
+            # .print_credentials() raises AttributeError.
+            global_provider.print_credentials()
