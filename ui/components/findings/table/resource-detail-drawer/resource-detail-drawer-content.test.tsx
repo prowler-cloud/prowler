@@ -12,11 +12,13 @@ const {
   mockGetComplianceIcon,
   mockGetCompliancesOverview,
   mockWindowOpen,
+  mockClipboardWriteText,
   mockSearchParamsState,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
   mockGetCompliancesOverview: vi.fn(),
   mockWindowOpen: vi.fn(),
+  mockClipboardWriteText: vi.fn(),
   mockSearchParamsState: { value: "" },
 }));
 
@@ -173,6 +175,29 @@ vi.mock("@/components/findings/send-to-jira-modal", () => ({
 
 vi.mock("@/components/findings/markdown-container", () => ({
   MarkdownContainer: ({ children }: { children: ReactNode }) => children,
+}));
+
+vi.mock("@/components/shared/query-code-editor", () => ({
+  QueryCodeEditor: ({
+    ariaLabel,
+    value,
+    copyValue,
+  }: {
+    ariaLabel: string;
+    value: string;
+    copyValue?: string;
+  }) => (
+    <div data-testid="query-code-editor" data-aria-label={ariaLabel}>
+      <span>{ariaLabel}</span>
+      <span>{value}</span>
+      <button
+        type="button"
+        onClick={() => mockClipboardWriteText(copyValue ?? value)}
+      >
+        Copy editor code
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("@/actions/compliances", () => ({
@@ -456,6 +481,36 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
 
     // Then — CLI Command label must remain
     expect(allText).toContain("CLI Command");
+  });
+
+  it("should render remediation snippets with the shared code editor and copy CLI without the visual prompt", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={checkMetaWithCommands}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const editors = screen.getAllByTestId("query-code-editor");
+    await user.click(
+      within(editors[0]).getByRole("button", { name: "Copy editor code" }),
+    );
+
+    // Then
+    expect(editors).toHaveLength(3);
+    expect(mockClipboardWriteText).toHaveBeenCalledWith("aws s3 ...");
+    expect(screen.getByText("$ aws s3 ...")).toBeInTheDocument();
   });
 });
 
