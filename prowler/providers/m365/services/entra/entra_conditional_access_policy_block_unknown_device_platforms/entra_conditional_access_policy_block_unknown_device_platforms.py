@@ -47,18 +47,12 @@ class entra_conditional_access_policy_block_unknown_device_platforms(Check):
             if not policy.conditions.platform_conditions:
                 continue
 
-            included_platforms = {
-                (getattr(p, "value", p) or "").lower()
-                for p in policy.conditions.platform_conditions.include_platforms
-            }
-            if "all" not in included_platforms:
+            if "all" not in policy.conditions.platform_conditions.include_platforms:
                 continue
 
-            excluded_platforms = {
-                (getattr(p, "value", p) or "").lower()
-                for p in policy.conditions.platform_conditions.exclude_platforms
-            }
-            if not self.KNOWN_PLATFORMS.issubset(excluded_platforms):
+            if not self.KNOWN_PLATFORMS.issubset(
+                set(policy.conditions.platform_conditions.exclude_platforms)
+            ):
                 continue
 
             if (
