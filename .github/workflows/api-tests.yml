@@ -116,6 +116,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
+          update-lock: 'true'
 
       - name: Run tests with pytest
         if: steps.check-changes.outputs.any_changed == 'true'
