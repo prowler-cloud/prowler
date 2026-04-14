@@ -32,5 +32,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check includes an automated fixer that runs `Set-OrganizationConfig -DelayedDelicensingEnabled $true` via Exchange Online PowerShell. Delicensing Resiliency is only available to tenants with 5000 or more paid licenses; tenants below this threshold are automatically marked as compliant."
+  "Notes": "This check includes an automated fixer that runs `Set-OrganizationConfig -DelayedDelicensingEnabled $true` via Exchange Online PowerShell. Delicensing Resiliency is only available to tenants with 5000 or more paid licenses; trial licenses also count toward this threshold but cannot be discerned from the SDK, so tenants at or above the threshold (or with an unknown license count) are reported as a preventive FAIL and eligibility can be confirmed by running the fixer, which succeeds on qualifying tenants and fails otherwise."
 }

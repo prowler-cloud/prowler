@@ -63,12 +63,15 @@ class exchange_organization_delicensing_resiliency_enabled(Check):
                     f"required by Microsoft for this feature."
                 )
             else:
-                report.status = "MANUAL"
+                report.status = "FAIL"
                 report.status_extended = (
                     "Delicensing Resiliency is not enabled for Exchange Online. "
-                    "This feature is only available to tenants with 5000 or more "
-                    "paid licenses. Verify whether the tenant qualifies and "
-                    "enable Delicensing Resiliency if applicable."
+                    "This feature requires the tenant to have 5000 or more paid "
+                    "licenses, and trial licenses also count toward this "
+                    "threshold but cannot be discerned from the SDK, so this "
+                    "is reported as a preventive FAIL. Running the fixer will "
+                    "enable the feature when the tenant qualifies and will "
+                    "fail otherwise, confirming eligibility."
                 )
 
             findings.append(report)

@@ -43,7 +43,7 @@ class Test_exchange_organization_delicensing_resiliency_enabled:
             assert len(result) == 0
 
     def test_delicensing_resiliency_disabled_above_threshold(self):
-        """Disabled + >= 5000 total licenses -> MANUAL (can't confirm paid count)."""
+        """Disabled + >= 5000 total licenses -> FAIL (fixer confirms eligibility)."""
         exchange_client = mock.MagicMock()
         exchange_client.audited_tenant = "audited_tenant"
         exchange_client.audited_domain = DOMAIN
@@ -77,14 +77,14 @@ class Test_exchange_organization_delicensing_resiliency_enabled:
             check = exchange_organization_delicensing_resiliency_enabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "MANUAL"
-            assert "Verify whether the tenant qualifies" in result[0].status_extended
+            assert result[0].status == "FAIL"
+            assert "preventive FAIL" in result[0].status_extended
             assert result[0].resource_name == "test-org"
             assert result[0].resource_id == "org-guid"
             assert result[0].location == "global"
 
     def test_delicensing_resiliency_disabled_at_threshold(self):
-        """Disabled + exactly 5000 total licenses -> MANUAL."""
+        """Disabled + exactly 5000 total licenses -> FAIL."""
         exchange_client = mock.MagicMock()
         exchange_client.audited_tenant = "audited_tenant"
         exchange_client.audited_domain = DOMAIN
@@ -118,7 +118,7 @@ class Test_exchange_organization_delicensing_resiliency_enabled:
             check = exchange_organization_delicensing_resiliency_enabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "MANUAL"
+            assert result[0].status == "FAIL"
 
     def test_delicensing_resiliency_disabled_below_threshold(self):
         """Disabled + < 5000 total licenses -> PASS (not applicable)."""
@@ -160,7 +160,7 @@ class Test_exchange_organization_delicensing_resiliency_enabled:
             assert "4999 total licenses" in result[0].status_extended
 
     def test_delicensing_resiliency_disabled_licenses_unknown(self):
-        """Disabled + unknown license count -> MANUAL."""
+        """Disabled + unknown license count -> FAIL."""
         exchange_client = mock.MagicMock()
         exchange_client.audited_tenant = "audited_tenant"
         exchange_client.audited_domain = DOMAIN
@@ -194,8 +194,8 @@ class Test_exchange_organization_delicensing_resiliency_enabled:
             check = exchange_organization_delicensing_resiliency_enabled()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "MANUAL"
-            assert "Verify whether the tenant qualifies" in result[0].status_extended
+            assert result[0].status == "FAIL"
+            assert "preventive FAIL" in result[0].status_extended
 
     def test_delicensing_resiliency_enabled(self):
         """Enabled -> PASS regardless of license count."""
