@@ -17127,6 +17127,57 @@ class TestFindingGroupViewSet:
     @pytest.mark.parametrize(
         "endpoint_name", ["finding-group-list", "finding-group-latest"]
     )
+    @pytest.mark.parametrize(
+        "sort_field",
+        [
+            "pass_muted_count",
+            "fail_muted_count",
+            "manual_muted_count",
+            "new_fail_count",
+            "new_fail_muted_count",
+            "new_pass_count",
+            "new_pass_muted_count",
+            "new_manual_count",
+            "new_manual_muted_count",
+            "changed_fail_count",
+            "changed_fail_muted_count",
+            "changed_pass_count",
+            "changed_pass_muted_count",
+            "changed_manual_count",
+            "changed_manual_muted_count",
+        ],
+    )
+    def test_finding_groups_sort_by_counter_fields(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        sort_field,
+    ):
+        """All counter fields are accepted as sort parameters (asc and desc)."""
+        params = {"sort": f"-{sort_field}"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        desc_values = [item["attributes"][sort_field] for item in data]
+        assert desc_values == sorted(desc_values, reverse=True)
+
+        params["sort"] = sort_field
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        asc_values = [
+            item["attributes"][sort_field] for item in response.json()["data"]
+        ]
+        assert asc_values == sorted(asc_values)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
     def test_finding_groups_delta_status_breakdown(
         self, authenticated_client, finding_groups_fixture, endpoint_name
     ):
