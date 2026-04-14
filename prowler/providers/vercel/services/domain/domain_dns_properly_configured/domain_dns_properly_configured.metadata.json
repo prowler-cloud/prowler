@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Update DNS records at your domain registrar to correctly point to Vercel. Use a CNAME record for subdomains or an A record for apex domains. Verify the configuration in the Vercel dashboard after making changes.",
-      "Url": "https://hub.prowler.com/checks/vercel/domain_dns_properly_configured"
+      "Url": "https://hub.prowler.com/check/domain_dns_properly_configured"
     }
   },
   "Categories": [
