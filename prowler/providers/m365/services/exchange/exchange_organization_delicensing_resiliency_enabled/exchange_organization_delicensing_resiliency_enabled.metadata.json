@@ -13,8 +13,7 @@
   "Risk": "Without **Delicensing Resiliency**, removing or reassigning an Exchange Online license causes **immediate mailbox inaccessibility**. This can lead to data loss, business disruption, and inability to recover mailbox contents during organizational changes such as role transitions or license optimizations.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/exchange/recipients-in-exchange-online/manage-user-mailboxes/delicensing-resiliency",
-    "https://maester.dev/docs/tests/MT.1083"
+    "https://learn.microsoft.com/en-us/exchange/recipients-in-exchange-online/manage-user-mailboxes/delicensing-resiliency"
   ],
   "Remediation": {
     "Code": {
