@@ -163,6 +163,8 @@ These resources help ensure that AI-assisted contributions maintain consistency 
 
 All dependencies are listed in the `pyproject.toml` file.
 
+The SDK keeps direct dependencies pinned to exact versions, while `poetry.lock` records the full resolved dependency tree and the artifact hashes for every package. Use `poetry install` from the lock file instead of ad-hoc `pip` installs when you need a reproducible environment.
+
 For proper code documentation, refer to the following and follow the code documentation practices presented there: [Google Python Style Guide - Comments and Docstrings](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings).
 
 <Note>
