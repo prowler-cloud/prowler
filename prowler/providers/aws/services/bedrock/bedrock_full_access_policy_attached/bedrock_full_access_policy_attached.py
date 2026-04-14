@@ -22,14 +22,15 @@ class bedrock_full_access_policy_attached(Check):
         if iam_client.roles:
             for role in iam_client.roles:
                 if not role.is_service_role:
-                    report = Check_Report_AWS(
-                        metadata=self.metadata(), resource=role
-                    )
+                    report = Check_Report_AWS(metadata=self.metadata(), resource=role)
                     report.region = iam_client.region
                     report.status = "PASS"
                     report.status_extended = f"IAM Role {role.name} does not have AmazonBedrockFullAccess policy attached."
                     for policy in role.attached_policies:
-                        if policy["PolicyName"] == "AmazonBedrockFullAccess":
+                        if (
+                            policy["PolicyArn"]
+                            == "arn:aws:iam::aws:policy/AmazonBedrockFullAccess"
+                        ):
                             report.status = "FAIL"
                             report.status_extended = f"IAM Role {role.name} has AmazonBedrockFullAccess policy attached."
                             break
