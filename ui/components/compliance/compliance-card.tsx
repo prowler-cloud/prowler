@@ -32,7 +32,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   scanId,
   complianceId,
   id,
-  selectedScan,
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -64,17 +63,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     params.set("complianceId", id);
     params.set("version", version);
     params.set("scanId", scanId);
-
-    if (selectedScan) {
-      params.set(
-        "scanData",
-        JSON.stringify({
-          id: selectedScan.id,
-          providerInfo: selectedScan.providerInfo,
-          attributes: selectedScan.attributes,
-        }),
-      );
-    }
 
     const regionFilter = searchParams.get("filter[region__in]");
     if (regionFilter) {

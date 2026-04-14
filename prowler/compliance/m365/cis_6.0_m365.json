@@ -873,7 +873,9 @@
     {
       "Id": "4.1",
       "Description": "Compliance policies are sets of rules and conditions that are used to evaluate the configuration of managed devices. These policies can help secure organizational data and resources from devices that don't meet those configuration requirements. The recommended state is Mark devices with no compliance policy assigned as Not compliant.",
-      "Checks": [],
+      "Checks": [
+        "intune_device_compliance_policy_unassigned_devices_not_compliant_by_default"
+      ],
       "Attributes": [
         {
           "Section": "4 Microsoft Intune admin center",
