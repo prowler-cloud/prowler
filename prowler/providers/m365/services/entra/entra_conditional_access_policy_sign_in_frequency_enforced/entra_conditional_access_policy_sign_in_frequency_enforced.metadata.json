@@ -13,8 +13,7 @@
   "Risk": "Without sign-in frequency enforcement on non-corporate devices, user sessions may persist indefinitely on unmanaged devices.\n\n- **Session hijacking** on shared or public devices becomes more likely\n- **Stolen session tokens** remain valid for extended periods\n- **Unauthorized access** from compromised personal devices",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-session-lifetime",
-    "https://maester.dev/docs/tests/MT.1018"
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-session-lifetime"
   ],
   "Remediation": {
     "Code": {
