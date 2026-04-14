@@ -46,7 +46,6 @@
       "Id": "1.1.3",
       "Description": "Ensure multifactor authentication is enabled for all users",
       "Checks": [
-        "entra_conditional_access_policy_mfa_enforced_for_guest_users",
         "entra_users_mfa_enabled"
       ],
       "Attributes": [
