@@ -64,19 +64,6 @@ runs:
         echo "Updated resolved_reference:"
         grep -A2 -B2 "resolved_reference" poetry.lock
 
-    - name: Update SDK resolved_reference to latest commit (prowler repo on push)
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'prowler-cloud/prowler'
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: |
-        LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
-        echo "Latest commit hash: $LATEST_COMMIT"
-        sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
-          s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
-        }' poetry.lock
-        echo "Updated resolved_reference:"
-        grep -A2 -B2 "resolved_reference" poetry.lock
-
     - name: Update poetry.lock (prowler repo only)
       if: github.repository == 'prowler-cloud/prowler' && inputs.update-lock == 'true'
       shell: bash
