@@ -293,6 +293,8 @@
         }
       ],
       "Checks": [
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_no_expired_server_certificates_stored"
@@ -311,14 +313,15 @@
         }
       ],
       "Checks": [
-        "iam_policy_allows_privilege_escalation",
+        "accessanalyzer_enabled",
+        "bedrock_full_access_policy_attached",
+        "iam_group_administrator_access_policy",
         "iam_inline_policy_allows_privilege_escalation",
         "iam_no_custom_policy_permissive_role_assumption",
-        "iam_user_two_active_access_key",
-        "accessanalyzer_enabled",
+        "iam_policy_allows_privilege_escalation",
         "iam_role_administratoraccess_policy",
         "iam_user_administrator_access_policy",
-        "iam_group_administrator_access_policy"
+        "iam_user_two_active_access_key"
       ]
     },
     {
@@ -335,6 +338,8 @@
       ],
       "Checks": [
         "iam_rotate_access_key_90_days",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "accessanalyzer_enabled_without_findings"

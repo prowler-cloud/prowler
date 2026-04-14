@@ -1,9 +1,12 @@
 import re
+from datetime import datetime, timezone
 from ipaddress import ip_address, ip_network
 from typing import Optional, Tuple
 
+from dateutil.parser import parse
 from py_iam_expand.actions import InvalidActionHandling, expand_actions
 
+from prowler.lib.check.models import Check_Report_AWS
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import read_aws_regions_file
 
@@ -1031,3 +1034,47 @@ def has_codebuild_trusted_principal(trust_policy: dict) -> bool:
         )
         for s in statements
     )
+
+
+def find_bedrock_service(last_accessed_services: list[dict]) -> Optional[dict]:
+    """Return the Bedrock entry from a service last accessed list."""
+    for service in last_accessed_services:
+        if service.get("ServiceNamespace") == "bedrock":
+            return service
+    return None
+
+
+def evaluate_bedrock_staleness(
+    report: Check_Report_AWS,
+    bedrock_service: dict,
+    max_days: int,
+    identity_name: str,
+    identity_type: str,
+) -> None:
+    """Populate a check report based on Bedrock access recency."""
+    last_authenticated = bedrock_service.get("LastAuthenticated")
+    if last_authenticated is None:
+        report.status = "FAIL"
+        report.status_extended = (
+            f"IAM {identity_type} {identity_name} has Bedrock permissions "
+            f"but has never used them."
+        )
+        return
+
+    if isinstance(last_authenticated, str):
+        last_authenticated = parse(last_authenticated)
+
+    days_since_access = (datetime.now(timezone.utc) - last_authenticated).days
+
+    if days_since_access > max_days:
+        report.status = "FAIL"
+        report.status_extended = (
+            f"IAM {identity_type} {identity_name} has not accessed Bedrock "
+            f"in {days_since_access} days (threshold: {max_days} days)."
+        )
+    else:
+        report.status = "PASS"
+        report.status_extended = (
+            f"IAM {identity_type} {identity_name} accessed Bedrock "
+            f"{days_since_access} days ago (threshold: {max_days} days)."
+        )

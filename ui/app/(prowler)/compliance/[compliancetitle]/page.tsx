@@ -82,23 +82,35 @@ export default async function ComplianceDetail({
         },
       }),
       getComplianceAttributes(complianceId),
-      selectedScanId ? getScan(selectedScanId) : Promise.resolve(null),
+      selectedScanId
+        ? getScan(selectedScanId, { include: "provider" })
+        : Promise.resolve(null),
     ]);
 
   if (selectedScanResponse?.data) {
     const scan = selectedScanResponse.data;
-    selectedScan = {
-      id: scan.id,
-      providerInfo: {
-        provider: scan.providerInfo?.provider || "aws",
-        alias: scan.providerInfo?.alias,
-        uid: scan.providerInfo?.uid,
-      },
-      attributes: {
-        name: scan.attributes.name,
-        completed_at: scan.attributes.completed_at,
-      },
-    };
+    const providerId = scan.relationships?.provider?.data?.id;
+    const providerData = providerId
+      ? selectedScanResponse.included?.find(
+          (item: { type: string; id: string }) =>
+            item.type === "providers" && item.id === providerId,
+        )
+      : undefined;
+
+    if (providerData) {
+      selectedScan = {
+        id: scan.id,
+        providerInfo: {
+          provider: providerData.attributes.provider,
+          alias: providerData.attributes.alias,
+          uid: providerData.attributes.uid,
+        },
+        attributes: {
+          name: scan.attributes.name,
+          completed_at: scan.attributes.completed_at,
+        },
+      };
+    }
   }
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];

@@ -5282,6 +5282,8 @@
         "iam_password_policy_reuse_24",
         "cognito_user_pool_blocks_potential_malicious_sign_in_attempts",
         "cognito_user_pool_blocks_compromised_credentials_sign_in_attempts",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_secret_unused"
@@ -5568,6 +5570,7 @@
         }
       ],
       "Checks": [
+        "bedrock_full_access_policy_attached",
         "iam_policy_allows_privilege_escalation",
         "iam_role_administratoraccess_policy",
         "iam_policy_cloudshell_admin_not_attached",
@@ -6350,6 +6353,8 @@
         "iam_role_administratoraccess_policy",
         "iam_role_cross_account_readonlyaccess_policy",
         "iam_rotate_access_key_90_days",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
         "iam_user_accesskey_unused",
         "iam_user_administrator_access_policy",
         "iam_user_console_access_unused",

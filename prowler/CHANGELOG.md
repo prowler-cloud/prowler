@@ -2,6 +2,15 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.24.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `bedrock_full_access_policy_attached` check for AWS provider [(#10577)](https://github.com/prowler-cloud/prowler/pull/10577)
+- `iam_role_access_not_stale_to_bedrock` and `iam_user_access_not_stale_to_bedrock` checks for AWS provider [(#10536)](https://github.com/prowler-cloud/prowler/pull/10536)
+
+---
+
 ## [5.23.0] (Prowler v5.23.0)
 
 ### 🚀 Added
