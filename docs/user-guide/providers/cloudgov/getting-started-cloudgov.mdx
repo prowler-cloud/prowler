@@ -1,0 +1,202 @@
+# Deploy Prowler API on Cloud.gov
+
+This guide prepares Prowler API for deployment on Cloud.gov as a Cloud Foundry application using the Python buildpack, Amazon RDS for PostgreSQL, Amazon ElastiCache for Redis, and Cloud.gov UAA for authentication.
+
+Use this page together with:
+
+* [Required Deployment Files](./required-files.mdx)
+* [Common Issues](./common-issues.mdx)
+* [Authentication](./authentication.mdx)
+
+## Scope
+
+This deployment path covers:
+
+* Prowler API web process
+* Celery worker process
+* Celery beat process
+* Cloud.gov UAA login for Django
+* Cloud.gov managed PostgreSQL and Redis services
+
+This guide does not deploy Prowler UI. The current manifest deploys the Python backend components only.
+
+## Prerequisites
+
+Before starting, make sure the following requirements are met:
+
+* `cf` CLI is installed and authenticated against `https://api.fr.cloud.gov`
+* The target organization has enough quota for one PostgreSQL instance and one Redis instance
+* The deployment operator has either `OrgManager` privileges to create a new space, or an existing development space where services can be provisioned
+* A Cloud.gov route is reserved for the API application
+
+## Create or Target a Space
+
+To create a dedicated space, an `OrgManager` must run:
+
+```console
+cf target -o gsa-10x-prototyping
+cf create-space prowler-dev
+cf target -o gsa-10x-prototyping -s prowler-dev
+```
+
+During this implementation, the authenticated user was a `SpaceDeveloper` but not an `OrgManager`, so `cf create-space prowler-dev` was rejected by Cloud Foundry RBAC. Because of that, service provisioning was completed in the existing `tts-pic-dev` space.
+
+## Configure Space Egress
+
+New Cloud.gov spaces start with `closed-egress`. Prowler API needs both brokered-service access and public internet access:
+
+* `trusted_local_networks_egress` for Cloud.gov brokered RDS and Redis
+* `public_networks_egress` for external cloud provider APIs and package staging
+
+An `OrgManager` or `SpaceManager` should run:
+
+```console
+cf bind-security-group trusted_local_networks_egress gsa-10x-prototyping --space prowler-dev
+cf bind-security-group public_networks_egress gsa-10x-prototyping --space prowler-dev
+```
+
+## Provision Backend Services
+
+Target the deployment space first:
+
+```console
+cf target -o gsa-10x-prototyping -s prowler-dev
+```
+
+Create PostgreSQL, Redis, and the Cloud.gov identity provider instance:
+
+```console
+cf create-service aws-rds micro-psql prowler-api-db -c '{"version":"16"}'
+cf create-service aws-elasticache-redis redis-dev prowler-api-redis
+cf create-service cloud-gov-identity-provider oauth-client prowler-api-uaa
+```
+
+Provisioning notes:
+
+* `micro-psql` is appropriate for development and prototyping
+* `redis-dev` is the lowest-cost ElastiCache plan intended for non-production use
+* RDS provisioning can take several minutes; check with `cf services`
+
+These service instances were created in `tts-pic-dev` during this work:
+
+* `prowler-api-db`
+* `prowler-api-redis`
+* `prowler-api-uaa`
+
+At the time of provisioning, the UAA client was ready immediately, while PostgreSQL and Redis were still in `create in progress`.
+
+## Create the Cloud.gov UAA Client Credentials
+
+Cloud.gov UAA credentials are retrieved through a service key, not through a bound app environment.
+
+Create a service key with the exact redirect URIs used by `django-uaa`:
+
+```console
+cf create-service-key prowler-api-uaa prowler-api-login \
+	-c '{"redirect_uri":["https://prowler-api-gsa-10x-prototyping.app.cloud.gov/auth/callback","https://prowler-api-gsa-10x-prototyping.app.cloud.gov/"]}'
+```
+
+Retrieve the generated credentials:
+
+```console
+cf service-key prowler-api-uaa prowler-api-login
+```
+
+Copy `client_id` and `client_secret` into the Cloud Foundry vars file described below.
+
+## Create the Deployment Files Locally
+
+For an upstream contribution, keep the repository free of Cloud.gov-only deployment artifacts and recreate them locally when needed.
+
+Create the required files from the inline templates in [Required Deployment Files](./required-files.mdx):
+
+* `manifest.yml`
+* `cloudgov-vars.yml`
+* `api/Procfile`
+* `api/runtime.txt`
+* `api/requirements.txt`
+* `api/bin/cloudgov-web.sh`
+* `api/bin/cloudgov-worker.sh`
+* `api/bin/cloudgov-beat.sh`
+
+## Prepare the Variables File
+
+Create `cloudgov-vars.yml` locally from the template in [Required Deployment Files](./required-files.mdx). Do not commit this file.
+
+Set the following values in `cloudgov-vars.yml`:
+
+* `api_route`
+* `uaa_client_id`
+* `uaa_client_secret`
+* `uaa_approved_domains`
+* `django_secret_key`
+* `django_secrets_encryption_key`
+* `django_token_signing_key`
+* `django_token_verifying_key`
+
+The signing and verifying keys must be an RSA key pair because Prowler API is configured for `RS256` JWT signing.
+
+## Push the Applications
+
+Once the services are ready, deploy all three processes with:
+
+```console
+cf push --vars-file cloudgov-vars.yml
+```
+
+For iterative debugging, deploy only the web process first:
+
+```console
+cf push prowler-api-web --vars-file cloudgov-vars.yml
+```
+
+The manifest creates:
+
+* `prowler-api-web`
+* `prowler-api-worker`
+* `prowler-api-beat`
+
+The web process starts Gunicorn with production settings. Migrations are disabled during normal startup to avoid race conditions when scaling multiple instances.
+
+Run migrations as a one-off task instead of on every web restart:
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+	--command "sh -lc 'cd src/backend && RUN_DB_MIGRATIONS=1 python manage.py migrate'"
+```
+
+The worker and beat processes use the same codebase and service bindings without a public route.
+
+## Verify the Deployment
+
+Use the following commands after the push:
+
+```console
+cf apps
+cf services
+cf logs prowler-api-web --recent
+cf logs prowler-api-worker --recent
+cf logs prowler-api-beat --recent
+```
+
+To confirm authentication redirects correctly, open:
+
+```text
+https://prowler-api-gsa-10x-prototyping.app.cloud.gov/auth/login
+```
+
+## Operational Notes
+
+Keep the following platform details in mind:
+
+* Cloud.gov RDS PostgreSQL 15 and 16 require SSL; the production settings now enforce `sslmode=require` when `VCAP_SERVICES` is present
+* The Redis broker binding is consumed from `VCAP_SERVICES`, including `rediss://` URIs when TLS is enabled
+* `VCAP_APPLICATION` is now used to extend Django allowed hosts and CORS origins automatically for Cloud Foundry routes
+* If Attack Paths is required, Neo4j must be supplied separately because Cloud.gov does not provide a managed Neo4j broker
+* If Neo4j is not used, leave the Neo4j environment variables empty in the manifest
+
+For quota, staging, runtime, and startup issues discovered during this deployment, refer to [Common Issues](./common-issues.mdx).
+
+## Next Steps
+
+After the backend is stable on Cloud.gov, the next work item is deploying or fronting Prowler UI so the web application can consume the Cloud.gov-hosted API route.

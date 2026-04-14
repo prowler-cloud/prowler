@@ -1,0 +1,18 @@
+api_route: prowler-api-gsa-10x-prototyping.app.cloud.gov
+uaa_client_id: replace-with-cf-service-key-client-id
+uaa_client_secret: replace-with-cf-service-key-client-secret
+uaa_approved_domains: gsa.gov
+uaa_login_redirect_url: /
+django_secret_key: replace-with-django-secret-key
+django_secrets_encryption_key: replace-with-fernet-key
+django_token_signing_key: |
+  -----BEGIN PRIVATE KEY-----
+  replace-with-rs256-private-key
+  -----END PRIVATE KEY-----
+django_token_verifying_key: |
+  -----BEGIN PUBLIC KEY-----
+  replace-with-rs256-public-key
+  -----END PUBLIC KEY-----
+ui_route: prowler-ui-gsa-10x-prototyping.app.cloud.gov
+ui_auth_secret: replace-with-nextauth-secret
+egress_proxy_url: http://<proxy-username>:<proxy-password>@<org>-<space>-egress-egress-proxy.apps.internal:8080

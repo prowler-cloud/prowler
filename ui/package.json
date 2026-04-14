@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && npm run postbuild",
+    "postbuild": "cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && mv .next/standalone/node_modules .next/standalone/.node_modules && rm -f .next/standalone/package.json",
     "start": "next start",
     "start:standalone": "node .next/standalone/server.js",
     "deps:log": "node scripts/update-dependency-log.js",

@@ -1,9 +1,9 @@
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.db import transaction
 
+from api.account_bootstrap import provision_default_tenant_access
 from api.db_router import MainRouter
-from api.db_utils import rls_transaction
-from api.models import Membership, Role, Tenant, User, UserRoleRelationship
+from api.models import User
 
 
 class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -41,30 +41,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
                 if social_account_name:
                     user.name = social_account_name
                     user.save(using=MainRouter.admin_db)
-
-                tenant = Tenant.objects.using(MainRouter.admin_db).create(
-                    name=f"{user.email.split('@')[0]} default tenant"
-                )
-                with rls_transaction(str(tenant.id)):
-                    Membership.objects.using(MainRouter.admin_db).create(
-                        user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
-                    )
-                    role = Role.objects.using(MainRouter.admin_db).create(
-                        name="admin",
-                        tenant_id=tenant.id,
-                        manage_users=True,
-                        manage_account=True,
-                        manage_billing=True,
-                        manage_providers=True,
-                        manage_integrations=True,
-                        manage_scans=True,
-                        unlimited_visibility=True,
-                    )
-                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                        user=user,
-                        role=role,
-                        tenant_id=tenant.id,
-                    )
+                provision_default_tenant_access(user)
             else:
                 request.session["saml_user_created"] = str(user.id)
 

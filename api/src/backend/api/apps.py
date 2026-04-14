@@ -12,6 +12,7 @@ logger = logging.getLogger(BackendLogger.API)
 
 SIGNING_KEY_ENV = "DJANGO_TOKEN_SIGNING_KEY"
 VERIFYING_KEY_ENV = "DJANGO_TOKEN_VERIFYING_KEY"
+DISABLE_NEO4J_INIT_ENV = "DISABLE_NEO4J_INIT"
 
 PRIVATE_KEY_FILE = "jwt_private.pem"
 PUBLIC_KEY_FILE = "jwt_public.pem"
@@ -26,6 +27,12 @@ _keys_initialized = False  # Flag to prevent multiple executions within the same
 class ApiConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "api"
+
+    @staticmethod
+    def _is_neo4j_configured() -> bool:
+        neo4j_settings = settings.DATABASES.get("neo4j", {})
+        required_fields = ("HOST", "PORT", "USER", "PASSWORD")
+        return all(neo4j_settings.get(field) for field in required_fields)
 
     def ready(self):
         from api import schema_extensions  # noqa: F401
@@ -66,6 +73,12 @@ class ApiConfig(AppConfig):
             logger.info(
                 "Skipping Neo4j initialization because tests, some Django commands or Celery"
             )
+
+        elif env.bool(DISABLE_NEO4J_INIT_ENV, default=False):
+            logger.info("Skipping Neo4j initialization because it is disabled")
+
+        elif not self._is_neo4j_configured():
+            logger.info("Skipping Neo4j initialization because Neo4j is not configured")
 
         else:
             graph_database.init_driver()

@@ -1,0 +1,373 @@
+# Configure Cloud.gov Authentication
+
+Prowler API now supports Cloud.gov authentication through `cg-django-uaa`, the Django integration maintained for Cloud.gov UAA.
+
+## Authentication Model
+
+The Cloud.gov authentication flow is configured with the following behavior:
+
+* `uaa_client` is enabled only when `CLOUDGOV_UAA_ENABLED=true`
+* Django routes `/auth/login` and `/auth/callback` are exposed through `uaa_client.urls`
+* `uaa_client.middleware.UaaRefreshMiddleware` refreshes short-lived Cloud.gov access tokens for authenticated browser sessions
+* A custom backend, `api.cloudgov.authentication.ProwlerUaaBackend`, subclasses `uaa_client.authentication.UaaBackend`
+
+## Why a Custom UAA Backend Is Required
+
+The default `django-uaa` backend assumes a standard Django user model and only auto-creates users when the email domain is approved. Prowler requires additional bootstrap actions when a new user is created:
+
+* Create the initial tenant
+* Create an owner membership
+* Create the tenant-scoped `admin` role
+* Link the new user to that role
+
+To keep that behavior consistent with existing social login providers, the repository now uses a shared helper:
+
+* `api.account_bootstrap.provision_default_tenant_access`
+
+That helper is used by both:
+
+* `ProwlerSocialAccountAdapter` for social logins
+* `ProwlerUaaBackend` for Cloud.gov UAA logins
+
+## Required Environment Variables
+
+The full set of environment variables required for Cloud.gov authentication:
+
+```env
+# Enable the UAA authentication backend
+CLOUDGOV_UAA_ENABLED=true
+
+# Cloud.gov identity-provider service key credentials
+UAA_CLIENT_ID=<cloud.gov service key client_id>
+UAA_CLIENT_SECRET=<cloud.gov service key client_secret>
+
+# Cloud.gov UAA endpoints (these values are fixed for all cloud.gov environments)
+UAA_AUTH_URL=https://login.fr.cloud.gov/oauth/authorize
+UAA_TOKEN_URL=https://uaa.fr.cloud.gov/oauth/token
+
+# Comma-separated list of email domains allowed to self-register on first login
+UAA_APPROVED_DOMAINS=gsa.gov
+
+# After UAA callback, redirect to the Prowler JWT bridge view
+UAA_LOGIN_REDIRECT_URL=/auth/complete/cloudgov/
+
+# Optional: map specific email addresses to named roles (JSON object)
+# Keys are role names; values are lists of email addresses
+# Example: {"admin": ["user@agency.gov"], "viewer": ["reader@agency.gov"]}
+UAA_EMAIL_ROLE_MAP={"admin":["user@agency.gov"]}
+
+# The public URL of the Prowler UI (used to build the post-auth redirect)
+AUTH_URL=https://<ui-route>
+
+# The Next.js callback that receives the short-lived SAML token after login
+SAML_SSO_CALLBACK_URL=https://<ui-route>/api/auth/callback/saml
+```
+
+`UAA_APPROVED_DOMAINS` controls which email domains may be auto-created on first login. If this value is empty, users must already exist in the database before authenticating.
+
+`UAA_EMAIL_ROLE_MAP` takes precedence over domain-based role assignment. Any email address listed there is granted the specified role regardless of `UAA_APPROVED_DOMAINS`.
+
+## Setting Variables in Cloud Foundry
+
+Cloud Foundry environment variables should be managed through a manifest and a separate variables file rather than `cf set-env`, so that values are version-controlled and reproducible.
+
+### Manifest pattern (`manifest.yml`)
+
+Interpolate secret values with `((variable_name))` placeholders:
+
+```yaml
+env:
+  CLOUDGOV_UAA_ENABLED: true
+  UAA_CLIENT_ID: ((uaa_client_id))
+  UAA_CLIENT_SECRET: ((uaa_client_secret))
+  UAA_AUTH_URL: https://login.fr.cloud.gov/oauth/authorize
+  UAA_TOKEN_URL: https://uaa.fr.cloud.gov/oauth/token
+  UAA_APPROVED_DOMAINS: ((uaa_approved_domains))
+  UAA_LOGIN_REDIRECT_URL: /auth/complete/cloudgov/
+  UAA_EMAIL_ROLE_MAP: ((uaa_email_role_map))
+  AUTH_URL: https://((ui_route))
+  SAML_SSO_CALLBACK_URL: https://((ui_route))/api/auth/callback/saml
+```
+
+### Variables file (`cloudgov-vars.yml`)
+
+Create this file locally and **do not commit it**. It holds the actual secret values:
+
+```yaml
+uaa_client_id: <client_id from service key>
+uaa_client_secret: <client_secret from service key>
+uaa_approved_domains: gsa.gov
+uaa_email_role_map: '{"admin":["user@agency.gov"]}'
+ui_route: prowler-ui-<org>-<space>.app.cloud.gov
+api_route: prowler-api-<org>-<space>.app.cloud.gov
+```
+
+Push with:
+
+```bash
+cf push prowler-api-web --vars-file cloudgov-vars.yml
+```
+
+### Tuning gunicorn workers
+
+The default gunicorn worker count is `cpu_count() * 2 + 1`. Inside a 1 GB Cloud Foundry container the Prowler stack (~200 MB per worker) will trigger the OOM killer before that many workers can start. Set `DJANGO_WORKERS` to avoid this:
+
+```yaml
+# manifest.yml
+env:
+  DJANGO_WORKERS: 2
+```
+
+Or apply it without a full restage:
+
+```bash
+cf set-env prowler-api-web DJANGO_WORKERS 2
+cf restart prowler-api-web
+```
+
+## Network Egress Requirements
+
+Cloud Foundry uses **Application Security Groups (ASGs)** to control outbound TCP connections from app containers. The UAA callback flow requires a **server-side** POST from the Django container to `uaa.fr.cloud.gov:443` to exchange the authorization code for an access token. If the space does not have outbound access to public networks, the `/auth/callback` request returns `500` with:
+
+```
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='uaa.fr.cloud.gov', port=443):
+  Max retries exceeded with url: /oauth/token
+  (Caused by NewConnectionError('[Errno 111] Connection refused'))
+```
+
+### Cloud.gov egress proxy pattern
+
+Cloud.gov provides a paired `-egress` space for every environment. Each egress space contains a running `egress-proxy` that has `public_networks_egress` bound. Apps in the restricted space route outbound traffic through this proxy rather than binding the ASG directly (which requires Org Manager rights):
+
+| Space | Outbound internet |
+|-------|------------------|
+| `tts-pic-dev` | ✗ blocked |
+| `tts-pic-dev-egress` | ✓ allowed |
+| `tts-pic-staging` | ✗ blocked |
+| `tts-pic-staging-egress` | ✓ allowed |
+| `tts-pic-prod` | ✗ blocked |
+| `tts-pic-prod-egress` | ✓ allowed |
+
+### Step 1 – Allow container-to-proxy traffic
+
+Add a network policy from each API app to the egress proxy (the proxy name is `egress-proxy` in the corresponding egress space):
+
+```bash
+cf add-network-policy prowler-api-web egress-proxy -s tts-pic-dev-egress --protocol tcp --port 8080
+cf add-network-policy prowler-api-worker egress-proxy -s tts-pic-dev-egress --protocol tcp --port 8080
+cf add-network-policy prowler-api-beat egress-proxy -s tts-pic-dev-egress --protocol tcp --port 8080
+```
+
+> **Port 8080, not 61443:** CF's internal TLS proxy uses port 61443 for container-to-container traffic. Because prowler-api-web's own CF container also exposes an inbound TLS proxy on port 61443, outbound connections to that same port are silently looped back to the container itself. Connecting to port 8080 (Caddy's actual `$PORT`) bypasses this conflict.
+
+### Step 2 – Set proxy environment variables
+
+Python's `requests` library (used by `cg-django-uaa` for the token exchange) respects the standard `HTTPS_PROXY` / `https_proxy` environment variables. Add these to the manifest:
+
+```yaml
+# manifest.yml
+env:
+  https_proxy: ((egress_proxy_url))
+  HTTPS_PROXY: ((egress_proxy_url))
+  http_proxy: ((egress_proxy_url))
+  HTTP_PROXY: ((egress_proxy_url))
+```
+
+And add the resolved URL to `cloudgov-vars.yml`:
+
+```yaml
+# cloudgov-vars.yml
+egress_proxy_url: http://<proxy-username>:<proxy-password>@<org>-<space>-egress-egress-proxy.apps.internal:8080
+# Example for tts-pic-dev:
+# egress_proxy_url: http://auth:Li0EOF23tFgeSx9f@gsa-10x-prototyping-tts-pic-dev-egress-egress-proxy.apps.internal:8080
+```
+
+The Caddy proxy uses `probe_resistance` — requests without valid credentials receive a `RemoteDisconnected` error rather than a `407`. Retrieve the credentials from the egress-proxy app's environment:
+
+```bash
+cf target -s <space>-egress
+cf env egress-proxy | grep PROXY_USERNAME
+cf env egress-proxy | grep PROXY_PASSWORD
+```
+
+Match the username to the ACL block whose `allow` list covers the destinations you need:
+
+| Username | Allowed destinations |
+|----------|---------------------|
+| `auth` | `*.cloud.gov`, `uaa.fr.cloud.gov`, `login.fr.cloud.gov`, `idp.int.identitysandbox.gov` |
+| `workflow` | `*.amazonaws.com`, `*.cloud.gov`, `uaa.fr.cloud.gov`, `*.innovation.gov` |
+| `astro` | `*.app.cloud.gov`, `*.innovation.gov` |
+
+> **Note:** `*.cloud.gov` is a single-level wildcard — it does **not** match `uaa.fr.cloud.gov` (two levels deep). The `auth` ACL must explicitly list `uaa.fr.cloud.gov`. The egress-proxy config in the example deployment has been updated to include this entry.
+
+For Prowler UAA authentication, use the `auth` credentials. If the worker also needs to reach AWS endpoints, set a separate `HTTPS_PROXY` for the worker using the `workflow` credentials.
+
+Note: the proxy URL uses `http://` even for HTTPS destinations. The proxy uses the HTTP CONNECT method to tunnel TLS traffic.
+
+### Step 3 – Restart apps
+
+```bash
+cf restart prowler-api-web
+cf restart prowler-api-worker
+cf restart prowler-api-beat
+```
+
+### Binding `public_networks_egress` directly (requires Org Manager)
+
+If an Org Manager is available, the proxy pattern can be skipped by binding the ASG to the restricted space:
+
+```bash
+cf bind-security-group public_networks_egress <org> --space <space> --lifecycle running
+# Then restart all apps to pick up the new rules
+```
+
+## Required Redirect URIs
+
+`django-uaa` builds the callback URL from the Django route named `uaa_client:callback`, which resolves to:
+
+```text
+/auth/callback
+```
+
+Register at least these redirect URIs in the Cloud.gov identity-provider service key:
+
+* `https://<api-route>/auth/callback`
+* `https://<api-route>/`
+
+For the route used in the sample manifest, those values are:
+
+* `https://prowler-api-gsa-10x-prototyping.app.cloud.gov/auth/callback`
+* `https://prowler-api-gsa-10x-prototyping.app.cloud.gov/`
+
+## Login Flow
+
+The browser-based authentication flow is:
+
+1. Visit `/auth/login`
+2. Redirect to Cloud.gov UAA
+3. Return to `/auth/callback`
+4. Exchange the authorization code for a token
+5. Resolve or create the Django user
+6. Create the default tenant and admin relationship on first login
+
+If something fails in the callback flow, Django renders `uaa_client/login_error.html`, which has been added to the API templates directory.
+
+## Route and Settings Integration
+
+The Cloud.gov implementation also adds deployment-aware behavior:
+
+* `VCAP_APPLICATION` extends `ALLOWED_HOSTS`
+* `VCAP_APPLICATION` extends `CORS_ALLOWED_ORIGINS`
+* `VCAP_SERVICES` supplies PostgreSQL and Redis connection settings
+* PostgreSQL service bindings force `sslmode=require`
+
+## Troubleshooting Deployed Instances
+
+The three errors below were encountered when first deploying Prowler to `tts-pic-dev`. They are captured here to speed up diagnosis in future environments.
+
+---
+
+### Error 1 — `[Errno 111] Connection refused` on `/auth/callback`
+
+**Symptom:** Django logs show a `NewConnectionError` and the callback returns HTTP 500.
+
+```
+requests.exceptions.ConnectionError:
+  HTTPSConnectionPool(host='uaa.fr.cloud.gov', port=443):
+    Max retries exceeded with url: /oauth/token
+    (Caused by NewConnectionError('<urlopen error [Errno 111] Connection refused>'))
+```
+
+**Cause:** The space has no `public_networks_egress` ASG bound, and no `HTTPS_PROXY` is set. The Django container cannot directly reach `uaa.fr.cloud.gov`.
+
+**Fix:** Follow [Step 1](#step-1--allow-container-to-proxy-traffic) and [Step 2](#step-2--set-proxy-environment-variables) of the egress proxy setup above.
+
+---
+
+### Error 2 — `RemoteDisconnected` on `/auth/callback`
+
+**Symptom:** After adding the proxy env vars, the callback still returns HTTP 500. Django logs show:
+
+```
+urllib3.exceptions.ProtocolError:
+  ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+requests.exceptions.ConnectionError:
+  ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+```
+
+**Cause:** The Caddy `forward_proxy` plugin uses `probe_resistance`, which silently closes connections that use invalid or missing credentials — instead of returning `407 Proxy Auth Required`. This means:
+
+* No credentials → silent close
+* Wrong credentials → silent close
+* Correct credentials but domain not in ACL → silent close
+
+All three look identical in the Django logs.
+
+**Fix:** Verify the proxy URL includes valid credentials and that the target hostname is in the ACL:
+
+```bash
+# Confirm credentials are correct
+cf target -s <space>-egress
+cf env egress-proxy | grep -E "PROXY_USERNAME|PROXY_PASSWORD"
+
+# Confirm the ACL allows uaa.fr.cloud.gov (must be listed explicitly — see note below)
+cf env egress-proxy | grep -A10 "CONFIG_CONTENT"
+
+# Test connectivity from inside the app container
+cf ssh prowler-api-web -c "curl -sv -x http://<user>:<pass>@<proxy-host>:8080 https://uaa.fr.cloud.gov/.well-known/openid-configuration"
+```
+
+> **ACL wildcard gotcha:** `*.cloud.gov` is a single-level wildcard. It matches `login.cloud.gov` but **not** `uaa.fr.cloud.gov` (two levels). The `auth` and `workflow` ACL blocks must explicitly list `uaa.fr.cloud.gov` and `login.fr.cloud.gov`. If `probe_resistance` is enabled, a mismatched ACL produces the same `RemoteDisconnected` error as missing credentials.
+
+If the ACL is missing the entry, update `CONFIG_CONTENT` and restage:
+
+```bash
+cf target -s <space>-egress
+# Edit CONFIG_CONTENT to add uaa.fr.cloud.gov to the allow list
+cf set-env egress-proxy CONFIG_CONTENT '<updated caddyfile>'
+cf restage egress-proxy
+```
+
+---
+
+### Error 3 — Silent proxy loopback on port 61443
+
+**Symptom:** Proxy env vars are set, the ACL is correct, yet `/auth/callback` still returns 500 with a `RemoteDisconnected` error. Egress-proxy logs show **no record** of the connection attempt — it never arrives. The raw Python socket receives `b''`.
+
+**Cause:** Every CF container exposes its own internal TLS proxy on port 61443 (visible in `CF_INSTANCE_PORTS`). When prowler-api-web opens an outbound TCP connection to another internal app on port 61443, CF's overlay network intercepts that connection and routes it back to `prowler-api-web`'s own inbound sidecar — not to the egress-proxy. Traffic loops silently and the Caddy instance never sees it.
+
+```
+CF_INSTANCE_PORTS=[
+  {"internal":8080,"external_tls_proxy":61035,"internal_tls_proxy":61443},
+  {"internal":8080,"internal_tls_proxy":61443},
+  ...
+]
+```
+
+**Fix:** Use port **8080** (Caddy's actual `$PORT`) for both the network policy and the proxy URL. Caddy listens on `$PORT` (CF injects this as `8080` for apps using the binary buildpack); the 61443 entry is the CF-managed sidecar overlay, not Caddy.
+
+```bash
+# Remove the 61443 policy and add 8080
+cf remove-network-policy prowler-api-web egress-proxy --port 61443 --protocol tcp -s <egress-space>
+cf add-network-policy prowler-api-web egress-proxy --port 8080 --protocol tcp -s <egress-space>
+
+# Update the proxy URL in CF env
+cf set-env prowler-api-web HTTPS_PROXY http://<user>:<pass>@<proxy-host>:8080
+cf set-env prowler-api-web https_proxy http://<user>:<pass>@<proxy-host>:8080
+cf set-env prowler-api-web HTTP_PROXY  http://<user>:<pass>@<proxy-host>:8080
+cf set-env prowler-api-web http_proxy  http://<user>:<pass>@<proxy-host>:8080
+cf restart prowler-api-web
+```
+
+Verify by testing inside the container before restarting:
+
+```bash
+cf ssh prowler-api-web -c "curl -sv -x http://<user>:<pass>@<proxy-host>:8080 https://uaa.fr.cloud.gov/.well-known/openid-configuration"
+# Should return JSON — look for "< HTTP/1.1 200 OK" from the proxy CONNECT phase
+```
+
+---
+
+## Operational Recommendation
+
+For production environments, keep `UAA_APPROVED_DOMAINS` restricted to the smallest practical set of domains. If broader access control or tenant routing is needed, extend `ProwlerUaaBackend` instead of broadening the approved-domain list indiscriminately.

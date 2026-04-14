@@ -1,0 +1,287 @@
+# Cloud.gov Common Issues
+
+This page captures the operational lessons learned while deploying Prowler API on Cloud.gov with the Python buildpack.
+
+## Space Creation Fails with RBAC Errors
+
+If `cf create-space` fails, the authenticated account usually has `SpaceDeveloper` access but not `OrgManager` access.
+
+Use an existing space or ask an `OrgManager` to create and target the deployment space.
+
+## Egress Is Closed by Default
+
+New Cloud.gov spaces often start with restricted outbound traffic.
+
+If service brokers, package downloads, or provider API calls fail unexpectedly, bind the required security groups:
+
+```console
+cf bind-security-group trusted_local_networks_egress <org> --space <space>
+cf bind-security-group public_networks_egress <org> --space <space>
+```
+
+## UAA Redirect URIs Must Match Exactly
+
+Cloud.gov UAA service keys must include the final route and callback path used by Django.
+
+If login redirects loop or the callback is rejected, recreate the service key with:
+
+* `https://<api-route>/auth/callback`
+* `https://<api-route>/`
+
+## Unsupported Python Runtime Version
+
+If staging fails with an unsupported Python version, update `api/runtime.txt` to a version accepted by the current Cloud Foundry Python buildpack.
+
+During this deployment, `python-3.12.3` was rejected and `python-3.12.12` staged successfully.
+
+## `collectstatic` Fails During Staging
+
+If the buildpack runs Django static collection and the API image is not prepared for it, set:
+
+```yaml
+DISABLE_COLLECTSTATIC: 1
+```
+
+Add that value to each app entry in `manifest.yml`.
+
+## Only One Build Can Stage at a Time
+
+Cloud Foundry rejects overlapping pushes for the same app.
+
+If `cf push` fails with `Only one build can be STAGING at a time per application`, wait for the previous build to finish and push again.
+
+## Droplet or Task Unpack Fails with `No Space Left on Device`
+
+This deployment produced a large droplet because the API dependency set is large.
+
+Symptoms include:
+
+* app startup failures while unpacking the droplet
+* `cf run-task` failures before the task command runs
+* `tar: ... No space left on device`
+
+Mitigations:
+
+* increase app `disk_quota` in `manifest.yml`
+* run troubleshooting tasks with a larger disk allocation
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G --command "python -c 'print(1)'"
+```
+
+## App Memory and Disk Quota Need Tuning
+
+The Python buildpack deployment required larger disk allocations than a default lightweight Django app.
+
+These values worked during debugging:
+
+* web: `memory: 1024M`, `disk_quota: 4G`
+* worker: `memory: 1024M`, `disk_quota: 4G`
+* beat: `memory: 512M`, `disk_quota: 4G`
+
+If staging or startup fails under quota pressure, increase these values before changing application code.
+
+## Celery Workers Need Conservative Defaults
+
+The default Celery worker settings were too memory-heavy for this Cloud.gov deployment.
+
+The worker stabilized after switching to a single-process `solo` pool with a prefetch multiplier of `1`.
+
+Useful startup flags for constrained environments:
+
+```console
+python -m celery -A config.celery worker \
+  --pool solo \
+  --concurrency 1 \
+  --prefetch-multiplier 1 \
+  --max-tasks-per-child 1
+```
+
+This change reduced memory pressure enough for the worker to stay healthy on Cloud.gov.
+
+## Cloud.gov Already Provides `DATABASE_URL`
+
+Cloud.gov injects `VCAP_SERVICES`, and in this deployment the runtime environment also exposed `DATABASE_URL`.
+
+Even so, keeping a startup-script fallback that derives `DATABASE_URL` from `VCAP_SERVICES` is useful because it makes the scripts resilient to environment differences between tasks, shells, and future platform behavior.
+
+## `django_celery_beat` Can Drift from Migration History
+
+This deployment hit a state where `python manage.py showmigrations django_celery_beat` reported all migrations as applied, but the scheduler tables were still missing in PostgreSQL.
+
+The failing symptom in logs was:
+
+```console
+django.db.utils.ProgrammingError: relation "django_celery_beat_crontabschedule" does not exist
+```
+
+In this codebase, Django and Celery framework tables are routed through the `admin` database alias. That means migration debugging must validate both migration history and physical table existence on the routed database, not just the default alias.
+
+On Cloud.gov, running `python manage.py migrate` against the default alias can record migration history without creating the routed framework tables. When framework tables such as `django_content_type`, `django_site`, or `django_celery_beat_*` are missing, run repair tasks against `--database admin`.
+
+Useful checks:
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && python manage.py showmigrations django_celery_beat'"
+```
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && python manage.py shell -c \"from django.db import connections; cursor = connections[\"admin\"].cursor(); cursor.execute(\"SELECT tablename FROM pg_tables WHERE schemaname = %s AND tablename = %s\", [\"public\", \"django_celery_beat_crontabschedule\"]); print(cursor.fetchone())\"'"
+```
+
+If those two results disagree, treat it as a schema-repair problem rather than a Celery configuration problem.
+
+If multiple framework apps are marked as migrated but their tables are missing, a targeted `django_celery_beat` repair is not enough. Rebuild the routed schema on `admin` first, then restart beat.
+
+This recovery path restored the deployment:
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && python -c \"import os; os.environ.setdefault(\"DJANGO_SETTINGS_MODULE\", \"config.django.production\"); import django; django.setup(); from django.core.management import call_command; from django.db.models.signals import post_migrate; receivers = post_migrate.receivers; post_migrate.receivers = []; [call_command(\"migrate\", app, \"zero\", database=\"admin\", fake=True, interactive=False, verbosity=1) for app in [\"django_celery_results\", \"sessions\", \"sites\"]]; call_command(\"migrate\", database=\"admin\", interactive=False, verbosity=1); post_migrate.receivers = receivers\"'"
+```
+
+After the bootstrap task succeeds, verify that key tables exist before restarting beat:
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && python -c \"import json, os, psycopg2; conn = psycopg2.connect(os.environ[\"DATABASE_URL\"]); cur = conn.cursor(); cur.execute(\"select schemaname, tablename from pg_tables where schemaname = $$public$$ and tablename in (%s,%s,%s,%s,%s,%s) order by tablename\", [\"django_celery_beat_crontabschedule\", \"django_celery_beat_periodictask\", \"django_celery_results_taskresult\", \"django_content_type\", \"django_site\", \"scans\"]); print(cur.fetchall())\"'"
+```
+
+## Neo4j Is Not a Managed Cloud.gov Service
+
+Cloud.gov does not provide a managed Neo4j broker. If Attack Paths is not part of the deployment, set the Neo4j environment variables to empty values in the manifest:
+
+```yaml
+NEO4J_HOST: ''
+NEO4J_PORT: ''
+NEO4J_USER: ''
+NEO4J_PASSWORD: ''
+```
+
+In addition, Django startup must skip Neo4j initialization when those values are empty.
+
+## Gunicorn Config Can Trigger Django Startup Side Effects
+
+This deployment exposed an important startup detail: `config/guniconf.py` imports Django settings and calls `django.setup()`. That means application startup hooks can run before Gunicorn begins serving traffic.
+
+If the app tries to connect to optional services such as Neo4j during `ApiConfig.ready()`, Gunicorn can fail before the web process becomes healthy.
+
+The safe pattern is:
+
+* keep optional service configuration explicit
+* skip startup-time connectivity checks when the service is not configured
+
+## Use `cf run-task` for Live Debugging
+
+One-off tasks were the fastest way to inspect the real runtime environment inside the Cloud.gov droplet.
+
+Useful examples:
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "python -c \"import os; print(os.environ.get('DATABASE_URL'))\""
+```
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && python manage.py showmigrations'"
+```
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && python manage.py shell -c \"from django.db import connections; print({alias: connections[alias].settings_dict.get(\"NAME\") for alias in [\"default\", \"admin\"]})\"'"
+```
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && python manage.py migrate django_celery_beat zero --fake && python manage.py migrate django_celery_beat'"
+```
+
+If a task fails before the command runs, inspect the failure reason through the v3 API:
+
+```console
+cf tasks prowler-api-web
+cf curl /v3/apps/<app-guid>/tasks
+```
+
+## Concrete `cf` Commands Used in This Deployment
+
+These were the highest-value commands during the live debugging cycle:
+
+```console
+cf target -o <org> -s <space>
+cf push prowler-api-web --vars-file cloudgov-vars.yml --no-wait
+cf push prowler-api-worker --vars-file cloudgov-vars.yml --no-wait
+cf push prowler-api-beat --vars-file cloudgov-vars.yml --no-wait
+cf app prowler-api-web
+cf app prowler-api-worker
+cf app prowler-api-beat
+cf logs prowler-api-web --recent
+cf logs prowler-api-worker --recent
+cf logs prowler-api-beat --recent
+cf tasks prowler-api-web
+cf curl /v3/apps/<app-guid>/tasks
+```
+
+Use pushes without `--no-wait` when you need the full staging result inline. Use `--no-wait` when you want to immediately switch to `cf app` and `cf logs --recent` in another terminal.
+
+## Cloud.gov UAA Handles Authentication, Not Prowler Authorization
+
+Cloud.gov UAA proves who the user is and returns identity data such as the email address. It does not manage Prowler roles for you.
+
+In the current Prowler Cloud.gov integration:
+
+* `UAA_APPROVED_DOMAINS` can restrict which email domains are allowed to auto-provision.
+* `UAA_EMAIL_ROLE_MAP` can assign specific email addresses to built-in bootstrap presets.
+* New UAA users who pass that check are auto-created in Prowler with a new default tenant and one of these presets:
+  * `admin`: `OWNER` membership plus a full-access `admin` role
+  * `editor`: `MEMBER` membership plus an `editor` role with provider, integration, and scan management permissions
+  * `read`: `MEMBER` membership plus a `read` role with read-only access and full visibility
+* Unmapped users still default to the existing `admin` bootstrap behavior.
+
+Example manifest environment value:
+
+```yaml
+env:
+  UAA_EMAIL_ROLE_MAP: '{"admin":["owner@example.gov"],"editor":["editor1@example.gov","editor2@example.gov"],"read":["reader@example.gov"]}'
+```
+
+If you need more than those built-in presets, implement it inside Prowler after authentication, for example by:
+
+* pre-provisioning memberships and roles in the database
+* assigning users through invitation flows
+* extending the Cloud.gov auth backend to read a custom mapping source and apply tenant-specific roles after login
+
+Do not assume Cloud.gov UAA service configuration can replace application-side authorization logic.
+
+## Read Recent Logs After Every Push
+
+The fastest loop for diagnosing Cloud.gov startup issues was:
+
+```console
+cf app prowler-api-web
+cf logs prowler-api-web --recent
+```
+
+That combination exposed:
+
+* buildpack runtime mismatches
+* collectstatic failures
+* quota failures
+* migration failures
+* missing Neo4j configuration
+* Gunicorn startup errors
+
+## Recommended Debugging Order
+
+When bringing up a fresh Cloud.gov deployment, this order reduced noise:
+
+1. Push only `prowler-api-web`
+2. Confirm migrations complete
+3. Confirm Gunicorn starts cleanly
+4. Push the worker and beat processes
+5. Test `/auth/login`
+
+Bringing up all three processes before the web process is stable makes root-cause analysis slower.

@@ -1,0 +1,330 @@
+# Create the Required Deployment Files
+
+This page contains the local-only Cloud.gov deployment files that can be recreated when preparing a deployment or validating an upstream contribution.
+
+Save these files in the listed locations before running `cf push`.
+
+## Save as `manifest.yml` at the Repository Root
+
+```yaml
+applications:
+  - name: prowler-api-web
+    path: api
+    buildpacks:
+      - python_buildpack
+    memory: 1024M
+    disk_quota: 4G
+    instances: 1
+    command: ./bin/cloudgov-web.sh
+    routes:
+      - route: ((api_route))
+    services:
+      - prowler-api-db
+      - prowler-api-redis
+    env:
+      DISABLE_COLLECTSTATIC: 1
+      DJANGO_SETTINGS_MODULE: config.django.production
+      RUN_DB_MIGRATIONS: 0
+      DJANGO_BIND_ADDRESS: 0.0.0.0
+      DJANGO_LOGGING_FORMATTER: human_readable
+      DJANGO_LOGGING_LEVEL: INFO
+      CLOUDGOV_UAA_ENABLED: true
+      UAA_CLIENT_ID: ((uaa_client_id))
+      UAA_CLIENT_SECRET: ((uaa_client_secret))
+      UAA_AUTH_URL: https://login.fr.cloud.gov/oauth/authorize
+      UAA_TOKEN_URL: https://uaa.fr.cloud.gov/oauth/token
+      UAA_APPROVED_DOMAINS: ((uaa_approved_domains))
+      UAA_LOGIN_REDIRECT_URL: ((uaa_login_redirect_url))
+      SECRET_KEY: ((django_secret_key))
+      DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
+      DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
+      DJANGO_TOKEN_VERIFYING_KEY: ((django_token_verifying_key))
+      NEO4J_HOST: ''
+      NEO4J_PORT: ''
+      NEO4J_USER: ''
+      NEO4J_PASSWORD: ''
+      SENTRY_ENVIRONMENT: cloudgov
+      SENTRY_RELEASE: cloudgov
+
+  - name: prowler-api-worker
+    path: api
+    buildpacks:
+      - python_buildpack
+    memory: 1024M
+    disk_quota: 4G
+    instances: 1
+    no-route: true
+    health-check-type: process
+    command: ./bin/cloudgov-worker.sh
+    services:
+      - prowler-api-db
+      - prowler-api-redis
+    env:
+      DISABLE_COLLECTSTATIC: 1
+      DJANGO_SETTINGS_MODULE: config.django.production
+      DJANGO_LOGGING_FORMATTER: human_readable
+      DJANGO_LOGGING_LEVEL: INFO
+      CLOUDGOV_UAA_ENABLED: true
+      UAA_CLIENT_ID: ((uaa_client_id))
+      UAA_CLIENT_SECRET: ((uaa_client_secret))
+      UAA_AUTH_URL: https://login.fr.cloud.gov/oauth/authorize
+      UAA_TOKEN_URL: https://uaa.fr.cloud.gov/oauth/token
+      UAA_APPROVED_DOMAINS: ((uaa_approved_domains))
+      UAA_LOGIN_REDIRECT_URL: ((uaa_login_redirect_url))
+      SECRET_KEY: ((django_secret_key))
+      DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
+      DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
+      DJANGO_TOKEN_VERIFYING_KEY: ((django_token_verifying_key))
+      NEO4J_HOST: ''
+      NEO4J_PORT: ''
+      NEO4J_USER: ''
+      NEO4J_PASSWORD: ''
+      SENTRY_ENVIRONMENT: cloudgov
+      SENTRY_RELEASE: cloudgov
+
+  - name: prowler-api-beat
+    path: api
+    buildpacks:
+      - python_buildpack
+    memory: 256M
+    disk_quota: 2G
+    instances: 1
+    no-route: true
+    health-check-type: process
+    command: ./bin/cloudgov-beat.sh
+    services:
+      - prowler-api-db
+      - prowler-api-redis
+    env:
+      DISABLE_COLLECTSTATIC: 1
+      DJANGO_SETTINGS_MODULE: config.django.production
+      DJANGO_LOGGING_FORMATTER: human_readable
+      DJANGO_LOGGING_LEVEL: INFO
+      CLOUDGOV_UAA_ENABLED: true
+      UAA_CLIENT_ID: ((uaa_client_id))
+      UAA_CLIENT_SECRET: ((uaa_client_secret))
+      UAA_AUTH_URL: https://login.fr.cloud.gov/oauth/authorize
+      UAA_TOKEN_URL: https://uaa.fr.cloud.gov/oauth/token
+      UAA_APPROVED_DOMAINS: ((uaa_approved_domains))
+      UAA_LOGIN_REDIRECT_URL: ((uaa_login_redirect_url))
+      SECRET_KEY: ((django_secret_key))
+      DJANGO_SECRETS_ENCRYPTION_KEY: ((django_secrets_encryption_key))
+      DJANGO_TOKEN_SIGNING_KEY: ((django_token_signing_key))
+      DJANGO_TOKEN_VERIFYING_KEY: ((django_token_verifying_key))
+      NEO4J_HOST: ''
+      NEO4J_PORT: ''
+      NEO4J_USER: ''
+      NEO4J_PASSWORD: ''
+      SENTRY_ENVIRONMENT: cloudgov
+      SENTRY_RELEASE: cloudgov
+```
+
+## Save as `cloudgov-vars.yml` at the Repository Root
+
+Create this file locally and keep it out of version control.
+
+```yaml
+api_route: prowler-api-gsa-10x-prototyping.app.cloud.gov
+uaa_client_id: replace-with-cf-service-key-client-id
+uaa_client_secret: replace-with-cf-service-key-client-secret
+uaa_approved_domains: gsa.gov
+uaa_login_redirect_url: /
+django_secret_key: replace-with-django-secret-key
+django_secrets_encryption_key: replace-with-fernet-key
+django_token_signing_key: |
+  -----BEGIN PRIVATE KEY-----
+  replace-with-rs256-private-key
+  -----END PRIVATE KEY-----
+django_token_verifying_key: |
+  -----BEGIN PUBLIC KEY-----
+  replace-with-rs256-public-key
+  -----END PUBLIC KEY-----
+```
+
+## Save as `api/Procfile`
+
+```procfile
+web: ./bin/cloudgov-web.sh
+worker: ./bin/cloudgov-worker.sh
+beat: ./bin/cloudgov-beat.sh
+```
+
+## Save as `api/runtime.txt`
+
+```text
+python-3.12.12
+```
+
+Use a Python version supported by the current Cloud Foundry Python buildpack. If staging rejects the version, update this file first.
+
+## Save as `api/requirements.txt`
+
+This file is required because the Cloud.gov Python buildpack installs from `requirements.txt`.
+
+```text
+celery==5.6.2
+cg-django-uaa>=2.1.9,<3.0.0
+defusedxml==0.7.1
+dj-rest-auth[with_social,jwt]==7.0.1
+django==5.1.15
+django-allauth[saml]==65.15.0
+django-celery-beat==2.9.0
+django-celery-results==2.6.0
+django-cors-headers==4.4.0
+django-environ==0.11.2
+django-filter==24.3
+django-guid==3.5.0
+django-postgres-extra==2.0.9
+djangorestframework==3.15.2
+djangorestframework-jsonapi==7.0.2
+djangorestframework-simplejwt==5.5.1
+drf-nested-routers==0.95.0
+drf-simple-apikey==2.2.1
+drf-spectacular==0.27.2
+drf-spectacular-jsonapi==0.5.1
+gevent==25.9.1
+gunicorn==23.0.0
+h2==4.3.0
+lxml==5.3.2
+markdown==3.10.2
+matplotlib==3.10.8
+neo4j==6.1.0
+openai==1.109.1
+prowler @ git+https://github.com/prowler-cloud/prowler.git@master
+psycopg2-binary==2.9.9
+reportlab==4.4.10
+sentry-sdk[django]==2.56.0
+sqlparse==0.5.5
+uuid6==2024.7.10
+werkzeug==3.1.7
+xmlsec==1.3.14
+cartography==0.132.0
+fonttools==4.62.1
+```
+
+## Save as `api/bin/cloudgov-web.sh`
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/../src/backend"
+
+export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.django.production}"
+export DJANGO_BIND_ADDRESS="${DJANGO_BIND_ADDRESS:-0.0.0.0}"
+export DJANGO_PORT="${PORT:-${DJANGO_PORT:-8080}}"
+export NEO4J_HOST="${NEO4J_HOST:-}"
+export NEO4J_PORT="${NEO4J_PORT:-}"
+export NEO4J_USER="${NEO4J_USER:-}"
+export NEO4J_PASSWORD="${NEO4J_PASSWORD:-}"
+
+if [[ -z "${DATABASE_URL:-}" && -n "${VCAP_SERVICES:-}" ]]; then
+  export DATABASE_URL="$(python - <<'PY'
+import json
+import os
+
+services = json.loads(os.environ["VCAP_SERVICES"])
+credentials = (services.get("aws-rds") or [{}])[0].get("credentials") or {}
+print(credentials.get("uri", ""), end="")
+PY
+)"
+fi
+
+if [[ "${RUN_DB_MIGRATIONS:-0}" == "1" ]]; then
+  python manage.py migrate
+fi
+
+gunicorn -c config/guniconf.py config.wsgi:application
+```
+
+## Save as `api/bin/cloudgov-worker.sh`
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/../src/backend"
+
+export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.django.production}"
+export NEO4J_HOST="${NEO4J_HOST:-}"
+export NEO4J_PORT="${NEO4J_PORT:-}"
+export NEO4J_USER="${NEO4J_USER:-}"
+export NEO4J_PASSWORD="${NEO4J_PASSWORD:-}"
+
+if [[ -z "${DATABASE_URL:-}" && -n "${VCAP_SERVICES:-}" ]]; then
+  export DATABASE_URL="$(python - <<'PY'
+import json
+import os
+
+services = json.loads(os.environ["VCAP_SERVICES"])
+credentials = (services.get("aws-rds") or [{}])[0].get("credentials") or {}
+print(credentials.get("uri", ""), end="")
+PY
+)"
+fi
+
+python -m celery -A config.celery worker \
+  -l "${DJANGO_LOGGING_LEVEL:-info}" \
+  -Q celery,scans,scan-reports,deletion,backfill,overview,integrations,compliance,attack-paths-scans \
+  -E --max-tasks-per-child 1
+```
+
+## Save as `api/bin/cloudgov-beat.sh`
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/../src/backend"
+
+export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.django.production}"
+export NEO4J_HOST="${NEO4J_HOST:-}"
+export NEO4J_PORT="${NEO4J_PORT:-}"
+export NEO4J_USER="${NEO4J_USER:-}"
+export NEO4J_PASSWORD="${NEO4J_PASSWORD:-}"
+
+if [[ -z "${DATABASE_URL:-}" && -n "${VCAP_SERVICES:-}" ]]; then
+  export DATABASE_URL="$(python - <<'PY'
+import json
+import os
+
+services = json.loads(os.environ["VCAP_SERVICES"])
+credentials = (services.get("aws-rds") or [{}])[0].get("credentials") or {}
+print(credentials.get("uri", ""), end="")
+PY
+)"
+fi
+
+python -m celery -A config.celery beat \
+  -l "${DJANGO_LOGGING_LEVEL:-info}" \
+  --scheduler django_celery_beat.schedulers:DatabaseScheduler
+```
+
+## Mark the Shell Scripts as Executable
+
+After saving the files, run:
+
+```console
+chmod +x api/bin/cloudgov-web.sh api/bin/cloudgov-worker.sh api/bin/cloudgov-beat.sh
+```
+
+## Deploy with the Local Files
+
+After creating the files, deploy with:
+
+```console
+cf push --vars-file cloudgov-vars.yml
+```
+
+For incremental debugging, start with:
+
+```console
+cf push prowler-api-web --vars-file cloudgov-vars.yml
+```
+
+Run migrations explicitly as a task when needed:
+
+```console
+cf run-task prowler-api-web -k 4G -m 1G \
+  --command "sh -lc 'cd src/backend && RUN_DB_MIGRATIONS=1 python manage.py migrate'"
+```

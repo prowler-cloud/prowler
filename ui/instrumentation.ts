@@ -14,8 +14,6 @@
  * @see https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation
  */
 
-import * as Sentry from "@sentry/nextjs";
-
 const SENTRY_DSN = process.env.SENTRY_DSN;
 
 export async function register() {
@@ -34,7 +32,15 @@ export async function register() {
   }
 }
 
-// Only capture request errors if Sentry is configured
-export const onRequestError = SENTRY_DSN
-  ? Sentry.captureRequestError
-  : undefined;
+// Only capture request errors if Sentry is configured — use dynamic import to
+// prevent Turbopack from externalising require-in-the-middle at build time
+// when SENTRY_DSN is absent (e.g. Cloud.gov deployments).
+export async function onRequestError(
+  ...args: Parameters<
+    Awaited<typeof import("@sentry/nextjs")>["captureRequestError"]
+  >
+): Promise<void> {
+  if (!SENTRY_DSN) return;
+  const { captureRequestError } = await import("@sentry/nextjs");
+  return captureRequestError(...args);
+}
