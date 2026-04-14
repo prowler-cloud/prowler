@@ -9,7 +9,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 
 
-class entra_conditional_access_policy_sign_in_frequency_enforced(Check):
+class entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced(Check):
     """Check if at least one Conditional Access policy enforces sign-in frequency for non-corporate devices.
 
     This check verifies that the tenant has at least one enabled Conditional Access policy
@@ -34,57 +34,6 @@ class entra_conditional_access_policy_sign_in_frequency_enforced(Check):
         r"device\.trusttype\s*-eq\s*'serverad'",
     )
 
-    def _targets_all_users(self, included_users: list[str]) -> bool:
-        """Check if the policy targets all users.
-
-        Returns True if 'All' is in the included users list.
-        """
-        return "All" in included_users
-
-    def _targets_all_applications(self, included_applications: list[str]) -> bool:
-        """Check if the policy targets all applications.
-
-        Returns True if 'All' is in the included applications list.
-        """
-        return "All" in included_applications
-
-    def _has_sign_in_frequency_enabled(self, policy) -> bool:
-        """Check if the policy has time-based sign-in frequency enabled.
-
-        Returns True if sign-in frequency is enabled with a time-based interval.
-        """
-        sign_in_freq = policy.session_controls.sign_in_frequency
-        return (
-            sign_in_freq.is_enabled
-            and sign_in_freq.interval == SignInFrequencyInterval.TIME_BASED
-        )
-
-    def _has_non_corporate_device_filter(self, policy) -> bool:
-        """Check if the policy has a device filter targeting non-corporate devices.
-
-        The device filter can target non-corporate devices in two ways:
-        - Include mode: The filter rule matches non-compliant and non-domain-joined devices.
-        - Exclude mode: The filter rule excludes compliant or domain-joined devices.
-
-        Returns True if the policy has a device filter configured with a rule.
-        """
-        device_conditions = policy.conditions.device_conditions
-        if not device_conditions:
-            return False
-        if not device_conditions.device_filter_mode:
-            return False
-        if not device_conditions.device_filter_rule:
-            return False
-        rule = device_conditions.device_filter_rule.lower()
-        if device_conditions.device_filter_mode == DeviceFilterMode.INCLUDE:
-            return self._rule_matches_any(rule, self.NON_CORPORATE_INCLUDE_PATTERNS)
-        elif device_conditions.device_filter_mode == DeviceFilterMode.EXCLUDE:
-            return self._rule_matches_any(rule, self.CORPORATE_EXCLUDE_PATTERNS)
-        return False
-
-    def _rule_matches_any(self, rule: str, patterns: tuple[str, ...]) -> bool:
-        return any(re.search(pattern, rule) for pattern in patterns)
-
     def execute(self) -> list[CheckReportM365]:
         """Execute the check for sign-in frequency enforcement in Conditional Access policies.
 
@@ -105,20 +54,39 @@ class entra_conditional_access_policy_sign_in_frequency_enforced(Check):
             if policy.state == ConditionalAccessPolicyState.DISABLED:
                 continue
 
-            if not self._targets_all_users(
-                policy.conditions.user_conditions.included_users
+            if "All" not in policy.conditions.user_conditions.included_users:
+                continue
+
+            if (
+                "All"
+                not in policy.conditions.application_conditions.included_applications
             ):
                 continue
 
-            if not self._targets_all_applications(
-                policy.conditions.application_conditions.included_applications
+            sign_in_freq = policy.session_controls.sign_in_frequency
+            if not (
+                sign_in_freq.is_enabled
+                and sign_in_freq.interval == SignInFrequencyInterval.TIME_BASED
             ):
                 continue
 
-            if not self._has_sign_in_frequency_enabled(policy):
+            device_conditions = policy.conditions.device_conditions
+            if (
+                not device_conditions
+                or not device_conditions.device_filter_mode
+                or not device_conditions.device_filter_rule
+            ):
                 continue
 
-            if not self._has_non_corporate_device_filter(policy):
+            rule = device_conditions.device_filter_rule.lower()
+            if device_conditions.device_filter_mode == DeviceFilterMode.INCLUDE:
+                patterns = self.NON_CORPORATE_INCLUDE_PATTERNS
+            elif device_conditions.device_filter_mode == DeviceFilterMode.EXCLUDE:
+                patterns = self.CORPORATE_EXCLUDE_PATTERNS
+            else:
+                continue
+
+            if not any(re.search(pattern, rule) for pattern in patterns):
                 continue
 
             report = CheckReportM365(

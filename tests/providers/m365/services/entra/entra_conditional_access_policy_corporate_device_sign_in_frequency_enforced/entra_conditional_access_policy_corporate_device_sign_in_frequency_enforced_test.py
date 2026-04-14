@@ -18,7 +18,7 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
-CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced"
+CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced"
 
 
 def _make_policy(
@@ -81,7 +81,7 @@ def _make_policy(
     )
 
 
-class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
+class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced:
     """Tests for sign-in frequency enforcement on non-corporate devices."""
 
     def test_entra_no_conditional_access_policies(self):
@@ -100,13 +100,13 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -137,8 +137,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -151,7 +151,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -177,8 +177,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -191,7 +191,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -220,8 +220,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -234,7 +234,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -258,8 +258,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -272,7 +272,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -296,8 +296,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -310,7 +310,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -334,8 +334,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -348,7 +348,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -372,8 +372,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -383,7 +383,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -408,8 +408,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -421,7 +421,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -451,8 +451,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -464,7 +464,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -489,8 +489,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -502,7 +502,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -526,8 +526,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -539,7 +539,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -563,8 +563,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -576,7 +576,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -602,8 +602,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -620,7 +620,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 ),
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1
@@ -646,8 +646,8 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_conditional_access_policy_sign_in_frequency_enforced.entra_conditional_access_policy_sign_in_frequency_enforced import (
-                entra_conditional_access_policy_sign_in_frequency_enforced,
+            from prowler.providers.m365.services.entra.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced.entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced import (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced,
             )
 
             entra_client.conditional_access_policies = {
@@ -659,7 +659,7 @@ class Test_entra_conditional_access_policy_sign_in_frequency_enforced:
                 )
             }
 
-            check = entra_conditional_access_policy_sign_in_frequency_enforced()
+            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
             result = check.execute()
 
             assert len(result) == 1

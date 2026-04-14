@@ -1,6 +1,6 @@
 {
   "Provider": "m365",
-  "CheckID": "entra_conditional_access_policy_sign_in_frequency_enforced",
+  "CheckID": "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
   "CheckTitle": "Conditional Access policy enforces sign-in frequency for non-corporate devices",
   "CheckType": [],
   "ServiceName": "entra",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure a Conditional Access policy to enforce **sign-in frequency** on non-corporate devices. Use device filters to target unmanaged endpoints and set a time-based re-authentication interval to limit session duration.\n\nThis aligns with **zero trust** principles by ensuring sessions on untrusted devices are regularly validated.",
-      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_sign_in_frequency_enforced"
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced"
     }
   },
   "Categories": [
@@ -34,5 +34,5 @@
   "RelatedTo": [
     "entra_conditional_access_policy_app_enforced_restrictions"
   ],
-  "Notes": "This check corresponds to Maester test MT.1018 (Test-MtCaEnforceSignInFrequency). A qualifying policy must target all users, all applications, enforce time-based sign-in frequency, and include a device filter targeting non-corporate devices."
+  "Notes": "A qualifying policy must target all users, all applications, enforce time-based sign-in frequency, and include a device filter targeting non-corporate devices."
 }
