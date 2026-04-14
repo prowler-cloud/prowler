@@ -99,13 +99,13 @@ class entra_conditional_access_policy_block_unknown_device_platforms(Check):
             if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Conditional Access Policy '{policy.display_name}' reports "
+                    f"Conditional Access Policy {policy.display_name} reports "
                     "blocking unknown or unsupported device platforms but does not enforce it."
                 )
             else:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Conditional Access Policy '{policy.display_name}' blocks "
+                    f"Conditional Access Policy {policy.display_name} blocks "
                     "access from unknown or unsupported device platforms."
                 )
                 break

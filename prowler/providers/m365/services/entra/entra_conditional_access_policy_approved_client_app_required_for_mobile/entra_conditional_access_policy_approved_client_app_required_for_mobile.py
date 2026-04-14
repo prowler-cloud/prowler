@@ -85,10 +85,10 @@ class entra_conditional_access_policy_approved_client_app_required_for_mobile(Ch
             )
             if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                 report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' reports the requirement of approved client apps or app protection for mobile devices but does not enforce it."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} reports the requirement of approved client apps or app protection for mobile devices but does not enforce it."
             else:
                 report.status = "PASS"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' requires approved client apps or app protection for mobile devices."
+                report.status_extended = f"Conditional Access Policy {policy.display_name} requires approved client apps or app protection for mobile devices."
                 break
 
         findings.append(report)
