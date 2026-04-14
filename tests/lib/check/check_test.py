@@ -1048,6 +1048,34 @@ class TestCheck:
         )
         self.verify_metadata_check_id(base_directory)
 
+    def test_vercel_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/vercel/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_vercel_checks_metadata_use_canonical_hub_urls(self):
+        base_directory = pathlib.Path(__file__).resolve().parents[3] / "prowler"
+        provider_path = base_directory / "providers" / "vercel" / "services"
+
+        invalid_urls = []
+
+        for metadata_file_path in provider_path.rglob("*.metadata.json"):
+            with metadata_file_path.open("r") as metadata_file:
+                data = json.load(metadata_file)
+
+            recommendation = data.get("Remediation", {}).get("Recommendation", {})
+            url = recommendation.get("Url", "")
+
+            if url.startswith("https://hub.prowler.com/checks/vercel/"):
+                invalid_urls.append(f"{metadata_file_path}: {url}")
+
+        assert not invalid_urls, "\n".join(invalid_urls)
+
     def verify_metadata_check_id(self, provider_path):
         errors = []
         # Walk through the base directory to find all service directories
