@@ -39,8 +39,8 @@ export function ResourcesTableWithSelection({
       return;
     }
 
-    getResourceById(initialResourceId, { include: ["provider"] }).then(
-      (response) => {
+    getResourceById(initialResourceId, { include: ["provider"] })
+      .then((response) => {
         if (!response?.data) return;
         const resource = response.data;
         const providerDict = createDict("providers", response);
@@ -52,8 +52,10 @@ export function ResourcesTableWithSelection({
           relationships: { ...resource.relationships, provider },
         } as ResourceProps);
         setDrawerOpen(true);
-      },
-    );
+      })
+      .catch((error) => {
+        console.error("Failed to fetch resource:", error);
+      });
   }, [initialResourceId, data]);
 
   const openDrawer = (resource: ResourceProps) => {
