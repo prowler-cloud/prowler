@@ -1,0 +1,36 @@
+{
+  "Provider": "m365",
+  "CheckID": "intune_device_compliance_policy_unassigned_devices_not_compliant_by_default",
+  "CheckTitle": "Built-in Device Compliance Policy marks devices without an assigned compliance policy as Not compliant by default",
+  "CheckType": [],
+  "ServiceName": "intune",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "Intune has a built-in Device Compliance Policy that governs how devices without an explicit compliance policy are treated. When the default behavior marks those devices as Compliant, unmanaged devices can be treated as compliant and gain access to corporate resources. This check verifies the default is set to Not compliant (secureByDefault = true).",
+  "Risk": "If the built-in policy marks devices without a compliance policy as Compliant, those devices can bypass Conditional Access policies requiring device compliance, granting unauthorized access to corporate resources from unmanaged or non-compliant endpoints.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/intune-deviceconfig-devicemanagementsettings?view=graph-rest-1.0"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Intune admin center (intune.microsoft.com)\n2. Go to Devices > Compliance\n3. Select Compliance policy settings\n4. Set 'Mark devices with no compliance policy assigned as' to 'Not compliant'\n5. Save the settings",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the built-in Device Compliance Policy default so devices with no compliance policy assigned are marked as Not compliant.",
+      "Url": "https://hub.prowler.com/check/intune_device_compliance_policy_unassigned_devices_not_compliant_by_default"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The check evaluates the secureByDefault property from the deviceManagement/settings Microsoft Graph endpoint."
+}

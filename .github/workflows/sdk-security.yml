@@ -69,20 +69,11 @@ jobs:
             contrib/**
             **/AGENTS.md
 
-      - name: Install Poetry
+      - name: Setup Python with Poetry
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: pipx install poetry==2.1.1
-
-      - name: Set up Python 3.12
-        if: steps.check-changes.outputs.any_changed == 'true'
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: ./.github/actions/setup-python-poetry
         with:
           python-version: '3.12'
-          cache: 'poetry'
-
-      - name: Install dependencies
-        if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry install --no-root
 
       - name: Security scan with Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
