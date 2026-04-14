@@ -1,16 +1,16 @@
 {
   "Provider": "m365",
   "CheckID": "entra_conditional_access_policy_all_apps_all_users",
-  "CheckTitle": "Conditional Access policy covers all cloud apps and all users for baseline protection",
+  "CheckTitle": "Conditional Access policy covers all cloud apps and all users",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "low",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Microsoft Entra **Conditional Access** is verified to have at least one **enabled** policy that targets **all cloud applications** and **all users**, providing a baseline security posture across the entire tenant.\n\nPolicies that only require a password change are excluded as they do not provide meaningful access controls.",
-  "Risk": "Without a Conditional Access policy covering all apps and all users, **newly added applications** and **user accounts** may bypass security controls entirely. Attackers could exploit unprotected apps or temporary accounts to gain unauthorized access to organizational resources.",
+  "Description": "Helper check that verifies whether Microsoft Entra Conditional Access includes at least one enabled policy scoped to all cloud applications and all users. Policies that only require a password change and report-only policies are excluded from passing. The result is intended to support other, more specific Conditional Access checks rather than enforce a baseline on its own.",
+  "Risk": "Without a Conditional Access policy that targets all cloud apps and all users, newly added applications or user accounts may not be covered by existing access controls until policies are explicitly updated.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/plan-conditional-access",
@@ -20,21 +20,20 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Click **New policy**.\n4. Under **Users**, select **Include** > **All users**. Exclude break-glass accounts as needed.\n5. Under **Target resources**, select **Include** > **All cloud apps**.\n6. Under **Grant**, select the desired access controls (e.g., **Require multifactor authentication**).\n7. Set the policy to **On** and click **Create**.",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Click **New policy**.\n4. Under **Users**, select **Include** > **All users**. Exclude break-glass accounts as needed.\n5. Under **Target resources**, select **Include** > **All cloud apps**.\n6. Under **Grant**, select the desired access controls.\n7. Set the policy to **On** and click **Create**.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Create a Conditional Access policy that targets **all cloud apps** and **all users** to ensure baseline protection. Exclude only break-glass accounts. This prevents security gaps when new apps or users are added to the tenant.",
+      "Text": "Ensure there is at least one enabled Conditional Access policy that targets all cloud apps and all users so that other Conditional Access checks have broad coverage to evaluate. Exclude only break-glass accounts.",
       "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_all_apps_all_users"
     }
   },
   "Categories": [
-    "identity-access",
-    "e3"
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [
     "entra_conditional_access_policy_require_mfa_for_management_api"
   ],
-  "Notes": "This check is equivalent to Maester test MT.1004 (Test-MtCaAllAppsExists). Conditional Access policies require Microsoft Entra ID P1 or P2 licenses."
+  "Notes": "Generic helper check intended to support other Conditional Access checks. Conditional Access policies require Microsoft Entra ID P1 or P2 licenses."
 }
