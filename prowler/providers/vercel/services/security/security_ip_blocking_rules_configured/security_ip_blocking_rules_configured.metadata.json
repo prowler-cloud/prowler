@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Configure IP blocking rules to deny traffic from known malicious sources. Maintain a blocklist of IPs identified through security monitoring, threat intelligence feeds, or incident investigation. Regularly review and update the blocklist.",
-      "Url": "https://hub.prowler.com/checks/vercel/security_ip_blocking_rules_configured"
+      "Url": "https://hub.prowler.com/check/security_ip_blocking_rules_configured"
     }
   },
   "Categories": [

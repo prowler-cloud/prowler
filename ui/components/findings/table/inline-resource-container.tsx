@@ -12,7 +12,6 @@ import { ChevronsDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useImperativeHandle, useRef, useState } from "react";
 
-import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -24,6 +23,10 @@ import { FindingGroupRow, FindingResourceRow } from "@/types";
 import { getColumnFindingResources } from "./column-finding-resources";
 import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
+import {
+  getFilteredFindingGroupResourceCount,
+  getFindingGroupSkeletonCount,
+} from "./inline-resource-container.utils";
 import {
   ResourceDetailDrawer,
   useResourceDetailDrawer,
@@ -40,8 +43,8 @@ interface InlineResourceContainerProps {
   group: FindingGroupRow;
   resourceSearch: string;
   columnCount: number;
-  /** Called with selected resource UIDs (not finding IDs) for parent-level mute resolution */
-  onResourceSelectionChange: (resourceUids: string[]) => void;
+  /** Called with selected finding IDs (real UUIDs) for parent-level mute */
+  onResourceSelectionChange: (findingIds: string[]) => void;
   ref?: React.Ref<InlineResourceContainerHandle>;
 }
 
@@ -55,11 +58,17 @@ interface InlineResourceContainerProps {
 /** Max skeleton rows that fit in the 440px scroll container */
 const MAX_SKELETON_ROWS = 7;
 
-function ResourceSkeletonRow() {
+function ResourceSkeletonRow({
+  isEmptyStateSized = false,
+}: {
+  isEmptyStateSized?: boolean;
+}) {
+  const cellClassName = isEmptyStateSized ? "h-24 py-3" : "py-3";
+
   return (
     <TableRow className="hover:bg-transparent">
       {/* Select: indicator + corner arrow + checkbox */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-1.5 rounded-full" />
           <Skeleton className="size-4 rounded" />
@@ -67,55 +76,55 @@ function ResourceSkeletonRow() {
         </div>
       </TableCell>
       {/* Resource: icon + name + uid */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-4 rounded" />
-          <div className="space-y-1">
-            <Skeleton className="h-3.5 w-32 rounded" />
-            <Skeleton className="h-3 w-20 rounded" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-32 rounded" />
+            <Skeleton className="h-3.5 w-20 rounded" />
           </div>
         </div>
       </TableCell>
       {/* Status */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <Skeleton className="h-6 w-11 rounded-md" />
       </TableCell>
       {/* Service */}
-      <TableCell>
-        <Skeleton className="h-4 w-16 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-16 rounded" />
       </TableCell>
       {/* Region */}
-      <TableCell>
-        <Skeleton className="h-4 w-20 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-20 rounded" />
       </TableCell>
       {/* Severity */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-2 rounded-full" />
-          <Skeleton className="h-4 w-12 rounded" />
+          <Skeleton className="h-4.5 w-12 rounded" />
         </div>
       </TableCell>
       {/* Account: provider icon + alias + uid */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-4 rounded" />
-          <div className="space-y-1">
-            <Skeleton className="h-3.5 w-24 rounded" />
-            <Skeleton className="h-3 w-16 rounded" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-24 rounded" />
+            <Skeleton className="h-3.5 w-16 rounded" />
           </div>
         </div>
       </TableCell>
       {/* Last seen */}
-      <TableCell>
-        <Skeleton className="h-4 w-24 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-24 rounded" />
       </TableCell>
       {/* Failing for */}
-      <TableCell>
-        <Skeleton className="h-4 w-16 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-16 rounded" />
       </TableCell>
       {/* Actions */}
-      <TableCell>
-        <Skeleton className="size-6 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="size-8 rounded-md" />
       </TableCell>
     </TableRow>
   );
@@ -160,6 +169,16 @@ export function InlineResourceContainer({
   if (resourceSearch) {
     filters["filter[name__icontains]"] = resourceSearch;
   }
+
+  const skeletonRowCount = getFindingGroupSkeletonCount(
+    group,
+    filters,
+    MAX_SKELETON_ROWS,
+  );
+  const filteredResourceCount = getFilteredFindingGroupResourceCount(
+    group,
+    filters,
+  );
 
   const handleSetResources = (
     newResources: FindingResourceRow[],
@@ -211,16 +230,9 @@ export function InlineResourceContainer({
     .filter(Boolean);
 
   const resolveResourceIds = async (ids: string[]) => {
-    const resourceUids = ids
-      .map((id) => resources.find((r) => r.findingId === id)?.resourceUid)
-      .filter(Boolean) as string[];
-    if (resourceUids.length === 0) return [];
-    return resolveFindingIds({
-      checkId: group.checkId,
-      resourceUids,
-      filters,
-      hasDateOrScanFilter: hasDateOrScan,
-    });
+    // findingId values are already real finding UUIDs (from the group
+    // resources endpoint), so no second resolution round-trip is needed.
+    return ids.filter(Boolean);
   };
 
   const selectableRowCount = resources.filter(canMuteFindingResource).length;
@@ -254,11 +266,11 @@ export function InlineResourceContainer({
       typeof updater === "function" ? updater(rowSelection) : updater;
     setRowSelection(newSelection);
 
-    const newResourceUids = Object.keys(newSelection)
+    const newFindingIds = Object.keys(newSelection)
       .filter((key) => newSelection[key])
-      .map((idx) => resources[parseInt(idx)]?.resourceUid)
+      .map((idx) => resources[parseInt(idx)]?.findingId)
       .filter(Boolean);
-    onResourceSelectionChange(newResourceUids);
+    onResourceSelectionChange(newFindingIds);
   };
 
   const columns = getColumnFindingResources({
@@ -310,12 +322,12 @@ export function InlineResourceContainer({
                   <table className="-mt-2.5 w-full border-separate border-spacing-y-4">
                     <tbody>
                       {isLoading && rows.length === 0 ? (
-                        Array.from({
-                          length: Math.min(
-                            group.resourcesTotal,
-                            MAX_SKELETON_ROWS,
-                          ),
-                        }).map((_, i) => <ResourceSkeletonRow key={i} />)
+                        Array.from({ length: skeletonRowCount }).map((_, i) => (
+                          <ResourceSkeletonRow
+                            key={i}
+                            isEmptyStateSized={filteredResourceCount === 0}
+                          />
+                        ))
                       ) : rows.length > 0 ? (
                         rows.map((row) => (
                           <TableRow
@@ -351,7 +363,9 @@ export function InlineResourceContainer({
                             colSpan={columns.length}
                             className="h-24 text-center"
                           >
-                            No resources found.
+                            {Object.keys(filters).length > 0
+                              ? "No resources found for the selected filters."
+                              : "No resources found."}
                           </TableCell>
                         </TableRow>
                       )}

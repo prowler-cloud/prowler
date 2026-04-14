@@ -427,6 +427,7 @@
       ],
       "Checks": [
         "admincenter_groups_not_public_visibility",
+        "exchange_organization_delicensing_resiliency_enabled",
         "teams_meeting_recording_disabled"
       ]
     },
