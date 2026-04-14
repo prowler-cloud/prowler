@@ -2,6 +2,22 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+## [0.6.0] (Prowler v5.23.0)
+
+### 🚀 Added
+
+- Resource events tool to get timeline for a resource (who, what, when) [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
+
+### 🔄 Changed
+
+- Pin `httpx` dependency to exact version for reproducible installs [(#10593)](https://github.com/prowler-cloud/prowler/pull/10593)
+
+### 🔐 Security
+
+- `authlib` bumped from 1.6.5 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
+
+---
+
 ## [0.5.0] (Prowler v5.21.0)
 
 ### 🚀 Added

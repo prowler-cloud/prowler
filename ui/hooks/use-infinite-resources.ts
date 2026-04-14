@@ -32,6 +32,8 @@ interface UseInfiniteResourcesReturn {
   refresh: () => void;
   /** Imperatively load the next page (e.g. from drawer navigation). */
   loadMore: () => void;
+  /** Total number of resources matching current filters (from API pagination). */
+  totalCount: number | null;
 }
 
 /**
@@ -60,6 +62,7 @@ export function useInfiniteResources({
   const currentCheckIdRef = useRef(checkId);
   const controllerRef = useRef<AbortController | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const totalCountRef = useRef<number | null>(null);
 
   // Store latest values in refs so the fetch function always reads current values
   // without being recreated on every render
@@ -70,6 +73,7 @@ export function useInfiniteResources({
   const onSetLoadingRef = useRef(onSetLoading);
 
   // Keep refs in sync with latest props
+  currentCheckIdRef.current = checkId;
   hasDateOrScanRef.current = hasDateOrScanFilter;
   filtersRef.current = filters;
   onSetResourcesRef.current = onSetResources;
@@ -110,7 +114,13 @@ export function useInfiniteResources({
       );
       const totalPages = response?.meta?.pagination?.pages ?? 1;
       const hasMore = page < totalPages;
+      totalCountRef.current = response?.meta?.pagination?.count ?? null;
 
+      // Commit the page number only after a successful (non-aborted) fetch.
+      // This prevents a premature pageRef increment from loadNextPage being
+      // permanently committed if a concurrent abort fires before fetchPage
+      // starts executing.
+      pageRef.current = page;
       hasMoreRef.current = hasMore;
 
       if (append) {
@@ -160,9 +170,11 @@ export function useInfiniteResources({
     )
       return;
 
-    const nextPage = pageRef.current + 1;
-    pageRef.current = nextPage;
-    fetchPage(nextPage, true, currentCheckIdRef.current, signal);
+    // Pass the next page number as an argument without pre-committing
+    // pageRef.current. The fetchPage function commits pageRef.current = page
+    // only after a successful (non-aborted) response, eliminating the race
+    // where a concurrent abort would leave pageRef permanently incremented.
+    fetchPage(pageRef.current + 1, true, currentCheckIdRef.current, signal);
   }
 
   // IntersectionObserver callback
@@ -202,5 +214,10 @@ export function useInfiniteResources({
     fetchPage(1, false, currentCheckIdRef.current, controller.signal);
   }
 
-  return { sentinelRef, refresh, loadMore: loadNextPage };
+  return {
+    sentinelRef,
+    refresh,
+    loadMore: loadNextPage,
+    totalCount: totalCountRef.current,
+  };
 }

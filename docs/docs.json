@@ -98,6 +98,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
+              "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-import-findings",
               {
@@ -137,6 +138,7 @@
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
+                  "user-guide/tutorials/prowler-app-sso-google-workspace",
                   "user-guide/tutorials/bulk-provider-provisioning",
                   "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
@@ -274,7 +276,8 @@
               {
                 "group": "Image",
                 "pages": [
-                  "user-guide/providers/image/getting-started-image"
+                  "user-guide/providers/image/getting-started-image",
+                  "user-guide/providers/image/authentication"
                 ]
               },
               {

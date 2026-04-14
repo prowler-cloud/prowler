@@ -1389,6 +1389,7 @@
       "Checks": [
         "accessanalyzer_enabled",
         "accessanalyzer_enabled_without_findings",
+        "bedrock_full_access_policy_attached",
         "iam_administrator_access_with_mfa",
         "iam_avoid_root_usage",
         "iam_aws_attached_policy_no_administrative_privileges",

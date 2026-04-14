@@ -972,6 +972,7 @@
         }
       ],
       "Checks": [
+        "bedrock_full_access_policy_attached",
         "ec2_instance_profile_attached",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",

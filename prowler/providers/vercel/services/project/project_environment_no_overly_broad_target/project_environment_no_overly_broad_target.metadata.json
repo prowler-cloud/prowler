@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Follow the **principle of least privilege** for environment variable targeting.\n- Assign each variable to only the environments where it is actually needed\n- Use different credentials for production, preview, and development environments\n- Non-sensitive configuration (e.g. feature flags, public URLs) may be acceptable in multiple environments but should still be reviewed\n- Regularly audit environment variable targets to prevent scope creep",
-      "Url": "https://hub.prowler.com/checks/vercel/project_environment_no_overly_broad_target"
+      "Url": "https://hub.prowler.com/check/project_environment_no_overly_broad_target"
     }
   },
   "Categories": [
