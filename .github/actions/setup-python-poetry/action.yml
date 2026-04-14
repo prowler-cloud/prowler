@@ -18,6 +18,10 @@ inputs:
     description: 'Install Python dependencies with Poetry'
     required: false
     default: 'true'
+  update-lock:
+    description: 'Run `poetry lock` during setup. Only enable when a prior step mutates pyproject.toml (e.g. API `@master` VCS rewrite). Default: false.'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -74,7 +78,7 @@ runs:
         grep -A2 -B2 "resolved_reference" poetry.lock
 
     - name: Update poetry.lock (prowler repo only)
-      if: github.repository == 'prowler-cloud/prowler'
+      if: github.repository == 'prowler-cloud/prowler' && inputs.update-lock == 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: poetry lock

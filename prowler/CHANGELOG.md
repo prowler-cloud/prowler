@@ -11,7 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🔄 Changed
 
-- Bump Poetry to `2.3.4` in CI, Dockerfile, ReadTheDocs, and pre-commit hooks. Consolidate SDK GitHub workflows to use the shared `setup-python-poetry` composite action. Regenerate `poetry.lock`. Remove deprecated license trove classifier from `pyproject.toml` [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
+- Bump Poetry to `2.3.4` and consolidate SDK workflows onto the `setup-python-poetry` composite action with opt-in lockfile regeneration [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
 
 ---
 
