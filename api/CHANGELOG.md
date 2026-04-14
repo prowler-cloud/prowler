@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.25.0] (Prowler UNRELEASED)
+
+### 🔐 Security
+
+- `pytest` from 8.3.5 to 9.0.3 to fix CVE-2025-71176 [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
+---
+
 ## [1.24.0] (Prowler v5.23.0)
 
 ### 🚀 Added
