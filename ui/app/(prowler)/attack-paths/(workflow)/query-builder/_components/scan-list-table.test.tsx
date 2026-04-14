@@ -287,7 +287,7 @@ describe("ScanListTable", () => {
 
     const dot = screen.getByLabelText("Graph data available");
     expect(dot).toBeInTheDocument();
-    expect(dot).toHaveClass("bg-green-500");
+    expect(dot).toHaveClass("bg-bg-pass-primary");
   });
 
   it("does not show a green dot when graph data is not ready", () => {
@@ -301,6 +301,8 @@ describe("ScanListTable", () => {
 
     render(<ScanListTable scans={[noGraphScan]} />);
 
-    expect(screen.queryByLabelText("Graph data available")).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Graph data available"),
+    ).not.toBeInTheDocument();
   });
 });

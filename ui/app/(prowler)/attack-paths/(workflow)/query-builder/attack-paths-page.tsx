@@ -382,7 +382,10 @@ export default function AttackPathsPage() {
 
           {/* Banner: viewing data from a previous scan cycle */}
           {isViewingPreviousCycleData && (
-            <Alert variant="default" className="border-border-warning-secondary bg-bg-warning-secondary">
+            <Alert
+              variant="default"
+              className="border-border-warning-secondary bg-bg-warning-secondary"
+            >
               <TriangleAlert className="text-text-warning-primary size-4" />
               <AlertTitle>Viewing data from a previous scan</AlertTitle>
               <AlertDescription>

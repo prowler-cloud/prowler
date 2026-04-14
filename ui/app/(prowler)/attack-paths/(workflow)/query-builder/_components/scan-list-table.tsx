@@ -12,10 +12,10 @@ import {
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
 import type { MetaDataProps, ProviderType } from "@/types";
-import type { AttackPathScan, ScanState } from "@/types/attack-paths";
+import type { AttackPathScan } from "@/types/attack-paths";
 import { SCAN_STATES } from "@/types/attack-paths";
 
 import { ScanStatusBadge } from "./scan-status-badge";
@@ -26,12 +26,6 @@ interface ScanListTableProps {
 
 const DEFAULT_PAGE_SIZE = 5;
 const PAGE_SIZE_OPTIONS = [2, 5, 10, 15];
-const WAITING_STATES: readonly ScanState[] = [
-  SCAN_STATES.SCHEDULED,
-  SCAN_STATES.AVAILABLE,
-  SCAN_STATES.EXECUTING,
-];
-
 const parsePageParam = (value: string | null, fallback: number) => {
   if (!value) return fallback;
 
@@ -151,7 +145,7 @@ const getColumns = ({
           className={cn(
             "inline-block size-2 shrink-0 rounded-full",
             row.original.attributes.graph_data_ready
-              ? "bg-green-500"
+              ? "bg-bg-pass-primary"
               : "bg-transparent",
           )}
           aria-label={
