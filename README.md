@@ -3,7 +3,7 @@
   <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
-  <b><i>Prowler</b> is the Open Cloud Security platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
+  <b><i>Prowler</b> is the Open Cloud Security Platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 </p>
 <p align="center">
 <b>Secure ANY cloud at AI Speed at <a href="https://prowler.com">prowler.com</i></b>
@@ -41,7 +41,7 @@
 
 # Description
 
-**Prowler** is the world’s most widely used _open-source cloud security platform_ that automates security and compliance across **any cloud environment**. With hundreds of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler is built to _“Secure ANY cloud at AI Speed”_. Prowler delivers **AI-driven**, **customizable**, and **easy-to-use** assessments, dashboards, reports, and integrations, making cloud security **simple**, **scalable**, and **cost-effective** for organizations of any size.
+**Prowler** is the world’s most widely used _Open-Source Cloud Security Platform_ that automates security and compliance across **any cloud environment**. With hundreds of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler is built to _“Secure ANY Cloud at AI Speed”_. Prowler delivers **AI-driven**, **customizable**, and **easy-to-use** assessments, dashboards, reports, and integrations, making cloud security **simple**, **scalable**, and **cost-effective** for organizations of any size.
 
 Prowler includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
 
@@ -317,7 +317,10 @@ python prowler-cli.py -v
 - **Prowler SDK**: A Python SDK designed to extend the functionality of the Prowler CLI for advanced capabilities.
 - **Prowler MCP Server**: A Model Context Protocol server that provides AI tools for Lighthouse, the AI-powered security assistant. This is a critical dependency for Lighthouse functionality.
 
-![Prowler App Architecture](docs/products/img/prowler-app-architecture.png)
+![Prowler App Architecture](docs/images/products/prowler-app-architecture.png)
+
+<!-- Diagram source: docs/images/products/prowler-app-architecture.mmd — edit there, re-render at https://mermaid.live, and replace the PNG. -->
+
 
 ## Prowler CLI
 

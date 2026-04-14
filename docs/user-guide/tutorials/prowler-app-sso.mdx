@@ -75,7 +75,7 @@ Choose a Method:
         <Info>
         **IdP Configuration**
 
-        The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application. For SSO integration with Azure AD / Entra ID, see our [Entra ID configuration instructions](/user-guide/tutorials/prowler-app-sso-entra).
+        The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, Google Workspace, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application. For SSO integration with Azure AD / Entra ID, see our [Entra ID configuration instructions](/user-guide/tutorials/prowler-app-sso-entra). For Google Workspace, see our [Google Workspace configuration instructions](/user-guide/tutorials/prowler-app-sso-google-workspace).
 
         </Info>
 
@@ -88,7 +88,7 @@ Choose a Method:
         | `firstName`    | The user's first name.                                                                                  | Yes      |
         | `lastName`     | The user's last name.                                                                                   | Yes      |
         | `userType`     | Determines which Prowler role the user receives (e.g., `admin`, `auditor`). If a role with that name already exists, the user receives it automatically; if it does not exist, Prowler App creates a new role with that name without permissions. If `userType` is not defined, the user is assigned the `no_permissions` role. Role permissions can be edited in the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac). | No       |
-        | `companyName`  | The user's company name. This is automatically populated if the IdP sends an `organization` attribute. | No       |
+        | `organization` | The user's company name.                                                                                | No       |
 
         <Info>
         **IdP Attribute Mapping**

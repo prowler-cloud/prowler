@@ -43,6 +43,39 @@ USER_3 = {
 }
 
 
+# Role data for Directory API role tests
+SUPER_ADMIN_ROLE_ID = "13801188331880449"
+SEED_ADMIN_ROLE_ID = "13801188331880451"
+GROUPS_ADMIN_ROLE_ID = "13801188331880450"
+
+ROLE_SUPER_ADMIN = {
+    "roleId": SUPER_ADMIN_ROLE_ID,
+    "roleName": "Super Admin",
+    "roleDescription": "Super Admin",
+    "isSystemRole": True,
+    "isSuperAdminRole": True,
+}
+
+# Google automatically assigns _SEED_ADMIN_ROLE to the first account that
+# created the domain. It is a super-admin-capable system role with a
+# different name, so it must also be excluded when counting "extra" roles.
+ROLE_SEED_ADMIN = {
+    "roleId": SEED_ADMIN_ROLE_ID,
+    "roleName": "_SEED_ADMIN_ROLE",
+    "roleDescription": "Super Admin",
+    "isSystemRole": True,
+    "isSuperAdminRole": True,
+}
+
+ROLE_GROUPS_ADMIN = {
+    "roleId": GROUPS_ADMIN_ROLE_ID,
+    "roleName": "_GROUPS_ADMIN_ROLE",
+    "roleDescription": "Groups Administrator",
+    "isSystemRole": True,
+    "isSuperAdminRole": False,
+}
+
+
 def set_mocked_googleworkspace_provider(
     identity: GoogleWorkspaceIdentityInfo = GoogleWorkspaceIdentityInfo(
         domain=DOMAIN,

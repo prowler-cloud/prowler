@@ -2,8 +2,8 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 
 /**
  * Skeleton placeholder for the resource info grid in the detail drawer.
- * Mirrors the 4-column layout: EntityInfo × 2, InfoField × 2 per row,
- * plus the actions button.
+ * Mirrors the drawer layout so added metadata fields don't leave visual gaps
+ * while the next resource is loading.
  */
 export function ResourceDetailSkeleton() {
   return (
@@ -15,16 +15,19 @@ export function ResourceDetailSkeleton() {
         <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-20" />
         <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-24" />
 
-        {/* Row 2: Last detected, First seen, Failing for */}
+        {/* Row 2: Last detected, First seen, Failing for, Group */}
         <InfoFieldSkeleton labelWidth="w-20" valueWidth="w-32" />
         <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-32" />
         <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-16" />
-        <div className="hidden md:block" />
+        <InfoFieldSkeleton labelWidth="w-10" valueWidth="w-18" />
 
         {/* Row 3: Check ID, Finding ID, Finding UID */}
         <InfoFieldSkeleton labelWidth="w-14" valueWidth="w-36" />
         <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-36" />
         <InfoFieldSkeleton labelWidth="w-20" valueWidth="w-36" />
+
+        {/* Row 4: Resource type */}
+        <InfoFieldSkeleton labelWidth="w-20" valueWidth="w-28" />
       </div>
 
       {/* Actions button */}
