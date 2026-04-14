@@ -14,11 +14,10 @@ import {
   getFilteredFindingGroupDelta,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
-import { FindingGroupRow, ProviderType } from "@/types";
+import { FindingGroupRow } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 import { canMuteFindingGroup } from "./finding-group-selection";
-import { ImpactedProvidersCell } from "./impacted-providers-cell";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 
@@ -208,19 +207,6 @@ export function getColumnFindingGroups({
         />
       ),
       cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
-    },
-    // Impacted Providers column
-    {
-      id: "impactedProviders",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Impacted Providers" />
-      ),
-      cell: ({ row }) => (
-        <ImpactedProvidersCell
-          providers={row.original.providers as ProviderType[]}
-        />
-      ),
-      enableSorting: false,
     },
     // Impacted Resources column
     {
