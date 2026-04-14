@@ -784,6 +784,7 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_customer_unattached_policy_no_administrative_privileges",
         "accessanalyzer_enabled_without_findings",
+        "bedrock_full_access_policy_attached",
         "eventbridge_bus_cross_account_access",
         "eventbridge_bus_exposed",
         "iam_policy_no_full_access_to_cloudtrail",

@@ -311,14 +311,15 @@
         }
       ],
       "Checks": [
-        "iam_policy_allows_privilege_escalation",
+        "accessanalyzer_enabled",
+        "bedrock_full_access_policy_attached",
+        "iam_group_administrator_access_policy",
         "iam_inline_policy_allows_privilege_escalation",
         "iam_no_custom_policy_permissive_role_assumption",
-        "iam_user_two_active_access_key",
-        "accessanalyzer_enabled",
+        "iam_policy_allows_privilege_escalation",
         "iam_role_administratoraccess_policy",
         "iam_user_administrator_access_policy",
-        "iam_group_administrator_access_policy"
+        "iam_user_two_active_access_key"
       ]
     },
     {
