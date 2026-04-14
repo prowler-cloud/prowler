@@ -1,6 +1,7 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportVercel
+from prowler.providers.vercel.lib.billing import plan_reason_suffix
 from prowler.providers.vercel.services.team.team_client import team_client
 
 
@@ -38,13 +39,12 @@ class team_saml_sso_enforced(Check):
                 if team.saml and team.saml.status == "enabled":
                     report.status_extended = (
                         f"Team {team.name} has SAML SSO enabled but does not enforce it. "
-                        f"Members can still authenticate without SSO. This feature is "
-                        f"available on Vercel Enterprise and Pro plans."
+                        f"Members can still authenticate without SSO."
                     )
                 else:
                     report.status_extended = (
-                        f"Team {team.name} does not have SAML SSO enforced. "
-                        f"This feature is available on Vercel Enterprise and Pro plans."
+                        f"Team {team.name} does not have SAML SSO enforced."
+                        f"{plan_reason_suffix(team.billing_plan, {'hobby'}, 'SAML SSO is not available on the Vercel Hobby plan.')}"
                     )
 
             findings.append(report)
