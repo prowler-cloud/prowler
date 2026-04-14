@@ -33,20 +33,19 @@ class gmail_mail_delegation_disabled(Check):
                     f"Mail delegation is disabled "
                     f"in domain {gmail_client.provider.identity.domain}."
                 )
+            elif delegation_enabled is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Mail delegation uses Google's secure default configuration "
+                    f"(disabled) in domain {gmail_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if delegation_enabled is None:
-                    report.status_extended = (
-                        f"Mail delegation is not explicitly configured "
-                        f"in domain {gmail_client.provider.identity.domain}. "
-                        f"Users should not be able to delegate access to their mailbox."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Mail delegation is enabled "
-                        f"in domain {gmail_client.provider.identity.domain}. "
-                        f"Users should not be able to delegate access to their mailbox."
-                    )
+                report.status_extended = (
+                    f"Mail delegation is enabled "
+                    f"in domain {gmail_client.provider.identity.domain}. "
+                    f"Users should not be able to delegate access to their mailbox."
+                )
 
             findings.append(report)
 

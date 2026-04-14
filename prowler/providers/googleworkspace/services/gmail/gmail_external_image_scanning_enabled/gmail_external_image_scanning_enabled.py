@@ -33,21 +33,20 @@ class gmail_external_image_scanning_enabled(Check):
                     f"Scanning of linked images for malicious content is enabled "
                     f"in domain {gmail_client.provider.identity.domain}."
                 )
+            elif scanning_enabled is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Scanning of linked images for malicious content uses Google's "
+                    f"secure default configuration (enabled) "
+                    f"in domain {gmail_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if scanning_enabled is None:
-                    report.status_extended = (
-                        f"Scanning of linked images for malicious content is not "
-                        f"explicitly configured "
-                        f"in domain {gmail_client.provider.identity.domain}. "
-                        f"External image scanning should be enabled to detect hidden threats."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Scanning of linked images for malicious content is disabled "
-                        f"in domain {gmail_client.provider.identity.domain}. "
-                        f"External image scanning should be enabled to detect hidden threats."
-                    )
+                report.status_extended = (
+                    f"Scanning of linked images for malicious content is disabled "
+                    f"in domain {gmail_client.provider.identity.domain}. "
+                    f"External image scanning should be enabled to detect hidden threats."
+                )
 
             findings.append(report)
 

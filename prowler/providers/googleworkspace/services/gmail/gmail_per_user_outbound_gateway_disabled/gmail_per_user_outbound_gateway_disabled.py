@@ -33,20 +33,20 @@ class gmail_per_user_outbound_gateway_disabled(Check):
                     f"Per-user outbound gateways are disabled "
                     f"in domain {gmail_client.provider.identity.domain}."
                 )
+            elif gateway_allowed is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Per-user outbound gateways use Google's secure default "
+                    f"configuration (disabled) "
+                    f"in domain {gmail_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if gateway_allowed is None:
-                    report.status_extended = (
-                        f"Per-user outbound gateways are not explicitly configured "
-                        f"in domain {gmail_client.provider.identity.domain}. "
-                        f"External SMTP server usage should be disabled."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Per-user outbound gateways are enabled "
-                        f"in domain {gmail_client.provider.identity.domain}. "
-                        f"External SMTP server usage should be disabled."
-                    )
+                report.status_extended = (
+                    f"Per-user outbound gateways are enabled "
+                    f"in domain {gmail_client.provider.identity.domain}. "
+                    f"External SMTP server usage should be disabled."
+                )
 
             findings.append(report)
 

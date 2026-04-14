@@ -65,7 +65,7 @@ class TestGmailMailDelegationDisabled:
             assert findings[0].status == "FAIL"
             assert "enabled" in findings[0].status_extended
 
-    def test_fail_no_policy_set(self):
+    def test_pass_using_default(self):
         mock_provider = set_mocked_googleworkspace_provider()
 
         with (
@@ -89,8 +89,8 @@ class TestGmailMailDelegationDisabled:
             findings = check.execute()
 
             assert len(findings) == 1
-            assert findings[0].status == "FAIL"
-            assert "not explicitly configured" in findings[0].status_extended
+            assert findings[0].status == "PASS"
+            assert "secure default" in findings[0].status_extended
 
     def test_no_findings_when_fetch_failed(self):
         mock_provider = set_mocked_googleworkspace_provider()

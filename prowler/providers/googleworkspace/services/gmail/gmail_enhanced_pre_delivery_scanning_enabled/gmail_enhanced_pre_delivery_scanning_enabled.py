@@ -35,20 +35,20 @@ class gmail_enhanced_pre_delivery_scanning_enabled(Check):
                     f"Enhanced pre-delivery message scanning is enabled "
                     f"in domain {gmail_client.provider.identity.domain}."
                 )
+            elif scanning_enabled is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Enhanced pre-delivery message scanning uses Google's "
+                    f"secure default configuration (enabled) "
+                    f"in domain {gmail_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if scanning_enabled is None:
-                    report.status_extended = (
-                        f"Enhanced pre-delivery message scanning is not explicitly configured "
-                        f"in domain {gmail_client.provider.identity.domain}. "
-                        f"Pre-delivery scanning should be enabled for improved threat detection."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Enhanced pre-delivery message scanning is disabled "
-                        f"in domain {gmail_client.provider.identity.domain}. "
-                        f"Pre-delivery scanning should be enabled for improved threat detection."
-                    )
+                report.status_extended = (
+                    f"Enhanced pre-delivery message scanning is disabled "
+                    f"in domain {gmail_client.provider.identity.domain}. "
+                    f"Pre-delivery scanning should be enabled for improved threat detection."
+                )
 
             findings.append(report)
 

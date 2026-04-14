@@ -33,21 +33,20 @@ class gmail_shortener_scanning_enabled(Check):
                     f"Identification of links behind shortened URLs is enabled "
                     f"in domain {gmail_client.provider.identity.domain}."
                 )
+            elif scanning_enabled is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Identification of links behind shortened URLs uses Google's "
+                    f"secure default configuration (enabled) "
+                    f"in domain {gmail_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if scanning_enabled is None:
-                    report.status_extended = (
-                        f"Identification of links behind shortened URLs is not "
-                        f"explicitly configured "
-                        f"in domain {gmail_client.provider.identity.domain}. "
-                        f"Shortened URL scanning should be enabled to detect hidden malicious links."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Identification of links behind shortened URLs is disabled "
-                        f"in domain {gmail_client.provider.identity.domain}. "
-                        f"Shortened URL scanning should be enabled to detect hidden malicious links."
-                    )
+                report.status_extended = (
+                    f"Identification of links behind shortened URLs is disabled "
+                    f"in domain {gmail_client.provider.identity.domain}. "
+                    f"Shortened URL scanning should be enabled to detect hidden malicious links."
+                )
 
             findings.append(report)
 
