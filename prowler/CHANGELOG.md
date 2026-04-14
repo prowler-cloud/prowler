@@ -7,6 +7,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - `entra_conditional_access_policy_all_apps_all_users` check for M365 provider [(#10619)](https://github.com/prowler-cloud/prowler/pull/10619)
+- `bedrock_full_access_policy_attached` check for AWS provider [(#10577)](https://github.com/prowler-cloud/prowler/pull/10577)
+- `iam_role_access_not_stale_to_bedrock` and `iam_user_access_not_stale_to_bedrock` checks for AWS provider [(#10536)](https://github.com/prowler-cloud/prowler/pull/10536)
+- `iam_policy_no_wildcard_marketplace_subscribe` and `iam_inline_policy_no_wildcard_marketplace_subscribe` checks for AWS provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
+- `bedrock_vpc_endpoints_configured` check for AWS provider [(#10591)](https://github.com/prowler-cloud/prowler/pull/10591)
 
 ---
 
