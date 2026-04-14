@@ -2,6 +2,24 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.24.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `intune_device_compliance_policy_unassigned_devices_not_compliant_by_default` check for M365 provider [(#10599)](https://github.com/prowler-cloud/prowler/pull/10599)
+- `entra_conditional_access_policy_all_apps_all_users` check for M365 provider [(#10619)](https://github.com/prowler-cloud/prowler/pull/10619)
+- `bedrock_full_access_policy_attached` check for AWS provider [(#10577)](https://github.com/prowler-cloud/prowler/pull/10577)
+- `iam_role_access_not_stale_to_bedrock` and `iam_user_access_not_stale_to_bedrock` checks for AWS provider [(#10536)](https://github.com/prowler-cloud/prowler/pull/10536)
+- `iam_policy_no_wildcard_marketplace_subscribe` and `iam_inline_policy_no_wildcard_marketplace_subscribe` checks for AWS provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
+- `bedrock_vpc_endpoints_configured` check for AWS provider [(#10591)](https://github.com/prowler-cloud/prowler/pull/10591)
+- `exchange_organization_delicensing_resiliency_enabled` check for m365 provider [(#10608)](https://github.com/prowler-cloud/prowler/pull/10608)
+
+### 🔄 Changed
+
+- Bump Poetry to `2.3.4` and consolidate SDK workflows onto the `setup-python-poetry` composite action with opt-in lockfile regeneration [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
+
+---
+
 ## [5.23.0] (Prowler v5.23.0)
 
 ### 🚀 Added

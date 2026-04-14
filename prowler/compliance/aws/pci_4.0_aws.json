@@ -754,6 +754,7 @@
       "Description": "Checks if Service Endpoint for the service provided in rule parameter is created for each Amazon Virtual Private Cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -1454,6 +1455,7 @@
       "Description": "Checks if Service Endpoint for the service provided in rule parameter is created for each Amazon Virtual Private Cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -2168,6 +2170,7 @@
       "Description": "Checks if Service Endpoint for the service provided in rule parameter is created for each Amazon Virtual Private Cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -2988,6 +2991,7 @@
       "Description": "Checks if Service Endpoint for the service provided in rule parameter is created for each Amazon Virtual Private Cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -3850,6 +3854,7 @@
       "Description": "Checks if Service Endpoint for the service provided in rule parameter is created for each Amazon Virtual Private Cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
@@ -21686,6 +21691,7 @@
       "Description": "Checks if Service Endpoint for the service provided in rule parameter is created for each Amazon Virtual Private Cloud (Amazon VPC)",
       "Name": "vpc",
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled"
       ],
       "Attributes": [
