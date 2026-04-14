@@ -209,6 +209,7 @@
         "entra_conditional_access_policy_mfa_enforced_for_guest_users",
         "entra_conditional_access_policy_block_o365_elevated_insider_risk",
         "entra_conditional_access_policy_directory_sync_account_excluded",
+        "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
         "entra_policy_guest_users_access_restrictions",
         "entra_seamless_sso_disabled"
       ]
@@ -253,6 +254,7 @@
         "entra_conditional_access_policy_device_registration_mfa_required",
         "entra_intune_enrollment_sign_in_frequency_every_time",
         "entra_conditional_access_policy_device_code_flow_blocked",
+        "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
@@ -719,6 +721,7 @@
         "entra_conditional_access_policy_approved_client_app_required_for_mobile",
         "entra_conditional_access_policy_device_code_flow_blocked",
         "entra_conditional_access_policy_directory_sync_account_excluded",
+        "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
