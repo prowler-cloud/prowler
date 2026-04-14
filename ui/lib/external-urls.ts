@@ -6,6 +6,8 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings",
   AWS_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
+  ATTACK_PATHS_CUSTOM_QUERIES:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-attack-paths#writing-custom-opencypher-queries",
 } as const;
 
 // CloudFormation template URL for the ProwlerScan role.

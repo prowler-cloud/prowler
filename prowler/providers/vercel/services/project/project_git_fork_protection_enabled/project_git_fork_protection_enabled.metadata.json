@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable Git fork protection to require explicit authorization before pull requests from forked repositories can trigger deployments. This prevents untrusted contributors from accessing environment variables and secrets through the build process. For open-source projects, review fork PRs manually before allowing builds.",
-      "Url": "https://hub.prowler.com/checks/vercel/project_git_fork_protection_enabled"
+      "Url": "https://hub.prowler.com/check/project_git_fork_protection_enabled"
     }
   },
   "Categories": [

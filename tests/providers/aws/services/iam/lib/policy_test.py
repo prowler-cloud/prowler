@@ -15,6 +15,7 @@ from prowler.providers.aws.services.iam.lib.policy import (
     is_condition_restricting_from_private_ip,
     is_condition_restricting_to_trusted_ips,
     is_policy_public,
+    policy_allows_marketplace_subscribe_on_all_resources,
 )
 
 TRUSTED_AWS_ACCOUNT_NUMBER = "123456789012"
@@ -136,6 +137,47 @@ class Test_Policy:
         result = get_effective_actions(policy)
         assert result == {"s3:GetObject", "s3:ListBucket"}
         assert "s3:PutObject" not in result
+
+    def test_policy_allows_marketplace_subscribe_conditional_deny_does_not_cancel(self):
+        """Conditional deny should not globally cancel a wildcard marketplace allow."""
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "aws-marketplace:Subscribe",
+                    "Resource": "*",
+                },
+                {
+                    "Effect": "Deny",
+                    "Action": "aws-marketplace:Subscribe",
+                    "Resource": "*",
+                    "Condition": {"StringEquals": {"aws:RequestedRegion": "us-east-1"}},
+                },
+            ],
+        }
+
+        assert policy_allows_marketplace_subscribe_on_all_resources(policy)
+
+    def test_policy_allows_marketplace_subscribe_unconditional_deny_cancels(self):
+        """Unconditional deny on Resource:* should cancel the wildcard marketplace allow."""
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "aws-marketplace:Subscribe",
+                    "Resource": "*",
+                },
+                {
+                    "Effect": "Deny",
+                    "Action": "aws-marketplace:Subscribe",
+                    "Resource": "*",
+                },
+            ],
+        }
+
+        assert not policy_allows_marketplace_subscribe_on_all_resources(policy)
 
     # Test lowercase context key name --> aws
     def test_condition_parser_string_equals_aws_SourceAccount_list(self):
