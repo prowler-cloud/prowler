@@ -9,8 +9,8 @@
   "Severity": "low",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Helper check that verifies whether Microsoft Entra Conditional Access includes at least one enabled policy scoped to all cloud applications and all users. Policies that only require a password change and report-only policies are excluded from passing. The result is intended to support other, more specific Conditional Access checks rather than enforce a baseline on its own.",
-  "Risk": "Without a Conditional Access policy that targets all cloud apps and all users, newly added applications or user accounts may not be covered by existing access controls until policies are explicitly updated.",
+  "Description": "Helper check that verifies whether **Microsoft Entra Conditional Access** includes at least one **enabled** policy scoped to **all cloud applications** and **all users**. Policies that only require a **password change** and **report-only** policies are excluded from passing. The result is intended to support other, more specific Conditional Access checks rather than enforce a baseline on its own.",
+  "Risk": "Without a Conditional Access policy that targets **all cloud apps** and **all users**, newly added applications or user accounts may not be covered by existing access controls until policies are explicitly updated.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/plan-conditional-access",
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure there is at least one enabled Conditional Access policy that targets all cloud apps and all users so that other Conditional Access checks have broad coverage to evaluate. Exclude only break-glass accounts.",
+      "Text": "Ensure there is at least one **enabled** Conditional Access policy that targets **all cloud apps** and **all users** so that other Conditional Access checks have broad coverage to evaluate. Exclude only **break-glass accounts**.",
       "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_all_apps_all_users"
     }
   },
