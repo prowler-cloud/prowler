@@ -44,12 +44,86 @@ vi.mock("next/navigation", () => ({
 
 import {
   getFindingGroupResources,
+  getFindingGroups,
   getLatestFindingGroupResources,
+  getLatestFindingGroups,
 } from "./finding-groups";
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
+
+describe("getFindingGroups — default sort for muted and non-muted rows", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+  });
+
+  it("should prefer non-muted fail counters when include muted is not active", async () => {
+    // When
+    await getFindingGroups();
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-new_fail_count,-changed_fail_count,-severity,-fail_count,-last_seen_at",
+    );
+  });
+
+  it("should include muted counters when filter[muted]=include is active", async () => {
+    // When
+    await getFindingGroups({
+      filters: { "filter[muted]": "include" },
+    });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-new_fail_count,-changed_fail_count,-severity,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at",
+    );
+  });
+});
+
+describe("getLatestFindingGroups — default sort for muted and non-muted rows", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+  });
+
+  it("should prefer non-muted fail counters when include muted is not active", async () => {
+    // When
+    await getLatestFindingGroups();
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-new_fail_count,-changed_fail_count,-severity,-fail_count,-last_seen_at",
+    );
+  });
+
+  it("should include muted counters when filter[muted]=include is active", async () => {
+    // When
+    await getLatestFindingGroups({
+      filters: { "filter[muted]": "include" },
+    });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-new_fail_count,-changed_fail_count,-severity,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at",
+    );
+  });
+});
 
 describe("getFindingGroupResources — SSRF path traversal protection", () => {
   beforeEach(() => {

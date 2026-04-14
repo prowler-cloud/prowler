@@ -83,7 +83,10 @@ function normalizeFindingGroupResourceFilters(
 }
 
 const DEFAULT_FINDING_GROUPS_SORT =
-  "-status,-severity,-delta,-fail_count,-last_seen_at";
+  "-status,-new_fail_count,-changed_fail_count,-severity,-fail_count,-last_seen_at";
+
+const DEFAULT_FINDING_GROUPS_SORT_WITH_MUTED =
+  "-status,-new_fail_count,-changed_fail_count,-severity,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at";
 
 const DEFAULT_FINDING_GROUP_RESOURCES_SORT =
   "-status,-delta,-severity,-last_seen_at";
@@ -95,16 +98,32 @@ interface FetchFindingGroupsParams {
   filters?: Record<string, string | string[] | undefined>;
 }
 
+function includesMutedFindings(
+  filters: Record<string, string | string[] | undefined>,
+): boolean {
+  const mutedFilter = filters["filter[muted]"];
+
+  if (Array.isArray(mutedFilter)) {
+    return mutedFilter.includes("include");
+  }
+
+  return mutedFilter === "include";
+}
+
+function getDefaultFindingGroupsSort(
+  filters: Record<string, string | string[] | undefined>,
+): string {
+  return includesMutedFindings(filters)
+    ? DEFAULT_FINDING_GROUPS_SORT_WITH_MUTED
+    : DEFAULT_FINDING_GROUPS_SORT;
+}
+
 async function fetchFindingGroupsEndpoint(
   endpoint: string,
-  {
-    page = 1,
-    pageSize = 10,
-    sort = DEFAULT_FINDING_GROUPS_SORT,
-    filters = {},
-  }: FetchFindingGroupsParams,
+  { page = 1, pageSize = 10, sort, filters = {} }: FetchFindingGroupsParams,
 ) {
   const headers = await getAuthHeaders({ contentType: false });
+  const resolvedSort = sort ?? getDefaultFindingGroupsSort(filters);
 
   if (isNaN(Number(page)) || page < 1) redirect("/findings");
 
@@ -112,7 +131,7 @@ async function fetchFindingGroupsEndpoint(
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  if (sort) url.searchParams.append("sort", sort);
+  if (resolvedSort) url.searchParams.append("sort", resolvedSort);
 
   appendSanitizedProviderFilters(url, mapSearchFilter(filters));
 
