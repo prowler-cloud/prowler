@@ -13,8 +13,7 @@
   "Risk": "Without MFA for guest users, compromised external accounts can access tenant resources using only a password. Attackers may exploit **B2B collaboration**, **direct connect**, or **service provider** accounts to exfiltrate data, escalate privileges, or move laterally across the organization.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-alt-require-mfa-guest-access",
-    "https://maester.dev/docs/tests/MT.1016"
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/policy-alt-require-mfa-guest-access"
   ],
   "Remediation": {
     "Code": {
