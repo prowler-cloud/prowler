@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { appendSanitizedProviderFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
-import { FilterParam } from "@/types/filters";
 
 /**
  * Maps filter[search] to filter[check_title__icontains] for finding-groups.
@@ -47,7 +46,7 @@ function splitCsvFilterValues(value: string | string[] | undefined): string[] {
  * finding-group resources sub-endpoint. These must be stripped before
  * calling the resources API to avoid empty results.
  */
-const FINDING_GROUP_ONLY_FILTERS: FilterParam[] = ["filter[service__in]"];
+const FINDING_GROUP_ONLY_FILTERS = ["filter[service__in]"] as const;
 
 function normalizeFindingGroupResourceFilters(
   filters: Record<string, string | string[] | undefined>,
@@ -55,7 +54,9 @@ function normalizeFindingGroupResourceFilters(
   const normalized = Object.fromEntries(
     Object.entries(filters).filter(
       ([key]) =>
-        !FINDING_GROUP_ONLY_FILTERS.includes(key as FilterParam),
+        !FINDING_GROUP_ONLY_FILTERS.includes(
+          key as (typeof FINDING_GROUP_ONLY_FILTERS)[number],
+        ),
     ),
   );
 
