@@ -414,6 +414,80 @@ class Test_iam_policy_no_wildcard_marketplace_subscribe:
                 assert result[0].region == "us-east-1"
 
     @mock_aws
+    def test_policy_not_action_allows_marketplace_subscribe(self):
+        """FAIL: Allow + NotAction excludes only unrelated actions so Subscribe is granted."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam_client = client("iam")
+        policy_name = "marketplace_not_action"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "NotAction": "ec2:Describe*",
+                    "Resource": "*",
+                },
+            ],
+        }
+        arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                f"{CHECK_MODULE_PATH}.iam_client",
+                new=IAM(aws_provider),
+            ):
+                from prowler.providers.aws.services.iam.iam_policy_no_wildcard_marketplace_subscribe.iam_policy_no_wildcard_marketplace_subscribe import (
+                    iam_policy_no_wildcard_marketplace_subscribe,
+                )
+
+                check = iam_policy_no_wildcard_marketplace_subscribe()
+                result = check.execute()
+                assert result[0].status == "FAIL"
+                assert result[0].resource_arn == arn
+
+    @mock_aws
+    def test_policy_not_action_excludes_marketplace_subscribe(self):
+        """PASS: Allow + NotAction that excludes aws-marketplace:Subscribe does not grant it."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam_client = client("iam")
+        policy_name = "marketplace_not_action_excluded"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "NotAction": "aws-marketplace:Subscribe",
+                    "Resource": "*",
+                },
+            ],
+        }
+        arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                f"{CHECK_MODULE_PATH}.iam_client",
+                new=IAM(aws_provider),
+            ):
+                from prowler.providers.aws.services.iam.iam_policy_no_wildcard_marketplace_subscribe.iam_policy_no_wildcard_marketplace_subscribe import (
+                    iam_policy_no_wildcard_marketplace_subscribe,
+                )
+
+                check = iam_policy_no_wildcard_marketplace_subscribe()
+                result = check.execute()
+                assert result[0].status == "PASS"
+                assert result[0].resource_arn == arn
+
+    @mock_aws
     def test_no_custom_policies(self):
         """No findings when there are no custom IAM policies."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])

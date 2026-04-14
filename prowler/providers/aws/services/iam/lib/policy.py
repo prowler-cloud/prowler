@@ -989,10 +989,11 @@ def policy_allows_marketplace_subscribe_on_all_resources(
 ) -> bool:
     """Check if a policy document allows aws-marketplace:Subscribe on Resource:*.
 
-    Inspects each statement in the policy document for Allow statements that
-    grant the ``aws-marketplace:Subscribe`` action (or a wildcard pattern that
-    matches it) on all resources (``*``).  Explicit Deny statements for the
-    same action on all resources take precedence and negate the finding.
+    Inspects statements with Resource ``*`` for Allow effects that grant
+    ``aws-marketplace:Subscribe`` via ``Action`` or ``NotAction`` (wildcard
+    patterns expanded through ``expand_actions``). Explicit Deny statements
+    on Resource ``*`` (via either ``Action`` or ``NotAction``) covering the
+    same action take precedence.
 
     Args:
         policy_document: The IAM policy document to analyse.
@@ -1001,46 +1002,65 @@ def policy_allows_marketplace_subscribe_on_all_resources(
         True if the policy effectively allows aws-marketplace:Subscribe on
         all resources, False otherwise.
     """
-    from fnmatch import fnmatch
-
-    target_action = "aws-marketplace:subscribe"
-
     if not policy_document or "Statement" not in policy_document:
         return False
+
+    target_actions = set(
+        expand_actions(
+            "aws-marketplace:Subscribe",
+            InvalidActionHandling.REMOVE,
+        )
+    )
+    if not target_actions:
+        target_actions = {"aws-marketplace:Subscribe"}
 
     statements = policy_document.get("Statement", [])
     if not isinstance(statements, list):
         statements = [statements]
 
-    is_allowed = False
-    is_denied = False
+    allowed_on_all = set()
+    denied_on_all = set()
+    all_aws_actions = None
 
     for statement in statements:
         effect = statement.get("Effect", "")
         if not isinstance(effect, str):
             continue
+        effect_lower = effect.strip().lower()
+        if effect_lower not in ("allow", "deny"):
+            continue
 
         resources = statement.get("Resource", [])
         if isinstance(resources, str):
             resources = [resources]
-
-        actions = statement.get("Action", [])
-        if isinstance(actions, str):
-            actions = [actions]
-
-        action_matches = any(
-            fnmatch(target_action, action.lower()) for action in actions
-        )
-
-        if not action_matches:
+        if "*" not in resources:
             continue
 
-        if effect == "Allow" and "*" in resources:
-            is_allowed = True
-        elif effect == "Deny" and "*" in resources:
-            is_denied = True
+        statement_actions = set()
+        action_patterns = _get_patterns_from_standard_value(statement.get("Action"))
+        for pattern in action_patterns:
+            statement_actions.update(
+                expand_actions(pattern, InvalidActionHandling.REMOVE)
+            )
 
-    return is_allowed and not is_denied
+        not_action_patterns = _get_patterns_from_standard_value(
+            statement.get("NotAction")
+        )
+        if not_action_patterns:
+            if all_aws_actions is None:
+                all_aws_actions = set(expand_actions("*", InvalidActionHandling.REMOVE))
+            exclusions = set()
+            for pattern in not_action_patterns:
+                exclusions.update(expand_actions(pattern, InvalidActionHandling.REMOVE))
+            statement_actions.update(all_aws_actions.difference(exclusions))
+
+        if effect_lower == "allow":
+            allowed_on_all.update(statement_actions)
+        else:
+            denied_on_all.update(statement_actions)
+
+    effective = allowed_on_all.difference(denied_on_all)
+    return bool(target_actions & effective)
 
 
 def has_codebuild_trusted_principal(trust_policy: dict) -> bool:

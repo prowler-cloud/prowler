@@ -344,6 +344,100 @@ class Test_iam_inline_policy_no_wildcard_marketplace_subscribe:
             assert result[0].region == "eu-west-1"
 
     @mock_aws
+    def test_inline_policy_not_action_allows_marketplace_subscribe(self):
+        """FAIL: Allow + NotAction excludes only unrelated actions so Subscribe is granted."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
+        policy_name = "marketplace_not_action"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "NotAction": "ec2:Describe*",
+                    "Resource": "*",
+                },
+            ],
+        }
+        iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_inline_policy_no_wildcard_marketplace_subscribe.iam_inline_policy_no_wildcard_marketplace_subscribe import (
+                iam_inline_policy_no_wildcard_marketplace_subscribe,
+            )
+
+            check = iam_inline_policy_no_wildcard_marketplace_subscribe()
+            result = check.execute()
+            assert result[0].status == "FAIL"
+            assert result[0].resource_arn == role_arn
+
+    @mock_aws
+    def test_inline_policy_not_action_excludes_marketplace_subscribe(self):
+        """PASS: Allow + NotAction that excludes aws-marketplace:Subscribe does not grant it."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        iam_client = client("iam", region_name=AWS_REGION_EU_WEST_1)
+        role_name = "test_role"
+        role_arn = iam_client.create_role(
+            RoleName=role_name,
+            AssumeRolePolicyDocument=dumps(ADMINISTRATOR_ROLE_ASSUME_ROLE_POLICY),
+        )["Role"]["Arn"]
+
+        policy_name = "marketplace_not_action_excluded"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "NotAction": "aws-marketplace:Subscribe",
+                    "Resource": "*",
+                },
+            ],
+        }
+        iam_client.put_role_policy(
+            RoleName=role_name,
+            PolicyName=policy_name,
+            PolicyDocument=dumps(policy_document),
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_inline_policy_no_wildcard_marketplace_subscribe.iam_inline_policy_no_wildcard_marketplace_subscribe import (
+                iam_inline_policy_no_wildcard_marketplace_subscribe,
+            )
+
+            check = iam_inline_policy_no_wildcard_marketplace_subscribe()
+            result = check.execute()
+            assert result[0].status == "PASS"
+            assert result[0].resource_arn == role_arn
+
+    @mock_aws
     def test_no_inline_policies(self):
         """No findings when there are no inline policies."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
