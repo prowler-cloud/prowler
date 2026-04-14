@@ -5,6 +5,7 @@ import {
   Check,
   Container,
   Copy,
+  CornerDownRight,
   ExternalLink,
   Link,
   Loader2,
@@ -13,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { getFindingById, getLatestFindings } from "@/actions/findings";
+import { listOrganizationsSafe } from "@/actions/organizations/organizations";
 import { getResourceById } from "@/actions/resources";
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
 import { FindingDetail } from "@/components/findings/table/finding-detail";
@@ -32,7 +34,6 @@ import {
 } from "@/components/shadcn/info-field/info-field";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable } from "@/components/ui/table";
@@ -46,11 +47,41 @@ import {
   ProviderType,
   ResourceProps,
 } from "@/types";
+import { OrganizationResource } from "@/types/organizations";
 
 import {
   getResourceFindingsColumns,
   ResourceFinding,
 } from "./resource-findings-columns";
+
+function useProviderOrganization(
+  providerId: string,
+  providerType: string,
+): OrganizationResource | null {
+  const [org, setOrg] = useState<OrganizationResource | null>(null);
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+
+  useEffect(() => {
+    if (!isCloudEnv || providerType !== "aws") {
+      setOrg(null);
+      return;
+    }
+
+    const loadOrg = async () => {
+      const response = await listOrganizationsSafe();
+      const found = response.data.find((o: OrganizationResource) =>
+        o.relationships?.providers?.data?.some(
+          (p: { id: string }) => p.id === providerId,
+        ),
+      );
+      setOrg(found ?? null);
+    };
+
+    loadOrg();
+  }, [isCloudEnv, providerType, providerId]);
+
+  return org;
+}
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -142,6 +173,11 @@ export const ResourceDetailContent = ({
   const resourceId = resource.id;
   const attributes = resource.attributes;
   const providerData = resource.relationships.provider.data.attributes;
+  const providerId = resource.relationships.provider.data.id;
+  const providerOrg = useProviderOrganization(
+    providerId,
+    providerData.provider,
+  );
 
   // Reset to overview tab when switching resources
   useEffect(() => {
@@ -419,17 +455,41 @@ export const ResourceDetailContent = ({
 
       <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
         <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
-          <EntityInfo
-            cloudProvider={providerData.provider as ProviderType}
-            entityAlias={providerData.alias ?? undefined}
-            entityId={providerData.uid}
-          />
-          <EntityInfo
-            nameIcon={<Container className="size-4" />}
-            entityAlias={resourceName}
-            entityId={attributes.uid}
-          />
-          <InfoField label="Service" variant="compact">
+          {providerOrg ? (
+            <div className="col-span-2 flex flex-col gap-1">
+              <EntityInfo
+                cloudProvider="aws"
+                entityAlias={providerOrg.attributes.name}
+                entityId={providerOrg.attributes.external_id}
+              />
+              <div className="flex items-start pl-6">
+                <CornerDownRight className="text-text-neutral-tertiary mt-1 mr-2 size-4 shrink-0" />
+                <EntityInfo
+                  cloudProvider="aws"
+                  entityAlias={providerData.alias ?? undefined}
+                  entityId={providerData.uid}
+                />
+              </div>
+            </div>
+          ) : (
+            <EntityInfo
+              cloudProvider={providerData.provider as ProviderType}
+              entityAlias={providerData.alias ?? undefined}
+              entityId={providerData.uid}
+            />
+          )}
+          <div className={providerOrg ? "self-end" : undefined}>
+            <EntityInfo
+              nameIcon={<Container className="size-4" />}
+              entityAlias={resourceName}
+              entityId={attributes.uid}
+            />
+          </div>
+          <InfoField
+            label="Service"
+            variant="compact"
+            className={providerOrg ? "self-end" : undefined}
+          >
             {renderValue(attributes.service)}
           </InfoField>
           <InfoField label="Region" variant="compact">
@@ -452,22 +512,12 @@ export const ResourceDetailContent = ({
           <InfoField label="Partition" variant="compact">
             {renderValue(attributes.partition)}
           </InfoField>
-          <InfoField label="Resource UID" variant="compact">
-            <CodeSnippet
-              value={attributes.uid}
-              transparent
-              className="max-w-full text-sm"
-            />
-          </InfoField>
 
           <InfoField label="Created At" variant="compact">
             <DateWithTime inline dateTime={attributes.inserted_at || "-"} />
           </InfoField>
           <InfoField label="Last Updated" variant="compact">
             <DateWithTime inline dateTime={attributes.updated_at || "-"} />
-          </InfoField>
-          <InfoField label="Failed Findings" variant="compact">
-            {String(attributes.failed_findings_count ?? 0)}
           </InfoField>
         </div>
 
