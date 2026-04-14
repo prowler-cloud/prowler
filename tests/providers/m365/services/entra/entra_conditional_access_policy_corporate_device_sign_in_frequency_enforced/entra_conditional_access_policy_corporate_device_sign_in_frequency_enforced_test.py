@@ -106,7 +106,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
 
             entra_client.conditional_access_policies = {}
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -151,7 +153,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -191,7 +195,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -234,7 +240,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -272,7 +280,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -310,7 +320,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -348,7 +360,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -383,7 +397,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -421,7 +437,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -464,7 +482,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -502,7 +522,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -539,7 +561,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -576,7 +600,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -620,7 +646,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 ),
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1
@@ -659,7 +687,9 @@ class Test_entra_conditional_access_policy_corporate_device_sign_in_frequency_en
                 )
             }
 
-            check = entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            check = (
+                entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced()
+            )
             result = check.execute()
 
             assert len(result) == 1

@@ -9,7 +9,9 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 
 
-class entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced(Check):
+class entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced(
+    Check
+):
     """Check if at least one Conditional Access policy enforces sign-in frequency for non-corporate devices.
 
     This check verifies that the tenant has at least one enabled Conditional Access policy
