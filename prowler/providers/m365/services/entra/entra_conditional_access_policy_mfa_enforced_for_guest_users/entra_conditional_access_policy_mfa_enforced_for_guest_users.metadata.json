@@ -38,5 +38,5 @@
     "entra_policy_guest_invite_only_for_admin_roles",
     "entra_dynamic_group_for_guests_created"
   ],
-  "Notes": "Conditional Access policies require Microsoft Entra ID P1 or P2 licenses. This check corresponds to Maester test MT.1016 (Test-MtCaMfaForGuest)."
+  "Notes": "Conditional Access policies require Microsoft Entra ID P1 or P2 licenses."
 }
