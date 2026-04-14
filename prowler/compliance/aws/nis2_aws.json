@@ -1368,9 +1368,10 @@
       "Id": "6.8.2.a",
       "Description": "consider the functional, logical and physical relationship, including location, between trustworthy systems and services;",
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "iam_role_cross_service_confused_deputy_prevention",
-        "vpc_endpoint_services_allowed_principals_trust_boundaries",
-        "vpc_endpoint_connections_trust_boundaries"
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_endpoint_services_allowed_principals_trust_boundaries"
       ],
       "Attributes": [
         {
@@ -1910,6 +1911,8 @@
       "Id": "11.5.4",
       "Description": "The relevant entities shall regularly review the identities for network and information systems and their users and, if no longer needed, deactivate them without delay.",
       "Checks": [
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ],
