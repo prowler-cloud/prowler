@@ -674,6 +674,7 @@
         "sagemaker_notebook_instance_vpc_settings_configured",
         "sagemaker_training_jobs_network_isolation_enabled",
         "sagemaker_training_jobs_vpc_settings_configured",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_services_allowed_principals_trust_boundaries"
       ]

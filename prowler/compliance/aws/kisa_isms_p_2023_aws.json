@@ -1617,6 +1617,7 @@
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "sagemaker_training_jobs_network_isolation_enabled",
         "sagemaker_training_jobs_vpc_settings_configured",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_for_ec2_enabled",
         "vpc_peering_routing_tables_with_least_privilege",

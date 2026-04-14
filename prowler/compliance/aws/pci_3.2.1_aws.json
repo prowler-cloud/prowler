@@ -276,6 +276,7 @@
         "ec2_ebs_public_snapshot",
         "rds_instance_no_public_access",
         "eks_endpoints_not_publicly_accessible",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled",
         "s3_account_level_public_access_blocks",
         "awslambda_function_not_publicly_accessible",
