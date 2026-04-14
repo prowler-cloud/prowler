@@ -1,11 +1,11 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
 import Link from "next/link";
 
 import { AddIcon } from "../icons";
 import { Button, Card, CardContent, CardHeader } from "../shadcn";
 import { Separator } from "../shadcn/separator/separator";
+import { CodeSnippet } from "../ui/code-snippet/code-snippet";
 import { DateWithTime } from "../ui/entities";
 
 interface InvitationDetailsProps {
@@ -53,7 +53,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
       ? window.location.origin
       : "http://localhost:3000";
 
-  const invitationLink = `${baseUrl}/sign-up?invitation_token=${attributes.token}`;
+  const invitationLink = `${baseUrl}/invitation/accept?invitation_token=${attributes.token}`;
 
   return (
     <div className="flex flex-col gap-x-4 gap-y-8">
@@ -89,20 +89,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
             Share this link with the user:
           </h3>
 
-          <div className="flex w-full flex-col items-start justify-between overflow-hidden">
-            <Snippet
-              classNames={{
-                base: "w-full max-w-full",
-                content: "min-w-0 overflow-hidden",
-                pre: "min-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
-              }}
-              hideSymbol
-              variant="bordered"
-              className="bg-bg-neutral-secondary max-w-full overflow-hidden py-1"
-            >
-              <p className="min-w-0 truncate text-sm">{invitationLink}</p>
-            </Snippet>
-          </div>
+          <CodeSnippet value={invitationLink} className="max-w-full" />
         </CardContent>
       </Card>
       <div className="flex w-full items-center justify-end">

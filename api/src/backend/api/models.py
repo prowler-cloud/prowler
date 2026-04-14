@@ -1,14 +1,15 @@
 import json
 import logging
 import re
-import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
+import defusedxml
 from allauth.socialaccount.models import SocialApp
 from config.custom_logging import BackendLogger
 from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
 from cryptography.fernet import Fernet, InvalidToken
+from defusedxml import ElementTree as ET
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.postgres.fields import ArrayField
@@ -293,6 +294,8 @@ class Provider(RowLevelSecurityProtectedModel):
         CLOUDFLARE = "cloudflare", _("Cloudflare")
         OPENSTACK = "openstack", _("OpenStack")
         IMAGE = "image", _("Image")
+        GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
+        VERCEL = "vercel", _("Vercel")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -339,6 +342,15 @@ class Provider(RowLevelSecurityProtectedModel):
                 "and contain only lowercase letters, numbers, and hyphens. "
                 "Legacy App Engine project IDs with a domain prefix (e.g., example.com:my-project) are also accepted.",
                 code="gcp-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_googleworkspace_uid(value):
+        if not re.match(r"^C[0-9a-zA-Z]+$", value):
+            raise ModelValidationError(
+                detail="Google Workspace Customer ID must start with 'C' followed by one or more alphanumeric characters (e.g., C01234abc, C12345678).",
+                code="googleworkspace-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -424,6 +436,15 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="OpenStack provider ID must be a valid project ID (UUID or project name).",
                 code="openstack-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_vercel_uid(value):
+        if not re.match(r"^team_[a-zA-Z0-9]{16,32}$", value):
+            raise ModelValidationError(
+                detail="Vercel provider ID must be a valid Vercel Team ID (e.g., team_xxxxxxxxxxxxxxxxxxxxxxxx).",
+                code="vercel-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -1727,14 +1748,44 @@ class FindingGroupDailySummary(RowLevelSecurityProtectedModel):
     # Severity stored as integer for MAX aggregation (5=critical, 4=high, etc.)
     severity_order = models.SmallIntegerField(default=1)
 
-    # Finding counts
+    # Finding counts (inclusive of muted findings; use the `muted` flag to
+    # tell whether the group has any actionable findings).
     pass_count = models.IntegerField(default=0)
     fail_count = models.IntegerField(default=0)
+    manual_count = models.IntegerField(default=0)
     muted_count = models.IntegerField(default=0)
 
-    # Delta counts
+    # Status counts restricted to muted findings, so clients can isolate the
+    # muted half of each status (e.g. `pass_count - pass_muted_count` gives the
+    # actionable PASS findings).
+    pass_muted_count = models.IntegerField(default=0)
+    fail_muted_count = models.IntegerField(default=0)
+    manual_muted_count = models.IntegerField(default=0)
+
+    # Whether every finding for this (provider, check, day) is muted.
+    muted = models.BooleanField(default=False)
+
+    # Delta counts (non-muted, kept for convenience and as a "total" view).
     new_count = models.IntegerField(default=0)
     changed_count = models.IntegerField(default=0)
+
+    # Delta breakdown by (status, muted) so clients can answer questions like
+    # "how many new failing findings appeared in this scan?" without scanning
+    # the underlying findings table. Mirrors the existing pass/fail/manual
+    # naming, with `_muted_count` siblings tracking the muted half of each
+    # bucket explicitly.
+    new_fail_count = models.IntegerField(default=0)
+    new_fail_muted_count = models.IntegerField(default=0)
+    new_pass_count = models.IntegerField(default=0)
+    new_pass_muted_count = models.IntegerField(default=0)
+    new_manual_count = models.IntegerField(default=0)
+    new_manual_muted_count = models.IntegerField(default=0)
+    changed_fail_count = models.IntegerField(default=0)
+    changed_fail_muted_count = models.IntegerField(default=0)
+    changed_pass_count = models.IntegerField(default=0)
+    changed_pass_muted_count = models.IntegerField(default=0)
+    changed_manual_count = models.IntegerField(default=0)
+    changed_manual_muted_count = models.IntegerField(default=0)
 
     # Resource counts
     resources_fail = models.IntegerField(default=0)
@@ -1772,6 +1823,15 @@ class FindingGroupDailySummary(RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "provider", "inserted_at"],
                 name="fgds_tenant_prov_ins_idx",
+            ),
+            # Trigram indexes for case-insensitive search
+            GinIndex(
+                OpClass(Upper("check_id"), name="gin_trgm_ops"),
+                name="fgds_check_id_trgm_idx",
+            ),
+            GinIndex(
+                OpClass(Upper("check_title"), name="gin_trgm_ops"),
+                name="fgds_check_title_trgm_idx",
             ),
         ]
 
@@ -2048,6 +2108,8 @@ class SAMLConfiguration(RowLevelSecurityProtectedModel):
             root = ET.fromstring(self.metadata_xml)
         except ET.ParseError as e:
             raise ValidationError({"metadata_xml": f"Invalid XML: {e}"})
+        except defusedxml.DefusedXmlException as e:
+            raise ValidationError({"metadata_xml": f"Unsafe XML content rejected: {e}"})
 
         # Entity ID
         entity_id = root.attrib.get("entityID")

@@ -6,6 +6,7 @@
 export const META_TOOLS = {
   DESCRIBE: "describe_tool",
   EXECUTE: "execute_tool",
+  LOAD_SKILL: "load_skill",
 } as const;
 
 export type MetaTool = (typeof META_TOOLS)[keyof typeof META_TOOLS];
@@ -67,6 +68,8 @@ export const LIGHTHOUSE_AGENT_TAG = "lighthouse-agent";
 export const STREAM_MESSAGE_ID = "msg-1";
 
 export const ERROR_PREFIX = "[LIGHTHOUSE_ANALYST_ERROR]:";
+
+export const SKILL_PREFIX = "skill:";
 
 export const TOOLS_UNAVAILABLE_MESSAGE =
   "\nProwler tools are unavailable. You cannot access cloud accounts or security scan data. If asked about security status or scan results, inform the user that this data is currently inaccessible.\n";

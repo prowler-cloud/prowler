@@ -1,33 +1,30 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "rds_instance_postgresql_log_connections_enabled",
-  "CheckTitle": "Parameter log_connections is set to ON for PostgreSQL Database",
-  "CheckType": [
-    "Intrusion into applications",
-    "Unusual logon"
-  ],
+  "CheckTitle": "RDS PostgreSQL instance has log_connections parameter enabled",
+  "CheckType": [],
   "ServiceName": "rds",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "ResourceType": "ALIYUN::RDS::DBInstance",
   "ResourceGroup": "database",
-  "Description": "Enable `log_connections` on **PostgreSQL Servers**. Enabling `log_connections` helps PostgreSQL Database log attempted connections to the server, as well as successful completion of client authentication.\n\nLog data can be used to identify, troubleshoot, and repair configuration errors and suboptimal performance.",
-  "Risk": "Without **connection logging**, unauthorized access attempts might go unnoticed, and troubleshooting connection issues becomes more difficult.\n\nThis data is essential for **security monitoring** and **incident investigation**.",
+  "Description": "**Alibaba Cloud RDS PostgreSQL instances** should have the `log_connections` parameter set to `on`. Enabling this parameter logs each attempted connection to the server, including successful client authentication. This log data is essential for identifying, troubleshooting, and repairing configuration errors, detecting unauthorized access attempts, and supporting **security auditing**.",
+  "Risk": "Without **connection logging** enabled, unauthorized access attempts to the database may go unnoticed, making it difficult to detect **brute-force attacks** or **credential compromise**. This gap in visibility impacts the ability to perform **security monitoring**, **incident investigation**, and **forensic analysis**, reducing overall **confidentiality** assurance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/doc-detail/96751.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-log-connections-for-postgresql.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RDS/enable-log-connections-for-postgresql.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun rds ModifyParameter --DBInstanceId <instance_id> --Parameters \"{\\\"log_connections\\\":\\\"on\\\"}\"",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **RDS Console**.\n2. Select the region and target PostgreSQL instance.\n3. In the left-side navigation pane, select **Parameters**.\n4. Find the `log_connections` parameter and set it to `on`.\n5. Click **Apply Changes**.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "1. Log on to the **RDS Console**\n2. Select the region and target instance\n3. In the left-side navigation pane, select **Parameters**\n4. Find the `log_connections` parameter and set it to `on`\n5. Click **Apply Changes**",
+      "Text": "Enable the `log_connections` parameter on all PostgreSQL RDS instances to log connection attempts for security monitoring and troubleshooting.",
       "Url": "https://hub.prowler.com/check/rds_instance_postgresql_log_connections_enabled"
     }
   },

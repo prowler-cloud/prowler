@@ -1,0 +1,180 @@
+name: 'Tools: Check Compliance Mapping'
+
+on:
+  pull_request:
+    types:
+      - 'opened'
+      - 'synchronize'
+      - 'reopened'
+      - 'labeled'
+      - 'unlabeled'
+    branches:
+      - 'master'
+      - 'v5.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check-compliance-mapping:
+    if: contains(github.event.pull_request.labels.*.name, 'no-compliance-check') == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        with:
+          files: |
+            prowler/providers/**/services/**/*.metadata.json
+            prowler/compliance/**/*.json
+
+      - name: Check if new checks are mapped in compliance
+        id: compliance-check
+        run: |
+          ADDED_METADATA="${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}"
+          ALL_CHANGED="${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}"
+
+          # Filter only new metadata files (new checks)
+          new_checks=""
+          for f in $ADDED_METADATA; do
+            case "$f" in *.metadata.json) new_checks="$new_checks $f" ;; esac
+          done
+
+          if [ -z "$(echo "$new_checks" | tr -d ' ')" ]; then
+            echo "No new checks detected."
+            echo "has_new_checks=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Collect compliance files changed in this PR
+          changed_compliance=""
+          for f in $ALL_CHANGED; do
+            case "$f" in prowler/compliance/*.json) changed_compliance="$changed_compliance $f" ;; esac
+          done
+
+          UNMAPPED=""
+          MAPPED=""
+
+          for metadata_file in $new_checks; do
+            check_dir=$(dirname "$metadata_file")
+            check_id=$(basename "$check_dir")
+            provider=$(echo "$metadata_file" | cut -d'/' -f3)
+
+            # Read CheckID from the metadata JSON for accuracy
+            if [ -f "$metadata_file" ]; then
+              json_check_id=$(python3 -c "import json; print(json.load(open('$metadata_file')).get('CheckID', ''))" 2>/dev/null || echo "")
+              if [ -n "$json_check_id" ]; then
+                check_id="$json_check_id"
+              fi
+            fi
+
+            # Search for the check ID in compliance files changed in this PR
+            found_in=""
+            for comp_file in $changed_compliance; do
+              if grep -q "\"${check_id}\"" "$comp_file" 2>/dev/null; then
+                found_in="${found_in}$(basename "$comp_file" .json), "
+              fi
+            done
+
+            if [ -n "$found_in" ]; then
+              found_in=$(echo "$found_in" | sed 's/, $//')
+              MAPPED="${MAPPED}- \`${check_id}\` (\`${provider}\`): ${found_in}"$'\n'
+            else
+              UNMAPPED="${UNMAPPED}- \`${check_id}\` (\`${provider}\`)"$'\n'
+            fi
+          done
+
+          echo "has_new_checks=true" >> "$GITHUB_OUTPUT"
+
+          if [ -n "$UNMAPPED" ]; then
+            echo "has_unmapped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_unmapped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          {
+            echo "unmapped<<EOF"
+            echo -e "${UNMAPPED}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "mapped<<EOF"
+            echo -e "${MAPPED}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+        env:
+          STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
+          STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+
+      - name: Manage compliance review label
+        if: steps.compliance-check.outputs.has_new_checks == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HAS_UNMAPPED: ${{ steps.compliance-check.outputs.has_unmapped }}
+        run: |
+          LABEL_NAME="needs-compliance-review"
+
+          if [ "$HAS_UNMAPPED" = "true" ]; then
+            echo "Adding compliance review label to PR #${PR_NUMBER}..."
+            gh pr edit "$PR_NUMBER" --add-label "$LABEL_NAME" --repo "${{ github.repository }}" || true
+          else
+            echo "Removing compliance review label from PR #${PR_NUMBER}..."
+            gh pr edit "$PR_NUMBER" --remove-label "$LABEL_NAME" --repo "${{ github.repository }}" || true
+          fi
+
+      - name: Find existing compliance comment
+        if: steps.compliance-check.outputs.has_new_checks == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+        id: find-comment
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- compliance-mapping-check -->'
+
+      - name: Create or update compliance comment
+        if: steps.compliance-check.outputs.has_new_checks == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+          body: |
+            <!-- compliance-mapping-check -->
+            ## Compliance Mapping Review
+
+            This PR adds new checks. Please verify that they have been mapped to the relevant compliance framework requirements.
+
+            ${{ steps.compliance-check.outputs.unmapped != '' && format('### New checks not mapped to any compliance framework in this PR
+
+            {0}
+
+            > Please review whether these checks should be added to compliance framework requirements in `prowler/compliance/<provider>/`. Each compliance JSON has a `Checks` array inside each requirement — add the check ID there if it satisfies that requirement.', steps.compliance-check.outputs.unmapped) || '' }}
+
+            ${{ steps.compliance-check.outputs.mapped != '' && format('### New checks already mapped in this PR
+
+            {0}', steps.compliance-check.outputs.mapped) || '' }}
+
+            Use the `no-compliance-check` label to skip this check.

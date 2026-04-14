@@ -9,6 +9,10 @@ from rest_framework.exceptions import APIException, PermissionDenied, Validation
 
 from api.attack_paths import database as graph_database
 from api.attack_paths import views_helpers
+from tasks.jobs.attack_paths.config import (
+    PROVIDER_ELEMENT_ID_PROPERTY,
+    get_provider_label,
+)
 
 
 def _make_neo4j_error(message, code):
@@ -49,7 +53,7 @@ def test_prepare_parameters_includes_provider_and_casts(
     )
 
     assert result["provider_uid"] == "123456789012"
-    assert result["provider_id"] == "test-provider-id"
+    assert "provider_id" not in result
     assert result["limit"] == 5
 
 
@@ -103,12 +107,12 @@ def test_execute_query_serializes_graph(
     parameters = {"provider_uid": "123"}
 
     provider_id = "test-provider-123"
+    plabel = get_provider_label(provider_id)
     node = attack_paths_graph_stub_classes.Node(
         element_id="node-1",
-        labels=["AWSAccount"],
+        labels=["AWSAccount", plabel],
         properties={
             "name": "account",
-            "provider_id": provider_id,
             "complex": {
                 "items": [
                     attack_paths_graph_stub_classes.NativeValue("value"),
@@ -117,15 +121,13 @@ def test_execute_query_serializes_graph(
             },
         },
     )
-    node_2 = attack_paths_graph_stub_classes.Node(
-        "node-2", ["RDSInstance"], {"provider_id": provider_id}
-    )
+    node_2 = attack_paths_graph_stub_classes.Node("node-2", ["RDSInstance", plabel], {})
     relationship = attack_paths_graph_stub_classes.Relationship(
         element_id="rel-1",
         rel_type="OWNS",
         start_node=node,
         end_node=node_2,
-        properties={"weight": 1, "provider_id": provider_id},
+        properties={"weight": 1},
     )
     graph = SimpleNamespace(nodes=[node, node_2], relationships=[relationship])
 
@@ -209,29 +211,27 @@ def test_execute_query_raises_permission_denied_on_read_only(
             )
 
 
-def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes):
+def test_serialize_graph_filters_by_provider_label(attack_paths_graph_stub_classes):
     provider_id = "provider-keep"
+    plabel = get_provider_label(provider_id)
+    other_label = get_provider_label("provider-other")
 
-    node_keep = attack_paths_graph_stub_classes.Node(
-        "n1", ["AWSAccount"], {"provider_id": provider_id}
-    )
+    node_keep = attack_paths_graph_stub_classes.Node("n1", ["AWSAccount", plabel], {})
     node_drop = attack_paths_graph_stub_classes.Node(
-        "n2", ["AWSAccount"], {"provider_id": "provider-other"}
+        "n2", ["AWSAccount", other_label], {}
     )
 
     rel_keep = attack_paths_graph_stub_classes.Relationship(
-        "r1", "OWNS", node_keep, node_keep, {"provider_id": provider_id}
+        "r1", "OWNS", node_keep, node_keep, {}
     )
-    rel_drop_by_provider = attack_paths_graph_stub_classes.Relationship(
-        "r2", "OWNS", node_keep, node_drop, {"provider_id": "provider-other"}
-    )
+    # Relationship connecting a kept node to a dropped node — filtered by endpoint check
     rel_drop_orphaned = attack_paths_graph_stub_classes.Relationship(
-        "r3", "OWNS", node_keep, node_drop, {"provider_id": provider_id}
+        "r2", "OWNS", node_keep, node_drop, {}
     )
 
     graph = SimpleNamespace(
         nodes=[node_keep, node_drop],
-        relationships=[rel_keep, rel_drop_by_provider, rel_drop_orphaned],
+        relationships=[rel_keep, rel_drop_orphaned],
     )
 
     result = views_helpers._serialize_graph(graph, provider_id)
@@ -242,22 +242,186 @@ def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes)
     assert result["relationships"][0]["id"] == "r1"
 
 
+# -- serialize_graph_as_text -------------------------------------------------------
+
+
+def test_serialize_graph_as_text_renders_nodes_and_relationships():
+    graph = {
+        "nodes": [
+            {
+                "id": "n1",
+                "labels": ["AWSAccount"],
+                "properties": {"account_id": "123456789012", "name": "prod"},
+            },
+            {
+                "id": "n2",
+                "labels": ["EC2Instance", "NetworkExposed"],
+                "properties": {"name": "web-server-1", "exposed_internet": True},
+            },
+        ],
+        "relationships": [
+            {
+                "id": "r1",
+                "label": "RESOURCE",
+                "source": "n1",
+                "target": "n2",
+                "properties": {},
+            },
+        ],
+        "total_nodes": 2,
+        "truncated": False,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert result.startswith("## Nodes (2)")
+    assert '- AWSAccount "n1" (account_id: "123456789012", name: "prod")' in result
+    assert (
+        '- EC2Instance, NetworkExposed "n2" (name: "web-server-1", exposed_internet: true)'
+        in result
+    )
+    assert "## Relationships (1)" in result
+    assert '- AWSAccount "n1" -[RESOURCE]-> EC2Instance, NetworkExposed "n2"' in result
+    assert "## Summary" in result
+    assert "- Total nodes: 2" in result
+    assert "- Truncated: false" in result
+
+
+def test_serialize_graph_as_text_empty_graph():
+    graph = {
+        "nodes": [],
+        "relationships": [],
+        "total_nodes": 0,
+        "truncated": False,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert "## Nodes (0)" in result
+    assert "## Relationships (0)" in result
+    assert "- Total nodes: 0" in result
+    assert "- Truncated: false" in result
+
+
+def test_serialize_graph_as_text_truncated_flag():
+    graph = {
+        "nodes": [{"id": "n1", "labels": ["Node"], "properties": {}}],
+        "relationships": [],
+        "total_nodes": 500,
+        "truncated": True,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert "- Total nodes: 500" in result
+    assert "- Truncated: true" in result
+
+
+def test_serialize_graph_as_text_relationship_with_properties():
+    graph = {
+        "nodes": [
+            {"id": "n1", "labels": ["AWSRole"], "properties": {"name": "role-a"}},
+            {"id": "n2", "labels": ["AWSRole"], "properties": {"name": "role-b"}},
+        ],
+        "relationships": [
+            {
+                "id": "r1",
+                "label": "STS_ASSUMEROLE_ALLOW",
+                "source": "n1",
+                "target": "n2",
+                "properties": {"weight": 1, "reason": "trust-policy"},
+            },
+        ],
+        "total_nodes": 2,
+        "truncated": False,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert '-[STS_ASSUMEROLE_ALLOW (weight: 1, reason: "trust-policy")]->' in result
+
+
+def test_serialize_properties_filters_internal_fields():
+    properties = {
+        "name": "prod",
+        # Cartography metadata
+        "lastupdated": 1234567890,
+        "firstseen": 1234567800,
+        "_module_name": "cartography:aws",
+        "_module_version": "0.98.0",
+        # Provider isolation
+        PROVIDER_ELEMENT_ID_PROPERTY: "42:abc123",
+    }
+
+    result = views_helpers._serialize_properties(properties)
+
+    assert result == {"name": "prod"}
+
+
+def test_filter_labels_strips_dynamic_isolation_labels():
+    labels = ["AWSRole", "_Tenant_abc123", "_Provider_def456", "_ProviderResource"]
+
+    result = views_helpers._filter_labels(labels)
+
+    assert result == ["AWSRole"]
+
+
+def test_serialize_graph_as_text_node_without_properties():
+    graph = {
+        "nodes": [{"id": "n1", "labels": ["AWSAccount"], "properties": {}}],
+        "relationships": [],
+        "total_nodes": 1,
+        "truncated": False,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert '- AWSAccount "n1"' in result
+    # No trailing parentheses when no properties
+    assert '- AWSAccount "n1" (' not in result
+
+
+def test_serialize_graph_as_text_complex_property_values():
+    graph = {
+        "nodes": [
+            {
+                "id": "n1",
+                "labels": ["SecurityGroup"],
+                "properties": {
+                    "ports": [80, 443],
+                    "tags": {"env": "prod"},
+                    "enabled": None,
+                },
+            },
+        ],
+        "relationships": [],
+        "total_nodes": 1,
+        "truncated": False,
+    }
+
+    result = views_helpers.serialize_graph_as_text(graph)
+
+    assert "ports: [80, 443]" in result
+    assert 'tags: {env: "prod"}' in result
+    assert "enabled: null" in result
+
+
 # -- normalize_custom_query_payload ------------------------------------------------
 
 
-def test_normalize_custom_query_payload_extracts_cypher():
+def test_normalize_custom_query_payload_extracts_query():
     payload = {
         "data": {
             "type": "attack-paths-custom-query-run-requests",
             "attributes": {
-                "cypher": "MATCH (n) RETURN n",
+                "query": "MATCH (n) RETURN n",
             },
         }
     }
 
     result = views_helpers.normalize_custom_query_payload(payload)
 
-    assert result == {"cypher": "MATCH (n) RETURN n"}
+    assert result == {"query": "MATCH (n) RETURN n"}
 
 
 def test_normalize_custom_query_payload_passthrough_for_non_dict():
@@ -266,11 +430,11 @@ def test_normalize_custom_query_payload_passthrough_for_non_dict():
 
 
 def test_normalize_custom_query_payload_passthrough_for_flat_dict():
-    payload = {"cypher": "MATCH (n) RETURN n"}
+    payload = {"query": "MATCH (n) RETURN n"}
 
     result = views_helpers.normalize_custom_query_payload(payload)
 
-    assert result == {"cypher": "MATCH (n) RETURN n"}
+    assert result == {"query": "MATCH (n) RETURN n"}
 
 
 # -- execute_custom_query ----------------------------------------------
@@ -280,14 +444,11 @@ def test_execute_custom_query_serializes_graph(
     attack_paths_graph_stub_classes,
 ):
     provider_id = "test-provider-123"
-    node_1 = attack_paths_graph_stub_classes.Node(
-        "node-1", ["AWSAccount"], {"provider_id": provider_id}
-    )
-    node_2 = attack_paths_graph_stub_classes.Node(
-        "node-2", ["RDSInstance"], {"provider_id": provider_id}
-    )
+    plabel = get_provider_label(provider_id)
+    node_1 = attack_paths_graph_stub_classes.Node("node-1", ["AWSAccount", plabel], {})
+    node_2 = attack_paths_graph_stub_classes.Node("node-2", ["RDSInstance", plabel], {})
     relationship = attack_paths_graph_stub_classes.Relationship(
-        "rel-1", "OWNS", node_1, node_2, {"provider_id": provider_id}
+        "rel-1", "OWNS", node_1, node_2, {}
     )
 
     graph_result = MagicMock()
@@ -302,10 +463,11 @@ def test_execute_custom_query_serializes_graph(
             "db-tenant-test", "MATCH (n) RETURN n", provider_id
         )
 
-    mock_execute.assert_called_once_with(
-        database="db-tenant-test",
-        cypher="MATCH (n) RETURN n",
-    )
+    mock_execute.assert_called_once()
+    call_kwargs = mock_execute.call_args[1]
+    assert call_kwargs["database"] == "db-tenant-test"
+    # The cypher is rewritten with the provider label injection
+    assert plabel in call_kwargs["cypher"]
     assert len(result["nodes"]) == 2
     assert result["relationships"][0]["label"] == "OWNS"
     assert result["truncated"] is False

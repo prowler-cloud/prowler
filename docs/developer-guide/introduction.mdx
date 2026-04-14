@@ -79,7 +79,7 @@ Remember, our community is here to help! If you need guidance, do not hesitate t
 Before proceeding, ensure the following:
 
 - Git is installed.
-- Python 3.9 or higher is installed.
+- Python 3.10 or higher is installed.
 - `poetry` is installed to manage dependencies.
 
 ### Forking the Prowler Repository
@@ -162,6 +162,8 @@ These resources help ensure that AI-assisted contributions maintain consistency 
 ### Dependency Management
 
 All dependencies are listed in the `pyproject.toml` file.
+
+The SDK keeps direct dependencies pinned to exact versions, while `poetry.lock` records the full resolved dependency tree and the artifact hashes for every package. Use `poetry install` from the lock file instead of ad-hoc `pip` installs when you need a reproducible environment.
 
 For proper code documentation, refer to the following and follow the code documentation practices presented there: [Google Python Style Guide - Comments and Docstrings](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings).
 

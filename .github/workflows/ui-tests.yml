@@ -29,12 +29,27 @@ jobs:
         working-directory: ./ui
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            registry.npmjs.org:443
+            fonts.googleapis.com:443
+            fonts.gstatic.com:443
+            api.github.com:443
+            release-assets.githubusercontent.com:443
+
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
       - name: Check for UI changes
         id: check-changes
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             ui/**
@@ -47,7 +62,7 @@ jobs:
       - name: Get changed source files for targeted tests
         id: changed-source
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             ui/**/*.ts
@@ -63,7 +78,7 @@ jobs:
       - name: Check for critical path changes (run all tests)
         id: critical-changes
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             ui/lib/**
@@ -75,15 +90,15 @@ jobs:
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Setup pnpm
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
         with:
-          version: 10
+          package_json_file: ui/package.json
           run_install: false
 
       - name: Get pnpm store directory
@@ -93,7 +108,7 @@ jobs:
 
       - name: Setup pnpm and Next.js cache
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: |
             ${{ env.STORE_PATH }}
@@ -122,10 +137,12 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files != ''
         run: |
           echo "Running tests related to changed files:"
-          echo "${{ steps.changed-source.outputs.all_changed_files }}"
+          echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}"
           # Convert space-separated to vitest related format (remove ui/ prefix for relative paths)
-          CHANGED_FILES=$(echo "${{ steps.changed-source.outputs.all_changed_files }}" | tr ' ' '\n' | sed 's|^ui/||' | tr '\n' ' ')
+          CHANGED_FILES=$(echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | sed 's|^ui/||' | tr '\n' ' ')
           pnpm exec vitest related $CHANGED_FILES --run
+        env:
+          STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-source.outputs.all_changed_files }}
 
       - name: Run unit tests (test files only changed)
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files == ''

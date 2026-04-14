@@ -4,6 +4,7 @@ from io import StringIO
 from mock import MagicMock, patch
 
 from prowler.config.config import prowler_version, timestamp
+from prowler.lib.cli.redact import redact_argv
 from prowler.lib.logger import logger
 from prowler.lib.outputs.html.html import HTML
 from prowler.providers.github.models import GithubAppIdentityInfo
@@ -12,6 +13,9 @@ from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provi
 from tests.providers.azure.azure_fixtures import set_mocked_azure_provider
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
 from tests.providers.github.github_fixtures import APP_ID, set_mocked_github_provider
+from tests.providers.googleworkspace.googleworkspace_fixtures import (
+    set_mocked_googleworkspace_provider,
+)
 from tests.providers.kubernetes.kubernetes_fixtures import (
     set_mocked_kubernetes_provider,
 )
@@ -470,7 +474,7 @@ def get_aws_html_header(args: list) -> str:
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(args)}
+                <b>Parameters used:</b> {redact_argv(args)}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}
@@ -909,6 +913,24 @@ class TestHTML:
         summary = output.get_assessment_summary(provider)
 
         assert summary == mongodbatlas_html_assessment_summary
+
+    def test_googleworkspace_get_assessment_summary(self):
+        """Test Google Workspace HTML assessment summary generation."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+        provider = set_mocked_googleworkspace_provider()
+
+        summary = output.get_assessment_summary(provider)
+
+        assert "Google Workspace Assessment Summary" in summary
+        assert "Google Workspace Credentials" in summary
+        assert "<b>Domain:</b> test-company.com" in summary
+        assert "<b>Customer ID:</b> C1234567" in summary
+        assert "<b>Delegated User:</b> prowler-reader@test-company.com" in summary
+        assert (
+            "<b>Authentication Method:</b> Service Account with Domain-Wide Delegation"
+            in summary
+        )
 
     def test_image_get_assessment_summary_with_registry(self):
         """Test Image HTML assessment summary with registry URL."""

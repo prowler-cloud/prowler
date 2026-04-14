@@ -23,9 +23,6 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -45,6 +42,7 @@ env:
   # Container registries
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
   PROWLERCLOUD_DOCKERHUB_IMAGE: prowler
+  TONIBLYX_DOCKERHUB_REPOSITORY: toniblyx
 
   # AWS configuration (for ECR)
   AWS_REGION: us-east-1
@@ -59,12 +57,25 @@ jobs:
       prowler_version_major: ${{ steps.get-prowler-version.outputs.prowler_version_major }}
       latest_tag: ${{ steps.get-prowler-version.outputs.latest_tag }}
       stable_tag: ${{ steps.get-prowler-version.outputs.stable_tag }}
+    permissions:
+      contents: read
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
+
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -113,9 +124,18 @@ jobs:
     timeout-minutes: 5
     outputs:
       message-ts: ${{ steps.slack-notification.outputs.ts }}
+    permissions:
+      contents: read
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Notify container push started
         id: slack-notification
@@ -150,17 +170,40 @@ jobs:
       packages: write
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.ecr-public.us-east-1.amazonaws.com:443
+            public.ecr.aws:443
+            registry-1.docker.io:443
+            production.cloudflare.docker.com:443
+            auth.docker.io:443
+            debian.map.fastlydns.net:80
+            github.com:443
+            release-assets.githubusercontent.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
+            www.powershellgallery.com:443
+            aka.ms:443
+            cdn.powershellgallery.com:443
+            _http._tcp.deb.debian.org:443
+            powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
+
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Login to DockerHub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Public ECR
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: public.ecr.aws
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
@@ -169,12 +212,12 @@ jobs:
           AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Build and push SDK container for ${{ matrix.arch }}
         id: container-push
         if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
           file: ${{ env.DOCKERFILE_PATH }}
@@ -190,16 +233,32 @@ jobs:
     needs: [setup, container-build-push]
     if: always() && needs.setup.result == 'success' && needs.container-build-push.result == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            registry-1.docker.io:443
+            auth.docker.io:443
+            public.ecr.aws:443
+            production.cloudflare.docker.com:443
+            github.com:443
+            release-assets.githubusercontent.com:443
+            api.ecr-public.us-east-1.amazonaws.com:443
+
+
       - name: Login to DockerHub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to Public ECR
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: public.ecr.aws
           username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
@@ -207,61 +266,108 @@ jobs:
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
-
       - name: Create and push manifests for push event
         if: github.event_name == 'push'
         run: |
           docker buildx imagetools create \
-            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }} \
-            -t ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }} \
-            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }} \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }}-amd64 \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }}-arm64
+            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_LATEST_TAG} \
+            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_LATEST_TAG} \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_LATEST_TAG}-amd64 \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_LATEST_TAG}-arm64
+        env:
+          NEEDS_SETUP_OUTPUTS_LATEST_TAG: ${{ needs.setup.outputs.latest_tag }}
 
       - name: Create and push manifests for release event
         if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
           docker buildx imagetools create \
-            -t ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.setup.outputs.prowler_version }} \
-            -t ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.setup.outputs.stable_tag }} \
-            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.setup.outputs.prowler_version }} \
-            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.setup.outputs.stable_tag }} \
-            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.prowler_version }} \
-            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.stable_tag }} \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }}-amd64 \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }}-arm64
+            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_PROWLER_VERSION} \
+            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_STABLE_TAG} \
+            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${NEEDS_SETUP_OUTPUTS_PROWLER_VERSION} \
+            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${NEEDS_SETUP_OUTPUTS_STABLE_TAG} \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_LATEST_TAG}-amd64 \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_LATEST_TAG}-arm64
+        env:
+          NEEDS_SETUP_OUTPUTS_PROWLER_VERSION: ${{ needs.setup.outputs.prowler_version }}
+          NEEDS_SETUP_OUTPUTS_STABLE_TAG: ${{ needs.setup.outputs.stable_tag }}
+          NEEDS_SETUP_OUTPUTS_LATEST_TAG: ${{ needs.setup.outputs.latest_tag }}
+
+      # Push to toniblyx/prowler only for current version (latest/stable/release tags)
+      - name: Login to DockerHub (toniblyx)
+        if: needs.setup.outputs.latest_tag == 'latest'
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          username: ${{ secrets.TONIBLYX_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.TONIBLYX_DOCKERHUB_PASSWORD }}
+
+      - name: Push manifests to toniblyx for push event
+        if: needs.setup.outputs.latest_tag == 'latest' && github.event_name == 'push'
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.TONIBLYX_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:latest \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:latest
+
+      - name: Push manifests to toniblyx for release event
+        if: needs.setup.outputs.latest_tag == 'latest' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.TONIBLYX_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_PROWLER_VERSION} \
+            -t ${{ env.TONIBLYX_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:stable \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:stable
+        env:
+          NEEDS_SETUP_OUTPUTS_PROWLER_VERSION: ${{ needs.setup.outputs.prowler_version }}
+
+      # Re-login as prowlercloud for cleanup of intermediate tags
+      - name: Login to DockerHub (prowlercloud)
+        if: always()
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Install regctl
         if: always()
-        uses: regclient/actions/regctl-installer@main
+        uses: regclient/actions/regctl-installer@da9319db8e44e8b062b3a147e1dfb2f574d41a03 # main
 
       - name: Cleanup intermediate architecture tags
         if: always()
         run: |
           echo "Cleaning up intermediate tags..."
-          regctl tag delete "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }}-amd64" || true
-          regctl tag delete "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }}-arm64" || true
+          regctl tag delete "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_LATEST_TAG}-amd64" || true
+          regctl tag delete "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_LATEST_TAG}-arm64" || true
           echo "Cleanup completed"
+        env:
+          NEEDS_SETUP_OUTPUTS_LATEST_TAG: ${{ needs.setup.outputs.latest_tag }}
 
   notify-release-completed:
     if: always() && needs.notify-release-started.result == 'success' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
     needs: [setup, notify-release-started, container-build-push, create-manifest]
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Determine overall outcome
         id: outcome
         run: |
-          if [[ "${{ needs.container-build-push.result }}" == "success" && "${{ needs.create-manifest.result }}" == "success" ]]; then
+          if [[ "${NEEDS_CONTAINER_BUILD_PUSH_RESULT}" == "success" && "${NEEDS_CREATE_MANIFEST_RESULT}" == "success" ]]; then
             echo "outcome=success" >> $GITHUB_OUTPUT
           else
             echo "outcome=failure" >> $GITHUB_OUTPUT
           fi
+        env:
+          NEEDS_CONTAINER_BUILD_PUSH_RESULT: ${{ needs.container-build-push.result }}
+          NEEDS_CREATE_MANIFEST_RESULT: ${{ needs.create-manifest.result }}
 
       - name: Notify container push completed
         uses: ./.github/actions/slack-notification
@@ -288,6 +394,11 @@ jobs:
       contents: read
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Calculate short SHA
         id: short-sha
         run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT

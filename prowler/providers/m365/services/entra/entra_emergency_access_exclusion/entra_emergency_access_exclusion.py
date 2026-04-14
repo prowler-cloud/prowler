@@ -84,28 +84,34 @@ class entra_emergency_access_exclusion(Check):
             users_excluded_from_all or groups_excluded_from_all
         )
 
-        for policy in enabled_policies:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource=policy,
-                resource_name=policy.display_name,
-                resource_id=policy.id,
-            )
+        report = CheckReportM365(
+            metadata=self.metadata(),
+            resource={},
+            resource_name="Conditional Access Policies",
+            resource_id="conditionalAccessPolicies",
+        )
 
-            if has_emergency_exclusion:
-                report.status = "PASS"
-                exclusion_details = []
-                if users_excluded_from_all:
-                    exclusion_details.append(f"{len(users_excluded_from_all)} user(s)")
-                if groups_excluded_from_all:
-                    exclusion_details.append(
-                        f"{len(groups_excluded_from_all)} group(s)"
-                    )
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' has {' and '.join(exclusion_details)} excluded as emergency access across all {total_policy_count} enabled policies."
-            else:
-                report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy '{policy.display_name}' does not have any user or group excluded as emergency access from all enabled Conditional Access policies."
+        if has_emergency_exclusion:
+            report.status = "PASS"
+            exclusion_details = []
+            if users_excluded_from_all:
+                user_names = []
+                for user_id in users_excluded_from_all:
+                    user = entra_client.users.get(user_id)
+                    user_names.append(user.name if user else user_id)
+                exclusion_details.append(f"user(s): {', '.join(user_names)}")
+            if groups_excluded_from_all:
+                group_names = []
+                groups_by_id = {g.id: g for g in entra_client.groups}
+                for group_id in groups_excluded_from_all:
+                    group = groups_by_id.get(group_id)
+                    group_names.append(group.name if group else group_id)
+                exclusion_details.append(f"group(s): {', '.join(group_names)}")
+            report.status_extended = f"Emergency access {' and '.join(exclusion_details)} excluded from all {total_policy_count} enabled Conditional Access policies."
+        else:
+            report.status = "FAIL"
+            report.status_extended = f"No user or group is excluded as emergency access from all {total_policy_count} enabled Conditional Access policies."
 
-            findings.append(report)
+        findings.append(report)
 
         return findings

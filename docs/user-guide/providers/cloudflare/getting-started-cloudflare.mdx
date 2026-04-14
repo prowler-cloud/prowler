@@ -1,117 +1,165 @@
 ---
-title: 'Getting Started with Cloudflare'
+title: 'Getting Started With Cloudflare on Prowler'
 ---
 
-import { VersionBadge } from "/snippets/version-badge.mdx";
+import { VersionBadge } from "/snippets/version-badge.mdx"
 
-<VersionBadge version="5.17.0" />
-
-Prowler for Cloudflare allows you to scan your Cloudflare zones for security misconfigurations, including SSL/TLS settings, DNSSEC, HSTS, and more.
+Prowler for Cloudflare scans zones for security misconfigurations, including SSL/TLS settings, DNSSEC, HSTS, WAF rules, DNS records, and more.
 
 ## Prerequisites
 
-Before running Prowler with the Cloudflare provider, ensure you have:
+Set up authentication for Cloudflare with the [Cloudflare Authentication](/user-guide/providers/cloudflare/authentication) guide before starting either path:
 
-1. A Cloudflare account with at least one zone
-2. One of the following authentication methods configured (see [Authentication](/user-guide/providers/cloudflare/authentication)):
-   - An **API Token** (recommended)
-   - An **API Key + Email** (legacy)
+- Create a Cloudflare User API Token (recommended) or locate the Global API Key
+- Grant the required read-only permissions (`Account Settings:Read`, `Zone:Read`, `Zone Settings:Read`, `DNS:Read`)
+- Identify the Cloudflare Account ID to use as the provider identifier
 
-## Quick Start
+<CardGroup cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
+    Onboard Cloudflare using Prowler Cloud
+  </Card>
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Onboard Cloudflare using Prowler CLI
+  </Card>
+</CardGroup>
+
+## Prowler Cloud
+
+<VersionBadge version="5.19.0" />
+
+### Step 1: Locate the Account ID
+
+1. Log into the [Cloudflare Dashboard](https://dash.cloudflare.com).
+2. Select any zone in the target account.
+3. On the zone overview page, find the **Account ID** in the right sidebar under the "API" section.
+
+    ![Cloudflare Account ID](/images/providers/cloudflare-account-id.png)
+
+<Note>
+The Account ID is a 32-character hexadecimal string (e.g., `372e67954025e0ba6aaa6d586b9e0b59`). This value acts as the unique identifier for the Cloudflare account in Prowler Cloud.
+</Note>
+
+### Step 2: Open Prowler Cloud
+
+1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app).
+2. Navigate to "Configuration" > "Cloud Providers".
+
+    ![Cloud Providers Page](/images/prowler-app/cloud-providers-page.png)
+
+3. Click "Add Cloud Provider".
+
+    ![Add a Cloud Provider](/images/prowler-app/add-cloud-provider.png)
+
+4. Select "Cloudflare".
+
+    ![Select Cloudflare](/images/providers/select-cloudflare-prowler-cloud.png)
+
+5. Add the **Account ID** and an optional alias, then click "Next".
+
+    ![Add Cloudflare Account ID](/images/providers/cloudflare-account-id-form.png)
+
+### Step 3: Choose and Provide Authentication
+
+After the Account ID is in place, select the authentication method that matches the Cloudflare setup:
+
+![Select Authentication Method](/images/providers/cloudflare-auth-selection.png)
+
+#### User API Token Authentication (Recommended)
+
+1. Select **API Token**.
+2. Enter the **User API Token** created in the Cloudflare Dashboard.
+
+    ![API Token Form](/images/providers/cloudflare-token-form.png)
+
+Use this method for scoped, least-privilege access. Full setup steps are in the [Authentication guide](/user-guide/providers/cloudflare/authentication#api-token-recommended).
+
+#### API Key and Email Authentication (Legacy)
+
+1. Select **API Key + Email**.
+2. Enter the **Global API Key**.
+3. Enter the **email address** associated with the Cloudflare account.
+
+    ![API Key and Email Form](/images/providers/cloudflare-api-email-form.png)
+
+For the complete setup workflow, follow the [Authentication guide](/user-guide/providers/cloudflare/authentication#api-key-and-email-legacy).
+
+### Step 4: Launch the Scan
+
+1. Review the summary.
+2. Click **Launch Scan** to start auditing Cloudflare.
+
+    ![Launch Scan](/images/providers/cloudflare-launch-scan.png)
+
+---
+
+## Prowler CLI
+
+<VersionBadge version="5.17.0" />
 
 ### Step 1: Set Up Authentication
 
-The recommended method is using an API Token via environment variable:
+Choose the matching method from the [Cloudflare Authentication](/user-guide/providers/cloudflare/authentication) guide:
 
-```bash
-export CLOUDFLARE_API_TOKEN="your-api-token-here"
-```
+- **User API Token** (recommended): Set `CLOUDFLARE_API_TOKEN`
+- **API Key + Email** (legacy): Set `CLOUDFLARE_API_KEY` and `CLOUDFLARE_API_EMAIL`
 
-Alternatively, use API Key + Email:
+### Step 2: Run the First Scan
 
-```bash
-export CLOUDFLARE_API_KEY="your-api-key-here"
-export CLOUDFLARE_API_EMAIL="your-email@example.com"
-```
+Run a baseline scan after credentials are configured:
 
-### Step 2: Run Prowler
-
-Run a scan across all your Cloudflare zones:
-
-```bash
+```console
 prowler cloudflare
 ```
 
-That's it! Prowler will automatically discover all zones in your account and run security checks against them.
+Prowler automatically discovers all zones accessible with the provided credentials and runs security checks against them.
 
-## Authentication
+### Step 3: Filter the Scan Scope (Optional)
 
-Prowler reads Cloudflare credentials from environment variables. Set your credentials before running Prowler:
-
-**API Token (Recommended):**
-```bash
-export CLOUDFLARE_API_TOKEN="your-api-token-here"
-prowler cloudflare
-```
-
-**API Key + Email (Legacy):**
-```bash
-export CLOUDFLARE_API_KEY="your-api-key-here"
-export CLOUDFLARE_API_EMAIL="your-email@example.com"
-prowler cloudflare
-```
-
-## Filtering Zones
-
-By default, Prowler scans all zones accessible with your credentials:
-
-```bash
-prowler cloudflare
-```
+#### Filter by Zone
 
 To scan only specific zones, use the `-f`, `--region`, or `--filter-region` argument:
 
-```bash
+```console
 prowler cloudflare -f example.com
 ```
 
-You can specify multiple zones:
+Multiple zones can be specified:
 
-```bash
+```console
 prowler cloudflare -f example.com example.org
 ```
 
-You can also use zone IDs instead of domain names:
+Zone IDs are also supported:
 
-```bash
+```console
 prowler cloudflare -f 023e105f4ecef8ad9ca31a8372d0c353
 ```
 
-## Filtering Accounts
+#### Filter by Account
 
-By default, Prowler scans all accounts accessible with your credentials. If your API Token or API Key has access to multiple Cloudflare accounts, you can restrict the scan to specific accounts using the `--account-id` argument:
+To restrict the scan to specific accounts, use the `--account-id` argument:
 
-```bash
+```console
 prowler cloudflare --account-id 372e67954025e0ba6aaa6d586b9e0b59
 ```
 
-You can specify multiple account IDs:
+Multiple account IDs can be specified:
 
-```bash
+```console
 prowler cloudflare --account-id 372e67954025e0ba6aaa6d586b9e0b59 9a7806061c88ada191ed06f989cc3dac
 ```
 
 <Note>
-If any of the provided account IDs are not found among the accounts accessible with your credentials, Prowler will raise an error and stop execution.
+If any of the provided account IDs are not accessible with the current credentials, Prowler raises an error and stops execution.
 </Note>
 
-You can combine account and zone filtering to narrow the scan scope further:
+Account and zone filtering can be combined to narrow the scan scope further:
 
-```bash
+```console
 prowler cloudflare --account-id 372e67954025e0ba6aaa6d586b9e0b59 -f example.com
 ```
 
-## Configuration
+### Step 4: Use a Custom Configuration (Optional)
 
 Prowler uses a configuration file to customize provider behavior. The Cloudflare configuration includes:
 
@@ -123,10 +171,8 @@ cloudflare:
 
 To use a custom configuration:
 
-```bash
+```console
 prowler cloudflare --config-file /path/to/config.yaml
 ```
 
-## Next Steps
-
-- [Authentication](/user-guide/providers/cloudflare/authentication) - Detailed guide on creating API tokens and keys
+---

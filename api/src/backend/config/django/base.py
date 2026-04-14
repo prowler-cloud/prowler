@@ -113,8 +113,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.ScopedRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
         "dj_rest_auth": None,
+        "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
+        "attack-paths-custom-query": env(
+            "DJANGO_THROTTLE_ATTACK_PATHS_CUSTOM_QUERY", default="10/min"
+        ),
     },
 }
 
@@ -296,3 +299,8 @@ DJANGO_DELETION_BATCH_SIZE = env.int("DJANGO_DELETION_BATCH_SIZE", 5000)
 # SAML requirement
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
+
+# Attack Paths
+ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
+    "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 2880
+)  # 48h

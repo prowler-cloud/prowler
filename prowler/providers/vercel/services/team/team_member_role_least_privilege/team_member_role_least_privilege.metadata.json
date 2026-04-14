@@ -1,0 +1,36 @@
+{
+  "Provider": "vercel",
+  "CheckID": "team_member_role_least_privilege",
+  "CheckTitle": "Vercel team follows least privilege with a limited number of owner roles",
+  "CheckType": [],
+  "ServiceName": "team",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Vercel team members** are assessed for **least privilege** by checking whether the proportion of members with the `OWNER` role exceeds a configurable percentage threshold (default: 20%) or a maximum owner count (default: 3). Both thresholds are configurable via audit_config. An excessive number of owners increases the attack surface and risk of accidental or malicious configuration changes.",
+  "Risk": "Having too many **team owners** increases the **blast radius** of compromised accounts and the risk of unauthorized changes to billing, security settings, and team membership. Each owner has full administrative privileges over the team.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/accounts/team-members-and-roles"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to your Vercel team settings\n2. Go to the Members section\n3. Review all members with the OWNER role\n4. Downgrade unnecessary owners to MEMBER, DEVELOPER, or VIEWER roles\n5. Ensure only essential personnel retain the OWNER role",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Limit the number of team owners to the minimum required for administration. Assign the least privileged role necessary for each member's responsibilities. Use MEMBER, DEVELOPER, or VIEWER roles for non-administrative team members.",
+      "Url": "https://hub.prowler.com/check/team_member_role_least_privilege"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Thresholds are configurable via audit_config: max_owner_percentage (default: 20) and max_owners (default: 3). Small teams (<5 members) with at most 1 owner are always considered compliant."
+}

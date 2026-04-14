@@ -1,0 +1,39 @@
+{
+  "Provider": "vercel",
+  "CheckID": "project_environment_production_vars_not_in_preview",
+  "CheckTitle": "Vercel sensitive production environment variables do not target preview",
+  "CheckType": [],
+  "ServiceName": "project",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Vercel project environment variables** are assessed for **environment separation** by checking whether sensitive variables (type `secret` or `encrypted`) that target the `production` environment also target `preview`, which could expose production credentials to untrusted preview builds.",
+  "Risk": "Preview deployments are often triggered by **pull requests**, including those from external contributors or forks. Sharing **production secrets** with preview environments can lead to credential theft. Production API keys and database credentials could be exfiltrated by malicious code in preview builds and used to modify or disrupt live services.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/environment-variables"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to your Vercel project dashboard\n2. Go to Settings > Environment Variables\n3. Identify sensitive variables (type Secret or Encrypted) that target both Production and Preview\n4. Edit each variable to remove the Preview target\n5. If preview builds require credentials, create separate variables with limited-scope preview-only credentials",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Maintain strict **environment separation** between production and preview deployments.\n- Use dedicated, limited-scope credentials for preview environments\n- Never share production database credentials, API keys, or signing keys with preview builds\n- Enable Vercel's deployment protection features to further restrict access to preview deployments\n- Regularly audit which environment variables target multiple environments",
+      "Url": "https://hub.prowler.com/check/project_environment_production_vars_not_in_preview"
+    }
+  },
+  "Categories": [
+    "secrets"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "project_environment_no_secrets_in_plain_type",
+    "project_environment_no_overly_broad_target"
+  ],
+  "Notes": "This check only inspects variables with type 'secret' or 'encrypted' since these are the ones most likely to contain actual credentials. Plain-text variables with sensitive names should be caught by the project_environment_no_secrets_in_plain_type check."
+}

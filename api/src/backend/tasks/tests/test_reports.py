@@ -29,7 +29,7 @@ from tasks.jobs.threatscore_utils import (
     _load_findings_for_requirement_checks,
 )
 
-from api.models import Finding, StatusChoices
+from api.models import Finding, Resource, ResourceFindingMapping, StatusChoices
 from prowler.lib.check.models import Severity
 
 matplotlib.use("Agg")  # Use non-interactive backend for tests
@@ -39,43 +39,50 @@ matplotlib.use("Agg")  # Use non-interactive backend for tests
 class TestAggregateRequirementStatistics:
     """Test suite for _aggregate_requirement_statistics_from_database function."""
 
+    def _create_finding_with_resource(
+        self, tenant, scan, uid, check_id, status, severity=Severity.high
+    ):
+        """Helper to create a finding linked to a resource (matching scan processing behavior)."""
+        finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid=uid,
+            check_id=check_id,
+            status=status,
+            severity=severity,
+            impact=severity,
+            check_metadata={},
+            raw_result={},
+        )
+        resource = Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=scan.provider,
+            uid=f"resource-{uid}",
+            name=f"resource-{uid}",
+            region="us-east-1",
+            service="test",
+            type="test::resource",
+        )
+        ResourceFindingMapping.objects.create(
+            tenant_id=tenant.id,
+            finding=finding,
+            resource=resource,
+        )
+        return finding
+
     def test_aggregates_findings_correctly(self, tenants_fixture, scans_fixture):
         """Verify correct pass/total counts per check are aggregated from database."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
 
-        Finding.objects.create(
-            tenant_id=tenant.id,
-            scan=scan,
-            uid="finding-1",
-            check_id="check_1",
-            status=StatusChoices.PASS,
-            severity=Severity.high,
-            impact=Severity.high,
-            check_metadata={},
-            raw_result={},
+        self._create_finding_with_resource(
+            tenant, scan, "finding-1", "check_1", StatusChoices.PASS
         )
-        Finding.objects.create(
-            tenant_id=tenant.id,
-            scan=scan,
-            uid="finding-2",
-            check_id="check_1",
-            status=StatusChoices.FAIL,
-            severity=Severity.high,
-            impact=Severity.high,
-            check_metadata={},
-            raw_result={},
+        self._create_finding_with_resource(
+            tenant, scan, "finding-2", "check_1", StatusChoices.FAIL
         )
-        Finding.objects.create(
-            tenant_id=tenant.id,
-            scan=scan,
-            uid="finding-3",
-            check_id="check_2",
-            status=StatusChoices.PASS,
-            severity=Severity.medium,
-            impact=Severity.medium,
-            check_metadata={},
-            raw_result={},
+        self._create_finding_with_resource(
+            tenant, scan, "finding-3", "check_2", StatusChoices.PASS, Severity.medium
         )
 
         result = _aggregate_requirement_statistics_from_database(
@@ -106,27 +113,11 @@ class TestAggregateRequirementStatistics:
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
 
-        Finding.objects.create(
-            tenant_id=tenant.id,
-            scan=scan,
-            uid="finding-1",
-            check_id="check_1",
-            status=StatusChoices.FAIL,
-            severity=Severity.high,
-            impact=Severity.high,
-            check_metadata={},
-            raw_result={},
+        self._create_finding_with_resource(
+            tenant, scan, "finding-1", "check_1", StatusChoices.FAIL
         )
-        Finding.objects.create(
-            tenant_id=tenant.id,
-            scan=scan,
-            uid="finding-2",
-            check_id="check_1",
-            status=StatusChoices.FAIL,
-            severity=Severity.high,
-            impact=Severity.high,
-            check_metadata={},
-            raw_result={},
+        self._create_finding_with_resource(
+            tenant, scan, "finding-2", "check_1", StatusChoices.FAIL
         )
 
         result = _aggregate_requirement_statistics_from_database(
@@ -142,16 +133,12 @@ class TestAggregateRequirementStatistics:
         scan = scans_fixture[0]
 
         for i in range(5):
-            Finding.objects.create(
-                tenant_id=tenant.id,
-                scan=scan,
-                uid=f"finding-{i}",
-                check_id="check_1",
-                status=StatusChoices.PASS if i % 2 == 0 else StatusChoices.FAIL,
-                severity=Severity.high,
-                impact=Severity.high,
-                check_metadata={},
-                raw_result={},
+            self._create_finding_with_resource(
+                tenant,
+                scan,
+                f"finding-{i}",
+                "check_1",
+                StatusChoices.PASS if i % 2 == 0 else StatusChoices.FAIL,
             )
 
         result = _aggregate_requirement_statistics_from_database(
@@ -162,11 +149,54 @@ class TestAggregateRequirementStatistics:
         assert result["check_1"]["total"] == 5
 
     def test_mixed_statuses(self, tenants_fixture, scans_fixture):
-        """Verify MANUAL status is counted in total but not passed."""
+        """Verify MANUAL status is not counted in total or passed."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
 
-        Finding.objects.create(
+        self._create_finding_with_resource(
+            tenant, scan, "finding-1", "check_1", StatusChoices.PASS
+        )
+        self._create_finding_with_resource(
+            tenant, scan, "finding-2", "check_1", StatusChoices.MANUAL
+        )
+
+        result = _aggregate_requirement_statistics_from_database(
+            str(tenant.id), str(scan.id)
+        )
+
+        # MANUAL findings are excluded from the aggregation query
+        # since it only counts PASS and FAIL statuses
+        assert result["check_1"]["passed"] == 1
+        assert result["check_1"]["total"] == 1
+
+    def test_skips_aggregation_for_deleted_provider(
+        self, tenants_fixture, scans_fixture
+    ):
+        """Verify aggregation returns empty when the scan's provider is soft-deleted."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        self._create_finding_with_resource(
+            tenant, scan, "finding-1", "check_1", StatusChoices.PASS
+        )
+
+        # Soft-delete the provider
+        provider = scan.provider
+        provider.is_deleted = True
+        provider.save(update_fields=["is_deleted"])
+
+        result = _aggregate_requirement_statistics_from_database(
+            str(tenant.id), str(scan.id)
+        )
+
+        assert result == {}
+
+    def test_multiple_resources_no_double_count(self, tenants_fixture, scans_fixture):
+        """Verify a finding with multiple resources is only counted once."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        finding = Finding.objects.create(
             tenant_id=tenant.id,
             scan=scan,
             uid="finding-1",
@@ -177,24 +207,27 @@ class TestAggregateRequirementStatistics:
             check_metadata={},
             raw_result={},
         )
-        Finding.objects.create(
-            tenant_id=tenant.id,
-            scan=scan,
-            uid="finding-2",
-            check_id="check_1",
-            status=StatusChoices.MANUAL,
-            severity=Severity.high,
-            impact=Severity.high,
-            check_metadata={},
-            raw_result={},
-        )
+        # Link two resources to the same finding
+        for i in range(2):
+            resource = Resource.objects.create(
+                tenant_id=tenant.id,
+                provider=scan.provider,
+                uid=f"resource-{i}",
+                name=f"resource-{i}",
+                region="us-east-1",
+                service="test",
+                type="test::resource",
+            )
+            ResourceFindingMapping.objects.create(
+                tenant_id=tenant.id,
+                finding=finding,
+                resource=resource,
+            )
 
         result = _aggregate_requirement_statistics_from_database(
             str(tenant.id), str(scan.id)
         )
 
-        # MANUAL findings are excluded from the aggregation query
-        # since it only counts PASS and FAIL statuses
         assert result["check_1"]["passed"] == 1
         assert result["check_1"]["total"] == 1
 

@@ -62,7 +62,7 @@ def init_parser(self):
         default="M365Global",
         choices=[
             "M365Global",
-            "M365GlobalChina",
+            "M365China",
             "M365USGovernment",
         ],
         help="Microsoft 365 region to be used, default is M365Global",

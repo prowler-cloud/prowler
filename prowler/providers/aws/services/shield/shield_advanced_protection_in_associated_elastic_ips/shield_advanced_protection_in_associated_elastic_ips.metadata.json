@@ -4,7 +4,7 @@
   "CheckTitle": "Elastic IP address is protected by AWS Shield Advanced",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "Effects/Denial of Service"
   ],
   "ServiceName": "shield",
@@ -32,7 +32,8 @@
     }
   },
   "Categories": [
-    "resilience"
+    "resilience",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -238,6 +238,21 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                     )
                 elif "github" in provider_class_name.lower():
+                    orgs = []
+                    repos = []
+
+                    if getattr(arguments, "organization", None):
+                        orgs.extend(arguments.organization)
+                    if getattr(arguments, "organizations", None):
+                        orgs.extend(arguments.organizations)
+                    if getattr(arguments, "repository", None):
+                        repos.extend(arguments.repository)
+                    if getattr(arguments, "repositories", None):
+                        repos.extend(arguments.repositories)
+
+                    orgs = list(dict.fromkeys(orgs))
+                    repos = list(dict.fromkeys(repos))
+
                     provider_class(
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
@@ -245,8 +260,14 @@ class Provider(ABC):
                         github_app_id=arguments.github_app_id,
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
-                        repositories=arguments.repository,
-                        organizations=arguments.organization,
+                        repositories=repos,
+                        organizations=orgs,
+                    )
+                elif "googleworkspace" in provider_class_name.lower():
+                    provider_class(
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "cloudflare" in provider_class_name.lower():
                     provider_class(
@@ -267,6 +288,7 @@ class Provider(ABC):
                         github_username=arguments.github_username,
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
+                        provider_uid=arguments.provider_uid,
                     )
                 elif "llm" in provider_class_name.lower():
                     provider_class(
@@ -285,6 +307,12 @@ class Provider(ABC):
                         timeout=arguments.timeout,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
+                        registry=arguments.registry,
+                        image_filter=arguments.image_filter,
+                        tag_filter=arguments.tag_filter,
+                        max_images=arguments.max_images,
+                        registry_insecure=arguments.registry_insecure,
+                        registry_list_images=arguments.registry_list_images,
                     )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(
@@ -299,7 +327,7 @@ class Provider(ABC):
                     provider_class(
                         oci_config_file=arguments.oci_config_file,
                         profile=arguments.profile,
-                        region=arguments.region,
+                        region=set(arguments.region) if arguments.region else None,
                         compartment_ids=arguments.compartment_id,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
@@ -339,6 +367,13 @@ class Provider(ABC):
                         oidc_role_arn=arguments.oidc_role_arn,
                         credentials_uri=arguments.credentials_uri,
                         regions=arguments.regions,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "vercel" in provider_class_name.lower():
+                    provider_class(
+                        projects=getattr(arguments, "project", None),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

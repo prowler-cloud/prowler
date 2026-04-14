@@ -135,71 +135,36 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   await page.goto();
   await expect(page.providersTable).toBeVisible({ timeout: 10000 });
 
-  // Find and use the search input to filter the table
-  const searchInput = page.page.getByPlaceholder(/search|filter/i);
-
-  await expect(searchInput).toBeVisible({ timeout: 5000 });
-
-  // Clear and search for the specific provider
-  await searchInput.clear();
-  await searchInput.fill(providerUID);
-  await searchInput.press("Enter");
-
-  // Additional wait for React table to re-render with the server-filtered data
-  // The filtering happens on the server, but the table component needs time
-  // to process the response and update the DOM after network idle
-  await page.page.waitForTimeout(1500);
-
-  // Get all rows from the table
   const allRows = page.providersTable.locator("tbody tr");
 
-  // Helper function to check if a row is the "No results" row
   const isNoResultsRow = async (row: Locator): Promise<boolean> => {
     const text = await row.textContent();
     return text?.includes("No results") || text?.includes("No data") || false;
   };
 
-  // Helper function to find the row with the specific UID
   const findProviderRow = async (): Promise<Locator | null> => {
-    const count = await allRows.count();
+    const rowByText = page.providersTable
+      .locator("tbody tr")
+      .filter({ hasText: providerUID })
+      .first();
+    if (await rowByText.isVisible().catch(() => false)) {
+      return rowByText;
+    }
 
+    const count = await allRows.count();
     for (let i = 0; i < count; i++) {
       const row = allRows.nth(i);
-
-      // Skip "No results" rows
       if (await isNoResultsRow(row)) {
         continue;
       }
-
-      // Check if this row contains the UID in the UID column (column 3)
-      const uidCell = row.locator("td").nth(3);
-      const uidText = await uidCell.textContent();
-
-      if (uidText?.includes(providerUID)) {
+      const rowText = await row.textContent();
+      if (rowText?.includes(providerUID)) {
         return row;
       }
     }
 
     return null;
   };
-
-  // Wait for filtering to complete (max 0 or 1 data rows)
-  await expect(async () => {
-
-    await findProviderRow();
-    const count = await allRows.count();
-
-    // Count only real data rows (not "No results")
-    let dataRowCount = 0;
-    for (let i = 0; i < count; i++) {
-      if (!(await isNoResultsRow(allRows.nth(i)))) {
-        dataRowCount++;
-      }
-    }
-
-    // Should have 0 or 1 data row
-    expect(dataRowCount).toBeLessThanOrEqual(1);
-  }).toPass({ timeout: 20000 });
 
   // Find the provider row
   const targetRow = await findProviderRow();

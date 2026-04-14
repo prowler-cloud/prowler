@@ -18,6 +18,7 @@ from django.db import (
 )
 from django_celery_beat.models import PeriodicTask
 from psycopg2 import connect as psycopg2_connect
+from psycopg2 import sql as psycopg2_sql
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 from rest_framework_json_api.serializers import ValidationError
 
@@ -74,6 +75,7 @@ def rls_transaction(
     value: str,
     parameter: str = POSTGRES_TENANT_VAR,
     using: str | None = None,
+    retry_on_replica: bool = True,
 ):
     """
     Creates a new database transaction setting the given configuration value for Postgres RLS. It validates the
@@ -92,10 +94,11 @@ def rls_transaction(
 
     alias = db_alias
     is_replica = READ_REPLICA_ALIAS and alias == READ_REPLICA_ALIAS
-    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica else 1
+    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica and retry_on_replica else 1
 
     for attempt in range(1, max_attempts + 1):
         router_token = None
+        yielded_cursor = False
 
         # On final attempt, fallback to primary
         if attempt == max_attempts and is_replica:
@@ -118,9 +121,12 @@ def rls_transaction(
                     except ValueError:
                         raise ValidationError("Must be a valid UUID")
                     cursor.execute(SET_CONFIG_QUERY, [parameter, value])
+                    yielded_cursor = True
                     yield cursor
             return
         except OperationalError as e:
+            if yielded_cursor:
+                raise
             # If on primary or max attempts reached, raise
             if not is_replica or attempt == max_attempts:
                 raise
@@ -275,15 +281,23 @@ class PostgresEnumMigration:
         self.enum_values = enum_values
 
     def create_enum_type(self, apps, schema_editor):  # noqa: F841
-        string_enum_values = ", ".join([f"'{value}'" for value in self.enum_values])
         with schema_editor.connection.cursor() as cursor:
             cursor.execute(
-                f"CREATE TYPE {self.enum_name} AS ENUM ({string_enum_values});"
+                psycopg2_sql.SQL("CREATE TYPE {} AS ENUM ({})").format(
+                    psycopg2_sql.Identifier(self.enum_name),
+                    psycopg2_sql.SQL(", ").join(
+                        psycopg2_sql.Literal(v) for v in self.enum_values
+                    ),
+                )
             )
 
     def drop_enum_type(self, apps, schema_editor):  # noqa: F841
         with schema_editor.connection.cursor() as cursor:
-            cursor.execute(f"DROP TYPE {self.enum_name};")
+            cursor.execute(
+                psycopg2_sql.SQL("DROP TYPE {}").format(
+                    psycopg2_sql.Identifier(self.enum_name)
+                )
+            )
 
 
 class PostgresEnumField(models.Field):

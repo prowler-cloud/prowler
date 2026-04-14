@@ -1,18 +1,14 @@
 "use client";
 
 import { Input, Textarea } from "@heroui/input";
-import {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { Dispatch, SetStateAction, useState, useTransition } from "react";
 
 import { createMuteRule } from "@/actions/mute-rules";
 import { MuteRuleActionState } from "@/actions/mute-rules/types";
+import { Button } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
+import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { useToast } from "@/components/ui";
 import { FormButtons } from "@/components/ui/form";
 
@@ -21,6 +17,9 @@ interface MuteFindingsModalProps {
   onOpenChange: Dispatch<SetStateAction<boolean>>;
   findingIds: string[];
   onComplete?: () => void;
+  isBulkOperation?: boolean;
+  isPreparing?: boolean;
+  preparationError?: string | null;
 }
 
 export function MuteFindingsModal({
@@ -28,38 +27,23 @@ export function MuteFindingsModal({
   onOpenChange,
   findingIds,
   onComplete,
+  isBulkOperation = false,
+  isPreparing = false,
+  preparationError = null,
 }: MuteFindingsModalProps) {
   const { toast } = useToast();
   const [state, setState] = useState<MuteRuleActionState | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Use refs to avoid stale closures in useEffect
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
-
-  const onOpenChangeRef = useRef(onOpenChange);
-  onOpenChangeRef.current = onOpenChange;
-
-  useEffect(() => {
-    if (state?.success) {
-      toast({
-        title: "Success",
-        description: state.success,
-      });
-      onCompleteRef.current?.();
-      onOpenChangeRef.current(false);
-    } else if (state?.errors?.general) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: state.errors.general,
-      });
-    }
-  }, [state, toast]);
-
   const handleCancel = () => {
     onOpenChange(false);
   };
+
+  const isSubmitDisabled =
+    isPending ||
+    isPreparing ||
+    findingIds.length === 0 ||
+    Boolean(preparationError);
 
   return (
     <Modal
@@ -72,11 +56,33 @@ export function MuteFindingsModal({
         className="flex flex-col gap-4"
         onSubmit={(e) => {
           e.preventDefault();
+          if (isSubmitDisabled) {
+            return;
+          }
+
           const formData = new FormData(e.currentTarget);
 
           startTransition(() => {
             void (async () => {
               const result = await createMuteRule(null, formData);
+              if (!result) return;
+
+              if (result.success) {
+                toast({
+                  title: "Success",
+                  description: isBulkOperation
+                    ? "Mute rule created. It may take a few minutes for all findings to update."
+                    : result.success,
+                });
+                onComplete?.();
+                onOpenChange(false);
+              } else if (result.errors?.general) {
+                toast({
+                  variant: "destructive",
+                  title: "Error",
+                  description: result.errors.general,
+                });
+              }
               setState(result);
             })();
           });
@@ -88,52 +94,121 @@ export function MuteFindingsModal({
           value={JSON.stringify(findingIds)}
         />
 
-        <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            You are about to mute{" "}
-            <span className="font-semibold text-slate-900 dark:text-white">
-              {findingIds.length}
-            </span>{" "}
-            {findingIds.length === 1 ? "finding" : "findings"}.
-          </p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
-            Muted findings will be hidden by default but can be shown using
-            filters.
-          </p>
-        </div>
+        {isPreparing ? (
+          <>
+            <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
+              <div className="flex items-start gap-3">
+                <Spinner className="mt-0.5 size-5 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">
+                    Preparing findings to mute...
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Large finding groups can take a few seconds while we gather
+                    the matching findings.
+                  </p>
+                </div>
+              </div>
+            </div>
 
-        <Input
-          name="name"
-          label="Rule Name"
-          placeholder="e.g., Ignore dev environment S3 buckets"
-          isRequired
-          variant="bordered"
-          isInvalid={!!state?.errors?.name}
-          errorMessage={state?.errors?.name}
-          isDisabled={isPending}
-          description="A descriptive name for this mute rule"
-        />
+            <div className="space-y-3" aria-hidden="true">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24 rounded" />
+                <Skeleton className="h-11 w-full rounded-lg" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20 rounded" />
+                <Skeleton className="h-24 w-full rounded-lg" />
+              </div>
+            </div>
 
-        <Textarea
-          name="reason"
-          label="Reason"
-          placeholder="e.g., These are expected findings in the development environment"
-          isRequired
-          variant="bordered"
-          minRows={3}
-          maxRows={6}
-          isInvalid={!!state?.errors?.reason}
-          errorMessage={state?.errors?.reason}
-          isDisabled={isPending}
-          description="Explain why these findings are being muted"
-        />
+            <div className="flex w-full justify-end gap-4">
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+              <Button type="button" size="lg" disabled>
+                <Spinner className="size-4" />
+                Preparing...
+              </Button>
+            </div>
+          </>
+        ) : preparationError ? (
+          <>
+            <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-800/50">
+              <p className="text-sm font-medium text-slate-900 dark:text-white">
+                We couldn&apos;t prepare this mute action.
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {preparationError}
+              </p>
+            </div>
 
-        <FormButtons
-          setIsOpen={onOpenChange}
-          onCancel={handleCancel}
-          submitText="Mute Findings"
-          isDisabled={isPending}
-        />
+            <div className="flex w-full justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                onClick={handleCancel}
+              >
+                Close
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                You are about to mute{" "}
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {findingIds.length}
+                </span>{" "}
+                {findingIds.length === 1 ? "finding" : "findings"}.
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">
+                Muted findings will be hidden by default but can be shown using
+                filters.
+              </p>
+            </div>
+
+            <Input
+              name="name"
+              label="Rule Name"
+              placeholder="e.g., Ignore dev environment S3 buckets"
+              isRequired
+              variant="bordered"
+              isInvalid={!!state?.errors?.name}
+              errorMessage={state?.errors?.name}
+              isDisabled={isPending}
+              description="A descriptive name for this mute rule"
+            />
+
+            <Textarea
+              name="reason"
+              label="Reason"
+              placeholder="e.g., These are expected findings in the development environment"
+              isRequired
+              variant="bordered"
+              minRows={3}
+              maxRows={6}
+              isInvalid={!!state?.errors?.reason}
+              errorMessage={state?.errors?.reason}
+              isDisabled={isPending}
+              description="Explain why these findings are being muted"
+            />
+
+            <FormButtons
+              setIsOpen={onOpenChange}
+              onCancel={handleCancel}
+              submitText="Mute Findings"
+              isDisabled={isPending}
+            />
+          </>
+        )}
       </form>
     </Modal>
   );

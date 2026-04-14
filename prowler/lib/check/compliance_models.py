@@ -62,6 +62,7 @@ class Generic_Compliance_Requirement_Attribute(BaseModel):
     SubGroup: Optional[str] = None
     Service: Optional[str] = None
     Type: Optional[str] = None
+    Comment: Optional[str] = None
 
 
 class CIS_Requirement_Attribute_Profile(str, Enum):

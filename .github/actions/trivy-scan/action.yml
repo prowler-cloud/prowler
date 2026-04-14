@@ -54,7 +54,7 @@ runs:
           trivy-db-${{ runner.os }}-
 
     - name: Run Trivy vulnerability scan (JSON)
-      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+      uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
       with:
         image-ref: ${{ inputs.image-name }}:${{ inputs.image-tag }}
         format: 'json'
@@ -63,10 +63,11 @@ runs:
         exit-code: '0'
         scanners: 'vuln'
         timeout: '5m'
+        version: 'v0.69.2'
 
     - name: Run Trivy vulnerability scan (SARIF)
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
-      uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+      uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
       with:
         image-ref: ${{ inputs.image-name }}:${{ inputs.image-tag }}
         format: 'sarif'
@@ -75,6 +76,7 @@ runs:
         exit-code: '0'
         scanners: 'vuln'
         timeout: '5m'
+        version: 'v0.69.2'
 
     - name: Upload Trivy results to GitHub Security tab
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
@@ -105,14 +107,20 @@ runs:
 
         echo "### 🔒 Container Security Scan" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Image:** \`${{ inputs.image-name }}:${{ inputs.image-tag }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "**Image:** \`${INPUTS_IMAGE_NAME}:${INPUTS_IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "- 🔴 Critical: $CRITICAL" >> $GITHUB_STEP_SUMMARY
         echo "- 🟠 High: $HIGH" >> $GITHUB_STEP_SUMMARY
         echo "- **Total**: $TOTAL" >> $GITHUB_STEP_SUMMARY
+      env:
+        INPUTS_IMAGE_NAME: ${{ inputs.image-name }}
+        INPUTS_IMAGE_TAG: ${{ inputs.image-tag }}
 
     - name: Comment scan results on PR
-      if: inputs.create-pr-comment == 'true' && github.event_name == 'pull_request'
+      if: >-
+        inputs.create-pr-comment == 'true'
+        && github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository
       uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
       env:
         IMAGE_NAME: ${{ inputs.image-name }}
@@ -123,7 +131,7 @@ runs:
           const comment = require('./.github/scripts/trivy-pr-comment.js');
 
           // Unique identifier to find our comment
-          const marker = '<!-- trivy-scan-comment:${{ inputs.image-name }} -->';
+          const marker = `<!-- trivy-scan-comment:${process.env.IMAGE_NAME} -->`;
           const body = marker + '\n' + comment;
 
           // Find existing comment
@@ -159,6 +167,9 @@ runs:
       if: inputs.fail-on-critical == 'true' && steps.security-check.outputs.critical != '0'
       shell: bash
       run: |
-        echo "::error::Found ${{ steps.security-check.outputs.critical }} critical vulnerabilities"
+        echo "::error::Found ${STEPS_SECURITY_CHECK_OUTPUTS_CRITICAL} critical vulnerabilities"
         echo "::warning::Please update packages or use a different base image"
         exit 1
+
+      env:
+        STEPS_SECURITY_CHECK_OUTPUTS_CRITICAL: ${{ steps.security-check.outputs.critical }}

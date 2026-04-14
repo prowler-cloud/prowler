@@ -1,4 +1,4 @@
-FROM python:3.12.11-slim-bookworm AS build
+FROM python:3.12.11-slim-bookworm@sha256:519591d6871b7bc437060736b9f7456b8731f1499a57e22e6c285135ae657bf7 AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
@@ -6,7 +6,7 @@ LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
-ARG TRIVY_VERSION=0.66.0
+ARG TRIVY_VERSION=0.69.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 # hadolint ignore=DL3008
