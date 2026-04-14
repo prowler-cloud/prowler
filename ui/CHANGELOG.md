@@ -2,11 +2,19 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+<<<<<<< feat/PROWLER-1296-new-resources-side-drawer
 ## [1.24.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
 - Resources side drawer with redesigned detail panel [(#10673)](https://github.com/prowler-cloud/prowler/pull/10673)
+=======
+## [1.23.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Compliance detail page header now reflects the actual provider, alias and UID of the selected scan instead of always defaulting to AWS [(#10674)](https://github.com/prowler-cloud/prowler/pull/10674)
+>>>>>>> master
 
 ---
 
