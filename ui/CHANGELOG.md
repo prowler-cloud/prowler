@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.24.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Resources side drawer with redesigned detail panel [(#10673)](https://github.com/prowler-cloud/prowler/pull/10673)
+
+---
+
 ## [1.23.0] (Prowler v5.23.0)
 
 ### 🚀 Added
