@@ -5,6 +5,7 @@ import {
   getLatestMetadataInfo,
   getLatestResources,
   getMetadataInfo,
+  getResourceById,
   getResources,
 } from "@/actions/resources";
 import { ResourcesFilters } from "@/components/resources/resources-filters";
@@ -36,14 +37,36 @@ export default async function Resources({
 
   const initialResourceId = resolvedSearchParams.resourceId?.toString();
 
-  const [metadataInfoData, providersData] = await Promise.all([
-    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
-      query,
-      filters: outputFilters,
-      sort: encodedSort,
-    }),
-    getProviders({ pageSize: 50 }),
-  ]);
+  const [metadataInfoData, providersData, resourceByIdData] = await Promise.all(
+    [
+      (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
+        query,
+        filters: outputFilters,
+        sort: encodedSort,
+      }),
+      getProviders({ pageSize: 50 }),
+      initialResourceId
+        ? getResourceById(initialResourceId, { include: ["provider"] })
+        : Promise.resolve(undefined),
+    ],
+  );
+
+  const processedResource = resourceByIdData?.data
+    ? (() => {
+        const resource = resourceByIdData.data;
+        const providerDict = createDict("providers", resourceByIdData);
+
+        return {
+          ...resource,
+          relationships: {
+            ...resource.relationships,
+            provider: {
+              data: providerDict[resource.relationships.provider.data.id],
+            },
+          },
+        } satisfies ResourceProps;
+      })()
+    : null;
 
   // Extract unique regions, services, groups from the metadata endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
@@ -66,7 +89,7 @@ export default async function Resources({
         <Suspense fallback={<SkeletonTableResources />}>
           <SSRDataTable
             searchParams={resolvedSearchParams}
-            initialResourceId={initialResourceId}
+            initialResource={processedResource}
           />
         </Suspense>
       </FilterTransitionWrapper>
@@ -76,10 +99,10 @@ export default async function Resources({
 
 const SSRDataTable = async ({
   searchParams,
-  initialResourceId,
+  initialResource,
 }: {
   searchParams: SearchParamsProps;
-  initialResourceId?: string;
+  initialResource?: ResourceProps | null;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
@@ -151,7 +174,7 @@ const SSRDataTable = async ({
       <ResourcesTableWithSelection
         data={expandedResources || []}
         metadata={resourcesData?.meta}
-        initialResourceId={initialResourceId}
+        initialResource={initialResource}
       />
     </>
   );
