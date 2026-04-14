@@ -97,6 +97,7 @@ export function getColumnFindings(
             delta={delta}
             isMuted={isMuted}
             mutedReason={mutedReason}
+            showDeltaWhenMuted
           />
         );
       },
