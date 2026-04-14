@@ -188,12 +188,16 @@ def parse_upstream(config: dict) -> list[dict]:
     for filename in catalog_files:
         path = upstream_dir / filename
         if not path.exists():
-            # The runner handles fatal errors; a missing optional catalog
-            # file is surfaced as a warning via print to stderr.
-            import sys
-
-            print(f"warn: missing upstream file {filename}", file=sys.stderr)
-            continue
+            # parser.catalog_files is the closed set of upstream catalogs
+            # that define the framework. Silently skipping a missing file
+            # would emit valid-looking JSON with part of the framework
+            # dropped, defeating the whole point of a canonical sync.
+            raise FileNotFoundError(
+                f"upstream catalog file not found: {path}\n"
+                f"  hint: refresh the upstream cache (see SKILL.md Workflow A "
+                f"Step 1), or remove {filename!r} from parser.catalog_files "
+                f"if it has been retired upstream."
+            )
         with open(path) as f:
             doc = yaml.safe_load(f) or {}
 

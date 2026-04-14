@@ -461,7 +461,14 @@ def main() -> int:
         return 4
 
     print(f"Parsing upstream from {upstream_dir}...")
-    base_requirements = parser.parse_upstream(config)
+    try:
+        base_requirements = parser.parse_upstream(config)
+    except FileNotFoundError as exc:
+        # A missing catalog declared in parser.catalog_files is a hard
+        # failure: emitting JSON with part of the framework silently
+        # dropped would violate the canonical-sync contract.
+        print(f"upstream error: {exc}", file=sys.stderr)
+        return 6
     print(f"  parser returned {len(base_requirements)} requirements")
 
     # Safety-net: parser contract
