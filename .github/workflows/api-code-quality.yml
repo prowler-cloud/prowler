@@ -67,6 +67,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
+          update-lock: 'true'
 
       - name: Poetry check
         if: steps.check-changes.outputs.any_changed == 'true'

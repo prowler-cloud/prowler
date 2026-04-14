@@ -70,7 +70,7 @@ repos:
         args: ["--ignore=E266,W503,E203,E501,W605"]
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 2.1.1
+    rev: 2.3.4
     hooks:
       - id: poetry-check
         name: API - poetry-check

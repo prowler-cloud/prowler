@@ -9,8 +9,7 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "License :: OSI Approved :: Apache Software License"
+  "Programming Language :: Python :: 3.12"
 ]
 dependencies = [
   "awsipranges==0.3.3",
@@ -96,7 +95,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
-version = "5.23.0"
+version = "5.24.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
