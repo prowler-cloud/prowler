@@ -48,10 +48,6 @@ import {
 } from "./finding-groups";
 
 // ---------------------------------------------------------------------------
-// Blocker 1 + 2: FAIL-first sort and FAIL-only filter for drill-down resources
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
@@ -169,7 +165,7 @@ describe("getLatestFindingGroupResources — SSRF path traversal protection", ()
 });
 
 // ---------------------------------------------------------------------------
-// Blocker 1: Resources list must show FAIL first (sort=-status)
+// Resources list keeps FAIL-first sort but no longer forces FAIL-only filtering
 // ---------------------------------------------------------------------------
 
 describe("getFindingGroupResources — Blocker 1: FAIL-first sort", () => {
@@ -181,30 +177,32 @@ describe("getFindingGroupResources — Blocker 1: FAIL-first sort", () => {
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
   });
 
-  it("should include sort=-status in the API call so FAIL resources appear first", async () => {
+  it("should include the composite sort so FAIL resources appear first, then severity", async () => {
     // Given
     const checkId = "s3_bucket_public_access";
 
     // When
     await getFindingGroupResources({ checkId });
 
-    // Then — the URL must contain sort=-status
+    // Then — the URL must contain the composite sort
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("sort")).toBe("-status");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
   });
 
-  it("should include filter[status]=FAIL in the API call so only impacted resources are shown", async () => {
+  it("should not force filter[status]=FAIL so PASS resources can also be shown", async () => {
     // Given
     const checkId = "s3_bucket_public_access";
 
     // When
     await getFindingGroupResources({ checkId });
 
-    // Then — the URL must contain filter[status]=FAIL
+    // Then — the URL should not add a hardcoded status filter
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("filter[status]")).toBe("FAIL");
+    expect(url.searchParams.get("filter[status]")).toBeNull();
   });
 });
 
@@ -217,7 +215,7 @@ describe("getLatestFindingGroupResources — Blocker 1: FAIL-first sort", () => 
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
   });
 
-  it("should include sort=-status in the API call so FAIL resources appear first", async () => {
+  it("should include the composite sort so FAIL resources appear first, then severity", async () => {
     // Given
     const checkId = "iam_user_mfa_enabled";
 
@@ -227,10 +225,12 @@ describe("getLatestFindingGroupResources — Blocker 1: FAIL-first sort", () => 
     // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("sort")).toBe("-status");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
   });
 
-  it("should include filter[status]=FAIL in the API call so only impacted resources are shown", async () => {
+  it("should not force filter[status]=FAIL so PASS resources can also be shown", async () => {
     // Given
     const checkId = "iam_user_mfa_enabled";
 
@@ -240,7 +240,7 @@ describe("getLatestFindingGroupResources — Blocker 1: FAIL-first sort", () => 
     // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("filter[status]")).toBe("FAIL");
+    expect(url.searchParams.get("filter[status]")).toBeNull();
   });
 });
 
@@ -257,7 +257,7 @@ describe("getFindingGroupResources — triangulation: params coexist", () => {
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
   });
 
-  it("should send sort=-status AND filter[status]=FAIL alongside pagination params", async () => {
+  it("should send the composite sort alongside pagination params without forcing filter[status]", async () => {
     // Given
     const checkId = "s3_bucket_versioning";
 
@@ -269,8 +269,10 @@ describe("getFindingGroupResources — triangulation: params coexist", () => {
     const url = new URL(calledUrl);
     expect(url.searchParams.get("page[number]")).toBe("2");
     expect(url.searchParams.get("page[size]")).toBe("50");
-    expect(url.searchParams.get("sort")).toBe("-status");
-    expect(url.searchParams.get("filter[status]")).toBe("FAIL");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
+    expect(url.searchParams.get("filter[status]")).toBeNull();
   });
 });
 
@@ -283,7 +285,7 @@ describe("getLatestFindingGroupResources — triangulation: params coexist", () 
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
   });
 
-  it("should send sort=-status AND filter[status]=FAIL alongside pagination params", async () => {
+  it("should send the composite sort alongside pagination params without forcing filter[status]", async () => {
     // Given
     const checkId = "iam_root_mfa_enabled";
 
@@ -295,16 +297,18 @@ describe("getLatestFindingGroupResources — triangulation: params coexist", () 
     const url = new URL(calledUrl);
     expect(url.searchParams.get("page[number]")).toBe("3");
     expect(url.searchParams.get("page[size]")).toBe("20");
-    expect(url.searchParams.get("sort")).toBe("-status");
-    expect(url.searchParams.get("filter[status]")).toBe("FAIL");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
+    expect(url.searchParams.get("filter[status]")).toBeNull();
   });
 });
 
 // ---------------------------------------------------------------------------
-// Blocker: Duplicate filter[status] — caller-supplied status must be stripped
+// Caller filters should propagate unchanged to the drill-down resources endpoint
 // ---------------------------------------------------------------------------
 
-describe("getFindingGroupResources — Blocker: caller filter[status] is always overridden to FAIL", () => {
+describe("getFindingGroupResources — caller filters are preserved", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
@@ -313,23 +317,7 @@ describe("getFindingGroupResources — Blocker: caller filter[status] is always 
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
   });
 
-  it("should use filter[status]=FAIL even when caller passes filter[status]=PASS", async () => {
-    // Given — caller explicitly passes PASS, which must be ignored
-    const checkId = "s3_bucket_public_access";
-    const filters = { "filter[status]": "PASS" };
-
-    // When
-    await getFindingGroupResources({ checkId, filters });
-
-    // Then — the final URL must have exactly one filter[status]=FAIL, not PASS
-    const calledUrl = fetchMock.mock.calls[0][0] as string;
-    const url = new URL(calledUrl);
-    const allStatusValues = url.searchParams.getAll("filter[status]");
-    expect(allStatusValues).toHaveLength(1);
-    expect(allStatusValues[0]).toBe("FAIL");
-  });
-
-  it("should not have duplicate filter[status] params when caller passes filter[status]", async () => {
+  it("should preserve caller filter[status] when explicitly provided", async () => {
     // Given
     const checkId = "s3_bucket_public_access";
     const filters = { "filter[status]": "PASS" };
@@ -337,14 +325,58 @@ describe("getFindingGroupResources — Blocker: caller filter[status] is always 
     // When
     await getFindingGroupResources({ checkId, filters });
 
-    // Then — no duplicates
+    // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.getAll("filter[status]")).toHaveLength(1);
+    const allStatusValues = url.searchParams.getAll("filter[status]");
+    expect(allStatusValues).toHaveLength(1);
+    expect(allStatusValues[0]).toBe("PASS");
+  });
+
+  it("should translate a single group status__in filter into filter[status] for resources", async () => {
+    // Given
+    const checkId = "s3_bucket_public_access";
+    const filters = {
+      "filter[status__in]": "PASS",
+      "filter[severity__in]": "medium",
+      "filter[provider_type__in]": "aws",
+    };
+
+    // When
+    await getFindingGroupResources({ checkId, filters });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("filter[status]")).toBe("PASS");
+    expect(url.searchParams.get("filter[status__in]")).toBeNull();
+    expect(url.searchParams.get("filter[severity__in]")).toBe("medium");
+    expect(url.searchParams.get("filter[provider_type__in]")).toBe("aws");
+  });
+
+  it("should keep the composite sort when the resource search filter is applied", async () => {
+    // Given
+    const checkId = "s3_bucket_public_access";
+    const filters = {
+      "filter[name__icontains]": "bucket-prod",
+      "filter[severity__in]": "high",
+    };
+
+    // When
+    await getFindingGroupResources({ checkId, filters });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
+    expect(url.searchParams.get("filter[name__icontains]")).toBe("bucket-prod");
+    expect(url.searchParams.get("filter[severity__in]")).toBe("high");
   });
 });
 
-describe("getLatestFindingGroupResources — Blocker: caller filter[status] is always overridden to FAIL", () => {
+describe("getLatestFindingGroupResources — caller filters are preserved", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
@@ -353,23 +385,7 @@ describe("getLatestFindingGroupResources — Blocker: caller filter[status] is a
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
   });
 
-  it("should use filter[status]=FAIL even when caller passes filter[status]=PASS", async () => {
-    // Given — caller explicitly passes PASS, which must be ignored
-    const checkId = "iam_user_mfa_enabled";
-    const filters = { "filter[status]": "PASS" };
-
-    // When
-    await getLatestFindingGroupResources({ checkId, filters });
-
-    // Then — the final URL must have exactly one filter[status]=FAIL, not PASS
-    const calledUrl = fetchMock.mock.calls[0][0] as string;
-    const url = new URL(calledUrl);
-    const allStatusValues = url.searchParams.getAll("filter[status]");
-    expect(allStatusValues).toHaveLength(1);
-    expect(allStatusValues[0]).toBe("FAIL");
-  });
-
-  it("should not have duplicate filter[status] params when caller passes filter[status]", async () => {
+  it("should preserve caller filter[status] when explicitly provided", async () => {
     // Given
     const checkId = "iam_user_mfa_enabled";
     const filters = { "filter[status]": "PASS" };
@@ -377,9 +393,55 @@ describe("getLatestFindingGroupResources — Blocker: caller filter[status] is a
     // When
     await getLatestFindingGroupResources({ checkId, filters });
 
-    // Then — no duplicates
+    // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.getAll("filter[status]")).toHaveLength(1);
+    const allStatusValues = url.searchParams.getAll("filter[status]");
+    expect(allStatusValues).toHaveLength(1);
+    expect(allStatusValues[0]).toBe("PASS");
+  });
+
+  it("should translate a single group status__in filter into filter[status] for latest resources", async () => {
+    // Given
+    const checkId = "iam_user_mfa_enabled";
+    const filters = {
+      "filter[status__in]": "PASS",
+      "filter[severity__in]": "low",
+      "filter[provider_type__in]": "aws",
+    };
+
+    // When
+    await getLatestFindingGroupResources({ checkId, filters });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("filter[status]")).toBe("PASS");
+    expect(url.searchParams.get("filter[status__in]")).toBeNull();
+    expect(url.searchParams.get("filter[severity__in]")).toBe("low");
+    expect(url.searchParams.get("filter[provider_type__in]")).toBe("aws");
+  });
+
+  it("should keep the composite sort when the resource search filter is applied", async () => {
+    // Given
+    const checkId = "iam_user_mfa_enabled";
+    const filters = {
+      "filter[name__icontains]": "instance-prod",
+      "filter[status__in]": "PASS,FAIL",
+    };
+
+    // When
+    await getLatestFindingGroupResources({ checkId, filters });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-delta,-severity,-last_seen_at",
+    );
+    expect(url.searchParams.get("filter[name__icontains]")).toBe(
+      "instance-prod",
+    );
+    expect(url.searchParams.get("filter[status__in]")).toBe("PASS,FAIL");
   });
 });

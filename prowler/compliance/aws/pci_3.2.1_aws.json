@@ -1561,6 +1561,8 @@
       "Name": "Observe user accounts to verify that any inactive accounts over 90 days old are either removed or disabled",
       "Description": "Accounts that are not used regularly are often targets of attack since it is less likely that any changes (such as a changed password) will be noticed. As such, these accounts may be more easily exploited and used to access cardholder data.",
       "Checks": [
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
         "iam_password_policy_reuse_24",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
