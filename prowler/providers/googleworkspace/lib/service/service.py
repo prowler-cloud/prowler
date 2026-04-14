@@ -41,6 +41,22 @@ class GoogleWorkspaceService:
             )
             return None
 
+    @staticmethod
+    def _is_customer_level_policy(policy: dict) -> bool:
+        """Check if a policy applies at the customer (domain-wide) level.
+
+        The Cloud Identity Policy API returns policies at multiple
+        organizational levels (customer, OU, group). Customer-level
+        policies have no group targeting and no sub-OU targeting in
+        their policyQuery.
+        """
+        policy_query = policy.get("policyQuery", {})
+        if policy_query.get("group"):
+            return False
+        if policy_query.get("orgUnit"):
+            return False
+        return True
+
     def _handle_api_error(self, error, context: str, resource_name: str = ""):
         """
         Centralized Google Workspace API error handling.

@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable managed WAF rulesets to benefit from Vercel-curated protection against common attack patterns. If you are on a plan that does not support managed rulesets, consider upgrading to the Enterprise plan for enhanced security features.",
-      "Url": "https://hub.prowler.com/checks/vercel/security_managed_rulesets_enabled"
+      "Url": "https://hub.prowler.com/check/security_managed_rulesets_enabled"
     }
   },
   "Categories": [

@@ -54,6 +54,7 @@ export const getResourceFindingsColumns = (
             delta={row.original.attributes.delta}
             isMuted={row.original.attributes.muted}
             mutedReason={row.original.attributes.muted_reason}
+            showDeltaWhenMuted
           />
         </div>
       ),
