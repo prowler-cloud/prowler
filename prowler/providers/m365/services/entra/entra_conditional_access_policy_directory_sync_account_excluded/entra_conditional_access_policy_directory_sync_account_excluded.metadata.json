@@ -14,8 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-all-users-mfa",
-    "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/reference-connect-accounts-permissions",
-    "https://maester.dev/docs/tests/MT.1020"
+    "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/reference-connect-accounts-permissions"
   ],
   "Remediation": {
     "Code": {

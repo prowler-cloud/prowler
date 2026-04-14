@@ -70,7 +70,10 @@ class entra_conditional_access_policy_directory_sync_account_excluded(Check):
                 report.status_extended = f"Conditional Access Policy {policy.display_name} excludes the Directory Synchronization Accounts role."
             else:
                 report.status = "FAIL"
-                report.status_extended = f"Conditional Access Policy {policy.display_name} does not exclude the Directory Synchronization Accounts role, which may break Entra Connect sync."
+                if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
+                    report.status_extended = f"Conditional Access Policy {policy.display_name} reports excluding the Directory Synchronization Accounts role but does not enforce it."
+                else:
+                    report.status_extended = f"Conditional Access Policy {policy.display_name} does not exclude the Directory Synchronization Accounts role, which may break Entra Connect sync."
 
             findings.append(report)
 
