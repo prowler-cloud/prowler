@@ -12,6 +12,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Findings group resource filters now strip unsupported scan parameters, display scan name instead of provider alias in filter badges, migrate mute modal from HeroUI to shadcn, and add searchable accounts/provider type selectors [(#10662)](https://github.com/prowler-cloud/prowler/pull/10662)
 - Compliance detail page header now reflects the actual provider, alias and UID of the selected scan instead of always defaulting to AWS [(#10674)](https://github.com/prowler-cloud/prowler/pull/10674)
+- Provider wizard modal moved to a stable page-level host so the providers table refreshes after link, authenticate, and connection check without closing the modal [(#10675)](https://github.com/prowler-cloud/prowler/pull/10675)
 
 ---
 
@@ -40,11 +41,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Preserve query parameters in callbackUrl during invitation flow [(#10571)](https://github.com/prowler-cloud/prowler/pull/10571)
-- Deleting the active organization now switches to the target org before deleting, preventing JWT rejection from the backend [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
-- Clear Filters now resets all filters including muted findings and auto-applies, Clear all in pills only removes pill-visible sub-filters, and the discard icon is now an Undo text button [(#10446)](https://github.com/prowler-cloud/prowler/pull/10446)
-- Send to Jira modal now dynamically fetches and displays available issue types per project instead of hardcoding `"Task"`, fixing failures on non-English Jira instances [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
-- Exclude service filter from finding group resources endpoint to prevent empty results when a service filter is active [(#10652)](https://github.com/prowler-cloud/prowler/pull/10652)
-- Update credentials wizard no longer closes prematurely; revalidation deferred to the connection test step [(#10675)](https://github.com/prowler-cloud/prowler/pull/10675)
+- Attack Paths scan auto-refresh now correctly detects "available" (queued) scans as active [(#10476)](https://github.com/prowler-cloud/prowler/pull/10476)
+- Attack Paths empty state not showing when no scans exist [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
 
 ---
 
