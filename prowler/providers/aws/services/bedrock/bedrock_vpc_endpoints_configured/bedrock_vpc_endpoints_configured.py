@@ -10,6 +10,7 @@ BEDROCK_ENDPOINT_SERVICES = {
     "bedrock-runtime": "Bedrock runtime",
     "bedrock-agent": "Bedrock agent control plane",
     "bedrock-agent-runtime": "Bedrock agent runtime",
+    "bedrock-mantle": "Bedrock Mantle (OpenAI-compatible API)",
 }
 
 
@@ -18,9 +19,9 @@ class bedrock_vpc_endpoints_configured(Check):
 
     This check verifies that each VPC in regions with Bedrock activity has
     interface VPC endpoints for all Amazon Bedrock services (control plane,
-    runtime, agent, and agent runtime), ensuring that traffic to these
-    services remains within the AWS network.
-    - PASS: The VPC has VPC endpoints for all four Bedrock services.
+    runtime, agent, agent runtime, and Mantle OpenAI-compatible API),
+    ensuring that traffic to these services remains within the AWS network.
+    - PASS: The VPC has VPC endpoints for all Bedrock services.
     - FAIL: The VPC is missing one or more Bedrock VPC endpoints.
     VPCs in regions without Bedrock activity are skipped.
     """

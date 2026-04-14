@@ -14,6 +14,7 @@ BEDROCK_SERVICES = [
     "com.amazonaws.us-east-1.bedrock-runtime",
     "com.amazonaws.us-east-1.bedrock-agent",
     "com.amazonaws.us-east-1.bedrock-agent-runtime",
+    "com.amazonaws.us-east-1.bedrock-mantle",
 ]
 
 MOCK_BEDROCK_CLIENT = mock.MagicMock(
@@ -152,6 +153,7 @@ class Test_bedrock_vpc_endpoints_configured:
                 assert "Bedrock runtime" in result[0].status_extended
                 assert "Bedrock agent control plane" in result[0].status_extended
                 assert "Bedrock agent runtime" in result[0].status_extended
+                assert "Bedrock Mantle" in result[0].status_extended
 
     @mock_aws
     def test_vpc_only_bedrock_runtime_endpoint(self):
@@ -206,6 +208,7 @@ class Test_bedrock_vpc_endpoints_configured:
                 assert "Bedrock control plane" in finding.status_extended
                 assert "Bedrock agent control plane" in finding.status_extended
                 assert "Bedrock agent runtime" in finding.status_extended
+                assert "Bedrock Mantle" in finding.status_extended
                 assert (
                     finding.resource_arn
                     == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:vpc/{vpc['VpcId']}"
@@ -263,6 +266,7 @@ class Test_bedrock_vpc_endpoints_configured:
                 assert "Bedrock control plane" in finding.status_extended
                 assert "Bedrock runtime" in finding.status_extended
                 assert "Bedrock agent control plane" in finding.status_extended
+                assert "Bedrock Mantle" in finding.status_extended
                 assert (
                     finding.resource_arn
                     == f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:123456789012:vpc/{vpc['VpcId']}"
@@ -388,6 +392,7 @@ class Test_bedrock_vpc_endpoints_configured:
                 assert finding.status == "FAIL"
                 assert "Bedrock control plane" in finding.status_extended
                 assert "Bedrock agent control plane" in finding.status_extended
+                assert "Bedrock Mantle" in finding.status_extended
                 assert "Bedrock runtime" not in finding.status_extended
                 assert "Bedrock agent runtime" not in finding.status_extended
 
@@ -439,6 +444,60 @@ class Test_bedrock_vpc_endpoints_configured:
                 finding = next(f for f in result if f.resource_id == vpc["VpcId"])
                 assert finding.region == AWS_REGION_US_EAST_1
                 assert finding.status == "FAIL"
+                assert "Bedrock control plane" in finding.status_extended
+                assert "Bedrock runtime" in finding.status_extended
+                assert "Bedrock agent control plane" in finding.status_extended
+                assert "Bedrock agent runtime" in finding.status_extended
+                assert "Bedrock Mantle" in finding.status_extended
+
+    @mock_aws
+    def test_vpc_only_bedrock_mantle_endpoint(self):
+        """Test VPC with only Bedrock Mantle endpoint - should FAIL with four services missing."""
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+
+        vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
+
+        route_table = ec2_client.create_route_table(VpcId=vpc["VpcId"])["RouteTable"]
+        ec2_client.create_vpc_endpoint(
+            VpcId=vpc["VpcId"],
+            ServiceName="com.amazonaws.us-east-1.bedrock-mantle",
+            RouteTableIds=[route_table["RouteTableId"]],
+            VpcEndpointType="Interface",
+        )
+
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with (
+                mock.patch(
+                    f"{CHECK_MODULE}.vpc_client",
+                    new=VPC(aws_provider),
+                ),
+                mock.patch(
+                    f"{CHECK_MODULE}.bedrock_client",
+                    new=MOCK_BEDROCK_CLIENT,
+                ),
+                mock.patch(
+                    f"{CHECK_MODULE}.bedrock_agent_client",
+                    new=MOCK_BEDROCK_AGENT_CLIENT,
+                ),
+            ):
+                from prowler.providers.aws.services.bedrock.bedrock_vpc_endpoints_configured.bedrock_vpc_endpoints_configured import (
+                    bedrock_vpc_endpoints_configured,
+                )
+
+                check = bedrock_vpc_endpoints_configured()
+                result = check.execute()
+
+                assert len(result) == 2
+                finding = next(f for f in result if f.resource_id == vpc["VpcId"])
+                assert finding.status == "FAIL"
+                assert "Bedrock Mantle" not in finding.status_extended
                 assert "Bedrock control plane" in finding.status_extended
                 assert "Bedrock runtime" in finding.status_extended
                 assert "Bedrock agent control plane" in finding.status_extended
