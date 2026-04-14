@@ -1173,6 +1173,7 @@ class PlatformConditions(BaseModel):
     exclude_platforms: List[str] = []
 
     @validator("include_platforms", "exclude_platforms", pre=True)
+    @classmethod
     def normalize_platforms(cls, values):
         if not values:
             return []
