@@ -47,6 +47,7 @@ vi.mock("@/lib/server-actions-helper", () => ({
 
 import {
   addCredentialsProvider,
+  addProvider,
   checkConnectionProvider,
   updateCredentialsProvider,
 } from "./providers";
@@ -69,7 +70,23 @@ describe("providers actions", () => {
     );
   });
 
-  it("should revalidate providers after adding credentials", async () => {
+  it("should revalidate providers after linking a cloud provider", async () => {
+    // Given
+    const formData = new FormData();
+    formData.set("providerType", "aws");
+    formData.set("providerUid", "111111111111");
+
+    // When
+    await addProvider(formData);
+
+    // Then
+    expect(handleApiResponseMock).toHaveBeenCalledWith(
+      expect.any(Response),
+      "/providers",
+    );
+  });
+
+  it("should revalidate providers after adding credentials in the wizard", async () => {
     // Given
     const formData = new FormData();
     formData.set("providerId", "provider-1");
@@ -85,7 +102,7 @@ describe("providers actions", () => {
     );
   });
 
-  it("should not revalidate providers before the update wizard reaches test connection", async () => {
+  it("should revalidate providers after updating credentials in the wizard", async () => {
     // Given
     const formData = new FormData();
     formData.set("providerId", "provider-1");
@@ -95,10 +112,13 @@ describe("providers actions", () => {
     await updateCredentialsProvider("secret-1", formData);
 
     // Then
-    expect(handleApiResponseMock).toHaveBeenCalledWith(expect.any(Response));
+    expect(handleApiResponseMock).toHaveBeenCalledWith(
+      expect.any(Response),
+      "/providers",
+    );
   });
 
-  it("should not revalidate providers when checking connection from the wizard", async () => {
+  it("should revalidate providers when checking connection from the wizard", async () => {
     // Given
     const formData = new FormData();
     formData.set("providerId", "provider-1");
@@ -107,6 +127,9 @@ describe("providers actions", () => {
     await checkConnectionProvider(formData);
 
     // Then
-    expect(handleApiResponseMock).toHaveBeenCalledWith(expect.any(Response));
+    expect(handleApiResponseMock).toHaveBeenCalledWith(
+      expect.any(Response),
+      "/providers",
+    );
   });
 });

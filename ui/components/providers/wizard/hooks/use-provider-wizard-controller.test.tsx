@@ -9,7 +9,18 @@ import {
   PROVIDER_WIZARD_STEP,
 } from "@/types/provider-wizard";
 
+import type { ProviderWizardInitialData } from "../types";
 import { useProviderWizardController } from "./use-provider-wizard-controller";
+
+const { refreshMock } = vi.hoisted(() => ({
+  refreshMock: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: refreshMock,
+  }),
+}));
 
 vi.mock("next-auth/react", () => ({
   useSession: () => ({
@@ -21,10 +32,31 @@ vi.mock("next-auth/react", () => ({
 describe("useProviderWizardController", () => {
   beforeEach(() => {
     vi.useRealTimers();
+    vi.clearAllMocks();
     sessionStorage.clear();
     localStorage.clear();
     useProviderWizardStore.getState().reset();
     useOrgSetupStore.getState().reset();
+  });
+
+  it("refreshes providers data when the wizard closes", () => {
+    // Given
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+      }),
+    );
+
+    // When
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // Then
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(refreshMock).toHaveBeenCalledTimes(1);
   });
 
   it("hydrates update mode when initial data is provided", async () => {
@@ -216,14 +248,7 @@ describe("useProviderWizardController", () => {
         initialData,
       }: {
         open: boolean;
-        initialData?: {
-          providerId: string;
-          providerType: "gcp";
-          providerUid: string;
-          providerAlias: string;
-          secretId: string | null;
-          mode: "add" | "update";
-        };
+        initialData?: ProviderWizardInitialData;
       }) =>
         useProviderWizardController({
           open,

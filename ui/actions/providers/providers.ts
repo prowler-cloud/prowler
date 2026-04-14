@@ -293,8 +293,7 @@ export const updateCredentialsProvider = async (
       }),
     });
 
-    // No revalidation — keeps the wizard modal open until checkConnectionProvider revalidates
-    return handleApiResponse(response);
+    return handleApiResponse(response, "/providers");
   } catch (error) {
     return handleApiError(error);
   }
@@ -309,7 +308,7 @@ export const checkConnectionProvider = async (formData: FormData) => {
     const response = await fetch(url.toString(), { method: "POST", headers });
     await wait(2000);
 
-    return handleApiResponse(response);
+    return handleApiResponse(response, "/providers");
   } catch (error) {
     return handleApiError(error);
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
@@ -57,6 +58,7 @@ export function useProviderWizardController({
   initialData,
   orgInitialData,
 }: UseProviderWizardControllerProps) {
+  const router = useRouter();
   const initialProviderId = initialData?.providerId ?? null;
   const initialProviderType = initialData?.providerType ?? null;
   const initialProviderUid = initialData?.providerUid ?? null;
@@ -183,6 +185,7 @@ export function useProviderWizardController({
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
     onOpenChange(false);
+    router.refresh();
   };
 
   const handleDialogOpenChange = (nextOpen: boolean) => {
