@@ -94,7 +94,10 @@ class IAM(AWSService):
         self.last_accessed_services = {}
         self._get_last_accessed_services()
         self.role_last_accessed_services = {}
-        if "bedrock_access_not_stale" in provider.audit_metadata.expected_checks:
+        if (
+            "iam_role_access_not_stale_to_bedrock"
+            in provider.audit_metadata.expected_checks
+        ):
             self._get_role_last_accessed_services()
         self.user_temporary_credentials_usage = {}
         self._get_user_temporary_credentials_usage()
