@@ -21,6 +21,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔄 Changed
 
 - Bump Poetry to `2.3.4` and consolidate SDK workflows onto the `setup-python-poetry` composite action with opt-in lockfile regeneration [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
+- Normalize Conditional Access platform values in Entra models and simplify platform-based checks [(#10635)](https://github.com/prowler-cloud/prowler/pull/10635)
 
 ---
 
@@ -43,7 +44,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - 11 Drive and Docs checks for Google Workspace provider (`drive_external_sharing_warn_users`, `drive_publishing_files_disabled`, `drive_sharing_allowlisted_domains`, `drive_warn_sharing_with_allowlisted_domains`, `drive_access_checker_recipients_only`, `drive_internal_users_distribute_content`, `drive_shared_drive_creation_allowed`, `drive_shared_drive_managers_cannot_override`, `drive_shared_drive_members_only_access`, `drive_shared_drive_disable_download_print_copy`, `drive_desktop_access_disabled`) using the Cloud Identity Policy API [(#10648)](https://github.com/prowler-cloud/prowler/pull/10648)
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
 - `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
-- `entra_conditional_access_policy_block_unknown_device_platforms` check for m365 provider [(#10615)](https://github.com/prowler-cloud/prowler/pull/10615)
 - `Vercel` provider support with 30 checks [(#10189)](https://github.com/prowler-cloud/prowler/pull/10189)
 - `internet-exposed` category for 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 - `stepfunctions_statemachine_no_secrets_in_definition` check for hardcoded secrets in AWS Step Functions state machine definitions [(#10570)](https://github.com/prowler-cloud/prowler/pull/10570)
@@ -54,7 +54,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Minimum Python version from 3.9 to 3.10 and updated classifiers to reflect supported versions (3.10, 3.11, 3.12) [(#10464)](https://github.com/prowler-cloud/prowler/pull/10464)
 - Pin direct SDK dependencies to exact versions and rely on `poetry.lock` artifact hashes for reproducible installs [(#10593)](https://github.com/prowler-cloud/prowler/pull/10593)
 - Sensitive CLI flags now warn when values are passed directly, recommending environment variables instead [(#10532)](https://github.com/prowler-cloud/prowler/pull/10532)
-- Normalize Conditional Access platform values in Entra models and simplify platform-based checks
 
 ### 🐞 Fixed
 
