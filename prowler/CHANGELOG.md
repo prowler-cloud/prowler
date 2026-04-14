@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.24.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `entra_conditional_access_policy_all_apps_all_users` check for M365 provider [(#10619)](https://github.com/prowler-cloud/prowler/pull/10619)
+
+---
+
 ## [5.23.0] (Prowler v5.23.0)
 
 ### 🚀 Added
