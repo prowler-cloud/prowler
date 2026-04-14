@@ -55,6 +55,8 @@ const FILTER_KEY_LABELS: Record<FilterParam, string> = {
   "filter[category__in]": "Category",
   "filter[resource_groups__in]": "Resource Group",
   "filter[scan__in]": "Scan",
+  "filter[scan_id]": "Scan",
+  "filter[scan_id__in]": "Scan",
   "filter[inserted_at]": "Date",
   "filter[muted]": "Muted",
 };
