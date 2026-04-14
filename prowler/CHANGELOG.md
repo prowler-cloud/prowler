@@ -21,7 +21,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Bump Poetry to `2.3.4` and consolidate SDK workflows onto the `setup-python-poetry` composite action with opt-in lockfile regeneration [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
 
-
 ---
 
 ## [5.23.0] (Prowler v5.23.0)
