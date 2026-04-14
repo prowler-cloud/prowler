@@ -184,7 +184,7 @@
       "@hono/node-server": "1.19.10",
       "@isaacs/brace-expansion": "5.0.1",
       "fast-xml-parser": "5.3.8",
-      "serialize-javascript": "7.0.3",
+      "serialize-javascript": "7.0.5",
       "rollup@>=4": "4.59.0",
       "minimatch@<4": "3.1.4",
       "minimatch@>=9 <10": "9.0.7",
