@@ -308,6 +308,8 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges"
@@ -972,6 +974,8 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "bedrock_full_access_policy_attached",
         "ec2_instance_profile_attached",
         "iam_aws_attached_policy_no_administrative_privileges",
@@ -1457,6 +1461,7 @@
       "Checks": [
         "awslambda_function_inside_vpc",
         "awslambda_function_vpc_multi_az",
+        "bedrock_vpc_endpoints_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "ec2_transitgateway_auto_accept_vpc_attachments",
         "networkfirewall_in_all_vpc",
@@ -1551,6 +1556,7 @@
       "Checks": [
         "awslambda_function_inside_vpc",
         "awslambda_function_vpc_multi_az",
+        "bedrock_vpc_endpoints_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "ec2_transitgateway_auto_accept_vpc_attachments",
         "networkfirewall_in_all_vpc",
@@ -1645,6 +1651,7 @@
       "Checks": [
         "awslambda_function_inside_vpc",
         "awslambda_function_vpc_multi_az",
+        "bedrock_vpc_endpoints_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "ec2_transitgateway_auto_accept_vpc_attachments",
         "networkfirewall_in_all_vpc",

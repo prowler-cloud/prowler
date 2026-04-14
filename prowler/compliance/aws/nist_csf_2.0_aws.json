@@ -776,6 +776,8 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "iam_administrator_access_with_mfa",
         "iam_group_administrator_access_policy",
         "iam_user_administrator_access_policy",
@@ -808,6 +810,7 @@
       "Checks": [
         "vpc_subnet_different_az",
         "vpc_subnet_separate_private_public",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_peering_routing_tables_with_least_privilege",
         "ec2_networkacl_unused",

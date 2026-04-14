@@ -380,6 +380,12 @@ export function MultiSelectSeparator({
   className,
   ...props
 }: ComponentPropsWithoutRef<typeof CommandSeparator>) {
+  const { selectedValues } = useMultiSelectContext();
+
+  if (selectedValues.size === 0) {
+    return null;
+  }
+
   return (
     <CommandSeparator
       data-slot="multiselect-separator"
@@ -404,8 +410,11 @@ export function MultiSelectSelectAll({
 
   const hasSelections = selectedValues.size > 0;
 
+  if (!hasSelections) {
+    return null;
+  }
+
   const handleClearAll = () => {
-    // Clear all selections
     onValuesChange?.([]);
   };
 
