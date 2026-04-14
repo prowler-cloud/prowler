@@ -1000,20 +1000,22 @@ def is_codebuild_using_allowed_github_org(
 def policy_allows_marketplace_subscribe_on_all_resources(
     policy_document: dict,
 ) -> bool:
-    """Check if a policy document allows aws-marketplace:Subscribe on Resource:*.
+    """Check if a policy document can allow aws-marketplace:Subscribe on Resource:*.
 
     Inspects statements with Resource ``*`` for Allow effects that grant
     ``aws-marketplace:Subscribe`` via ``Action`` or ``NotAction`` (wildcard
-    patterns expanded through ``expand_actions``). Explicit Deny statements
-    on Resource ``*`` (via either ``Action`` or ``NotAction``) covering the
-    same action take precedence.
+    patterns expanded through ``expand_actions``). Unconditional Deny
+    statements on Resource ``*`` (via either ``Action`` or ``NotAction``)
+    covering the same action take precedence. Conditional Deny statements
+    are not treated as global cancellation because the condition scope is
+    request-dependent and is not evaluated here.
 
     Args:
         policy_document: The IAM policy document to analyse.
 
     Returns:
-        True if the policy effectively allows aws-marketplace:Subscribe on
-        all resources, False otherwise.
+        True if the policy can allow aws-marketplace:Subscribe on all
+        resources, False otherwise.
     """
     if not policy_document or "Statement" not in policy_document:
         return False
@@ -1047,6 +1049,9 @@ def policy_allows_marketplace_subscribe_on_all_resources(
         if isinstance(resources, str):
             resources = [resources]
         if "*" not in resources:
+            continue
+
+        if effect_lower == "deny" and "Condition" in statement:
             continue
 
         statement_actions = set()
