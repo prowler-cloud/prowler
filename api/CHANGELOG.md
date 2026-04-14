@@ -10,7 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔐 Security
 
-- `pytest` from 8.3.5 to 9.0.3 to fix CVE-2025-71176 [(#10678)](https://github.com/prowler-cloud/prowler/pull/10678)
+- `pytest` from 8.2.2 to 9.0.3 to fix CVE-2025-71176 [(#10678)](https://github.com/prowler-cloud/prowler/pull/10678)
 
 ---
 
