@@ -293,6 +293,10 @@ def prowler():
     if not args.only_logs:
         global_provider.print_credentials()
 
+    # --registry-list: listing already printed during provider init, exit
+    if getattr(global_provider, "_listing_only", False):
+        sys.exit()
+
     # Skip service and check loading for external-tool providers
     if provider not in EXTERNAL_TOOL_PROVIDERS:
         # Import custom checks from folder

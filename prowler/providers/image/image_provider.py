@@ -163,42 +163,44 @@ class ImageProvider(Provider):
         # Registry scan mode: enumerate images from registry
         if self.registry:
             self._enumerate_registry()
-            if self._listing_only:
-                return
 
-        for image in self.images:
-            self._validate_image_name(image)
+        # Skip scan setup for listing-only mode
+        if not self._listing_only:
+            for image in self.images:
+                self._validate_image_name(image)
 
-        if not self.images:
-            raise ImageNoImagesProvidedError(
-                file=__file__,
-                message="No images provided for scanning.",
+            if not self.images:
+                raise ImageNoImagesProvidedError(
+                    file=__file__,
+                    message="No images provided for scanning.",
+                )
+
+            # Audit Config
+            if config_content:
+                self._audit_config = config_content
+            else:
+                if not config_path:
+                    config_path = default_config_file_path
+                self._audit_config = load_and_validate_config_file(
+                    self._type, config_path
+                )
+
+            # Fixer Config
+            self._fixer_config = fixer_config if fixer_config is not None else {}
+
+            # Mutelist (not needed for Image provider since Trivy has its own logic)
+            self._mutelist = None
+
+            self.audit_metadata = Audit_Metadata(
+                provider=self._type,
+                account_id=self.audited_account,
+                account_name="image",
+                region=self.region,
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
             )
-
-        # Audit Config
-        if config_content:
-            self._audit_config = config_content
-        else:
-            if not config_path:
-                config_path = default_config_file_path
-            self._audit_config = load_and_validate_config_file(self._type, config_path)
-
-        # Fixer Config
-        self._fixer_config = fixer_config if fixer_config is not None else {}
-
-        # Mutelist (not needed for Image provider since Trivy has its own logic)
-        self._mutelist = None
-
-        self.audit_metadata = Audit_Metadata(
-            provider=self._type,
-            account_id=self.audited_account,
-            account_name="image",
-            region=self.region,
-            services_scanned=0,
-            expected_checks=[],
-            completed_checks=0,
-            audit_progress=0,
-        )
 
         Provider.set_global_provider(self)
 
