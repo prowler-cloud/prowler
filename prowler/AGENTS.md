@@ -81,7 +81,7 @@ class {check_name}(Check):
 
 ## TECH STACK
 
-Python 3.10+ | Poetry 2+ | pytest | moto (AWS mocking) | Pre-commit hooks (black, flake8, pylint, bandit)
+Python 3.10+ | Poetry 2.3+ | pytest | moto (AWS mocking) | Pre-commit hooks (black, flake8, pylint, bandit)
 
 ---
 
