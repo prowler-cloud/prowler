@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `entra_conditional_access_policy_directory_sync_account_excluded` check for M365 provider [(#10620)](https://github.com/prowler-cloud/prowler/pull/10620)
 - `intune_device_compliance_policy_unassigned_devices_not_compliant_by_default` check for M365 provider [(#10599)](https://github.com/prowler-cloud/prowler/pull/10599)
 - `entra_conditional_access_policy_all_apps_all_users` check for M365 provider [(#10619)](https://github.com/prowler-cloud/prowler/pull/10619)
 - `bedrock_full_access_policy_attached` check for AWS provider [(#10577)](https://github.com/prowler-cloud/prowler/pull/10577)
@@ -13,6 +14,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `iam_policy_no_wildcard_marketplace_subscribe` and `iam_inline_policy_no_wildcard_marketplace_subscribe` checks for AWS provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
 - `bedrock_vpc_endpoints_configured` check for AWS provider [(#10591)](https://github.com/prowler-cloud/prowler/pull/10591)
 - `exchange_organization_delicensing_resiliency_enabled` check for m365 provider [(#10608)](https://github.com/prowler-cloud/prowler/pull/10608)
+- `entra_conditional_access_policy_mfa_enforced_for_guest_users` check for M365 provider [(#10616)](https://github.com/prowler-cloud/prowler/pull/10616)
+- `entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced` check for m365 provider [(#10618)](https://github.com/prowler-cloud/prowler/pull/10618)
+- `entra_conditional_access_policy_block_unknown_device_platforms` check for m365 provider [(#10615)](https://github.com/prowler-cloud/prowler/pull/10615)
 
 ### 🔄 Changed
 

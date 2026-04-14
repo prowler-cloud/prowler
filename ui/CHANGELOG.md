@@ -28,6 +28,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Attack Paths custom openCypher queries now link to the Prowler documentation with examples and how-to guidance instead of the upstream Cartography schema URL
 - Filter summary strip: removed redundant "Clear all" link next to pills (use top-bar Clear Filters instead) and switched chip variant from `outline` to `tag` for consistency [(#10481)](https://github.com/prowler-cloud/prowler/pull/10481)
 
+### 🔐 Security
+
+- Bump `serialize-javascript` override from 7.0.3 to 7.0.5 to restore pnpm trusted publishing and patch CVE-2026-34043 [(#10653)](https://github.com/prowler-cloud/prowler/pull/10653)
+
 ### 🐞 Fixed
 
 - Preserve query parameters in callbackUrl during invitation flow [(#10571)](https://github.com/prowler-cloud/prowler/pull/10571)
