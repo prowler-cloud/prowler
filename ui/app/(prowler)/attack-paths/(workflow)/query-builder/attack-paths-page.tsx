@@ -549,7 +549,7 @@ export default function AttackPathsPage() {
                                 }
                               />
                             </div>
-                            <div className="flex flex-1 gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6">
+                            <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6 lg:flex-row">
                               <div className="flex flex-1 items-center justify-center">
                                 <AttackPathGraph
                                   ref={fullscreenGraphRef}
@@ -561,7 +561,7 @@ export default function AttackPathsPage() {
                               {/* Node Detail Panel - Side by side */}
                               {graphState.selectedNode && (
                                 <section aria-labelledby="node-details-heading">
-                                  <Card className="w-96 overflow-y-auto">
+                                  <Card className="w-full overflow-y-auto lg:w-96">
                                     <CardContent className="p-4">
                                       <div className="mb-4 flex items-center justify-between">
                                         <h3
@@ -622,7 +622,7 @@ export default function AttackPathsPage() {
                   </div>
 
                   {/* Legend below */}
-                  <div className="hidden justify-center lg:flex">
+                  <div className="flex justify-center overflow-x-auto">
                     <GraphLegend data={graphState.data} />
                   </div>
                 </>
