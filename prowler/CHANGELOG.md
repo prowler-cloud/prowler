@@ -17,6 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_conditional_access_policy_mfa_enforced_for_guest_users` check for M365 provider [(#10616)](https://github.com/prowler-cloud/prowler/pull/10616)
 - `entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced` check for m365 provider [(#10618)](https://github.com/prowler-cloud/prowler/pull/10618)
 - `entra_conditional_access_policy_block_unknown_device_platforms` check for m365 provider [(#10615)](https://github.com/prowler-cloud/prowler/pull/10615)
+- `--excluded-region` CLI flag, `PROWLER_AWS_DISALLOWED_REGIONS` environment variable, and `aws.disallowed_regions` config entry to skip specific AWS regions during scans [(#10688)](https://github.com/prowler-cloud/prowler/pull/10688)
 
 ### 🔄 Changed
 
@@ -48,7 +49,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `internet-exposed` category for 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 - `stepfunctions_statemachine_no_secrets_in_definition` check for hardcoded secrets in AWS Step Functions state machine definitions [(#10570)](https://github.com/prowler-cloud/prowler/pull/10570)
 - CCC improvements with the latest checks and new mappings [(#10625)](https://github.com/prowler-cloud/prowler/pull/10625)
-- `--excluded-region` CLI flag, `PROWLER_AWS_DISALLOWED_REGIONS` environment variable, and `aws.disallowed_regions` config entry to skip specific AWS regions during scans
 
 ### 🔄 Changed
 
