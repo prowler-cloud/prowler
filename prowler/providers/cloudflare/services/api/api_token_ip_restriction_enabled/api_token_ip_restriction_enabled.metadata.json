@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "api_token_ip_restriction_enabled",
+  "CheckTitle": "API token has client IP address filtering configured",
+  "CheckType": [],
+  "ServiceName": "api",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "APIToken",
+  "ResourceGroup": "IAM",
+  "Description": "**Cloudflare API tokens** with **client IP address filtering** restrict token usage to requests originating from trusted network locations, reducing exposure if a token is compromised.",
+  "Risk": "Without **IP address filtering**, a compromised API token can be used from **any network location**.\n- **Confidentiality**: attackers with a stolen token can access account resources from any IP.\n- **Integrity**: unauthorized modifications can be made from uncontrolled networks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard.\n2. Go to My Profile > API Tokens.\n3. Select the token to edit and click the three-dot menu > Edit.\n4. Under Client IP Address Filtering, add the IP addresses or CIDR ranges that should be allowed or denied.\n5. Save the token.",
+      "Terraform": "```hcl\nresource \"cloudflare_api_token\" \"example_resource\" {\n  name = \"example_resource\"\n\n  policy {\n    permission_groups = [\"<PERMISSION_GROUP_ID>\"]\n    resources         = { \"com.cloudflare.api.account.*\" = \"*\" }\n  }\n\n  # Restrict token to specific IP ranges\n  condition {\n    request_ip {\n      in = [\"192.0.2.0/24\", \"198.51.100.0/24\"]\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure **client IP address filtering** following the **principle of least privilege**. Restricting credentials to known IP ranges reduces the impact of credential compromise by ensuring they cannot be used from unauthorized networks.",
+      "Url": "https://hub.prowler.com/checks/cloudflare/api_token_ip_restriction_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "API tokens can have both allow lists and deny lists for IP filtering. This check requires API Key and Email authentication because the Cloudflare API does not expose user token listing to scoped API Tokens."
+}

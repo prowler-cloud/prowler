@@ -17,6 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_conditional_access_policy_mfa_enforced_for_guest_users` check for M365 provider [(#10616)](https://github.com/prowler-cloud/prowler/pull/10616)
 - `entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced` check for m365 provider [(#10618)](https://github.com/prowler-cloud/prowler/pull/10618)
 - `entra_conditional_access_policy_block_unknown_device_platforms` check for m365 provider [(#10615)](https://github.com/prowler-cloud/prowler/pull/10615)
+- `api_token_ip_restriction_enabled` check for cloudflare provider [(#10624)](https://github.com/prowler-cloud/prowler/pull/10624)
 
 ### 🔄 Changed
 
