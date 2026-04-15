@@ -30,6 +30,18 @@ Prowler requires read-only access to Cloudflare zones and their settings. The fo
 Ensure the API Token has access to all zones targeted for scanning. Missing permissions may cause some checks to fail or return incomplete results.
 </Warning>
 
+### Checks Requiring API Key and Email Authentication
+
+Some Cloudflare API endpoints are restricted to user-level authentication and cannot be accessed with scoped API Tokens. The following checks require [API Key and Email](#api-key-and-email-legacy) authentication:
+
+| Check | Description |
+|-------|-------------|
+| `api_token_ip_restriction_enabled` | Verifies that API tokens have client IP address filtering configured |
+
+<Note>
+When using API Token authentication, these checks are automatically skipped without affecting the rest of the scan.
+</Note>
+
 ---
 
 ## API Token (Recommended)

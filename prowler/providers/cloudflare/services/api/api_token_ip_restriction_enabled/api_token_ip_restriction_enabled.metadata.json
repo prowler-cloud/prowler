@@ -32,5 +32,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "API tokens can have both allow lists and deny lists for IP filtering."
+  "Notes": "API tokens can have both allow lists and deny lists for IP filtering. This check requires API Key and Email authentication because the Cloudflare API does not expose user token listing to scoped API Tokens."
 }
