@@ -949,6 +949,23 @@ aws:
             assert Provider.get_excluded_regions_from_env() == set()
 
     @mock_aws
+    def test_print_credentials_shows_all_except_excluded_regions(self):
+        aws_provider = AwsProvider(
+            excluded_regions={AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1}
+        )
+
+        with patch(
+            "prowler.providers.aws.aws_provider.print_boxes"
+        ) as mock_print_boxes:
+            aws_provider.print_credentials()
+
+        report_lines = mock_print_boxes.call_args.args[0]
+        assert any(
+            "AWS Regions:" in line and "all except eu-west-1, us-east-1" in line
+            for line in report_lines
+        )
+
+    @mock_aws
     def test_generate_regional_clients_all_enabled_regions(self):
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")

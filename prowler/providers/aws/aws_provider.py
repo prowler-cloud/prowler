@@ -782,12 +782,15 @@ class AwsProvider(Provider):
         Caller Identity ARN: arn:aws:iam::123456789012:user/prowler
         ```
         """
-        # Beautify audited regions, set "all" if there is no filter region
-        regions = (
-            ", ".join(self._identity.audited_regions)
-            if self._identity.audited_regions is not None
-            else "all"
-        )
+        # Beautify audited regions. If the scan includes all regions but some
+        # are explicitly excluded, reflect that in the banner instead of
+        # showing the misleading "all" label.
+        if self._identity.audited_regions:
+            regions = ", ".join(sorted(self._identity.audited_regions))
+        elif getattr(self, "_excluded_regions", None):
+            regions = f"all except {', '.join(sorted(self._excluded_regions))}"
+        else:
+            regions = "all"
         # Beautify audited profile, set "default" if there is no profile set
         profile = (
             self._identity.profile if self._identity.profile is not None else "default"
