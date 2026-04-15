@@ -12,11 +12,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Attack Paths scan selection: contextual button labels based on graph availability, tooltips on disabled actions, green dot indicator for selectable scans, and a warning banner when viewing data from a previous scan cycle [(#10685)](https://github.com/prowler-cloud/prowler/pull/10685)
-
-### 🔄 Changed
-
 - Remove legacy finding detail sheet, row-details wrapper, and resource detail panel; unify findings and resources around new side drawers [(#10692)](https://github.com/prowler-cloud/prowler/pull/10692)
 - Attack Paths "View Finding" now opens the finding drawer inline over the graph instead of navigating to `/findings` in a new tab, preserving graph zoom, selection, and filter state
+- Attack Paths scan table: replace action buttons with radio buttons, add dedicated Graph column, use info-colored In Progress badge, remove redundant Progress column, and fix info banner variant [(#10704)](https://github.com/prowler-cloud/prowler/pull/10704)
 
 ### 🐞 Fixed
 
