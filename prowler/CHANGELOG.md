@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.25.0] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Azure subscriptions sharing the same display name are no longer collapsed into a single identity entry, so every subscription is scanned [(#10718)](https://github.com/prowler-cloud/prowler/pull/10718)
+
+---
+
 ## [5.24.0] (Prowler v5.24.0)
 
 ### 🚀 Added
