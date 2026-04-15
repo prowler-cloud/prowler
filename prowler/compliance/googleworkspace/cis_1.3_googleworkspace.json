@@ -98,7 +98,9 @@
     {
       "Id": "3.1.1.1.1",
       "Description": "Ensure external sharing options for primary calendars are configured",
-      "Checks": [],
+      "Checks": [
+        "calendar_external_sharing_primary_calendar"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -140,7 +142,9 @@
     {
       "Id": "3.1.1.1.3",
       "Description": "Ensure external invitation warnings for Google Calendar are configured",
-      "Checks": [],
+      "Checks": [
+        "calendar_external_invitations_warning"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -161,7 +165,9 @@
     {
       "Id": "3.1.1.2.1",
       "Description": "Ensure external sharing options for secondary calendars are configured",
-      "Checks": [],
+      "Checks": [
+        "calendar_external_sharing_secondary_calendar"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -224,7 +230,9 @@
     {
       "Id": "3.1.2.1.1.1",
       "Description": "Ensure users are warned when they share a file outside their domain",
-      "Checks": [],
+      "Checks": [
+        "drive_external_sharing_warn_users"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -245,7 +253,9 @@
     {
       "Id": "3.1.2.1.1.2",
       "Description": "Ensure users cannot publish files to the web or make visible to the world as public or unlisted",
-      "Checks": [],
+      "Checks": [
+        "drive_publishing_files_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -266,7 +276,9 @@
     {
       "Id": "3.1.2.1.1.3",
       "Description": "Ensure document sharing is being controlled by domain with allowlists",
-      "Checks": [],
+      "Checks": [
+        "drive_sharing_allowlisted_domains"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -287,7 +299,9 @@
     {
       "Id": "3.1.2.1.1.4",
       "Description": "Ensure users are warned when they share a file with users in an allowlisted domain",
-      "Checks": [],
+      "Checks": [
+        "drive_warn_sharing_with_allowlisted_domains"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -308,7 +322,9 @@
     {
       "Id": "3.1.2.1.1.5",
       "Description": "Ensure Access Checker is configured to limit file access",
-      "Checks": [],
+      "Checks": [
+        "drive_access_checker_recipients_only"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -329,7 +345,9 @@
     {
       "Id": "3.1.2.1.1.6",
       "Description": "Ensure only users inside your organization can distribute content externally",
-      "Checks": [],
+      "Checks": [
+        "drive_internal_users_distribute_content"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -350,7 +368,9 @@
     {
       "Id": "3.1.2.1.2.1",
       "Description": "Ensure users can create new shared drives",
-      "Checks": [],
+      "Checks": [
+        "drive_shared_drive_creation_allowed"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -371,7 +391,9 @@
     {
       "Id": "3.1.2.1.2.2",
       "Description": "Ensure manager access members cannot modify shared drive settings",
-      "Checks": [],
+      "Checks": [
+        "drive_shared_drive_managers_cannot_override"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -392,7 +414,9 @@
     {
       "Id": "3.1.2.1.2.3",
       "Description": "Ensure shared drive file access is restricted to members only",
-      "Checks": [],
+      "Checks": [
+        "drive_shared_drive_members_only_access"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -413,7 +437,9 @@
     {
       "Id": "3.1.2.1.2.4",
       "Description": "Ensure viewers and commenters ability to download, print, and copy files is disabled",
-      "Checks": [],
+      "Checks": [
+        "drive_shared_drive_disable_download_print_copy"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -455,7 +481,9 @@
     {
       "Id": "3.1.2.2.2",
       "Description": "Ensure desktop access to Drive is disabled",
-      "Checks": [],
+      "Checks": [
+        "drive_desktop_access_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",

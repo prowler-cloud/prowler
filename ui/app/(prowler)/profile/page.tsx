@@ -77,11 +77,7 @@ const SSRDataUser = async ({
     {},
   );
 
-  const firstUserMembership = membershipsIncluded.find(
-    (m) => m.relationships?.user?.data?.id === userData.id,
-  );
-
-  const userTenantId = firstUserMembership?.relationships?.tenant?.data?.id;
+  const userTenantId = session?.tenantId;
 
   const userRoleIds =
     userData.relationships?.roles?.data?.map((r) => r.id) || [];

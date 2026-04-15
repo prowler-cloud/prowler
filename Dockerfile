@@ -87,7 +87,7 @@ ENV HOME='/home/prowler'
 ENV PATH="${HOME}/.local/bin:${PATH}"
 #hadolint ignore=DL3013
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir poetry
+    pip install --no-cache-dir poetry==2.3.4
 
 RUN poetry install --compile && \
     rm -rf ~/.cache/pip

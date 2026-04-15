@@ -2,11 +2,15 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
-## [0.6.0] (Prowler UNRELEASED)
+## [0.6.0] (Prowler v5.23.0)
 
 ### 🚀 Added
 
 - Resource events tool to get timeline for a resource (who, what, when) [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
+
+### 🔄 Changed
+
+- Pin `httpx` dependency to exact version for reproducible installs [(#10593)](https://github.com/prowler-cloud/prowler/pull/10593)
 
 ### 🔐 Security
 

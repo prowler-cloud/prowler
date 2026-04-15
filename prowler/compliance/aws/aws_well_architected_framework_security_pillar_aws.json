@@ -344,6 +344,9 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
+        "bedrock_full_access_policy_attached",
         "ec2_instance_profile_attached",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
@@ -671,6 +674,7 @@
         "sagemaker_notebook_instance_vpc_settings_configured",
         "sagemaker_training_jobs_network_isolation_enabled",
         "sagemaker_training_jobs_vpc_settings_configured",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_services_allowed_principals_trust_boundaries"
       ]

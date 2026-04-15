@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Disable directory listing to prevent visitors from browsing the file structure of your deployments. Ensure that all directories either contain an index file or return a 404 response when accessed directly.",
-      "Url": "https://hub.prowler.com/checks/vercel/project_directory_listing_disabled"
+      "Url": "https://hub.prowler.com/check/project_directory_listing_disabled"
     }
   },
   "Categories": [

@@ -90,7 +90,7 @@ RUN mkdir -p /tmp/prowler_api_output
 COPY pyproject.toml ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir poetry
+    pip install --no-cache-dir poetry==2.3.4
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 

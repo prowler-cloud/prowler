@@ -69,4 +69,19 @@ test.describe("Session Error Messages", () => {
       await signInPage.verifyRedirectWithCallback("/providers");
     },
   );
+
+  test(
+    "should preserve query parameters in callbackUrl",
+    { tag: ["@e2e", "@auth", "@session", "@AUTH-SESSION-E2E-005"] },
+    async ({ page, context }) => {
+      const signInPage = new SignInPage(page);
+      await context.clearCookies();
+
+      // Navigate to a protected route with query params and assert they are preserved.
+      await page.goto("/providers?ref=test", {
+        waitUntil: "commit",
+      });
+      await signInPage.verifyRedirectWithCallback("/providers?ref=test");
+    },
+  );
 });
