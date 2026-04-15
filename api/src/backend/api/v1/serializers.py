@@ -4222,13 +4222,12 @@ class FindingGroupSerializer(BaseSerializerV1):
 
 class FindingGroupResourceSerializer(BaseSerializerV1):
     """
-    Serializer for Finding Group Resources - resources within a finding group.
+    Serializer for Finding Group resources drill-down.
 
-    Returns individual resources with their current status, severity,
-    and timing information.
+    Returns finding-level rows with a resource-like payload for UI compatibility.
     """
 
-    id = serializers.UUIDField(source="resource_id")
+    id = serializers.UUIDField(source="finding_id")
     resource = serializers.SerializerMethodField()
     provider = serializers.SerializerMethodField()
     finding_id = serializers.UUIDField()

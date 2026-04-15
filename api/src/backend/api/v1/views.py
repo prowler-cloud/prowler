@@ -7407,174 +7407,252 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         return filterset.qs
 
-    def _build_resource_mapping_queryset(
-        self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
-    ):
-        """
-        Build resource mapping queryset using a filtered findings subquery.
+    def _resource_filter_q(self, resource_ids):
+        if resource_ids is None:
+            return None
+        if isinstance(resource_ids, QuerySet):
+            return Q(resources__id__in=Subquery(resource_ids))
+        return Q(resources__id__in=resource_ids)
 
-        Starting from ResourceFindingMapping avoids scanning all mappings
-        before applying check_id/date filters on findings.
-        """
-        finding_ids = filtered_queryset.order_by().values("id")
+    def _apply_resource_filters_to_findings(self, queryset, resource_ids):
+        resource_filter_q = self._resource_filter_q(resource_ids)
+        if resource_filter_q is None:
+            return queryset
+        return queryset.filter(resource_filter_q)
 
-        mapping_queryset = ResourceFindingMapping.objects.filter(
-            finding_id__in=Subquery(finding_ids)
+    def _resource_aggregate(self, field_name: str, resource_ids):
+        resource_filter_q = self._resource_filter_q(resource_ids)
+        if resource_filter_q is None:
+            return Max(field_name)
+        return Max(field_name, filter=resource_filter_q)
+
+    @staticmethod
+    def _coalesce_text(*expressions, default: str = ""):
+        return Coalesce(
+            *expressions,
+            Value(default, output_field=CharField()),
+            output_field=CharField(),
         )
-        if tenant_id:
-            mapping_queryset = mapping_queryset.filter(tenant_id=tenant_id)
-        if resource_ids is not None:
-            if isinstance(resource_ids, QuerySet):
-                mapping_queryset = mapping_queryset.filter(
-                    resource_id__in=Subquery(resource_ids)
-                )
-            else:
-                mapping_queryset = mapping_queryset.filter(resource_id__in=resource_ids)
 
-        return mapping_queryset
+    def _metadata_text_aggregate(self, *keys: str):
+        return self._coalesce_text(
+            *[
+                Cast(
+                    Max(KeyTextTransform(key, "check_metadata")),
+                    output_field=CharField(),
+                )
+                for key in keys
+            ]
+        )
 
     def _build_resource_aggregation(
-        self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
+        self, filtered_queryset, finding_ids=None, resource_ids=None
     ):
-        """Build resource aggregation using a filtered findings subquery."""
-        mapping_queryset = self._build_resource_mapping_queryset(
-            filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
+        """
+        Build finding-level rows for finding-group resources endpoints.
+
+        We intentionally aggregate from Finding (not ResourceFindingMapping)
+        so orphan findings (without resources) are still returned.
+        """
+        queryset = filtered_queryset
+        if finding_ids is not None:
+            queryset = queryset.filter(id__in=finding_ids)
+
+        queryset = self._apply_resource_filters_to_findings(queryset, resource_ids)
+        resource_filter_q = self._resource_filter_q(resource_ids)
+
+        return queryset.values(
+            finding_id=F("id"),
+            finding_uid=F("uid"),
+            provider_type=F("scan__provider__provider"),
+            provider_uid=F("scan__provider__uid"),
+            provider_alias=F("scan__provider__alias"),
+        ).annotate(
+            # Keep resource-like payload for UI compatibility.
+            resource_id=Max(
+                Cast(F("resources__id"), output_field=CharField()),
+                filter=resource_filter_q,
+            ),
+            resource_uid=self._coalesce_text(
+                self._resource_aggregate("resources__uid", resource_ids),
+                Max("uid"),
+            ),
+            resource_name=self._coalesce_text(
+                self._resource_aggregate("resources__name", resource_ids),
+                Max("uid"),
+            ),
+            resource_service=self._coalesce_text(
+                self._resource_aggregate("resources__service", resource_ids),
+                self._metadata_text_aggregate(
+                    "servicename",
+                    "ServiceName",
+                    "service",
+                    "Service",
+                ),
+            ),
+            resource_region=self._coalesce_text(
+                self._resource_aggregate("resources__region", resource_ids),
+                self._metadata_text_aggregate(
+                    "region",
+                    "Region",
+                    "location",
+                    "Location",
+                ),
+            ),
+            resource_type=self._coalesce_text(
+                self._resource_aggregate("resources__type", resource_ids),
+                self._metadata_text_aggregate(
+                    "resourcetype",
+                    "ResourceType",
+                    "resource_type",
+                    "resourceType",
+                    "Type",
+                ),
+            ),
+            status_order=Max(
+                Case(
+                    When(status="FAIL", then=Value(3)),
+                    When(status="PASS", then=Value(2)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            ),
+            severity_order=Max(
+                Case(
+                    *[
+                        When(severity=severity, then=Value(order))
+                        for severity, order in SEVERITY_ORDER.items()
+                    ],
+                    output_field=IntegerField(),
+                )
+            ),
+            delta_order=Max(
+                Case(
+                    When(
+                        delta="new",
+                        muted=False,
+                        then=Value(2),
+                    ),
+                    When(
+                        delta="changed",
+                        muted=False,
+                        then=Value(1),
+                    ),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            ),
+            first_seen_at=Min("first_seen_at"),
+            last_seen_at=Max("inserted_at"),
+            muted=BoolAnd("muted"),
+            muted_reason=Max("muted_reason"),
+            resource_group=self._coalesce_text(
+                Cast(Max("resource_groups"), output_field=CharField()),
+                self._metadata_text_aggregate(
+                    "resourcegroup",
+                    "ResourceGroup",
+                    "resourceGroup",
+                    "Group",
+                ),
+            ),
         )
 
-        return (
-            mapping_queryset.values("resource_id")
-            .annotate(
-                resource_uid=Max("resource__uid"),
-                resource_name=Max("resource__name"),
-                resource_service=Max("resource__service"),
-                resource_region=Max("resource__region"),
-                resource_type=Max("resource__type"),
-                provider_type=Max("resource__provider__provider"),
-                provider_uid=Max("resource__provider__uid"),
-                provider_alias=Max("resource__provider__alias"),
-                # status_order considers ALL findings (muted or not) so it
-                # surfaces FAIL/PASS/MANUAL based on the underlying check
-                # outcome. Whether the resource is actionable is signalled by
-                # the orthogonal `muted` flag below.
-                status_order=Max(
-                    Case(
-                        When(finding__status="FAIL", then=Value(3)),
-                        When(finding__status="PASS", then=Value(2)),
-                        default=Value(1),
-                        output_field=IntegerField(),
-                    )
+    def _get_resource_sort_annotations(self, resource_ids):
+        return {
+            "status_order": Max(
+                Case(
+                    When(status="FAIL", then=Value(3)),
+                    When(status="PASS", then=Value(2)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            ),
+            "severity_order": Max(
+                Case(
+                    *[
+                        When(severity=severity, then=Value(order))
+                        for severity, order in SEVERITY_ORDER.items()
+                    ],
+                    output_field=IntegerField(),
+                )
+            ),
+            "delta_order": Max(
+                Case(
+                    When(
+                        delta="new",
+                        muted=False,
+                        then=Value(2),
+                    ),
+                    When(
+                        delta="changed",
+                        muted=False,
+                        then=Value(1),
+                    ),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            ),
+            "first_seen_at": Min("first_seen_at"),
+            "last_seen_at": Max("inserted_at"),
+            "resource_uid": self._coalesce_text(
+                self._resource_aggregate("resources__uid", resource_ids),
+                Max("uid"),
+            ),
+            "resource_name": self._coalesce_text(
+                self._resource_aggregate("resources__name", resource_ids),
+                Max("uid"),
+            ),
+            "resource_region": self._coalesce_text(
+                self._resource_aggregate("resources__region", resource_ids),
+                self._metadata_text_aggregate(
+                    "region",
+                    "Region",
+                    "location",
+                    "Location",
                 ),
-                severity_order=Max(
-                    Case(
-                        *[
-                            When(finding__severity=severity, then=Value(order))
-                            for severity, order in SEVERITY_ORDER.items()
-                        ],
-                        output_field=IntegerField(),
-                    )
+            ),
+            "resource_service": self._coalesce_text(
+                self._resource_aggregate("resources__service", resource_ids),
+                self._metadata_text_aggregate(
+                    "servicename",
+                    "ServiceName",
+                    "service",
+                    "Service",
                 ),
-                delta_order=Max(
-                    Case(
-                        When(
-                            finding__delta="new",
-                            finding__muted=False,
-                            then=Value(2),
-                        ),
-                        When(
-                            finding__delta="changed",
-                            finding__muted=False,
-                            then=Value(1),
-                        ),
-                        default=Value(0),
-                        output_field=IntegerField(),
-                    )
+            ),
+            "resource_type": self._coalesce_text(
+                self._resource_aggregate("resources__type", resource_ids),
+                self._metadata_text_aggregate(
+                    "resourcetype",
+                    "ResourceType",
+                    "resource_type",
+                    "resourceType",
+                    "Type",
                 ),
-                first_seen_at=Min("finding__first_seen_at"),
-                last_seen_at=Max("finding__inserted_at"),
-                # True only if every finding for this resource+check is muted.
-                muted=BoolAnd("finding__muted"),
-                # Max() on muted_reason / check_metadata is safe because
-                # all findings for the same resource+check share identical
-                # values (mute rules and metadata are applied per-check).
-                muted_reason=Max("finding__muted_reason"),
-                resource_group=Max(
-                    KeyTextTransform("resourcegroup", "finding__check_metadata")
-                ),
-                # Most recent matching Finding for this (resource, check):
-                # Finding.id is a UUIDv7 (time-ordered in its high 48 bits).
-                # Cast to text first because PostgreSQL has no built-in
-                # `max(uuid)` aggregate; on the canonical lowercase form a
-                # lexicographic Max() still resolves to the latest snapshot.
-                finding_id=Max(Cast("finding__id", output_field=CharField())),
-            )
-            .filter(resource_id__isnull=False)
-        )
-
-    # Annotations needed for each sort field (lightweight versions for ordering)
-    _RESOURCE_SORT_ANNOTATIONS = {
-        "status_order": lambda: Max(
-            Case(
-                When(finding__status="FAIL", then=Value(3)),
-                When(finding__status="PASS", then=Value(2)),
-                default=Value(1),
-                output_field=IntegerField(),
-            )
-        ),
-        "severity_order": lambda: Max(
-            Case(
-                *[
-                    When(finding__severity=severity, then=Value(order))
-                    for severity, order in SEVERITY_ORDER.items()
-                ],
-                output_field=IntegerField(),
-            )
-        ),
-        "delta_order": lambda: Max(
-            Case(
-                When(
-                    finding__delta="new",
-                    finding__muted=False,
-                    then=Value(2),
-                ),
-                When(
-                    finding__delta="changed",
-                    finding__muted=False,
-                    then=Value(1),
-                ),
-                default=Value(0),
-                output_field=IntegerField(),
-            )
-        ),
-        "first_seen_at": lambda: Min("finding__first_seen_at"),
-        "last_seen_at": lambda: Max("finding__inserted_at"),
-        "resource_uid": lambda: Max("resource__uid"),
-        "resource_name": lambda: Max("resource__name"),
-        "resource_region": lambda: Max("resource__region"),
-        "resource_service": lambda: Max("resource__service"),
-        "resource_type": lambda: Max("resource__type"),
-        "provider_uid": lambda: Max("resource__provider__uid"),
-        "provider_alias": lambda: Max("resource__provider__alias"),
-    }
+            ),
+            "provider_uid": Max("scan__provider__uid"),
+            "provider_alias": Max("scan__provider__alias"),
+        }
 
     def _build_resource_ordering_queryset(
-        self, filtered_queryset, resource_ids, tenant_id, ordering
+        self, filtered_queryset, resource_ids, _tenant_id, ordering
     ):
         """Build a lightweight aggregation with only the columns needed for sorting."""
-        mapping_qs = self._build_resource_mapping_queryset(
-            filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
+        queryset = self._apply_resource_filters_to_findings(
+            filtered_queryset, resource_ids
         )
+        sort_annotations = self._get_resource_sort_annotations(resource_ids)
 
         # Collect only the annotations required by the requested ordering
         annotations = {}
         for field in ordering:
             col = field.lstrip("-")
-            if col != "resource_id" and col in self._RESOURCE_SORT_ANNOTATIONS:
-                annotations[col] = self._RESOURCE_SORT_ANNOTATIONS[col]()
+            if col != "finding_id" and col in sort_annotations:
+                annotations[col] = sort_annotations[col]
 
         return (
-            mapping_qs.values("resource_id")
+            queryset.values(finding_id=F("id"))
             .annotate(**annotations)
-            .filter(resource_id__isnull=False)
             .order_by(*ordering)
         )
 
@@ -7599,14 +7677,20 @@ class FindingGroupViewSet(BaseRLSViewSet):
             else:
                 delta = None
 
+            finding_id = row["finding_id"]
+            resource_id = row.get("resource_id") or finding_id
+            finding_uid = row.get("finding_uid")
+            resource_uid = row.get("resource_uid") or finding_uid or ""
+            resource_name = row.get("resource_name") or finding_uid or ""
+
             results.append(
                 {
-                    "resource_id": row["resource_id"],
-                    "resource_uid": row["resource_uid"],
-                    "resource_name": row["resource_name"],
-                    "resource_service": row["resource_service"],
-                    "resource_region": row["resource_region"],
-                    "resource_type": row["resource_type"],
+                    "resource_id": resource_id,
+                    "resource_uid": resource_uid,
+                    "resource_name": resource_name,
+                    "resource_service": row.get("resource_service") or "",
+                    "resource_region": row.get("resource_region") or "",
+                    "resource_type": row.get("resource_type") or "finding",
                     "provider_type": row["provider_type"],
                     "provider_uid": row["provider_uid"],
                     "provider_alias": row["provider_alias"],
@@ -7619,10 +7703,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     "last_seen_at": row["last_seen_at"],
                     "muted": bool(row.get("muted", False)),
                     "muted_reason": row.get("muted_reason"),
-                    "resource_group": row.get("resource_group", ""),
-                    "finding_id": (
-                        str(row["finding_id"]) if row.get("finding_id") else None
-                    ),
+                    "resource_group": row.get("resource_group") or "",
+                    "finding_id": finding_id,
                 }
             )
 
@@ -7729,12 +7811,12 @@ class FindingGroupViewSet(BaseRLSViewSet):
             self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
 
     def _paginated_resource_response(
-        self, request, filtered_queryset, resource_ids, tenant_id
+        self, request, filtered_queryset, resource_ids, _tenant_id
     ):
-        """Paginate and return resources.
+        """Paginate and return finding-level rows with resource-like payload.
 
-        Without sort: paginate lightweight resource IDs first, aggregate only the page.
-        With sort: build a lightweight ordering subquery (resource_id + sort keys),
+        Without sort: paginate lightweight finding IDs first, aggregate only the page.
+        With sort: build a lightweight ordering subquery (finding_id + sort keys),
         paginate that, then aggregate full details only for the page.
         """
         sort_param = request.query_params.get("sort")
@@ -7742,64 +7824,68 @@ class FindingGroupViewSet(BaseRLSViewSet):
         if sort_param:
             ordering = self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
             if ordering:
-                if "resource_id" not in {field.lstrip("-") for field in ordering}:
-                    ordering.append("resource_id")
+                if "finding_id" not in {field.lstrip("-") for field in ordering}:
+                    ordering.append("finding_id")
 
                 # Phase 1: lightweight aggregation with only sort keys, paginate
                 ordering_qs = self._build_resource_ordering_queryset(
                     filtered_queryset,
                     resource_ids=resource_ids,
-                    tenant_id=tenant_id,
+                    _tenant_id=_tenant_id,
                     ordering=ordering,
                 )
                 page = self.paginate_queryset(ordering_qs)
                 if page is not None:
-                    page_ids = [row["resource_id"] for row in page]
+                    page_ids = [row["finding_id"] for row in page]
                     resource_data = self._build_resource_aggregation(
-                        filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
+                        filtered_queryset,
+                        finding_ids=page_ids,
+                        resource_ids=resource_ids,
                     )
                     # Re-sort to match the page ordering
                     id_order = {rid: idx for idx, rid in enumerate(page_ids)}
                     results = self._post_process_resources(resource_data)
-                    results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
+                    results.sort(key=lambda r: id_order.get(r["finding_id"], 0))
                     serializer = FindingGroupResourceSerializer(results, many=True)
                     return self.get_paginated_response(serializer.data)
 
-                page_ids = [row["resource_id"] for row in ordering_qs]
+                page_ids = [row["finding_id"] for row in ordering_qs]
                 resource_data = self._build_resource_aggregation(
-                    filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
+                    filtered_queryset,
+                    finding_ids=page_ids,
+                    resource_ids=resource_ids,
                 )
                 id_order = {rid: idx for idx, rid in enumerate(page_ids)}
                 results = self._post_process_resources(resource_data)
-                results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
+                results.sort(key=lambda r: id_order.get(r["finding_id"], 0))
                 serializer = FindingGroupResourceSerializer(results, many=True)
                 return Response(serializer.data)
 
-        # No sort (or only empty sort fragments): paginate lightweight resource IDs
+        # No sort (or only empty sort fragments): paginate lightweight finding IDs
         # first, aggregate only the page.
-        mapping_qs = self._build_resource_mapping_queryset(
-            filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
+        findings_qs = self._apply_resource_filters_to_findings(
+            filtered_queryset, resource_ids
         )
-        resource_id_qs = (
-            mapping_qs.values_list("resource_id", flat=True)
-            .distinct()
-            .order_by("resource_id")
+        finding_id_qs = (
+            findings_qs.values_list("id", flat=True).distinct().order_by("id")
         )
 
-        page_ids = self.paginate_queryset(resource_id_qs)
+        page_ids = self.paginate_queryset(finding_id_qs)
         if page_ids is not None:
             resource_data = self._build_resource_aggregation(
-                filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
+                filtered_queryset,
+                finding_ids=page_ids,
+                resource_ids=resource_ids,
             )
             id_order = {rid: idx for idx, rid in enumerate(page_ids)}
             results = self._post_process_resources(resource_data)
-            results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
+            results.sort(key=lambda r: id_order.get(r["finding_id"], 0))
             serializer = FindingGroupResourceSerializer(results, many=True)
             return self.get_paginated_response(serializer.data)
 
         resource_data = self._build_resource_aggregation(
-            filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
-        ).order_by("resource_id")
+            filtered_queryset, resource_ids=resource_ids
+        ).order_by("finding_id")
         results = self._post_process_resources(resource_data)
         serializer = FindingGroupResourceSerializer(results, many=True)
         return Response(serializer.data)
