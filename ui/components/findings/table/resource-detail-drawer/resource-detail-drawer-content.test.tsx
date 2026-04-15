@@ -178,16 +178,30 @@ vi.mock("@/components/findings/markdown-container", () => ({
 }));
 
 vi.mock("@/components/shared/query-code-editor", () => ({
+  QUERY_EDITOR_LANGUAGE: {
+    OPEN_CYPHER: "openCypher",
+    PLAIN_TEXT: "plainText",
+    SHELL: "shell",
+    HCL: "hcl",
+    BICEP: "bicep",
+    YAML: "yaml",
+  },
   QueryCodeEditor: ({
     ariaLabel,
+    language,
     value,
     copyValue,
   }: {
     ariaLabel: string;
+    language?: string;
     value: string;
     copyValue?: string;
   }) => (
-    <div data-testid="query-code-editor" data-aria-label={ariaLabel}>
+    <div
+      data-testid="query-code-editor"
+      data-aria-label={ariaLabel}
+      data-language={language}
+    >
       <span>{ariaLabel}</span>
       <span>{value}</span>
       <button
@@ -511,6 +525,34 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
     expect(editors).toHaveLength(3);
     expect(mockClipboardWriteText).toHaveBeenCalledWith("aws s3 ...");
     expect(screen.getByText("$ aws s3 ...")).toBeInTheDocument();
+  });
+
+  it("should pass syntax highlighting languages to each remediation editor", () => {
+    // Given
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={checkMetaWithCommands}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const editors = screen.getAllByTestId("query-code-editor");
+
+    // Then
+    expect(editors[0]).toHaveAttribute("data-language", "shell");
+    expect(editors[1]).toHaveAttribute("data-language", "hcl");
+    expect(editors[2]).toHaveAttribute("data-language", "yaml");
+    expect(editors[0]).toHaveAttribute("data-aria-label", "CLI Command");
+    expect(editors[2]).toHaveAttribute("data-aria-label", "CloudFormation");
   });
 });
 
