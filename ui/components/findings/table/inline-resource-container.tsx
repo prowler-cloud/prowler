@@ -3,32 +3,26 @@
 import {
   flexRender,
   getCoreRowModel,
-  Row,
-  RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
-import { useImperativeHandle, useRef, useState } from "react";
+import { useImperativeHandle, useRef } from "react";
 
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { useInfiniteResources } from "@/hooks/use-infinite-resources";
+import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
-import { FindingGroupRow, FindingResourceRow } from "@/types";
+import { FindingGroupRow } from "@/types";
 
 import { getColumnFindingResources } from "./column-finding-resources";
-import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   getFilteredFindingGroupResourceCount,
   getFindingGroupSkeletonCount,
 } from "./inline-resource-container.utils";
-import {
-  ResourceDetailDrawer,
-  useResourceDetailDrawer,
-} from "./resource-detail-drawer";
+import { ResourceDetailDrawer } from "./resource-detail-drawer";
 
 export interface InlineResourceContainerHandle {
   /** Soft-refresh resources (re-fetch page 1 without skeletons). */
@@ -140,22 +134,6 @@ export function InlineResourceContainer({
   ref,
 }: InlineResourceContainerProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [resources, setResources] = useState<FindingResourceRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  // Scroll hint: shows "scroll for more" when content overflows
-  const {
-    containerRef: scrollHintContainerRef,
-    sentinelRef: scrollHintSentinelRef,
-    showScrollHint,
-  } = useScrollHint({ refreshToken: resources.length });
-
-  // Combine scrollContainerRef (for IntersectionObserver root) with scrollHintContainerRef
-  const combinedScrollRef = (node: HTMLDivElement | null) => {
-    scrollContainerRef.current = node;
-    scrollHintContainerRef(node);
-  };
-
   const filters: Record<string, string> = { ...resolvedFilters };
   if (resourceSearch) {
     filters["filter[name__icontains]"] = resourceSearch;
@@ -171,98 +149,44 @@ export function InlineResourceContainer({
     filters,
   );
 
-  const handleSetResources = (
-    newResources: FindingResourceRow[],
-    _hasMore: boolean,
-  ) => {
-    setResources(newResources);
-    setIsLoading(false);
-  };
-
-  const handleAppendResources = (
-    newResources: FindingResourceRow[],
-    _hasMore: boolean,
-  ) => {
-    setResources((prev) => [...prev, ...newResources]);
-    setIsLoading(false);
-  };
-
-  const handleSetLoading = (loading: boolean) => {
-    setIsLoading(loading);
-  };
-
-  const { sentinelRef, refresh, loadMore, totalCount } = useInfiniteResources({
-    checkId: group.checkId,
-    hasDateOrScanFilter: hasHistoricalData,
+  const {
+    rowSelection,
+    resources,
+    isLoading,
+    sentinelRef,
+    refresh,
+    drawer,
+    handleDrawerMuteComplete,
+    selectedFindingIds,
+    selectableRowCount,
+    getRowCanSelect,
+    clearSelection,
+    isSelected,
+    handleMuteComplete,
+    handleRowSelectionChange,
+    resolveSelectedFindingIds,
+  } = useFindingGroupResourceState({
+    group,
     filters,
-    onSetResources: handleSetResources,
-    onAppendResources: handleAppendResources,
-    onSetLoading: handleSetLoading,
+    hasHistoricalData,
+    onResourceSelectionChange,
     scrollContainerRef,
   });
 
-  // Resource detail drawer
-  const drawer = useResourceDetailDrawer({
-    resources,
-    checkId: group.checkId,
-    totalResourceCount: totalCount ?? group.resourcesTotal,
-    onRequestMoreResources: loadMore,
-  });
+  // Scroll hint: shows "scroll for more" when content overflows
+  const {
+    containerRef: scrollHintContainerRef,
+    sentinelRef: scrollHintSentinelRef,
+    showScrollHint,
+  } = useScrollHint({ refreshToken: resources.length });
 
-  const handleDrawerMuteComplete = () => {
-    drawer.refetchCurrent();
-    refresh();
-  };
-
-  // Selection logic
-  const selectedFindingIds = Object.keys(rowSelection)
-    .filter((key) => rowSelection[key])
-    .map((idx) => resources[parseInt(idx)]?.findingId)
-    .filter(Boolean);
-
-  const resolveResourceIds = async (ids: string[]) => {
-    // findingId values are already real finding UUIDs (from the group
-    // resources endpoint), so no second resolution round-trip is needed.
-    return ids.filter(Boolean);
-  };
-
-  const selectableRowCount = resources.filter(canMuteFindingResource).length;
-
-  const getRowCanSelect = (row: Row<FindingResourceRow>): boolean => {
-    return canMuteFindingResource(row.original);
-  };
-
-  const clearSelection = () => {
-    setRowSelection({});
-    onResourceSelectionChange([]);
+  // Combine scrollContainerRef (for IntersectionObserver root) with scrollHintContainerRef
+  const combinedScrollRef = (node: HTMLDivElement | null) => {
+    scrollContainerRef.current = node;
+    scrollHintContainerRef(node);
   };
 
   useImperativeHandle(ref, () => ({ refresh, clearSelection }));
-
-  const isSelected = (id: string) => {
-    return selectedFindingIds.includes(id);
-  };
-
-  const handleMuteComplete = () => {
-    clearSelection();
-    refresh();
-  };
-
-  const handleRowSelectionChange = (
-    updater:
-      | RowSelectionState
-      | ((prev: RowSelectionState) => RowSelectionState),
-  ) => {
-    const newSelection =
-      typeof updater === "function" ? updater(rowSelection) : updater;
-    setRowSelection(newSelection);
-
-    const newFindingIds = Object.keys(newSelection)
-      .filter((key) => newSelection[key])
-      .map((idx) => resources[parseInt(idx)]?.findingId)
-      .filter(Boolean);
-    onResourceSelectionChange(newFindingIds);
-  };
 
   const columns = getColumnFindingResources({
     rowSelection,
@@ -290,7 +214,7 @@ export function InlineResourceContainer({
         selectedFindings: [],
         clearSelection,
         isSelected,
-        resolveMuteIds: resolveResourceIds,
+        resolveMuteIds: resolveSelectedFindingIds,
         onMuteComplete: handleMuteComplete,
       }}
     >
