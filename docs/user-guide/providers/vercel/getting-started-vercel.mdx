@@ -13,9 +13,63 @@ Set up authentication for Vercel with the [Vercel Authentication](/user-guide/pr
 - Create a Vercel API Token with access to the target team
 - Identify the Team ID (optional, required to scope the scan to a single team)
 
+<CardGroup cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
+    Onboard Vercel using Prowler Cloud
+  </Card>
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Onboard Vercel using Prowler CLI
+  </Card>
+</CardGroup>
+
+## Prowler Cloud
+
+<VersionBadge version="5.23.0" />
+
+### Step 1: Add the Provider
+
+1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app).
+2. Navigate to "Configuration" > "Cloud Providers".
+
+    ![Cloud Providers Page](/images/prowler-app/cloud-providers-page.png)
+
+3. Click "Add Cloud Provider".
+
+    ![Add a Cloud Provider](/images/prowler-app/add-cloud-provider.png)
+
+4. Select "Vercel".
+
+    ![Select Vercel](/images/providers/select-vercel-prowler-cloud.png)
+
+5. Enter the **Team ID** and an optional alias, then click "Next".
+
+    ![Add Vercel Team ID](/images/providers/vercel-team-id-form.png)
+
+<Note>
+The Team ID can be found in the Vercel Dashboard under "Settings" > "General". It follows the format `team_xxxxxxxxxxxxxxxxxxxx`. For detailed instructions, see the [Authentication guide](/user-guide/providers/vercel/authentication).
+</Note>
+
+### Step 2: Provide Credentials
+
+1. Enter the **API Token** created in the Vercel Dashboard.
+
+    ![API Token Form](/images/providers/vercel-token-form.png)
+
+For the complete token creation workflow, follow the [Authentication guide](/user-guide/providers/vercel/authentication#api-token).
+
+### Step 3: Launch the Scan
+
+1. Review the connection summary.
+2. Choose the scan schedule: run a single scan or set up daily scans (every 24 hours).
+3. Click **Launch Scan** to start auditing Vercel.
+
+    ![Launch Scan](/images/providers/vercel-launch-scan.png)
+
+---
+
 ## Prowler CLI
 
-<VersionBadge version="5.22.0" />
+<VersionBadge version="5.23.0" />
 
 ### Step 1: Set Up Authentication
 

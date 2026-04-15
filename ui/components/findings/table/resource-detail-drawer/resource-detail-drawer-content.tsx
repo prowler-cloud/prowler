@@ -12,8 +12,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import { getCompliancesOverview } from "@/actions/compliances";
 import type { ResourceDrawerFinding } from "@/actions/findings";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
@@ -42,6 +44,7 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import { QueryCodeEditor } from "@/components/shared/query-code-editor";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -62,12 +65,203 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
+import type { ComplianceOverviewData } from "@/types/compliance";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
 import { NotificationIndicator } from "../notification-indicator";
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
+
+/** Strip markdown code fences (```lang ... ```) so CodeSnippet shows clean code. */
+function stripCodeFences(code: string): string {
+  return code
+    .replace(/^```\w*\n?/, "")
+    .replace(/\n?```\s*$/, "")
+    .trim();
+}
+
+function renderRemediationCodeBlock({
+  label,
+  value,
+  copyValue,
+}: {
+  label: string;
+  value: string;
+  copyValue?: string;
+}) {
+  return (
+    <QueryCodeEditor
+      ariaLabel={label}
+      language="plainText"
+      value={value}
+      copyValue={copyValue}
+      editable={false}
+      minHeight={96}
+      showCopyButton
+      onChange={() => {}}
+    />
+  );
+}
+
+function normalizeComplianceFrameworkName(framework: string): string {
+  return framework
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function stripComplianceVersionSuffix(framework: string): string {
+  return framework.replace(/-\d+(?:\.\d+)*$/g, "");
+}
+
+function canonicalComplianceKey(framework: string): string {
+  return stripComplianceVersionSuffix(
+    normalizeComplianceFrameworkName(framework),
+  )
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
+function complianceTokens(framework: string): string[] {
+  return stripComplianceVersionSuffix(
+    normalizeComplianceFrameworkName(framework),
+  )
+    .split("-")
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .filter((token) => !/^\d+(?:\.\d+)*$/.test(token));
+}
+
+function complianceMatchScore(
+  sourceFramework: string,
+  targetFramework: string,
+): number {
+  const normalizedSource = normalizeComplianceFrameworkName(sourceFramework);
+  const normalizedTarget = normalizeComplianceFrameworkName(targetFramework);
+
+  if (normalizedSource === normalizedTarget) {
+    return 5;
+  }
+
+  const canonicalSource = canonicalComplianceKey(sourceFramework);
+  const canonicalTarget = canonicalComplianceKey(targetFramework);
+
+  if (canonicalSource === canonicalTarget) {
+    return 4;
+  }
+
+  if (canonicalSource && canonicalTarget) {
+    const sourceTokens = canonicalSource.split("-");
+    const targetTokens = canonicalTarget.split("-");
+    if (
+      sourceTokens.length !== targetTokens.length &&
+      (sourceTokens.every((t) => targetTokens.includes(t)) ||
+        targetTokens.every((t) => sourceTokens.includes(t)))
+    ) {
+      return 3;
+    }
+  }
+
+  const sourceTokens = complianceTokens(sourceFramework);
+  const targetTokens = complianceTokens(targetFramework);
+  if (!sourceTokens.length || !targetTokens.length) {
+    return 0;
+  }
+
+  const sourceMatchesTarget = sourceTokens.every((token) =>
+    targetTokens.includes(token),
+  );
+  const targetMatchesSource = targetTokens.every((token) =>
+    sourceTokens.includes(token),
+  );
+
+  if (sourceMatchesTarget || targetMatchesSource) {
+    return 2;
+  }
+
+  if (
+    sourceTokens.some((token) => targetTokens.includes(token)) &&
+    canonicalSource &&
+    canonicalTarget &&
+    (canonicalTarget.includes(canonicalSource) ||
+      canonicalSource.includes(canonicalTarget))
+  ) {
+    return 1;
+  }
+
+  return 0;
+}
+
+function parseSelectedScanIds(scanFilterValue: string | null): string[] {
+  if (!scanFilterValue) {
+    return [];
+  }
+
+  return scanFilterValue
+    .split(",")
+    .map((scanId) => scanId.trim())
+    .filter(Boolean);
+}
+
+function resolveComplianceMatch(
+  compliances: ComplianceOverviewData[] | undefined,
+  framework: string,
+): {
+  complianceId: string;
+  framework: string;
+  version: string;
+} | null {
+  if (!compliances?.length) {
+    return null;
+  }
+
+  const match = compliances
+    .map((compliance) => ({
+      compliance,
+      score: complianceMatchScore(framework, compliance.attributes.framework),
+    }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)[0]?.compliance;
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    complianceId: match.id,
+    framework: match.attributes.framework,
+    version: match.attributes.version,
+  };
+}
+
+function buildComplianceDetailHref({
+  complianceId,
+  framework,
+  version,
+  scanId,
+  regionFilter,
+}: {
+  complianceId: string;
+  framework: string;
+  version: string;
+  scanId: string;
+  regionFilter: string | null;
+}): string {
+  const params = new URLSearchParams();
+  params.set("complianceId", complianceId);
+  if (version) {
+    params.set("version", version);
+  }
+  params.set("scanId", scanId);
+
+  if (regionFilter) {
+    params.set("filter[region__in]", regionFilter);
+  }
+
+  return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
+}
 
 interface ResourceDetailDrawerContentProps {
   isLoading: boolean;
@@ -94,8 +288,15 @@ export function ResourceDetailDrawerContent({
   onNavigateNext,
   onMuteComplete,
 }: ResourceDetailDrawerContentProps) {
+  const searchParams = useSearchParams();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
+  const [resolvingFramework, setResolvingFramework] = useState<string | null>(
+    null,
+  );
+  const [optimisticallyMutedIds, setOptimisticallyMutedIds] = useState<
+    Set<string>
+  >(new Set());
 
   // Initial load — no check metadata yet
   if (!checkMeta && isLoading) {
@@ -140,6 +341,54 @@ export function ResourceDetailDrawerContent({
   const f = currentFinding;
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalResources - 1;
+  const selectedScanIds = parseSelectedScanIds(
+    searchParams.get("filter[scan__in]"),
+  );
+  const complianceScanId =
+    selectedScanIds.length === 1
+      ? selectedScanIds[0]
+      : selectedScanIds.length === 0
+        ? (f?.scan?.id ?? null)
+        : null;
+  const regionFilter = searchParams.get("filter[region__in]");
+
+  const handleOpenCompliance = async (framework: string) => {
+    if (!complianceScanId || resolvingFramework) {
+      return;
+    }
+
+    setResolvingFramework(framework);
+
+    try {
+      const compliancesOverview = await getCompliancesOverview({
+        scanId: complianceScanId,
+      });
+      const complianceMatch = resolveComplianceMatch(
+        compliancesOverview?.data,
+        framework,
+      );
+
+      if (!complianceMatch) {
+        return;
+      }
+
+      window.open(
+        buildComplianceDetailHref({
+          complianceId: complianceMatch.complianceId,
+          framework: complianceMatch.framework,
+          version: complianceMatch.version,
+          scanId: complianceScanId,
+          regionFilter,
+        }),
+        "_blank",
+        "noopener,noreferrer",
+      );
+    } catch (error) {
+      console.error("Error resolving compliance detail:", error);
+    } finally {
+      setResolvingFramework(null);
+    }
+  };
 
   return (
     <div className="flex h-full min-w-0 flex-col gap-4 overflow-hidden">
@@ -197,27 +446,66 @@ export function ResourceDetailDrawerContent({
             <div className="flex flex-wrap items-center gap-2">
               {checkMeta.complianceFrameworks.map((framework) => {
                 const icon = getComplianceIcon(framework);
+                const isNavigable = Boolean(complianceScanId);
+                const isResolving = resolvingFramework === framework;
+
                 return icon ? (
                   <Tooltip key={framework}>
                     <TooltipTrigger asChild>
-                      <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
-                        <Image
-                          src={icon}
-                          alt={framework}
-                          width={20}
-                          height={20}
-                          className="size-5 object-contain"
-                        />
-                      </div>
+                      {isNavigable ? (
+                        <button
+                          type="button"
+                          aria-label={`Open ${framework} compliance details`}
+                          onClick={() => void handleOpenCompliance(framework)}
+                          disabled={Boolean(resolvingFramework)}
+                          className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
+                        >
+                          <Image
+                            src={icon}
+                            alt={framework}
+                            width={20}
+                            height={20}
+                            className="size-5 object-contain"
+                          />
+                          {isResolving && (
+                            <span className="sr-only">Opening compliance</span>
+                          )}
+                        </button>
+                      ) : (
+                        <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
+                          <Image
+                            src={icon}
+                            alt={framework}
+                            width={20}
+                            height={20}
+                            className="size-5 object-contain"
+                          />
+                        </div>
+                      )}
                     </TooltipTrigger>
                     <TooltipContent>{framework}</TooltipContent>
                   </Tooltip>
                 ) : (
                   <Tooltip key={framework}>
                     <TooltipTrigger asChild>
-                      <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
-                        {framework}
-                      </span>
+                      {isNavigable ? (
+                        <button
+                          type="button"
+                          aria-label={`Open ${framework} compliance details`}
+                          onClick={() => void handleOpenCompliance(framework)}
+                          disabled={Boolean(resolvingFramework)}
+                          className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
+                        >
+                          {framework}
+                          {isResolving && (
+                            <span className="sr-only">Opening compliance</span>
+                          )}
+                        </button>
+                      ) : (
+                        <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
+                          {framework}
+                        </span>
+                      )}
                     </TooltipTrigger>
                     <TooltipContent>{framework}</TooltipContent>
                   </Tooltip>
@@ -228,10 +516,10 @@ export function ResourceDetailDrawerContent({
         )}
       </div>
 
-      {/* Navigation: "Impacted Resource (X of N)" */}
+      {/* Navigation: "Resource (X of N)" */}
       <div className="flex items-center justify-between">
         <Badge variant="tag" className="rounded text-sm">
-          Impacted Resource
+          Resource
           <span className="font-bold">{currentIndex + 1}</span>
           <span className="font-normal">of</span>
           <span className="font-bold">{totalResources}</span>
@@ -277,7 +565,7 @@ export function ResourceDetailDrawerContent({
                 />
                 <EntityInfo
                   nameIcon={<Container className="size-4" />}
-                  entityAlias={f.resourceGroup}
+                  entityAlias={f.resourceName}
                   entityId={f.resourceUid}
                   idLabel="UID"
                 />
@@ -305,7 +593,9 @@ export function ResourceDetailDrawerContent({
                 <InfoField label="Failing for" variant="compact">
                   {getFailingForLabel(f.firstSeenAt) || "-"}
                 </InfoField>
-                <div className="hidden md:block" />
+                <InfoField label="Group" variant="compact">
+                  {f.resourceGroup || "-"}
+                </InfoField>
 
                 {/* Row 3: IDs */}
                 <InfoField label="Check ID" variant="compact">
@@ -328,6 +618,11 @@ export function ResourceDetailDrawerContent({
                     transparent
                     className="max-w-full text-sm"
                   />
+                </InfoField>
+
+                {/* Row 4: Resource metadata */}
+                <InfoField label="Resource type" variant="compact">
+                  {f.resourceType || "-"}
                 </InfoField>
               </div>
 
@@ -382,16 +677,16 @@ export function ResourceDetailDrawerContent({
             {(checkMeta.risk || checkMeta.description || f?.statusExtended) && (
               <Card variant="inner">
                 {checkMeta.risk && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                  <Card variant="danger">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Risk:
                     </span>
                     <MarkdownContainer>{checkMeta.risk}</MarkdownContainer>
-                  </div>
+                  </Card>
                 )}
                 {checkMeta.description && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                  <div className="border-default-200 flex flex-col gap-1 border-b pb-4">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Description:
                     </span>
                     <MarkdownContainer>
@@ -401,7 +696,7 @@ export function ResourceDetailDrawerContent({
                 )}
                 {f?.statusExtended && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
                       Status Extended:
                     </span>
                     <p className="text-text-neutral-primary text-sm">
@@ -444,43 +739,35 @@ export function ResourceDetailDrawerContent({
 
                 {checkMeta.remediation.code.cli && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CLI Command:
-                    </span>
-                    <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.cli}`}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                    {renderRemediationCodeBlock({
+                      label: "CLI Command",
+                      value: `$ ${stripCodeFences(checkMeta.remediation.code.cli)}`,
+                      copyValue: stripCodeFences(
+                        checkMeta.remediation.code.cli,
+                      ),
+                    })}
                   </div>
                 )}
 
                 {checkMeta.remediation.code.terraform && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      Terraform Command:
-                    </span>
-                    <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.terraform}`}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                    {renderRemediationCodeBlock({
+                      label: "Terraform",
+                      value: stripCodeFences(
+                        checkMeta.remediation.code.terraform,
+                      ),
+                    })}
                   </div>
                 )}
 
                 {checkMeta.remediation.code.nativeiac && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CloudFormation Command:
-                    </span>
-                    <CodeSnippet
-                      value={`$ ${checkMeta.remediation.code.nativeiac}`}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                    {renderRemediationCodeBlock({
+                      label: "CloudFormation",
+                      value: stripCodeFences(
+                        checkMeta.remediation.code.nativeiac,
+                      ),
+                    })}
                   </div>
                 )}
 
@@ -526,9 +813,17 @@ export function ResourceDetailDrawerContent({
                   <span className="text-text-neutral-secondary text-xs">
                     Categories:
                   </span>
-                  <p className="text-text-neutral-primary text-sm">
-                    {checkMeta.categories.join(", ")}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {checkMeta.categories.map((category) => (
+                      <Badge
+                        key={category}
+                        variant="outline"
+                        className="text-xs capitalize"
+                      >
+                        {category}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </Card>
             )}
@@ -545,10 +840,7 @@ export function ResourceDetailDrawerContent({
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between">
-                  <h4 className="text-text-neutral-primary text-sm font-medium">
-                    Failed Findings For This Resource
-                  </h4>
+                <div className="flex items-center justify-end">
                   <span className="text-text-neutral-tertiary text-sm">
                     {otherFindings.length} Total Entries
                   </span>
@@ -584,7 +876,18 @@ export function ResourceDetailDrawerContent({
                   <TableBody>
                     {otherFindings.length > 0 ? (
                       otherFindings.map((finding) => (
-                        <OtherFindingRow key={finding.id} finding={finding} />
+                        <OtherFindingRow
+                          key={finding.id}
+                          finding={finding}
+                          isOptimisticallyMuted={optimisticallyMutedIds.has(
+                            finding.id,
+                          )}
+                          onMuted={() =>
+                            setOptimisticallyMutedIds((prev) =>
+                              new Set(prev).add(finding.id),
+                            )
+                          }
+                        />
                       ))
                     ) : (
                       <TableRow>
@@ -611,7 +914,7 @@ export function ResourceDetailDrawerContent({
                   </p>
                   <Button variant="link" size="link-sm" asChild>
                     <Link
-                      href={`/scans?id=${f.scan.id}`}
+                      href={`/scans?filter[id__in]=${f.scan.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -684,31 +987,44 @@ export function ResourceDetailDrawerContent({
       {/* Lighthouse AI button */}
       <a
         href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
-        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-950 transition-opacity hover:opacity-90"
+        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
         style={{
           background: "var(--gradient-lighthouse)",
         }}
       >
         <CircleArrowRight className="size-5" />
-        View This Finding With Lighthouse AI
+        Analyze This Finding With Lighthouse AI
       </a>
     </div>
   );
 }
 
-function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
+function OtherFindingRow({
+  finding,
+  isOptimisticallyMuted,
+  onMuted,
+}: {
+  finding: ResourceDrawerFinding;
+  isOptimisticallyMuted: boolean;
+  onMuted: () => void;
+}) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
+  const isMuted = finding.isMuted || isOptimisticallyMuted;
 
   const findingUrl = `/findings?filter%5Bcheck_id__in%5D=${encodeURIComponent(finding.checkId)}&filter%5Bmuted%5D=include`;
 
   return (
     <>
-      {!finding.isMuted && (
+      {!isMuted && (
         <MuteFindingsModal
           isOpen={isMuteModalOpen}
           onOpenChange={setIsMuteModalOpen}
           findingIds={[finding.id]}
+          onComplete={() => {
+            setIsMuteModalOpen(false);
+            onMuted();
+          }}
         />
       )}
       <SendToJiraModal
@@ -722,7 +1038,7 @@ function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
       >
         <TableCell className="w-10">
-          <NotificationIndicator isMuted={finding.isMuted} />
+          <NotificationIndicator isMuted={isMuted} />
         </TableCell>
         <TableCell>
           <StatusFindingBadge status={finding.status as FindingStatus} />
@@ -743,14 +1059,14 @@ function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
             <ActionDropdown ariaLabel="Finding actions">
               <ActionDropdownItem
                 icon={
-                  finding.isMuted ? (
+                  isMuted ? (
                     <VolumeOff className="size-5" />
                   ) : (
                     <VolumeX className="size-5" />
                   )
                 }
-                label={finding.isMuted ? "Muted" : "Mute"}
-                disabled={finding.isMuted}
+                label={isMuted ? "Muted" : "Mute"}
+                disabled={isMuted}
                 onSelect={() => setIsMuteModalOpen(true)}
               />
               <ActionDropdownItem

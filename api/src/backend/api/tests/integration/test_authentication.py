@@ -215,6 +215,21 @@ class TestTokenSwitchTenant:
         tenant_id = tenants_fixture[0].id
         user_instance = User.objects.get(email=test_user)
         Membership.objects.create(user=user_instance, tenant_id=tenant_id)
+        # Assign an admin role in the target tenant so the user can access resources
+        target_role = Role.objects.create(
+            name="admin",
+            tenant_id=tenant_id,
+            manage_users=True,
+            manage_account=True,
+            manage_billing=True,
+            manage_providers=True,
+            manage_integrations=True,
+            manage_scans=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=user_instance, role=target_role, tenant_id=tenant_id
+        )
 
         # Check that using our new user's credentials we can authenticate and get the providers
         access_token, _ = get_api_tokens(client, test_user, test_password)

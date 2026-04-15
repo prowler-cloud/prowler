@@ -118,17 +118,21 @@ In case you have any doubts, consult the [Poetry environment activation guide](h
 
 ### Pre-Commit Hooks
 
-This repository uses Git pre-commit hooks managed by the [pre-commit](https://pre-commit.com/) tool, it is installed with `poetry install --with dev`. Next, run the following command in the root of this repository:
+This repository uses Git pre-commit hooks managed by the [prek](https://prek.j178.dev/) tool, it is installed with `poetry install --with dev`. Next, run the following command in the root of this repository:
 
 ```shell
-pre-commit install
+prek install
 ```
 
 Successful installation should produce the following output:
 
 ```shell
-pre-commit installed at .git/hooks/pre-commit
+prek installed at `.git/hooks/pre-commit`
 ```
+
+<Warning>
+If pre-commit hooks were previously installed, run `prek install --overwrite` to replace the existing hook. Otherwise, both tools will run on each commit.
+</Warning>
 
 ### Code Quality and Security Checks
 
@@ -162,6 +166,8 @@ These resources help ensure that AI-assisted contributions maintain consistency 
 ### Dependency Management
 
 All dependencies are listed in the `pyproject.toml` file.
+
+The SDK keeps direct dependencies pinned to exact versions, while `poetry.lock` records the full resolved dependency tree and the artifact hashes for every package. Use `poetry install` from the lock file instead of ad-hoc `pip` installs when you need a reproducible environment.
 
 For proper code documentation, refer to the following and follow the code documentation practices presented there: [Google Python Style Guide - Comments and Docstrings](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings).
 

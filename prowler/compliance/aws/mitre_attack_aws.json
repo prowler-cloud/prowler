@@ -169,6 +169,8 @@
         "iam_customer_unattached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_expired_server_certificates_stored",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_no_root_access_key",

@@ -9,21 +9,22 @@ import {
 } from "@tanstack/react-table";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useImperativeHandle, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
-import { resolveFindingIds } from "@/actions/findings/findings-by-resource";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useInfiniteResources } from "@/hooks/use-infinite-resources";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
-import { hasDateOrScanFilter } from "@/lib";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
 
 import { getColumnFindingResources } from "./column-finding-resources";
+import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
+import {
+  getFilteredFindingGroupResourceCount,
+  getFindingGroupSkeletonCount,
+} from "./inline-resource-container.utils";
 import {
   ResourceDetailDrawer,
   useResourceDetailDrawer,
@@ -38,10 +39,12 @@ export interface InlineResourceContainerHandle {
 
 interface InlineResourceContainerProps {
   group: FindingGroupRow;
+  resolvedFilters: Record<string, string>;
+  hasHistoricalData: boolean;
   resourceSearch: string;
   columnCount: number;
-  /** Called with selected resource UIDs (not finding IDs) for parent-level mute resolution */
-  onResourceSelectionChange: (resourceUids: string[]) => void;
+  /** Called with selected finding IDs (real UUIDs) for parent-level mute */
+  onResourceSelectionChange: (findingIds: string[]) => void;
   ref?: React.Ref<InlineResourceContainerHandle>;
 }
 
@@ -55,11 +58,17 @@ interface InlineResourceContainerProps {
 /** Max skeleton rows that fit in the 440px scroll container */
 const MAX_SKELETON_ROWS = 7;
 
-function ResourceSkeletonRow() {
+function ResourceSkeletonRow({
+  isEmptyStateSized = false,
+}: {
+  isEmptyStateSized?: boolean;
+}) {
+  const cellClassName = isEmptyStateSized ? "h-24 py-3" : "py-3";
+
   return (
     <TableRow className="hover:bg-transparent">
       {/* Select: indicator + corner arrow + checkbox */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-1.5 rounded-full" />
           <Skeleton className="size-4 rounded" />
@@ -67,55 +76,55 @@ function ResourceSkeletonRow() {
         </div>
       </TableCell>
       {/* Resource: icon + name + uid */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-4 rounded" />
-          <div className="space-y-1">
-            <Skeleton className="h-3.5 w-32 rounded" />
-            <Skeleton className="h-3 w-20 rounded" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-32 rounded" />
+            <Skeleton className="h-3.5 w-20 rounded" />
           </div>
         </div>
       </TableCell>
       {/* Status */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <Skeleton className="h-6 w-11 rounded-md" />
       </TableCell>
       {/* Service */}
-      <TableCell>
-        <Skeleton className="h-4 w-16 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-16 rounded" />
       </TableCell>
       {/* Region */}
-      <TableCell>
-        <Skeleton className="h-4 w-20 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-20 rounded" />
       </TableCell>
       {/* Severity */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-2 rounded-full" />
-          <Skeleton className="h-4 w-12 rounded" />
+          <Skeleton className="h-4.5 w-12 rounded" />
         </div>
       </TableCell>
       {/* Account: provider icon + alias + uid */}
-      <TableCell>
+      <TableCell className={cellClassName}>
         <div className="flex items-center gap-2">
           <Skeleton className="size-4 rounded" />
-          <div className="space-y-1">
-            <Skeleton className="h-3.5 w-24 rounded" />
-            <Skeleton className="h-3 w-16 rounded" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-24 rounded" />
+            <Skeleton className="h-3.5 w-16 rounded" />
           </div>
         </div>
       </TableCell>
       {/* Last seen */}
-      <TableCell>
-        <Skeleton className="h-4 w-24 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-24 rounded" />
       </TableCell>
       {/* Failing for */}
-      <TableCell>
-        <Skeleton className="h-4 w-16 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-16 rounded" />
       </TableCell>
       {/* Actions */}
-      <TableCell>
-        <Skeleton className="size-6 rounded" />
+      <TableCell className={cellClassName}>
+        <Skeleton className="size-8 rounded-md" />
       </TableCell>
     </TableRow>
   );
@@ -123,17 +132,17 @@ function ResourceSkeletonRow() {
 
 export function InlineResourceContainer({
   group,
+  resolvedFilters,
+  hasHistoricalData,
   resourceSearch,
   columnCount,
   onResourceSelectionChange,
   ref,
 }: InlineResourceContainerProps) {
-  const searchParams = useSearchParams();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [resources, setResources] = useState<FindingResourceRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   // Scroll hint: shows "scroll for more" when content overflows
   const {
     containerRef: scrollHintContainerRef,
@@ -147,20 +156,20 @@ export function InlineResourceContainer({
     scrollHintContainerRef(node);
   };
 
-  // Derive hasDateOrScan from current URL params
-  const currentParams = Object.fromEntries(searchParams.entries());
-  const hasDateOrScan = hasDateOrScanFilter(currentParams);
-
-  // Extract filter params from search params, merge with local resource search
-  const filters: Record<string, string> = {};
-  searchParams.forEach((value, key) => {
-    if (key.startsWith("filter[") || key.includes("__in")) {
-      filters[key] = value;
-    }
-  });
+  const filters: Record<string, string> = { ...resolvedFilters };
   if (resourceSearch) {
     filters["filter[name__icontains]"] = resourceSearch;
   }
+
+  const skeletonRowCount = getFindingGroupSkeletonCount(
+    group,
+    filters,
+    MAX_SKELETON_ROWS,
+  );
+  const filteredResourceCount = getFilteredFindingGroupResourceCount(
+    group,
+    filters,
+  );
 
   const handleSetResources = (
     newResources: FindingResourceRow[],
@@ -182,9 +191,9 @@ export function InlineResourceContainer({
     setIsLoading(loading);
   };
 
-  const { sentinelRef, refresh, loadMore } = useInfiniteResources({
+  const { sentinelRef, refresh, loadMore, totalCount } = useInfiniteResources({
     checkId: group.checkId,
-    hasDateOrScanFilter: hasDateOrScan,
+    hasDateOrScanFilter: hasHistoricalData,
     filters,
     onSetResources: handleSetResources,
     onAppendResources: handleAppendResources,
@@ -196,7 +205,7 @@ export function InlineResourceContainer({
   const drawer = useResourceDetailDrawer({
     resources,
     checkId: group.checkId,
-    totalResourceCount: group.resourcesTotal,
+    totalResourceCount: totalCount ?? group.resourcesTotal,
     onRequestMoreResources: loadMore,
   });
 
@@ -212,22 +221,15 @@ export function InlineResourceContainer({
     .filter(Boolean);
 
   const resolveResourceIds = async (ids: string[]) => {
-    const resourceUids = ids
-      .map((id) => resources.find((r) => r.findingId === id)?.resourceUid)
-      .filter(Boolean) as string[];
-    if (resourceUids.length === 0) return [];
-    return resolveFindingIds({
-      checkId: group.checkId,
-      resourceUids,
-      filters,
-      hasDateOrScanFilter: hasDateOrScan,
-    });
+    // findingId values are already real finding UUIDs (from the group
+    // resources endpoint), so no second resolution round-trip is needed.
+    return ids.filter(Boolean);
   };
 
-  const selectableRowCount = resources.filter((r) => !r.isMuted).length;
+  const selectableRowCount = resources.filter(canMuteFindingResource).length;
 
   const getRowCanSelect = (row: Row<FindingResourceRow>): boolean => {
-    return !row.original.isMuted;
+    return canMuteFindingResource(row.original);
   };
 
   const clearSelection = () => {
@@ -255,11 +257,11 @@ export function InlineResourceContainer({
       typeof updater === "function" ? updater(rowSelection) : updater;
     setRowSelection(newSelection);
 
-    const newResourceUids = Object.keys(newSelection)
+    const newFindingIds = Object.keys(newSelection)
       .filter((key) => newSelection[key])
-      .map((idx) => resources[parseInt(idx)]?.resourceUid)
+      .map((idx) => resources[parseInt(idx)]?.findingId)
       .filter(Boolean);
-    onResourceSelectionChange(newResourceUids);
+    onResourceSelectionChange(newFindingIds);
   };
 
   const columns = getColumnFindingResources({
@@ -308,22 +310,33 @@ export function InlineResourceContainer({
                   className="max-h-[440px] overflow-y-auto pl-6"
                 >
                   {/* Resource rows or skeleton placeholder */}
-                  <table className="mt-[-10] w-full border-separate border-spacing-y-4">
+                  <table className="-mt-2.5 w-full border-separate border-spacing-y-4">
                     <tbody>
                       {isLoading && rows.length === 0 ? (
-                        Array.from({
-                          length: Math.min(
-                            group.resourcesTotal,
-                            MAX_SKELETON_ROWS,
-                          ),
-                        }).map((_, i) => <ResourceSkeletonRow key={i} />)
+                        Array.from({ length: skeletonRowCount }).map((_, i) => (
+                          <ResourceSkeletonRow
+                            key={i}
+                            isEmptyStateSized={filteredResourceCount === 0}
+                          />
+                        ))
                       ) : rows.length > 0 ? (
                         rows.map((row) => (
                           <TableRow
                             key={row.id}
                             data-state={row.getIsSelected() && "selected"}
                             className="cursor-pointer"
-                            onClick={() => drawer.openDrawer(row.index)}
+                            onClick={(e) => {
+                              // Don't open drawer if clicking interactive elements
+                              // (links, buttons, checkboxes, dropdown items)
+                              const target = e.target as HTMLElement;
+                              if (
+                                target.closest(
+                                  "a, button, input, [role=menuitem]",
+                                )
+                              )
+                                return;
+                              drawer.openDrawer(row.index);
+                            }}
                           >
                             {row.getVisibleCells().map((cell) => (
                               <TableCell key={cell.id}>
@@ -341,7 +354,9 @@ export function InlineResourceContainer({
                             colSpan={columns.length}
                             className="h-24 text-center"
                           >
-                            No resources found.
+                            {Object.keys(filters).length > 0
+                              ? "No resources found for the selected filters."
+                              : "No resources found."}
                           </TableCell>
                         </TableRow>
                       )}
@@ -390,25 +405,22 @@ export function InlineResourceContainer({
         </td>
       </tr>
 
-      {createPortal(
-        <ResourceDetailDrawer
-          open={drawer.isOpen}
-          onOpenChange={(open) => {
-            if (!open) drawer.closeDrawer();
-          }}
-          isLoading={drawer.isLoading}
-          isNavigating={drawer.isNavigating}
-          checkMeta={drawer.checkMeta}
-          currentIndex={drawer.currentIndex}
-          totalResources={drawer.totalResources}
-          currentFinding={drawer.currentFinding}
-          otherFindings={drawer.otherFindings}
-          onNavigatePrev={drawer.navigatePrev}
-          onNavigateNext={drawer.navigateNext}
-          onMuteComplete={handleDrawerMuteComplete}
-        />,
-        document.body,
-      )}
+      <ResourceDetailDrawer
+        open={drawer.isOpen}
+        onOpenChange={(open) => {
+          if (!open) drawer.closeDrawer();
+        }}
+        isLoading={drawer.isLoading}
+        isNavigating={drawer.isNavigating}
+        checkMeta={drawer.checkMeta}
+        currentIndex={drawer.currentIndex}
+        totalResources={drawer.totalResources}
+        currentFinding={drawer.currentFinding}
+        otherFindings={drawer.otherFindings}
+        onNavigatePrev={drawer.navigatePrev}
+        onNavigateNext={drawer.navigateNext}
+        onMuteComplete={handleDrawerMuteComplete}
+      />
     </FindingsSelectionContext.Provider>
   );
 }

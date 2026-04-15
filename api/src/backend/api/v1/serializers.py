@@ -1573,6 +1573,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = OpenStackCloudsYamlProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IMAGE.value:
                 serializer = ImageProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.VERCEL.value:
+                serializer = VercelProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1777,6 +1779,13 @@ class ImageProviderSecret(serializers.Serializer):
                     "registry_username is required when registry_password is provided."
                 )
         return attrs
+
+
+class VercelProviderSecret(serializers.Serializer):
+    api_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
 
 
 class AlibabaCloudProviderSecret(serializers.Serializer):
@@ -2713,11 +2722,11 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 )
             config_serializer = JiraConfigSerializer
             # Create non-editable configuration for JIRA integration
-            default_jira_issue_types = ["Task"]
+            # issue_types will be populated per project when connection is tested
             configuration.update(
                 {
                     "projects": {},
-                    "issue_types": default_jira_issue_types,
+                    "issue_types": {},
                     "domain": credentials.get("domain"),
                 }
             )
@@ -2932,13 +2941,25 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         return representation
 
 
+class IntegrationJiraIssueTypesSerializer(BaseSerializerV1):
+    """
+    Serializer for Jira issue types response.
+    """
+
+    project_key = serializers.CharField(read_only=True)
+    issue_types = serializers.ListField(child=serializers.CharField(), read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "jira-issue-types"
+
+
 class IntegrationJiraDispatchSerializer(BaseSerializerV1):
     """
     Serializer for dispatching findings to JIRA integration.
     """
 
     project_key = serializers.CharField(required=True)
-    issue_type = serializers.ChoiceField(required=True, choices=["Task"])
+    issue_type = serializers.CharField(required=True)
 
     class JSONAPIMeta:
         resource_name = "integrations-jira-dispatches"
@@ -2964,6 +2985,23 @@ class IntegrationJiraDispatchSerializer(BaseSerializerV1):
                 {
                     "project_key": "The given project key is not available for this JIRA integration. Refresh the "
                     "connection if this is an error."
+                }
+            )
+
+        issue_type = attrs.get("issue_type")
+        available_issue_types = integration_instance.configuration.get(
+            "issue_types", {}
+        )
+        # Handle old format where issue_types was a flat list (e.g., ["Task"])
+        if not isinstance(available_issue_types, dict):
+            available_issue_types = {}
+        project_issue_types = available_issue_types.get(project_key, [])
+        if project_issue_types and issue_type not in project_issue_types:
+            raise ValidationError(
+                {
+                    "issue_type": f"The issue type '{issue_type}' is not available for project '{project_key}'. "
+                    f"Available types: {', '.join(project_issue_types)}. "
+                    "Refresh the connection if this is an error."
                 }
             )
 
@@ -4147,6 +4185,7 @@ class FindingGroupSerializer(BaseSerializerV1):
     check_description = serializers.CharField(required=False, allow_null=True)
     severity = serializers.CharField()
     status = serializers.CharField()
+    muted = serializers.BooleanField()
     impacted_providers = serializers.ListField(
         child=serializers.CharField(), required=False
     )
@@ -4154,9 +4193,25 @@ class FindingGroupSerializer(BaseSerializerV1):
     resources_total = serializers.IntegerField()
     pass_count = serializers.IntegerField()
     fail_count = serializers.IntegerField()
+    manual_count = serializers.IntegerField()
+    pass_muted_count = serializers.IntegerField()
+    fail_muted_count = serializers.IntegerField()
+    manual_muted_count = serializers.IntegerField()
     muted_count = serializers.IntegerField()
     new_count = serializers.IntegerField()
     changed_count = serializers.IntegerField()
+    new_fail_count = serializers.IntegerField()
+    new_fail_muted_count = serializers.IntegerField()
+    new_pass_count = serializers.IntegerField()
+    new_pass_muted_count = serializers.IntegerField()
+    new_manual_count = serializers.IntegerField()
+    new_manual_muted_count = serializers.IntegerField()
+    changed_fail_count = serializers.IntegerField()
+    changed_fail_muted_count = serializers.IntegerField()
+    changed_pass_count = serializers.IntegerField()
+    changed_pass_muted_count = serializers.IntegerField()
+    changed_manual_count = serializers.IntegerField()
+    changed_manual_muted_count = serializers.IntegerField()
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     failing_since = serializers.DateTimeField(required=False, allow_null=True)
@@ -4176,8 +4231,11 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     id = serializers.UUIDField(source="resource_id")
     resource = serializers.SerializerMethodField()
     provider = serializers.SerializerMethodField()
+    finding_id = serializers.UUIDField()
     status = serializers.CharField()
     severity = serializers.CharField()
+    muted = serializers.BooleanField()
+    delta = serializers.CharField(required=False, allow_null=True)
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     muted_reason = serializers.CharField(required=False, allow_null=True)

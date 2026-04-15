@@ -6,17 +6,19 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.19.0" />
 
-Prowler for Google Workspace uses a **Service Account with Domain-Wide Delegation** to authenticate to the Google Workspace Admin SDK. This allows Prowler to read directory data on behalf of a super administrator without requiring an interactive login.
+Prowler for Google Workspace uses a **Service Account with Domain-Wide Delegation** to authenticate to the Google Workspace Admin SDK and the Cloud Identity Policy API. This allows Prowler to read directory data and domain-level application policies on behalf of a super administrator without requiring an interactive login.
 
 ## Required Open Authorization (OAuth) Scopes
 
-Prowler requests the following read-only OAuth 2.0 scopes from the Google Workspace Admin SDK:
+Prowler requests the following read-only OAuth 2.0 scopes:
 
 | Scope | Description |
 |-------|-------------|
 | `https://www.googleapis.com/auth/admin.directory.user.readonly` | Read access to user accounts and their admin status |
 | `https://www.googleapis.com/auth/admin.directory.domain.readonly` | Read access to domain information |
 | `https://www.googleapis.com/auth/admin.directory.customer.readonly` | Read access to customer information (Customer ID) |
+| `https://www.googleapis.com/auth/cloud-identity.policies.readonly` | Read access to domain-level application policies (required for Calendar service checks) |
+| `https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly` | Read access to admin roles and role assignments |
 
 <Warning>
 The delegated user must be a **super administrator** in your Google Workspace organization. Using a non-admin account will result in permission errors when accessing the Admin SDK.
@@ -30,13 +32,24 @@ If no GCP project exists, create one at [https://console.cloud.google.com](https
 
 The project is only used to host the Service Account — it does not need to have any Google Workspace data in it.
 
-### Step 2: Enable the Admin SDK API
+### Step 2: Enable Required APIs
 
-1. Navigate to the [Google Cloud Console](https://console.cloud.google.com)
-2. Select the target project
-3. Navigate to **APIs & Services → Library**
-4. Search for **Admin SDK API**
-5. Click **Enable**
+In the [Google Cloud Console](https://console.cloud.google.com), select the target project and navigate to **APIs & Services → Library**. Search for and enable each of the following APIs:
+
+| API | Required For |
+|-----|--------------|
+| **Admin SDK API** | Directory service checks (users, roles, domains) |
+| **Cloud Identity API** | Calendar service checks (domain-level sharing and invitation policies) |
+
+For each API:
+
+1. Search for the API name in the library
+2. Click the API result
+3. Click **Enable**
+
+<Note>
+Both APIs must be enabled in the same GCP project that hosts the Service Account. Calendar checks will return no findings if the Cloud Identity API is not enabled.
+</Note>
 
 ### Step 3: Create a Service Account
 
@@ -73,7 +86,7 @@ This JSON key grants access to your Google Workspace organization. Never commit 
 6. In the **OAuth scopes** field, enter the following scopes as a comma-separated list:
 
 ```
-https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.customer.readonly
+https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.customer.readonly,https://www.googleapis.com/auth/cloud-identity.policies.readonly,https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly
 ```
 
 7. Click **Authorize**
@@ -114,7 +127,7 @@ The delegated user must be provided via the `GOOGLEWORKSPACE_DELEGATED_USER` env
 
 - **Use environment variables** — Never hardcode credentials in scripts or commands
 - **Use a dedicated Service Account** — Create one specifically for Prowler, separate from other integrations
-- **Use read-only scopes** — Prowler only requires the three read-only scopes listed above
+- **Use read-only scopes** — Prowler only requires the read-only scopes listed above
 - **Restrict key access** — Set file permissions to `600` on the JSON key file
 - **Rotate keys regularly** — Delete and regenerate the JSON key periodically
 - **Use a least-privilege super admin** — Consider using a dedicated super admin account for Prowler's delegated user rather than a personal admin account
@@ -151,7 +164,7 @@ python3 -c "import json; json.load(open('/path/to/key.json'))" && echo "Valid JS
 The Service Account cannot impersonate the delegated user. This usually means Domain-Wide Delegation has not been configured, or the OAuth scopes are incorrect. Verify:
 
 - The Service Account Client ID is correctly entered in the Admin Console
-- All three required OAuth scopes are included
+- All required OAuth scopes are included
 - The delegated user is a super administrator
 
 ### Permission Denied on Admin SDK Calls
@@ -159,5 +172,14 @@ The Service Account cannot impersonate the delegated user. This usually means Do
 If Prowler connects but returns empty results or permission errors for specific API calls:
 
 - Confirm Domain-Wide Delegation is fully propagated (wait a few minutes after setup)
-- Verify all three scopes are authorized in the Admin Console
+- Verify all scopes are authorized in the Admin Console
 - Ensure the delegated user is an active super administrator
+
+### Calendar Checks Return No Findings
+
+If the Directory checks run successfully but the Calendar checks (e.g., `calendar_external_sharing_primary_calendar`) return no findings, the Cloud Identity Policy API is not reachable for this Service Account. Verify:
+
+- The **Cloud Identity API** is enabled in the GCP project hosting the Service Account (Step 2)
+- The scope `https://www.googleapis.com/auth/cloud-identity.policies.readonly` is included in the Domain-Wide Delegation OAuth scopes list in the Admin Console (Step 5)
+- The delegated user is a super administrator (the Policy API only returns data to super admins)
+- Domain-Wide Delegation has had time to propagate after adding the new scope (a few minutes)

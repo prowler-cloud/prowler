@@ -516,6 +516,13 @@ class TestTenantViewSet:
             response.json()["data"]["attributes"]["name"]
             == valid_tenant_payload["name"]
         )
+        new_tenant_id = response.json()["data"]["id"]
+        user = authenticated_client.user
+        assert UserRoleRelationship.objects.filter(
+            user=user,
+            tenant_id=new_tenant_id,
+            role__name="admin",
+        ).exists()
 
     def test_tenants_invalid_create(self, authenticated_client, invalid_tenant_payload):
         response = authenticated_client.post(
@@ -575,22 +582,66 @@ class TestTenantViewSet:
             Tenant.objects.filter(pk=kwargs.get("tenant_id")).delete()
 
         delete_tenant_mock.side_effect = _delete_tenant
+        # Use tenant2 where the user is OWNER
+        _, tenant2, _ = tenants_fixture
+        response = authenticated_client.delete(
+            reverse("tenant-detail", kwargs={"pk": tenant2.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert Membership.objects.filter(tenant_id=tenant2.id).count() == 0
+        # User is not deleted because it has another membership (tenant1)
+        assert User.objects.count() == 1
+
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_tenants_delete_as_member_forbidden(
+        self, delete_tenant_mock, authenticated_client, tenants_fixture
+    ):
+        # tenant1: user is MEMBER, not OWNER -> should be forbidden
         tenant1, *_ = tenants_fixture
         response = authenticated_client.delete(
             reverse("tenant-detail", kwargs={"pk": tenant1.id})
         )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        delete_tenant_mock.assert_not_called()
+
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_tenants_delete_cross_tenant(
+        self, delete_tenant_mock, authenticated_client, tenants_fixture
+    ):
+        # tenant3: user has no membership -> should be 404
+        _, _, tenant3 = tenants_fixture
+        response = authenticated_client.delete(
+            reverse("tenant-detail", kwargs={"pk": tenant3.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        delete_tenant_mock.assert_not_called()
+
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_tenants_delete_only_removes_exclusive_users(
+        self, delete_tenant_mock, authenticated_client, tenants_fixture, extra_users
+    ):
+        def _delete_tenant(kwargs):
+            Tenant.objects.filter(pk=kwargs.get("tenant_id")).delete()
+
+        delete_tenant_mock.side_effect = _delete_tenant
+        _, tenant2, _ = tenants_fixture
+        # extra_users adds user2 (OWNER in tenant2) and user3 (MEMBER in tenant2)
+        # user2 and user3 are ONLY in tenant2, so they should be deleted
+        # The test user is in tenant1 + tenant2, so should NOT be deleted
+        initial_user_count = User.objects.count()  # test_user + user2 + user3 = 3
+        assert initial_user_count == 3
+
+        response = authenticated_client.delete(
+            reverse("tenant-detail", kwargs={"pk": tenant2.id})
+        )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert Tenant.objects.count() == len(tenants_fixture) - 1
-        assert Membership.objects.filter(tenant_id=tenant1.id).count() == 0
-        # User is not deleted because it has another membership
+        # user2 and user3 are deleted (no other memberships), test_user remains
         assert User.objects.count() == 1
 
     def test_tenants_delete_invalid(self, authenticated_client):
         response = authenticated_client.delete(
             reverse("tenant-detail", kwargs={"pk": "random_id"})
         )
-        # To change if we implement RBAC
-        # (user might not have permissions to see if the tenant exists or not -> 200 empty)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_tenants_list_filter_search(self, authenticated_client, tenants_fixture):
@@ -694,7 +745,6 @@ class TestTenantViewSet:
         # Test user + 2 extra users for tenant 2
         assert len(response.json()["data"]) == 3
 
-    @patch("api.v1.views.TenantMembersViewSet.required_permissions", [])
     def test_tenants_list_memberships_as_member(
         self, authenticated_client, tenants_fixture, extra_users
     ):
@@ -806,6 +856,30 @@ class TestTenantViewSet:
             reverse("tenant-membership-list", kwargs={"tenant_pk": tenant4.id})
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_tenants_delete_membership_cross_tenant(
+        self, authenticated_client, tenants_fixture
+    ):
+        # Create a tenant with a different user's membership
+        other_tenant = Tenant.objects.create(name="Other Tenant")
+        other_user = User.objects.create_user(
+            name="other", password=TEST_PASSWORD, email="other@test.com"
+        )
+        other_membership = Membership.objects.create(
+            user=other_user,
+            tenant=other_tenant,
+            role=Membership.RoleChoices.OWNER,
+        )
+
+        # Authenticated user is NOT a member of other_tenant -> 404
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": other_tenant.id, "pk": other_membership.id},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert Membership.objects.filter(id=other_membership.id).exists()
 
     def test_tenants_list_no_permissions(
         self, authenticated_client_no_permissions_rbac, tenants_fixture
@@ -1715,6 +1789,46 @@ class TestProviderViewSet:
                     "min_length",
                     "uid",
                 ),
+                # Vercel UID validation - missing team_ prefix
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "abcdef1234567890abcdef12",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
+                # Vercel UID validation - too short after prefix
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "team_abc123",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
+                # Vercel UID validation - contains special characters
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "team_abcdef-1234567890ab",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
+                # Vercel UID validation - too long (33 chars after prefix)
+                (
+                    {
+                        "provider": "vercel",
+                        "uid": "team_abcdefghijklmnopqrstuvwxyz1234567",
+                        "alias": "test",
+                    },
+                    "vercel-uid",
+                    "uid",
+                ),
                 # Google Workspace UID validation - missing 'C' prefix
                 (
                     {
@@ -1918,21 +2032,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    11,
+                    12,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 12),
+                ("inserted_at", TODAY, 13),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    12,
+                    13,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    12,
+                    13,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
@@ -2555,6 +2669,14 @@ class TestProviderSecretViewSet:
                 {
                     "credentials_content": '{"type": "service_account", "project_id": "test-project", "private_key_id": "key123", "private_key": "-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n", "client_email": "test@test-project.iam.gserviceaccount.com", "client_id": "123456789"}',
                     "delegated_user": "admin@example.com",
+                },
+            ),
+            # Vercel with API Token
+            (
+                Provider.ProviderChoices.VERCEL.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "api_token": "fake-vercel-api-token-for-testing",
                 },
             ),
         ],
@@ -3234,6 +3356,29 @@ class TestScanViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 3
+
+    def test_scan_filter_by_id_exact(self, authenticated_client, scans_fixture):
+        scan1, *_ = scans_fixture
+        response = authenticated_client.get(
+            reverse("scan-list"),
+            {"filter[id]": str(scan1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == str(scan1.id)
+
+    def test_scan_filter_by_id_in(self, authenticated_client, scans_fixture):
+        scan1, scan2, *_ = scans_fixture
+        response = authenticated_client.get(
+            reverse("scan-list"),
+            {"filter[id.in]": f"{scan1.id},{scan2.id}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        returned_ids = {item["id"] for item in data}
+        assert returned_ids == {str(scan1.id), str(scan2.id)}
 
     def test_scans_filter_state_failed(self, authenticated_client, scans_fixture):
         """Ensure state filter matches only FAILED scans."""
@@ -4142,7 +4287,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value=graph_payload,
             ) as mock_execute,
-            patch("api.v1.views.graph_database.clear_cache") as mock_clear_cache,
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4169,7 +4313,6 @@ class TestAttackPathsScanViewSet:
             prepared_parameters,
             provider_id,
         )
-        mock_clear_cache.assert_called_once_with(expected_db_name)
         result = response.json()["data"]
         attributes = result["attributes"]
         assert attributes["nodes"] == graph_payload["nodes"]
@@ -4224,7 +4367,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.attack_paths_views_helpers.execute_query",
                 return_value=graph_payload,
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4308,7 +4450,6 @@ class TestAttackPathsScanViewSet:
                     "truncated": False,
                 },
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
             patch(
                 "api.v1.views.graph_database.get_database_name", return_value="db-test"
             ),
@@ -4363,7 +4504,6 @@ class TestAttackPathsScanViewSet:
                     "truncated": False,
                 },
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
             patch(
                 "api.v1.views.graph_database.get_database_name", return_value="db-test"
             ),
@@ -4443,7 +4583,6 @@ class TestAttackPathsScanViewSet:
                     "truncated": False,
                 },
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4509,7 +4648,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4566,7 +4704,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4613,7 +4750,6 @@ class TestAttackPathsScanViewSet:
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
             ),
-            patch("api.v1.views.graph_database.clear_cache"),
         ):
             response = authenticated_client.post(
                 reverse(
@@ -4963,9 +5099,6 @@ class TestAttackPathsScanViewSet:
             patch(
                 "api.v1.views.graph_database.get_database_name",
                 return_value="db-test",
-            ),
-            patch(
-                "api.v1.views.graph_database.clear_cache",
             ),
         ):
             for i in range(11):
@@ -8097,6 +8230,8 @@ class TestUserRoleRelationshipViewSet:
             manage_scans=False,
             unlimited_visibility=False,
         )
+        # Assign the role to the user
+        UserRoleRelationship.objects.create(user=user, role=only_role, tenant=tenant)
 
         # Switch token to this tenant
         serializer = TokenSerializer(
@@ -15310,10 +15445,16 @@ class TestFindingGroupViewSet:
         # iam_password_policy has only PASS findings
         assert data[0]["attributes"]["status"] == "PASS"
 
-    def test_finding_groups_status_muted_all(
+    def test_finding_groups_fully_muted_group_reflects_underlying_status(
         self, authenticated_client, finding_groups_fixture
     ):
-        """Test that MUTED status returned when all findings are muted."""
+        """A fully-muted group still surfaces its underlying status (no MUTED).
+
+        rds_encryption has 2 muted FAIL findings, so the group must report
+        status=FAIL (the orthogonal `muted` boolean signals it isn't actionable).
+        The status×muted breakdown lets clients answer 'how many failing
+        findings are muted in this group'.
+        """
         response = authenticated_client.get(
             reverse("finding-group-list"),
             {"filter[inserted_at]": TODAY, "filter[check_id]": "rds_encryption"},
@@ -15321,8 +15462,21 @@ class TestFindingGroupViewSet:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 1
-        # rds_encryption has all muted findings
-        assert data[0]["attributes"]["status"] == "MUTED"
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "FAIL"
+        assert attrs["muted"] is True
+        assert attrs["fail_count"] == 2
+        assert attrs["fail_muted_count"] == 2
+        assert attrs["pass_muted_count"] == 0
+        assert attrs["manual_muted_count"] == 0
+        assert attrs["muted_count"] == 2
+        # Sanity: the per-status muted counts must add up to muted_count.
+        assert (
+            attrs["pass_muted_count"]
+            + attrs["fail_muted_count"]
+            + attrs["manual_muted_count"]
+            == attrs["muted_count"]
+        )
 
     def test_finding_groups_status_filter(
         self, authenticated_client, finding_groups_fixture
@@ -15814,7 +15968,7 @@ class TestFindingGroupViewSet:
         "extra_filters",
         [
             {},
-            {"filter[muted]": "include"},
+            {"filter[delta]": "new"},
         ],
         ids=["summary_path", "finding_level_path"],
     )
@@ -15832,7 +15986,8 @@ class TestFindingGroupViewSet:
 
         Parametrized to cover both aggregation paths:
         - summary_path: default, uses _CheckTitleToCheckIdMixin on summaries
-        - finding_level_path: filter[muted]=include forces CommonFindingFilters
+        - finding_level_path: filter[delta]=new forces _aggregate_findings via
+          CommonFindingFilters (delta is finding-level, not summary-level)
         """
         params = {
             "filter[inserted_at]": TODAY,
@@ -16704,6 +16859,39 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         assert len(data) > 0
 
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_delta(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+    ):
+        """Sort by delta orders by new_count then changed_count (lexicographic)."""
+        params = {"sort": "-delta"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        def delta_key(item):
+            attrs = item["attributes"]
+            return (attrs.get("new_count", 0), attrs.get("changed_count", 0))
+
+        desc_keys = [delta_key(item) for item in data]
+        assert desc_keys == sorted(desc_keys, reverse=True)
+
+        # Ascending order produces the inverse arrangement
+        params["sort"] = "delta"
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        asc_keys = [delta_key(item) for item in response.json()["data"]]
+        assert asc_keys == sorted(asc_keys)
+
     def test_finding_groups_latest_ignores_date_filters(
         self, authenticated_client, finding_groups_fixture
     ):
@@ -16717,3 +16905,338 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         # Should still return data, not filtered by the old date
         assert len(data) == 5
+
+    def test_finding_groups_status_choices_no_muted(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Every returned group must have status ∈ {FAIL, PASS, MANUAL}."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        statuses = {item["attributes"]["status"] for item in response.json()["data"]}
+        assert statuses, "fixture should produce at least one group"
+        assert statuses <= {"FAIL", "PASS", "MANUAL"}
+        assert "MUTED" not in statuses
+
+    def test_finding_groups_serializer_exposes_muted_and_manual_count(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /finding-groups payload must expose `muted`, `manual_count` and
+        the per-status muted siblings (`pass_muted_count`/`fail_muted_count`/
+        `manual_muted_count`)."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[check_id]": "iam_password_policy"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attrs = response.json()["data"][0]["attributes"]
+        assert "muted" in attrs and isinstance(attrs["muted"], bool)
+        assert "manual_count" in attrs and isinstance(attrs["manual_count"], int)
+        assert attrs["muted"] is False  # iam_password_policy has only non-muted PASS
+        assert attrs["manual_count"] == 0
+        assert attrs["pass_muted_count"] == 0
+        assert attrs["fail_muted_count"] == 0
+        assert attrs["manual_muted_count"] == 0
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_filter_status_muted_is_rejected(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`filter[status]=MUTED` is no longer a valid status value."""
+        params = {"filter[status]": "MUTED"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_filter_muted_true(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`filter[muted]=true` returns only fully-muted groups."""
+        params = {"filter[muted]": "true"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        # Only rds_encryption is fully muted in the fixture
+        assert check_ids == {"rds_encryption"}
+        assert all(item["attributes"]["muted"] is True for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_filter_muted_false(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`filter[muted]=false` returns only groups with actionable findings."""
+        params = {"filter[muted]": "false"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert "rds_encryption" not in check_ids
+        assert check_ids == {
+            "s3_bucket_public_access",
+            "ec2_instance_public_ip",
+            "iam_password_policy",
+            "cloudtrail_enabled",
+        }
+        assert all(item["attributes"]["muted"] is False for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_status(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """sort=status orders by aggregated status (FAIL > PASS > MANUAL)."""
+        priority = {"FAIL": 3, "PASS": 2, "MANUAL": 1}
+        params = {"sort": "-status"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "fixture should produce groups"
+
+        desc_keys = [priority[item["attributes"]["status"]] for item in data]
+        assert desc_keys == sorted(desc_keys, reverse=True)
+
+        params["sort"] = "status"
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        asc_keys = [
+            priority[item["attributes"]["status"]] for item in response.json()["data"]
+        ]
+        assert asc_keys == sorted(asc_keys)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_muted(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """sort=muted orders by the boolean muted attribute."""
+        # Need include_muted=true so the fully-muted group is part of the result
+        params = {"sort": "-muted", "filter[include_muted]": "true"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "fixture should produce groups"
+
+        muted_values = [item["attributes"]["muted"] for item in data]
+        # Descending boolean: True (1) before False (0)
+        assert muted_values == sorted(muted_values, reverse=True)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "sort_field",
+        [
+            "pass_muted_count",
+            "fail_muted_count",
+            "manual_muted_count",
+            "new_fail_count",
+            "new_fail_muted_count",
+            "new_pass_count",
+            "new_pass_muted_count",
+            "new_manual_count",
+            "new_manual_muted_count",
+            "changed_fail_count",
+            "changed_fail_muted_count",
+            "changed_pass_count",
+            "changed_pass_muted_count",
+            "changed_manual_count",
+            "changed_manual_muted_count",
+        ],
+    )
+    def test_finding_groups_sort_by_counter_fields(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        sort_field,
+    ):
+        """All counter fields are accepted as sort parameters (asc and desc)."""
+        params = {"sort": f"-{sort_field}"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        desc_values = [item["attributes"][sort_field] for item in data]
+        assert desc_values == sorted(desc_values, reverse=True)
+
+        params["sort"] = sort_field
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        asc_values = [
+            item["attributes"][sort_field] for item in response.json()["data"]
+        ]
+        assert asc_values == sorted(asc_values)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_delta_status_breakdown(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`new_*` and `changed_*` counters split by status and mute state.
+
+        s3_bucket_public_access has 1 new FAIL and 1 changed FAIL (both
+        non-muted) so the breakdown must reflect exactly that and the totals
+        must equal the sum of the buckets.
+        """
+        params = {"filter[check_id]": "s3_bucket_public_access"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+
+        assert attrs["new_fail_count"] == 1
+        assert attrs["new_fail_muted_count"] == 0
+        assert attrs["new_pass_count"] == 0
+        assert attrs["new_pass_muted_count"] == 0
+        assert attrs["new_manual_count"] == 0
+        assert attrs["new_manual_muted_count"] == 0
+        assert attrs["changed_fail_count"] == 1
+        assert attrs["changed_fail_muted_count"] == 0
+        assert attrs["changed_pass_count"] == 0
+        assert attrs["changed_pass_muted_count"] == 0
+        assert attrs["changed_manual_count"] == 0
+        assert attrs["changed_manual_muted_count"] == 0
+
+        new_total = (
+            attrs["new_fail_count"]
+            + attrs["new_fail_muted_count"]
+            + attrs["new_pass_count"]
+            + attrs["new_pass_muted_count"]
+            + attrs["new_manual_count"]
+            + attrs["new_manual_muted_count"]
+        )
+        changed_total = (
+            attrs["changed_fail_count"]
+            + attrs["changed_fail_muted_count"]
+            + attrs["changed_pass_count"]
+            + attrs["changed_pass_muted_count"]
+            + attrs["changed_manual_count"]
+            + attrs["changed_manual_muted_count"]
+        )
+        # The non-muted variants of the breakdown must sum to the legacy
+        # totals (new_count/changed_count are stored as non-muted).
+        assert (
+            attrs["new_fail_count"]
+            + attrs["new_pass_count"]
+            + attrs["new_manual_count"]
+            == attrs["new_count"]
+        )
+        assert (
+            attrs["changed_fail_count"]
+            + attrs["changed_pass_count"]
+            + attrs["changed_manual_count"]
+            == attrs["changed_count"]
+        )
+        # And the *full* breakdown (including the muted halves) is exposed
+        # so clients can also count muted-only deltas without losing data.
+        assert new_total >= attrs["new_count"]
+        assert changed_total >= attrs["changed_count"]
+
+    def test_finding_groups_resources_serializer_exposes_muted(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /finding-groups/<id>/resources payload must expose `muted`."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources",
+                kwargs={"pk": "rds_encryption"},
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "rds_encryption should expose its resources"
+        for item in data:
+            attrs = item["attributes"]
+            assert "muted" in attrs and isinstance(attrs["muted"], bool)
+            # rds_encryption has all muted findings
+            assert attrs["muted"] is True
+            # Status reflects the underlying check outcome (FAIL), not MUTED
+            assert attrs["status"] == "FAIL"
+
+    def test_finding_groups_resources_exposes_finding_id(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /resources payload exposes the most recent matching finding_id.
+
+        rds_encryption has 2 findings, one per resource. Each resource row must
+        report the UUID of its corresponding Finding (UUIDv7 ordering means
+        Max(finding__id) resolves to the latest snapshot in time).
+        """
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources",
+                kwargs={"pk": "rds_encryption"},
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "rds_encryption should expose its resources"
+
+        rds_finding_ids = {
+            str(f.id) for f in finding_groups_fixture if f.check_id == "rds_encryption"
+        }
+        assert rds_finding_ids, "fixture sanity"
+
+        for item in data:
+            attrs = item["attributes"]
+            assert "finding_id" in attrs
+            assert attrs["finding_id"] in rds_finding_ids
+
+    def test_finding_groups_latest_resources_exposes_finding_id(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /latest/.../resources payload also exposes finding_id."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": "rds_encryption"},
+            ),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "rds_encryption should expose its resources via /latest"
+
+        rds_finding_ids = {
+            str(f.id) for f in finding_groups_fixture if f.check_id == "rds_encryption"
+        }
+        for item in data:
+            attrs = item["attributes"]
+            assert "finding_id" in attrs
+            assert attrs["finding_id"] in rds_finding_ids

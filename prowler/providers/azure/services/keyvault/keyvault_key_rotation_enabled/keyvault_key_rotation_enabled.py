@@ -7,23 +7,21 @@ class keyvault_key_rotation_enabled(Check):
         findings = []
         for subscription, key_vaults in keyvault_client.key_vaults.items():
             for keyvault in key_vaults:
-                if keyvault.keys:
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource=keyvault
-                    )
+                for key in keyvault.keys or []:
+                    report = Check_Report_Azure(metadata=self.metadata(), resource=key)
                     report.subscription = subscription
-                    for key in keyvault.keys:
-                        if (
-                            key.rotation_policy
-                            and key.rotation_policy.lifetime_actions
-                            and key.rotation_policy.lifetime_actions[0].action
-                            == "Rotate"
-                        ):
-                            report.status = "PASS"
-                            report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has the key {key.name} with rotation policy set."
-                        else:
-                            report.status = "FAIL"
-                            report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has the key {key.name} without rotation policy set."
-
-                        findings.append(report)
+                    if (
+                        key.rotation_policy
+                        and key.rotation_policy.lifetime_actions
+                        and any(
+                            action.action == "Rotate"
+                            for action in key.rotation_policy.lifetime_actions
+                        )
+                    ):
+                        report.status = "PASS"
+                        report.status_extended = f"Key {key.name} in Key Vault {keyvault.name} from subscription {subscription} has a rotation policy set."
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = f"Key {key.name} in Key Vault {keyvault.name} from subscription {subscription} does not have a rotation policy set."
+                    findings.append(report)
         return findings
