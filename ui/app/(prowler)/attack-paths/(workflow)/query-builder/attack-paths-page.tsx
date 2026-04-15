@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Info, Maximize2, TriangleAlert, X } from "lucide-react";
+import { ArrowLeft, Info, Maximize2, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -120,8 +120,8 @@ export default function AttackPathsPage() {
   // Check if there's an executing scan for auto-refresh
   const hasExecutingScan = scans.some(
     (scan) =>
-      scan.attributes.state === "executing" ||
-      scan.attributes.state === "scheduled",
+      scan.attributes.state === SCAN_STATES.EXECUTING ||
+      scan.attributes.state === SCAN_STATES.SCHEDULED,
   );
 
   // Detect if the selected scan is showing data from a previous cycle
@@ -358,11 +358,11 @@ export default function AttackPathsPage() {
         <h2 className="dark:text-prowler-theme-pale/90 text-xl font-semibold">
           Attack Paths
         </h2>
-        <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-2 text-sm">
+        <p className="text-text-neutral-secondary mt-2 text-sm">
           Select a scan, build a query, and visualize Attack Paths in your
           infrastructure.
         </p>
-        <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-1 text-xs">
+        <p className="text-text-neutral-secondary mt-1 text-xs">
           Scans can be selected when data is available. A new scan does not
           interrupt access to existing data.
         </p>
@@ -394,11 +394,8 @@ export default function AttackPathsPage() {
 
           {/* Banner: viewing data from a previous scan cycle */}
           {isViewingPreviousCycleData && (
-            <Alert
-              variant="default"
-              className="border-border-warning-secondary bg-bg-warning-secondary"
-            >
-              <TriangleAlert className="text-text-warning-primary size-4" />
+            <Alert variant="info">
+              <Info className="size-4" />
               <AlertTitle>Viewing data from a previous scan</AlertTitle>
               <AlertDescription>
                 This scan is currently{" "}
@@ -605,7 +602,7 @@ export default function AttackPathsPage() {
                                           <X size={16} />
                                         </Button>
                                       </div>
-                                      <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mb-4 text-xs">
+                                      <p className="text-text-neutral-secondary mb-4 text-xs">
                                         {graphState.selectedNode?.labels.some(
                                           (label) =>
                                             label
@@ -628,7 +625,7 @@ export default function AttackPathsPage() {
                                           <h4 className="mb-2 text-xs font-semibold">
                                             Type
                                           </h4>
-                                          <p className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
+                                          <p className="text-text-neutral-secondary text-xs">
                                             {graphState.selectedNode?.labels
                                               .map(formatNodeLabel)
                                               .join(", ")}
@@ -678,7 +675,7 @@ export default function AttackPathsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold">Node Details</h3>
-                  <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-1 text-sm">
+                  <p className="text-text-neutral-secondary mt-1 text-sm">
                     {String(
                       graphState.selectedNode.labels.some((label) =>
                         label.toLowerCase().includes("finding"),
