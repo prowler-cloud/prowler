@@ -180,8 +180,8 @@ export interface GraphNode {
 
 export interface GraphEdge {
   id: string;
-  source: string | object;
-  target: string | object;
+  source: string;
+  target: string;
   type: string;
   properties?: GraphNodeProperties;
 }
@@ -268,9 +268,6 @@ export interface GraphState {
   selectedNodeId: string | null;
   loading: boolean;
   error: string | null;
-  zoomLevel: number;
-  panX: number;
-  panY: number;
 }
 
 // Provider Integration

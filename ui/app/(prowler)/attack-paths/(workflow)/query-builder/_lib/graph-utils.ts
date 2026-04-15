@@ -5,23 +5,6 @@
 import type { AttackPathGraphData } from "@/types/attack-paths";
 
 /**
- * Type for edge node reference - can be a string ID or an object with id property
- * Note: We use `object` to match GraphEdge type from attack-paths.ts
- */
-export type EdgeNodeRef = string | object;
-
-/**
- * Helper to get edge source/target ID from string or object
- */
-export const getEdgeNodeId = (nodeRef: EdgeNodeRef): string => {
-  if (typeof nodeRef === "string") {
-    return nodeRef;
-  }
-  // Edge node references are objects with an id property
-  return (nodeRef as { id: string }).id;
-};
-
-/**
  * Compute a filtered subgraph containing only the path through the target node.
  * This follows the directed graph structure of attack paths:
  * - Upstream: traces back to the root (AWS Account)
@@ -44,10 +27,8 @@ export const computeFilteredSubgraph = (
   });
 
   edges.forEach((edge) => {
-    const sourceId = getEdgeNodeId(edge.source);
-    const targetId = getEdgeNodeId(edge.target);
-    forwardEdges.get(sourceId)?.add(targetId);
-    backwardEdges.get(targetId)?.add(sourceId);
+    forwardEdges.get(edge.source)?.add(edge.target);
+    backwardEdges.get(edge.target)?.add(edge.source);
   });
 
   const visibleNodeIds = new Set<string>();
@@ -85,10 +66,8 @@ export const computeFilteredSubgraph = (
 
   // Also include findings directly connected to the selected node
   edges.forEach((edge) => {
-    const sourceId = getEdgeNodeId(edge.source);
-    const targetId = getEdgeNodeId(edge.target);
-    const sourceNode = nodes.find((n) => n.id === sourceId);
-    const targetNode = nodes.find((n) => n.id === targetId);
+    const sourceNode = nodes.find((n) => n.id === edge.source);
+    const targetNode = nodes.find((n) => n.id === edge.target);
 
     const sourceIsFinding = sourceNode?.labels.some((l) =>
       l.toLowerCase().includes("finding"),
@@ -98,21 +77,20 @@ export const computeFilteredSubgraph = (
     );
 
     // Include findings connected to the selected node
-    if (sourceId === targetNodeId && targetIsFinding) {
-      visibleNodeIds.add(targetId);
+    if (edge.source === targetNodeId && targetIsFinding) {
+      visibleNodeIds.add(edge.target);
     }
-    if (targetId === targetNodeId && sourceIsFinding) {
-      visibleNodeIds.add(sourceId);
+    if (edge.target === targetNodeId && sourceIsFinding) {
+      visibleNodeIds.add(edge.source);
     }
   });
 
   // Filter nodes and edges to only include visible ones
   const filteredNodes = nodes.filter((node) => visibleNodeIds.has(node.id));
-  const filteredEdges = edges.filter((edge) => {
-    const sourceId = getEdgeNodeId(edge.source);
-    const targetId = getEdgeNodeId(edge.target);
-    return visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId);
-  });
+  const filteredEdges = edges.filter(
+    (edge) =>
+      visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target),
+  );
 
   return {
     nodes: filteredNodes,

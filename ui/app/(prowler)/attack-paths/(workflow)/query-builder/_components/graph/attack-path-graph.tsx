@@ -302,20 +302,8 @@ const AttackPathGraphComponent = forwardRef<
     // Add edges to dagre graph
     if (data.edges && Array.isArray(data.edges)) {
       data.edges.forEach((edge) => {
-        const source = edge.source;
-        const target = edge.target;
-        let sourceId =
-          typeof source === "string"
-            ? source
-            : typeof source === "object" && source !== null
-              ? (source as GraphNode).id
-              : "";
-        let targetId =
-          typeof target === "string"
-            ? target
-            : typeof target === "object" && target !== null
-              ? (target as GraphNode).id
-              : "";
+        let sourceId = edge.source;
+        let targetId = edge.target;
 
         // Reverse container relationships for proper hierarchy
         if (containerRelations.has(edge.type)) {
@@ -324,14 +312,8 @@ const AttackPathGraphComponent = forwardRef<
 
         if (sourceId && targetId) {
           g.setEdge(sourceId, targetId, {
-            originalSource:
-              typeof edge.source === "string"
-                ? edge.source
-                : (edge.source as GraphNode).id,
-            originalTarget:
-              typeof edge.target === "string"
-                ? edge.target
-                : (edge.target as GraphNode).id,
+            originalSource: edge.source,
+            originalTarget: edge.target,
           });
         }
       });
@@ -682,17 +664,9 @@ const AttackPathGraphComponent = forwardRef<
           // Find connected findings for THIS node
           const connectedFindings = new Set<string>();
           data.edges?.forEach((edge) => {
-            const sourceId =
-              typeof edge.source === "string"
-                ? edge.source
-                : (edge.source as GraphNode).id;
-            const targetId =
-              typeof edge.target === "string"
-                ? edge.target
-                : (edge.target as GraphNode).id;
-
-            if (sourceId === node.id || targetId === node.id) {
-              const otherId = sourceId === node.id ? targetId : sourceId;
+            if (edge.source === node.id || edge.target === node.id) {
+              const otherId =
+                edge.source === node.id ? edge.target : edge.source;
               const otherNode = data.nodes.find((n) => n.id === otherId);
               if (
                 otherNode?.labels.some((label) =>
@@ -847,17 +821,8 @@ const AttackPathGraphComponent = forwardRef<
     // Build a set of resource nodes that have findings connected to them
     const resourcesWithFindings = new Set<string>();
     data.edges?.forEach((edge) => {
-      const sourceId =
-        typeof edge.source === "string"
-          ? edge.source
-          : (edge.source as GraphNode).id;
-      const targetId =
-        typeof edge.target === "string"
-          ? edge.target
-          : (edge.target as GraphNode).id;
-
-      const sourceNode = nodeDataMap.get(sourceId);
-      const targetNode = nodeDataMap.get(targetId);
+      const sourceNode = nodeDataMap.get(edge.source);
+      const targetNode = nodeDataMap.get(edge.target);
 
       const sourceIsFinding = sourceNode?.labels.some((l) =>
         l.toLowerCase().includes("finding"),
@@ -868,10 +833,10 @@ const AttackPathGraphComponent = forwardRef<
 
       // If one end is a finding, the other is a resource with findings
       if (sourceIsFinding && !targetIsFinding) {
-        resourcesWithFindings.add(targetId);
+        resourcesWithFindings.add(edge.target);
       }
       if (targetIsFinding && !sourceIsFinding) {
-        resourcesWithFindings.add(sourceId);
+        resourcesWithFindings.add(edge.source);
       }
     });
 
