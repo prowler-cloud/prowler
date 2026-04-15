@@ -7580,12 +7580,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
             .order_by(*ordering)
         )
 
-    def _has_orphan_findings(self, filtered_queryset) -> bool:
-        """Return True if any finding in the filtered set has no resource mapping."""
-        return filtered_queryset.filter(
-            ~Exists(ResourceFindingMapping.objects.filter(finding_id=OuterRef("pk")))
-        ).exists()
-
     def _orphan_findings_queryset(self, filtered_queryset, finding_ids=None):
         """Findings in the filtered set with no ResourceFindingMapping entries."""
         orphan_qs = filtered_queryset.filter(
@@ -7594,6 +7588,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
         if finding_ids is not None:
             orphan_qs = orphan_qs.filter(id__in=finding_ids)
         return orphan_qs
+
+    def _has_orphan_findings(self, filtered_queryset) -> bool:
+        """Return True if any finding in the filtered set has no resource mapping."""
+        return self._orphan_findings_queryset(filtered_queryset).exists()
 
     def _orphan_aggregation_values(self, orphan_queryset):
         """Raw rows for orphan findings; resource payload synthesized from metadata.
@@ -7606,35 +7604,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
             _provider_type=F("scan__provider__provider"),
             _provider_uid=F("scan__provider__uid"),
             _provider_alias=F("scan__provider__alias"),
-            _svc=Coalesce(
-                Cast(
-                    KeyTextTransform("servicename", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Value("", output_field=CharField()),
-                output_field=CharField(),
-            ),
-            _region=Coalesce(
-                Cast(
-                    KeyTextTransform("region", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Value("", output_field=CharField()),
-                output_field=CharField(),
-            ),
-            _rtype=Coalesce(
-                Cast(
-                    KeyTextTransform("resourcetype", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Value("", output_field=CharField()),
-                output_field=CharField(),
-            ),
-            _rgroup=Coalesce(
-                Cast(F("resource_groups"), output_field=CharField()),
-                Value("", output_field=CharField()),
-                output_field=CharField(),
-            ),
+            _svc=KeyTextTransform("servicename", "check_metadata"),
+            _region=KeyTextTransform("region", "check_metadata"),
+            _rtype=KeyTextTransform("resourcetype", "check_metadata"),
+            _rgroup=F("resource_groups"),
         ).values(
             "id",
             "uid",
@@ -7711,21 +7684,11 @@ class FindingGroupViewSet(BaseRLSViewSet):
         results = []
         for row in orphan_rows:
             status_val = row["status"]
-            if status_val == "FAIL":
-                status = "FAIL"
-            elif status_val == "PASS":
-                status = "PASS"
-            else:
-                status = "MANUAL"
+            status = status_val if status_val in ("FAIL", "PASS") else "MANUAL"
 
-            delta_val = row.get("delta")
             muted = bool(row["muted"])
-            if delta_val == "new" and not muted:
-                delta = "new"
-            elif delta_val == "changed" and not muted:
-                delta = "changed"
-            else:
-                delta = None
+            delta_val = row.get("delta")
+            delta = delta_val if delta_val in ("new", "changed") and not muted else None
 
             finding_id = str(row["id"])
 
@@ -7976,7 +7939,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         # Paginate a simple [0..total) index sequence so DRF produces proper
         # links/meta; then slice mapping / orphan sources accordingly.
-        page = self.paginate_queryset(list(range(total)))
+        page = self.paginate_queryset(range(total))
         page_indices = list(page) if page is not None else list(range(total))
 
         mapping_indices = [i for i in page_indices if i < mapping_count]
