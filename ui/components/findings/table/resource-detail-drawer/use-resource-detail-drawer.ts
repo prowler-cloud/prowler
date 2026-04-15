@@ -269,10 +269,13 @@ export function useResourceDetailDrawer({
   const currentFinding =
     findings.find((f) => f.checkId === checkId) ?? findings[0] ?? null;
 
-  // All other findings for this resource
-  const otherFindings = currentFinding
-    ? findings.filter((f) => f.id !== currentFinding.id)
-    : findings;
+  // "Other Findings For This Resource" intentionally shows only FAIL entries,
+  // while currentFinding (the drilled-down one) can be any status (FAIL, MANUAL, PASS…).
+  const otherFindings = (
+    currentFinding
+      ? findings.filter((f) => f.id !== currentFinding.id)
+      : findings
+  ).filter((f) => f.status === "FAIL");
 
   return {
     isOpen,
