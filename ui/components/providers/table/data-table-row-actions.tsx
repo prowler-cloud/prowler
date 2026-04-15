@@ -6,10 +6,10 @@ import { useState } from "react";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
-import { ProviderWizardModal } from "@/components/providers/wizard";
 import {
   ORG_WIZARD_INTENT,
   OrgWizardInitialData,
+  ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
 import {
   ActionDropdown,
@@ -44,6 +44,8 @@ interface DataTableRowActionsProps {
   testableProviderIds: string[];
   /** Callback to clear the row selection after bulk operation */
   onClearSelection: () => void;
+  onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
+  onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
 }
 
 function collectTestableChildProviderIds(rows: ProvidersTableRow[]): string[] {
@@ -69,6 +71,7 @@ interface OrgGroupDropdownActionsProps {
   onClearSelection: () => void;
   onBulkTest: (ids: string[]) => Promise<void>;
   onTestChildConnections: () => Promise<void>;
+  onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
 }
 
 function OrgGroupDropdownActions({
@@ -80,12 +83,10 @@ function OrgGroupDropdownActions({
   onClearSelection,
   onBulkTest,
   onTestChildConnections,
+  onOpenOrganizationWizard,
 }: OrgGroupDropdownActionsProps) {
   const [isDeleteOrgOpen, setIsDeleteOrgOpen] = useState(false);
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
-  const [isOrgWizardOpen, setIsOrgWizardOpen] = useState(false);
-  const [orgWizardData, setOrgWizardData] =
-    useState<OrgWizardInitialData | null>(null);
 
   const isOrgKind = rowData.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION;
   const testIds = hasSelection ? testableProviderIds : childTestableIds;
@@ -97,7 +98,7 @@ function OrgGroupDropdownActions({
     targetPhase: OrgWizardInitialData["targetPhase"],
     intent?: OrgWizardInitialData["intent"],
   ) => {
-    setOrgWizardData({
+    onOpenOrganizationWizard({
       organizationId: rowData.id,
       organizationName: rowData.name,
       externalId: rowData.externalId ?? "",
@@ -105,33 +106,25 @@ function OrgGroupDropdownActions({
       targetPhase,
       intent,
     });
-    setIsOrgWizardOpen(true);
   };
 
   return (
     <>
       {isOrgKind && (
-        <>
-          <Modal
-            open={isEditNameOpen}
-            onOpenChange={setIsEditNameOpen}
-            title="Edit Organization Name"
-          >
-            <EditNameForm
-              currentValue={rowData.name}
-              label="Name"
-              successMessage="The organization name was updated successfully."
-              helperText="If left blank, Prowler will use the name stored in AWS."
-              setIsOpen={setIsEditNameOpen}
-              onSave={(name) => updateOrganizationName(rowData.id, name)}
-            />
-          </Modal>
-          <ProviderWizardModal
-            open={isOrgWizardOpen}
-            onOpenChange={setIsOrgWizardOpen}
-            orgInitialData={orgWizardData ?? undefined}
+        <Modal
+          open={isEditNameOpen}
+          onOpenChange={setIsEditNameOpen}
+          title="Edit Organization Name"
+        >
+          <EditNameForm
+            currentValue={rowData.name}
+            label="Name"
+            successMessage="The organization name was updated successfully."
+            helperText="If left blank, Prowler will use the name stored in AWS."
+            setIsOpen={setIsEditNameOpen}
+            onSave={(name) => updateOrganizationName(rowData.id, name)}
           />
-        </>
+        </Modal>
       )}
       <Modal
         open={isDeleteOrgOpen}
@@ -205,10 +198,11 @@ export function DataTableRowActions({
   isRowSelected,
   testableProviderIds,
   onClearSelection,
+  onOpenProviderWizard,
+  onOpenOrganizationWizard,
 }: DataTableRowActionsProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -323,6 +317,7 @@ export function DataTableRowActions({
         onClearSelection={onClearSelection}
         onBulkTest={handleBulkTest}
         onTestChildConnections={handleTestChildConnections}
+        onOpenOrganizationWizard={onOpenOrganizationWizard}
       />
     );
   }
@@ -369,21 +364,6 @@ export function DataTableRowActions({
           <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
         )}
       </Modal>
-      <ProviderWizardModal
-        open={isWizardOpen}
-        onOpenChange={setIsWizardOpen}
-        initialData={{
-          providerId,
-          providerType,
-          providerUid,
-          providerAlias,
-          secretId: providerSecretId,
-          mode: providerSecretId
-            ? PROVIDER_WIZARD_MODE.UPDATE
-            : PROVIDER_WIZARD_MODE.ADD,
-        }}
-      />
-
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown>
           <ActionDropdownItem
@@ -393,8 +373,19 @@ export function DataTableRowActions({
           />
           <ActionDropdownItem
             icon={<KeyRound />}
-            label="Update Credentials"
-            onSelect={() => setIsWizardOpen(true)}
+            label={hasSecret ? "Update Credentials" : "Add Credentials"}
+            onSelect={() =>
+              onOpenProviderWizard({
+                providerId,
+                providerType,
+                providerUid,
+                providerAlias,
+                secretId: providerSecretId,
+                mode: providerSecretId
+                  ? PROVIDER_WIZARD_MODE.UPDATE
+                  : PROVIDER_WIZARD_MODE.ADD,
+              })
+            }
           />
           <ActionDropdownItem
             icon={<Rocket />}

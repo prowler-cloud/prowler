@@ -9,6 +9,10 @@ import {
 } from "@/actions/findings";
 import { FindingResourceRow } from "@/types";
 
+// Keep fast carousel navigations in a loading state for one short beat so
+// React doesn't batch away the skeleton frame when switching resources.
+const MIN_NAVIGATION_SKELETON_MS = 300;
+
 /**
  * Check-level metadata that is identical across all resources for a given check.
  * Extracted once on first successful fetch and kept stable during navigation.
@@ -42,6 +46,7 @@ interface UseResourceDetailDrawerOptions {
   checkId: string;
   totalResourceCount?: number;
   onRequestMoreResources?: () => void;
+  initialIndex?: number | null;
 }
 
 interface UseResourceDetailDrawerReturn {
@@ -73,28 +78,76 @@ export function useResourceDetailDrawer({
   checkId,
   totalResourceCount,
   onRequestMoreResources,
+  initialIndex = null,
 }: UseResourceDetailDrawerOptions): UseResourceDetailDrawerReturn {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialIndex !== null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex ?? 0);
   const [findings, setFindings] = useState<ResourceDrawerFinding[]>([]);
   const [isNavigating, setIsNavigating] = useState(false);
 
   const cacheRef = useRef<Map<string, ResourceDrawerFinding[]>>(new Map());
   const checkMetaRef = useRef<CheckMeta | null>(null);
   const fetchControllerRef = useRef<AbortController | null>(null);
+  const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const navigationStartedAtRef = useRef<number | null>(null);
+
+  const clearNavigationTimeout = () => {
+    if (navigationTimeoutRef.current !== null) {
+      clearTimeout(navigationTimeoutRef.current);
+      navigationTimeoutRef.current = null;
+    }
+  };
+
+  const finishNavigation = () => {
+    clearNavigationTimeout();
+    setIsLoading(false);
+
+    const navigationStartedAt = navigationStartedAtRef.current;
+    if (navigationStartedAt === null) {
+      navigationStartedAtRef.current = null;
+      setIsNavigating(false);
+      return;
+    }
+
+    const elapsed = Date.now() - navigationStartedAt;
+    const remaining = Math.max(0, MIN_NAVIGATION_SKELETON_MS - elapsed);
+
+    if (remaining === 0) {
+      navigationStartedAtRef.current = null;
+      setIsNavigating(false);
+      return;
+    }
+
+    navigationTimeoutRef.current = setTimeout(() => {
+      setIsNavigating(false);
+      navigationStartedAtRef.current = null;
+      navigationTimeoutRef.current = null;
+    }, remaining);
+  };
+
+  const startNavigation = () => {
+    clearNavigationTimeout();
+    navigationStartedAtRef.current = Date.now();
+    setIsNavigating(true);
+  };
 
   // Abort any in-flight request on unmount to prevent state updates
   // on an already-unmounted component.
   useEffect(() => {
     return () => {
       fetchControllerRef.current?.abort();
+      clearNavigationTimeout();
+      navigationStartedAtRef.current = null;
     };
   }, []);
 
   const fetchFindings = async (resourceUid: string) => {
     // Abort any in-flight request to prevent stale data from out-of-order responses
     fetchControllerRef.current?.abort();
+    clearNavigationTimeout();
     const controller = new AbortController();
     fetchControllerRef.current = controller;
 
@@ -106,8 +159,7 @@ export function useResourceDetailDrawer({
         if (main) checkMetaRef.current = extractCheckMeta(main);
       }
       setFindings(cached);
-      setIsLoading(false);
-      setIsNavigating(false);
+      finishNavigation();
       return;
     }
 
@@ -131,22 +183,40 @@ export function useResourceDetailDrawer({
     } catch (error) {
       if (!controller.signal.aborted) {
         console.error("Error fetching findings for resource:", error);
-        // Don't clear findings — keep previous data as fallback during navigation
+        setFindings([]);
       }
     } finally {
       if (!controller.signal.aborted) {
-        setIsLoading(false);
-        setIsNavigating(false);
+        finishNavigation();
       }
     }
   };
+
+  useEffect(() => {
+    if (initialIndex === null) {
+      return;
+    }
+
+    const resource = resources[initialIndex];
+    if (!resource) {
+      return;
+    }
+
+    fetchFindings(resource.resourceUid);
+    // Only initialize once on mount for deep-link/inline entry points.
+    // User-driven navigations use openDrawer/navigateTo afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openDrawer = (index: number) => {
     const resource = resources[index];
     if (!resource) return;
 
+    clearNavigationTimeout();
+    navigationStartedAtRef.current = null;
     setCurrentIndex(index);
     setIsOpen(true);
+    setIsNavigating(false);
     setFindings([]);
     fetchFindings(resource.resourceUid);
   };
@@ -159,7 +229,8 @@ export function useResourceDetailDrawer({
     const resource = resources[currentIndex];
     if (!resource) return;
     cacheRef.current.delete(resource.resourceUid);
-    setIsNavigating(true);
+    startNavigation();
+    setFindings([]);
     fetchFindings(resource.resourceUid);
   };
 
@@ -168,7 +239,8 @@ export function useResourceDetailDrawer({
     if (!resource) return;
 
     setCurrentIndex(index);
-    setIsNavigating(true);
+    startNavigation();
+    setFindings([]);
     fetchFindings(resource.resourceUid);
   };
 
@@ -197,10 +269,13 @@ export function useResourceDetailDrawer({
   const currentFinding =
     findings.find((f) => f.checkId === checkId) ?? findings[0] ?? null;
 
-  // All other findings for this resource
-  const otherFindings = currentFinding
-    ? findings.filter((f) => f.id !== currentFinding.id)
-    : findings;
+  // "Other Findings For This Resource" intentionally shows only FAIL entries,
+  // while currentFinding (the drilled-down one) can be any status (FAIL, MANUAL, PASS…).
+  const otherFindings = (
+    currentFinding
+      ? findings.filter((f) => f.id !== currentFinding.id)
+      : findings
+  ).filter((f) => f.status === "FAIL");
 
   return {
     isOpen,

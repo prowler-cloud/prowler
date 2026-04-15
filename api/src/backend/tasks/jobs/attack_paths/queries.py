@@ -80,17 +80,6 @@ INSERT_FINDING_TEMPLATE = f"""
             rel.lastupdated = $last_updated
 """
 
-CLEANUP_FINDINGS_TEMPLATE = f"""
-    MATCH (finding:{PROWLER_FINDING_LABEL})
-        WHERE finding.lastupdated < $last_updated
-
-    WITH finding LIMIT $batch_size
-
-    DETACH DELETE finding
-
-    RETURN COUNT(finding) AS deleted_findings_count
-"""
-
 # Internet queries (used by internet.py)
 # ---------------------------------------
 

@@ -103,7 +103,7 @@ repos:
 
   ## POETRY (check before lock)
   - repo: https://github.com/python-poetry/poetry
-    rev: 2.1.1
+    rev: 2.3.4
     hooks:
       - id: poetry-check
         name: API - poetry-check
@@ -158,7 +158,11 @@ repos:
       - id: safety
         name: safety
         description: "Safety is a tool that checks your installed dependencies for known security vulnerabilities"
-        entry: bash -c 'safety check --ignore 70612,66963,74429,76352,76353,77744,77745,79023,79027,86217'
+        # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
+        # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
+        # TODO: 86217 because `alibabacloud-tea-openapi == 0.4.3` don't let us upgrade `cryptography >= 46.0.0`
+        # TODO: 71600 CVE-2024-1135 false positive - fixed in gunicorn 22.0.0, project uses 23.0.0
+        entry: bash -c 'safety check --ignore 70612,66963,74429,76352,76353,77744,77745,79023,79027,86217,71600'
         language: system
         priority: 5
 

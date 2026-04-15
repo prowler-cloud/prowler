@@ -17,6 +17,8 @@ concurrency:
 env:
   API_WORKING_DIR: ./api
 
+permissions: {}
+
 jobs:
   api-security-scans:
     runs-on: ubuntu-latest
@@ -53,7 +55,7 @@ jobs:
 
       - name: Check for API changes
         id: check-changes
-        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             api/**
@@ -70,6 +72,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
+          update-lock: 'true'
 
       - name: Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -77,9 +80,10 @@ jobs:
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check --ignore 79023,79027,86217
+        run: poetry run safety check --ignore 79023,79027,86217,71600
         # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
         # TODO: 86217 because `alibabacloud-tea-openapi == 0.4.3` don't let us upgrade `cryptography >= 46.0.0`
+        # TODO: 71600 CVE-2024-1135 false positive - fixed in gunicorn 22.0.0, project uses 23.0.0
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'
