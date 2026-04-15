@@ -4,13 +4,17 @@ import { ColumnDef } from "@tanstack/react-table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/shadcn/button/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/table";
 import { formatDuration } from "@/lib/date-utils";
 import type { MetaDataProps, ProviderType } from "@/types";
-import type { AttackPathScan, ScanState } from "@/types/attack-paths";
-import { SCAN_STATES } from "@/types/attack-paths";
+import type { AttackPathScan } from "@/types/attack-paths";
 
 import { ScanStatusBadge } from "./scan-status-badge";
 
@@ -20,11 +24,6 @@ interface ScanListTableProps {
 
 const DEFAULT_PAGE_SIZE = 5;
 const PAGE_SIZE_OPTIONS = [2, 5, 10, 15];
-const WAITING_STATES: readonly ScanState[] = [
-  SCAN_STATES.SCHEDULED,
-  SCAN_STATES.AVAILABLE,
-  SCAN_STATES.EXECUTING,
-];
 
 const parsePageParam = (value: string | null, fallback: number) => {
   if (!value) return fallback;
@@ -57,15 +56,7 @@ const getSelectButtonLabel = (
     return "Select";
   }
 
-  if (WAITING_STATES.includes(scan.attributes.state)) {
-    return "Waiting...";
-  }
-
-  if (scan.attributes.state === SCAN_STATES.FAILED) {
-    return "Failed";
-  }
-
-  return "Select";
+  return "Unavailable";
 };
 
 const getSelectedRowSelection = (
@@ -171,20 +162,35 @@ const getColumns = ({
     cell: ({ row }) => {
       const isDisabled = isSelectDisabled(row.original, selectedScanId);
 
-      return (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            aria-label="Select scan"
-            disabled={isDisabled}
-            variant={isDisabled ? "secondary" : "default"}
-            onClick={() => onSelectScan(row.original.id)}
-            className="w-full max-w-24"
-          >
-            {getSelectButtonLabel(row.original, selectedScanId)}
-          </Button>
-        </div>
+      const button = (
+        <Button
+          type="button"
+          aria-label="Select scan"
+          disabled={isDisabled}
+          variant={isDisabled ? "secondary" : "default"}
+          onClick={() => onSelectScan(row.original.id)}
+          className="w-full max-w-24"
+        >
+          {getSelectButtonLabel(row.original, selectedScanId)}
+        </Button>
       );
+
+      if (isDisabled && selectedScanId !== row.original.id) {
+        return (
+          <div className="flex justify-end">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="w-full max-w-24" tabIndex={0}>
+                  {button}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Graph data not yet available</TooltipContent>
+            </Tooltip>
+          </div>
+        );
+      }
+
+      return <div className="flex justify-end">{button}</div>;
     },
     enableSorting: false,
   },

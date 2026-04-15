@@ -8,6 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { cn } from "@/lib/utils";
 import type { ScanState } from "@/types/attack-paths";
 import { SCAN_STATES } from "@/types/attack-paths";
 
@@ -28,12 +29,12 @@ const BADGE_CONFIG: Record<
   [SCAN_STATES.EXECUTING]: {
     className: "bg-bg-warning-secondary text-text-neutral-primary",
     label: "In Progress",
-    showGraphDot: false,
+    showGraphDot: true,
   },
   [SCAN_STATES.COMPLETED]: {
     className: "bg-bg-pass-secondary text-text-success-primary",
     label: "Completed",
-    showGraphDot: false,
+    showGraphDot: true,
   },
   [SCAN_STATES.FAILED]: {
     className: "bg-bg-fail-secondary text-text-error-primary",
@@ -65,14 +66,16 @@ export const ScanStatusBadge = ({
       ? "Graph not available"
       : "Graph not available yet";
 
+  const spinner = status === SCAN_STATES.EXECUTING && (
+    <Loader2 size={14} className="animate-spin" />
+  );
+
   const icon =
     status === SCAN_STATES.EXECUTING ? (
-      <Loader2
-        size={14}
-        className={
-          graphDataReady ? "animate-spin text-green-500" : "animate-spin"
-        }
-      />
+      <>
+        {graphDot}
+        {spinner}
+      </>
     ) : (
       graphDot
     );
@@ -85,7 +88,7 @@ export const ScanStatusBadge = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Badge className={`${config.className} gap-2`}>
+        <Badge className={cn(config.className, "gap-2")}>
           {icon}
           <span>{label}</span>
         </Badge>

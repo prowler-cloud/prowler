@@ -24,6 +24,36 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => navigationState.searchParams,
 }));
 
+vi.mock("@/components/shadcn/tooltip", () => ({
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({
+    children,
+    asChild: _asChild,
+    ...props
+  }: {
+    children: ReactNode;
+    asChild?: boolean;
+  }) => <div {...props}>{children}</div>,
+  TooltipContent: ({ children }: { children: ReactNode }) => (
+    <div role="tooltip">{children}</div>
+  ),
+}));
+
+vi.mock("./scan-status-badge", () => ({
+  ScanStatusBadge: ({
+    status,
+    graphDataReady,
+  }: {
+    status: string;
+    graphDataReady?: boolean;
+  }) => (
+    <span>
+      {status}
+      {graphDataReady && " (graph ready)"}
+    </span>
+  ),
+}));
+
 vi.mock("@/components/ui/entities/entity-info", () => ({
   EntityInfo: ({
     entityAlias,
@@ -201,6 +231,114 @@ describe("ScanListTable", () => {
 
     const button = screen.getByRole("button", { name: "Select scan" });
     expect(button).toBeDisabled();
-    expect(button).toHaveTextContent("Failed");
+    expect(button).toHaveTextContent("Unavailable");
+  });
+
+  // PROWLER-1383: Button label based on graph_data_ready instead of scan state
+  it("shows 'Unavailable' for scheduled scan when graph data is not ready", () => {
+    const scheduledScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "scheduled",
+        graph_data_ready: false,
+      },
+    };
+
+    render(<ScanListTable scans={[scheduledScan]} />);
+
+    const button = screen.getByRole("button", { name: "Select scan" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent("Unavailable");
+  });
+
+  it("shows 'Unavailable' for executing scan when graph data is not ready", () => {
+    const executingScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "executing",
+        progress: 45,
+        graph_data_ready: false,
+      },
+    };
+
+    render(<ScanListTable scans={[executingScan]} />);
+
+    const button = screen.getByRole("button", { name: "Select scan" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent("Unavailable");
+  });
+
+  // PROWLER-1383: Enable Select on scheduled/executing scans with graph data from previous cycle
+  it("enables 'Select' for executing scan when graph data is ready from previous cycle", async () => {
+    const user = userEvent.setup();
+    const executingScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "executing",
+        progress: 30,
+        graph_data_ready: true,
+      },
+    };
+
+    render(<ScanListTable scans={[executingScan]} />);
+
+    const button = screen.getByRole("button", { name: "Select scan" });
+    expect(button).toBeEnabled();
+    expect(button).toHaveTextContent("Select");
+
+    await user.click(button);
+    expect(pushMock).toHaveBeenCalledWith(
+      "/attack-paths?scanPage=1&scanPageSize=5&scanId=scan-1",
+    );
+  });
+
+  it("enables 'Select' for scheduled scan when graph data is ready from previous cycle", async () => {
+    const user = userEvent.setup();
+    const scheduledScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "scheduled",
+        graph_data_ready: true,
+      },
+    };
+
+    render(<ScanListTable scans={[scheduledScan]} />);
+
+    const button = screen.getByRole("button", { name: "Select scan" });
+    expect(button).toBeEnabled();
+    expect(button).toHaveTextContent("Select");
+
+    await user.click(button);
+    expect(pushMock).toHaveBeenCalledWith(
+      "/attack-paths?scanPage=1&scanPageSize=5&scanId=scan-1",
+    );
+  });
+
+  // PROWLER-1383: Tooltip on disabled button explaining why it can't be selected
+  it("shows tooltip on disabled button explaining graph data is not available", () => {
+    const unavailableScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "executing",
+        graph_data_ready: false,
+      },
+    };
+
+    render(<ScanListTable scans={[unavailableScan]} />);
+
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "Graph data not yet available",
+    );
+  });
+
+  it("does not show tooltip on enabled button", () => {
+    render(<ScanListTable scans={[createScan(1)]} />);
+
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 });
