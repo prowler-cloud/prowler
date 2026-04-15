@@ -9,7 +9,13 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from "@xyflow/react";
-import { type Ref, useImperativeHandle, useRef } from "react";
+import {
+  type MouseEvent,
+  type Ref,
+  useImperativeHandle,
+  useRef,
+  type WheelEvent,
+} from "react";
 
 import { cn } from "@/lib/utils";
 import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
@@ -152,13 +158,13 @@ const GraphCanvas = ({
     getContainerElement: () => containerRef.current,
   }));
 
-  const handleNodeClick = (_event: React.MouseEvent, node: Node) => {
+  const handleNodeClick = (_event: MouseEvent, node: Node) => {
     const graphNode = (node.data as { graphNode: GraphNode }).graphNode;
     onNodeClick?.(graphNode);
   };
 
   // Ctrl+scroll zoom handler: only zoom when Ctrl/Cmd is pressed
-  const handleWheel = (event: React.WheelEvent) => {
+  const handleWheel = (event: WheelEvent) => {
     if (!event.ctrlKey && !event.metaKey) {
       // Allow normal page scroll — do nothing, React Flow's zoomOnScroll is off
       return;
