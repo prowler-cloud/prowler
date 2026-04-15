@@ -12,6 +12,24 @@
     "dark": "/images/prowler-logo-white.png",
     "light": "/images/prowler-logo-black.png"
   },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      {
+        "title": "Request a feature",
+        "description": "Open a feature request on GitHub",
+        "icon": "plus",
+        "href": "https://github.com/prowler-cloud/prowler/issues/new?template=feature-request.yml"
+      },
+      {
+        "title": "Report an issue",
+        "description": "Open a bug report on GitHub",
+        "icon": "bug",
+        "href": "https://github.com/prowler-cloud/prowler/issues/new?template=bug_report.yml"
+      }
+    ]
+  },
   "navigation": {
     "tabs": [
       {
