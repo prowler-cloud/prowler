@@ -8,9 +8,6 @@ class api_token_ip_restriction_enabled(Check):
     API tokens with IP address filtering restrict token usage to requests originating
     from specific IP addresses or CIDR ranges. Without IP filtering, a compromised
     token can be used from any network location.
-
-    - PASS: The API token has at least one IP address restriction configured.
-    - FAIL: The API token has no IP address filtering configured.
     """
 
     def execute(self) -> list[CheckReportCloudflare]:
@@ -30,19 +27,11 @@ class api_token_ip_restriction_enabled(Check):
                 resource=token,
             )
 
-            has_ip_restriction = bool(token.ip_allow_list) or bool(
-                token.ip_deny_list
-            )
-
-            if has_ip_restriction:
+            if token.ip_allow_list or token.ip_deny_list:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"API token {token.name} has client IP address filtering configured."
-                )
+                report.status_extended = f"API token {token.name or token.id} has client IP address filtering configured."
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"API token {token.name} does not have client IP address filtering configured."
-                )
+                report.status_extended = f"API token {token.name or token.id} does not have client IP address filtering configured."
             findings.append(report)
         return findings

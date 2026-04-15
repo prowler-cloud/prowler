@@ -1,16 +1,16 @@
 {
   "Provider": "cloudflare",
   "CheckID": "api_token_ip_restriction_enabled",
-  "CheckTitle": "IP address filtering restricts API token usage to authorized networks",
+  "CheckTitle": "API token has client IP address filtering configured",
   "CheckType": [],
   "ServiceName": "api",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "APIToken",
   "ResourceGroup": "IAM",
-  "Description": "**Cloudflare API tokens** are assessed for **client IP address filtering** by checking whether an allow list or deny list of IP addresses/CIDR ranges is configured to restrict which networks can use the token.",
-  "Risk": "Without **IP address filtering**, a compromised API token can be used from **any network location**.\n- **Confidentiality**: attackers with a stolen token can access account resources from any IP\n- **Integrity**: unauthorized modifications can be made from uncontrolled networks\n- Restricting tokens to known IP ranges limits the blast radius of credential theft",
+  "Description": "**Cloudflare API tokens** with **client IP address filtering** restrict token usage to requests originating from trusted network locations, reducing exposure if a token is compromised.",
+  "Risk": "Without **IP address filtering**, a compromised API token can be used from **any network location**.\n- **Confidentiality**: attackers with a stolen token can access account resources from any IP.\n- **Integrity**: unauthorized modifications can be made from uncontrolled networks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/"
@@ -19,11 +19,11 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log in to the Cloudflare dashboard\n2. Go to My Profile > API Tokens\n3. Select the token to edit and click the three-dot menu > Edit\n4. Under Client IP Address Filtering, add the IP addresses or CIDR ranges that should be allowed or denied\n5. Save the token",
+      "Other": "1. Log in to the Cloudflare dashboard.\n2. Go to My Profile > API Tokens.\n3. Select the token to edit and click the three-dot menu > Edit.\n4. Under Client IP Address Filtering, add the IP addresses or CIDR ranges that should be allowed or denied.\n5. Save the token.",
       "Terraform": "```hcl\nresource \"cloudflare_api_token\" \"example_resource\" {\n  name = \"example_resource\"\n\n  policy {\n    permission_groups = [\"<PERMISSION_GROUP_ID>\"]\n    resources         = { \"com.cloudflare.api.account.*\" = \"*\" }\n  }\n\n  # Restrict token to specific IP ranges\n  condition {\n    request_ip {\n      in = [\"192.0.2.0/24\", \"198.51.100.0/24\"]\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure **client IP address filtering** on all API tokens following the **principle of least privilege**.\n- Restrict tokens to known corporate or CI/CD IP ranges\n- Use CIDR notation to allow specific networks rather than broad ranges\n- Regularly review and update allowed IP lists as infrastructure changes",
+      "Text": "Configure **client IP address filtering** following the **principle of least privilege**. Restricting credentials to known IP ranges reduces the impact of credential compromise by ensuring they cannot be used from unauthorized networks.",
       "Url": "https://hub.prowler.com/checks/cloudflare/api_token_ip_restriction_enabled"
     }
   },
@@ -32,5 +32,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "API tokens can have both allow lists and deny lists for IP filtering. This check verifies that at least one form of IP restriction is configured. Tokens used by CI/CD pipelines should be restricted to the IP ranges of the pipeline runners."
+  "Notes": "API tokens can have both allow lists and deny lists for IP filtering."
 }

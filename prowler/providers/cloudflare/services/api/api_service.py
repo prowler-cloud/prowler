@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.providers.cloudflare.lib.service.service import CloudflareService
@@ -22,9 +22,10 @@ class API(CloudflareService):
             seen_token_ids: set[str] = set()
             for token in self.client.user.tokens.list():
                 token_id = getattr(token, "id", None)
-                # Prevent infinite loop
+                if not token_id:
+                    continue
                 if token_id in seen_token_ids:
-                    break
+                    continue
                 seen_token_ids.add(token_id)
 
                 # Extract IP condition details
@@ -58,8 +59,8 @@ class CloudflareAPIToken(BaseModel):
     id: str
     name: Optional[str] = None
     status: Optional[str] = None
-    ip_allow_list: list[str] = []
-    ip_deny_list: list[str] = []
+    ip_allow_list: list[str] = Field(default_factory=list)
+    ip_deny_list: list[str] = Field(default_factory=list)
     expires_on: Optional[datetime] = None
     issued_on: Optional[datetime] = None
     last_used_on: Optional[datetime] = None

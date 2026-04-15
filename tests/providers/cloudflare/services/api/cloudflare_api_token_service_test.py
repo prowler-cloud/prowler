@@ -1,7 +1,13 @@
 from datetime import datetime, timezone
+from unittest import mock
+from unittest.mock import MagicMock
 
 from prowler.providers.cloudflare.services.api.api_service import (
+    API,
     CloudflareAPIToken,
+)
+from tests.providers.cloudflare.cloudflare_fixtures import (
+    set_mocked_cloudflare_provider,
 )
 
 
@@ -77,3 +83,155 @@ class Test_CloudflareAPIToken_Model:
         )
         assert token.status == "expired"
         assert token.expires_on == datetime(2025, 1, 1, tzinfo=timezone.utc)
+
+
+class Test_API_Service:
+    """Tests for the API service _list_api_tokens method."""
+
+    def _make_sdk_token(self, **kwargs):
+        """Create a mock Cloudflare SDK token object."""
+        token = MagicMock()
+        for key, value in kwargs.items():
+            setattr(token, key, value)
+        return token
+
+    def test_list_api_tokens_with_ip_conditions(self):
+        mock_provider = set_mocked_cloudflare_provider()
+        request_ip = MagicMock()
+        request_ip.in_ = ["192.0.2.0/24"]
+        request_ip.not_in = ["10.0.0.0/8"]
+        condition = MagicMock()
+        condition.request_ip = request_ip
+
+        sdk_token = self._make_sdk_token(
+            id="token-1",
+            name="Test Token",
+            status="active",
+            condition=condition,
+            expires_on=None,
+            issued_on=None,
+            last_used_on=None,
+            modified_on=None,
+        )
+        mock_provider.session.client.user.tokens.list.return_value = [sdk_token]
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mock_provider,
+        ):
+            service = API(mock_provider)
+
+        assert len(service.tokens) == 1
+        assert service.tokens[0].id == "token-1"
+        assert service.tokens[0].name == "Test Token"
+        assert service.tokens[0].ip_allow_list == ["192.0.2.0/24"]
+        assert service.tokens[0].ip_deny_list == ["10.0.0.0/8"]
+
+    def test_list_api_tokens_without_condition(self):
+        mock_provider = set_mocked_cloudflare_provider()
+        sdk_token = self._make_sdk_token(
+            id="token-2",
+            name="No Condition Token",
+            status="active",
+            condition=None,
+            expires_on=None,
+            issued_on=None,
+            last_used_on=None,
+            modified_on=None,
+        )
+        mock_provider.session.client.user.tokens.list.return_value = [sdk_token]
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mock_provider,
+        ):
+            service = API(mock_provider)
+
+        assert len(service.tokens) == 1
+        assert service.tokens[0].ip_allow_list == []
+        assert service.tokens[0].ip_deny_list == []
+
+    def test_list_api_tokens_skips_duplicates(self):
+        mock_provider = set_mocked_cloudflare_provider()
+        sdk_token_1 = self._make_sdk_token(
+            id="token-dup",
+            name="First",
+            status="active",
+            condition=None,
+            expires_on=None,
+            issued_on=None,
+            last_used_on=None,
+            modified_on=None,
+        )
+        sdk_token_2 = self._make_sdk_token(
+            id="token-dup",
+            name="Duplicate",
+            status="active",
+            condition=None,
+            expires_on=None,
+            issued_on=None,
+            last_used_on=None,
+            modified_on=None,
+        )
+        sdk_token_3 = self._make_sdk_token(
+            id="token-other",
+            name="Other",
+            status="active",
+            condition=None,
+            expires_on=None,
+            issued_on=None,
+            last_used_on=None,
+            modified_on=None,
+        )
+        mock_provider.session.client.user.tokens.list.return_value = [
+            sdk_token_1,
+            sdk_token_2,
+            sdk_token_3,
+        ]
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mock_provider,
+        ):
+            service = API(mock_provider)
+
+        assert len(service.tokens) == 2
+        assert service.tokens[0].id == "token-dup"
+        assert service.tokens[0].name == "First"
+        assert service.tokens[1].id == "token-other"
+
+    def test_list_api_tokens_skips_none_id(self):
+        mock_provider = set_mocked_cloudflare_provider()
+        sdk_token_no_id = self._make_sdk_token(
+            id=None,
+            name="No ID",
+            status="active",
+            condition=None,
+            expires_on=None,
+            issued_on=None,
+            last_used_on=None,
+            modified_on=None,
+        )
+        sdk_token_valid = self._make_sdk_token(
+            id="token-valid",
+            name="Valid",
+            status="active",
+            condition=None,
+            expires_on=None,
+            issued_on=None,
+            last_used_on=None,
+            modified_on=None,
+        )
+        mock_provider.session.client.user.tokens.list.return_value = [
+            sdk_token_no_id,
+            sdk_token_valid,
+        ]
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mock_provider,
+        ):
+            service = API(mock_provider)
+
+        assert len(service.tokens) == 1
+        assert service.tokens[0].id == "token-valid"
