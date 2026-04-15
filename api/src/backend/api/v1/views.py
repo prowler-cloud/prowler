@@ -7596,7 +7596,12 @@ class FindingGroupViewSet(BaseRLSViewSet):
         return orphan_qs
 
     def _orphan_aggregation_values(self, orphan_queryset):
-        """Raw rows for orphan findings; resource payload synthesized from metadata."""
+        """Raw rows for orphan findings; resource payload synthesized from metadata.
+
+        check_metadata is stored with lowercase keys (see
+        `prowler.lib.outputs.finding.Finding.get_metadata`) and
+        `Finding.resource_groups` is already denormalized at ingest time.
+        """
         return orphan_queryset.annotate(
             _provider_type=F("scan__provider__provider"),
             _provider_uid=F("scan__provider__uid"),
@@ -7604,18 +7609,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
             _svc=Coalesce(
                 Cast(
                     KeyTextTransform("servicename", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Cast(
-                    KeyTextTransform("ServiceName", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Cast(
-                    KeyTextTransform("service", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Cast(
-                    KeyTextTransform("Service", "check_metadata"),
                     output_field=CharField(),
                 ),
                 Value("", output_field=CharField()),
@@ -7626,18 +7619,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     KeyTextTransform("region", "check_metadata"),
                     output_field=CharField(),
                 ),
-                Cast(
-                    KeyTextTransform("Region", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Cast(
-                    KeyTextTransform("location", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Cast(
-                    KeyTextTransform("Location", "check_metadata"),
-                    output_field=CharField(),
-                ),
                 Value("", output_field=CharField()),
                 output_field=CharField(),
             ),
@@ -7646,31 +7627,11 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     KeyTextTransform("resourcetype", "check_metadata"),
                     output_field=CharField(),
                 ),
-                Cast(
-                    KeyTextTransform("ResourceType", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Cast(
-                    KeyTextTransform("resource_type", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Cast(
-                    KeyTextTransform("resourceType", "check_metadata"),
-                    output_field=CharField(),
-                ),
-                Cast(
-                    KeyTextTransform("Type", "check_metadata"),
-                    output_field=CharField(),
-                ),
                 Value("", output_field=CharField()),
                 output_field=CharField(),
             ),
             _rgroup=Coalesce(
                 Cast(F("resource_groups"), output_field=CharField()),
-                Cast(
-                    KeyTextTransform("resourcegroup", "check_metadata"),
-                    output_field=CharField(),
-                ),
                 Value("", output_field=CharField()),
                 output_field=CharField(),
             ),

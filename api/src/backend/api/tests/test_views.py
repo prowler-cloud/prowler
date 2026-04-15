@@ -16091,6 +16091,7 @@ class TestFindingGroupViewSet:
                 "region": "global",
                 "resourcegroup": "networking",
             },
+            resource_groups="networking",
             first_seen_at=datetime.now(timezone.utc),
             muted=False,
         )
@@ -16155,6 +16156,7 @@ class TestFindingGroupViewSet:
                 "region": "global",
                 "resourcegroup": "networking",
             },
+            resource_groups="networking",
             first_seen_at=datetime.now(timezone.utc),
             muted=False,
         )
