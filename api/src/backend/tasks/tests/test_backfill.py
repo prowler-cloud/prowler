@@ -1,10 +1,12 @@
-from datetime import datetime, timezone
+from contextlib import nullcontext
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
+    backfill_finding_group_summaries,
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
     backfill_scan_category_summaries,
@@ -223,6 +225,75 @@ class TestBackfillComplianceSummaries:
             assert summary.requirements_failed == expected_counts["requirements_failed"]
             assert summary.requirements_manual == expected_counts["requirements_manual"]
             assert summary.total_requirements == expected_counts["total_requirements"]
+
+
+@pytest.mark.django_db
+class TestBackfillFindingGroupSummaries:
+    @patch("tasks.jobs.backfill.aggregate_finding_group_summaries")
+    @patch("tasks.jobs.backfill.Scan.objects.filter")
+    @patch("tasks.jobs.backfill.rls_transaction")
+    def test_keeps_latest_scan_per_provider_per_day(
+        self,
+        mock_rls_transaction,
+        mock_scan_filter,
+        mock_aggregate_finding_group_summaries,
+    ):
+        tenant_id = str(uuid4())
+        provider_1 = uuid4()
+        provider_2 = uuid4()
+
+        now = datetime.now(tz=timezone.utc)
+        yesterday = now - timedelta(days=1)
+        latest_p1_today = uuid4()
+        older_p1_today = uuid4()
+        latest_p2_today = uuid4()
+        latest_p1_yesterday = uuid4()
+
+        mock_rls_transaction.side_effect = lambda *args, **kwargs: nullcontext()
+        mock_scan_filter.return_value.order_by.return_value.values.return_value = [
+            {
+                "id": latest_p1_today,
+                "provider_id": provider_1,
+                "completed_at": now,
+            },
+            {
+                "id": latest_p2_today,
+                "provider_id": provider_2,
+                "completed_at": now - timedelta(minutes=2),
+            },
+            {
+                "id": older_p1_today,
+                "provider_id": provider_1,
+                "completed_at": now - timedelta(hours=2),
+            },
+            {
+                "id": latest_p1_yesterday,
+                "provider_id": provider_1,
+                "completed_at": yesterday,
+            },
+        ]
+        mock_aggregate_finding_group_summaries.return_value = {
+            "status": "completed",
+            "created": 1,
+            "updated": 0,
+        }
+
+        result = backfill_finding_group_summaries(tenant_id=tenant_id)
+
+        assert result["status"] == "backfilled"
+        assert result["scans_processed"] == 3
+        assert result["scans_skipped"] == 0
+        assert mock_aggregate_finding_group_summaries.call_count == 3
+
+        called_scan_ids = {
+            call.args[1]
+            for call in mock_aggregate_finding_group_summaries.call_args_list
+        }
+        assert called_scan_ids == {
+            str(latest_p1_today),
+            str(latest_p2_today),
+            str(latest_p1_yesterday),
+        }
 
 
 @pytest.mark.django_db

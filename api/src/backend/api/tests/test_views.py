@@ -16782,6 +16782,176 @@ class TestFindingGroupViewSet:
         assert attrs["resources_total"] == 3
         assert attrs["resources_fail"] == 2
 
+    @patch("api.v1.views.reaggregate_finding_group_summaries_for_scans_task.delay")
+    def test_finding_groups_latest_check_id_self_heals_when_summary_missing(
+        self,
+        mock_reaggregate_delay,
+        authenticated_client,
+        providers_fixture,
+        resources_fixture,
+    ):
+        """If /latest summary rows are missing, trigger background reaggregation."""
+        provider = providers_fixture[0]
+        resource = resources_fixture[0]
+        check_id = "self_heal_missing_summary_check"
+
+        latest_scan = Scan.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc),
+        )
+
+        finding = Finding.objects.create(
+            tenant_id=provider.tenant_id,
+            uid="self_heal_missing_summary_finding",
+            scan=latest_scan,
+            delta="new",
+            status="FAIL",
+            severity="critical",
+            impact="critical",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Self heal check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(minutes=5),
+            muted=False,
+        )
+        finding.add_resources([resource])
+
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[check_id]": check_id},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+        mock_reaggregate_delay.assert_called_once_with(
+            tenant_id=str(provider.tenant_id),
+            scan_ids=[str(latest_scan.id)],
+        )
+
+    @patch("api.v1.views.reaggregate_finding_group_summaries_for_scans_task.delay")
+    def test_finding_groups_latest_check_id_no_self_heal_when_summary_matches(
+        self,
+        mock_reaggregate_delay,
+        authenticated_client,
+        providers_fixture,
+        resources_fixture,
+    ):
+        """When summary and finding-level metrics match, /latest must not trigger reaggregation."""
+        from tasks.jobs.scan import aggregate_finding_group_summaries
+
+        provider = providers_fixture[0]
+        resource = resources_fixture[0]
+        check_id = "self_heal_in_sync_summary_check"
+
+        latest_scan = Scan.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc),
+        )
+
+        finding = Finding.objects.create(
+            tenant_id=provider.tenant_id,
+            uid="self_heal_in_sync_summary_finding",
+            scan=latest_scan,
+            delta="new",
+            status="FAIL",
+            severity="critical",
+            impact="critical",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Self heal check"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(minutes=5),
+            muted=False,
+        )
+        finding.add_resources([resource])
+
+        aggregate_finding_group_summaries(
+            tenant_id=str(provider.tenant_id),
+            scan_id=str(latest_scan.id),
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-group-latest"),
+            {"filter[check_id]": check_id},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        assert attrs["check_id"] == check_id
+        assert attrs["fail_count"] == 1
+        assert attrs["resources_fail"] == 1
+        assert attrs["resources_total"] == 1
+        mock_reaggregate_delay.assert_not_called()
+
+    @patch("api.v1.views.reaggregate_finding_group_summaries_for_scans_task.delay")
+    def test_finding_groups_latest_no_filter_self_heals_when_summary_missing(
+        self,
+        mock_reaggregate_delay,
+        authenticated_client,
+        providers_fixture,
+        resources_fixture,
+    ):
+        """Self-healing must also work without any finding-group filters."""
+        provider = providers_fixture[0]
+        resource = resources_fixture[0]
+        check_id = "self_heal_missing_summary_no_filter_check"
+
+        latest_scan = Scan.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            completed_at=datetime.now(timezone.utc),
+        )
+
+        finding = Finding.objects.create(
+            tenant_id=provider.tenant_id,
+            uid="self_heal_missing_summary_no_filter_finding",
+            scan=latest_scan,
+            delta="new",
+            status="FAIL",
+            severity="critical",
+            impact="critical",
+            check_id=check_id,
+            check_metadata={"CheckId": check_id, "checktitle": "Self heal no filter"},
+            first_seen_at=datetime.now(timezone.utc) - timedelta(minutes=2),
+            muted=False,
+        )
+        finding.add_resources([resource])
+
+        response = authenticated_client.get(reverse("finding-group-latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert check_id not in check_ids
+        mock_reaggregate_delay.assert_called_once_with(
+            tenant_id=str(provider.tenant_id),
+            scan_ids=[str(latest_scan.id)],
+        )
+
+    @patch("api.v1.views.cache.add", return_value=False)
+    @patch("api.v1.views.FindingGroupViewSet._latest_scan_ids_missing_summary")
+    def test_finding_groups_latest_self_heal_probe_throttled(
+        self,
+        mock_missing_summary_check,
+        mock_cache_add,
+        authenticated_client,
+        finding_groups_fixture,
+    ):
+        """When probe cache is warm, /latest should skip drift-detection queries."""
+        response = authenticated_client.get(reverse("finding-group-latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_missing_summary_check.assert_not_called()
+        mock_cache_add.assert_called_once()
+
     def test_finding_groups_latest_provider_type_filter(
         self, authenticated_client, finding_groups_fixture
     ):
