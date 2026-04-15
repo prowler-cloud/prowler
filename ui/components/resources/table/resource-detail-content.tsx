@@ -8,7 +8,6 @@ import {
   CornerDownRight,
   ExternalLink,
   Link,
-  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,6 +28,7 @@ import {
   InfoField,
   InfoTooltip,
 } from "@/components/shadcn/info-field/info-field";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -246,10 +246,10 @@ export const ResourceDetailContent = ({
 
         {findingDetailLoading ? (
           <div className="flex items-center justify-center gap-2 py-8">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <p className="text-text-neutral-secondary text-sm">
+            <Spinner className="size-6" />
+            <span className="text-text-neutral-tertiary text-sm">
               Loading finding details...
-            </p>
+            </span>
           </div>
         ) : (
           findingDetails && (
@@ -400,10 +400,10 @@ export const ResourceDetailContent = ({
             <TabsContent value="findings" className="flex flex-col gap-4">
               {findingsLoading && !hasInitiallyLoaded ? (
                 <div className="flex items-center justify-center gap-2 py-8">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <p className="text-text-neutral-secondary text-sm">
+                  <Spinner className="size-6" />
+                  <span className="text-text-neutral-tertiary text-sm">
                     Loading findings...
-                  </p>
+                  </span>
                 </div>
               ) : (
                 <>
