@@ -14,6 +14,8 @@ import {
   getAvailableQueries,
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
+import { FindingDetailDrawer } from "@/components/findings/table";
+import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
 import {
   Alert,
@@ -30,6 +32,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/shadcn/dialog";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { useToast } from "@/components/ui";
 import type {
   AttackPathQuery,
@@ -65,6 +68,7 @@ export default function AttackPathsPage() {
   const searchParams = useSearchParams();
   const scanId = searchParams.get("scanId");
   const graphState = useGraphState();
+  const finding = useFindingDetails();
   const { toast } = useToast();
 
   const [scansLoading, setScansLoading] = useState(true);
@@ -309,6 +313,14 @@ export default function AttackPathsPage() {
 
   const handleCloseDetails = () => {
     graphState.selectNode(null);
+  };
+
+  const getFindingId = (node: GraphNode | null) =>
+    node ? String(node.properties?.id || node.id) : "";
+
+  const handleViewFinding = (findingId: string) => {
+    if (!findingId) return;
+    void finding.navigateToFinding(findingId);
   };
 
   const handleGraphExport = (svgElement: SVGSVGElement | null) => {
@@ -684,15 +696,20 @@ export default function AttackPathsPage() {
                   {graphState.selectedNode.labels.some((label) =>
                     label.toLowerCase().includes("finding"),
                   ) && (
-                    <Button asChild variant="default" size="sm">
-                      <a
-                        href={`/findings?id=${String(graphState.selectedNode.properties?.id || graphState.selectedNode.id)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`View finding ${String(graphState.selectedNode.properties?.id || graphState.selectedNode.id)}`}
-                      >
-                        View Finding →
-                      </a>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() =>
+                        handleViewFinding(getFindingId(graphState.selectedNode))
+                      }
+                      disabled={finding.findingDetailLoading}
+                      aria-label={`View finding ${getFindingId(graphState.selectedNode)}`}
+                    >
+                      {finding.findingDetailLoading ? (
+                        <Spinner className="size-4" />
+                      ) : (
+                        "View Finding"
+                      )}
                     </Button>
                   )}
                   <Button
@@ -710,8 +727,21 @@ export default function AttackPathsPage() {
               <NodeDetailContent
                 node={graphState.selectedNode}
                 allNodes={graphState.data.nodes}
+                onViewFinding={handleViewFinding}
+                viewFindingLoading={finding.findingDetailLoading}
               />
             </div>
+          )}
+
+          {finding.findingDetails && (
+            <FindingDetailDrawer
+              key={finding.findingDetails.id}
+              finding={finding.findingDetails}
+              defaultOpen
+              onOpenChange={(open) => {
+                if (!open) finding.resetFindingDetails();
+              }}
+            />
           )}
         </>
       )}

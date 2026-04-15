@@ -191,7 +191,7 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
         id: "other-1",
         checkId: "check-other-1",
         checkTitle: "Other 1",
-        status: "PASS",
+        status: "FAIL",
         severity: "critical",
       }),
       makeDrawerFinding({
@@ -218,6 +218,55 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(result.current.otherFindings.map((finding) => finding.id)).toEqual([
       "other-1",
       "other-2",
+    ]);
+  });
+
+  it("should exclude non-FAIL findings from otherFindings", async () => {
+    const resources = [makeResource()];
+
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
+    adaptFindingsByResourceResponseMock.mockReturnValue([
+      makeDrawerFinding({
+        id: "current",
+        checkId: "s3_check",
+        status: "MANUAL",
+        severity: "informational",
+      }),
+      makeDrawerFinding({
+        id: "other-pass",
+        checkId: "check-pass",
+        status: "PASS",
+        severity: "low",
+      }),
+      makeDrawerFinding({
+        id: "other-manual",
+        checkId: "check-manual",
+        status: "MANUAL",
+        severity: "low",
+      }),
+      makeDrawerFinding({
+        id: "other-fail",
+        checkId: "check-fail",
+        status: "FAIL",
+        severity: "high",
+      }),
+    ]);
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+        checkId: "s3_check",
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(result.current.currentFinding?.id).toBe("current");
+    expect(result.current.otherFindings.map((f) => f.id)).toEqual([
+      "other-fail",
     ]);
   });
 
