@@ -18,6 +18,8 @@ env:
   API_WORKING_DIR: ./api
   IMAGE_NAME: prowler-api
 
+permissions: {}
+
 jobs:
   api-dockerfile-lint:
     if: github.repository == 'prowler-cloud/prowler'

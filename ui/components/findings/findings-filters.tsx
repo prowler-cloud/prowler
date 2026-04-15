@@ -54,7 +54,9 @@ const FILTER_KEY_LABELS: Record<FilterParam, string> = {
   "filter[resource_type__in]": "Resource Type",
   "filter[category__in]": "Category",
   "filter[resource_groups__in]": "Resource Group",
-  "filter[scan__in]": "Scan ID",
+  "filter[scan__in]": "Scan",
+  "filter[scan_id]": "Scan",
+  "filter[scan_id__in]": "Scan",
   "filter[inserted_at]": "Date",
   "filter[muted]": "Muted",
 };
@@ -86,7 +88,14 @@ export const FindingsFilters = ({
 
   // Custom filters for the expandable section (removed Provider - now using AccountsSelector)
   const customFilters = [
-    ...filterFindings,
+    ...filterFindings.map((filter) => ({
+      ...filter,
+      labelFormatter: (value: string) =>
+        getFindingsFilterDisplayValue(`filter[${filter.key}]`, value, {
+          providers,
+          scans: scanDetails,
+        }),
+    })),
     {
       key: FilterType.REGION,
       labelCheckboxGroup: "Regions",
@@ -124,6 +133,11 @@ export const FindingsFilters = ({
       labelCheckboxGroup: "Scan ID",
       values: completedScanIds,
       valueLabelMapping: scanDetails,
+      labelFormatter: (value: string) =>
+        getFindingsFilterDisplayValue(`filter[${FilterType.SCAN}]`, value, {
+          providers,
+          scans: scanDetails,
+        }),
       index: 7,
     },
   ];

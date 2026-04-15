@@ -9,6 +9,11 @@ interface GetFindingsFilterDisplayValueOptions {
   scans?: Array<{ [scanId: string]: ScanEntity }>;
 }
 
+const FINDING_DELTA_DISPLAY_NAMES: Record<string, string> = {
+  new: "New",
+  changed: "Changed",
+};
+
 function getProviderAccountDisplayValue(
   providerId: string,
   providers: ProviderProps[],
@@ -30,7 +35,12 @@ function getScanDisplayValue(
     return scanId;
   }
 
-  return scan.providerInfo.alias || scan.providerInfo.uid || scanId;
+  return (
+    scan.attributes.name ||
+    scan.providerInfo.alias ||
+    scan.providerInfo.uid ||
+    scanId
+  );
 }
 
 export function getFindingsFilterDisplayValue(
@@ -60,6 +70,11 @@ export function getFindingsFilterDisplayValue(
       FINDING_STATUS_DISPLAY_NAMES[
         value as keyof typeof FINDING_STATUS_DISPLAY_NAMES
       ] ?? formatLabel(value)
+    );
+  }
+  if (filterKey === "filter[delta__in]") {
+    return (
+      FINDING_DELTA_DISPLAY_NAMES[value.toLowerCase()] ?? formatLabel(value)
     );
   }
   if (filterKey === "filter[category__in]") {

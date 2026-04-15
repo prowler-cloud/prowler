@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+const { notificationIndicatorMock } = vi.hoisted(() => ({
+  notificationIndicatorMock: vi.fn(),
+}));
+
 // ---------------------------------------------------------------------------
 // Hoist mocks for dependencies
 // ---------------------------------------------------------------------------
@@ -56,10 +60,6 @@ vi.mock("./data-table-row-actions", () => ({
   DataTableRowActions: () => null,
 }));
 
-vi.mock("./impacted-providers-cell", () => ({
-  ImpactedProvidersCell: () => null,
-}));
-
 vi.mock("./impacted-resources-cell", () => ({
   ImpactedResourcesCell: ({
     impacted,
@@ -72,7 +72,10 @@ vi.mock("./impacted-resources-cell", () => ({
 
 vi.mock("./notification-indicator", () => ({
   DeltaValues: { NEW: "new", CHANGED: "changed", NONE: "none" },
-  NotificationIndicator: () => null,
+  NotificationIndicator: (props: unknown) => {
+    notificationIndicatorMock(props);
+    return null;
+  },
 }));
 
 // ---------------------------------------------------------------------------
@@ -95,10 +98,23 @@ function makeGroup(overrides?: Partial<FindingGroupRow>): FindingGroupRow {
     checkTitle: "S3 Bucket Public Access",
     severity: "critical",
     status: "FAIL",
+    muted: false,
     resourcesTotal: 5,
     resourcesFail: 3,
     newCount: 0,
     changedCount: 0,
+    newFailCount: 0,
+    newFailMutedCount: 0,
+    newPassCount: 0,
+    newPassMutedCount: 0,
+    newManualCount: 0,
+    newManualMutedCount: 0,
+    changedFailCount: 0,
+    changedFailMutedCount: 0,
+    changedPassCount: 0,
+    changedPassMutedCount: 0,
+    changedManualCount: 0,
+    changedManualMutedCount: 0,
     mutedCount: 0,
     providers: ["aws"],
     updatedAt: "2024-01-01T00:00:00Z",
@@ -198,6 +214,23 @@ function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
 // ---------------------------------------------------------------------------
 
 describe("column-finding-groups — accessibility of check title cell", () => {
+  it("should not expose an impacted providers column", () => {
+    // Given
+    const columns = getColumnFindingGroups({
+      rowSelection: {},
+      selectableRowCount: 1,
+      onDrillDown: vi.fn(),
+    });
+
+    // When
+    const impactedProvidersColumn = columns.find(
+      (col) => (col as { id?: string }).id === "impactedProviders",
+    );
+
+    // Then
+    expect(impactedProvidersColumn).toBeUndefined();
+  });
+
   it("should render the check title as a button element (not a <p>)", () => {
     // Given
     const onDrillDown =
@@ -323,5 +356,27 @@ describe("column-finding-groups — group selection", () => {
     });
 
     expect(screen.getByRole("checkbox", { name: "Select row" })).toBeDisabled();
+  });
+});
+
+describe("column-finding-groups — indicators", () => {
+  it("should prefer the new indicator when the new delta exists only in the breakdown fields", () => {
+    notificationIndicatorMock.mockClear();
+
+    renderSelectCell({
+      muted: true,
+      newCount: 0,
+      changedCount: 0,
+      newFailMutedCount: 1,
+      changedFailCount: 2,
+    });
+
+    expect(notificationIndicatorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        delta: "new",
+        isMuted: true,
+        showDeltaWhenMuted: true,
+      }),
+    );
   });
 });

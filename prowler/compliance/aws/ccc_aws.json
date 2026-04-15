@@ -4172,6 +4172,7 @@
         }
       ],
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "vpc_endpoint_connections_trust_boundaries"
       ]

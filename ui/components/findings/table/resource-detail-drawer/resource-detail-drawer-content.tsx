@@ -44,6 +44,7 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import { QueryCodeEditor } from "@/components/shared/query-code-editor";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -78,6 +79,29 @@ function stripCodeFences(code: string): string {
     .replace(/^```\w*\n?/, "")
     .replace(/\n?```\s*$/, "")
     .trim();
+}
+
+function renderRemediationCodeBlock({
+  label,
+  value,
+  copyValue,
+}: {
+  label: string;
+  value: string;
+  copyValue?: string;
+}) {
+  return (
+    <QueryCodeEditor
+      ariaLabel={label}
+      language="plainText"
+      value={value}
+      copyValue={copyValue}
+      editable={false}
+      minHeight={96}
+      showCopyButton
+      onChange={() => {}}
+    />
+  );
 }
 
 function normalizeComplianceFrameworkName(framework: string): string {
@@ -218,16 +242,12 @@ function buildComplianceDetailHref({
   version,
   scanId,
   regionFilter,
-  currentFinding,
-  includeScanData,
 }: {
   complianceId: string;
   framework: string;
   version: string;
   scanId: string;
   regionFilter: string | null;
-  currentFinding: ResourceDrawerFinding | null;
-  includeScanData: boolean;
 }): string {
   const params = new URLSearchParams();
   params.set("complianceId", complianceId);
@@ -238,24 +258,6 @@ function buildComplianceDetailHref({
 
   if (regionFilter) {
     params.set("filter[region__in]", regionFilter);
-  }
-
-  if (includeScanData && currentFinding?.scan?.completedAt) {
-    params.set(
-      "scanData",
-      JSON.stringify({
-        id: currentFinding.scan.id,
-        providerInfo: {
-          provider: currentFinding.providerType,
-          alias: currentFinding.providerAlias,
-          uid: currentFinding.providerUid,
-        },
-        attributes: {
-          name: currentFinding.scan.name,
-          completed_at: currentFinding.scan.completedAt,
-        },
-      }),
-    );
   }
 
   return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
@@ -377,8 +379,6 @@ export function ResourceDetailDrawerContent({
           version: complianceMatch.version,
           scanId: complianceScanId,
           regionFilter,
-          currentFinding: f,
-          includeScanData: f?.scan?.id === complianceScanId,
         }),
         "_blank",
         "noopener,noreferrer",
@@ -739,47 +739,35 @@ export function ResourceDetailDrawerContent({
 
                 {checkMeta.remediation.code.cli && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CLI Command:
-                    </span>
-                    <CodeSnippet
-                      value={`$ ${stripCodeFences(checkMeta.remediation.code.cli)}`}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                    {renderRemediationCodeBlock({
+                      label: "CLI Command",
+                      value: `$ ${stripCodeFences(checkMeta.remediation.code.cli)}`,
+                      copyValue: stripCodeFences(
+                        checkMeta.remediation.code.cli,
+                      ),
+                    })}
                   </div>
                 )}
 
                 {checkMeta.remediation.code.terraform && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      Terraform:
-                    </span>
-                    <CodeSnippet
-                      value={stripCodeFences(
+                    {renderRemediationCodeBlock({
+                      label: "Terraform",
+                      value: stripCodeFences(
                         checkMeta.remediation.code.terraform,
-                      )}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                      ),
+                    })}
                   </div>
                 )}
 
                 {checkMeta.remediation.code.nativeiac && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CloudFormation:
-                    </span>
-                    <CodeSnippet
-                      value={stripCodeFences(
+                    {renderRemediationCodeBlock({
+                      label: "CloudFormation",
+                      value: stripCodeFences(
                         checkMeta.remediation.code.nativeiac,
-                      )}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                      ),
+                    })}
                   </div>
                 )}
 

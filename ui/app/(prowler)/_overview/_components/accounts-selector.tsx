@@ -24,6 +24,7 @@ import {
   MultiSelect,
   MultiSelectContent,
   MultiSelectItem,
+  type MultiSelectSearchProp,
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
@@ -55,6 +56,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
 /** Common props shared by both batch and instant modes. */
 interface AccountsSelectorBaseProps {
   providers: ProviderProps[];
+  search?: MultiSelectSearchProp;
   /**
    * Currently selected provider types (from the pending ProviderTypeSelector state).
    * Used only for contextual description/empty-state messaging — does NOT narrow
@@ -95,6 +97,10 @@ export function AccountsSelector({
   onBatchChange,
   selectedValues,
   selectedProviderTypes,
+  search = {
+    placeholder: "Search accounts...",
+    emptyMessage: "No accounts found.",
+  },
 }: AccountsSelectorProps) {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
@@ -159,7 +165,7 @@ export function AccountsSelector({
         >
           {selectedLabel() || <MultiSelectValue placeholder="All accounts" />}
         </MultiSelectTrigger>
-        <MultiSelectContent search={false}>
+        <MultiSelectContent search={search}>
           {visibleProviders.length > 0 ? (
             <>
               <div
@@ -183,11 +189,19 @@ export function AccountsSelector({
                 const displayName = p.attributes.alias || p.attributes.uid;
                 const providerType = p.attributes.provider as ProviderType;
                 const icon = PROVIDER_ICON[providerType];
+                const searchKeywords = [
+                  displayName,
+                  p.attributes.alias,
+                  p.attributes.uid,
+                  providerType,
+                  getProviderDisplayName(providerType),
+                ].filter(Boolean);
                 return (
                   <MultiSelectItem
                     key={id}
                     value={id}
                     badgeLabel={displayName}
+                    keywords={searchKeywords}
                     aria-label={`${displayName} account (${providerType.toUpperCase()})`}
                   >
                     <span aria-hidden="true">{icon}</span>

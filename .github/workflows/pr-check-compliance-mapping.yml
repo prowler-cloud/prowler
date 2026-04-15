@@ -16,6 +16,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   check-compliance-mapping:
     if: contains(github.event.pull_request.labels.*.name, 'no-compliance-check') == false

@@ -181,7 +181,7 @@ export function useResourceDetailDrawer({
     } catch (error) {
       if (!controller.signal.aborted) {
         console.error("Error fetching findings for resource:", error);
-        // Don't clear findings — keep previous data as fallback during navigation
+        setFindings([]);
       }
     } finally {
       if (!controller.signal.aborted) {
@@ -212,6 +212,7 @@ export function useResourceDetailDrawer({
     if (!resource) return;
     cacheRef.current.delete(resource.resourceUid);
     startNavigation();
+    setFindings([]);
     fetchFindings(resource.resourceUid);
   };
 
@@ -221,6 +222,7 @@ export function useResourceDetailDrawer({
 
     setCurrentIndex(index);
     startNavigation();
+    setFindings([]);
     fetchFindings(resource.resourceUid);
   };
 
