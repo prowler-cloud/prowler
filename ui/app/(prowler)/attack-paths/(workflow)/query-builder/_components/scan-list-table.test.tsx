@@ -24,6 +24,19 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => navigationState.searchParams,
 }));
 
+vi.mock("@/components/shadcn/tooltip", () => ({
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({
+    children,
+  }: {
+    children: ReactNode;
+    asChild?: boolean;
+  }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: ReactNode }) => (
+    <span data-testid="tooltip-content">{children}</span>
+  ),
+}));
+
 vi.mock("@/components/ui/entities/entity-info", () => ({
   EntityInfo: ({
     entityAlias,
@@ -202,5 +215,94 @@ describe("ScanListTable", () => {
     const button = screen.getByRole("button", { name: "Select scan" });
     expect(button).toBeDisabled();
     expect(button).toHaveTextContent("Failed");
+  });
+
+  it("shows 'Scheduled' label for a scheduled scan without graph data", () => {
+    const scheduledScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "scheduled",
+        progress: 0,
+        graph_data_ready: false,
+        completed_at: null,
+        duration: null,
+      },
+    };
+
+    render(<ScanListTable scans={[scheduledScan]} />);
+
+    const button = screen.getByRole("button", { name: "Select scan" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent("Scheduled");
+  });
+
+  it("shows 'Running...' label for an executing scan without graph data", () => {
+    const executingScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "executing",
+        progress: 45,
+        graph_data_ready: false,
+        completed_at: null,
+        duration: null,
+      },
+    };
+
+    render(<ScanListTable scans={[executingScan]} />);
+
+    const button = screen.getByRole("button", { name: "Select scan" });
+    expect(button).toBeDisabled();
+    expect(button).toHaveTextContent("Running...");
+  });
+
+  it("enables Select for a scheduled scan when graph data is ready from a previous cycle", async () => {
+    const user = userEvent.setup();
+    const scheduledWithGraph: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "scheduled",
+        progress: 0,
+        graph_data_ready: true,
+      },
+    };
+
+    render(<ScanListTable scans={[scheduledWithGraph]} />);
+
+    const button = screen.getByRole("button", { name: "Select scan" });
+    expect(button).toBeEnabled();
+    expect(button).toHaveTextContent("Select");
+
+    await user.click(button);
+
+    expect(pushMock).toHaveBeenCalledWith(
+      "/attack-paths?scanPage=1&scanPageSize=5&scanId=scan-1",
+    );
+  });
+
+  it("shows a green dot next to the account name when graph data is ready", () => {
+    render(<ScanListTable scans={[createScan(1)]} />);
+
+    const dot = screen.getByLabelText("Graph data available");
+    expect(dot).toBeInTheDocument();
+    expect(dot).toHaveClass("bg-bg-pass-primary");
+  });
+
+  it("does not show a green dot when graph data is not ready", () => {
+    const noGraphScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        graph_data_ready: false,
+      },
+    };
+
+    render(<ScanListTable scans={[noGraphScan]} />);
+
+    expect(
+      screen.queryByLabelText("Graph data available"),
+    ).not.toBeInTheDocument();
   });
 });
