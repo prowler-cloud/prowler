@@ -969,19 +969,41 @@ class AzureProvider(Provider):
             )
             if not subscription_ids:
                 logger.info("Scanning all the Azure subscriptions...")
-                for subscription in subscriptions_client.subscriptions.list():
-                    # TODO: get tags or labels
-                    # TODO: fill with AzureSubscription
-                    identity.subscriptions.update(
-                        {subscription.display_name: subscription.subscription_id}
-                    )
+                subscription_pairs = [
+                    (subscription.display_name, subscription.subscription_id)
+                    for subscription in subscriptions_client.subscriptions.list()
+                ]
             else:
                 logger.info("Scanning the subscriptions passed as argument ...")
-                for id in subscription_ids:
-                    subscription = subscriptions_client.subscriptions.get(
-                        subscription_id=id
+                subscription_pairs = [
+                    (
+                        subscriptions_client.subscriptions.get(
+                            subscription_id=id
+                        ).display_name,
+                        id,
                     )
-                    identity.subscriptions.update({subscription.display_name: id})
+                    for id in subscription_ids
+                ]
+
+            # Azure allows multiple subscriptions to share the same display
+            # name, which happens for auto-generated names under several
+            # billing account types. Keying identity.subscriptions by
+            # display_name alone silently collapses those entries, so
+            # downstream services end up scanning only the last one.
+            # Disambiguate colliding names by appending the subscription ID;
+            # names that are already unique are left unchanged to preserve
+            # existing behavior.
+            name_counts: dict[str, int] = {}
+            for display_name, _ in subscription_pairs:
+                name_counts[display_name] = name_counts.get(display_name, 0) + 1
+
+            for display_name, subscription_id in subscription_pairs:
+                key = (
+                    display_name
+                    if name_counts[display_name] == 1
+                    else f"{display_name} ({subscription_id})"
+                )
+                identity.subscriptions[key] = subscription_id
 
             # If there are no subscriptions listed -> checks are not going to be run against any resource
             if not identity.subscriptions:

@@ -527,3 +527,176 @@ class TestAzureProvider:
         regions = azure_provider.get_regions(subscription_ids=subscription_ids)
 
         assert regions == expected_regions
+
+
+class TestAzureProviderSetupIdentitySubscriptions:
+    """Regression tests ensuring identity.subscriptions preserves every
+    subscription even when multiple Azure subscriptions share the same
+    display_name (which is permitted by Azure)."""
+
+    @staticmethod
+    def _mock_subscription(display_name, subscription_id):
+        mock_subscription = MagicMock()
+        mock_subscription.display_name = display_name
+        mock_subscription.subscription_id = subscription_id
+        return mock_subscription
+
+    @staticmethod
+    def _build_subscriptions_client_mock(list_result=None, get_map=None):
+        """Construct a fully explicit SubscriptionClient mock so the tests do
+        not depend on MagicMock auto-attribute behavior, which makes the suite
+        sensitive to shared state across test files."""
+        subscriptions_operations = MagicMock()
+        subscriptions_operations.list = MagicMock(return_value=list_result or [])
+        if get_map is not None:
+            subscriptions_operations.get = MagicMock(
+                side_effect=lambda subscription_id: get_map[subscription_id]
+            )
+        else:
+            subscriptions_operations.get = MagicMock()
+
+        tenants_operations = MagicMock()
+        tenants_operations.list = MagicMock(return_value=[])
+
+        client_instance = MagicMock()
+        client_instance.subscriptions = subscriptions_operations
+        client_instance.tenants = tenants_operations
+
+        client_class = MagicMock(return_value=client_instance)
+        return client_class
+
+    @staticmethod
+    def _build_provider():
+        """Create an AzureProvider instance ready to invoke setup_identity
+        with auth flags left False so the AAD lookup branches are skipped and
+        the test focuses on the subscription resolution logic."""
+        with patch.object(AzureProvider, "__init__", return_value=None):
+            azure_provider = AzureProvider()
+        azure_provider._session = MagicMock()
+        azure_provider._region_config = AzureRegionConfig(
+            name="AzureCloud",
+            authority=None,
+            base_url="https://management.azure.com",
+            credential_scopes=["https://management.azure.com/.default"],
+        )
+        return azure_provider
+
+    def test_setup_identity_auto_discovery_preserves_unique_display_names(self):
+        first_id = str(uuid4())
+        second_id = str(uuid4())
+        client_class = self._build_subscriptions_client_mock(
+            list_result=[
+                self._mock_subscription("Unique Name One", first_id),
+                self._mock_subscription("Unique Name Two", second_id),
+            ]
+        )
+        with patch(
+            "prowler.providers.azure.azure_provider.SubscriptionClient",
+            client_class,
+        ):
+            azure_provider = self._build_provider()
+
+            identity = azure_provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                subscription_ids=[],
+                client_id=None,
+            )
+
+        assert identity.subscriptions == {
+            "Unique Name One": first_id,
+            "Unique Name Two": second_id,
+        }
+
+    def test_setup_identity_auto_discovery_disambiguates_duplicate_display_names(
+        self,
+    ):
+        shared_name = "Shared Display Name"
+        first_id = str(uuid4())
+        second_id = str(uuid4())
+        client_class = self._build_subscriptions_client_mock(
+            list_result=[
+                self._mock_subscription(shared_name, first_id),
+                self._mock_subscription(shared_name, second_id),
+            ]
+        )
+        with patch(
+            "prowler.providers.azure.azure_provider.SubscriptionClient",
+            client_class,
+        ):
+            azure_provider = self._build_provider()
+
+            identity = azure_provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                subscription_ids=[],
+                client_id=None,
+            )
+
+        assert identity.subscriptions == {
+            f"{shared_name} ({first_id})": first_id,
+            f"{shared_name} ({second_id})": second_id,
+        }
+
+    def test_setup_identity_filtered_preserves_unique_display_names(self):
+        first_id = str(uuid4())
+        second_id = str(uuid4())
+        client_class = self._build_subscriptions_client_mock(
+            get_map={
+                first_id: self._mock_subscription("Unique Name One", first_id),
+                second_id: self._mock_subscription("Unique Name Two", second_id),
+            }
+        )
+        with patch(
+            "prowler.providers.azure.azure_provider.SubscriptionClient",
+            client_class,
+        ):
+            azure_provider = self._build_provider()
+
+            identity = azure_provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                subscription_ids=[first_id, second_id],
+                client_id=None,
+            )
+
+        assert identity.subscriptions == {
+            "Unique Name One": first_id,
+            "Unique Name Two": second_id,
+        }
+
+    def test_setup_identity_filtered_disambiguates_duplicate_display_names(self):
+        shared_name = "Shared Display Name"
+        first_id = str(uuid4())
+        second_id = str(uuid4())
+        client_class = self._build_subscriptions_client_mock(
+            get_map={
+                first_id: self._mock_subscription(shared_name, first_id),
+                second_id: self._mock_subscription(shared_name, second_id),
+            }
+        )
+        with patch(
+            "prowler.providers.azure.azure_provider.SubscriptionClient",
+            client_class,
+        ):
+            azure_provider = self._build_provider()
+
+            identity = azure_provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                subscription_ids=[first_id, second_id],
+                client_id=None,
+            )
+
+        assert identity.subscriptions == {
+            f"{shared_name} ({first_id})": first_id,
+            f"{shared_name} ({second_id})": second_id,
+        }
