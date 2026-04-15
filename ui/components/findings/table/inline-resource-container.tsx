@@ -10,7 +10,7 @@ import { ChevronsDown } from "lucide-react";
 import { useImperativeHandle, useRef } from "react";
 
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
@@ -287,14 +287,9 @@ export function InlineResourceContainer({
                     </tbody>
                   </table>
 
-                  {/* Spinner for infinite scroll (subsequent pages only) */}
+                  {/* Loading state for infinite scroll (subsequent pages only) */}
                   {isLoading && rows.length > 0 && (
-                    <div className="flex items-center justify-center gap-2 py-8">
-                      <Spinner className="size-6" />
-                      <span className="text-text-neutral-tertiary text-sm">
-                        Loading resources...
-                      </span>
-                    </div>
+                    <LoadingState label="Loading resources..." />
                   )}
 
                   {/* Sentinel for scroll hint detection */}

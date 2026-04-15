@@ -8,7 +8,7 @@ import {
 import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
-import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Table,
   TableBody,
@@ -219,14 +219,7 @@ export function FindingsGroupDrillDown({
           </Table>
 
           {/* Loading indicator */}
-          {isLoading && (
-            <div className="flex items-center justify-center gap-2 py-8">
-              <Spinner className="size-6" />
-              <span className="text-text-neutral-tertiary text-sm">
-                Loading resources...
-              </span>
-            </div>
-          )}
+          {isLoading && <LoadingState label="Loading resources..." />}
 
           {/* Sentinel for infinite scroll */}
           <div ref={sentinelRef} className="h-1" />

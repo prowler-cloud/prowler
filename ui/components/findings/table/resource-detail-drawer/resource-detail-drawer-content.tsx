@@ -37,7 +37,7 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Tooltip,
   TooltipContent,
@@ -835,9 +835,7 @@ export function ResourceDetailDrawerContent({
             className="minimal-scrollbar flex flex-col gap-2 overflow-y-auto"
           >
             {!f || isNavigating ? (
-              <div className="flex items-center justify-center py-8">
-                <Spinner className="size-5" />
-              </div>
+              <LoadingState spinnerClassName="size-5" />
             ) : (
               <>
                 <div className="flex items-center justify-end">

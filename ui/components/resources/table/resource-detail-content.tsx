@@ -28,7 +28,7 @@ import {
   InfoField,
   InfoTooltip,
 } from "@/components/shadcn/info-field/info-field";
-import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -245,12 +245,7 @@ export const ResourceDetailContent = ({
         />
 
         {findingDetailLoading ? (
-          <div className="flex items-center justify-center gap-2 py-8">
-            <Spinner className="size-6" />
-            <span className="text-text-neutral-tertiary text-sm">
-              Loading finding details...
-            </span>
-          </div>
+          <LoadingState label="Loading finding details..." />
         ) : (
           findingDetails && (
             <FindingDetailDrawer
@@ -399,12 +394,7 @@ export const ResourceDetailContent = ({
           <div className="minimal-scrollbar min-h-0 flex-1 overflow-y-auto">
             <TabsContent value="findings" className="flex flex-col gap-4">
               {findingsLoading && !hasInitiallyLoaded ? (
-                <div className="flex items-center justify-center gap-2 py-8">
-                  <Spinner className="size-6" />
-                  <span className="text-text-neutral-tertiary text-sm">
-                    Loading findings...
-                  </span>
-                </div>
+                <LoadingState label="Loading findings..." />
               ) : (
                 <>
                   <DataTable
