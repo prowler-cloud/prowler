@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Resources side drawer with redesigned detail panel [(#10673)](https://github.com/prowler-cloud/prowler/pull/10673)
+- Syntax highlighting for remediation code blocks in finding groups drawer with provider-aware auto-detection (Shell, HCL, YAML, Bicep)
 
 ### 🐞 Fixed
 
