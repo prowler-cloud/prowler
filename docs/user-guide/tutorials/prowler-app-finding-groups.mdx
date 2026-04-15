@@ -32,6 +32,8 @@ Each row represents a single check title with key information immediately visibl
 
 For example, `Vercel project has the Web Application Firewall enabled` across every affected project collapses to a single row — not one per project. Sort or filter by severity, provider, or status at the group level to triage top-down instead of drowning in per-resource rows.
 
+![Finding Groups list view](/images/finding-groups-list.png)
+
 ### Expanding Groups for Details
 
 Expand any group inline to see the failing resources with detailed information:
@@ -46,6 +48,8 @@ Expand any group inline to see the failing resources with detailed information:
 | **Last Seen** | When the finding was last detected |
 | **Failing For** | Duration the resource has been in a failing state |
 
+![Finding Groups expanded view](/images/finding-groups-expanded.png)
+
 ### Resource Detail Drawer
 
 Select any resource to open the detail drawer with full finding context:
@@ -56,6 +60,8 @@ Select any resource to open the detail drawer with full finding context:
 - **Remediation**: step-by-step guidance to resolve the issue
 - **View in Prowler Hub**: direct link to explore the check in Prowler Hub
 - **Analyze This Finding With Lighthouse AI**: one-click AI-powered analysis for deeper insights
+
+![Finding Groups resource detail drawer](/images/finding-groups-drawer.png)
 
 ### Bulk Actions
 
@@ -72,6 +78,8 @@ Muting findings does not resolve underlying security issues. Review each finding
 ## Other Findings for This Resource
 
 Inside the resource detail drawer, the **Other Findings For This Resource** tab lists every finding that hits the same resource — passing, failing, and muted — alongside the one currently being reviewed.
+
+![Other Findings For This Resource tab](/images/finding-groups-other-findings.png)
 
 ### Why This Matters
 
