@@ -21,7 +21,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Findings group resource filters now strip unsupported scan parameters, display scan name instead of provider alias in filter badges, migrate mute modal from HeroUI to shadcn, and add searchable accounts/provider type selectors [(#10662)](https://github.com/prowler-cloud/prowler/pull/10662)
 - Compliance detail page header now reflects the actual provider, alias and UID of the selected scan instead of always defaulting to AWS [(#10674)](https://github.com/prowler-cloud/prowler/pull/10674)
 - Provider wizard modal moved to a stable page-level host so the providers table refreshes after link, authenticate, and connection check without closing the modal [(#10675)](https://github.com/prowler-cloud/prowler/pull/10675)
-- Navbar Suspense missing key prop causing React console warning
 
 ---
 
