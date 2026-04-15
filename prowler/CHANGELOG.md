@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.24.0] (Prowler UNRELEASED)
+## [5.24.0] (Prowler v5.24.0)
 
 ### 🚀 Added
 
@@ -13,10 +13,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `iam_role_access_not_stale_to_bedrock` and `iam_user_access_not_stale_to_bedrock` checks for AWS provider [(#10536)](https://github.com/prowler-cloud/prowler/pull/10536)
 - `iam_policy_no_wildcard_marketplace_subscribe` and `iam_inline_policy_no_wildcard_marketplace_subscribe` checks for AWS provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
 - `bedrock_vpc_endpoints_configured` check for AWS provider [(#10591)](https://github.com/prowler-cloud/prowler/pull/10591)
-- `exchange_organization_delicensing_resiliency_enabled` check for m365 provider [(#10608)](https://github.com/prowler-cloud/prowler/pull/10608)
+- `exchange_organization_delicensing_resiliency_enabled` check for M365 provider [(#10608)](https://github.com/prowler-cloud/prowler/pull/10608)
 - `entra_conditional_access_policy_mfa_enforced_for_guest_users` check for M365 provider [(#10616)](https://github.com/prowler-cloud/prowler/pull/10616)
-- `entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced` check for m365 provider [(#10618)](https://github.com/prowler-cloud/prowler/pull/10618)
-- `entra_conditional_access_policy_block_unknown_device_platforms` check for m365 provider [(#10615)](https://github.com/prowler-cloud/prowler/pull/10615)
+- `entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced` check for M365 provider [(#10618)](https://github.com/prowler-cloud/prowler/pull/10618)
+- `entra_conditional_access_policy_block_unknown_device_platforms` check for M365 provider [(#10615)](https://github.com/prowler-cloud/prowler/pull/10615)
 - `--excluded-region` CLI flag, `PROWLER_AWS_DISALLOWED_REGIONS` environment variable, and `aws.disallowed_regions` config entry to skip specific AWS regions during scans [(#10688)](https://github.com/prowler-cloud/prowler/pull/10688)
 
 ### 🔄 Changed
@@ -25,6 +25,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Normalize Conditional Access platform values in Entra models and simplify platform-based checks [(#10635)](https://github.com/prowler-cloud/prowler/pull/10635)
 
 ### 🐞 Fixed
+
 - Vercel firewall config handling for team-scoped projects and current API response shapes [(#10695)](https://github.com/prowler-cloud/prowler/pull/10695)
 
 ---
@@ -791,7 +792,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - S3 `test_connection` uses AWS S3 API `HeadBucket` instead of `GetBucketLocation` [(#8456)](https://github.com/prowler-cloud/prowler/pull/8456)
 - Add more validations to Azure Storage models when some values are None to avoid serialization issues [(#8325)](https://github.com/prowler-cloud/prowler/pull/8325)
 - `sns_topics_not_publicly_accessible` false positive with `aws:SourceArn` conditions [(#8326)](https://github.com/prowler-cloud/prowler/issues/8326)
-- Remove typo from description req 1.2.3 - Prowler ThreatScore m365 [(#8384)](https://github.com/prowler-cloud/prowler/pull/8384)
+- Remove typo from description req 1.2.3 - Prowler ThreatScore M365 [(#8384)](https://github.com/prowler-cloud/prowler/pull/8384)
 - Way of counting FAILED/PASS reqs from `kisa_isms_p_2023_aws` table [(#8382)](https://github.com/prowler-cloud/prowler/pull/8382)
 - Use default tenant domain instead of first domain in list for Azure and M365 providers [(#8402)](https://github.com/prowler-cloud/prowler/pull/8402)
 - Avoid multiple module error calls in M365 provider [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
@@ -832,7 +833,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Title & description wording for `iam_user_accesskey_unused` check for AWS provider [(#8233)](https://github.com/prowler-cloud/prowler/pull/8233)
 - Add GitHub provider to lateral panel in documentation and change -h environment variable output [(#8246)](https://github.com/prowler-cloud/prowler/pull/8246)
-- Show `m365_identity_type` and `m365_identity_id` in cloud reports [(#8247)](https://github.com/prowler-cloud/prowler/pull/8247)
+- Show `M365_identity_type` and `M365_identity_id` in cloud reports [(#8247)](https://github.com/prowler-cloud/prowler/pull/8247)
 - Ensure `is_service_role` only returns `True` for service roles [(#8274)](https://github.com/prowler-cloud/prowler/pull/8274)
 - Update DynamoDB check metadata to fix broken link [(#8273)](https://github.com/prowler-cloud/prowler/pull/8273)
 - Show correct count of findings in Dashboard Security Posture page [(#8270)](https://github.com/prowler-cloud/prowler/pull/8270)
@@ -954,9 +955,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 
-- `m365_powershell test_credentials` to use sanitized credentials [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
+- `M365_powershell test_credentials` to use sanitized credentials [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
-- `m365_powershell` to close the PowerShell sessions in msgraph services [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
+- `M365_powershell` to close the PowerShell sessions in msgraph services [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
 - `defender_ensure_notify_alerts_severity_is_high`check to accept high or lower severity [(#7862)](https://github.com/prowler-cloud/prowler/pull/7862)
 - Replace `Directory.Read.All` permission with `Domain.Read.All` which is more restrictive [(#7888)](https://github.com/prowler-cloud/prowler/pull/7888)
 - Split calls to list Azure Functions attributes [(#7778)](https://github.com/prowler-cloud/prowler/pull/7778)
@@ -1030,7 +1031,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - New check `teams_meeting_chat_anonymous_users_disabled` [(#7579)](https://github.com/prowler-cloud/prowler/pull/7579)
 - Prowler Threat Score Compliance Framework [(#7603)](https://github.com/prowler-cloud/prowler/pull/7603)
 - Documentation for M365 provider [(#7622)](https://github.com/prowler-cloud/prowler/pull/7622)
-- Support for m365 provider in Prowler Dashboard [(#7633)](https://github.com/prowler-cloud/prowler/pull/7633)
+- Support for M365 provider in Prowler Dashboard [(#7633)](https://github.com/prowler-cloud/prowler/pull/7633)
 - New check for Modern Authentication enabled for Exchange Online in M365 [(#7636)](https://github.com/prowler-cloud/prowler/pull/7636)
 - New check `sharepoint_onedrive_sync_restricted_unmanaged_devices` [(#7589)](https://github.com/prowler-cloud/prowler/pull/7589)
 - New check for Additional Storage restricted for Exchange in M365 [(#7638)](https://github.com/prowler-cloud/prowler/pull/7638)
@@ -1040,7 +1041,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - New check for MailTips full enabled for Exchange in M365 [(#7637)](https://github.com/prowler-cloud/prowler/pull/7637)
 - New check for Comprehensive Attachments Filter Applied for Defender in M365 [(#7661)](https://github.com/prowler-cloud/prowler/pull/7661)
 - Modified check `exchange_mailbox_properties_auditing_enabled` to make it configurable [(#7662)](https://github.com/prowler-cloud/prowler/pull/7662)
-- snapshots to m365 documentation [(#7673)](https://github.com/prowler-cloud/prowler/pull/7673)
+- snapshots to M365 documentation [(#7673)](https://github.com/prowler-cloud/prowler/pull/7673)
 - support for static credentials for sending findings to Amazon S3 and AWS Security Hub [(#7322)](https://github.com/prowler-cloud/prowler/pull/7322)
 - Prowler ThreatScore for M365 provider [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
 - Microsoft User and User Credential auth to reports [(#7681)](https://github.com/prowler-cloud/prowler/pull/7681)
