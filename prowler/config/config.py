@@ -1,3 +1,4 @@
+import importlib.metadata
 import os
 import pathlib
 from datetime import datetime, timezone
@@ -76,17 +77,51 @@ EXTERNAL_TOOL_PROVIDERS = frozenset({"iac", "llm", "image"})
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
 
+def _get_ep_compliance_dirs() -> dict:
+    """Discover compliance directories from entry points. Returns {provider: path}."""
+    dirs = {}
+    for ep in importlib.metadata.entry_points(group="prowler.compliance"):
+        try:
+            module = ep.load()
+            if hasattr(module, "__path__"):
+                dirs[ep.name] = module.__path__[0]
+            elif hasattr(module, "__file__"):
+                dirs[ep.name] = os.path.dirname(module.__file__)
+        except Exception:
+            pass
+    return dirs
+
+
 def get_available_compliance_frameworks(provider=None):
     available_compliance_frameworks = []
-    providers = [p.value for p in Provider]
+    # Built-in compliance
+    compliance_base = f"{actual_directory}/../compliance"
     if provider:
         providers = [provider]
-    for provider in providers:
-        compliance_dir = f"{actual_directory}/../compliance/{provider}"
+    else:
+        # Scan compliance directory for all provider subdirectories
+        providers = []
+        if os.path.isdir(compliance_base):
+            for entry in os.scandir(compliance_base):
+                if entry.is_dir():
+                    providers.append(entry.name)
+    for prov in providers:
+        compliance_dir = f"{compliance_base}/{prov}"
         if not os.path.isdir(compliance_dir):
             continue
         with os.scandir(compliance_dir) as files:
             for file in files:
+                if file.is_file() and file.name.endswith(".json"):
+                    available_compliance_frameworks.append(
+                        file.name.removesuffix(".json")
+                    )
+    # External compliance via entry points
+    ep_dirs = _get_ep_compliance_dirs()
+    for prov, path in ep_dirs.items():
+        if provider and prov != provider:
+            continue
+        if os.path.isdir(path):
+            for file in os.scandir(path):
                 if file.is_file() and file.name.endswith(".json"):
                     available_compliance_frameworks.append(
                         file.name.removesuffix(".json")

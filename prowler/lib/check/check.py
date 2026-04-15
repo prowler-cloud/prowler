@@ -362,6 +362,29 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
+def _resolve_check_module(
+    provider_type: str, service: str, check_name: str
+) -> ModuleType:
+    """Resolve and import a check module — tries built-in path first, then entry points."""
+    # Built-in path
+    builtin_path = f"prowler.providers.{provider_type}.services.{service}.{check_name}.{check_name}"
+    try:
+        return import_check(builtin_path)
+    except ModuleNotFoundError:
+        pass
+
+    # Entry point lookup
+    import importlib.metadata
+
+    for ep in importlib.metadata.entry_points(group=f"prowler.checks.{provider_type}"):
+        if ep.name == check_name:
+            return importlib.import_module(ep.value)
+
+    raise ModuleNotFoundError(
+        f"Check '{check_name}' not found for provider '{provider_type}'"
+    )
+
+
 def run_fixer(check_findings: list) -> int:
     """
     Run the fixer for the check if it exists and there are any FAIL findings
@@ -502,9 +525,10 @@ def execute_checks(
             service = check_name.split("_")[0]
             try:
                 try:
-                    # Import check module
-                    check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
-                    lib = import_check(check_module_path)
+                    # Import check module (built-in or entry point)
+                    lib = _resolve_check_module(
+                        global_provider.type, service, check_name
+                    )
                     # Recover functions from check
                     check_to_execute = getattr(lib, check_name)
                     check = check_to_execute()
@@ -582,9 +606,10 @@ def execute_checks(
                 )
                 try:
                     try:
-                        # Import check module
-                        check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
-                        lib = import_check(check_module_path)
+                        # Import check module (built-in or entry point)
+                        lib = _resolve_check_module(
+                            global_provider.type, service, check_name
+                        )
                         # Recover functions from check
                         check_to_execute = getattr(lib, check_name)
                         check = check_to_execute()

@@ -19,19 +19,58 @@ from prowler.providers.common.arguments import (
     validate_asff_usage,
     validate_provider_arguments,
 )
+from prowler.providers.common.provider import Provider
 
 
 class ProwlerArgumentParser:
     # Set the default parser
     def __init__(self):
+        # Discover any providers not in the hardcoded list below
+        # TODO - First step to support current providers and the new external provider implementation
+        known_providers = {
+            "aws",
+            "azure",
+            "gcp",
+            "kubernetes",
+            "m365",
+            "github",
+            "googleworkspace",
+            "cloudflare",
+            "oraclecloud",
+            "openstack",
+            "alibabacloud",
+            "iac",
+            "llm",
+            "image",
+            "nhn",
+            "mongodbatlas",
+            "vercel",
+        }
+        all_providers = set(Provider.get_available_providers())
+        new_providers = sorted(all_providers - known_providers)
+
+        # Build extra strings for dynamically discovered providers
+        extra_providers_csv = ""
+        extra_providers_text = ""
+        if new_providers:
+            providers_help = Provider.get_providers_help_text()
+            extra_providers_csv = "," + ",".join(new_providers)
+            extra_lines = []
+            for name in new_providers:
+                help_text = providers_help.get(name, "")
+                if help_text:
+                    extra_lines.append(f"    {name:<20}{help_text}")
+            if extra_lines:
+                extra_providers_text = "\n" + "\n".join(extra_lines)
+
         # CLI Arguments
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image} ...",
-            epilog="""
+            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image{extra_providers_csv}}} ...",
+            epilog=f"""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel}
+  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel{extra_providers_csv}}}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -48,13 +87,13 @@ Available Cloud Providers:
     image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
     mongodbatlas        MongoDB Atlas Provider (Beta)
-    vercel              Vercel Provider
+    vercel              Vercel Provider{extra_providers_text}
 
 Available components:
     dashboard           Local dashboard
 
 To see the different available options on a specific component, run:
-    prowler {provider|dashboard} -h|--help
+    prowler {{provider|dashboard}} -h|--help
 
 Detailed documentation at https://docs.prowler.com
 """,

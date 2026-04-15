@@ -69,11 +69,11 @@ from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_googleworkspace import GoogleWorkspaceCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
+from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
+from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
     GoogleWorkspaceCISASCuBA,
 )
-from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
-from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
@@ -405,6 +405,9 @@ def prowler():
         output_options = VercelOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    else:
+        # Dynamic fallback: any external/custom provider
+        output_options = global_provider.get_output_options(args, bulk_checks_metadata)
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -1271,6 +1274,30 @@ def prowler():
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
             else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+    else:
+        # Dynamic fallback: any external/custom provider
+        try:
+            global_provider.generate_compliance_output(
+                finding_outputs,
+                bulk_compliance_frameworks,
+                input_compliance_frameworks,
+                output_options,
+                generated_outputs,
+            )
+        except NotImplementedError:
+            # Last resort: generic compliance
+            for compliance_name in input_compliance_frameworks:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"

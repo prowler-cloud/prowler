@@ -7,39 +7,46 @@ from prowler.lib.outputs.common import Status
 from prowler.lib.outputs.finding import Finding
 
 
-def stdout_report(finding, color, verbose, status, fix):
+def stdout_report(finding, color, verbose, status, fix, provider=None):
     if finding.check_metadata.Provider == "aws":
         details = finding.region
-    if finding.check_metadata.Provider == "azure":
+    elif finding.check_metadata.Provider == "azure":
         details = finding.location
-    if finding.check_metadata.Provider == "gcp":
+    elif finding.check_metadata.Provider == "gcp":
         details = finding.location.lower()
-    if finding.check_metadata.Provider == "kubernetes":
+    elif finding.check_metadata.Provider == "kubernetes":
         details = finding.namespace.lower()
-    if finding.check_metadata.Provider == "github":
+    elif finding.check_metadata.Provider == "github":
         details = finding.owner
-    if finding.check_metadata.Provider == "m365":
+    elif finding.check_metadata.Provider == "m365":
         details = finding.location
-    if finding.check_metadata.Provider == "mongodbatlas":
+    elif finding.check_metadata.Provider == "mongodbatlas":
         details = finding.location
-    if finding.check_metadata.Provider == "nhn":
+    elif finding.check_metadata.Provider == "nhn":
         details = finding.location
-    if finding.check_metadata.Provider == "llm":
+    elif finding.check_metadata.Provider == "llm":
         details = finding.check_metadata.CheckID
-    if finding.check_metadata.Provider == "iac":
+    elif finding.check_metadata.Provider == "iac":
         details = finding.check_metadata.CheckID
-    if finding.check_metadata.Provider == "oraclecloud":
+    elif finding.check_metadata.Provider == "oraclecloud":
         details = finding.region
-    if finding.check_metadata.Provider == "alibabacloud":
+    elif finding.check_metadata.Provider == "alibabacloud":
         details = finding.region
-    if finding.check_metadata.Provider == "openstack":
+    elif finding.check_metadata.Provider == "openstack":
         details = finding.region
-    if finding.check_metadata.Provider == "cloudflare":
+    elif finding.check_metadata.Provider == "cloudflare":
         details = finding.zone_name
-    if finding.check_metadata.Provider == "googleworkspace":
+    elif finding.check_metadata.Provider == "googleworkspace":
         details = finding.location
-    if finding.check_metadata.Provider == "vercel":
+    elif finding.check_metadata.Provider == "vercel":
         details = finding.region
+    else:
+        # Dynamic fallback: any external/custom provider
+        if provider is None:
+            from prowler.providers.common.provider import Provider
+
+            provider = Provider.get_global_provider()
+        details = provider.get_stdout_detail(finding)
 
     if (verbose or fix) and (not status or finding.status in status):
         if finding.muted:
@@ -59,12 +66,15 @@ def report(check_findings, provider, output_options):
         if hasattr(output_options, "verbose"):
             verbose = output_options.verbose
         if check_findings:
-            # TO-DO Generic Function
             if provider.type == "aws":
                 check_findings.sort(key=lambda x: x.region)
-
-            if provider.type == "azure":
+            elif provider.type == "azure":
                 check_findings.sort(key=lambda x: x.subscription)
+            else:
+                # Dynamic fallback: any external/custom provider
+                sort_key = provider.get_finding_sort_key()
+                if sort_key and isinstance(sort_key, str):
+                    check_findings.sort(key=lambda x: getattr(x, sort_key, ""))
 
             for finding in check_findings:
                 # Print findings by stdout

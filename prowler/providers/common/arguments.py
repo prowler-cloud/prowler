@@ -23,6 +23,16 @@ def init_providers_parser(self):
                 ),
                 init_provider_arguments_function,
             )(self)
+        except ImportError:
+            # External provider — try init_parser classmethod via entry point
+            cls = Provider._load_ep_provider(provider)
+            if cls and hasattr(cls, "init_parser"):
+                try:
+                    cls.init_parser(self)
+                except Exception as error:
+                    logger.warning(
+                        f"Failed to init parser for external provider '{provider}': {error}"
+                    )
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

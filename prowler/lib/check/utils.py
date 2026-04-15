@@ -1,8 +1,28 @@
 import importlib
+import importlib.metadata
+import os
 import sys
 from pkgutil import walk_packages
 
 from prowler.lib.logger import logger
+
+
+def _recover_ep_checks(provider: str) -> list[tuple]:
+    """Discover external checks registered via entry points for a provider.
+
+    Uses find_spec to locate the check module without importing it,
+    avoiding service client initialization at discovery time.
+    """
+    checks = []
+    for ep in importlib.metadata.entry_points(group=f"prowler.checks.{provider}"):
+        try:
+            spec = importlib.util.find_spec(ep.value)
+            if spec and spec.origin:
+                check_path = os.path.dirname(spec.origin)
+                checks.append((ep.name, check_path))
+        except Exception as e:
+            logger.warning(f"Failed to discover external check '{ep.name}': {e}")
+    return checks
 
 
 def recover_checks_from_provider(
@@ -19,24 +39,34 @@ def recover_checks_from_provider(
             return []
 
         checks = []
-        modules = list_modules(provider, service)
-        for module_name in modules:
-            # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
-            check_module_name = module_name.name
-            # We need to exclude common shared libraries in services
-            if (
-                check_module_name.count(".") == 6
-                and ".lib." not in check_module_name
-                and (not check_module_name.endswith("_fixer") or include_fixers)
-            ):
-                check_path = module_name.module_finder.path
-                # Check name is the last part of the check_module_name
-                check_name = check_module_name.split(".")[-1]
-                check_info = (check_name, check_path)
-                checks.append(check_info)
-    except ModuleNotFoundError:
-        logger.critical(f"Service {service} was not found for the {provider} provider.")
-        sys.exit(1)
+        # Built-in checks from prowler.providers.{provider}.services
+        try:
+            modules = list_modules(provider, service)
+            for module_name in modules:
+                # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
+                check_module_name = module_name.name
+                # We need to exclude common shared libraries in services
+                if (
+                    check_module_name.count(".") == 6
+                    and ".lib." not in check_module_name
+                    and (not check_module_name.endswith("_fixer") or include_fixers)
+                ):
+                    check_path = module_name.module_finder.path
+                    check_name = check_module_name.split(".")[-1]
+                    check_info = (check_name, check_path)
+                    checks.append(check_info)
+        except ModuleNotFoundError:
+            if service:
+                logger.critical(
+                    f"Service {service} was not found for the {provider} provider."
+                )
+                sys.exit(1)
+            # No built-in services for this provider (e.g., external provider)
+
+        # External checks registered via entry points
+        if not service:
+            checks.extend(_recover_ep_checks(provider))
+
     except Exception as e:
         logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
         sys.exit(1)

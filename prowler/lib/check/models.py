@@ -11,10 +11,11 @@ from typing import Any, Dict, Optional, Set
 from pydantic.v1 import BaseModel, Field, ValidationError, validator
 from pydantic.v1.error_wrappers import ErrorWrapper
 
-from prowler.config.config import EXTERNAL_TOOL_PROVIDERS, Provider
+from prowler.config.config import EXTERNAL_TOOL_PROVIDERS
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
+from prowler.providers.common.provider import Provider as ProviderABC
 
 # Valid ResourceGroup values as defined in the RFC
 VALID_RESOURCE_GROUPS = frozenset(
@@ -466,7 +467,7 @@ class CheckMetadata(BaseModel):
         # If the bulk checks metadata is not provided, get it
         if not bulk_checks_metadata:
             bulk_checks_metadata = {}
-            available_providers = [p.value for p in Provider]
+            available_providers = ProviderABC.get_available_providers()
             for provider_name in available_providers:
                 bulk_checks_metadata.update(CheckMetadata.get_bulk(provider_name))
         if provider:
@@ -491,7 +492,7 @@ class CheckMetadata(BaseModel):
             # Loaded here, as it is not always needed
             if not bulk_compliance_frameworks:
                 bulk_compliance_frameworks = {}
-                available_providers = [p.value for p in Provider]
+                available_providers = ProviderABC.get_available_providers()
                 for provider in available_providers:
                     bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
             checks_from_compliance_framework = (
