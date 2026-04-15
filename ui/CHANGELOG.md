@@ -10,7 +10,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
-- Remove legacy finding detail sheet, row-details wrapper, and resource detail panel; unify findings and resources around new side drawers with deep-link support via the `id` query param [(#10692)](https://github.com/prowler-cloud/prowler/pull/10692)
+- Remove legacy finding detail sheet, row-details wrapper, and resource detail panel; unify findings and resources around new side drawers [(#10692)](https://github.com/prowler-cloud/prowler/pull/10692)
+- Attack Paths "View Finding" now opens the finding drawer inline over the graph instead of navigating to `/findings` in a new tab, preserving graph zoom, selection, and filter state
 
 ### 🐞 Fixed
 

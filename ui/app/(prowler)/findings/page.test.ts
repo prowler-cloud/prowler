@@ -34,10 +34,4 @@ describe("findings page", () => {
   it("guards errors array access with a length check", () => {
     expect(source).toContain("errors?.length > 0");
   });
-
-  it("resolves the id deep link through getFindingById and passes the expanded finding into the new drawer flow", () => {
-    expect(source).toContain("const initialFindingId");
-    expect(source).toContain("getFindingById(initialFindingId");
-    expect(source).toContain("initialFinding={processedInitialFinding}");
-  });
 });

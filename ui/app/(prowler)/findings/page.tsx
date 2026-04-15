@@ -5,16 +5,11 @@ import {
   getFindingGroups,
   getLatestFindingGroups,
 } from "@/actions/finding-groups";
-import {
-  getFindingById,
-  getLatestMetadataInfo,
-  getMetadataInfo,
-} from "@/actions/findings";
+import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScan, getScans } from "@/actions/scans";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
-  FindingDetailDrawer,
   FindingsGroupTable,
   SkeletonTableFindings,
 } from "@/components/findings/table";
@@ -26,9 +21,8 @@ import {
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
-import { expandFindingWithRelationships } from "@/lib/finding-detail";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
-import { FindingProps, ScanEntity, ScanProps } from "@/types";
+import { ScanEntity, ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
@@ -39,22 +33,14 @@ export default async function Findings({
   const resolvedSearchParams = await searchParams;
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
-  const initialFindingId = resolvedSearchParams.id?.toString();
 
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
-  const [providersData, scansData, initialFindingResponse] = await Promise.all([
+  const [providersData, scansData] = await Promise.all([
     getProviders({ pageSize: 50 }),
     getScans({ pageSize: 50 }),
-    initialFindingId
-      ? getFindingById(initialFindingId, "resources,scan.provider")
-      : Promise.resolve(undefined),
   ]);
-
-  const processedInitialFinding = expandFindingWithRelationships(
-    initialFindingResponse,
-  );
 
   const filtersWithScanDates = await resolveFindingScanDateFilters({
     filters,
@@ -115,7 +101,6 @@ export default async function Findings({
           <SSRDataTable
             searchParams={resolvedSearchParams}
             filters={filtersWithScanDates}
-            initialFinding={processedInitialFinding}
           />
         </Suspense>
       </FilterTransitionWrapper>
@@ -126,11 +111,9 @@ export default async function Findings({
 const SSRDataTable = async ({
   searchParams,
   filters,
-  initialFinding,
 }: {
   searchParams: SearchParamsProps;
   filters: Record<string, string>;
-  initialFinding: FindingProps | null;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
@@ -157,9 +140,6 @@ const SSRDataTable = async ({
 
   return (
     <>
-      {initialFinding && (
-        <FindingDetailDrawer finding={initialFinding} defaultOpen />
-      )}
       {findingGroupsData?.errors?.length > 0 && (
         <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
