@@ -16,3 +16,4 @@ export {
   GRAPH_SELECTION_COLOR,
 } from "./graph-colors";
 export { computeFilteredSubgraph, getPathEdges } from "./graph-utils";
+export { layoutWithDagre } from "./layout";
