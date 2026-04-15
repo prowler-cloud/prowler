@@ -969,6 +969,8 @@ class AzureProvider(Provider):
             )
             if not subscription_ids:
                 logger.info("Scanning all the Azure subscriptions...")
+                # TODO: get tags or labels
+                # TODO: fill with AzureSubscription
                 subscription_pairs = [
                     (subscription.display_name, subscription.subscription_id)
                     for subscription in subscriptions_client.subscriptions.list()
