@@ -57,6 +57,7 @@ from api.models import (
     ProviderGroupMembership,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -16030,6 +16031,36 @@ class TestFindingGroupViewSet:
         # s3_bucket_public_access has 2 findings with 2 different resources
         assert len(data) == 2
 
+    def test_resources_id_matches_resource_id_for_mapped_findings(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Findings with a resource expose the resource id as row id (hot path contract)."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "expected resources in response"
+
+        resource_ids = set(
+            ResourceFindingMapping.objects.filter(
+                finding__check_id="s3_bucket_public_access",
+            ).values_list("resource_id", flat=True)
+        )
+        finding_ids = set(
+            Finding.objects.filter(
+                check_id="s3_bucket_public_access",
+            ).values_list("id", flat=True)
+        )
+
+        returned_ids = {item["id"] for item in data}
+        assert returned_ids <= {str(rid) for rid in resource_ids}
+        assert returned_ids.isdisjoint({str(fid) for fid in finding_ids})
+
     def test_resources_includes_orphan_finding_as_simulated_resource(
         self,
         authenticated_client,
@@ -16084,71 +16115,6 @@ class TestFindingGroupViewSet:
         assert resource["service"] == "network"
         assert resource["region"] == "global"
         assert resource["resource_group"] == "networking"
-
-    def test_resources_returns_findings_not_deduplicated_resources(
-        self,
-        authenticated_client,
-        tenants_fixture,
-        scans_fixture,
-        resources_fixture,
-    ):
-        """If multiple findings share one resource, endpoint must return both findings."""
-        tenant = tenants_fixture[0]
-        scan = scans_fixture[0]
-        shared_resource = resources_fixture[0]
-        check_id = "iac_same_resource_multiple_findings"
-
-        finding_a = Finding.objects.create(
-            tenant_id=tenant.id,
-            uid="same_resource_finding_a",
-            scan=scan,
-            delta="new",
-            status=Status.FAIL,
-            status_extended="first finding",
-            impact=Severity.medium,
-            impact_extended="medium risk",
-            severity=Severity.medium,
-            raw_result={"status": Status.FAIL, "severity": Severity.medium},
-            tags={"source": "iac"},
-            check_id=check_id,
-            check_metadata={"CheckId": check_id, "checktitle": "Same resource check"},
-            first_seen_at=datetime.now(timezone.utc),
-            muted=False,
-        )
-        finding_a.add_resources([shared_resource])
-
-        finding_b = Finding.objects.create(
-            tenant_id=tenant.id,
-            uid="same_resource_finding_b",
-            scan=scan,
-            delta="changed",
-            status=Status.FAIL,
-            status_extended="second finding",
-            impact=Severity.high,
-            impact_extended="high risk",
-            severity=Severity.high,
-            raw_result={"status": Status.FAIL, "severity": Severity.high},
-            tags={"source": "iac"},
-            check_id=check_id,
-            check_metadata={"CheckId": check_id, "checktitle": "Same resource check"},
-            first_seen_at=datetime.now(timezone.utc),
-            muted=False,
-        )
-        finding_b.add_resources([shared_resource])
-
-        response = authenticated_client.get(
-            reverse("finding-group-resources", kwargs={"pk": check_id}),
-            {"filter[inserted_at]": TODAY},
-        )
-
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()["data"]
-        assert len(data) == 2
-        assert {item["id"] for item in data} == {str(finding_a.id), str(finding_b.id)}
-        assert {item["attributes"]["finding_id"] for item in data} == {
-            str(finding_a.id),
-            str(finding_b.id),
-        }
 
     def test_latest_resources_includes_orphan_finding_as_simulated_resource(
         self,
