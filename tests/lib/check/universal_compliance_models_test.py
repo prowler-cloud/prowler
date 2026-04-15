@@ -1047,6 +1047,50 @@ class TestAttributesMetadataValidation:
         )
         assert len(fw.requirements) == 1
 
+    def test_unknown_attribute_key_raises(self):
+        """Typos like 'Sectoin' must be rejected by the schema validator."""
+        with pytest.raises(ValidationError, match="unknown attribute 'Sectoin'"):
+            ComplianceFramework(
+                framework="Test",
+                name="Test",
+                description="d",
+                requirements=[
+                    UniversalComplianceRequirement(
+                        id="1.1",
+                        description="d",
+                        attributes={"Sectoin": "IAM", "Level": "high"},
+                        checks={},
+                    ),
+                ],
+                attributes_metadata=self._metadata(enum=["high", "low"]),
+            )
+
+    def test_multiple_unknown_keys_all_reported(self):
+        """Every unknown key must appear in the validation error (deterministic order)."""
+        with pytest.raises(
+            ValidationError,
+            match=r"unknown attribute 'Bogus1'[\s\S]*unknown attribute 'Bogus2'",
+        ):
+            ComplianceFramework(
+                framework="Test",
+                name="Test",
+                description="d",
+                requirements=[
+                    UniversalComplianceRequirement(
+                        id="1.1",
+                        description="d",
+                        attributes={
+                            "Section": "IAM",
+                            "Level": "high",
+                            "Bogus1": "x",
+                            "Bogus2": "y",
+                        },
+                        checks={},
+                    ),
+                ],
+                attributes_metadata=self._metadata(enum=["high", "low"]),
+            )
+
     def test_multiple_errors_reported(self):
         """All validation errors should be collected and reported together."""
         with pytest.raises(

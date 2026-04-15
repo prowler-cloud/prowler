@@ -657,6 +657,14 @@ class ComplianceFramework(BaseModel):
                         f"Requirement '{req.id}': missing required attribute '{key}'"
                     )
 
+            # Unknown keys — anything outside the declared schema is a typo or drift
+            unknown_keys = set(attrs) - valid_keys
+            for key in sorted(unknown_keys):
+                errors.append(
+                    f"Requirement '{req.id}': unknown attribute '{key}' "
+                    f"(not declared in attributes_metadata)"
+                )
+
             # Enum validation
             for key, allowed in enum_map.items():
                 if key in attrs and attrs[key] is not None:
