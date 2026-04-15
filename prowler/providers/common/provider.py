@@ -138,14 +138,14 @@ class Provider(ABC):
 
     @staticmethod
     def get_excluded_regions_from_env() -> set:
-        """Parse the PROWLER_DISALLOWED_REGIONS environment variable.
+        """Parse the PROWLER_AWS_DISALLOWED_REGIONS environment variable.
 
         The variable is a comma-separated list of region identifiers to skip
         during scans (e.g. "me-south-1, ap-east-1"). Whitespace around entries
         is tolerated and empty entries are dropped. Returns an empty set when
         the variable is unset or contains no usable values.
         """
-        raw = os.environ.get("PROWLER_DISALLOWED_REGIONS", "")
+        raw = os.environ.get("PROWLER_AWS_DISALLOWED_REGIONS", "")
         return {region.strip() for region in raw.split(",") if region.strip()}
 
     @staticmethod

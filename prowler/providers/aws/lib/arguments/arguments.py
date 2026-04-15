@@ -72,7 +72,7 @@ def init_parser(self):
         nargs="+",
         help=(
             "AWS region names to exclude from the scan. Overrides the "
-            "PROWLER_DISALLOWED_REGIONS environment variable when set."
+            "PROWLER_AWS_DISALLOWED_REGIONS environment variable when set."
         ),
         choices=AwsProvider.get_regions(partition=None),
     )

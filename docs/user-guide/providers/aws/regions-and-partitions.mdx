@@ -41,10 +41,10 @@ To scan all supported AWS regions except a specific subset, use the `--excluded-
 prowler aws --excluded-region eu-west-1 me-south-1
 ```
 
-You can also configure the exclusion list with the `PROWLER_DISALLOWED_REGIONS` environment variable:
+You can also configure the exclusion list with the `PROWLER_AWS_DISALLOWED_REGIONS` environment variable as a comma-separated list:
 
 ```console
-export PROWLER_DISALLOWED_REGIONS="eu-west-1 me-south-1"
+export PROWLER_AWS_DISALLOWED_REGIONS="eu-west-1,me-south-1"
 prowler aws
 ```
 
@@ -60,11 +60,11 @@ aws:
 When more than one source is set, precedence is:
 
 1. `--excluded-region`
-2. `PROWLER_DISALLOWED_REGIONS`
+2. `PROWLER_AWS_DISALLOWED_REGIONS`
 3. `aws.disallowed_regions` in `config.yaml`
 
 <Note>
-For self-hosted App or API-triggered scans, set `PROWLER_DISALLOWED_REGIONS` in the runtime environment of the backend scan containers such as `api` and `worker`. The `ui` container does not enforce AWS region selection.
+For self-hosted App or API-triggered scans, set `PROWLER_AWS_DISALLOWED_REGIONS` in the runtime environment of the backend scan containers such as `api` and `worker`. The `ui` container does not enforce AWS region selection.
 
 </Note>
 

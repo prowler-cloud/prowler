@@ -872,7 +872,7 @@ aws:
     def test_excluded_regions_from_env_on_direct_provider_init(self):
         with mock.patch.dict(
             os.environ,
-            {"PROWLER_DISALLOWED_REGIONS": AWS_REGION_EU_WEST_1},
+            {"PROWLER_AWS_DISALLOWED_REGIONS": AWS_REGION_EU_WEST_1},
             clear=False,
         ):
             aws_provider = AwsProvider()
@@ -888,7 +888,7 @@ aws:
         try:
             with mock.patch.dict(
                 os.environ,
-                {"PROWLER_DISALLOWED_REGIONS": AWS_REGION_US_EAST_1},
+                {"PROWLER_AWS_DISALLOWED_REGIONS": AWS_REGION_US_EAST_1},
                 clear=False,
             ):
                 aws_provider = AwsProvider(
@@ -929,12 +929,20 @@ aws:
     def test_get_excluded_regions_from_env_parses_comma_list(self):
         with mock.patch.dict(
             os.environ,
-            {"PROWLER_DISALLOWED_REGIONS": " me-south-1 , ap-east-1 ,, "},
+            {"PROWLER_AWS_DISALLOWED_REGIONS": " me-south-1 , ap-east-1 ,, "},
         ):
             assert Provider.get_excluded_regions_from_env() == {
                 "me-south-1",
                 "ap-east-1",
             }
+
+    def test_get_excluded_regions_from_env_ignores_legacy_generic_name(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_DISALLOWED_REGIONS": "me-south-1"},
+            clear=True,
+        ):
+            assert Provider.get_excluded_regions_from_env() == set()
 
     def test_get_excluded_regions_from_env_unset(self):
         with mock.patch.dict(os.environ, {}, clear=True):

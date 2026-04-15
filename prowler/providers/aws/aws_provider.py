@@ -139,7 +139,7 @@ class AwsProvider(Provider):
             - regions: A set of regions to audit.
             - excluded_regions: A set of regions to skip during the scan. Applied
               on top of `regions` and of the account's enabled regions. Also
-              settable via the PROWLER_DISALLOWED_REGIONS environment variable
+              settable via the PROWLER_AWS_DISALLOWED_REGIONS environment variable
               or the `disallowed_regions` key in the provider config file.
             - organizations_role_arn: The ARN of the AWS Organizations IAM role to assume.
             - scan_unused_services: A boolean indicating whether to scan unused services. False by default.
