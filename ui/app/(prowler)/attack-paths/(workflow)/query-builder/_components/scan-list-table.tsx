@@ -1,9 +1,13 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { Check, Minus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { Button } from "@/components/shadcn/button/button";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/shadcn/radio-group/radio-group";
 import {
   Tooltip,
   TooltipContent,
@@ -36,44 +40,6 @@ const parsePageParam = (value: string | null, fallback: number) => {
 const formatNullableDuration = (duration: number | null) => {
   if (!duration) return "-";
   return formatDuration(duration);
-};
-
-const isSelectDisabled = (
-  scan: AttackPathScan,
-  selectedScanId: string | null,
-) => {
-  return !scan.attributes.graph_data_ready || selectedScanId === scan.id;
-};
-
-const getSelectButtonLabel = (
-  scan: AttackPathScan,
-  selectedScanId: string | null,
-) => {
-  if (selectedScanId === scan.id) {
-    return "Selected";
-  }
-
-  if (scan.attributes.graph_data_ready) {
-    return "Select";
-  }
-
-  if (scan.attributes.state === SCAN_STATES.SCHEDULED) {
-    return "Scheduled";
-  }
-
-  if (scan.attributes.state === SCAN_STATES.AVAILABLE) {
-    return "Queued";
-  }
-
-  if (scan.attributes.state === SCAN_STATES.EXECUTING) {
-    return "Running...";
-  }
-
-  if (scan.attributes.state === SCAN_STATES.FAILED) {
-    return "Failed";
-  }
-
-  return "Select";
 };
 
 const getDisabledTooltip = (scan: AttackPathScan): string | null => {
@@ -135,31 +101,67 @@ const getColumns = ({
   onSelectScan: (scanId: string) => void;
 }): ColumnDef<AttackPathScan>[] => [
   {
+    id: "select",
+    header: () => <span className="text-sm font-medium">Select</span>,
+    cell: ({ row }) => {
+      const isSelected = selectedScanId === row.original.id;
+      const canSelect = row.original.attributes.graph_data_ready;
+      const tooltip = getDisabledTooltip(row.original);
+
+      const radio = (
+        <RadioGroupItem
+          value={row.original.id}
+          checked={isSelected}
+          disabled={!canSelect}
+          onClick={() => {
+            if (canSelect && !isSelected) {
+              onSelectScan(row.original.id);
+            }
+          }}
+          className={cn(
+            "size-5",
+            canSelect && !isSelected
+              ? "border-text-neutral-secondary cursor-pointer"
+              : !canSelect
+                ? "disabled:opacity-70"
+                : undefined,
+          )}
+          aria-label={
+            isSelected
+              ? "Selected scan"
+              : canSelect
+                ? "Select scan"
+                : "Scan not available"
+          }
+        />
+      );
+
+      if (!canSelect && !isSelected && tooltip) {
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0}>{radio}</span>
+            </TooltipTrigger>
+            <TooltipContent>{tooltip}</TooltipContent>
+          </Tooltip>
+        );
+      }
+
+      return radio;
+    },
+    enableSorting: false,
+  },
+  {
     accessorKey: "provider",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Account" />
     ),
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <span
-          className={cn(
-            "inline-block size-2 shrink-0 rounded-full",
-            row.original.attributes.graph_data_ready
-              ? "bg-bg-pass-primary"
-              : "bg-transparent",
-          )}
-          aria-label={
-            row.original.attributes.graph_data_ready
-              ? "Graph data available"
-              : undefined
-          }
-        />
-        <EntityInfo
-          cloudProvider={row.original.attributes.provider_type as ProviderType}
-          entityAlias={row.original.attributes.provider_alias}
-          entityId={row.original.attributes.provider_uid}
-        />
-      </div>
+      <EntityInfo
+        cloudProvider={row.original.attributes.provider_type as ProviderType}
+        entityAlias={row.original.attributes.provider_alias}
+        entityId={row.original.attributes.provider_uid}
+      />
     ),
     enableSorting: false,
   },
@@ -182,22 +184,24 @@ const getColumns = ({
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => (
-      <ScanStatusBadge
-        status={row.original.attributes.state}
-        progress={row.original.attributes.progress}
-        graphDataReady={row.original.attributes.graph_data_ready}
-      />
+      <div className="flex">
+        <ScanStatusBadge
+          status={row.original.attributes.state}
+          progress={row.original.attributes.progress}
+        />
+      </div>
     ),
     enableSorting: false,
   },
   {
-    accessorKey: "progress",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Progress" />
-    ),
-    cell: ({ row }) => (
-      <span className="text-sm">{row.original.attributes.progress}%</span>
-    ),
+    accessorKey: "graph_data_ready",
+    header: () => <span className="text-sm font-medium">Graph</span>,
+    cell: ({ row }) =>
+      row.original.attributes.graph_data_ready ? (
+        <Check size={16} className="text-text-success-primary" />
+      ) : (
+        <Minus size={16} className="text-text-neutral-secondary" />
+      ),
     enableSorting: false,
   },
   {
@@ -210,45 +214,6 @@ const getColumns = ({
         {formatNullableDuration(row.original.attributes.duration)}
       </span>
     ),
-    enableSorting: false,
-  },
-  {
-    id: "actions",
-    header: () => <span className="sr-only">Actions</span>,
-    cell: ({ row }) => {
-      const isDisabled = isSelectDisabled(row.original, selectedScanId);
-      const tooltip = getDisabledTooltip(row.original);
-
-      const button = (
-        <Button
-          type="button"
-          aria-label="Select scan"
-          disabled={isDisabled}
-          variant={isDisabled ? "secondary" : "default"}
-          onClick={() => onSelectScan(row.original.id)}
-          className="w-full max-w-24"
-        >
-          {getSelectButtonLabel(row.original, selectedScanId)}
-        </Button>
-      );
-
-      if (isDisabled && tooltip) {
-        return (
-          <div className="flex justify-end">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="w-full max-w-24" tabIndex={0}>
-                  {button}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>{tooltip}</TooltipContent>
-            </Tooltip>
-          </div>
-        );
-      }
-
-      return <div className="flex justify-end">{button}</div>;
-    },
     enableSorting: false,
   },
 ];
@@ -300,19 +265,26 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   };
 
   return (
-    <DataTable
-      columns={getColumns({
-        selectedScanId,
-        onSelectScan: handleSelectScan,
-      })}
-      data={paginatedScans}
-      metadata={buildMetadata(scans.length, currentPage, totalPages)}
-      controlledPage={currentPage}
-      controlledPageSize={pageSize}
-      onPageChange={handlePageChange}
-      onPageSizeChange={handlePageSizeChange}
-      enableRowSelection
-      rowSelection={getSelectedRowSelection(paginatedScans, selectedScanId)}
-    />
+    <RadioGroup value={selectedScanId ?? ""} className="gap-0">
+      <DataTable
+        columns={getColumns({
+          selectedScanId,
+          onSelectScan: handleSelectScan,
+        })}
+        data={paginatedScans}
+        metadata={buildMetadata(scans.length, currentPage, totalPages)}
+        controlledPage={currentPage}
+        controlledPageSize={pageSize}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        onRowClick={(row) => {
+          if (row.original.attributes.graph_data_ready) {
+            handleSelectScan(row.original.id);
+          }
+        }}
+        enableRowSelection
+        rowSelection={getSelectedRowSelection(paginatedScans, selectedScanId)}
+      />
+    </RadioGroup>
   );
 };
