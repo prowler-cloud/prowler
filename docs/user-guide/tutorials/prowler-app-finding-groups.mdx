@@ -1,0 +1,110 @@
+---
+title: 'Finding Groups'
+---
+
+Finding Groups is a feature that transforms how you triage security findings by grouping them by check instead of displaying a flat list. This dramatically reduces noise and enables faster, more effective prioritization.
+
+## The Problem
+
+A real cloud environment produces thousands of findings per scan. A flat list makes it impossible to triage effectively:
+
+- **Signal buried in noise**: The same misconfiguration repeated across 200 resources shows up as 200 rows, burying the signal in repetitive data.
+- **Prioritization guesswork**: Without grouping, understanding which issues affect the most resources requires manual counting and correlation.
+- **Tedious muting**: Turning "mute this false positive everywhere" into a click marathon across dozens of individual findings.
+- **Lost context**: When investigating a single resource, related findings are scattered across the same flat list, making it hard to see the full picture.
+
+## The Solution
+
+Finding Groups addresses these challenges by intelligently grouping findings by check.
+
+### Grouped View at a Glance
+
+Each row represents a single check title with key information immediately visible:
+
+- **Severity** indicator for quick risk assessment
+- **Impacted providers** showing which cloud platforms are affected
+- **X of Y impacted resources** counter displaying how many resources fail this check
+
+For example, `Vercel project has the Web Application Firewall enabled` across every affected project collapses to a single row—not one per project.
+
+<Note>
+Sort or filter by severity, provider, or status at the group level to triage top-down instead of drowning in per-resource rows.
+</Note>
+
+### Expanding Groups for Details
+
+Expand any group inline to see the failing resources with detailed information:
+
+| Column | Description |
+|--------|-------------|
+| **UID** | Unique identifier for the resource |
+| **Service** | The cloud service the resource belongs to |
+| **Region** | Geographic region where the resource is deployed |
+| **Severity** | Risk level of the finding |
+| **Provider** | Cloud provider (AWS, Azure, GCP, Kubernetes, etc.) |
+| **Last Seen** | When the finding was last detected |
+| **Failing For** | Duration the resource has been in a failing state |
+
+### Resource Detail Drawer
+
+Click on any resource to open the detail drawer with full finding context:
+
+- **Risk**: The security risk associated with this finding
+- **Description**: Detailed explanation of what was detected
+- **Status Extended**: Additional status information and context
+- **Remediation**: Step-by-step guidance to resolve the issue
+- **View in Prowler Hub**: Direct link to explore the check in Prowler Hub
+- **Analyze This Finding With Lighthouse AI**: One-click AI-powered analysis for deeper insights
+
+### Bulk Actions
+
+Bulk-mute an entire group in a single action instead of chasing duplicates across the list. This is especially useful for:
+
+- Known false positives that appear across many resources
+- Findings in development or test environments
+- Accepted risks that have been documented and approved
+
+<Warning>
+Muting findings does not resolve underlying security issues. Review each finding carefully before muting to ensure it represents an acceptable risk or has been properly addressed.
+</Warning>
+
+## Other Findings For This Resource
+
+Inside the resource detail drawer, a new **Other Findings For This Resource** tab lists every finding that hits the same resource—passing, failing, and muted—alongside the one you opened.
+
+### Why This Matters
+
+When you're looking at "WAF not enabled" on a Vercel project, you immediately see:
+
+- Skew protection status
+- Rate limiting configuration
+- IP blocking settings
+- Custom firewall rules
+- Password protection findings
+
+All for that same project, without going back to the main list and filtering by resource UID.
+
+### Complete Context
+
+Pair the Other Findings tab with:
+
+- **Scans tab**: View the scan history for this resource
+- **Events tab**: Track changes and events over time
+
+This gives you full context without leaving the drawer.
+
+## Best Practices
+
+1. **Start with high severity groups**: Focus on critical and high severity groups first for maximum impact.
+2. **Use filters strategically**: Filter by provider or status at the group level to focus your triage session.
+3. **Leverage bulk mute**: When you've verified a finding is a false positive, mute the entire group at once.
+4. **Check related findings**: Always review the Other Findings tab to understand the full security posture of a resource.
+5. **Track failure duration**: Use the "Failing For" column to prioritize long-standing issues that may indicate systemic problems.
+
+## Getting Started
+
+1. Navigate to the **Findings** section in Prowler Cloud/App.
+2. Toggle to the **Grouped View** to see findings organized by check.
+3. Click on any group row to expand and see affected resources.
+4. Click on a resource to open the detail drawer with full context.
+5. Use the **Other Findings For This Resource** tab to see all findings for that resource.
