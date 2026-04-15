@@ -153,6 +153,8 @@ const SSRDataTable = async ({
         key={groupKey}
         data={groups}
         metadata={findingGroupsData?.meta}
+        resolvedFilters={filters}
+        hasHistoricalData={hasDateOrScan}
       />
     </>
   );

@@ -44,6 +44,7 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import { QueryCodeEditor } from "@/components/shared/query-code-editor";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -78,6 +79,29 @@ function stripCodeFences(code: string): string {
     .replace(/^```\w*\n?/, "")
     .replace(/\n?```\s*$/, "")
     .trim();
+}
+
+function renderRemediationCodeBlock({
+  label,
+  value,
+  copyValue,
+}: {
+  label: string;
+  value: string;
+  copyValue?: string;
+}) {
+  return (
+    <QueryCodeEditor
+      ariaLabel={label}
+      language="plainText"
+      value={value}
+      copyValue={copyValue}
+      editable={false}
+      minHeight={96}
+      showCopyButton
+      onChange={() => {}}
+    />
+  );
 }
 
 function normalizeComplianceFrameworkName(framework: string): string {
@@ -715,47 +739,35 @@ export function ResourceDetailDrawerContent({
 
                 {checkMeta.remediation.code.cli && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CLI Command:
-                    </span>
-                    <CodeSnippet
-                      value={`$ ${stripCodeFences(checkMeta.remediation.code.cli)}`}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                    {renderRemediationCodeBlock({
+                      label: "CLI Command",
+                      value: `$ ${stripCodeFences(checkMeta.remediation.code.cli)}`,
+                      copyValue: stripCodeFences(
+                        checkMeta.remediation.code.cli,
+                      ),
+                    })}
                   </div>
                 )}
 
                 {checkMeta.remediation.code.terraform && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      Terraform:
-                    </span>
-                    <CodeSnippet
-                      value={stripCodeFences(
+                    {renderRemediationCodeBlock({
+                      label: "Terraform",
+                      value: stripCodeFences(
                         checkMeta.remediation.code.terraform,
-                      )}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                      ),
+                    })}
                   </div>
                 )}
 
                 {checkMeta.remediation.code.nativeiac && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CloudFormation:
-                    </span>
-                    <CodeSnippet
-                      value={stripCodeFences(
+                    {renderRemediationCodeBlock({
+                      label: "CloudFormation",
+                      value: stripCodeFences(
                         checkMeta.remediation.code.nativeiac,
-                      )}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                      ),
+                    })}
                   </div>
                 )}
 

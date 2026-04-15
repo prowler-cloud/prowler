@@ -12,6 +12,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
+permissions: {}
+
 jobs:
   trigger-cloud-pull-request:
     if: |

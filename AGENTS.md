@@ -140,7 +140,7 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 
 | Component | Location | Tech Stack |
 |-----------|----------|------------|
-| SDK | `prowler/` | Python 3.10+, Poetry |
+| SDK | `prowler/` | Python 3.10+, Poetry 2.3+ |
 | API | `api/` | Django 5.1, DRF, Celery |
 | UI | `ui/` | Next.js 15, React 19, Tailwind 4 |
 | MCP Server | `mcp_server/` | FastMCP, Python 3.12+ |
@@ -153,12 +153,12 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 ```bash
 # Setup
 poetry install --with dev
-poetry run pre-commit install
+poetry run prek install
 
 # Code quality
 poetry run make lint
 poetry run make format
-poetry run pre-commit run --all-files
+poetry run prek run --all-files
 ```
 
 ---

@@ -60,10 +60,6 @@ vi.mock("./data-table-row-actions", () => ({
   DataTableRowActions: () => null,
 }));
 
-vi.mock("./impacted-providers-cell", () => ({
-  ImpactedProvidersCell: () => null,
-}));
-
 vi.mock("./impacted-resources-cell", () => ({
   ImpactedResourcesCell: ({
     impacted,
@@ -218,6 +214,23 @@ function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
 // ---------------------------------------------------------------------------
 
 describe("column-finding-groups — accessibility of check title cell", () => {
+  it("should not expose an impacted providers column", () => {
+    // Given
+    const columns = getColumnFindingGroups({
+      rowSelection: {},
+      selectableRowCount: 1,
+      onDrillDown: vi.fn(),
+    });
+
+    // When
+    const impactedProvidersColumn = columns.find(
+      (col) => (col as { id?: string }).id === "impactedProviders",
+    );
+
+    // Then
+    expect(impactedProvidersColumn).toBeUndefined();
+  });
+
   it("should render the check title as a button element (not a <p>)", () => {
     // Given
     const onDrillDown =

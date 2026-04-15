@@ -73,5 +73,7 @@ export type FilterParam =
   | "filter[category__in]"
   | "filter[resource_groups__in]"
   | "filter[scan__in]"
+  | "filter[scan_id]"
+  | "filter[scan_id__in]"
   | "filter[inserted_at]"
   | "filter[muted]";
