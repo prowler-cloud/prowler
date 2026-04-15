@@ -435,55 +435,61 @@ def load_compliance_framework(
 # ─── Universal Compliance Schema Models (Phase 1-3) ─────────────────────────
 
 
+class OutputFormats(BaseModel):
+    """Flags indicating in which output formats an attribute should be included."""
+
+    csv: bool = True
+    ocsf: bool = True
+
+
 class AttributeMetadata(BaseModel):
     """Schema descriptor for a single attribute field in a universal compliance framework."""
 
-    Key: str
-    Label: Optional[str] = None
-    Type: str = "str"  # str, int, float, list_str, list_dict, bool
-    Enum: Optional[list] = None
-    CSV: bool = True
-    OCSF: bool = True
-    Required: bool = False
-    EnumDisplay: Optional[dict] = None  # enum_value -> EnumValueDisplay dict
-    EnumOrder: Optional[list] = None  # explicit ordering of enum values
-    ChartLabel: Optional[str] = None  # axis label when used in charts
+    key: str
+    label: Optional[str] = None
+    type: str = "str"  # str, int, float, list_str, list_dict, bool
+    enum: Optional[list] = None
+    required: bool = False
+    enum_display: Optional[dict] = None  # enum_value -> EnumValueDisplay dict
+    enum_order: Optional[list] = None  # explicit ordering of enum values
+    chart_label: Optional[str] = None  # axis label when used in charts
+    output_formats: OutputFormats = Field(default_factory=OutputFormats)
 
 
 class SplitByConfig(BaseModel):
     """Column-splitting configuration (e.g. CIS Level 1/Level 2)."""
 
-    Field: str
-    Values: list
+    field: str
+    values: list
 
 
 class ScoringConfig(BaseModel):
     """Weighted scoring configuration (e.g. ThreatScore)."""
 
-    RiskField: str
-    WeightField: str
+    risk_field: str
+    weight_field: str
 
 
 class TableLabels(BaseModel):
     """Custom pass/fail labels for console table rendering."""
 
-    PassLabel: str = "PASS"
-    FailLabel: str = "FAIL"
-    ProviderHeader: str = "Provider"
-    GroupHeader: Optional[str] = None
-    StatusHeader: str = "Status"
-    Title: Optional[str] = None
-    ResultsTitle: Optional[str] = None
-    FooterNote: Optional[str] = None
+    pass_label: str = "PASS"
+    fail_label: str = "FAIL"
+    provider_header: str = "Provider"
+    group_header: Optional[str] = None
+    status_header: str = "Status"
+    title: Optional[str] = None
+    results_title: Optional[str] = None
+    footer_note: Optional[str] = None
 
 
 class TableConfig(BaseModel):
     """Declarative rendering instructions for the console compliance table."""
 
-    GroupBy: str
-    SplitBy: Optional[SplitByConfig] = None
-    Scoring: Optional[ScoringConfig] = None
-    Labels: Optional[TableLabels] = None
+    group_by: str
+    split_by: Optional[SplitByConfig] = None
+    scoring: Optional[ScoringConfig] = None
+    labels: Optional[TableLabels] = None
 
 
 class EnumValueDisplay(BaseModel):
@@ -492,64 +498,64 @@ class EnumValueDisplay(BaseModel):
     Replaces hardcoded DIMENSION_MAPPING, TIPO_ICONS, nivel colors.
     """
 
-    Label: Optional[str] = None  # "Trazabilidad"
-    Abbreviation: Optional[str] = None  # "T"
-    Color: Optional[str] = None  # "#4286F4"
-    Icon: Optional[str] = None  # emoji
+    label: Optional[str] = None  # "Trazabilidad"
+    abbreviation: Optional[str] = None  # "T"
+    color: Optional[str] = None  # "#4286F4"
+    icon: Optional[str] = None  # emoji
 
 
 class ChartConfig(BaseModel):
     """Declarative chart description for PDF reports."""
 
-    Id: str
-    Type: str  # vertical_bar | horizontal_bar | radar
-    GroupBy: str  # attribute key to group by
-    Title: Optional[str] = None
-    XLabel: Optional[str] = None
-    YLabel: Optional[str] = None
-    ValueSource: str = "compliance_percent"
-    ColorMode: str = "by_value"  # by_value | fixed | by_group
-    FixedColor: Optional[str] = None
+    id: str
+    type: str  # vertical_bar | horizontal_bar | radar
+    group_by: str  # attribute key to group by
+    title: Optional[str] = None
+    x_label: Optional[str] = None
+    y_label: Optional[str] = None
+    value_source: str = "compliance_percent"
+    color_mode: str = "by_value"  # by_value | fixed | by_group
+    fixed_color: Optional[str] = None
 
 
 class ScoringFormula(BaseModel):
     """Weighted scoring formula (e.g. ThreatScore)."""
 
-    RiskField: str  # "LevelOfRisk"
-    WeightField: str  # "Weight"
-    RiskBoostFactor: float = 0.25  # rfac = 1 + factor * risk_level
+    risk_field: str  # "LevelOfRisk"
+    weight_field: str  # "Weight"
+    risk_boost_factor: float = 0.25  # rfac = 1 + factor * risk_level
 
 
 class CriticalRequirementsFilter(BaseModel):
     """Filter for critical requirements section in PDF reports."""
 
-    FilterField: str  # "LevelOfRisk"
-    MinValue: Optional[int] = None  # 4 (int-based filter)
-    FilterValue: Optional[str] = None  # "alto" (string-based filter)
-    StatusFilter: str = "FAIL"
-    Title: Optional[str] = None  # "Critical Failed Requirements"
+    filter_field: str  # "LevelOfRisk"
+    min_value: Optional[int] = None  # 4 (int-based filter)
+    filter_value: Optional[str] = None  # "alto" (string-based filter)
+    status_filter: str = "FAIL"
+    title: Optional[str] = None  # "Critical Failed Requirements"
 
 
 class ReportFilter(BaseModel):
     """Default report filtering for PDF generation."""
 
-    OnlyFailed: bool = True
-    IncludeManual: bool = False
+    only_failed: bool = True
+    include_manual: bool = False
 
 
 class I18nLabels(BaseModel):
     """Localized labels for PDF report rendering."""
 
-    ReportTitle: Optional[str] = None
-    PageLabel: str = "Page"
-    PoweredBy: str = "Powered by Prowler"
-    FrameworkLabel: str = "Framework:"
-    VersionLabel: str = "Version:"
-    ProviderLabel: str = "Provider:"
-    DescriptionLabel: str = "Description:"
-    ComplianceScoreLabel: str = "Compliance Score by Sections"
-    RequirementsIndexLabel: str = "Requirements Index"
-    DetailedFindingsLabel: str = "Detailed Findings"
+    report_title: Optional[str] = None
+    page_label: str = "Page"
+    powered_by: str = "Powered by Prowler"
+    framework_label: str = "Framework:"
+    version_label: str = "Version:"
+    provider_label: str = "Provider:"
+    description_label: str = "Description:"
+    compliance_score_label: str = "Compliance Score by Sections"
+    requirements_index_label: str = "Requirements Index"
+    detailed_findings_label: str = "Detailed Findings"
 
 
 class PDFConfig(BaseModel):
@@ -559,100 +565,80 @@ class PDFConfig(BaseModel):
     Python config. Colors are hex strings (e.g. '#336699').
     """
 
-    Language: str = "en"
-    LogoFilename: Optional[str] = None
-    PrimaryColor: Optional[str] = None
-    SecondaryColor: Optional[str] = None
-    BgColor: Optional[str] = None
-    Sections: Optional[list] = None
-    SectionShortNames: Optional[dict] = None
-    GroupByField: Optional[str] = None
-    SubGroupByField: Optional[str] = None
-    SectionTitles: Optional[dict] = None
-    Charts: Optional[list] = None
-    Scoring: Optional[ScoringFormula] = None
-    CriticalFilter: Optional[CriticalRequirementsFilter] = None
-    Filter: Optional[ReportFilter] = None
-    Labels: Optional[I18nLabels] = None
+    language: str = "en"
+    logo_filename: Optional[str] = None
+    primary_color: Optional[str] = None
+    secondary_color: Optional[str] = None
+    bg_color: Optional[str] = None
+    sections: Optional[list] = None
+    section_short_names: Optional[dict] = None
+    group_by_field: Optional[str] = None
+    sub_group_by_field: Optional[str] = None
+    section_titles: Optional[dict] = None
+    charts: Optional[list] = None
+    scoring: Optional[ScoringFormula] = None
+    critical_filter: Optional[CriticalRequirementsFilter] = None
+    filter: Optional[ReportFilter] = None
+    labels: Optional[I18nLabels] = None
 
 
 class UniversalComplianceRequirement(BaseModel):
     """Universal requirement with flat dict-based attributes."""
 
-    Id: str
-    Description: str
-    Name: Optional[str] = None
-    Attributes: dict = Field(default_factory=dict)
-    Checks: Union[list, dict] = Field(default_factory=list)
-    Tactics: Optional[list] = None
-    SubTechniques: Optional[list] = None
-    Platforms: Optional[list] = None
-    TechniqueURL: Optional[str] = None
+    id: str
+    description: str
+    name: Optional[str] = None
+    attributes: dict = Field(default_factory=dict)
+    checks: dict[str, list[str]] = Field(default_factory=dict)
+    tactics: Optional[list] = None
+    sub_techniques: Optional[list] = None
+    platforms: Optional[list] = None
+    technique_url: Optional[str] = None
 
 
 class OutputsConfig(BaseModel):
     """Container for output-related configuration (table, PDF, etc.)."""
 
-    class Config:
-        allow_population_by_field_name = True
-
-    Table_Config: Optional[TableConfig] = Field(None, alias="TableConfig")
-    PDF_Config: Optional[PDFConfig] = Field(None, alias="PDFConfig")
+    table_config: Optional[TableConfig] = None
+    pdf_config: Optional[PDFConfig] = None
 
 
 class ComplianceFramework(BaseModel):
     """Universal top-level container for any compliance framework.
 
-    Provider may be explicit (single-provider JSON) or derived from Checks
-    keys when Checks is a dict keyed by provider.
+    Provider may be explicit (single-provider JSON) or derived from checks
+    keys across all requirements.
     """
 
-    Framework: str
-    Name: str
-    Provider: Optional[str] = None
-    Version: Optional[str] = None
-    Description: str
-    Icon: Optional[str] = None
-    Requirements: list[UniversalComplianceRequirement]
-    AttributesMetadata: Optional[list[AttributeMetadata]] = None
-    Outputs: Optional[OutputsConfig] = None
-
-    @root_validator(pre=True)
-    # noqa: F841 - since vulture raises unused variable 'cls'
-    def migrate_legacy_output_fields(cls, values):  # noqa: F841
-        """Move top-level TableConfig/PDFConfig into Outputs for backward compat."""
-        tc = values.pop("TableConfig", None)
-        pc = values.pop("PDFConfig", None)
-        if tc is not None or pc is not None:
-            outputs = values.get("Outputs") or {}
-            if isinstance(outputs, OutputsConfig):
-                outputs = outputs.dict()
-            if tc is not None and "TableConfig" not in outputs:
-                outputs["TableConfig"] = tc
-            if pc is not None and "PDFConfig" not in outputs:
-                outputs["PDFConfig"] = pc
-            values["Outputs"] = outputs
-        return values
+    framework: str
+    name: str
+    provider: Optional[str] = None
+    version: Optional[str] = None
+    description: str
+    icon: Optional[str] = None
+    requirements: list[UniversalComplianceRequirement]
+    attributes_metadata: Optional[list[AttributeMetadata]] = None
+    outputs: Optional[OutputsConfig] = None
 
     @root_validator
     # noqa: F841 - since vulture raises unused variable 'cls'
     def validate_attributes_against_metadata(cls, values):  # noqa: F841
-        """Validate every Requirement's Attributes dict against AttributesMetadata.
+        """Validate every Requirement's attributes dict against attributes_metadata.
 
         Checks:
-        - Required keys (Required=True) must be present in each Requirement.
-        - Enum-constrained keys must have a value within the declared Enum list.
+        - Required keys (required=True) must be present in each Requirement.
+        - Enum-constrained keys must have a value within the declared enum list.
         - Basic type validation (int, float, bool) for non-None values.
         """
-        metadata = values.get("AttributesMetadata")
-        requirements = values.get("Requirements", [])
+        metadata = values.get("attributes_metadata")
+        requirements = values.get("requirements", [])
         if not metadata:
             return values
 
-        required_keys = {m.Key for m in metadata if m.Required}
-        valid_keys = {m.Key for m in metadata}
-        enum_map = {m.Key: m.Enum for m in metadata if m.Enum}
-        type_map = {m.Key: m.Type for m in metadata}
+        required_keys = {m.key for m in metadata if m.required}
+        valid_keys = {m.key for m in metadata}
+        enum_map = {m.key: m.enum for m in metadata if m.enum}
+        type_map = {m.key: m.type for m in metadata}
 
         type_checks = {
             "int": int,
@@ -662,13 +648,13 @@ class ComplianceFramework(BaseModel):
 
         errors = []
         for req in requirements:
-            attrs = req.Attributes
+            attrs = req.attributes
 
             # Required keys
             for key in required_keys:
                 if key not in attrs or attrs[key] is None:
                     errors.append(
-                        f"Requirement '{req.Id}': missing required attribute '{key}'"
+                        f"Requirement '{req.id}': missing required attribute '{key}'"
                     )
 
             # Enum validation
@@ -676,7 +662,7 @@ class ComplianceFramework(BaseModel):
                 if key in attrs and attrs[key] is not None:
                     if attrs[key] not in allowed:
                         errors.append(
-                            f"Requirement '{req.Id}': attribute '{key}' value "
+                            f"Requirement '{req.id}': attribute '{key}' value "
                             f"'{attrs[key]}' not in {allowed}"
                         )
 
@@ -688,49 +674,44 @@ class ComplianceFramework(BaseModel):
                 py_type = type_checks.get(expected_type)
                 if py_type and not isinstance(attrs[key], py_type):
                     errors.append(
-                        f"Requirement '{req.Id}': attribute '{key}' expected "
+                        f"Requirement '{req.id}': attribute '{key}' expected "
                         f"type {expected_type}, got {type(attrs[key]).__name__}"
                     )
 
         if errors:
             detail = "\n  ".join(errors)
-            raise ValueError(f"AttributesMetadata validation failed:\n  {detail}")
+            raise ValueError(f"attributes_metadata validation failed:\n  {detail}")
 
         return values
 
     def get_providers(self) -> list:
         """Derive the set of providers this framework supports.
 
-        Inspects Checks keys across all requirements. Falls back to the
-        explicit Provider field for single-provider frameworks.
+        Inspects checks keys across all requirements. Falls back to the
+        explicit provider field for single-provider frameworks with no
+        requirement-level checks.
         """
         providers = set()
-        for req in self.Requirements:
-            if isinstance(req.Checks, dict):
-                providers.update(k.lower() for k in req.Checks.keys())
-        if self.Provider and not providers:
-            providers.add(self.Provider.lower())
+        for req in self.requirements:
+            providers.update(k.lower() for k in req.checks.keys())
+        if self.provider and not providers:
+            providers.add(self.provider.lower())
         return sorted(providers)
 
     def supports_provider(self, provider: str) -> bool:
         """Return True if this framework has checks for the given provider."""
         provider_lower = provider.lower()
-        for req in self.Requirements:
-            if isinstance(req.Checks, dict):
-                if provider_lower in (k.lower() for k in req.Checks.keys()):
-                    return True
-            elif isinstance(req.Checks, list) and req.Checks:
-                # List-style checks: rely on explicit Provider field
-                if self.Provider and self.Provider.lower() == provider_lower:
-                    return True
-        return False
+        for req in self.requirements:
+            if any(k.lower() == provider_lower for k in req.checks.keys()):
+                return True
+        return self.provider is not None and self.provider.lower() == provider_lower
 
 
 # ─── Legacy-to-Universal Adapter (Phase 2) ──────────────────────────────────
 
 
 def _infer_attribute_metadata(legacy: Compliance) -> Optional[list[AttributeMetadata]]:
-    """Introspect the first requirement's attribute model to build AttributesMetadata."""
+    """Introspect the first requirement's attribute model to build attributes_metadata."""
     try:
         if not legacy.Requirements:
             return None
@@ -771,10 +752,10 @@ def _infer_attribute_metadata(legacy: Compliance) -> Optional[list[AttributeMeta
 
             metadata.append(
                 AttributeMetadata(
-                    Key=field_name,
-                    Type=type_str,
-                    Enum=enum_values,
-                    Required=field_obj.required,
+                    key=field_name,
+                    type=type_str,
+                    enum=enum_values,
+                    required=field_obj.required,
                 )
             )
 
@@ -786,23 +767,25 @@ def _infer_attribute_metadata(legacy: Compliance) -> Optional[list[AttributeMeta
 def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
     """Convert a legacy Compliance object to a ComplianceFramework."""
     universal_requirements = []
+    legacy_provider_key = legacy.Provider.lower()
 
     for req in legacy.Requirements:
+        req_checks = {legacy_provider_key: list(req.Checks)} if req.Checks else {}
         if isinstance(req, Mitre_Requirement):
             # For MITRE, promote special fields and store raw attributes
             raw_attrs = [attr.dict() for attr in req.Attributes]
             attrs = {"_raw_attributes": raw_attrs}
             universal_requirements.append(
                 UniversalComplianceRequirement(
-                    Id=req.Id,
-                    Description=req.Description,
-                    Name=req.Name,
-                    Attributes=attrs,
-                    Checks=req.Checks,
-                    Tactics=req.Tactics,
-                    SubTechniques=req.SubTechniques,
-                    Platforms=req.Platforms,
-                    TechniqueURL=req.TechniqueURL,
+                    id=req.Id,
+                    description=req.Description,
+                    name=req.Name,
+                    attributes=attrs,
+                    checks=req_checks,
+                    tactics=req.Tactics,
+                    sub_techniques=req.SubTechniques,
+                    platforms=req.Platforms,
+                    technique_url=req.TechniqueURL,
                 )
             )
         else:
@@ -813,24 +796,24 @@ def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
                 attrs = {}
             universal_requirements.append(
                 UniversalComplianceRequirement(
-                    Id=req.Id,
-                    Description=req.Description,
-                    Name=req.Name,
-                    Attributes=attrs,
-                    Checks=req.Checks,
+                    id=req.Id,
+                    description=req.Description,
+                    name=req.Name,
+                    attributes=attrs,
+                    checks=req_checks,
                 )
             )
 
     inferred_metadata = _infer_attribute_metadata(legacy)
 
     return ComplianceFramework(
-        Framework=legacy.Framework,
-        Name=legacy.Name,
-        Provider=legacy.Provider,
-        Version=legacy.Version,
-        Description=legacy.Description,
-        Requirements=universal_requirements,
-        AttributesMetadata=inferred_metadata,
+        framework=legacy.Framework,
+        name=legacy.Name,
+        provider=legacy.Provider,
+        version=legacy.Version,
+        description=legacy.Description,
+        requirements=universal_requirements,
+        attributes_metadata=inferred_metadata,
     )
 
 
@@ -840,7 +823,7 @@ def load_compliance_framework_universal(path: str) -> ComplianceFramework:
         with open(path, "r") as f:
             data = json.load(f)
 
-        if "AttributesMetadata" in data:
+        if "attributes_metadata" in data or "requirements" in data:
             # New universal format — parse directly
             return ComplianceFramework(**data)
         else:
@@ -871,7 +854,7 @@ def _load_jsons_from_dir(dir_path: str, provider: str, bulk: dict) -> None:
         fw = load_compliance_framework_universal(file_path)
         if fw is None:
             continue
-        if fw.Provider and fw.Provider.lower() == provider.lower():
+        if fw.provider and fw.provider.lower() == provider.lower():
             bulk[framework_name] = fw
         elif fw.supports_provider(provider):
             bulk[framework_name] = fw

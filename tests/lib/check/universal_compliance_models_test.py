@@ -12,6 +12,7 @@ from prowler.lib.check.compliance_models import (
     CriticalRequirementsFilter,
     EnumValueDisplay,
     I18nLabels,
+    OutputFormats,
     OutputsConfig,
     PDFConfig,
     ReportFilter,
@@ -34,538 +35,562 @@ from tests.lib.outputs.compliance.fixtures import (
 )
 
 
+class TestOutputFormats:
+    def test_defaults(self):
+        of = OutputFormats()
+        assert of.csv is True
+        assert of.ocsf is True
+
+    def test_explicit_false(self):
+        of = OutputFormats(csv=False, ocsf=False)
+        assert of.csv is False
+        assert of.ocsf is False
+
+
 class TestAttributeMetadata:
     def test_basic(self):
-        meta = AttributeMetadata(Key="Section", Type="str")
-        assert meta.Key == "Section"
-        assert meta.Type == "str"
-        assert meta.CSV is True
-        assert meta.Required is False
+        meta = AttributeMetadata(key="Section", type="str")
+        assert meta.key == "Section"
+        assert meta.type == "str"
+        assert meta.output_formats.csv is True
+        assert meta.required is False
 
     def test_with_enum(self):
         meta = AttributeMetadata(
-            Key="Profile",
-            Type="str",
-            Enum=["Level 1", "Level 2"],
+            key="Profile",
+            type="str",
+            enum=["Level 1", "Level 2"],
         )
-        assert meta.Enum == ["Level 1", "Level 2"]
+        assert meta.enum == ["Level 1", "Level 2"]
 
     def test_int_type(self):
-        meta = AttributeMetadata(Key="LevelOfRisk", Type="int", Required=True)
-        assert meta.Type == "int"
-        assert meta.Required is True
+        meta = AttributeMetadata(key="LevelOfRisk", type="int", required=True)
+        assert meta.type == "int"
+        assert meta.required is True
 
     def test_enum_display_field(self):
         meta = AttributeMetadata(
-            Key="Dimensiones",
-            Type="str",
-            Enum=["confidencialidad", "integridad", "trazabilidad"],
-            EnumDisplay={
+            key="Dimensiones",
+            type="str",
+            enum=["confidencialidad", "integridad", "trazabilidad"],
+            enum_display={
                 "confidencialidad": {
-                    "Label": "Confidencialidad",
-                    "Abbreviation": "C",
-                    "Color": "#FF6347",
+                    "label": "Confidencialidad",
+                    "abbreviation": "C",
+                    "color": "#FF6347",
                 },
                 "integridad": {
-                    "Label": "Integridad",
-                    "Abbreviation": "I",
-                    "Color": "#4286F4",
+                    "label": "Integridad",
+                    "abbreviation": "I",
+                    "color": "#4286F4",
                 },
                 "trazabilidad": {
-                    "Label": "Trazabilidad",
-                    "Abbreviation": "T",
-                    "Color": "#32CD32",
+                    "label": "Trazabilidad",
+                    "abbreviation": "T",
+                    "color": "#32CD32",
                 },
             },
         )
-        assert meta.EnumDisplay is not None
-        assert meta.EnumDisplay["confidencialidad"]["Abbreviation"] == "C"
-        assert meta.EnumDisplay["integridad"]["Color"] == "#4286F4"
+        assert meta.enum_display is not None
+        assert meta.enum_display["confidencialidad"]["abbreviation"] == "C"
+        assert meta.enum_display["integridad"]["color"] == "#4286F4"
 
     def test_enum_order_field(self):
         meta = AttributeMetadata(
-            Key="Nivel",
-            Type="str",
-            Enum=["opcional", "bajo", "medio", "alto"],
-            EnumOrder=["alto", "medio", "bajo", "opcional"],
+            key="Nivel",
+            type="str",
+            enum=["opcional", "bajo", "medio", "alto"],
+            enum_order=["alto", "medio", "bajo", "opcional"],
         )
-        assert meta.EnumOrder == ["alto", "medio", "bajo", "opcional"]
+        assert meta.enum_order == ["alto", "medio", "bajo", "opcional"]
 
     def test_chart_label_field(self):
         meta = AttributeMetadata(
-            Key="Section",
-            Type="str",
-            ChartLabel="Security Domain",
+            key="Section",
+            type="str",
+            chart_label="Security Domain",
         )
-        assert meta.ChartLabel == "Security Domain"
+        assert meta.chart_label == "Security Domain"
 
-    def test_ocsf_default_true(self):
-        meta = AttributeMetadata(Key="Section")
-        assert meta.OCSF is True
+    def test_output_formats_default_true(self):
+        meta = AttributeMetadata(key="Section")
+        assert meta.output_formats.csv is True
+        assert meta.output_formats.ocsf is True
 
-    def test_ocsf_explicit_false(self):
-        meta = AttributeMetadata(Key="InternalNote", OCSF=False)
-        assert meta.OCSF is False
+    def test_output_formats_explicit_false(self):
+        meta = AttributeMetadata(
+            key="InternalNote",
+            output_formats=OutputFormats(csv=False, ocsf=False),
+        )
+        assert meta.output_formats.csv is False
+        assert meta.output_formats.ocsf is False
 
     def test_new_fields_default_none(self):
-        meta = AttributeMetadata(Key="Section")
-        assert meta.EnumDisplay is None
-        assert meta.EnumOrder is None
-        assert meta.ChartLabel is None
+        meta = AttributeMetadata(key="Section")
+        assert meta.enum_display is None
+        assert meta.enum_order is None
+        assert meta.chart_label is None
 
 
 class TestEnumValueDisplay:
     def test_basic(self):
-        evd = EnumValueDisplay(Label="Test")
-        assert evd.Label == "Test"
-        assert evd.Abbreviation is None
-        assert evd.Color is None
-        assert evd.Icon is None
+        evd = EnumValueDisplay(label="Test")
+        assert evd.label == "Test"
+        assert evd.abbreviation is None
+        assert evd.color is None
+        assert evd.icon is None
 
     def test_dimension_style(self):
         evd = EnumValueDisplay(
-            Label="Trazabilidad",
-            Abbreviation="T",
-            Color="#4286F4",
+            label="Trazabilidad",
+            abbreviation="T",
+            color="#4286F4",
         )
-        assert evd.Label == "Trazabilidad"
-        assert evd.Abbreviation == "T"
-        assert evd.Color == "#4286F4"
+        assert evd.label == "Trazabilidad"
+        assert evd.abbreviation == "T"
+        assert evd.color == "#4286F4"
 
     def test_tipo_style(self):
         evd = EnumValueDisplay(
-            Label="Requisito",
-            Icon="⚠️",
+            label="Requisito",
+            icon="⚠️",
         )
-        assert evd.Icon == "⚠️"
-        assert evd.Abbreviation is None
+        assert evd.icon == "⚠️"
+        assert evd.abbreviation is None
 
 
 class TestChartConfig:
     def test_horizontal_bar(self):
         chart = ChartConfig(
-            Id="section_compliance",
-            Type="horizontal_bar",
-            GroupBy="Section",
-            Title="Compliance Score by Domain",
-            YLabel="Domain",
-            XLabel="Compliance %",
+            id="section_compliance",
+            type="horizontal_bar",
+            group_by="Section",
+            title="Compliance Score by Domain",
+            y_label="Domain",
+            x_label="Compliance %",
         )
-        assert chart.Type == "horizontal_bar"
-        assert chart.GroupBy == "Section"
-        assert chart.ValueSource == "compliance_percent"
-        assert chart.ColorMode == "by_value"
+        assert chart.type == "horizontal_bar"
+        assert chart.group_by == "Section"
+        assert chart.value_source == "compliance_percent"
+        assert chart.color_mode == "by_value"
 
     def test_vertical_bar(self):
         chart = ChartConfig(
-            Id="risk_distribution",
-            Type="vertical_bar",
-            GroupBy="LevelOfRisk",
-            ColorMode="fixed",
-            FixedColor="#336699",
+            id="risk_distribution",
+            type="vertical_bar",
+            group_by="LevelOfRisk",
+            color_mode="fixed",
+            fixed_color="#336699",
         )
-        assert chart.Type == "vertical_bar"
-        assert chart.FixedColor == "#336699"
+        assert chart.type == "vertical_bar"
+        assert chart.fixed_color == "#336699"
 
     def test_radar(self):
         chart = ChartConfig(
-            Id="dimension_radar",
-            Type="radar",
-            GroupBy="Dimensiones",
+            id="dimension_radar",
+            type="radar",
+            group_by="Dimensiones",
         )
-        assert chart.Type == "radar"
+        assert chart.type == "radar"
 
     def test_defaults(self):
-        chart = ChartConfig(Id="test", Type="vertical_bar", GroupBy="Section")
-        assert chart.Title is None
-        assert chart.XLabel is None
-        assert chart.YLabel is None
-        assert chart.ValueSource == "compliance_percent"
-        assert chart.ColorMode == "by_value"
-        assert chart.FixedColor is None
+        chart = ChartConfig(id="test", type="vertical_bar", group_by="Section")
+        assert chart.title is None
+        assert chart.x_label is None
+        assert chart.y_label is None
+        assert chart.value_source == "compliance_percent"
+        assert chart.color_mode == "by_value"
+        assert chart.fixed_color is None
 
 
 class TestScoringFormula:
     def test_threatscore_style(self):
         formula = ScoringFormula(
-            RiskField="LevelOfRisk",
-            WeightField="Weight",
-            RiskBoostFactor=0.25,
+            risk_field="LevelOfRisk",
+            weight_field="Weight",
+            risk_boost_factor=0.25,
         )
-        assert formula.RiskField == "LevelOfRisk"
-        assert formula.WeightField == "Weight"
-        assert formula.RiskBoostFactor == 0.25
+        assert formula.risk_field == "LevelOfRisk"
+        assert formula.weight_field == "Weight"
+        assert formula.risk_boost_factor == 0.25
 
     def test_custom_boost_factor(self):
         formula = ScoringFormula(
-            RiskField="Risk",
-            WeightField="Impact",
-            RiskBoostFactor=0.5,
+            risk_field="Risk",
+            weight_field="Impact",
+            risk_boost_factor=0.5,
         )
-        assert formula.RiskBoostFactor == 0.5
+        assert formula.risk_boost_factor == 0.5
 
     def test_default_boost_factor(self):
-        formula = ScoringFormula(RiskField="LevelOfRisk", WeightField="Weight")
-        assert formula.RiskBoostFactor == 0.25
+        formula = ScoringFormula(risk_field="LevelOfRisk", weight_field="Weight")
+        assert formula.risk_boost_factor == 0.25
 
 
 class TestCriticalRequirementsFilter:
     def test_int_based(self):
         crf = CriticalRequirementsFilter(
-            FilterField="LevelOfRisk",
-            MinValue=4,
-            Title="Critical Failed Requirements",
+            filter_field="LevelOfRisk",
+            min_value=4,
+            title="Critical Failed Requirements",
         )
-        assert crf.FilterField == "LevelOfRisk"
-        assert crf.MinValue == 4
-        assert crf.FilterValue is None
-        assert crf.StatusFilter == "FAIL"
-        assert crf.Title == "Critical Failed Requirements"
+        assert crf.filter_field == "LevelOfRisk"
+        assert crf.min_value == 4
+        assert crf.filter_value is None
+        assert crf.status_filter == "FAIL"
+        assert crf.title == "Critical Failed Requirements"
 
     def test_string_based(self):
         crf = CriticalRequirementsFilter(
-            FilterField="Nivel",
-            FilterValue="alto",
+            filter_field="Nivel",
+            filter_value="alto",
         )
-        assert crf.FilterValue == "alto"
-        assert crf.MinValue is None
+        assert crf.filter_value == "alto"
+        assert crf.min_value is None
 
     def test_defaults(self):
-        crf = CriticalRequirementsFilter(FilterField="LevelOfRisk")
-        assert crf.StatusFilter == "FAIL"
-        assert crf.Title is None
-        assert crf.MinValue is None
-        assert crf.FilterValue is None
+        crf = CriticalRequirementsFilter(filter_field="LevelOfRisk")
+        assert crf.status_filter == "FAIL"
+        assert crf.title is None
+        assert crf.min_value is None
+        assert crf.filter_value is None
 
 
 class TestReportFilter:
     def test_defaults(self):
         rf = ReportFilter()
-        assert rf.OnlyFailed is True
-        assert rf.IncludeManual is False
+        assert rf.only_failed is True
+        assert rf.include_manual is False
 
     def test_custom(self):
-        rf = ReportFilter(OnlyFailed=False, IncludeManual=True)
-        assert rf.OnlyFailed is False
-        assert rf.IncludeManual is True
+        rf = ReportFilter(only_failed=False, include_manual=True)
+        assert rf.only_failed is False
+        assert rf.include_manual is True
 
 
 class TestI18nLabels:
     def test_english_defaults(self):
         labels = I18nLabels()
-        assert labels.PageLabel == "Page"
-        assert labels.PoweredBy == "Powered by Prowler"
-        assert labels.FrameworkLabel == "Framework:"
-        assert labels.ProviderLabel == "Provider:"
-        assert labels.ReportTitle is None
+        assert labels.page_label == "Page"
+        assert labels.powered_by == "Powered by Prowler"
+        assert labels.framework_label == "Framework:"
+        assert labels.provider_label == "Provider:"
+        assert labels.report_title is None
 
     def test_spanish_override(self):
         labels = I18nLabels(
-            ReportTitle="Informe de Cumplimiento ENS",
-            PageLabel="Página",
-            PoweredBy="Generado por Prowler",
-            FrameworkLabel="Marco:",
-            VersionLabel="Versión:",
-            ProviderLabel="Proveedor:",
-            DescriptionLabel="Descripción:",
-            ComplianceScoreLabel="Puntuación de Cumplimiento por Secciones",
-            RequirementsIndexLabel="Índice de Requisitos",
-            DetailedFindingsLabel="Hallazgos Detallados",
+            report_title="Informe de Cumplimiento ENS",
+            page_label="Página",
+            powered_by="Generado por Prowler",
+            framework_label="Marco:",
+            version_label="Versión:",
+            provider_label="Proveedor:",
+            description_label="Descripción:",
+            compliance_score_label="Puntuación de Cumplimiento por Secciones",
+            requirements_index_label="Índice de Requisitos",
+            detailed_findings_label="Hallazgos Detallados",
         )
-        assert labels.PageLabel == "Página"
-        assert labels.ProviderLabel == "Proveedor:"
-        assert labels.ReportTitle == "Informe de Cumplimiento ENS"
+        assert labels.page_label == "Página"
+        assert labels.provider_label == "Proveedor:"
+        assert labels.report_title == "Informe de Cumplimiento ENS"
 
 
 class TestSplitByConfig:
     def test_cis_style(self):
-        config = SplitByConfig(Field="Profile", Values=["Level 1", "Level 2"])
-        assert config.Field == "Profile"
-        assert len(config.Values) == 2
+        config = SplitByConfig(field="Profile", values=["Level 1", "Level 2"])
+        assert config.field == "Profile"
+        assert len(config.values) == 2
 
     def test_ens_style(self):
         config = SplitByConfig(
-            Field="Nivel",
-            Values=["alto", "medio", "bajo", "opcional"],
+            field="Nivel",
+            values=["alto", "medio", "bajo", "opcional"],
         )
-        assert len(config.Values) == 4
+        assert len(config.values) == 4
 
 
 class TestScoringConfig:
     def test_threatscore_style(self):
-        config = ScoringConfig(RiskField="LevelOfRisk", WeightField="Weight")
-        assert config.RiskField == "LevelOfRisk"
-        assert config.WeightField == "Weight"
+        config = ScoringConfig(risk_field="LevelOfRisk", weight_field="Weight")
+        assert config.risk_field == "LevelOfRisk"
+        assert config.weight_field == "Weight"
 
 
 class TestTableLabels:
     def test_defaults(self):
         labels = TableLabels()
-        assert labels.PassLabel == "PASS"
-        assert labels.FailLabel == "FAIL"
-        assert labels.ProviderHeader == "Provider"
+        assert labels.pass_label == "PASS"
+        assert labels.fail_label == "FAIL"
+        assert labels.provider_header == "Provider"
 
     def test_ens_spanish(self):
         labels = TableLabels(
-            PassLabel="CUMPLE",
-            FailLabel="NO CUMPLE",
-            ProviderHeader="Proveedor",
+            pass_label="CUMPLE",
+            fail_label="NO CUMPLE",
+            provider_header="Proveedor",
         )
-        assert labels.PassLabel == "CUMPLE"
+        assert labels.pass_label == "CUMPLE"
 
 
 class TestTableConfig:
     def test_grouped_mode(self):
-        tc = TableConfig(GroupBy="Section")
-        assert tc.GroupBy == "Section"
-        assert tc.SplitBy is None
-        assert tc.Scoring is None
+        tc = TableConfig(group_by="Section")
+        assert tc.group_by == "Section"
+        assert tc.split_by is None
+        assert tc.scoring is None
 
     def test_split_mode(self):
         tc = TableConfig(
-            GroupBy="Section",
-            SplitBy=SplitByConfig(Field="Profile", Values=["Level 1", "Level 2"]),
+            group_by="Section",
+            split_by=SplitByConfig(field="Profile", values=["Level 1", "Level 2"]),
         )
-        assert tc.SplitBy is not None
-        assert tc.SplitBy.Field == "Profile"
+        assert tc.split_by is not None
+        assert tc.split_by.field == "Profile"
 
     def test_scored_mode(self):
         tc = TableConfig(
-            GroupBy="Section",
-            Scoring=ScoringConfig(RiskField="LevelOfRisk", WeightField="Weight"),
+            group_by="Section",
+            scoring=ScoringConfig(risk_field="LevelOfRisk", weight_field="Weight"),
         )
-        assert tc.Scoring is not None
+        assert tc.scoring is not None
 
 
 class TestPDFConfig:
     def test_defaults(self):
         pdf = PDFConfig()
-        assert pdf.Language == "en"
-        assert pdf.LogoFilename is None
-        assert pdf.PrimaryColor is None
-        assert pdf.Sections is None
-        assert pdf.SectionShortNames is None
-        assert pdf.GroupByField is None
-        assert pdf.SubGroupByField is None
-        assert pdf.SectionTitles is None
-        assert pdf.Charts is None
-        assert pdf.Scoring is None
-        assert pdf.CriticalFilter is None
-        assert pdf.Filter is None
-        assert pdf.Labels is None
+        assert pdf.language == "en"
+        assert pdf.logo_filename is None
+        assert pdf.primary_color is None
+        assert pdf.sections is None
+        assert pdf.section_short_names is None
+        assert pdf.group_by_field is None
+        assert pdf.sub_group_by_field is None
+        assert pdf.section_titles is None
+        assert pdf.charts is None
+        assert pdf.scoring is None
+        assert pdf.critical_filter is None
+        assert pdf.filter is None
+        assert pdf.labels is None
 
     def test_csa_ccm_style(self):
         pdf = PDFConfig(
-            PrimaryColor="#336699",
-            SecondaryColor="#4D80B3",
-            BgColor="#F2F8FF",
-            GroupByField="Section",
-            Sections=["Audit & Assurance", "Identity & Access Management"],
-            SectionShortNames={"Identity & Access Management": "IAM"},
-            Charts=[
+            primary_color="#336699",
+            secondary_color="#4D80B3",
+            bg_color="#F2F8FF",
+            group_by_field="Section",
+            sections=["Audit & Assurance", "Identity & Access Management"],
+            section_short_names={"Identity & Access Management": "IAM"},
+            charts=[
                 ChartConfig(
-                    Id="section_compliance",
-                    Type="horizontal_bar",
-                    GroupBy="Section",
-                    Title="Compliance Score by Domain",
+                    id="section_compliance",
+                    type="horizontal_bar",
+                    group_by="Section",
+                    title="Compliance Score by Domain",
                 ).dict()
             ],
-            Filter=ReportFilter(OnlyFailed=True, IncludeManual=False),
+            filter=ReportFilter(only_failed=True, include_manual=False),
         )
-        assert pdf.PrimaryColor == "#336699"
-        assert len(pdf.Sections) == 2
-        assert pdf.SectionShortNames["Identity & Access Management"] == "IAM"
-        assert pdf.GroupByField == "Section"
-        assert pdf.Charts is not None
-        assert len(pdf.Charts) == 1
-        assert pdf.Filter.OnlyFailed is True
+        assert pdf.primary_color == "#336699"
+        assert len(pdf.sections) == 2
+        assert pdf.section_short_names["Identity & Access Management"] == "IAM"
+        assert pdf.group_by_field == "Section"
+        assert pdf.charts is not None
+        assert len(pdf.charts) == 1
+        assert pdf.filter.only_failed is True
 
     def test_ens_style(self):
         pdf = PDFConfig(
-            Language="es",
-            LogoFilename="ens_logo.png",
-            PrimaryColor="#CC3333",
-            GroupByField="Marco",
-            SubGroupByField="Categoria",
-            Labels=I18nLabels(
-                PageLabel="Página",
-                ProviderLabel="Proveedor:",
+            language="es",
+            logo_filename="ens_logo.png",
+            primary_color="#CC3333",
+            group_by_field="Marco",
+            sub_group_by_field="Categoria",
+            labels=I18nLabels(
+                page_label="Página",
+                provider_label="Proveedor:",
             ),
         )
-        assert pdf.Language == "es"
-        assert pdf.LogoFilename == "ens_logo.png"
-        assert pdf.GroupByField == "Marco"
-        assert pdf.SubGroupByField == "Categoria"
-        assert pdf.Labels.PageLabel == "Página"
+        assert pdf.language == "es"
+        assert pdf.logo_filename == "ens_logo.png"
+        assert pdf.group_by_field == "Marco"
+        assert pdf.sub_group_by_field == "Categoria"
+        assert pdf.labels.page_label == "Página"
 
     def test_threatscore_style(self):
         pdf = PDFConfig(
-            PrimaryColor="#336699",
-            Sections=["1. IAM", "2. Attack Surface"],
-            Scoring=ScoringFormula(
-                RiskField="LevelOfRisk",
-                WeightField="Weight",
-                RiskBoostFactor=0.25,
+            primary_color="#336699",
+            sections=["1. IAM", "2. Attack Surface"],
+            scoring=ScoringFormula(
+                risk_field="LevelOfRisk",
+                weight_field="Weight",
+                risk_boost_factor=0.25,
             ),
-            CriticalFilter=CriticalRequirementsFilter(
-                FilterField="LevelOfRisk",
-                MinValue=4,
-                Title="Critical Failed Requirements",
+            critical_filter=CriticalRequirementsFilter(
+                filter_field="LevelOfRisk",
+                min_value=4,
+                title="Critical Failed Requirements",
             ),
         )
-        assert pdf.Scoring is not None
-        assert pdf.Scoring.RiskField == "LevelOfRisk"
-        assert pdf.CriticalFilter.MinValue == 4
+        assert pdf.scoring is not None
+        assert pdf.scoring.risk_field == "LevelOfRisk"
+        assert pdf.critical_filter.min_value == 4
 
     def test_section_titles(self):
         pdf = PDFConfig(
-            SectionTitles={
+            section_titles={
                 "1": "1. Policy on Security",
                 "2": "2. Risk Management",
             },
         )
-        assert pdf.SectionTitles["1"] == "1. Policy on Security"
+        assert pdf.section_titles["1"] == "1. Policy on Security"
 
     def test_in_framework(self):
         fw = ComplianceFramework(
-            Framework="Test",
-            Name="Test Framework",
-            Description="Test",
-            Requirements=[],
-            Outputs=OutputsConfig(
-                PDF_Config=PDFConfig(
-                    PrimaryColor="#336699",
-                    Sections=["Section A"],
-                    Charts=[
+            framework="Test",
+            name="Test Framework",
+            description="Test",
+            requirements=[],
+            outputs=OutputsConfig(
+                pdf_config=PDFConfig(
+                    primary_color="#336699",
+                    sections=["Section A"],
+                    charts=[
                         ChartConfig(
-                            Id="test_chart",
-                            Type="vertical_bar",
-                            GroupBy="Section",
+                            id="test_chart",
+                            type="vertical_bar",
+                            group_by="Section",
                         ).dict()
                     ],
                 ),
             ),
         )
-        assert fw.Outputs is not None
-        assert fw.Outputs.PDF_Config is not None
-        assert fw.Outputs.PDF_Config.PrimaryColor == "#336699"
-        assert fw.Outputs.PDF_Config.Sections == ["Section A"]
-        assert fw.Outputs.PDF_Config.Charts is not None
-        assert len(fw.Outputs.PDF_Config.Charts) == 1
-        assert fw.Outputs.PDF_Config.Charts[0]["Id"] == "test_chart"
-        assert fw.Outputs.PDF_Config.Charts[0]["Type"] == "vertical_bar"
+        assert fw.outputs is not None
+        assert fw.outputs.pdf_config is not None
+        assert fw.outputs.pdf_config.primary_color == "#336699"
+        assert fw.outputs.pdf_config.sections == ["Section A"]
+        assert fw.outputs.pdf_config.charts is not None
+        assert len(fw.outputs.pdf_config.charts) == 1
+        assert fw.outputs.pdf_config.charts[0]["id"] == "test_chart"
+        assert fw.outputs.pdf_config.charts[0]["type"] == "vertical_bar"
 
     def test_framework_without_pdf_config(self):
         fw = ComplianceFramework(
-            Framework="Test",
-            Name="Test Framework",
-            Description="Test",
-            Requirements=[],
+            framework="Test",
+            name="Test Framework",
+            description="Test",
+            requirements=[],
         )
-        assert fw.Outputs is None
+        assert fw.outputs is None
 
 
 class TestUniversalComplianceRequirement:
     def test_flat_dict_attributes(self):
         req = UniversalComplianceRequirement(
-            Id="1.1",
-            Description="Test requirement",
-            Attributes={"Section": "IAM", "Profile": "Level 1"},
-            Checks=["check_a", "check_b"],
+            id="1.1",
+            description="Test requirement",
+            attributes={"Section": "IAM", "Profile": "Level 1"},
+            checks={"aws": ["check_a", "check_b"]},
         )
-        assert req.Attributes["Section"] == "IAM"
-        assert len(req.Checks) == 2
+        assert req.attributes["Section"] == "IAM"
+        assert len(req.checks["aws"]) == 2
 
     def test_mitre_optional_fields(self):
         req = UniversalComplianceRequirement(
-            Id="T1190",
-            Description="Exploit Public-Facing Application",
-            Attributes={},
-            Checks=["drs_job_exist"],
-            Tactics=["Initial Access"],
-            SubTechniques=[],
-            Platforms=["IaaS", "Linux"],
-            TechniqueURL="https://attack.mitre.org/techniques/T1190/",
+            id="T1190",
+            description="Exploit Public-Facing Application",
+            attributes={},
+            checks={"aws": ["drs_job_exist"]},
+            tactics=["Initial Access"],
+            sub_techniques=[],
+            platforms=["IaaS", "Linux"],
+            technique_url="https://attack.mitre.org/techniques/T1190/",
         )
-        assert req.Tactics == ["Initial Access"]
-        assert req.TechniqueURL == "https://attack.mitre.org/techniques/T1190/"
+        assert req.tactics == ["Initial Access"]
+        assert req.technique_url == "https://attack.mitre.org/techniques/T1190/"
 
     def test_dict_checks_multi_provider(self):
         req = UniversalComplianceRequirement(
-            Id="1.1",
-            Description="Multi-provider",
-            Attributes={},
-            Checks={"aws": ["check_a"], "azure": ["check_b"]},
+            id="1.1",
+            description="Multi-provider",
+            attributes={},
+            checks={"aws": ["check_a"], "azure": ["check_b"]},
         )
-        assert isinstance(req.Checks, dict)
-        assert "aws" in req.Checks
+        assert isinstance(req.checks, dict)
+        assert "aws" in req.checks
 
     def test_empty_checks(self):
         req = UniversalComplianceRequirement(
-            Id="manual-1",
-            Description="Manual requirement",
-            Attributes={"Section": "Governance"},
-            Checks=[],
+            id="manual-1",
+            description="Manual requirement",
+            attributes={"Section": "Governance"},
+            checks={},
         )
-        assert req.Checks == []
+        assert req.checks == {}
+
+    def test_checks_default_is_empty_dict(self):
+        req = UniversalComplianceRequirement(
+            id="1.1",
+            description="No checks provided",
+        )
+        assert req.checks == {}
 
 
 class TestComplianceFramework:
     def test_basic_framework(self):
         fw = ComplianceFramework(
-            Framework="TestFW",
-            Name="Test Framework",
-            Provider="AWS",
-            Version="1.0",
-            Description="A test framework",
-            Requirements=[
+            framework="TestFW",
+            name="Test Framework",
+            provider="AWS",
+            version="1.0",
+            description="A test framework",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="Test",
-                    Attributes={"Section": "IAM"},
-                    Checks=["check_a"],
+                    id="1.1",
+                    description="Test",
+                    attributes={"Section": "IAM"},
+                    checks={"aws": ["check_a"]},
                 )
             ],
-            AttributesMetadata=[
-                AttributeMetadata(Key="Section", Type="str"),
+            attributes_metadata=[
+                AttributeMetadata(key="Section", type="str"),
             ],
-            Outputs=OutputsConfig(Table_Config=TableConfig(GroupBy="Section")),
+            outputs=OutputsConfig(table_config=TableConfig(group_by="Section")),
         )
-        assert fw.Framework == "TestFW"
-        assert fw.Outputs.Table_Config.GroupBy == "Section"
-        assert len(fw.AttributesMetadata) == 1
-        assert len(fw.Requirements) == 1
+        assert fw.framework == "TestFW"
+        assert fw.outputs.table_config.group_by == "Section"
+        assert len(fw.attributes_metadata) == 1
+        assert len(fw.requirements) == 1
 
     def test_optional_provider(self):
         fw = ComplianceFramework(
-            Framework="MultiCloud",
-            Name="Multi-cloud framework",
-            Description="A multi-provider framework",
-            Requirements=[],
+            framework="MultiCloud",
+            name="Multi-cloud framework",
+            description="A multi-provider framework",
+            requirements=[],
         )
-        assert fw.Provider is None
+        assert fw.provider is None
 
     def test_get_providers_from_dict_checks(self):
         fw = ComplianceFramework(
-            Framework="MultiCloud",
-            Name="Multi-cloud",
-            Description="test",
-            Requirements=[
+            framework="MultiCloud",
+            name="Multi-cloud",
+            description="test",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="test",
-                    Attributes={},
-                    Checks={
+                    id="1.1",
+                    description="test",
+                    attributes={},
+                    checks={
                         "aws": ["check_a"],
                         "azure": ["check_b"],
                         "gcp": ["check_c"],
                     },
                 ),
                 UniversalComplianceRequirement(
-                    Id="1.2",
-                    Description="test2",
-                    Attributes={},
-                    Checks={"aws": ["check_d"]},
+                    id="1.2",
+                    description="test2",
+                    attributes={},
+                    checks={"aws": ["check_d"]},
                 ),
             ],
         )
@@ -574,16 +599,16 @@ class TestComplianceFramework:
 
     def test_get_providers_fallback_to_explicit(self):
         fw = ComplianceFramework(
-            Framework="SingleCloud",
-            Name="Single-cloud",
-            Provider="AWS",
-            Description="test",
-            Requirements=[
+            framework="SingleCloud",
+            name="Single-cloud",
+            provider="AWS",
+            description="test",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="test",
-                    Attributes={},
-                    Checks=["check_a"],
+                    id="1.1",
+                    description="test",
+                    attributes={},
+                    checks={},
                 ),
             ],
         )
@@ -592,15 +617,15 @@ class TestComplianceFramework:
 
     def test_supports_provider_dict_checks(self):
         fw = ComplianceFramework(
-            Framework="MultiCloud",
-            Name="Multi-cloud",
-            Description="test",
-            Requirements=[
+            framework="MultiCloud",
+            name="Multi-cloud",
+            description="test",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="test",
-                    Attributes={},
-                    Checks={"aws": ["check_a"], "azure": ["check_b"]},
+                    id="1.1",
+                    description="test",
+                    attributes={},
+                    checks={"aws": ["check_a"], "azure": ["check_b"]},
                 ),
             ],
         )
@@ -608,18 +633,19 @@ class TestComplianceFramework:
         assert fw.supports_provider("azure") is True
         assert fw.supports_provider("gcp") is False
 
-    def test_supports_provider_list_checks(self):
+    def test_supports_provider_explicit_only(self):
+        """Framework with explicit provider but no per-requirement checks still supports the provider."""
         fw = ComplianceFramework(
-            Framework="SingleCloud",
-            Name="Single-cloud",
-            Provider="AWS",
-            Description="test",
-            Requirements=[
+            framework="SingleCloud",
+            name="Single-cloud",
+            provider="AWS",
+            description="test",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="test",
-                    Attributes={},
-                    Checks=["check_a"],
+                    id="1.1",
+                    description="Manual requirement",
+                    attributes={},
+                    checks={},
                 ),
             ],
         )
@@ -627,17 +653,17 @@ class TestComplianceFramework:
         assert fw.supports_provider("azure") is False
 
     def test_no_provider_field_with_dict_checks(self):
-        """Multi-provider JSON has no Provider field — providers derived from Checks."""
+        """Multi-provider JSON has no Provider field — providers derived from checks."""
         fw = ComplianceFramework(
-            Framework="CSA_CCM",
-            Name="CSA CCM 4.0",
-            Description="Cloud Controls Matrix",
-            Requirements=[
+            framework="CSA_CCM",
+            name="CSA CCM 4.0",
+            description="Cloud Controls Matrix",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="A&A-01",
-                    Description="Audit & Assurance",
-                    Attributes={"Domain": "A&A"},
-                    Checks={
+                    id="A&A-01",
+                    description="Audit & Assurance",
+                    attributes={"Domain": "A&A"},
+                    checks={
                         "aws": ["check_a"],
                         "azure": ["check_b"],
                         "gcp": ["check_c"],
@@ -645,7 +671,7 @@ class TestComplianceFramework:
                 ),
             ],
         )
-        assert fw.Provider is None
+        assert fw.provider is None
         assert fw.get_providers() == ["aws", "azure", "gcp"]
         assert fw.supports_provider("aws")
         assert fw.supports_provider("azure")
@@ -654,100 +680,105 @@ class TestComplianceFramework:
 
     def test_icon_field(self):
         fw = ComplianceFramework(
-            Framework="CSA_CCM",
-            Name="CSA CCM 4.0",
-            Description="Cloud Controls Matrix",
-            Icon="csa",
-            Requirements=[],
+            framework="CSA_CCM",
+            name="CSA CCM 4.0",
+            description="Cloud Controls Matrix",
+            icon="csa",
+            requirements=[],
         )
-        assert fw.Icon == "csa"
+        assert fw.icon == "csa"
 
     def test_icon_defaults_to_none(self):
         fw = ComplianceFramework(
-            Framework="Test",
-            Name="Test",
-            Description="d",
-            Requirements=[],
+            framework="Test",
+            name="Test",
+            description="d",
+            requirements=[],
         )
-        assert fw.Icon is None
+        assert fw.icon is None
 
 
 class TestAdaptLegacyToUniversal:
     def test_adapt_cis(self):
         fw = adapt_legacy_to_universal(CIS_1_4_AWS)
-        assert fw.Framework == "CIS"
-        assert fw.Provider == "AWS"
-        assert len(fw.Requirements) == 2
+        assert fw.framework == "CIS"
+        assert fw.provider == "AWS"
+        assert len(fw.requirements) == 2
         # First requirement should have flat attributes
-        req = fw.Requirements[0]
-        assert "Section" in req.Attributes
-        assert req.Attributes["Section"] == "2. Storage"
-        assert req.Tactics is None
+        req = fw.requirements[0]
+        assert "Section" in req.attributes
+        assert req.attributes["Section"] == "2. Storage"
+        assert req.tactics is None
+        # Checks must be wrapped in dict keyed by provider
+        assert isinstance(req.checks, dict)
+        assert "aws" in req.checks
 
     def test_adapt_ens(self):
         fw = adapt_legacy_to_universal(ENS_RD2022_AWS)
-        assert fw.Framework == "ENS"
-        req = fw.Requirements[0]
-        assert "Marco" in req.Attributes
-        assert req.Attributes["Marco"] == "operacional"
+        assert fw.framework == "ENS"
+        req = fw.requirements[0]
+        assert "Marco" in req.attributes
+        assert req.attributes["Marco"] == "operacional"
 
     def test_adapt_mitre(self):
         fw = adapt_legacy_to_universal(MITRE_ATTACK_AWS)
-        assert fw.Framework == "MITRE-ATTACK"
-        req = fw.Requirements[0]
-        assert req.Tactics == ["Initial Access"]
-        assert req.TechniqueURL == "https://attack.mitre.org/techniques/T1190/"
-        assert "_raw_attributes" in req.Attributes
+        assert fw.framework == "MITRE-ATTACK"
+        req = fw.requirements[0]
+        assert req.tactics == ["Initial Access"]
+        assert req.technique_url == "https://attack.mitre.org/techniques/T1190/"
+        assert "_raw_attributes" in req.attributes
+        assert isinstance(req.checks, dict)
+        assert "aws" in req.checks
 
     def test_adapt_threatscore(self):
         fw = adapt_legacy_to_universal(PROWLER_THREATSCORE_AWS)
-        req = fw.Requirements[0]
-        assert req.Attributes["LevelOfRisk"] == 5
-        assert req.Attributes["Weight"] == 1000
+        req = fw.requirements[0]
+        assert req.attributes["LevelOfRisk"] == 5
+        assert req.attributes["Weight"] == 1000
 
     def test_adapt_generic(self):
         fw = adapt_legacy_to_universal(NIST_800_53_REVISION_4_AWS)
-        req = fw.Requirements[0]
-        assert "Section" in req.Attributes
+        req = fw.requirements[0]
+        assert "Section" in req.attributes
 
     def test_adapt_kisa(self):
         fw = adapt_legacy_to_universal(KISA_ISMSP_AWS)
-        req = fw.Requirements[0]
-        assert "Domain" in req.Attributes
+        req = fw.requirements[0]
+        assert "Domain" in req.attributes
 
     def test_inferred_metadata_cis(self):
         fw = adapt_legacy_to_universal(CIS_1_4_AWS)
-        assert fw.AttributesMetadata is not None
-        keys = [m.Key for m in fw.AttributesMetadata]
+        assert fw.attributes_metadata is not None
+        keys = [m.key for m in fw.attributes_metadata]
         assert "Section" in keys
         assert "Profile" in keys
 
     def test_inferred_metadata_mitre_is_none(self):
         fw = adapt_legacy_to_universal(MITRE_ATTACK_AWS)
-        assert fw.AttributesMetadata is None
+        assert fw.attributes_metadata is None
 
     def test_table_config_is_none(self):
         fw = adapt_legacy_to_universal(CIS_1_4_AWS)
-        assert fw.Outputs is None
+        assert fw.outputs is None
 
 
 class TestLoadComplianceFrameworkUniversal:
     def test_load_universal_format(self, tmp_path):
         data = {
-            "Framework": "TestFW",
-            "Name": "Test",
-            "Provider": "AWS",
-            "Version": "1.0",
-            "Description": "desc",
-            "Icon": "prowlerthreatscore",
-            "AttributesMetadata": [{"Key": "Section", "Type": "str"}],
-            "Outputs": {"TableConfig": {"GroupBy": "Section"}},
-            "Requirements": [
+            "framework": "TestFW",
+            "name": "Test",
+            "provider": "AWS",
+            "version": "1.0",
+            "description": "desc",
+            "icon": "prowlerthreatscore",
+            "attributes_metadata": [{"key": "Section", "type": "str"}],
+            "outputs": {"table_config": {"group_by": "Section"}},
+            "requirements": [
                 {
-                    "Id": "1.1",
-                    "Description": "test",
-                    "Attributes": {"Section": "IAM"},
-                    "Checks": ["check_a"],
+                    "id": "1.1",
+                    "description": "test",
+                    "attributes": {"Section": "IAM"},
+                    "checks": {"aws": ["check_a"]},
                 }
             ],
         }
@@ -755,24 +786,24 @@ class TestLoadComplianceFrameworkUniversal:
         path.write_text(json.dumps(data))
         fw = load_compliance_framework_universal(str(path))
         assert fw is not None
-        assert fw.Framework == "TestFW"
-        assert fw.Icon == "prowlerthreatscore"
-        assert fw.Outputs.Table_Config.GroupBy == "Section"
+        assert fw.framework == "TestFW"
+        assert fw.icon == "prowlerthreatscore"
+        assert fw.outputs.table_config.group_by == "Section"
 
     def test_load_universal_multi_provider(self, tmp_path):
         data = {
-            "Framework": "CSA_CCM",
-            "Name": "CSA CCM 4.0",
-            "Version": "4.0",
-            "Description": "Cloud Controls Matrix",
-            "AttributesMetadata": [{"Key": "Domain", "Type": "str"}],
-            "Outputs": {"TableConfig": {"GroupBy": "Domain"}},
-            "Requirements": [
+            "framework": "CSA_CCM",
+            "name": "CSA CCM 4.0",
+            "version": "4.0",
+            "description": "Cloud Controls Matrix",
+            "attributes_metadata": [{"key": "Domain", "type": "str"}],
+            "outputs": {"table_config": {"group_by": "Domain"}},
+            "requirements": [
                 {
-                    "Id": "A&A-01",
-                    "Description": "Audit",
-                    "Attributes": {"Domain": "Audit"},
-                    "Checks": {
+                    "id": "A&A-01",
+                    "description": "Audit",
+                    "attributes": {"Domain": "Audit"},
+                    "checks": {
                         "aws": ["check_a"],
                         "azure": ["check_b"],
                         "gcp": ["check_c"],
@@ -784,7 +815,7 @@ class TestLoadComplianceFrameworkUniversal:
         path.write_text(json.dumps(data))
         fw = load_compliance_framework_universal(str(path))
         assert fw is not None
-        assert fw.Provider is None
+        assert fw.provider is None
         assert fw.get_providers() == ["aws", "azure", "gcp"]
         assert fw.supports_provider("aws")
         assert not fw.supports_provider("kubernetes")
@@ -809,9 +840,10 @@ class TestLoadComplianceFrameworkUniversal:
         path.write_text(json.dumps(data))
         fw = load_compliance_framework_universal(str(path))
         assert fw is not None
-        assert fw.Framework == "SOC2"
-        assert fw.Outputs is None
-        assert fw.Requirements[0].Attributes["Section"] == "Access Control"
+        assert fw.framework == "SOC2"
+        assert fw.outputs is None
+        assert fw.requirements[0].attributes["Section"] == "Access Control"
+        assert fw.requirements[0].checks == {"aws": ["check_a"]}
 
 
 class TestSmokeLoadAllJSONs:
@@ -851,9 +883,9 @@ class TestSmokeLoadAllJSONs:
     def test_loads_as_universal(self, json_path):
         fw = load_compliance_framework_universal(json_path)
         assert fw is not None, f"Failed to load {json_path}"
-        assert fw.Framework
-        assert fw.Name
-        assert len(fw.Requirements) >= 0
+        assert fw.framework
+        assert fw.name
+        assert len(fw.requirements) >= 0
 
 
 class TestBackwardCompat:
@@ -868,152 +900,152 @@ class TestBackwardCompat:
 
 
 class TestAttributesMetadataValidation:
-    """Validate that Requirement Attributes match their AttributesMetadata schema."""
+    """Validate that Requirement attributes match their attributes_metadata schema."""
 
     def _metadata(self, required=False, enum=None, type_str="str"):
         return [
-            AttributeMetadata(Key="Section", Type="str", Required=True),
-            AttributeMetadata(Key="Level", Type=type_str, Required=required, Enum=enum),
+            AttributeMetadata(key="Section", type="str", required=True),
+            AttributeMetadata(key="Level", type=type_str, required=required, enum=enum),
         ]
 
     def test_valid_attributes_pass(self):
         fw = ComplianceFramework(
-            Framework="Test",
-            Name="Test",
-            Description="d",
-            Requirements=[
+            framework="Test",
+            name="Test",
+            description="d",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="d",
-                    Attributes={"Section": "IAM", "Level": "high"},
-                    Checks=[],
+                    id="1.1",
+                    description="d",
+                    attributes={"Section": "IAM", "Level": "high"},
+                    checks={},
                 ),
             ],
-            AttributesMetadata=self._metadata(),
+            attributes_metadata=self._metadata(),
         )
-        assert len(fw.Requirements) == 1
+        assert len(fw.requirements) == 1
 
     def test_missing_required_key_raises(self):
         with pytest.raises(
             ValidationError, match="missing required attribute 'Section'"
         ):
             ComplianceFramework(
-                Framework="Test",
-                Name="Test",
-                Description="d",
-                Requirements=[
+                framework="Test",
+                name="Test",
+                description="d",
+                requirements=[
                     UniversalComplianceRequirement(
-                        Id="1.1",
-                        Description="d",
-                        Attributes={"Level": "high"},
-                        Checks=[],
+                        id="1.1",
+                        description="d",
+                        attributes={"Level": "high"},
+                        checks={},
                     ),
                 ],
-                AttributesMetadata=self._metadata(),
+                attributes_metadata=self._metadata(),
             )
 
     def test_invalid_enum_value_raises(self):
         with pytest.raises(ValidationError, match="not in"):
             ComplianceFramework(
-                Framework="Test",
-                Name="Test",
-                Description="d",
-                Requirements=[
+                framework="Test",
+                name="Test",
+                description="d",
+                requirements=[
                     UniversalComplianceRequirement(
-                        Id="1.1",
-                        Description="d",
-                        Attributes={"Section": "IAM", "Level": "invalid"},
-                        Checks=[],
+                        id="1.1",
+                        description="d",
+                        attributes={"Section": "IAM", "Level": "invalid"},
+                        checks={},
                     ),
                 ],
-                AttributesMetadata=self._metadata(enum=["high", "low"]),
+                attributes_metadata=self._metadata(enum=["high", "low"]),
             )
 
     def test_valid_enum_value_passes(self):
         fw = ComplianceFramework(
-            Framework="Test",
-            Name="Test",
-            Description="d",
-            Requirements=[
+            framework="Test",
+            name="Test",
+            description="d",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="d",
-                    Attributes={"Section": "IAM", "Level": "high"},
-                    Checks=[],
+                    id="1.1",
+                    description="d",
+                    attributes={"Section": "IAM", "Level": "high"},
+                    checks={},
                 ),
             ],
-            AttributesMetadata=self._metadata(enum=["high", "low"]),
+            attributes_metadata=self._metadata(enum=["high", "low"]),
         )
-        assert len(fw.Requirements) == 1
+        assert len(fw.requirements) == 1
 
     def test_wrong_type_int_raises(self):
         with pytest.raises(ValidationError, match="expected type int"):
             ComplianceFramework(
-                Framework="Test",
-                Name="Test",
-                Description="d",
-                Requirements=[
+                framework="Test",
+                name="Test",
+                description="d",
+                requirements=[
                     UniversalComplianceRequirement(
-                        Id="1.1",
-                        Description="d",
-                        Attributes={"Section": "IAM", "Level": "not_a_number"},
-                        Checks=[],
+                        id="1.1",
+                        description="d",
+                        attributes={"Section": "IAM", "Level": "not_a_number"},
+                        checks={},
                     ),
                 ],
-                AttributesMetadata=self._metadata(type_str="int"),
+                attributes_metadata=self._metadata(type_str="int"),
             )
 
     def test_correct_type_int_passes(self):
         fw = ComplianceFramework(
-            Framework="Test",
-            Name="Test",
-            Description="d",
-            Requirements=[
+            framework="Test",
+            name="Test",
+            description="d",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="d",
-                    Attributes={"Section": "IAM", "Level": 5},
-                    Checks=[],
+                    id="1.1",
+                    description="d",
+                    attributes={"Section": "IAM", "Level": 5},
+                    checks={},
                 ),
             ],
-            AttributesMetadata=self._metadata(type_str="int"),
+            attributes_metadata=self._metadata(type_str="int"),
         )
-        assert fw.Requirements[0].Attributes["Level"] == 5
+        assert fw.requirements[0].attributes["Level"] == 5
 
     def test_none_optional_value_skips_validation(self):
         """None values for non-required keys should not trigger type/enum errors."""
         fw = ComplianceFramework(
-            Framework="Test",
-            Name="Test",
-            Description="d",
-            Requirements=[
+            framework="Test",
+            name="Test",
+            description="d",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="d",
-                    Attributes={"Section": "IAM", "Level": None},
-                    Checks=[],
+                    id="1.1",
+                    description="d",
+                    attributes={"Section": "IAM", "Level": None},
+                    checks={},
                 ),
             ],
-            AttributesMetadata=self._metadata(enum=["high", "low"]),
+            attributes_metadata=self._metadata(enum=["high", "low"]),
         )
-        assert len(fw.Requirements) == 1
+        assert len(fw.requirements) == 1
 
     def test_no_metadata_skips_validation(self):
-        """Frameworks without AttributesMetadata should not be validated."""
+        """Frameworks without attributes_metadata should not be validated."""
         fw = ComplianceFramework(
-            Framework="Test",
-            Name="Test",
-            Description="d",
-            Requirements=[
+            framework="Test",
+            name="Test",
+            description="d",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="d",
-                    Attributes={"anything": "goes"},
-                    Checks=[],
+                    id="1.1",
+                    description="d",
+                    attributes={"anything": "goes"},
+                    checks={},
                 ),
             ],
         )
-        assert len(fw.Requirements) == 1
+        assert len(fw.requirements) == 1
 
     def test_multiple_errors_reported(self):
         """All validation errors should be collected and reported together."""
@@ -1021,22 +1053,22 @@ class TestAttributesMetadataValidation:
             ValidationError, match="missing required attribute 'Section'"
         ):
             ComplianceFramework(
-                Framework="Test",
-                Name="Test",
-                Description="d",
-                Requirements=[
+                framework="Test",
+                name="Test",
+                description="d",
+                requirements=[
                     UniversalComplianceRequirement(
-                        Id="1.1",
-                        Description="d",
-                        Attributes={"Level": "bad"},
-                        Checks=[],
+                        id="1.1",
+                        description="d",
+                        attributes={"Level": "bad"},
+                        checks={},
                     ),
                     UniversalComplianceRequirement(
-                        Id="1.2",
-                        Description="d",
-                        Attributes={"Level": "also_bad"},
-                        Checks=[],
+                        id="1.2",
+                        description="d",
+                        attributes={"Level": "also_bad"},
+                        checks={},
                     ),
                 ],
-                AttributesMetadata=self._metadata(enum=["high", "low"]),
+                attributes_metadata=self._metadata(enum=["high", "low"]),
             )
