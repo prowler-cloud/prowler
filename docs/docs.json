@@ -133,6 +133,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-attack-paths",
+              "user-guide/tutorials/prowler-app-finding-groups",
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
