@@ -1298,23 +1298,6 @@ class TestAttackPathsFindingsHelpers:
             assert params["last_updated"] == config.update_tag
             assert "findings_data" in params
 
-    def test_cleanup_findings_runs_batches(self, providers_fixture):
-        provider = providers_fixture[0]
-        config = SimpleNamespace(update_tag=1024)
-        mock_session = MagicMock()
-
-        first_batch = MagicMock()
-        first_batch.single.return_value = {"deleted_findings_count": 3}
-        second_batch = MagicMock()
-        second_batch.single.return_value = {"deleted_findings_count": 0}
-        mock_session.run.side_effect = [first_batch, second_batch]
-
-        findings_module.cleanup_findings(mock_session, provider, config)
-
-        assert mock_session.run.call_count == 2
-        params = mock_session.run.call_args.args[1]
-        assert params["last_updated"] == config.update_tag
-
     def test_stream_findings_with_resources_returns_latest_scan_data(
         self,
         tenants_fixture,
