@@ -13,6 +13,8 @@ concurrency:
 env:
   CHART_PATH: contrib/k8s/helm/prowler-app
 
+permissions: {}
+
 jobs:
   release-helm-chart:
     if: github.repository == 'prowler-cloud/prowler'
@@ -29,12 +31,12 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Set up Helm
-        uses: azure/setup-helm@b9e51907a09c216f16ebe8536097933489208112 # v4.3.0
+        uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
 
       - name: Set appVersion from release tag
         run: |

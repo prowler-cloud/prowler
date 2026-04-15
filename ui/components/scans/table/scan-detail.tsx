@@ -1,8 +1,9 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime, EntityInfo, InfoField } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
 import { formatDuration } from "@/lib/date-utils";
 import { ProviderProps, ProviderType, ScanProps, TaskDetails } from "@/types";

@@ -11,7 +11,6 @@ export * from "./findings-selection-context";
 // export * from "./column-findings";
 // export * from "./data-table-row-details";
 // export * from "./finding-detail";
-export * from "./impacted-providers-cell";
 export * from "./impacted-resources-cell";
 export * from "./notification-indicator";
 export * from "./provider-icon-cell";

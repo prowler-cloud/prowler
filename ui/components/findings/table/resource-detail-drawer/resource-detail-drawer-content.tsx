@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
@@ -44,6 +44,11 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import {
+  QUERY_EDITOR_LANGUAGE,
+  QueryCodeEditor,
+  type QueryEditorLanguage,
+} from "@/components/shared/query-code-editor";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -80,11 +85,147 @@ function stripCodeFences(code: string): string {
     .trim();
 }
 
+function resolveNativeIacConfig(providerType: string | undefined): {
+  label: string;
+  language: QueryEditorLanguage;
+} {
+  switch (providerType) {
+    case "aws":
+      return {
+        label: "CloudFormation",
+        language: QUERY_EDITOR_LANGUAGE.YAML,
+      };
+    case "azure":
+      return {
+        label: "Bicep",
+        language: QUERY_EDITOR_LANGUAGE.BICEP,
+      };
+    case "kubernetes":
+      return {
+        label: "Kubernetes Manifest",
+        language: QUERY_EDITOR_LANGUAGE.YAML,
+      };
+    default:
+      return {
+        label: "Native IaC",
+        language: QUERY_EDITOR_LANGUAGE.PLAIN_TEXT,
+      };
+  }
+}
+
+function renderRemediationCodeBlock({
+  label,
+  value,
+  copyValue,
+  language = QUERY_EDITOR_LANGUAGE.PLAIN_TEXT,
+}: {
+  label: string;
+  value: string;
+  copyValue?: string;
+  language?: QueryEditorLanguage;
+}) {
+  return (
+    <QueryCodeEditor
+      ariaLabel={label}
+      language={language}
+      value={value}
+      copyValue={copyValue}
+      editable={false}
+      minHeight={96}
+      showCopyButton
+      onChange={() => {}}
+    />
+  );
+}
+
 function normalizeComplianceFrameworkName(framework: string): string {
   return framework
     .trim()
     .toLowerCase()
-    .replace(/[\s_]+/g, "-");
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function stripComplianceVersionSuffix(framework: string): string {
+  return framework.replace(/-\d+(?:\.\d+)*$/g, "");
+}
+
+function canonicalComplianceKey(framework: string): string {
+  return stripComplianceVersionSuffix(
+    normalizeComplianceFrameworkName(framework),
+  )
+    .replace(/[^a-z0-9]+/g, "")
+    .trim();
+}
+
+function complianceTokens(framework: string): string[] {
+  return stripComplianceVersionSuffix(
+    normalizeComplianceFrameworkName(framework),
+  )
+    .split("-")
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .filter((token) => !/^\d+(?:\.\d+)*$/.test(token));
+}
+
+function complianceMatchScore(
+  sourceFramework: string,
+  targetFramework: string,
+): number {
+  const normalizedSource = normalizeComplianceFrameworkName(sourceFramework);
+  const normalizedTarget = normalizeComplianceFrameworkName(targetFramework);
+
+  if (normalizedSource === normalizedTarget) {
+    return 5;
+  }
+
+  const canonicalSource = canonicalComplianceKey(sourceFramework);
+  const canonicalTarget = canonicalComplianceKey(targetFramework);
+
+  if (canonicalSource === canonicalTarget) {
+    return 4;
+  }
+
+  if (canonicalSource && canonicalTarget) {
+    const sourceTokens = canonicalSource.split("-");
+    const targetTokens = canonicalTarget.split("-");
+    if (
+      sourceTokens.length !== targetTokens.length &&
+      (sourceTokens.every((t) => targetTokens.includes(t)) ||
+        targetTokens.every((t) => sourceTokens.includes(t)))
+    ) {
+      return 3;
+    }
+  }
+
+  const sourceTokens = complianceTokens(sourceFramework);
+  const targetTokens = complianceTokens(targetFramework);
+  if (!sourceTokens.length || !targetTokens.length) {
+    return 0;
+  }
+
+  const sourceMatchesTarget = sourceTokens.every((token) =>
+    targetTokens.includes(token),
+  );
+  const targetMatchesSource = targetTokens.every((token) =>
+    sourceTokens.includes(token),
+  );
+
+  if (sourceMatchesTarget || targetMatchesSource) {
+    return 2;
+  }
+
+  if (
+    sourceTokens.some((token) => targetTokens.includes(token)) &&
+    canonicalSource &&
+    canonicalTarget &&
+    (canonicalTarget.includes(canonicalSource) ||
+      canonicalSource.includes(canonicalTarget))
+  ) {
+    return 1;
+  }
+
+  return 0;
 }
 
 function parseSelectedScanIds(scanFilterValue: string | null): string[] {
@@ -110,12 +251,13 @@ function resolveComplianceMatch(
     return null;
   }
 
-  const normalizedFramework = normalizeComplianceFrameworkName(framework);
-  const match = compliances.find(
-    (compliance) =>
-      normalizeComplianceFrameworkName(compliance.attributes.framework) ===
-      normalizedFramework,
-  );
+  const match = compliances
+    .map((compliance) => ({
+      compliance,
+      score: complianceMatchScore(framework, compliance.attributes.framework),
+    }))
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score)[0]?.compliance;
 
   if (!match) {
     return null;
@@ -134,16 +276,12 @@ function buildComplianceDetailHref({
   version,
   scanId,
   regionFilter,
-  currentFinding,
-  includeScanData,
 }: {
   complianceId: string;
   framework: string;
   version: string;
   scanId: string;
   regionFilter: string | null;
-  currentFinding: ResourceDrawerFinding | null;
-  includeScanData: boolean;
 }): string {
   const params = new URLSearchParams();
   params.set("complianceId", complianceId);
@@ -154,24 +292,6 @@ function buildComplianceDetailHref({
 
   if (regionFilter) {
     params.set("filter[region__in]", regionFilter);
-  }
-
-  if (includeScanData && currentFinding?.scan?.completedAt) {
-    params.set(
-      "scanData",
-      JSON.stringify({
-        id: currentFinding.scan.id,
-        providerInfo: {
-          provider: currentFinding.providerType,
-          alias: currentFinding.providerAlias,
-          uid: currentFinding.providerUid,
-        },
-        attributes: {
-          name: currentFinding.scan.name,
-          completed_at: currentFinding.scan.completedAt,
-        },
-      }),
-    );
   }
 
   return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
@@ -202,13 +322,15 @@ export function ResourceDetailDrawerContent({
   onNavigateNext,
   onMuteComplete,
 }: ResourceDetailDrawerContentProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvingFramework, setResolvingFramework] = useState<string | null>(
     null,
   );
+  const [optimisticallyMutedIds, setOptimisticallyMutedIds] = useState<
+    Set<string>
+  >(new Set());
 
   // Initial load — no check metadata yet
   if (!checkMeta && isLoading) {
@@ -263,6 +385,7 @@ export function ResourceDetailDrawerContent({
         ? (f?.scan?.id ?? null)
         : null;
   const regionFilter = searchParams.get("filter[region__in]");
+  const nativeIacConfig = resolveNativeIacConfig(f?.providerType);
 
   const handleOpenCompliance = async (framework: string) => {
     if (!complianceScanId || resolvingFramework) {
@@ -284,16 +407,16 @@ export function ResourceDetailDrawerContent({
         return;
       }
 
-      router.push(
+      window.open(
         buildComplianceDetailHref({
           complianceId: complianceMatch.complianceId,
           framework: complianceMatch.framework,
           version: complianceMatch.version,
           scanId: complianceScanId,
           regionFilter,
-          currentFinding: f,
-          includeScanData: f?.scan?.id === complianceScanId,
         }),
+        "_blank",
+        "noopener,noreferrer",
       );
     } catch (error) {
       console.error("Error resolving compliance detail:", error);
@@ -428,10 +551,10 @@ export function ResourceDetailDrawerContent({
         )}
       </div>
 
-      {/* Navigation: "Impacted Resource (X of N)" */}
+      {/* Navigation: "Resource (X of N)" */}
       <div className="flex items-center justify-between">
         <Badge variant="tag" className="rounded text-sm">
-          Impacted Resource
+          Resource
           <span className="font-bold">{currentIndex + 1}</span>
           <span className="font-normal">of</span>
           <span className="font-bold">{totalResources}</span>
@@ -477,7 +600,7 @@ export function ResourceDetailDrawerContent({
                 />
                 <EntityInfo
                   nameIcon={<Container className="size-4" />}
-                  entityAlias={f.resourceGroup}
+                  entityAlias={f.resourceName}
                   entityId={f.resourceUid}
                   idLabel="UID"
                 />
@@ -505,7 +628,9 @@ export function ResourceDetailDrawerContent({
                 <InfoField label="Failing for" variant="compact">
                   {getFailingForLabel(f.firstSeenAt) || "-"}
                 </InfoField>
-                <div className="hidden md:block" />
+                <InfoField label="Group" variant="compact">
+                  {f.resourceGroup || "-"}
+                </InfoField>
 
                 {/* Row 3: IDs */}
                 <InfoField label="Check ID" variant="compact">
@@ -528,6 +653,11 @@ export function ResourceDetailDrawerContent({
                     transparent
                     className="max-w-full text-sm"
                   />
+                </InfoField>
+
+                {/* Row 4: Resource metadata */}
+                <InfoField label="Resource type" variant="compact">
+                  {f.resourceType || "-"}
                 </InfoField>
               </div>
 
@@ -644,47 +774,38 @@ export function ResourceDetailDrawerContent({
 
                 {checkMeta.remediation.code.cli && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CLI Command:
-                    </span>
-                    <CodeSnippet
-                      value={`$ ${stripCodeFences(checkMeta.remediation.code.cli)}`}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                    {renderRemediationCodeBlock({
+                      label: "CLI Command",
+                      language: QUERY_EDITOR_LANGUAGE.SHELL,
+                      value: `$ ${stripCodeFences(checkMeta.remediation.code.cli)}`,
+                      copyValue: stripCodeFences(
+                        checkMeta.remediation.code.cli,
+                      ),
+                    })}
                   </div>
                 )}
 
                 {checkMeta.remediation.code.terraform && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      Terraform:
-                    </span>
-                    <CodeSnippet
-                      value={stripCodeFences(
+                    {renderRemediationCodeBlock({
+                      label: "Terraform",
+                      language: QUERY_EDITOR_LANGUAGE.HCL,
+                      value: stripCodeFences(
                         checkMeta.remediation.code.terraform,
-                      )}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                      ),
+                    })}
                   </div>
                 )}
 
-                {checkMeta.remediation.code.nativeiac && (
+                {checkMeta.remediation.code.nativeiac && f && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CloudFormation:
-                    </span>
-                    <CodeSnippet
-                      value={stripCodeFences(
+                    {renderRemediationCodeBlock({
+                      label: nativeIacConfig.label,
+                      language: nativeIacConfig.language,
+                      value: stripCodeFences(
                         checkMeta.remediation.code.nativeiac,
-                      )}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                      ),
+                    })}
                   </div>
                 )}
 
@@ -757,10 +878,7 @@ export function ResourceDetailDrawerContent({
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-between">
-                  <h4 className="text-text-neutral-primary text-sm font-medium">
-                    Failed Findings For This Resource
-                  </h4>
+                <div className="flex items-center justify-end">
                   <span className="text-text-neutral-tertiary text-sm">
                     {otherFindings.length} Total Entries
                   </span>
@@ -796,7 +914,18 @@ export function ResourceDetailDrawerContent({
                   <TableBody>
                     {otherFindings.length > 0 ? (
                       otherFindings.map((finding) => (
-                        <OtherFindingRow key={finding.id} finding={finding} />
+                        <OtherFindingRow
+                          key={finding.id}
+                          finding={finding}
+                          isOptimisticallyMuted={optimisticallyMutedIds.has(
+                            finding.id,
+                          )}
+                          onMuted={() =>
+                            setOptimisticallyMutedIds((prev) =>
+                              new Set(prev).add(finding.id),
+                            )
+                          }
+                        />
                       ))
                     ) : (
                       <TableRow>
@@ -908,19 +1037,32 @@ export function ResourceDetailDrawerContent({
   );
 }
 
-function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
+function OtherFindingRow({
+  finding,
+  isOptimisticallyMuted,
+  onMuted,
+}: {
+  finding: ResourceDrawerFinding;
+  isOptimisticallyMuted: boolean;
+  onMuted: () => void;
+}) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
+  const isMuted = finding.isMuted || isOptimisticallyMuted;
 
   const findingUrl = `/findings?filter%5Bcheck_id__in%5D=${encodeURIComponent(finding.checkId)}&filter%5Bmuted%5D=include`;
 
   return (
     <>
-      {!finding.isMuted && (
+      {!isMuted && (
         <MuteFindingsModal
           isOpen={isMuteModalOpen}
           onOpenChange={setIsMuteModalOpen}
           findingIds={[finding.id]}
+          onComplete={() => {
+            setIsMuteModalOpen(false);
+            onMuted();
+          }}
         />
       )}
       <SendToJiraModal
@@ -934,7 +1076,7 @@ function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
       >
         <TableCell className="w-10">
-          <NotificationIndicator isMuted={finding.isMuted} />
+          <NotificationIndicator isMuted={isMuted} />
         </TableCell>
         <TableCell>
           <StatusFindingBadge status={finding.status as FindingStatus} />
@@ -955,14 +1097,14 @@ function OtherFindingRow({ finding }: { finding: ResourceDrawerFinding }) {
             <ActionDropdown ariaLabel="Finding actions">
               <ActionDropdownItem
                 icon={
-                  finding.isMuted ? (
+                  isMuted ? (
                     <VolumeOff className="size-5" />
                   ) : (
                     <VolumeX className="size-5" />
                   )
                 }
-                label={finding.isMuted ? "Muted" : "Mute"}
-                disabled={finding.isMuted}
+                label={isMuted ? "Muted" : "Mute"}
+                disabled={isMuted}
                 onSelect={() => setIsMuteModalOpen(true)}
               />
               <ActionDropdownItem
