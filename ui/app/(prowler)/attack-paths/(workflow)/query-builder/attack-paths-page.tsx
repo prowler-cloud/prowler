@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Info, Maximize2, X } from "lucide-react";
+import { ArrowLeft, Info, Maximize2, TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -37,7 +37,7 @@ import type {
   AttackPathScan,
   GraphNode,
 } from "@/types/attack-paths";
-import { ATTACK_PATH_QUERY_IDS } from "@/types/attack-paths";
+import { ATTACK_PATH_QUERY_IDS, SCAN_STATES } from "@/types/attack-paths";
 
 import {
   AttackPathGraph,
@@ -119,6 +119,13 @@ export default function AttackPathsPage() {
       scan.attributes.state === "executing" ||
       scan.attributes.state === "scheduled",
   );
+
+  // Detect if the selected scan is showing data from a previous cycle
+  const selectedScan = scans.find((scan) => scan.id === scanId);
+  const isViewingPreviousCycleData =
+    selectedScan &&
+    selectedScan.attributes.graph_data_ready &&
+    selectedScan.attributes.state !== SCAN_STATES.COMPLETED;
 
   // Callback to refresh scans (used by AutoRefresh component)
   const refreshScans = async () => {
@@ -372,6 +379,24 @@ export default function AttackPathsPage() {
           <Suspense fallback={<div>Loading scans...</div>}>
             <ScanListTable scans={scans} />
           </Suspense>
+
+          {/* Banner: viewing data from a previous scan cycle */}
+          {isViewingPreviousCycleData && (
+            <Alert
+              variant="default"
+              className="border-border-warning-secondary bg-bg-warning-secondary"
+            >
+              <TriangleAlert className="text-text-warning-primary size-4" />
+              <AlertTitle>Viewing data from a previous scan</AlertTitle>
+              <AlertDescription>
+                This scan is currently{" "}
+                {selectedScan.attributes.state === SCAN_STATES.EXECUTING
+                  ? `running (${selectedScan.attributes.progress}%)`
+                  : selectedScan.attributes.state}
+                . The graph data shown is from the last completed cycle.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Query Builder Section - shown only after selecting a scan */}
           {scanId && (
