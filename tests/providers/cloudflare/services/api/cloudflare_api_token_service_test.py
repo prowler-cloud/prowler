@@ -235,3 +235,17 @@ class Test_API_Service:
 
         assert len(service.tokens) == 1
         assert service.tokens[0].id == "token-valid"
+
+    def test_list_api_tokens_handles_exception(self):
+        mock_provider = set_mocked_cloudflare_provider()
+        mock_provider.session.client.user.tokens.list.side_effect = Exception(
+            "API error"
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=mock_provider,
+        ):
+            service = API(mock_provider)
+
+        assert service.tokens == []

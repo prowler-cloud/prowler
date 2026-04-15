@@ -17,7 +17,7 @@ class API(CloudflareService):
 
     def _list_api_tokens(self) -> None:
         """List all API tokens for the authenticated user."""
-        logger.info("APIToken - Listing API tokens...")
+        logger.info("API - Listing API tokens...")
         try:
             seen_token_ids: set[str] = set()
             for token in self.client.user.tokens.list():
