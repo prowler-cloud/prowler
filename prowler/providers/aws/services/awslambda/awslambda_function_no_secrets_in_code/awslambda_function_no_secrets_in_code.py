@@ -37,11 +37,7 @@ class awslambda_function_no_secrets_in_code(Check):
                                 ),
                             )
                             if detect_secrets_output:
-                                for (
-                                    secret
-                                ) in (
-                                    detect_secrets_output
-                                ):  # Appears that only 1 file is being scanned at a time, so could rework this
+                                for secret in detect_secrets_output:  # Appears that only 1 file is being scanned at a time, so could rework this
                                     output_file_name = secret["filename"].replace(
                                         f"{tmp_dir_name}/", ""
                                     )

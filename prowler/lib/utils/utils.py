@@ -16,7 +16,7 @@ from datetime import datetime
 from hashlib import sha512
 from io import TextIOWrapper
 from ipaddress import ip_address
-from os.path import abspath, exists, join, normpath
+from os.path import abspath, exists, join
 from time import mktime
 from typing import Any, Optional
 
@@ -346,4 +346,3 @@ def safe_extract_zip(zip_file: zipfile.ZipFile, target_dir: str):
             zip_file.extract(member, target_dir)
     except Exception as error:
         logger.error(f"Error extracting zip file safely: {error}")
-
