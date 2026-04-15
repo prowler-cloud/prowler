@@ -30,6 +30,13 @@ import {
 } from "@/components/shadcn/popover";
 import { cn } from "@/lib/utils";
 
+export interface MultiSelectSearchConfig {
+  placeholder?: string;
+  emptyMessage?: string;
+}
+
+export type MultiSelectSearchProp = boolean | MultiSelectSearchConfig;
+
 type MultiSelectContextType = {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -263,18 +270,20 @@ export function MultiSelectContent({
   width = "default",
   ...props
 }: {
-  search?: boolean | { placeholder?: string; emptyMessage?: string };
+  search?: MultiSelectSearchProp;
   children: ReactNode;
   width?: "default" | "wide";
 } & Omit<ComponentPropsWithoutRef<typeof Command>, "children">) {
   const canSearch = typeof search === "object" ? true : search;
 
   const widthClasses =
-    width === "wide" ? "w-auto min-w-[400px] max-w-[600px]" : "w-auto";
+    width === "wide"
+      ? "w-[min(max(var(--radix-popover-trigger-width),24rem),calc(100vw-2rem))] max-w-[32rem]"
+      : "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))] max-w-[24rem]";
 
   return (
     <>
-      <div style={{ display: "none" }}>
+      <div className="hidden" aria-hidden="true">
         <Command>
           <CommandList>{children}</CommandList>
         </Command>
@@ -298,15 +307,13 @@ export function MultiSelectContent({
           ) : (
             <button className="sr-only" />
           )}
-          <CommandList className="minimal-scrollbar max-h-[300px] overflow-x-hidden overflow-y-auto">
-            <div className="flex flex-col gap-1 p-3">
-              {canSearch && (
-                <CommandEmpty className="text-bg-button-secondary py-6 text-center text-sm">
-                  {typeof search === "object" ? search.emptyMessage : undefined}
-                </CommandEmpty>
-              )}
-              {children}
-            </div>
+          <CommandList className="minimal-scrollbar max-h-[300px] overflow-x-hidden overflow-y-auto p-3">
+            {canSearch && (
+              <CommandEmpty className="text-bg-button-secondary py-6 text-center text-sm">
+                {typeof search === "object" ? search.emptyMessage : undefined}
+              </CommandEmpty>
+            )}
+            {children}
           </CommandList>
         </Command>
       </PopoverContent>
@@ -318,11 +325,13 @@ export function MultiSelectItem({
   value,
   children,
   badgeLabel,
+  keywords,
   onSelect,
   className,
   ...props
 }: {
   badgeLabel?: ReactNode;
+  keywords?: string[];
   value: string;
 } & Omit<ComponentPropsWithoutRef<typeof CommandItem>, "value">) {
   const { toggleValue, selectedValues, onItemAdded } = useMultiSelectContext();
@@ -336,9 +345,10 @@ export function MultiSelectItem({
     <CommandItem
       {...props}
       value={value}
+      keywords={keywords}
       data-slot="multiselect-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         isSelected && "bg-slate-100 dark:bg-slate-800/50",
         className,
       )}
@@ -347,7 +357,9 @@ export function MultiSelectItem({
         onSelect?.(value);
       }}
     >
-      <span className="flex min-w-0 flex-1 items-center gap-2">{children}</span>
+      <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+        {children}
+      </span>
       <CheckIcon
         className={cn(
           "text-bg-button-secondary size-5 shrink-0",
@@ -368,6 +380,12 @@ export function MultiSelectSeparator({
   className,
   ...props
 }: ComponentPropsWithoutRef<typeof CommandSeparator>) {
+  const { selectedValues } = useMultiSelectContext();
+
+  if (selectedValues.size === 0) {
+    return null;
+  }
+
   return (
     <CommandSeparator
       data-slot="multiselect-separator"
@@ -392,8 +410,11 @@ export function MultiSelectSelectAll({
 
   const hasSelections = selectedValues.size > 0;
 
+  if (!hasSelections) {
+    return null;
+  }
+
   const handleClearAll = () => {
-    // Clear all selections
     onValuesChange?.([]);
   };
 

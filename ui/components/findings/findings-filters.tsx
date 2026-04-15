@@ -18,11 +18,12 @@ import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
-import { formatLabel, getCategoryLabel, getGroupLabel } from "@/lib/categories";
-import { FilterType, FINDING_STATUS_DISPLAY_NAMES, ScanEntity } from "@/types";
+import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
+import { FilterType, ScanEntity } from "@/types";
 import { DATA_TABLE_FILTER_MODE, FilterParam } from "@/types/filters";
-import { getProviderDisplayName, ProviderProps } from "@/types/providers";
-import { SEVERITY_DISPLAY_NAMES } from "@/types/severities";
+import { ProviderProps } from "@/types/providers";
+
+import { getFindingsFilterDisplayValue } from "./findings-filters.utils";
 
 interface FindingsFiltersProps {
   /** Provider data for ProviderTypeSelector and AccountsSelector */
@@ -53,52 +54,11 @@ const FILTER_KEY_LABELS: Record<FilterParam, string> = {
   "filter[resource_type__in]": "Resource Type",
   "filter[category__in]": "Category",
   "filter[resource_groups__in]": "Resource Group",
-  "filter[scan__in]": "Scan ID",
+  "filter[scan__in]": "Scan",
+  "filter[scan_id]": "Scan",
+  "filter[scan_id__in]": "Scan",
   "filter[inserted_at]": "Date",
   "filter[muted]": "Muted",
-};
-
-/**
- * Formats a raw filter value into a human-readable display string.
- * - Provider types: uses shared getProviderDisplayName utility
- * - Severities: uses shared SEVERITY_DISPLAY_NAMES (e.g. "critical" → "Critical")
- * - Status: uses shared FINDING_STATUS_DISPLAY_NAMES (e.g. "FAIL" → "Fail")
- * - Categories: uses getCategoryLabel (handles IAM, EC2, IMDSv1, etc.)
- * - Resource groups: uses getGroupLabel (underscore-delimited)
- * - Date (filter[inserted_at]): returns the ISO date string as-is (YYYY-MM-DD)
- * - Other values: uses formatLabel as a generic fallback (avoids naive capitalisation)
- */
-const formatFilterValue = (filterKey: string, value: string): string => {
-  if (!value) return value;
-  if (filterKey === "filter[provider_type__in]") {
-    return getProviderDisplayName(value);
-  }
-  if (filterKey === "filter[severity__in]") {
-    return (
-      SEVERITY_DISPLAY_NAMES[
-        value.toLowerCase() as keyof typeof SEVERITY_DISPLAY_NAMES
-      ] ?? formatLabel(value)
-    );
-  }
-  if (filterKey === "filter[status__in]") {
-    return (
-      FINDING_STATUS_DISPLAY_NAMES[
-        value as keyof typeof FINDING_STATUS_DISPLAY_NAMES
-      ] ?? formatLabel(value)
-    );
-  }
-  if (filterKey === "filter[category__in]") {
-    return getCategoryLabel(value);
-  }
-  if (filterKey === "filter[resource_groups__in]") {
-    return getGroupLabel(value);
-  }
-  // Date filter: preserve ISO date string (YYYY-MM-DD) — do not run through formatLabel
-  if (filterKey === "filter[inserted_at]") {
-    return value;
-  }
-  // Generic fallback: handles hyphen/underscore-delimited IDs with smart capitalisation
-  return formatLabel(value);
 };
 
 export const FindingsFilters = ({
@@ -128,7 +88,14 @@ export const FindingsFilters = ({
 
   // Custom filters for the expandable section (removed Provider - now using AccountsSelector)
   const customFilters = [
-    ...filterFindings,
+    ...filterFindings.map((filter) => ({
+      ...filter,
+      labelFormatter: (value: string) =>
+        getFindingsFilterDisplayValue(`filter[${filter.key}]`, value, {
+          providers,
+          scans: scanDetails,
+        }),
+    })),
     {
       key: FilterType.REGION,
       labelCheckboxGroup: "Regions",
@@ -166,6 +133,11 @@ export const FindingsFilters = ({
       labelCheckboxGroup: "Scan ID",
       values: completedScanIds,
       valueLabelMapping: scanDetails,
+      labelFormatter: (value: string) =>
+        getFindingsFilterDisplayValue(`filter[${FilterType.SCAN}]`, value, {
+          providers,
+          scans: scanDetails,
+        }),
       index: 7,
     },
   ];
@@ -185,7 +157,10 @@ export const FindingsFilters = ({
         key,
         label,
         value,
-        displayValue: formatFilterValue(key, value),
+        displayValue: getFindingsFilterDisplayValue(key, value, {
+          providers,
+          scans: scanDetails,
+        }),
       });
     });
   });

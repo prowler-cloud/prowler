@@ -1,9 +1,12 @@
 import re
+from datetime import datetime, timezone
 from ipaddress import ip_address, ip_network
 from typing import Optional, Tuple
 
+from dateutil.parser import parse
 from py_iam_expand.actions import InvalidActionHandling, expand_actions
 
+from prowler.lib.check.models import Check_Report_AWS
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import read_aws_regions_file
 
@@ -994,6 +997,93 @@ def is_codebuild_using_allowed_github_org(
         return False, None
 
 
+def policy_allows_marketplace_subscribe_on_all_resources(
+    policy_document: dict,
+) -> bool:
+    """Check if a policy document can allow aws-marketplace:Subscribe on Resource:*.
+
+    Inspects statements with Resource ``*`` for Allow effects that grant
+    ``aws-marketplace:Subscribe`` via ``Action`` or ``NotAction`` (wildcard
+    patterns expanded through ``expand_actions``). Unconditional Deny
+    statements on Resource ``*`` (via either ``Action`` or ``NotAction``)
+    covering the same action take precedence. Conditional Deny statements
+    are not treated as global cancellation because the condition scope is
+    request-dependent and is not evaluated here. Conditional Allow
+    statements are still treated as potentially allowing access on
+    ``Resource:*``, since the wildcard scope remains risky even when
+    gated by a condition.
+
+    Args:
+        policy_document: The IAM policy document to analyse.
+
+    Returns:
+        True if the policy can allow aws-marketplace:Subscribe on all
+        resources, False otherwise.
+    """
+    if not policy_document or "Statement" not in policy_document:
+        return False
+
+    target_actions = set(
+        expand_actions(
+            "aws-marketplace:Subscribe",
+            InvalidActionHandling.REMOVE,
+        )
+    )
+    if not target_actions:
+        target_actions = {"aws-marketplace:Subscribe"}
+
+    statements = policy_document.get("Statement", [])
+    if not isinstance(statements, list):
+        statements = [statements]
+
+    allowed_on_all = set()
+    denied_on_all = set()
+    all_aws_actions = None
+
+    for statement in statements:
+        effect = statement.get("Effect", "")
+        if not isinstance(effect, str):
+            continue
+        effect_lower = effect.strip().lower()
+        if effect_lower not in ("allow", "deny"):
+            continue
+
+        resources = statement.get("Resource", [])
+        if isinstance(resources, str):
+            resources = [resources]
+        if "*" not in resources:
+            continue
+
+        if effect_lower == "deny" and "Condition" in statement:
+            continue
+
+        statement_actions = set()
+        action_patterns = _get_patterns_from_standard_value(statement.get("Action"))
+        for pattern in action_patterns:
+            statement_actions.update(
+                expand_actions(pattern, InvalidActionHandling.REMOVE)
+            )
+
+        not_action_patterns = _get_patterns_from_standard_value(
+            statement.get("NotAction")
+        )
+        if not_action_patterns:
+            if all_aws_actions is None:
+                all_aws_actions = set(expand_actions("*", InvalidActionHandling.REMOVE))
+            exclusions = set()
+            for pattern in not_action_patterns:
+                exclusions.update(expand_actions(pattern, InvalidActionHandling.REMOVE))
+            statement_actions.update(all_aws_actions.difference(exclusions))
+
+        if effect_lower == "allow":
+            allowed_on_all.update(statement_actions)
+        else:
+            denied_on_all.update(statement_actions)
+
+    effective = allowed_on_all.difference(denied_on_all)
+    return bool(target_actions & effective)
+
+
 def has_codebuild_trusted_principal(trust_policy: dict) -> bool:
     """
     Returns True if the trust policy allows codebuild.amazonaws.com as a trusted principal, otherwise False.
@@ -1031,3 +1121,47 @@ def has_codebuild_trusted_principal(trust_policy: dict) -> bool:
         )
         for s in statements
     )
+
+
+def find_bedrock_service(last_accessed_services: list[dict]) -> Optional[dict]:
+    """Return the Bedrock entry from a service last accessed list."""
+    for service in last_accessed_services:
+        if service.get("ServiceNamespace") == "bedrock":
+            return service
+    return None
+
+
+def evaluate_bedrock_staleness(
+    report: Check_Report_AWS,
+    bedrock_service: dict,
+    max_days: int,
+    identity_name: str,
+    identity_type: str,
+) -> None:
+    """Populate a check report based on Bedrock access recency."""
+    last_authenticated = bedrock_service.get("LastAuthenticated")
+    if last_authenticated is None:
+        report.status = "FAIL"
+        report.status_extended = (
+            f"IAM {identity_type} {identity_name} has Bedrock permissions "
+            f"but has never used them."
+        )
+        return
+
+    if isinstance(last_authenticated, str):
+        last_authenticated = parse(last_authenticated)
+
+    days_since_access = (datetime.now(timezone.utc) - last_authenticated).days
+
+    if days_since_access > max_days:
+        report.status = "FAIL"
+        report.status_extended = (
+            f"IAM {identity_type} {identity_name} has not accessed Bedrock "
+            f"in {days_since_access} days (threshold: {max_days} days)."
+        )
+    else:
+        report.status = "PASS"
+        report.status_extended = (
+            f"IAM {identity_type} {identity_name} accessed Bedrock "
+            f"{days_since_access} days ago (threshold: {max_days} days)."
+        )
