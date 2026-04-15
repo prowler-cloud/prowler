@@ -8,6 +8,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Bump Poetry to `2.3.4` in Dockerfile and pre-commit hooks. Regenerate `api/poetry.lock` [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
 
+### 🐞 Fixed
+
+- `/finding-groups/latest` now self-heals drifted `FindingGroupDailySummary` rows by detecting missing provider/day summaries and enqueuing a targeted reaggregation task, with per-tenant throttling to keep request latency unaffected [(#10693)](https://github.com/prowler-cloud/prowler/pull/10693)
+
 ### 🔐 Security
 
 - `pytest` from 8.2.2 to 9.0.3 to fix CVE-2025-71176 [(#10678)](https://github.com/prowler-cloud/prowler/pull/10678)
