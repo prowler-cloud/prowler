@@ -279,16 +279,15 @@ describe("ScanListTable", () => {
     );
   });
 
-  it("shows a Check icon in the Graph column when graph data is ready", () => {
+  it("exposes an accessible label in the Graph column when graph data is ready", () => {
     render(<ScanListTable scans={[createScan(1)]} />);
 
-    // The Graph column renders a Check icon (lucide-check) when graph_data_ready is true
-    const checkIcon = document.querySelector(".lucide-check");
-    expect(checkIcon).toBeInTheDocument();
-    expect(checkIcon).toHaveClass("text-text-success-primary");
+    expect(screen.getByLabelText("Graph available")).toHaveClass(
+      "text-text-success-primary",
+    );
   });
 
-  it("shows a Minus icon in the Graph column when graph data is not ready", () => {
+  it("exposes an accessible label in the Graph column when graph data is not ready", () => {
     const noGraphScan: AttackPathScan = {
       ...createScan(1),
       attributes: {
@@ -299,8 +298,28 @@ describe("ScanListTable", () => {
 
     render(<ScanListTable scans={[noGraphScan]} />);
 
-    const minusIcon = document.querySelector(".lucide-minus");
-    expect(minusIcon).toBeInTheDocument();
-    expect(minusIcon).toHaveClass("text-text-neutral-secondary");
+    expect(screen.getByLabelText("Graph not available")).toHaveClass(
+      "text-text-neutral-secondary",
+    );
+  });
+
+  it("renders a tooltip explaining a completed scan without graph data", () => {
+    const completedNoGraph: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "completed",
+        graph_data_ready: false,
+      },
+    };
+
+    render(<ScanListTable scans={[completedNoGraph]} />);
+
+    expect(
+      screen.getByRole("radio", { name: "Scan not available" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText("This scan completed without producing graph data."),
+    ).toBeInTheDocument();
   });
 });

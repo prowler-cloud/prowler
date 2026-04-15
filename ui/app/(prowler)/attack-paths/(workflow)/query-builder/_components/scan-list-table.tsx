@@ -63,7 +63,11 @@ const getDisabledTooltip = (scan: AttackPathScan): string | null => {
     return "This scan failed. No graph data is available.";
   }
 
-  return null;
+  if (scan.attributes.state === SCAN_STATES.COMPLETED) {
+    return "This scan completed without producing graph data.";
+  }
+
+  return "Graph data is not available for this scan.";
 };
 
 const getSelectedRowSelection = (
@@ -95,10 +99,8 @@ const buildMetadata = (
 
 const getColumns = ({
   selectedScanId,
-  onSelectScan,
 }: {
   selectedScanId: string | null;
-  onSelectScan: (scanId: string) => void;
 }): ColumnDef<AttackPathScan>[] => [
   {
     id: "select",
@@ -113,18 +115,12 @@ const getColumns = ({
           value={row.original.id}
           checked={isSelected}
           disabled={!canSelect}
-          onClick={() => {
-            if (canSelect && !isSelected) {
-              onSelectScan(row.original.id);
-            }
-          }}
           className={cn(
             "size-5",
-            canSelect && !isSelected
-              ? "border-text-neutral-secondary cursor-pointer"
-              : !canSelect
-                ? "disabled:opacity-70"
-                : undefined,
+            canSelect &&
+              !isSelected &&
+              "border-text-neutral-secondary cursor-pointer",
+            !canSelect && "disabled:opacity-70",
           )}
           aria-label={
             isSelected
@@ -198,9 +194,17 @@ const getColumns = ({
     header: () => <span className="text-sm font-medium">Graph</span>,
     cell: ({ row }) =>
       row.original.attributes.graph_data_ready ? (
-        <Check size={16} className="text-text-success-primary" />
+        <Check
+          size={16}
+          aria-label="Graph available"
+          className="text-text-success-primary"
+        />
       ) : (
-        <Minus size={16} className="text-text-neutral-secondary" />
+        <Minus
+          size={16}
+          aria-label="Graph not available"
+          className="text-text-neutral-secondary"
+        />
       ),
     enableSorting: false,
   },
@@ -265,12 +269,13 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   };
 
   return (
-    <RadioGroup value={selectedScanId ?? ""} className="gap-0">
+    <RadioGroup
+      value={selectedScanId ?? ""}
+      onValueChange={handleSelectScan}
+      className="gap-0"
+    >
       <DataTable
-        columns={getColumns({
-          selectedScanId,
-          onSelectScan: handleSelectScan,
-        })}
+        columns={getColumns({ selectedScanId })}
         data={paginatedScans}
         metadata={buildMetadata(scans.length, currentPage, totalPages)}
         controlledPage={currentPage}
