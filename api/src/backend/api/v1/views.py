@@ -7694,8 +7694,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
     def _latest_self_heal_trigger_cache_key(self, scan_ids: list[str]) -> str:
         scan_key = ",".join(sorted(scan_ids))
-        digest = hashlib.sha1(scan_key.encode("utf-8")).hexdigest()[:16]
-        return f"finding_groups:self_heal:trigger:tenant:{self.request.tenant_id}:{digest}"
+        digest = hashlib.sha256(scan_key.encode("utf-8")).hexdigest()[:16]
+        return (
+            f"finding_groups:self_heal:trigger:tenant:{self.request.tenant_id}:{digest}"
+        )
 
     def _should_probe_latest_self_heal(self) -> bool:
         """Throttle drift-detection probes to keep /latest lightweight under load."""
@@ -7709,7 +7711,9 @@ class FindingGroupViewSet(BaseRLSViewSet):
         """Return latest completed scans (1 per provider), scoped to RBAC and provider filters."""
         tenant_id = self.request.tenant_id
         role = get_role(self.request.user, tenant_id)
-        queryset = Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
+        queryset = Scan.objects.filter(
+            tenant_id=tenant_id, state=StateChoices.COMPLETED
+        )
 
         if not role.unlimited_visibility:
             queryset = queryset.filter(provider_id__in=get_providers(role))
@@ -7720,7 +7724,9 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         provider_ids_in = finding_params.get("provider_id__in")
         if provider_ids_in:
-            provider_ids = [pid.strip() for pid in provider_ids_in.split(",") if pid.strip()]
+            provider_ids = [
+                pid.strip() for pid in provider_ids_in.split(",") if pid.strip()
+            ]
             queryset = queryset.filter(provider_id__in=provider_ids)
 
         provider_type = finding_params.get("provider_type")
@@ -7785,10 +7791,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
         ).values_list("provider_id", "inserted_at")
 
         summary_keys = {
-            (provider_id, inserted_at.date()) for provider_id, inserted_at in summary_rows
+            (provider_id, inserted_at.date())
+            for provider_id, inserted_at in summary_rows
         }
         missing_keys = [
-            key for key in expected_scan_by_provider_day.keys() if key not in summary_keys
+            key
+            for key in expected_scan_by_provider_day.keys()
+            if key not in summary_keys
         ]
         return [expected_scan_by_provider_day[key] for key in missing_keys]
 
@@ -7991,11 +8000,14 @@ class FindingGroupViewSet(BaseRLSViewSet):
             normalized_params
         )
         summary_qs = self._build_aggregated_queryset(finding_params, latest=True)
-        summary_qs = self._apply_aggregated_computed_filters(summary_qs, computed_params)
+        summary_qs = self._apply_aggregated_computed_filters(
+            summary_qs, computed_params
+        )
 
-        if self._should_self_heal_latest(
-            finding_params
-        ) and self._should_probe_latest_self_heal():
+        if (
+            self._should_self_heal_latest(finding_params)
+            and self._should_probe_latest_self_heal()
+        ):
             drifted_scan_ids = self._latest_scan_ids_missing_summary(finding_params)
             if drifted_scan_ids:
                 self._trigger_latest_self_heal_reaggregation(drifted_scan_ids)
