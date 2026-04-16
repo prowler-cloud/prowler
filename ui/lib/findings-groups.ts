@@ -5,6 +5,18 @@ type FindingGroupMutedState = Pick<
   "muted" | "mutedCount" | "resourcesFail" | "resourcesTotal"
 >;
 
+type FindingGroupImpactedCountsState = Pick<
+  FindingGroupRow,
+  | "resourcesTotal"
+  | "resourcesFail"
+  | "passCount"
+  | "failCount"
+  | "passMutedCount"
+  | "failMutedCount"
+  | "muted"
+  | "mutedCount"
+>;
+
 type FindingGroupDeltaState = Pick<
   FindingGroupRow,
   | "newCount"
@@ -36,6 +48,31 @@ export function isFindingGroupMuted(group: FindingGroupMutedState): boolean {
   return (
     mutedCount === group.resourcesFail || mutedCount === group.resourcesTotal
   );
+}
+
+export function getFindingGroupImpactedCounts(
+  group: FindingGroupImpactedCountsState,
+): { impacted: number; total: number } {
+  if (group.resourcesTotal > 0) {
+    return {
+      impacted: group.resourcesFail,
+      total: group.resourcesTotal,
+    };
+  }
+
+  const total = (group.passCount ?? 0) + (group.failCount ?? 0);
+
+  if (!isFindingGroupMuted(group)) {
+    return {
+      impacted: group.failCount ?? 0,
+      total,
+    };
+  }
+
+  return {
+    impacted: group.failCount ?? 0,
+    total: total + (group.passMutedCount ?? 0) + (group.failMutedCount ?? 0),
+  };
 }
 
 function getNewDeltaTotal(group: FindingGroupDeltaState): number {

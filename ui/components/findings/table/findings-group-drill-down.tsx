@@ -22,6 +22,7 @@ import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource
 import { cn, hasHistoricalFindingFilter } from "@/lib";
 import {
   getFilteredFindingGroupDelta,
+  getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
 import { FindingGroupRow } from "@/types";
@@ -104,6 +105,7 @@ export function FindingsGroupDrillDown({
         : DeltaValues.NONE;
 
   const allMuted = isFindingGroupMuted(group);
+  const impactedCounts = getFindingGroupImpactedCounts(group);
 
   const rows = table.getRowModel().rows;
 
@@ -159,8 +161,8 @@ export function FindingsGroupDrillDown({
 
             {/* Impacted resources count */}
             <ImpactedResourcesCell
-              impacted={group.resourcesFail}
-              total={group.resourcesTotal}
+              impacted={impactedCounts.impacted}
+              total={impactedCounts.total}
             />
           </div>
         </div>

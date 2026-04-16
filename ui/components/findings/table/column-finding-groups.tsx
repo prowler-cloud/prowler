@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib";
 import {
   getFilteredFindingGroupDelta,
+  getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
 import { FindingGroupRow } from "@/types";
@@ -216,10 +217,11 @@ export function getColumnFindingGroups({
       ),
       cell: ({ row }) => {
         const group = row.original;
+        const counts = getFindingGroupImpactedCounts(group);
         return (
           <ImpactedResourcesCell
-            impacted={group.resourcesFail}
-            total={group.resourcesTotal}
+            impacted={counts.impacted}
+            total={counts.total}
           />
         );
       },

@@ -345,6 +345,36 @@ describe("column-finding-groups — impacted resources count", () => {
     // Then
     expect(screen.getByText("3/5")).toBeInTheDocument();
   });
+
+  it("should fall back to finding counts when resources total is zero", () => {
+    // Given/When
+    renderImpactedResourcesCell({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 3,
+      passCount: 2,
+      muted: false,
+    });
+
+    // Then
+    expect(screen.getByText("3/5")).toBeInTheDocument();
+  });
+
+  it("should include muted findings in the denominator when the row is muted", () => {
+    // Given/When
+    renderImpactedResourcesCell({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 3,
+      passCount: 2,
+      failMutedCount: 4,
+      passMutedCount: 1,
+      muted: true,
+    });
+
+    // Then
+    expect(screen.getByText("3/10")).toBeInTheDocument();
+  });
 });
 
 describe("column-finding-groups — group selection", () => {

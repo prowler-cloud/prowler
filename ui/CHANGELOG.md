@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.25.0] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Findings group impacted counters now fall back to pass/fail totals for IaC providers when no resources are present and include muted counts in muted totals
+
 ## [1.24.0] (Prowler v5.24.0)
 
 ### 🚀 Added

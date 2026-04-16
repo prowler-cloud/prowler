@@ -6,6 +6,7 @@ import {
   getActiveStatusFilter,
   getFilteredFindingGroupDelta,
   getFindingGroupDelta,
+  getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "./findings-groups";
 
@@ -135,6 +136,63 @@ describe("getActiveStatusFilter", () => {
     expect(
       getActiveStatusFilter({ "filter[status__in]": "UNKNOWN,FOO" }),
     ).toBeNull();
+  });
+});
+
+describe("getFindingGroupImpactedCounts", () => {
+  it("should fall back to pass and fail counts when resources total is zero", () => {
+    // Given
+    const group = makeGroup({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 3,
+      passCount: 2,
+      muted: false,
+    });
+
+    // When
+    const result = getFindingGroupImpactedCounts(group);
+
+    // Then
+    expect(result).toEqual({ impacted: 3, total: 5 });
+  });
+
+  it("should include muted pass and fail counts in the denominator when the result is muted", () => {
+    // Given
+    const group = makeGroup({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 3,
+      passCount: 2,
+      failMutedCount: 4,
+      passMutedCount: 1,
+      muted: true,
+    });
+
+    // When
+    const result = getFindingGroupImpactedCounts(group);
+
+    // Then
+    expect(result).toEqual({ impacted: 3, total: 10 });
+  });
+
+  it("should keep resource-based counts when resources total is available", () => {
+    // Given
+    const group = makeGroup({
+      resourcesTotal: 6,
+      resourcesFail: 4,
+      failCount: 2,
+      passCount: 1,
+      failMutedCount: 5,
+      passMutedCount: 3,
+      muted: true,
+    });
+
+    // When
+    const result = getFindingGroupImpactedCounts(group);
+
+    // Then
+    expect(result).toEqual({ impacted: 4, total: 6 });
   });
 });
 
