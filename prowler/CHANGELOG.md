@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.24.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Cloudflare account-scoped API tokens failing connection test in the App with `CloudflareUserTokenRequiredError` [(#10723)](https://github.com/prowler-cloud/prowler/pull/10723)
+
+---
+
 ## [5.24.0] (Prowler v5.24.0)
 
 ### 🚀 Added
