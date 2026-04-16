@@ -46,6 +46,12 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
   },
+  logging: {
+    // Next.js 16 prints every Server Function call with its arguments
+    // (e.g. `authenticate(null, {email, password}) ...`), which leaks
+    // credentials and other sensitive payloads to the terminal.
+    serverFunctions: false,
+  },
   async headers() {
     const sentryEndpoint = getSentryReportEndpoint();
     const headers = [
