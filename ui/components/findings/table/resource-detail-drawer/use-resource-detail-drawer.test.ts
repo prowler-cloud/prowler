@@ -587,4 +587,121 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(result.current.currentFinding).toBeNull();
     expect(result.current.otherFindings).toEqual([]);
   });
+
+  it("should clear other findings immediately while the next resource is loading", async () => {
+    // Given
+    const resources = [
+      makeResource({
+        id: "row-1",
+        findingId: "finding-1",
+        resourceUid: "arn:aws:s3:::first-bucket",
+        resourceName: "first-bucket",
+      }),
+      makeResource({
+        id: "row-2",
+        findingId: "finding-2",
+        resourceUid: "arn:aws:s3:::second-bucket",
+        resourceName: "second-bucket",
+      }),
+    ];
+
+    let resolveSecondFinding: ((value: { data: string[] }) => void) | null =
+      null;
+    let resolveSecondResource: ((value: { data: string[] }) => void) | null =
+      null;
+
+    getFindingByIdMock.mockImplementation((findingId: string) => {
+      if (findingId === "finding-2") {
+        return new Promise((resolve) => {
+          resolveSecondFinding = resolve;
+        });
+      }
+
+      return Promise.resolve({ data: [findingId] });
+    });
+
+    getLatestFindingsByResourceUidMock.mockImplementation(
+      ({ resourceUid }: { resourceUid: string }) => {
+        if (resourceUid === "arn:aws:s3:::second-bucket") {
+          return new Promise((resolve) => {
+            resolveSecondResource = resolve;
+          });
+        }
+
+        return Promise.resolve({ data: ["resource-1"] });
+      },
+    );
+
+    adaptFindingsByResourceResponseMock.mockImplementation(
+      (response: { data: string[] }) => {
+        if (response.data[0] === "finding-1") {
+          return [makeDrawerFinding({ id: "finding-1" })];
+        }
+
+        if (response.data[0] === "finding-2") {
+          return [
+            makeDrawerFinding({
+              id: "finding-2",
+              resourceUid: "arn:aws:s3:::second-bucket",
+              resourceName: "second-bucket",
+            }),
+          ];
+        }
+
+        if (response.data[0] === "resource-1") {
+          return [
+            makeDrawerFinding({
+              id: "finding-3",
+              checkTitle: "First bucket other finding",
+              resourceUid: "arn:aws:s3:::first-bucket",
+            }),
+          ];
+        }
+
+        return [
+          makeDrawerFinding({
+            id: "finding-4",
+            checkTitle: "Second bucket other finding",
+            resourceUid: "arn:aws:s3:::second-bucket",
+          }),
+        ];
+      },
+    );
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(result.current.otherFindings.map((finding) => finding.id)).toEqual([
+      "finding-3",
+    ]);
+
+    // When
+    act(() => {
+      result.current.navigateNext();
+    });
+
+    // Then
+    expect(result.current.currentIndex).toBe(1);
+    expect(result.current.currentFinding).toBeNull();
+    expect(result.current.otherFindings).toEqual([]);
+
+    await act(async () => {
+      resolveSecondFinding?.({ data: ["finding-2"] });
+      resolveSecondResource?.({ data: ["resource-2"] });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.otherFindings.map((finding) => finding.id)).toEqual([
+      "finding-4",
+    ]);
+  });
 });
