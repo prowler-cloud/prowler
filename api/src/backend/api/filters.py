@@ -267,6 +267,7 @@ class CommonFindingFilters(FilterSet):
         # GIN index) instead of scanning JSON in the findings table.
         matching_check_ids = (
             FindingGroupDailySummary.objects.filter(
+                tenant_id=self.request.tenant_id,
                 check_title__icontains=value,
             )
             .values_list("check_id", flat=True)

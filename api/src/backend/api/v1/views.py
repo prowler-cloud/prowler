@@ -3486,7 +3486,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         else:
             # User lacks permission, filter findings based on provider groups associated with the role
             queryset = Finding.all_objects.filter(
-                scan__provider__in=get_providers(user_roles)
+                tenant_id=tenant_id,
+                scan__provider__in=get_providers(user_roles),
             )
 
         search_value = self.request.query_params.get("filter[search]", None)
@@ -6205,7 +6206,8 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
         else:
             # User lacks permission, filter findings based on provider groups associated with the role
             queryset = Finding.all_objects.filter(
-                scan__provider__in=get_providers(user_roles)
+                tenant_id=tenant_id,
+                scan__provider__in=get_providers(user_roles),
             )
 
         return queryset
@@ -7667,7 +7669,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
             ),
         ).filter(inserted_at=F("_max_provider_date"))
         clean_queryset = FindingGroupDailySummary.objects.filter(
-            pk__in=latest_per_provider.values("pk")
+            tenant_id=self.request.tenant_id,
+            pk__in=latest_per_provider.values("pk"),
         )
         return self._aggregate_daily_summaries(clean_queryset)
 
