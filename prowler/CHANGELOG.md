@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [5.24.1] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
@@ -13,7 +11,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> a2a1a7374 (fix(image): --registry-list crashes with AttributeError on global_provider (#10691))
 ## [5.24.0] (Prowler v5.24.0)
 
 ### 🚀 Added
@@ -38,7 +35,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- `prowler image --registry-list` crashes with `AttributeError` because `ImageProvider.__init__` returns early before registering the global provider [(#10691)](https://github.com/prowler-cloud/prowler/pull/10691)
 - Vercel firewall config handling for team-scoped projects and current API response shapes [(#10695)](https://github.com/prowler-cloud/prowler/pull/10695)
 
 ---
