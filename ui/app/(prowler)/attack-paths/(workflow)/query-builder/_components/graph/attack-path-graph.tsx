@@ -125,14 +125,13 @@ const GraphCanvas = ({
   // Derive RF nodes and edges from data (pure computation in render body — D4)
   const { rfNodes, rfEdges } = layoutWithDagre(nodes, edges);
 
-  // Pre-compute which resources have findings connected (O(n+e) instead of O(n*e))
+  // Pre-compute which resources have findings connected (O(n+e))
+  const nodeLabelMap = new Map(nodes.map((n) => [n.id, n.labels]));
   const resourcesWithFindings = new Set<string>();
   edges.forEach((edge) => {
-    const sourceNode = nodes.find((n) => n.id === edge.source);
-    const targetNode = nodes.find((n) => n.id === edge.target);
-    if (isFindingNode(sourceNode?.labels ?? []))
+    if (isFindingNode(nodeLabelMap.get(edge.source) ?? []))
       resourcesWithFindings.add(edge.target);
-    if (isFindingNode(targetNode?.labels ?? []))
+    if (isFindingNode(nodeLabelMap.get(edge.target) ?? []))
       resourcesWithFindings.add(edge.source);
   });
 
