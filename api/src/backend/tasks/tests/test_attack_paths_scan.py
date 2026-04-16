@@ -38,7 +38,10 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph", return_value={"nodes": 0, "relationships": 0})
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph", return_value=0)
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
@@ -489,7 +492,10 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph", return_value={"nodes": 0, "relationships": 0})
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph",
         side_effect=RuntimeError("drop failed"),
@@ -718,7 +724,10 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph", return_value={"nodes": 0, "relationships": 0})
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
@@ -833,7 +842,10 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph", return_value={"nodes": 0, "relationships": 0})
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph",
         side_effect=RuntimeError("drop failed"),
