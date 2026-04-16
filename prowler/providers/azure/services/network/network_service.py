@@ -54,7 +54,7 @@ class Network(AzureService):
 
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return security_groups
 
@@ -99,7 +99,7 @@ class Network(AzureService):
 
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return network_watchers
 
@@ -118,12 +118,12 @@ class Network(AzureService):
             return flow_logs
         except ResourceNotFoundError as error:
             logger.warning(
-                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return []
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return []
 
@@ -145,7 +145,7 @@ class Network(AzureService):
 
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return bastion_hosts
 
@@ -168,7 +168,7 @@ class Network(AzureService):
 
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return public_ip_addresses
 

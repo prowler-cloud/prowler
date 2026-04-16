@@ -7,7 +7,7 @@ class defender_assessments_vm_endpoint_protection_installed(Check):
         findings = []
 
         for (
-            subscription_name,
+            subscription_id,
             assessments,
         ) in defender_client.assessments.items():
             if (
@@ -20,9 +20,9 @@ class defender_assessments_vm_endpoint_protection_installed(Check):
                         "Install endpoint protection solution on virtual machines"
                     ],
                 )
-                report.subscription = subscription_name
+                report.subscription = subscription_id
                 report.status = "PASS"
-                report.status_extended = f"Endpoint protection is set up in all VMs in subscription {subscription_name}."
+                report.status_extended = f"Endpoint protection is set up in all VMs in subscription {subscription_id}."
 
                 if (
                     assessments[
@@ -31,7 +31,7 @@ class defender_assessments_vm_endpoint_protection_installed(Check):
                     == "Unhealthy"
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"Endpoint protection is not set up in all VMs in subscription {subscription_name}."
+                    report.status_extended = f"Endpoint protection is not set up in all VMs in subscription {subscription_id}."
 
                 findings.append(report)
 

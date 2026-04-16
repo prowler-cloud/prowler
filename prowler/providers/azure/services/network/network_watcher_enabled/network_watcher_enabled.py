@@ -16,7 +16,7 @@ class network_watcher_enabled(Check):
                 report.subscription = subscription
                 report.resource_name = subscription
                 report.resource_id = (
-                    f"/subscriptions/{network_client.subscriptions[subscription]}"
+                    f"/subscriptions/{subscription}"
                 )
                 report.location = "global"
                 report.status = "FAIL"

@@ -7,7 +7,7 @@ class app_function_application_insights_enabled(Check):
         findings = []
 
         for (
-            subscription_name,
+            subscription_id,
             functions,
         ) in app_client.functions.items():
             for function in functions.values():
@@ -15,7 +15,7 @@ class app_function_application_insights_enabled(Check):
                     report = Check_Report_Azure(
                         metadata=self.metadata(), resource=function
                     )
-                    report.subscription = subscription_name
+                    report.subscription = subscription_id
                     report.status = "FAIL"
                     report.status_extended = (
                         f"Function {function.name} is not using Application Insights."

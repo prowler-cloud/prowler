@@ -606,11 +606,11 @@ class TestAzureProviderSetupIdentitySubscriptions:
             )
 
         assert identity.subscriptions == {
-            "Unique Name One": first_id,
-            "Unique Name Two": second_id,
+            first_id: "Unique Name One",
+            second_id: "Unique Name Two",
         }
 
-    def test_setup_identity_auto_discovery_disambiguates_duplicate_display_names(
+    def test_setup_identity_auto_discovery_preserves_duplicate_display_names(
         self,
     ):
         shared_name = "Shared Display Name"
@@ -638,8 +638,8 @@ class TestAzureProviderSetupIdentitySubscriptions:
             )
 
         assert identity.subscriptions == {
-            f"{shared_name} ({first_id})": first_id,
-            f"{shared_name} ({second_id})": second_id,
+            first_id: shared_name,
+            second_id: shared_name,
         }
 
     def test_setup_identity_filtered_preserves_unique_display_names(self):
@@ -667,11 +667,11 @@ class TestAzureProviderSetupIdentitySubscriptions:
             )
 
         assert identity.subscriptions == {
-            "Unique Name One": first_id,
-            "Unique Name Two": second_id,
+            first_id: "Unique Name One",
+            second_id: "Unique Name Two",
         }
 
-    def test_setup_identity_filtered_disambiguates_duplicate_display_names(self):
+    def test_setup_identity_filtered_preserves_duplicate_display_names(self):
         shared_name = "Shared Display Name"
         first_id = str(uuid4())
         second_id = str(uuid4())
@@ -697,6 +697,6 @@ class TestAzureProviderSetupIdentitySubscriptions:
             )
 
         assert identity.subscriptions == {
-            f"{shared_name} ({first_id})": first_id,
-            f"{shared_name} ({second_id})": second_id,
+            first_id: shared_name,
+            second_id: shared_name,
         }

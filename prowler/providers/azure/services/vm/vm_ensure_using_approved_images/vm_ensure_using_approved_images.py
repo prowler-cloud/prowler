@@ -14,10 +14,10 @@ class vm_ensure_using_approved_images(Check):
 
     def execute(self):
         findings = []
-        for subscription_name, vms in vm_client.virtual_machines.items():
+        for subscription_id, vms in vm_client.virtual_machines.items():
             for vm in vms.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=vm)
-                report.subscription = subscription_name
+                report.subscription = subscription_id
                 image_id = getattr(vm, "image_reference", None)
                 if (
                     image_id
@@ -25,9 +25,9 @@ class vm_ensure_using_approved_images(Check):
                     and "/providers/Microsoft.Compute/images/" in image_id
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} is using an approved machine image: {image_id.split('/')[-1]}."
+                    report.status_extended = f"VM {vm.resource_name} in subscription {subscription_id} is using an approved machine image: {image_id.split('/')[-1]}."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} is not using an approved machine image."
+                    report.status_extended = f"VM {vm.resource_name} in subscription {subscription_id} is not using an approved machine image."
                 findings.append(report)
         return findings

@@ -7,7 +7,7 @@ class app_ensure_php_version_is_latest(Check):
         findings = []
 
         for (
-            subscription_name,
+            subscription_id,
             apps,
         ) in app_client.apps.items():
             for app in apps.values():
@@ -17,14 +17,14 @@ class app_ensure_php_version_is_latest(Check):
                     app.configurations, "php_version", ""
                 ):
                     report = Check_Report_Azure(metadata=self.metadata(), resource=app)
-                    report.subscription = subscription_name
+                    report.subscription = subscription_id
                     report.status = "FAIL"
 
                     php_latest_version = app_client.audit_config.get(
                         "php_latest_version", "8.2"
                     )
 
-                    report.status_extended = f"PHP version is set to '{framework}', the latest version that you could use is the '{php_latest_version}' version, for app '{app.name}' in subscription '{subscription_name}'."
+                    report.status_extended = f"PHP version is set to '{framework}', the latest version that you could use is the '{php_latest_version}' version, for app '{app.name}' in subscription '{subscription_id}'."
 
                     if (
                         php_latest_version in framework
@@ -32,7 +32,7 @@ class app_ensure_php_version_is_latest(Check):
                         == php_latest_version
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"PHP version is set to '{php_latest_version}' for app '{app.name}' in subscription '{subscription_name}'."
+                        report.status_extended = f"PHP version is set to '{php_latest_version}' for app '{app.name}' in subscription '{subscription_id}'."
 
                     findings.append(report)
 

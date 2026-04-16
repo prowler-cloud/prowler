@@ -186,7 +186,7 @@ def display_summary_table(
             )
             if provider == "azure":
                 print(
-                    f"\nSubscriptions scanned: {Fore.YELLOW}{' '.join(provider.identity.subscriptions.keys())}{Style.RESET_ALL}"
+                    f"\nSubscriptions scanned: {Fore.YELLOW}{' '.join(provider.identity.subscriptions.values())}{Style.RESET_ALL}"
                 )
             print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
             print(

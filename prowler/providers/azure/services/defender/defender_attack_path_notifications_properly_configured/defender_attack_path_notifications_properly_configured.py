@@ -24,7 +24,7 @@ class defender_attack_path_notifications_properly_configured(Check):
         min_risk_index = risk_levels.index(min_risk_level)
 
         for (
-            subscription_name,
+            subscription_id,
             security_contact_configurations,
         ) in defender_client.security_contact_configurations.items():
             for contact_configuration in security_contact_configurations.values():
@@ -36,21 +36,21 @@ class defender_attack_path_notifications_properly_configured(Check):
                     if contact_configuration.name
                     else "Security Contact"
                 )
-                report.subscription = subscription_name
+                report.subscription = subscription_id
                 actual_risk_level = getattr(
                     contact_configuration, "attack_path_minimal_risk_level", None
                 )
                 if not actual_risk_level or actual_risk_level not in risk_levels:
                     report.status = "FAIL"
-                    report.status_extended = f"Attack path notifications are not enabled in subscription {subscription_name} for security contact {contact_configuration.name}."
+                    report.status_extended = f"Attack path notifications are not enabled in subscription {subscription_id} for security contact {contact_configuration.name}."
                 else:
                     actual_risk_index = risk_levels.index(actual_risk_level)
                     if actual_risk_index <= min_risk_index:
                         report.status = "PASS"
-                        report.status_extended = f"Attack path notifications are enabled with minimal risk level {actual_risk_level} in subscription {subscription_name} for security contact {contact_configuration.name}."
+                        report.status_extended = f"Attack path notifications are enabled with minimal risk level {actual_risk_level} in subscription {subscription_id} for security contact {contact_configuration.name}."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"Attack path notifications are enabled with minimal risk level {actual_risk_level} in subscription {subscription_name} for security contact {contact_configuration.name}."
+                        report.status_extended = f"Attack path notifications are enabled with minimal risk level {actual_risk_level} in subscription {subscription_id} for security contact {contact_configuration.name}."
                 findings.append(report)
 
         return findings

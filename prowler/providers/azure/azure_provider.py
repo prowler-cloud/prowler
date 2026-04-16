@@ -441,8 +441,8 @@ class AzureProvider(Provider):
             None
         """
         printed_subscriptions = []
-        for key, value in self._identity.subscriptions.items():
-            intermediate = key + ": " + value
+        for subscription_id, display_name in self._identity.subscriptions.items():
+            intermediate = display_name + ": " + subscription_id
             printed_subscriptions.append(intermediate)
         report_lines = [
             f"Azure Tenant Domain: {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} Azure Tenant ID: {Fore.YELLOW}{self._identity.tenant_ids[0]}{Style.RESET_ALL}",
@@ -987,25 +987,12 @@ class AzureProvider(Provider):
                     for id in subscription_ids
                 ]
 
-            # Azure allows multiple subscriptions to share the same display
-            # name, which happens for auto-generated names under several
-            # billing account types. Keying identity.subscriptions by
-            # display_name alone silently collapses those entries, so
-            # downstream services end up scanning only the last one.
-            # Disambiguate colliding names by appending the subscription ID;
-            # names that are already unique are left unchanged to preserve
-            # existing behavior.
-            name_counts: dict[str, int] = {}
-            for display_name, _ in subscription_pairs:
-                name_counts[display_name] = name_counts.get(display_name, 0) + 1
-
+            # Key the subscriptions dict by subscription ID (which is
+            # guaranteed unique) and store the display name as the value.
+            # This avoids collisions when multiple subscriptions share
+            # the same display name.
             for display_name, subscription_id in subscription_pairs:
-                key = (
-                    display_name
-                    if name_counts[display_name] == 1
-                    else f"{display_name} ({subscription_id})"
-                )
-                identity.subscriptions[key] = subscription_id
+                identity.subscriptions[subscription_id] = display_name
 
             # If there are no subscriptions listed -> checks are not going to be run against any resource
             if not identity.subscriptions:
@@ -1041,28 +1028,28 @@ class AzureProvider(Provider):
 
         Returns:
             A dictionary containing the locations available for each subscription. The dictionary
-            has subscription display names as keys and lists of location names as values.
+            has subscription IDs as keys and lists of location names as values.
 
         Examples:
             >>> provider = AzureProvider(...)
             >>> provider.get_locations()
             {
-                'Subscription 1': ['eastus', 'eastus2', 'westus', 'westus2'],
-                'Subscription 2': ['eastus', 'eastus2', 'westus', 'westus2']
+                'sub-id-1': ['eastus', 'eastus2', 'westus', 'westus2'],
+                'sub-id-2': ['eastus', 'eastus2', 'westus', 'westus2']
             }
         """
         credentials = self.session
         subscription_client = SubscriptionClient(credentials)
         locations = {}
 
-        for display_name, subscription_id in self._identity.subscriptions.items():
-            locations[display_name] = []
+        for subscription_id, display_name in self._identity.subscriptions.items():
+            locations[subscription_id] = []
 
             # List locations for each subscription
             for location in subscription_client.subscriptions.list_locations(
                 subscription_id
             ):
-                locations[display_name].append(location.name)
+                locations[subscription_id].append(location.name)
 
         return locations
 

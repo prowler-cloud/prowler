@@ -8,7 +8,7 @@ class monitor_alert_delete_policy_assignment(Check):
         findings = []
 
         for (
-            subscription_name,
+            subscription_id,
             activity_log_alerts,
         ) in monitor_client.alert_rules.items():
             for alert_rule in activity_log_alerts:
@@ -18,19 +18,19 @@ class monitor_alert_delete_policy_assignment(Check):
                     report = Check_Report_Azure(
                         metadata=self.metadata(), resource=alert_rule
                     )
-                    report.subscription = subscription_name
+                    report.subscription = subscription_id
                     report.status = "PASS"
-                    report.status_extended = f"There is an alert configured for deleting policy assignment in subscription {subscription_name}."
+                    report.status_extended = f"There is an alert configured for deleting policy assignment in subscription {subscription_id}."
                     break
             else:
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
-                report.subscription = subscription_name
-                report.resource_name = subscription_name
+                report.subscription = subscription_id
+                report.resource_name = subscription_id
                 report.resource_id = (
-                    f"/subscriptions/{monitor_client.subscriptions[subscription_name]}"
+                    f"/subscriptions/{subscription_id}"
                 )
                 report.status = "FAIL"
-                report.status_extended = f"There is not an alert for deleting policy assignment in subscription {subscription_name}."
+                report.status_extended = f"There is not an alert for deleting policy assignment in subscription {subscription_id}."
 
             findings.append(report)
 

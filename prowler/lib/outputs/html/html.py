@@ -492,8 +492,8 @@ class HTML(Output):
         """
         try:
             printed_subscriptions = []
-            for key, value in provider.identity.subscriptions.items():
-                intermediate = f"{key} : {value}"
+            for subscription_id, display_name in provider.identity.subscriptions.items():
+                intermediate = f"{display_name} : {subscription_id}"
                 printed_subscriptions.append(intermediate)
 
             # check if identity is str(coming from SP) or dict(coming from browser or)

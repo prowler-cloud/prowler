@@ -7,18 +7,18 @@ class app_ensure_http_is_redirected_to_https(Check):
         findings = []
 
         for (
-            subscription_name,
+            subscription_id,
             apps,
         ) in app_client.apps.items():
             for app in apps.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=app)
-                report.subscription = subscription_name
+                report.subscription = subscription_id
                 report.status = "PASS"
-                report.status_extended = f"HTTP is redirected to HTTPS for app '{app.name}' in subscription '{subscription_name}'."
+                report.status_extended = f"HTTP is redirected to HTTPS for app '{app.name}' in subscription '{subscription_id}'."
 
                 if not app.https_only:
                     report.status = "FAIL"
-                    report.status_extended = f"HTTP is not redirected to HTTPS for app '{app.name}' in subscription '{subscription_name}'."
+                    report.status_extended = f"HTTP is not redirected to HTTPS for app '{app.name}' in subscription '{subscription_id}'."
 
                 findings.append(report)
 
