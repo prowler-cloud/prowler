@@ -32,7 +32,7 @@ import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
 import { getFindingGroupEmptyStateMessage } from "./inline-resource-container.utils";
-import { DeltaValues, NotificationIndicator } from "./notification-indicator";
+import { NotificationIndicator } from "./notification-indicator";
 import { ResourceDetailDrawer } from "./resource-detail-drawer";
 
 interface FindingsGroupDrillDownProps {
@@ -98,13 +98,6 @@ export function FindingsGroupDrillDown({
 
   // Delta for the sticky header
   const deltaKey = getFilteredFindingGroupDelta(group, filters);
-  const delta =
-    deltaKey === "new"
-      ? DeltaValues.NEW
-      : deltaKey === "changed"
-        ? DeltaValues.CHANGED
-        : DeltaValues.NONE;
-
   const allMuted = isFindingGroupMuted(group);
   const impactedCounts = getFindingGroupImpactedCounts(group);
 
@@ -142,7 +135,7 @@ export function FindingsGroupDrillDown({
 
             {/* Notification indicator */}
             <NotificationIndicator
-              delta={delta}
+              delta={deltaKey}
               isMuted={allMuted}
               showDeltaWhenMuted
             />

@@ -27,7 +27,7 @@ import { getProviderDisplayName } from "@/types/providers";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { canMuteFindingGroup } from "./finding-group-selection";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
-import { DeltaValues, NotificationIndicator } from "./notification-indicator";
+import { NotificationIndicator } from "./notification-indicator";
 import { ProviderIconCell } from "./provider-icon-cell";
 
 interface GetColumnFindingGroupsOptions {
@@ -92,13 +92,6 @@ export function getColumnFindingGroups({
         const allMuted = isFindingGroupMuted(group);
         const isExpanded = expandedCheckId === group.checkId;
         const deltaKey = getFilteredFindingGroupDelta(group, filters);
-        const delta =
-          deltaKey === "new"
-            ? DeltaValues.NEW
-            : deltaKey === "changed"
-              ? DeltaValues.CHANGED
-              : DeltaValues.NONE;
-
         const canExpand = canDrillDownFindingGroup(group);
         const canSelect = canMuteFindingGroup({
           resourcesFail: group.resourcesFail,
@@ -110,7 +103,7 @@ export function getColumnFindingGroups({
         return (
           <div className="flex items-center gap-2">
             <NotificationIndicator
-              delta={delta}
+              delta={deltaKey}
               isMuted={allMuted}
               showDeltaWhenMuted
             />

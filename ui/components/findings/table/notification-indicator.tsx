@@ -17,14 +17,11 @@ import {
 } from "@/components/shadcn/tooltip";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { cn } from "@/lib/utils";
+import { FINDING_DELTA, type FindingDelta } from "@/types";
 
-export const DeltaValues = {
-  NEW: "new",
-  CHANGED: "changed",
-  NONE: "none",
-} as const;
+export const DeltaValues = FINDING_DELTA;
 
-export type DeltaType = (typeof DeltaValues)[keyof typeof DeltaValues];
+export type DeltaType = Exclude<FindingDelta, null>;
 
 interface NotificationIndicatorProps {
   delta?: DeltaType;
