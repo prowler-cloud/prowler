@@ -164,6 +164,12 @@ class ImageProvider(Provider):
         if self.registry:
             self._enumerate_registry()
 
+        # Safe defaults for listing-only mode (overwritten below in scan mode)
+        self._audit_config = {}
+        self._fixer_config = {}
+        self._mutelist = None
+        self.audit_metadata = None
+
         # Skip scan setup for listing-only mode
         if not self._listing_only:
             for image in self.images:
