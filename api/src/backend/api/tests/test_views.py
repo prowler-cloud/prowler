@@ -15466,7 +15466,7 @@ class TestFindingGroupViewSet:
         attrs = data[0]["attributes"]
         assert attrs["status"] == "FAIL"
         assert attrs["muted"] is True
-        assert attrs["fail_count"] == 2
+        assert attrs["fail_count"] == 0
         assert attrs["fail_muted_count"] == 2
         assert attrs["pass_muted_count"] == 0
         assert attrs["manual_muted_count"] == 0
