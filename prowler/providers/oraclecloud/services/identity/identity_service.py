@@ -62,7 +62,7 @@ class Identity(OCIService):
         """
         try:
             # Only use one region for global users
-            if regional_client.region != self.provider.regions[0].key:
+            if regional_client.region != self.provider.home_region:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -313,7 +313,7 @@ class Identity(OCIService):
         """List all IAM groups."""
         try:
             # Only use one region for global groups
-            if regional_client.region != self.provider.regions[0].key:
+            if regional_client.region != self.provider.home_region:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -357,7 +357,7 @@ class Identity(OCIService):
         """List all IAM policies."""
         try:
             # Only use one region for global policies
-            if regional_client.region != self.provider.regions[0].key:
+            if regional_client.region != self.provider.home_region:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -402,7 +402,7 @@ class Identity(OCIService):
         """List all dynamic groups in the tenancy."""
         try:
             # Only use one region for global dynamic groups
-            if regional_client.region != self.provider.regions[0].key:
+            if regional_client.region != self.provider.home_region:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -463,10 +463,6 @@ class Identity(OCIService):
                     ).data
 
                     for domain in domains:
-                        # Only scan domain if we are in it's home region
-                        if regional_client.region != domain.home_region:
-                            continue
-
                         self.domains.append(
                             IdentityDomain(
                                 id=domain.id,
@@ -481,6 +477,13 @@ class Identity(OCIService):
                                 password_policies=[],
                             )
                         )
+                    to_remove = []
+                    for i, domain in enumerate(domains):
+                        if any(d.id == domain and d is not domain for d in domains):
+                            if domain.home_region != regional_client.region:
+                                to_remove += [i]
+                    for i in sorted(to_remove, reversed=True):
+                        del domains[i]
 
             except Exception as error:
                 logger.error(
@@ -554,7 +557,7 @@ class Identity(OCIService):
         """Get the password policy for the tenancy."""
         try:
             # Only use one region for global password policies
-            if regional_client.region != self.provider.regions[0].key:
+            if regional_client.region != self.provider.home_region:
                 return
 
             identity_client = self.__get_client__(regional_client.region)
@@ -582,7 +585,7 @@ class Identity(OCIService):
         """Search for resources in the root compartment using OCI Resource Search."""
         try:
             # Only use one region for global search
-            if regional_client.region != self.provider.regions[0].key:
+            if regional_client.region != self.provider.home_region:
                 return
 
             logger.info("Identity - Searching for resources in root compartment...")
@@ -630,7 +633,7 @@ class Identity(OCIService):
         """Search for active non-root compartments using OCI Resource Search."""
         try:
             # Only use one region for global search
-            if regional_client.region != self.provider.regions[0].key:
+            if regional_client.region != self.provider.home_region:
                 return
             logger.info("Identity - Searching for active non-root compartments...")
 
