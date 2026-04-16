@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.25.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Silent data loss in `ResourceFindingMapping` bulk insert that left findings orphaned when `INSERT ... ON CONFLICT DO NOTHING` dropped rows without raising; added explicit `unique_fields`, row count verification, and rollback on partial insert [(#10724)](https://github.com/prowler-cloud/prowler/pull/10724)
+
+---
+
 ## [1.25.0] (Prowler v5.24.0)
 
 ### 🔄 Changed
