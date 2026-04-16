@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [Unreleased]
+## [1.24.1] (Prowler v5.24.1)
 
 ### 🔒 Security
 
