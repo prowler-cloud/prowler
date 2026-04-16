@@ -70,6 +70,7 @@ import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
 import type { ComplianceOverviewData } from "@/types/compliance";
+import type { FindingResourceRow } from "@/types/findings-table";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
@@ -303,8 +304,10 @@ interface ResourceDetailDrawerContentProps {
   checkMeta: CheckMeta | null;
   currentIndex: number;
   totalResources: number;
+  currentResource?: FindingResourceRow | null;
   currentFinding: ResourceDrawerFinding | null;
   otherFindings: ResourceDrawerFinding[];
+  showSyntheticResourceHint?: boolean;
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
   onMuteComplete: () => void;
@@ -316,8 +319,10 @@ export function ResourceDetailDrawerContent({
   checkMeta,
   currentIndex,
   totalResources,
+  currentResource = null,
   currentFinding,
   otherFindings,
+  showSyntheticResourceHint = false,
   onNavigatePrev,
   onNavigateNext,
   onMuteComplete,
@@ -373,6 +378,24 @@ export function ResourceDetailDrawerContent({
   // checkMeta is always available from here.
   // currentFinding may be null during resource loading (e.g. drawer reopen).
   const f = currentFinding;
+  const findingStatus = currentResource?.status ?? f?.status;
+  const findingSeverity = currentResource?.severity ?? f?.severity;
+  const findingDelta = currentResource?.delta ?? f?.delta;
+  const findingIsMuted = currentResource?.isMuted ?? f?.isMuted;
+  const findingMutedReason =
+    currentResource?.mutedReason ?? f?.mutedReason ?? "This finding is muted";
+  const providerType = currentResource?.providerType ?? f?.providerType;
+  const providerAlias = currentResource?.providerAlias ?? f?.providerAlias;
+  const providerUid = currentResource?.providerUid ?? f?.providerUid;
+  const resourceName = currentResource?.resourceName ?? f?.resourceName;
+  const resourceUid = currentResource?.resourceUid ?? f?.resourceUid;
+  const resourceService = currentResource?.service ?? f?.resourceService;
+  const resourceRegion = currentResource?.region ?? f?.resourceRegion;
+  const resourceGroup = currentResource?.resourceGroup ?? f?.resourceGroup;
+  const resourceType = currentResource?.resourceType ?? f?.resourceType;
+  const resourceRegionLabel = resourceRegion || "-";
+  const firstSeenAt = currentResource?.firstSeenAt ?? f?.firstSeenAt ?? null;
+  const lastSeenAt = currentResource?.lastSeenAt ?? f?.updatedAt ?? null;
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalResources - 1;
   const selectedScanIds = parseSelectedScanIds(
@@ -385,7 +408,7 @@ export function ResourceDetailDrawerContent({
         ? (f?.scan?.id ?? null)
         : null;
   const regionFilter = searchParams.get("filter[region__in]");
-  const nativeIacConfig = resolveNativeIacConfig(f?.providerType);
+  const nativeIacConfig = resolveNativeIacConfig(providerType);
 
   const handleOpenCompliance = async (framework: string) => {
     if (!complianceScanId || resolvingFramework) {
@@ -450,104 +473,137 @@ export function ResourceDetailDrawerContent({
 
       {/* Header: status badges + title (check-level from checkMeta) */}
       <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-3">
-          {f && <StatusFindingBadge status={f.status as FindingStatus} />}
-          {f && <SeverityBadge severity={f.severity} />}
-          {f?.delta && (
-            <div className="flex items-center gap-1 capitalize">
-              <DeltaIndicator delta={f.delta} />
-              <span className="text-text-neutral-secondary text-xs">
-                {f.delta}
-              </span>
+        {isNavigating ? (
+          <div
+            data-testid="drawer-header-skeleton"
+            aria-hidden="true"
+            className="flex flex-col gap-2"
+          >
+            <div className="flex flex-wrap items-center gap-3">
+              <Skeleton className="h-6 w-16 rounded-md" />
+              <Skeleton className="h-6 w-20 rounded-md" />
             </div>
-          )}
-          {f && (
-            <Muted
-              isMuted={f.isMuted}
-              mutedReason={f.mutedReason || "This finding is muted"}
-            />
-          )}
-        </div>
-
-        <h2 className="text-text-neutral-primary line-clamp-2 text-lg leading-tight font-medium">
-          {checkMeta.checkTitle}
-        </h2>
-
-        {checkMeta.complianceFrameworks.length > 0 && (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-text-neutral-tertiary text-xs font-medium">
-              Compliance Frameworks:
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              {checkMeta.complianceFrameworks.map((framework) => {
-                const icon = getComplianceIcon(framework);
-                const isNavigable = Boolean(complianceScanId);
-                const isResolving = resolvingFramework === framework;
-
-                return icon ? (
-                  <Tooltip key={framework}>
-                    <TooltipTrigger asChild>
-                      {isNavigable ? (
-                        <button
-                          type="button"
-                          aria-label={`Open ${framework} compliance details`}
-                          onClick={() => void handleOpenCompliance(framework)}
-                          disabled={Boolean(resolvingFramework)}
-                          className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-                        >
-                          <Image
-                            src={icon}
-                            alt={framework}
-                            width={20}
-                            height={20}
-                            className="size-5 object-contain"
-                          />
-                          {isResolving && (
-                            <span className="sr-only">Opening compliance</span>
-                          )}
-                        </button>
-                      ) : (
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
-                          <Image
-                            src={icon}
-                            alt={framework}
-                            width={20}
-                            height={20}
-                            className="size-5 object-contain"
-                          />
-                        </div>
-                      )}
-                    </TooltipTrigger>
-                    <TooltipContent>{framework}</TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <Tooltip key={framework}>
-                    <TooltipTrigger asChild>
-                      {isNavigable ? (
-                        <button
-                          type="button"
-                          aria-label={`Open ${framework} compliance details`}
-                          onClick={() => void handleOpenCompliance(framework)}
-                          disabled={Boolean(resolvingFramework)}
-                          className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-                        >
-                          {framework}
-                          {isResolving && (
-                            <span className="sr-only">Opening compliance</span>
-                          )}
-                        </button>
-                      ) : (
-                        <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
-                          {framework}
-                        </span>
-                      )}
-                    </TooltipTrigger>
-                    <TooltipContent>{framework}</TooltipContent>
-                  </Tooltip>
-                );
-              })}
+            <Skeleton className="h-6 w-3/4 rounded" />
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-4 w-28 rounded" />
+              <div className="flex flex-wrap items-center gap-2">
+                <Skeleton className="h-7 w-16 rounded-md" />
+                <Skeleton className="h-7 w-20 rounded-md" />
+              </div>
             </div>
           </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-3">
+              {findingStatus && (
+                <StatusFindingBadge status={findingStatus as FindingStatus} />
+              )}
+              {findingSeverity && <SeverityBadge severity={findingSeverity} />}
+              {findingDelta && (
+                <div className="flex items-center gap-1 capitalize">
+                  <DeltaIndicator delta={findingDelta} />
+                  <span className="text-text-neutral-secondary text-xs">
+                    {findingDelta}
+                  </span>
+                </div>
+              )}
+              {findingIsMuted !== undefined && (
+                <Muted
+                  isMuted={findingIsMuted}
+                  mutedReason={findingMutedReason}
+                />
+              )}
+            </div>
+
+            <h2 className="text-text-neutral-primary line-clamp-2 text-lg leading-tight font-medium">
+              {checkMeta.checkTitle}
+            </h2>
+
+            {checkMeta.complianceFrameworks.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-text-neutral-tertiary text-xs font-medium">
+                  Compliance Frameworks:
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {checkMeta.complianceFrameworks.map((framework) => {
+                    const icon = getComplianceIcon(framework);
+                    const isNavigable = Boolean(complianceScanId);
+                    const isResolving = resolvingFramework === framework;
+
+                    return icon ? (
+                      <Tooltip key={framework}>
+                        <TooltipTrigger asChild>
+                          {isNavigable ? (
+                            <button
+                              type="button"
+                              aria-label={`Open ${framework} compliance details`}
+                              onClick={() =>
+                                void handleOpenCompliance(framework)
+                              }
+                              disabled={Boolean(resolvingFramework)}
+                              className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
+                            >
+                              <Image
+                                src={icon}
+                                alt={framework}
+                                width={20}
+                                height={20}
+                                className="size-5 object-contain"
+                              />
+                              {isResolving && (
+                                <span className="sr-only">
+                                  Opening compliance
+                                </span>
+                              )}
+                            </button>
+                          ) : (
+                            <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
+                              <Image
+                                src={icon}
+                                alt={framework}
+                                width={20}
+                                height={20}
+                                className="size-5 object-contain"
+                              />
+                            </div>
+                          )}
+                        </TooltipTrigger>
+                        <TooltipContent>{framework}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip key={framework}>
+                        <TooltipTrigger asChild>
+                          {isNavigable ? (
+                            <button
+                              type="button"
+                              aria-label={`Open ${framework} compliance details`}
+                              onClick={() =>
+                                void handleOpenCompliance(framework)
+                              }
+                              disabled={Boolean(resolvingFramework)}
+                              className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
+                            >
+                              {framework}
+                              {isResolving && (
+                                <span className="sr-only">
+                                  Opening compliance
+                                </span>
+                              )}
+                            </button>
+                          ) : (
+                            <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
+                              {framework}
+                            </span>
+                          )}
+                        </TooltipTrigger>
+                        <TooltipContent>{framework}</TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -593,43 +649,43 @@ export function ResourceDetailDrawerContent({
               <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
                 {/* Row 1: Account, Resource, Service, Region */}
                 <EntityInfo
-                  cloudProvider={f.providerType}
+                  cloudProvider={providerType}
                   nameIcon={<Box className="size-4" />}
-                  entityAlias={f.providerAlias}
-                  entityId={f.providerUid}
+                  entityAlias={providerAlias}
+                  entityId={providerUid}
                 />
                 <EntityInfo
                   nameIcon={<Container className="size-4" />}
-                  entityAlias={f.resourceName}
-                  entityId={f.resourceUid}
+                  entityAlias={resourceName}
+                  entityId={resourceUid}
                   idLabel="UID"
                 />
                 <InfoField label="Service" variant="compact">
-                  {f.resourceService}
+                  {resourceService}
                 </InfoField>
                 <InfoField label="Region" variant="compact">
                   <span className="flex items-center gap-1.5">
-                    {getRegionFlag(f.resourceRegion) && (
+                    {getRegionFlag(resourceRegionLabel) && (
                       <span className="translate-y-px text-base leading-none">
-                        {getRegionFlag(f.resourceRegion)}
+                        {getRegionFlag(resourceRegionLabel)}
                       </span>
                     )}
-                    {f.resourceRegion}
+                    {resourceRegionLabel}
                   </span>
                 </InfoField>
 
                 {/* Row 2: Dates */}
                 <InfoField label="Last detected" variant="compact">
-                  <DateWithTime inline dateTime={f.updatedAt || "-"} />
+                  <DateWithTime inline dateTime={lastSeenAt || "-"} />
                 </InfoField>
                 <InfoField label="First seen" variant="compact">
-                  <DateWithTime inline dateTime={f.firstSeenAt || "-"} />
+                  <DateWithTime inline dateTime={firstSeenAt || "-"} />
                 </InfoField>
                 <InfoField label="Failing for" variant="compact">
-                  {getFailingForLabel(f.firstSeenAt) || "-"}
+                  {getFailingForLabel(firstSeenAt) || "-"}
                 </InfoField>
                 <InfoField label="Group" variant="compact">
-                  {f.resourceGroup || "-"}
+                  {resourceGroup || "-"}
                 </InfoField>
 
                 {/* Row 3: IDs */}
@@ -657,7 +713,7 @@ export function ResourceDetailDrawerContent({
 
                 {/* Row 4: Resource metadata */}
                 <InfoField label="Resource type" variant="compact">
-                  {f.resourceType || "-"}
+                  {resourceType || "-"}
                 </InfoField>
               </div>
 
@@ -929,7 +985,9 @@ export function ResourceDetailDrawerContent({
                       <TableRow>
                         <TableCell colSpan={6} className="h-16 text-center">
                           <span className="text-text-neutral-tertiary text-sm">
-                            No other findings for this resource.
+                            {showSyntheticResourceHint
+                              ? "No other findings are available for this IaC resource."
+                              : "No other findings for this resource."}
                           </span>
                         </TableCell>
                       </TableRow>

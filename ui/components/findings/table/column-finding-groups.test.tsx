@@ -171,11 +171,13 @@ function renderImpactedResourcesCell(overrides?: Partial<FindingGroupRow>) {
 }
 
 function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
+  const onDrillDown =
+    vi.fn<(checkId: string, group: FindingGroupRow) => void>();
   const toggleSelected = vi.fn();
   const columns = getColumnFindingGroups({
     rowSelection: {},
     selectableRowCount: 1,
-    onDrillDown: vi.fn(),
+    onDrillDown,
   });
 
   const selectColumn = columns.find(
@@ -206,7 +208,7 @@ function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
     </div>,
   );
 
-  return { toggleSelected };
+  return { onDrillDown, toggleSelected };
 }
 
 // ---------------------------------------------------------------------------
@@ -332,6 +334,58 @@ describe("column-finding-groups — accessibility of check title cell", () => {
       }),
     );
   });
+
+  it("should allow expanding fallback groups when the displayed total is greater than zero", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onDrillDown =
+      vi.fn<(checkId: string, group: FindingGroupRow) => void>();
+
+    renderFindingCell("Fallback IaC Check", onDrillDown, {
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 0,
+      passCount: 2,
+    });
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Fallback IaC Check",
+      }),
+    );
+
+    // Then
+    expect(onDrillDown).toHaveBeenCalledTimes(1);
+    expect(onDrillDown).toHaveBeenCalledWith(
+      "s3_check",
+      expect.objectContaining({
+        resourcesTotal: 0,
+        failCount: 0,
+        passCount: 2,
+      }),
+    );
+  });
+
+  it("should keep fallback groups non-clickable when the displayed total is zero", () => {
+    // Given
+    const onDrillDown =
+      vi.fn<(checkId: string, group: FindingGroupRow) => void>();
+
+    // When
+    renderFindingCell("No failing findings", onDrillDown, {
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 0,
+      passCount: 0,
+    });
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "No failing findings" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("No failing findings")).toBeInTheDocument();
+  });
 });
 
 describe("column-finding-groups — impacted resources count", () => {
@@ -386,6 +440,50 @@ describe("column-finding-groups — group selection", () => {
     });
 
     expect(screen.getByRole("checkbox", { name: "Select row" })).toBeDisabled();
+  });
+
+  it("should show the chevron and drill down for fallback groups when the displayed total is greater than zero", async () => {
+    // Given
+    const user = userEvent.setup();
+    const { onDrillDown } = renderSelectCell({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 0,
+      passCount: 2,
+    });
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Expand S3 Bucket Public Access" }),
+    );
+
+    // Then
+    expect(onDrillDown).toHaveBeenCalledTimes(1);
+    expect(onDrillDown).toHaveBeenCalledWith(
+      "s3_check",
+      expect.objectContaining({
+        resourcesTotal: 0,
+        failCount: 0,
+        passCount: 2,
+      }),
+    );
+  });
+
+  it("should hide the chevron for zero-resource groups when the displayed total is zero", () => {
+    // Given/When
+    renderSelectCell({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 0,
+      passCount: 0,
+    });
+
+    // Then
+    expect(
+      screen.queryByRole("button", {
+        name: "Expand S3 Bucket Public Access",
+      }),
+    ).not.toBeInTheDocument();
   });
 });
 

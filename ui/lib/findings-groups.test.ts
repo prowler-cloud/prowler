@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { FindingGroupRow } from "@/types";
 
 import {
+  canDrillDownFindingGroup,
   getActiveStatusFilter,
   getFilteredFindingGroupDelta,
   getFindingGroupDelta,
@@ -193,6 +194,43 @@ describe("getFindingGroupImpactedCounts", () => {
 
     // Then
     expect(result).toEqual({ impacted: 4, total: 6 });
+  });
+});
+
+describe("canDrillDownFindingGroup", () => {
+  it("should allow drill-down when resources exist", () => {
+    expect(
+      canDrillDownFindingGroup(
+        makeGroup({
+          resourcesTotal: 2,
+          failCount: 0,
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("should allow drill-down for fallback groups when the displayed total is greater than zero", () => {
+    expect(
+      canDrillDownFindingGroup(
+        makeGroup({
+          resourcesTotal: 0,
+          failCount: 0,
+          passCount: 2,
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("should keep drill-down disabled for zero-resource groups when the displayed total is zero", () => {
+    expect(
+      canDrillDownFindingGroup(
+        makeGroup({
+          resourcesTotal: 0,
+          failCount: 0,
+          passCount: 0,
+        }),
+      ),
+    ).toBe(false);
   });
 });
 

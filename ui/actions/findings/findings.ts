@@ -141,11 +141,24 @@ export const getLatestMetadataInfo = async ({
   }
 };
 
-export const getFindingById = async (findingId: string, include = "") => {
+interface GetFindingByIdOptions {
+  source?: "resource-detail-drawer";
+}
+
+export const getFindingById = async (
+  findingId: string,
+  include = "",
+  options?: GetFindingByIdOptions,
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/findings/${findingId}`);
   if (include) url.searchParams.append("include", include);
+
+  if (options?.source === "resource-detail-drawer") {
+    // eslint-disable-next-line no-console
+    console.info(`[resource-detail-drawer] GET ${url.pathname}${url.search}`);
+  }
 
   try {
     const response = await fetch(url.toString(), {

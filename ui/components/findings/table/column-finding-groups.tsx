@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib";
 import {
+  canDrillDownFindingGroup,
   getFilteredFindingGroupDelta,
   getFindingGroupImpactedCounts,
   isFindingGroupMuted,
@@ -91,7 +92,7 @@ export function getColumnFindingGroups({
               ? DeltaValues.CHANGED
               : DeltaValues.NONE;
 
-        const canExpand = group.resourcesTotal > 0;
+        const canExpand = canDrillDownFindingGroup(group);
         const canSelect = canMuteFindingGroup({
           resourcesFail: group.resourcesFail,
           resourcesTotal: group.resourcesTotal,
@@ -176,7 +177,7 @@ export function getColumnFindingGroups({
       ),
       cell: ({ row }) => {
         const group = row.original;
-        const canExpand = group.resourcesTotal > 0;
+        const canExpand = canDrillDownFindingGroup(group);
 
         return (
           <div>

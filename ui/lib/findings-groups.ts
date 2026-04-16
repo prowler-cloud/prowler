@@ -93,6 +93,22 @@ export function getFindingGroupImpactedCounts(
   };
 }
 
+export function canDrillDownFindingGroup(
+  group: Pick<
+    FindingGroupRow,
+    | "resourcesTotal"
+    | "resourcesFail"
+    | "passCount"
+    | "failCount"
+    | "passMutedCount"
+    | "failMutedCount"
+    | "muted"
+    | "mutedCount"
+  >,
+): boolean {
+  return getFindingGroupImpactedCounts(group).total > 0;
+}
+
 function getNewDeltaTotal(group: FindingGroupDeltaState): number {
   const breakdownTotal =
     (group.newFailCount ?? 0) +

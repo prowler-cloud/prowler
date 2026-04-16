@@ -134,7 +134,9 @@ vi.mock("@/components/shadcn/dropdown", () => ({
 }));
 
 vi.mock("@/components/shadcn/skeleton/skeleton", () => ({
-  Skeleton: () => <div />,
+  Skeleton: ({ className }: { className?: string }) => (
+    <div data-testid="inline-skeleton" className={className} />
+  ),
 }));
 
 vi.mock("@/components/shadcn/spinner/spinner", () => ({
@@ -309,6 +311,7 @@ vi.mock("../../muted", () => ({
 // ---------------------------------------------------------------------------
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
+import type { FindingResourceRow } from "@/types";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -372,6 +375,29 @@ const mockFinding: ResourceDrawerFinding = {
   },
   additionalUrls: [],
   scan: null,
+};
+
+const mockResourceRow: FindingResourceRow = {
+  id: "row-1",
+  rowType: "resource",
+  findingId: "finding-1",
+  checkId: "s3_check",
+  providerType: "aws",
+  providerAlias: "prod",
+  providerUid: "123456789",
+  resourceName: "my-bucket",
+  resourceType: "Bucket",
+  resourceGroup: "default",
+  resourceUid: "arn:aws:s3:::bucket",
+  service: "s3",
+  region: "us-east-1",
+  severity: "critical",
+  status: "FAIL",
+  delta: null,
+  isMuted: false,
+  mutedReason: undefined,
+  firstSeenAt: null,
+  lastSeenAt: null,
 };
 
 // ---------------------------------------------------------------------------
@@ -935,5 +961,121 @@ describe("ResourceDetailDrawerContent — other findings mute refresh", () => {
       within(row as HTMLElement).getByRole("button", { name: "Muted" }),
     ).toBeDisabled();
     expect(onMuteComplete).not.toHaveBeenCalled();
+  });
+});
+
+describe("ResourceDetailDrawerContent — synthetic resource empty state", () => {
+  it("should explain that simulated IaC resources never have other findings", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        showSyntheticResourceHint
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByText(
+        "No other findings are available for this IaC resource.",
+      ),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — current resource row display", () => {
+  it("should render resource card fields from the current resource row instead of the fetched finding", () => {
+    // Given
+    const currentResource: FindingResourceRow = {
+      ...mockResourceRow,
+      providerAlias: "row-account",
+      providerUid: "row-provider-uid",
+      resourceName: "row-resource-name",
+      resourceUid: "row-resource-uid",
+      service: "row-service",
+      region: "eu-west-1",
+      resourceType: "row-type",
+      resourceGroup: "row-group",
+      severity: "low",
+      status: "PASS",
+    };
+    const fetchedFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      providerAlias: "finding-account",
+      providerUid: "finding-provider-uid",
+      resourceName: "finding-resource-name",
+      resourceUid: "finding-resource-uid",
+      resourceService: "finding-service",
+      resourceRegion: "ap-south-1",
+      resourceType: "finding-type",
+      resourceGroup: "finding-group",
+      severity: "critical",
+      status: "FAIL",
+    };
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentResource={currentResource}
+        currentFinding={fetchedFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("row-service")).toBeInTheDocument();
+    expect(screen.getByText("eu-west-1")).toBeInTheDocument();
+    expect(screen.getByText("row-group")).toBeInTheDocument();
+    expect(screen.getByText("row-type")).toBeInTheDocument();
+    expect(screen.getByText("PASS")).toBeInTheDocument();
+    expect(screen.getByText("low")).toBeInTheDocument();
+    expect(screen.queryByText("finding-service")).not.toBeInTheDocument();
+    expect(screen.queryByText("ap-south-1")).not.toBeInTheDocument();
+    expect(screen.queryByText("finding-group")).not.toBeInTheDocument();
+    expect(screen.queryByText("finding-type")).not.toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — header skeleton while navigating", () => {
+  it("should replace the header with skeletons and hide stale header content during carousel navigation", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByTestId("drawer-header-skeleton")).toBeInTheDocument();
+    expect(screen.getByTestId("skeleton")).toBeInTheDocument();
+    expect(screen.queryByText("S3 Check")).not.toBeInTheDocument();
+    expect(screen.queryByText("FAIL")).not.toBeInTheDocument();
+    expect(screen.queryByText("critical")).not.toBeInTheDocument();
   });
 });

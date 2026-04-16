@@ -246,15 +246,18 @@ export const resolveFindingIdsByVisibleGroupResources = async ({
   }
 };
 
-export const getLatestFindingsByResourceUid = async ({
-  resourceUid,
-  page = 1,
-  pageSize = 50,
-}: {
-  resourceUid: string;
-  page?: number;
-  pageSize?: number;
-}) => {
+export const getLatestFindingsByResourceUid = async (
+  {
+    resourceUid,
+    page = 1,
+    pageSize = 50,
+  }: {
+    resourceUid: string;
+    page?: number;
+    pageSize?: number;
+  },
+  options?: { source?: "resource-detail-drawer" },
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(
@@ -266,6 +269,11 @@ export const getLatestFindingsByResourceUid = async ({
   url.searchParams.append("sort", "-severity,-updated_at");
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
+
+  if (options?.source === "resource-detail-drawer") {
+    // eslint-disable-next-line no-console
+    console.info(`[resource-detail-drawer] GET ${url.pathname}${url.search}`);
+  }
 
   try {
     const findings = await fetch(url.toString(), {
