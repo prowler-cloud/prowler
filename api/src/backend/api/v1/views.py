@@ -7127,17 +7127,16 @@ class FindingGroupViewSet(BaseRLSViewSet):
             output_field=IntegerField(),
         )
 
-        # `pass_count`, `fail_count` and `manual_count` count *every* finding
-        # for the check (muted or not) so the aggregated `status` reflects the
-        # underlying check outcome regardless of mute state. Whether the group
-        # is actionable is signalled by the orthogonal `muted` flag below.
+        # `pass_count`, `fail_count` and `manual_count` only count non-muted
+        # findings. Muted findings are tracked separately via the
+        # `*_muted_count` fields.
         return (
             queryset.values("check_id")
             .annotate(
                 severity_order=Max(severity_case),
-                pass_count=Count("id", filter=Q(status="PASS")),
-                fail_count=Count("id", filter=Q(status="FAIL")),
-                manual_count=Count("id", filter=Q(status="MANUAL")),
+                pass_count=Count("id", filter=Q(status="PASS", muted=False)),
+                fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                manual_count=Count("id", filter=Q(status="MANUAL", muted=False)),
                 pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
                 fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
                 manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),

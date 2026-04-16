@@ -11802,8 +11802,7 @@ class TestSAMLConfigurationViewSet:
             "data": {
                 "type": "saml-configurations",
                 "id": str(config.id),
-                "attributes": {
-                    "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+                "attributes": {"metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
         <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
         <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
             <md:KeyDescriptor use='signing'>
@@ -11818,8 +11817,7 @@ class TestSAMLConfigurationViewSet:
             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
         </md:IDPSSODescriptor>
         </md:EntityDescriptor>
-        """
-                },
+        """},
             }
         }
         response = authenticated_client.patch(
@@ -15466,7 +15464,7 @@ class TestFindingGroupViewSet:
         attrs = data[0]["attributes"]
         assert attrs["status"] == "FAIL"
         assert attrs["muted"] is True
-        assert attrs["fail_count"] == 2
+        assert attrs["fail_count"] == 0
         assert attrs["fail_muted_count"] == 2
         assert attrs["pass_muted_count"] == 0
         assert attrs["manual_muted_count"] == 0
