@@ -31,6 +31,7 @@ import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
+import { getFindingGroupEmptyStateMessage } from "./inline-resource-container.utils";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 import { ResourceDetailDrawer } from "./resource-detail-drawer";
 
@@ -211,9 +212,7 @@ export function FindingsGroupDrillDown({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    {Object.keys(filters).length > 0
-                      ? "No resources found for the selected filters."
-                      : "No resources found."}
+                    {getFindingGroupEmptyStateMessage(group, filters)}
                   </TableCell>
                 </TableRow>
               ) : null}
