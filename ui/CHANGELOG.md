@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Findings group impacted counters now fall back to pass/fail totals for IaC providers when no resources are present and include muted counts in muted totals
+- Findings grouped view now handles zero-resource IaC counters, refines drawer loading states, and adds provider indicators to finding groups [(#10736)](https://github.com/prowler-cloud/prowler/pull/10736)
 
 ## [1.24.0] (Prowler v5.24.0)
 
