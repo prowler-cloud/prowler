@@ -35,22 +35,21 @@ class drive_shared_drive_creation_allowed(Check):
                     f"Users in domain {drive_client.provider.identity.domain} "
                     f"are allowed to create new shared drives."
                 )
+            elif allow_creation is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Shared drive creation uses Google's secure default "
+                    f"configuration (allowed) "
+                    f"in domain {drive_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if allow_creation is None:
-                    report.status_extended = (
-                        f"Shared drive creation is not explicitly configured in "
-                        f"domain {drive_client.provider.identity.domain}. "
-                        f"Users should be allowed to create new shared drives to avoid "
-                        f"data loss when accounts are deleted."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Users in domain {drive_client.provider.identity.domain} "
-                        f"are prevented from creating new shared drives. "
-                        f"Users should be allowed to create new shared drives to avoid "
-                        f"data loss when accounts are deleted."
-                    )
+                report.status_extended = (
+                    f"Users in domain {drive_client.provider.identity.domain} "
+                    f"are prevented from creating new shared drives. "
+                    f"Users should be allowed to create new shared drives to avoid "
+                    f"data loss when accounts are deleted."
+                )
 
             findings.append(report)
 

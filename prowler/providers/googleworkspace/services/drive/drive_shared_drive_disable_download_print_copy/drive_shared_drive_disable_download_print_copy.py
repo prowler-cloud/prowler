@@ -35,21 +35,21 @@ class drive_shared_drive_disable_download_print_copy(Check):
                     f"{drive_client.provider.identity.domain} is restricted to "
                     f"{allowed}."
                 )
+            elif allowed is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Download, print, and copy restrictions for shared drives use "
+                    f"Google's secure default configuration (disabled for viewers "
+                    f"and commenters) "
+                    f"in domain {drive_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if allowed is None:
-                    report.status_extended = (
-                        f"Download, print, and copy restrictions for shared drive "
-                        f"viewers and commenters are not explicitly configured in "
-                        f"domain {drive_client.provider.identity.domain}. "
-                        f"These actions should be restricted to editors or managers only."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Download, print, and copy in shared drives in domain "
-                        f"{drive_client.provider.identity.domain} is set to {allowed}. "
-                        f"These actions should be restricted to editors or managers only."
-                    )
+                report.status_extended = (
+                    f"Download, print, and copy in shared drives in domain "
+                    f"{drive_client.provider.identity.domain} is set to {allowed}. "
+                    f"These actions should be restricted to editors or managers only."
+                )
 
             findings.append(report)
 

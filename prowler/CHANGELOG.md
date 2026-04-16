@@ -37,6 +37,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - Vercel firewall config handling for team-scoped projects and current API response shapes [(#10695)](https://github.com/prowler-cloud/prowler/pull/10695)
+<<<<<<< HEAD
+=======
+- Google Workspace Drive checks false FAIL on unconfigured settings with secure Google defaults [(#10727)](https://github.com/prowler-cloud/prowler/pull/10727)
+- Google Workspace Calendar checks false FAIL on unconfigured settings with secure Google defaults [(#10726)](https://github.com/prowler-cloud/prowler/pull/10726)
+>>>>>>> 08fbe17e2 (fix(googleworkspace): treat secure Google defaults as PASS for Drive checks (#10727))
 
 ---
 
