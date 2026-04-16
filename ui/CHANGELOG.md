@@ -8,6 +8,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Findings grouped view now handles zero-resource IaC counters, refines drawer loading states, and adds provider indicators to finding groups [(#10736)](https://github.com/prowler-cloud/prowler/pull/10736)
 
+## [1.24.1] (Prowler v5.24.1)
+
+### 🔒 Security
+
+- Upgrade React to 19.2.5 and Next.js to 16.2.3 to mitigate CVE-2026-23869 (React2DoS), a high-severity unauthenticated remote DoS vulnerability in the React Flight Protocol's Server Function deserialization
+
+---
+
 ## [1.24.0] (Prowler v5.24.0)
 
 ### 🚀 Added
