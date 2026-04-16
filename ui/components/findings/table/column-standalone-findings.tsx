@@ -1,14 +1,8 @@
-// TODO: Legacy columns — used by overview dashboard (column-new-findings-to-date.tsx).
-// Migrate that consumer to grouped view columns, then delete this file.
 "use client";
 
-import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { Database } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 
-import { FindingDetail } from "@/components/findings/table";
-import { DataTableRowActions } from "@/components/findings/table";
-import { Checkbox } from "@/components/shadcn";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { DateWithTime } from "@/components/ui/entities";
 import {
@@ -18,10 +12,14 @@ import {
 } from "@/components/ui/table";
 import { FindingProps, ProviderType } from "@/types";
 
-// TODO: PROWLER-379 - Enable ImpactedResourcesCell when backend supports grouped findings
-// import { ImpactedResourcesCell } from "./impacted-resources-cell";
+import { FindingDetailDrawer } from "./finding-detail-drawer";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 import { ProviderIconCell } from "./provider-icon-cell";
+
+interface GetStandaloneFindingColumnsOptions {
+  includeUpdatedAt?: boolean;
+  openFindingId?: string | null;
+}
 
 const getFindingsData = (row: { original: FindingProps }) => {
   return row.original;
@@ -45,49 +43,38 @@ const getProviderData = (
   return row.original.relationships?.provider?.attributes?.[field] || "-";
 };
 
-// Component for finding title that opens the detail drawer
-const FindingTitleCell = ({ row }: { row: { original: FindingProps } }) => {
-  const searchParams = useSearchParams();
-  const findingId = searchParams.get("id");
-  const isOpen = findingId === row.original.id;
-  const { checktitle } = row.original.attributes.check_metadata;
-
+function FindingTitleCell({
+  finding,
+  defaultOpen = false,
+}: {
+  finding: FindingProps;
+  defaultOpen?: boolean;
+}) {
   return (
-    <FindingDetail
-      findingDetails={row.original}
-      defaultOpen={isOpen}
+    <FindingDetailDrawer
+      finding={finding}
+      defaultOpen={defaultOpen}
       trigger={
         <div className="max-w-[500px]">
           <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
-            {checktitle}
+            {finding.attributes.check_metadata.checktitle}
           </p>
         </div>
       }
     />
   );
-};
+}
 
-// Function to generate columns with access to selection state
-export function getColumnFindings(
-  rowSelection: RowSelectionState,
-  selectableRowCount: number,
-): ColumnDef<FindingProps>[] {
-  // Calculate selection state from rowSelection for header checkbox
-  const selectedCount = Object.values(rowSelection).filter(Boolean).length;
-  const isAllSelected =
-    selectedCount > 0 && selectedCount === selectableRowCount;
-  const isSomeSelected =
-    selectedCount > 0 && selectedCount < selectableRowCount;
-
-  return [
-    // Notification column - shows new/changed/muted indicators
+export function getStandaloneFindingColumns({
+  includeUpdatedAt = false,
+  openFindingId = null,
+}: GetStandaloneFindingColumnsOptions = {}): ColumnDef<FindingProps>[] {
+  const columns: ColumnDef<FindingProps>[] = [
     {
       id: "notification",
       header: () => null,
       cell: ({ row }) => {
         const finding = row.original;
-        const isMuted = finding.attributes.muted;
-        const mutedReason = finding.attributes.muted_reason;
         const delta = finding.attributes.delta as
           | (typeof DeltaValues)[keyof typeof DeltaValues]
           | undefined;
@@ -95,8 +82,8 @@ export function getColumnFindings(
         return (
           <NotificationIndicator
             delta={delta}
-            isMuted={isMuted}
-            mutedReason={mutedReason}
+            isMuted={finding.attributes.muted}
+            mutedReason={finding.attributes.muted_reason}
             showDeltaWhenMuted
           />
         );
@@ -104,51 +91,6 @@ export function getColumnFindings(
       enableSorting: false,
       enableHiding: false,
     },
-    // Select column
-    {
-      id: "select",
-      header: ({ table }) => {
-        const headerChecked = isAllSelected
-          ? true
-          : isSomeSelected
-            ? "indeterminate"
-            : false;
-
-        return (
-          <div className="ml-1 flex w-6 items-center justify-center pr-4">
-            <Checkbox
-              checked={headerChecked}
-              onCheckedChange={(checked) =>
-                table.toggleAllPageRowsSelected(checked === true)
-              }
-              aria-label="Select all"
-              disabled={selectableRowCount === 0}
-            />
-          </div>
-        );
-      },
-      cell: ({ row }) => {
-        const finding = row.original;
-        const isMuted = finding.attributes.muted;
-        const isSelected = !!rowSelection[row.id];
-
-        return (
-          <div className="ml-1 flex w-6 items-center justify-center pr-4">
-            <Checkbox
-              checked={isSelected}
-              disabled={isMuted}
-              onCheckedChange={(checked) =>
-                row.toggleSelected(checked === true)
-              }
-              aria-label="Select row"
-            />
-          </div>
-        );
-      },
-      enableSorting: false,
-      enableHiding: false,
-    },
-    // Status column
     {
       accessorKey: "status",
       header: ({ column }) => (
@@ -162,7 +104,6 @@ export function getColumnFindings(
         return <StatusFindingBadge status={status} />;
       },
     },
-    // Finding column - clickable to open detail sheet
     {
       accessorKey: "check",
       header: ({ column }) => (
@@ -172,9 +113,13 @@ export function getColumnFindings(
           param="check_id"
         />
       ),
-      cell: ({ row }) => <FindingTitleCell row={row} />,
+      cell: ({ row }) => (
+        <FindingTitleCell
+          finding={row.original}
+          defaultOpen={openFindingId === row.original.id}
+        />
+      ),
     },
-    // Resource name column
     {
       accessorKey: "resourceName",
       header: ({ column }) => (
@@ -197,7 +142,6 @@ export function getColumnFindings(
       },
       enableSorting: false,
     },
-    // Severity column
     {
       accessorKey: "severity",
       header: ({ column }) => (
@@ -214,7 +158,6 @@ export function getColumnFindings(
         return <SeverityBadge severity={severity} />;
       },
     },
-    // Provider column
     {
       accessorKey: "provider",
       header: ({ column }) => (
@@ -227,7 +170,6 @@ export function getColumnFindings(
       },
       enableSorting: false,
     },
-    // Service column
     {
       accessorKey: "service",
       header: ({ column }) => (
@@ -243,7 +185,6 @@ export function getColumnFindings(
       },
       enableSorting: false,
     },
-    // Region column
     {
       accessorKey: "region",
       header: ({ column }) => (
@@ -260,19 +201,10 @@ export function getColumnFindings(
       },
       enableSorting: false,
     },
-    // TODO: PROWLER-379 - Enable Impacted Resources column when backend supports grouped findings
-    // {
-    //   accessorKey: "impactedResources",
-    //   header: ({ column }) => (
-    //     <DataTableColumnHeader column={column} title="Impacted Resources" />
-    //   ),
-    //   cell: () => {
-    //     return <ImpactedResourcesCell impacted={1} total={1} />;
-    //   },
-    //   enableSorting: false,
-    // },
-    // Time column
-    {
+  ];
+
+  if (includeUpdatedAt) {
+    columns.push({
       accessorKey: "updated_at",
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -287,13 +219,8 @@ export function getColumnFindings(
         } = getFindingsData(row);
         return <DateWithTime dateTime={updated_at} />;
       },
-    },
-    // Actions column - dropdown with Mute/Jira options
-    {
-      id: "actions",
-      header: () => <div className="w-10" />,
-      cell: ({ row }) => <DataTableRowActions row={row} />,
-      enableSorting: false,
-    },
-  ];
+    });
+  }
+
+  return columns;
 }

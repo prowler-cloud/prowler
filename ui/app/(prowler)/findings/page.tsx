@@ -37,9 +37,6 @@ export default async function Findings({
   // Check if the searchParams contain any date or scan filter
   const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
-  // TODO: Re-implement deep link support (/findings?id=<uuid>) using the grouped view's resource detail drawer
-  // once the legacy FindingDetailsSheet is fully deprecated (still used by /resources and overview dashboard).
-
   const [providersData, scansData] = await Promise.all([
     getProviders({ pageSize: 50 }),
     getScans({ pageSize: 50 }),

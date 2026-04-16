@@ -5,7 +5,6 @@ This module handles:
 - Adding resource labels to Cartography nodes for efficient lookups
 - Loading Prowler findings into the graph
 - Linking findings to resources
-- Cleaning up stale findings
 """
 
 from collections import defaultdict
@@ -24,7 +23,6 @@ from tasks.jobs.attack_paths.config import (
 )
 from tasks.jobs.attack_paths.queries import (
     ADD_RESOURCE_LABEL_TEMPLATE,
-    CLEANUP_FINDINGS_TEMPLATE,
     INSERT_FINDING_TEMPLATE,
     render_cypher_template,
 )
@@ -92,14 +90,13 @@ def analysis(
     """
     Main entry point for Prowler findings analysis.
 
-    Adds resource labels, loads findings, and cleans up stale data.
+    Adds resource labels and loads findings.
     """
     add_resource_label(
         neo4j_session, prowler_api_provider.provider, str(prowler_api_provider.uid)
     )
     findings_data = stream_findings_with_resources(prowler_api_provider, scan_id)
     load_findings(neo4j_session, findings_data, prowler_api_provider, config)
-    cleanup_findings(neo4j_session, prowler_api_provider, config)
 
 
 def add_resource_label(
@@ -183,28 +180,6 @@ def load_findings(
     logger.info(f"Finished loading {total_records} records in {batch_num} batches")
 
 
-def cleanup_findings(
-    neo4j_session: neo4j.Session,
-    prowler_api_provider: Provider,
-    config: CartographyConfig,
-) -> None:
-    """Remove stale findings (classic Cartography behaviour)."""
-    parameters = {
-        "last_updated": config.update_tag,
-        "batch_size": BATCH_SIZE,
-    }
-
-    batch = 1
-    deleted_count = 1
-    while deleted_count > 0:
-        logger.info(f"Cleaning findings batch {batch}")
-
-        result = neo4j_session.run(CLEANUP_FINDINGS_TEMPLATE, parameters)
-
-        deleted_count = result.single().get("deleted_findings_count", 0)
-        batch += 1
-
-
 # Findings Streaming (Generator-based)
 # -------------------------------------
 
@@ -273,7 +248,9 @@ def _fetch_findings_batch(
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         # Use `all_objects` to get `Findings` even on soft-deleted `Providers`
         # But even the provider is already validated as active in this context
-        qs = FindingModel.all_objects.filter(scan_id=scan_id).order_by("id")
+        qs = FindingModel.all_objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).order_by("id")
 
         if after_id is not None:
             qs = qs.filter(id__gt=after_id)

@@ -69,11 +69,11 @@ from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_googleworkspace import GoogleWorkspaceCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
+from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
+from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
     GoogleWorkspaceCISASCuBA,
 )
-from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
-from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
@@ -1315,8 +1315,12 @@ def prowler():
                     global_provider.identity.audited_regions,
                 )
                 if not global_provider.identity.audited_regions
-                else global_provider.identity.audited_regions
+                else set(global_provider.identity.audited_regions)
             )
+            if global_provider._enabled_regions is not None:
+                security_hub_regions = security_hub_regions.intersection(
+                    global_provider._enabled_regions
+                )
 
             security_hub = SecurityHub(
                 aws_account_id=global_provider.identity.account,
