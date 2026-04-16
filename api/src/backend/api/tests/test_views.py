@@ -57,6 +57,7 @@ from api.models import (
     ProviderGroupMembership,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -15465,7 +15466,7 @@ class TestFindingGroupViewSet:
         attrs = data[0]["attributes"]
         assert attrs["status"] == "FAIL"
         assert attrs["muted"] is True
-        assert attrs["fail_count"] == 2
+        assert attrs["fail_count"] == 0
         assert attrs["fail_muted_count"] == 2
         assert attrs["pass_muted_count"] == 0
         assert attrs["manual_muted_count"] == 0
@@ -16029,6 +16030,36 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         # s3_bucket_public_access has 2 findings with 2 different resources
         assert len(data) == 2
+
+    def test_resources_id_matches_resource_id_for_mapped_findings(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Findings with a resource expose the resource id as row id (hot path contract)."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "expected resources in response"
+
+        resource_ids = set(
+            ResourceFindingMapping.objects.filter(
+                finding__check_id="s3_bucket_public_access",
+            ).values_list("resource_id", flat=True)
+        )
+        finding_ids = set(
+            Finding.objects.filter(
+                check_id="s3_bucket_public_access",
+            ).values_list("id", flat=True)
+        )
+
+        returned_ids = {item["id"] for item in data}
+        assert returned_ids <= {str(rid) for rid in resource_ids}
+        assert returned_ids.isdisjoint({str(fid) for fid in finding_ids})
 
     def test_resources_fields(self, authenticated_client, finding_groups_fixture):
         """Test resource fields (uid, name, service, region, type) have valid values."""
