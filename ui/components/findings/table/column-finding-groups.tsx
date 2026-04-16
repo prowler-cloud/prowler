@@ -5,6 +5,11 @@ import { ChevronRight } from "lucide-react";
 
 import { Checkbox } from "@/components/shadcn";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import {
   DataTableColumnHeader,
   SeverityBadge,
   StatusFindingBadge,
@@ -17,11 +22,13 @@ import {
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
 import { FindingGroupRow } from "@/types";
+import { getProviderDisplayName } from "@/types/providers";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 import { canMuteFindingGroup } from "./finding-group-selection";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
+import { ProviderIconCell } from "./provider-icon-cell";
 
 interface GetColumnFindingGroupsOptions {
   rowSelection: RowSelectionState;
@@ -178,22 +185,42 @@ export function getColumnFindingGroups({
       cell: ({ row }) => {
         const group = row.original;
         const canExpand = canDrillDownFindingGroup(group);
+        const provider = group.providers[0];
+        const providerName = provider
+          ? getProviderDisplayName(provider)
+          : undefined;
 
         return (
-          <div>
-            {canExpand ? (
-              <button
-                type="button"
-                className="text-text-neutral-primary hover:text-button-tertiary w-full cursor-pointer border-none bg-transparent p-0 text-left text-sm break-words whitespace-normal hover:underline"
-                onClick={() => onDrillDown(group.checkId, group)}
-              >
-                {group.checkTitle}
-              </button>
-            ) : (
-              <span className="text-text-neutral-primary w-full text-left text-sm break-words whitespace-normal">
-                {group.checkTitle}
-              </span>
-            )}
+          <div className="flex items-start gap-2">
+            {provider && providerName ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="shrink-0 pt-0.5">
+                    <ProviderIconCell
+                      provider={provider}
+                      size={20}
+                      className="size-5 rounded-none bg-transparent"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">{providerName}</TooltipContent>
+              </Tooltip>
+            ) : null}
+            <div>
+              {canExpand ? (
+                <button
+                  type="button"
+                  className="text-text-neutral-primary hover:text-button-tertiary w-full cursor-pointer border-none bg-transparent p-0 text-left text-sm break-words whitespace-normal hover:underline"
+                  onClick={() => onDrillDown(group.checkId, group)}
+                >
+                  {group.checkTitle}
+                </button>
+              ) : (
+                <span className="text-text-neutral-primary w-full text-left text-sm break-words whitespace-normal">
+                  {group.checkTitle}
+                </span>
+              )}
+            </div>
           </div>
         );
       },

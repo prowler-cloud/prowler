@@ -78,6 +78,18 @@ vi.mock("./notification-indicator", () => ({
   },
 }));
 
+vi.mock("@/components/shadcn/tooltip", () => ({
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("./provider-icon-cell", () => ({
+  ProviderIconCell: ({ provider }: { provider: string }) => (
+    <span data-testid={`provider-icon-${provider}`}>{provider}</span>
+  ),
+}));
+
 // ---------------------------------------------------------------------------
 // Import after mocks
 // ---------------------------------------------------------------------------
@@ -141,6 +153,26 @@ function renderFindingCell(
 
   const group = makeGroup({ checkTitle, ...overrides });
   // Render the cell directly with a minimal row mock
+  const CellComponent = findingColumn.cell as (props: {
+    row: { original: FindingGroupRow };
+  }) => ReactNode;
+
+  render(<div>{CellComponent({ row: { original: group } })}</div>);
+}
+
+function renderFindingGroupTitleCell(overrides?: Partial<FindingGroupRow>) {
+  const columns = getColumnFindingGroups({
+    rowSelection: {},
+    selectableRowCount: 1,
+    onDrillDown: vi.fn(),
+  });
+
+  const findingColumn = columns.find(
+    (col) => (col as { accessorKey?: string }).accessorKey === "finding",
+  );
+  if (!findingColumn?.cell) throw new Error("finding column not found");
+
+  const group = makeGroup(overrides);
   const CellComponent = findingColumn.cell as (props: {
     row: { original: FindingGroupRow };
   }) => ReactNode;
@@ -231,6 +263,15 @@ describe("column-finding-groups — accessibility of check title cell", () => {
 
     // Then
     expect(impactedProvidersColumn).toBeUndefined();
+  });
+
+  it("should render the first provider icon with its provider name", () => {
+    // Given
+    renderFindingGroupTitleCell({ providers: ["iac"] });
+
+    // Then
+    expect(screen.getByTestId("provider-icon-iac")).toBeInTheDocument();
+    expect(screen.getByText("Infrastructure as Code")).toBeInTheDocument();
   });
 
   it("should render the check title as a button element (not a <p>)", () => {
