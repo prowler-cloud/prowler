@@ -57,6 +57,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@dagrejs/dagre",
+    "from": "3.0.0",
+    "to": "3.0.0",
+    "strategy": "installed",
+    "generatedAt": "2026-04-16T12:15:51.357Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@extractus/feed-extractor",
     "from": "7.1.7",
     "to": "7.1.7",
@@ -382,6 +390,14 @@
     "to": "4.25.8",
     "strategy": "installed",
     "generatedAt": "2026-03-26T08:39:34.728Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@xyflow/react",
+    "from": "12.10.2",
+    "to": "12.10.2",
+    "strategy": "installed",
+    "generatedAt": "2026-04-16T12:15:51.357Z"
   },
   {
     "section": "dependencies",
