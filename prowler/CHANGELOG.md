@@ -2,11 +2,12 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.25.0] (Prowler UNRELEASED)
+## [5.24.1] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
 
 - Cloudflare account-scoped API tokens failing connection test in the App with `CloudflareUserTokenRequiredError` [(#10723)](https://github.com/prowler-cloud/prowler/pull/10723)
+- `prowler image --registry` failing with `ImageNoImagesProvidedError` due to registry arguments not being forwarded to `ImageProvider` in `init_global_provider` [(#10470)](https://github.com/prowler-cloud/prowler/pull/10470)
 
 ---
 
@@ -86,7 +87,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Oracle Cloud `kms_key_rotation_enabled` now checks current key version age to avoid false positives on vaults without auto-rotation support [(#10450)](https://github.com/prowler-cloud/prowler/pull/10450)
 - OCI filestorage, blockstorage, KMS, and compute services now honor `--region` for scanning outside the tenancy home region [(#10472)](https://github.com/prowler-cloud/prowler/pull/10472)
 - OCI provider now supports multi-region filtering via `--region` [(#10473)](https://github.com/prowler-cloud/prowler/pull/10473)
-- `prowler image --registry` failing with `ImageNoImagesProvidedError` due to registry arguments not being forwarded to `ImageProvider` in `init_global_provider` [(#10470)](https://github.com/prowler-cloud/prowler/pull/10470)
 - OCI multi-region support for identity client configuration in blockstorage, identity, and filestorage services [(#10520)](https://github.com/prowler-cloud/prowler/pull/10520)
 - Google Workspace Calendar checks now filter for customer-level policies only, skipping OU and group overrides that could produce incorrect audit results [(#10658)](https://github.com/prowler-cloud/prowler/pull/10658)
 
