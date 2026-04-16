@@ -9,18 +9,12 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from "@xyflow/react";
-import {
-  type MouseEvent,
-  type Ref,
-  useImperativeHandle,
-  useRef,
-  type WheelEvent,
-} from "react";
+import { type MouseEvent, type Ref, useImperativeHandle, useRef } from "react";
 
 import { cn } from "@/lib/utils";
 import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
-import { layoutWithDagre } from "../../_lib/layout";
+import { isFindingNode, layoutWithDagre } from "../../_lib/layout";
 import { FindingNode } from "./nodes/finding-node";
 import { InternetNode } from "./nodes/internet-node";
 import { ResourceNode } from "./nodes/resource-node";
@@ -38,7 +32,6 @@ export interface GraphHandle {
 interface AttackPathGraphProps {
   data: AttackPathGraphData;
   selectedNodeId?: string | null;
-  initialNodeId?: string;
   onNodeClick?: (node: GraphNode) => void;
   ref?: Ref<GraphHandle>;
   className?: string;
@@ -74,7 +67,7 @@ const GRAPH_STYLES = `
 // --- SVG filter defs (shared by all node components) ---
 
 const GraphDefs = () => (
-  <svg width={0} height={0} className="absolute">
+  <svg width={0} height={0} className="absolute" aria-hidden="true">
     <defs>
       {/* Glow filter for finding nodes */}
       <filter id="glow">
@@ -132,21 +125,24 @@ const GraphCanvas = ({
   // Derive RF nodes and edges from data (pure computation in render body — D4)
   const { rfNodes, rfEdges } = layoutWithDagre(nodes, edges);
 
+  // Pre-compute which resources have findings connected (O(n+e) instead of O(n*e))
+  const resourcesWithFindings = new Set<string>();
+  edges.forEach((edge) => {
+    const sourceNode = nodes.find((n) => n.id === edge.source);
+    const targetNode = nodes.find((n) => n.id === edge.target);
+    if (isFindingNode(sourceNode?.labels ?? []))
+      resourcesWithFindings.add(edge.target);
+    if (isFindingNode(targetNode?.labels ?? []))
+      resourcesWithFindings.add(edge.source);
+  });
+
   // Enrich nodes with selection and hasFindings state
   const enrichedNodes = rfNodes.map((node) => ({
     ...node,
     selected: node.id === selectedNodeId,
     data: {
       ...node.data,
-      hasFindings: edges.some((edge) => {
-        const isConnected = edge.source === node.id || edge.target === node.id;
-        if (!isConnected) return false;
-        const otherId = edge.source === node.id ? edge.target : edge.source;
-        const otherNode = nodes.find((n) => n.id === otherId);
-        return otherNode?.labels.some((l) =>
-          l.toLowerCase().includes("finding"),
-        );
-      }),
+      hasFindings: resourcesWithFindings.has(node.id),
     },
   }));
 
@@ -163,15 +159,6 @@ const GraphCanvas = ({
     onNodeClick?.(graphNode);
   };
 
-  // Ctrl+scroll zoom handler: only zoom when Ctrl/Cmd is pressed
-  const handleWheel = (event: WheelEvent) => {
-    if (!event.ctrlKey && !event.metaKey) {
-      // Allow normal page scroll — do nothing, React Flow's zoomOnScroll is off
-      return;
-    }
-    // ctrlKey+scroll is handled natively by React Flow's zoomOnPinch
-  };
-
   return (
     <div ref={containerRef} className="h-full w-full">
       <ReactFlow
@@ -179,7 +166,6 @@ const GraphCanvas = ({
         edges={rfEdges}
         nodeTypes={NODE_TYPES}
         onNodeClick={handleNodeClick}
-        onWheel={handleWheel}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         zoomOnScroll={false}
@@ -207,12 +193,14 @@ export const AttackPathGraph = ({
 }: AttackPathGraphProps) => {
   return (
     <div
+      role="img"
+      aria-label="Attack path graph"
       className={cn(
         "dark:bg-bg-neutral-secondary bg-bg-neutral-secondary h-full w-full rounded-lg",
         className,
       )}
     >
-      <style dangerouslySetInnerHTML={{ __html: GRAPH_STYLES }} />
+      <style>{GRAPH_STYLES}</style>
       <GraphDefs />
       <ReactFlowProvider>
         <GraphCanvas
