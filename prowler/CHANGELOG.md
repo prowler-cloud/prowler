@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.25.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- `msgraph-sdk` bumped from 1.23.0 to 1.55.0 [(#10733)](https://github.com/prowler-cloud/prowler/pull/10733)
+
+---
+
 ## [5.24.1] (Prowler UNRELEASED)
 
 ### 🐞 Fixed

@@ -57,7 +57,7 @@ dependencies = [
   "kubernetes==32.0.1",
   "markdown==3.10.2",
   "microsoft-kiota-abstractions==1.9.2",
-  "msgraph-sdk==1.23.0",
+  "msgraph-sdk==1.55.0",
   "numpy==2.0.2",
   "openstacksdk==4.2.0",
   "pandas==2.2.3",
