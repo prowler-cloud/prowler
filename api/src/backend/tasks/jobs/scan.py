@@ -752,11 +752,19 @@ def _process_finding_micro_batch(
             )
 
         if mappings_to_create:
-            ResourceFindingMapping.objects.bulk_create(
+            created_mappings = ResourceFindingMapping.objects.bulk_create(
                 mappings_to_create,
                 batch_size=SCAN_DB_BATCH_SIZE,
                 ignore_conflicts=True,
+                unique_fields=["tenant_id", "resource_id", "finding_id"],
             )
+            inserted = sum(1 for m in created_mappings if m.pk)
+            if inserted != len(mappings_to_create):
+                logger.error(
+                    f"scan {scan_instance.id}: expected "
+                    f"{len(mappings_to_create)} ResourceFindingMapping rows, "
+                    f"inserted {inserted}. Rolling back micro-batch."
+                )
 
         # Update finding denormalized arrays
         findings_to_update = []
