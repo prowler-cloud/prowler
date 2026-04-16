@@ -248,7 +248,9 @@ def _fetch_findings_batch(
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         # Use `all_objects` to get `Findings` even on soft-deleted `Providers`
         # But even the provider is already validated as active in this context
-        qs = FindingModel.all_objects.filter(scan_id=scan_id).order_by("id")
+        qs = FindingModel.all_objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).order_by("id")
 
         if after_id is not None:
             qs = qs.filter(id__gt=after_id)
