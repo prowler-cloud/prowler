@@ -7127,17 +7127,16 @@ class FindingGroupViewSet(BaseRLSViewSet):
             output_field=IntegerField(),
         )
 
-        # `pass_count`, `fail_count` and `manual_count` count *every* finding
-        # for the check (muted or not) so the aggregated `status` reflects the
-        # underlying check outcome regardless of mute state. Whether the group
-        # is actionable is signalled by the orthogonal `muted` flag below.
+        # `pass_count`, `fail_count` and `manual_count` only count non-muted
+        # findings. Muted findings are tracked separately via the
+        # `*_muted_count` fields.
         return (
             queryset.values("check_id")
             .annotate(
                 severity_order=Max(severity_case),
-                pass_count=Count("id", filter=Q(status="PASS")),
-                fail_count=Count("id", filter=Q(status="FAIL")),
-                manual_count=Count("id", filter=Q(status="MANUAL")),
+                pass_count=Count("id", filter=Q(status="PASS", muted=False)),
+                fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                manual_count=Count("id", filter=Q(status="MANUAL", muted=False)),
                 pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
                 fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
                 manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),
@@ -7282,12 +7281,14 @@ class FindingGroupViewSet(BaseRLSViewSet):
             # finding-level aggregation path.
             row.pop("nonmuted_count", None)
 
-            # Compute aggregated status. Counts are inclusive of muted findings,
-            # so the underlying check outcome surfaces even when the group is
-            # fully muted.
-            if row.get("fail_count", 0) > 0:
+            # Compute aggregated status from non-muted counts first, then
+            # fall back to muted counts so fully-muted groups still reflect
+            # the underlying check outcome.
+            total_fail = row.get("fail_count", 0) + row.get("fail_muted_count", 0)
+            total_pass = row.get("pass_count", 0) + row.get("pass_muted_count", 0)
+            if total_fail > 0:
                 row["status"] = "FAIL"
-            elif row.get("pass_count", 0) > 0:
+            elif total_pass > 0:
                 row["status"] = "PASS"
             else:
                 row["status"] = "MANUAL"
@@ -7387,9 +7388,12 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         if computed_params.get("status") or computed_params.getlist("status__in"):
             queryset = queryset.annotate(
+                total_fail=F("fail_count") + F("fail_muted_count"),
+                total_pass=F("pass_count") + F("pass_muted_count"),
+            ).annotate(
                 aggregated_status=Case(
-                    When(fail_count__gt=0, then=Value("FAIL")),
-                    When(pass_count__gt=0, then=Value("PASS")),
+                    When(total_fail__gt=0, then=Value("FAIL")),
+                    When(total_pass__gt=0, then=Value("PASS")),
                     default=Value("MANUAL"),
                     output_field=CharField(),
                 )
@@ -7773,16 +7777,14 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 sort_param, self._FINDING_GROUP_SORT_MAP
             )
             if ordering:
-                # status_order is annotated on demand so groups can be sorted by
-                # their aggregated status (FAIL > PASS > MANUAL), mirroring the
-                # priority used in _post_process_aggregation. Counts are
-                # inclusive of muted findings, so the underlying check outcome
-                # surfaces even for fully muted groups.
                 if any(field.lstrip("-") == "status_order" for field in ordering):
                     aggregated_queryset = aggregated_queryset.annotate(
+                        total_fail_for_sort=F("fail_count") + F("fail_muted_count"),
+                        total_pass_for_sort=F("pass_count") + F("pass_muted_count"),
+                    ).annotate(
                         status_order=Case(
-                            When(fail_count__gt=0, then=Value(3)),
-                            When(pass_count__gt=0, then=Value(2)),
+                            When(total_fail_for_sort__gt=0, then=Value(3)),
+                            When(total_pass_for_sort__gt=0, then=Value(2)),
                             default=Value(1),
                             output_field=IntegerField(),
                         )
