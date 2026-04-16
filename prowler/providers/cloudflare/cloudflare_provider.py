@@ -338,7 +338,10 @@ class CloudflareProvider(Provider):
                 raise CloudflareInvalidAPIKeyError(
                     file=os.path.basename(__file__),
                 )
-            # For other permission errors (including 9109), try accounts.list() as fallback
+            # For permission errors (including 9109 account-scoped tokens),
+            # try accounts.list() as fallback before failing.
+            # Error 9109 means the token is account-scoped, not user-level,
+            # which is valid for scanning — only fail if accounts.list() also fails.
             logger.warning(
                 f"Unable to retrieve Cloudflare user info: {error}. "
                 "Trying accounts.list() as fallback."
