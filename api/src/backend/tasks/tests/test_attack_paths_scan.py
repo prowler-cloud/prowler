@@ -1275,10 +1275,6 @@ class TestAttackPathsFindingsHelpers:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.findings.get_root_node_label",
-                return_value="AWSAccount",
-            ),
-            patch(
                 "tasks.jobs.attack_paths.findings.get_node_uid_field",
                 return_value="arn",
             ),
@@ -1294,7 +1290,6 @@ class TestAttackPathsFindingsHelpers:
         assert mock_session.run.call_count == 2
         for call_args in mock_session.run.call_args_list:
             params = call_args.args[1]
-            assert params["provider_uid"] == str(provider.uid)
             assert params["last_updated"] == config.update_tag
             assert "findings_data" in params
 
@@ -1673,10 +1668,6 @@ class TestAttackPathsFindingsHelpers:
             yield  # Make it a generator
 
         with (
-            patch(
-                "tasks.jobs.attack_paths.findings.get_root_node_label",
-                return_value="AWSAccount",
-            ),
             patch(
                 "tasks.jobs.attack_paths.findings.get_node_uid_field",
                 return_value="arn",
