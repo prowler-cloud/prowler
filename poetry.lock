@@ -1267,18 +1267,19 @@ typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-resource"
-version = "25.0.0"
+version = "24.0.0"
 description = "Microsoft Azure Resource Management Client Library for Python"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "azure_mgmt_resource-25.0.0-py3-none-any.whl", hash = "sha256:f6f17b2305abe9bf6ec6c92a9410af21a2b0d805cc98e94d80c07220924a045b"},
-    {file = "azure_mgmt_resource-25.0.0.tar.gz", hash = "sha256:dc123a9f6509c37299d7716c9090cff0a9d73309b228cc094ea950ce3cca3603"},
+    {file = "azure_mgmt_resource-24.0.0-py3-none-any.whl", hash = "sha256:27b32cd223e2784269f5a0db3c282042886ee4072d79cedc638438ece7cd0df4"},
+    {file = "azure_mgmt_resource-24.0.0.tar.gz", hash = "sha256:cf6b8995fcdd407ac9ff1dd474087129429a1d90dbb1ac77f97c19b96237b265"},
 ]
 
 [package.dependencies]
-azure-mgmt-core = ">=1.6.0"
+azure-common = ">=1.1"
+azure-mgmt-core = ">=1.5.0"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.6.0"
 
@@ -6680,4 +6681,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.13"
-content-hash = "258978e0479c73ccb82b4c792ef1fc6fb9b9676eb220e3aeed46ac291ea5335b"
+content-hash = "f630ceabb34ebed8b2188453be9450c72e366d4cbb9c061409a8fe41442be501"
