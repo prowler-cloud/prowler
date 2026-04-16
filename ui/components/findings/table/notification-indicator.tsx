@@ -124,12 +124,12 @@ function MutedIndicator({ mutedReason }: { mutedReason?: string }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex w-4 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
+          className="flex w-5 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
           onClick={(e) => e.stopPropagation()}
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
         >
-          <MutedIcon className="text-bg-data-muted size-2" />
+          <MutedIcon className="text-bg-data-muted size-3" />
         </button>
       </PopoverTrigger>
       <PopoverContent
