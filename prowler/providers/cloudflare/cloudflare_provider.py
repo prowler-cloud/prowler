@@ -332,19 +332,16 @@ class CloudflareProvider(Provider):
             return
         except PermissionDeniedError as error:
             error_str = str(error)
-            # Check for user-level authentication required (code 9109)
-            if "9109" in error_str:
-                logger.error(f"CloudflareUserTokenRequiredError: {error}")
-                raise CloudflareUserTokenRequiredError(
-                    file=os.path.basename(__file__),
-                )
             # Check for invalid API key or email (code 9103) - comes as 403
             if "9103" in error_str or "Unknown X-Auth-Key" in error_str:
                 logger.error(f"CloudflareInvalidAPIKeyError: {error}")
                 raise CloudflareInvalidAPIKeyError(
                     file=os.path.basename(__file__),
                 )
-            # For other permission errors, try accounts.list() as fallback
+            # For permission errors (including 9109 account-scoped tokens),
+            # try accounts.list() as fallback before failing.
+            # Error 9109 means the token is account-scoped, not user-level,
+            # which is valid for scanning — only fail if accounts.list() also fails.
             logger.warning(
                 f"Unable to retrieve Cloudflare user info: {error}. "
                 "Trying accounts.list() as fallback."
