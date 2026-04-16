@@ -1,8 +1,9 @@
-import { Bell, TriangleAlert } from "lucide-react";
+import { Bell, ShieldCheck, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 
 import { ResourceInventoryItem } from "@/actions/overview";
 import { CardVariant, ResourceStatsCard, StatItem } from "@/components/shadcn";
+import { cn } from "@/lib/utils";
 
 interface ResourcesInventoryCardItemProps {
   item: ResourceInventoryItem;
@@ -15,6 +16,16 @@ export function ResourcesInventoryCardItem({
 }: ResourcesInventoryCardItemProps) {
   const hasFailedFindings = item.failedFindings > 0;
   const hasResources = item.totalResources > 0;
+  const resourceCardClassName = cn(
+    "relative flex-1 overflow-hidden border-border-neutral-secondary bg-bg-neutral-secondary shadow-sm transition-[transform,border-color,background-color,box-shadow] duration-200",
+    hasResources &&
+      "hover:-translate-y-0.5 hover:shadow-md focus-visible:border-border-neutral-primary",
+    hasFailedFindings
+      ? "before:bg-bg-fail-primary hover:border-border-error-primary before:absolute before:inset-x-0 before:top-0 before:h-1"
+      : hasResources
+        ? "before:bg-bg-pass-primary hover:border-border-neutral-primary before:absolute before:inset-x-0 before:top-0 before:h-1"
+        : "",
+  );
 
   // Build URL with current filters + resource group specific filters
   const buildResourcesUrl = () => {
@@ -56,12 +67,12 @@ export function ResourcesInventoryCardItem({
         header={{
           icon: item.icon,
           title: item.label,
-          resourceCount: item.totalResources,
+          resourceCount: `${item.totalResources.toLocaleString()} Resources`,
         }}
         emptyState={{
           message: "No Findings to display",
         }}
-        className="flex-1"
+        className={resourceCardClassName}
       />
     );
 
@@ -74,27 +85,26 @@ export function ResourcesInventoryCardItem({
       header={{
         icon: item.icon,
         title: item.label,
-        resourceCount: item.totalResources,
+        resourceCount: `${item.totalResources.toLocaleString()} Resources`,
       }}
       badge={{
-        icon: TriangleAlert,
+        icon: hasFailedFindings ? TriangleAlert : ShieldCheck,
         count: item.failedFindings,
-        variant: CardVariant.fail,
+        variant: hasFailedFindings ? CardVariant.fail : CardVariant.pass,
       }}
       label="Fail Findings"
       stats={stats}
-      variant={hasFailedFindings ? CardVariant.fail : CardVariant.default}
-      className={
-        hasFailedFindings
-          ? "hover:border-bg-fail/60 flex-1 cursor-pointer transition-all"
-          : "flex-1"
-      }
+      variant={CardVariant.default}
+      className={cn(resourceCardClassName, hasResources && "cursor-pointer")}
     />
   );
 
   if (resourcesUrl) {
     return (
-      <Link href={resourcesUrl} className="flex flex-1">
+      <Link
+        href={resourcesUrl}
+        className="focus-visible:ring-border-neutral-primary/40 flex flex-1 rounded-[12px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+      >
         {cardContent}
       </Link>
     );

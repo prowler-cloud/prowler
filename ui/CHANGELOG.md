@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.25.0] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Resource Inventory cards in light mode now use neutral surfaces, consistent hover/focus states, and aligned loading placeholders [(#00000)](https://github.com/prowler-cloud/prowler/pull/00000)
+
+---
+
 ## [1.24.0] (Prowler v5.24.0)
 
 ### 🚀 Added
