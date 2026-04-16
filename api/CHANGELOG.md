@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.25.1] (Prowler v5.24.1)
+
+### 🐞 Fixed
+
+- Attack Paths: Missing `tenant_id` filter while getting related findings after scan completes [(#10722)](https://github.com/prowler-cloud/prowler/pull/10722)
+
+---
+
 ## [1.25.0] (Prowler v5.24.0)
 
 ### 🔄 Changed
