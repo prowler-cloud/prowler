@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.26.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Attack Paths: Restore `SYNC_BATCH_SIZE` and `FINDINGS_BATCH_SIZE` defaults to 1000, upgrade Cartography to 0.135.0, and enable Celery queue priority for cleanup task [(#10729)](https://github.com/prowler-cloud/prowler/pull/10729)
+
+---
+
 ## [1.25.1] (Prowler v5.24.1)
 
 ### 🐞 Fixed
