@@ -7836,17 +7836,27 @@ class FindingGroupViewSet(BaseRLSViewSet):
             validated = self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
             ordering = validated if validated else None
 
-        # Resource filters can't match orphans (orphans have no resources), so
-        # skip the orphan path and preserve the original mapping-only behaviour.
-        has_orphans = resource_ids is None and self._has_orphan_findings(
-            filtered_queryset
-        )
-
-        if not has_orphans:
+        # Resource filters can only match findings with resources; skip orphan
+        # detection entirely when they are present.
+        if resource_ids is not None:
             return self._mapping_paginated_response(
                 request, filtered_queryset, resource_ids, tenant_id, ordering
             )
 
+        has_mappings = self._build_resource_mapping_queryset(
+            filtered_queryset, resource_ids=None, tenant_id=tenant_id
+        ).exists()
+
+        if has_mappings:
+            # Normal or mixed group: serve only resource-mapped rows.
+            # TODO: Orphan findings in mixed groups are intentionally excluded
+            # until the ephemeral resources strategy is decided. When resolved,
+            # route mixed groups to _combined_paginated_response instead.
+            return self._mapping_paginated_response(
+                request, filtered_queryset, resource_ids, tenant_id, ordering
+            )
+
+        # Pure orphan group (e.g. IaC): synthesize resource-like rows.
         return self._combined_paginated_response(
             request, filtered_queryset, tenant_id, ordering
         )
