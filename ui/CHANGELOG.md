@@ -11,6 +11,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
+- Migrate UI pre-commit hooks from Husky/lint-staged to prek workspace mode with typecheck, lint, related unit tests, and build stages [(#10651)](https://github.com/prowler-cloud/prowler/pull/10651)
 - Attack Paths scan selection: contextual button labels based on graph availability, tooltips on disabled actions, green dot indicator for selectable scans, and a warning banner when viewing data from a previous scan cycle [(#10685)](https://github.com/prowler-cloud/prowler/pull/10685)
 
 ### 🔄 Changed

@@ -1,34 +1,18 @@
 repos:
-  ## FAST CHECKS & FIXERS (priority 0, all parallel, Rust-native offline)
-  - repo: builtin
-    hooks:
-      - id: check-merge-conflict
-        priority: 0
-      - id: check-json
-        priority: 0
-      - id: check-added-large-files
-        args: [--maxkb=1024]
-        priority: 0
-      - id: check-case-conflict
-        priority: 0
-      - id: end-of-file-fixer
-        priority: 0
-      - id: trailing-whitespace
-        priority: 0
-      - id: no-commit-to-branch
-        priority: 0
-      - id: pretty-format-json
-        args: ["--autofix", --no-sort-keys, --no-ensure-ascii]
-        priority: 0
-
-  ## CHECK-YAML (needs --unsafe for CloudFormation templates in contrib/, stays remote)
+  ## GENERAL
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
+      - id: check-merge-conflict
       - id: check-yaml
         args: ["--unsafe"]
         exclude: prowler/config/llm_config.yaml
-        priority: 0
+      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: no-commit-to-branch
+      - id: pretty-format-json
+        args: ["--autofix", --no-sort-keys, --no-ensure-ascii]
 
   ## TOML
   - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
@@ -37,15 +21,13 @@ repos:
       - id: pretty-format-toml
         args: [--autofix]
         files: pyproject.toml
-        priority: 0
 
   ## GITHUB ACTIONS
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.6.0
     hooks:
       - id: zizmor
-        files: { glob: ".github/**" }
-        priority: 0
+        files: ^\.github/
 
   ## BASH
   - repo: https://github.com/koalaman/shellcheck-precommit
@@ -53,9 +35,8 @@ repos:
     hooks:
       - id: shellcheck
         exclude: contrib
-        priority: 0
 
-  ## PYTHON FORMATTING CHAIN (strict order: autoflake → isort → black)
+  ## PYTHON
   - repo: https://github.com/myint/autoflake
     rev: v2.3.1
     hooks:
@@ -67,7 +48,6 @@ repos:
             "--remove-all-unused-imports",
             "--remove-unused-variable",
           ]
-        priority: 1
 
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
@@ -75,33 +55,20 @@ repos:
       - id: isort
         exclude: ^skills/
         args: ["--profile", "black"]
-        priority: 2
 
   - repo: https://github.com/psf/black
     rev: 24.4.2
     hooks:
       - id: black
         exclude: ^skills/
-        priority: 3
 
-  ## PYTHON LINTERS (post-formatting, parallel)
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
     hooks:
       - id: flake8
         exclude: (contrib|^skills/)
         args: ["--ignore=E266,W503,E203,E501,W605"]
-        priority: 4
 
-  ## DOCKER
-  - repo: https://github.com/hadolint/hadolint
-    rev: v2.13.0-beta
-    hooks:
-      - id: hadolint
-        args: ["--ignore=DL3013"]
-        priority: 0
-
-  ## POETRY (check before lock)
   - repo: https://github.com/python-poetry/poetry
     rev: 2.3.4
     hooks:
@@ -109,51 +76,51 @@ repos:
         name: API - poetry-check
         args: ["--directory=./api"]
         pass_filenames: false
-        priority: 5
 
       - id: poetry-lock
         name: API - poetry-lock
         args: ["--directory=./api"]
         pass_filenames: false
-        priority: 6
 
       - id: poetry-check
         name: SDK - poetry-check
         args: ["--directory=./"]
         pass_filenames: false
-        priority: 5
 
       - id: poetry-lock
         name: SDK - poetry-lock
         args: ["--directory=./"]
         pass_filenames: false
-        priority: 6
 
-  ## HEAVY ANALYSIS (parallel at their priority level)
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.0-beta
+    hooks:
+      - id: hadolint
+        args: ["--ignore=DL3013"]
+
   - repo: local
     hooks:
       - id: pylint
         name: pylint
         entry: bash -c 'pylint --disable=W,C,R,E -j 0 -rn -sn prowler/'
         language: system
-        files: { glob: "**/*.py" }
-        priority: 5
+        files: '.*\.py'
 
       - id: trufflehog
         name: TruffleHog
         description: Detect secrets in your data.
         entry: bash -c 'trufflehog --no-update git file://. --only-verified --fail'
+        # For running trufflehog in docker, use the following entry instead:
+        # entry: bash -c 'docker run -v "$(pwd):/workdir" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --only-verified --fail'
         language: system
         stages: ["pre-commit", "pre-push"]
-        priority: 5
 
       - id: bandit
         name: bandit
         description: "Bandit is a tool for finding common security issues in Python code"
         entry: bash -c 'bandit -q -lll -x '*_test.py,./contrib/,./.venv/,./skills/' -r .'
         language: system
-        files: { glob: "**/*.py" }
-        priority: 4
+        files: '.*\.py'
 
       - id: safety
         name: safety
@@ -164,12 +131,19 @@ repos:
         # TODO: 71600 CVE-2024-1135 false positive - fixed in gunicorn 22.0.0, project uses 23.0.0
         entry: bash -c 'safety check --ignore 70612,66963,74429,76352,76353,77744,77745,79023,79027,86217,71600'
         language: system
-        priority: 5
 
       - id: vulture
         name: vulture
         description: "Vulture finds unused code in Python programs."
         entry: bash -c 'vulture --exclude "contrib,.venv,api/src/backend/api/tests/,api/src/backend/conftest.py,api/src/backend/tasks/tests/,skills/" --min-confidence 100 .'
         language: system
-        files: { glob: "**/*.py" }
-        priority: 4
+        files: '.*\.py'
+
+      - id: ui-checks
+        name: UI - Husky Pre-commit
+        description: "Run UI pre-commit checks (Claude Code validation + healthcheck)"
+        entry: bash -c 'cd ui && .husky/pre-commit'
+        language: system
+        files: '^ui/.*\.(ts|tsx|js|jsx|json|css)$'
+        pass_filenames: false
+        verbose: true
