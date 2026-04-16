@@ -1,27 +1,9 @@
 /**
  * Pure Dagre layout adapter for React Flow
  * Converts normalized GraphNode[] + GraphEdge[] to positioned RF nodes
- *
- * Note: Uses dynamic import of @dagrejs/dagre to avoid type conflicts
- * with @types/dagre (which will be removed in PR3 when old dagre is removed).
  */
 
-const dagreModule = require("@dagrejs/dagre");
-const DagreGraph = dagreModule.Graph as new () => {
-  setGraph: (opts: Record<string, unknown>) => void;
-  setDefaultEdgeLabel: (fn: () => Record<string, unknown>) => void;
-  setNode: (id: string, label: Record<string, unknown>) => void;
-  setEdge: (
-    source: string,
-    target: string,
-    label: Record<string, unknown>,
-  ) => void;
-  node: (id: string) => { x: number; y: number };
-  edges: () => Array<{ v: string; w: string }>;
-  edge: (e: { v: string; w: string }) => Record<string, unknown>;
-};
-const dagreLayout = dagreModule.layout as (g: unknown) => void;
-
+import { Graph, layout as dagreLayout } from "@dagrejs/dagre";
 import type { Edge, Node } from "@xyflow/react";
 
 import type { GraphEdge, GraphNode } from "@/types/attack-paths";
@@ -53,9 +35,11 @@ const NODE_TYPE = {
 
 type NodeType = (typeof NODE_TYPE)[keyof typeof NODE_TYPE];
 
+export const isFindingNode = (labels: string[]): boolean =>
+  labels.some((l) => l.toLowerCase().includes("finding"));
+
 const getNodeType = (labels: string[]): NodeType => {
-  if (labels.some((l) => l.toLowerCase().includes("finding")))
-    return NODE_TYPE.FINDING;
+  if (isFindingNode(labels)) return NODE_TYPE.FINDING;
   if (labels.some((l) => l.toLowerCase() === "internet"))
     return NODE_TYPE.INTERNET;
   return NODE_TYPE.RESOURCE;
@@ -79,7 +63,7 @@ export const layoutWithDagre = (
   nodes: GraphNode[],
   edges: GraphEdge[],
 ): { rfNodes: Node<NodeData>[]; rfEdges: Edge[] } => {
-  const g = new DagreGraph();
+  const g = new Graph();
   g.setGraph({
     rankdir: "LR",
     nodesep: 80,
@@ -145,8 +129,8 @@ export const layoutWithDagre = (
     const sourceNode = nodes.find((n) => n.id === e.v);
     const targetNode = nodes.find((n) => n.id === e.w);
     const hasFinding =
-      sourceNode?.labels.some((l) => l.toLowerCase().includes("finding")) ||
-      targetNode?.labels.some((l) => l.toLowerCase().includes("finding"));
+      isFindingNode(sourceNode?.labels ?? []) ||
+      isFindingNode(targetNode?.labels ?? []);
 
     return {
       id: `${e.v}-${e.w}`,
