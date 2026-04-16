@@ -57,8 +57,10 @@ export function getFindingGroupImpactedCounts(
     | "resourcesFail"
     | "passCount"
     | "failCount"
+    | "manualCount"
     | "passMutedCount"
     | "failMutedCount"
+    | "manualMutedCount"
     | "muted"
     | "mutedCount"
   >,
@@ -70,7 +72,8 @@ export function getFindingGroupImpactedCounts(
     };
   }
 
-  const total = (group.passCount ?? 0) + (group.failCount ?? 0);
+  const total =
+    (group.passCount ?? 0) + (group.failCount ?? 0) + (group.manualCount ?? 0);
 
   if (!isFindingGroupMuted(group)) {
     return {
@@ -81,24 +84,18 @@ export function getFindingGroupImpactedCounts(
 
   return {
     impacted: group.failCount ?? 0,
-    total: total + (group.passMutedCount ?? 0) + (group.failMutedCount ?? 0),
+    total:
+      total +
+      (group.passMutedCount ?? 0) +
+      (group.failMutedCount ?? 0) +
+      (group.manualMutedCount ?? 0),
   };
 }
 
 export function canDrillDownFindingGroup(
-  group: Pick<
-    FindingGroupRow,
-    | "resourcesTotal"
-    | "resourcesFail"
-    | "passCount"
-    | "failCount"
-    | "passMutedCount"
-    | "failMutedCount"
-    | "muted"
-    | "mutedCount"
-  >,
+  group: Pick<FindingGroupRow, "resourcesTotal">,
 ): boolean {
-  return getFindingGroupImpactedCounts(group).total > 0;
+  return group.resourcesTotal > 0;
 }
 
 function getNewDeltaTotal(group: FindingGroupDeltaState): number {

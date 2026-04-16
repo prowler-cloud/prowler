@@ -522,6 +522,90 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(result.current.checkMeta?.description).toBe("ec2 description");
   });
 
+  it("should keep the previous check metadata cached while reopening until the new finding arrives", async () => {
+    // Given
+    const resources = [
+      makeResource({
+        id: "row-1",
+        findingId: "finding-1",
+        checkId: "s3_check",
+      }),
+      makeResource({
+        id: "row-2",
+        findingId: "finding-2",
+        checkId: "ec2_check",
+        resourceUid: "arn:aws:ec2:::instance/i-123",
+        resourceName: "instance-1",
+        service: "ec2",
+      }),
+    ];
+
+    let resolveSecondFinding: ((value: { data: string[] }) => void) | null =
+      null;
+
+    getFindingByIdMock.mockImplementation((findingId: string) => {
+      if (findingId === "finding-2") {
+        return new Promise((resolve) => {
+          resolveSecondFinding = resolve;
+        });
+      }
+
+      return Promise.resolve({ data: [findingId] });
+    });
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
+    adaptFindingsByResourceResponseMock.mockImplementation(
+      (response: { data: string[] }) => [
+        response.data[0] === "finding-1"
+          ? makeDrawerFinding({
+              id: "finding-1",
+              checkId: "s3_check",
+              checkTitle: "S3 Check",
+              description: "s3 description",
+            })
+          : makeDrawerFinding({
+              id: "finding-2",
+              checkId: "ec2_check",
+              checkTitle: "EC2 Check",
+              description: "ec2 description",
+            }),
+      ],
+    );
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(result.current.checkMeta?.checkTitle).toBe("S3 Check");
+
+    // When
+    act(() => {
+      result.current.closeDrawer();
+      result.current.openDrawer(1);
+    });
+
+    // Then
+    expect(result.current.isOpen).toBe(true);
+    expect(result.current.currentIndex).toBe(1);
+    expect(result.current.currentFinding).toBeNull();
+    expect(result.current.checkMeta?.checkTitle).toBe("S3 Check");
+
+    await act(async () => {
+      resolveSecondFinding?.({ data: ["finding-2"] });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.checkMeta?.checkTitle).toBe("EC2 Check");
+    expect(result.current.checkMeta?.description).toBe("ec2 description");
+  });
+
   it("should clear the previous resource findings when navigation to the next resource fails", async () => {
     // Given
     const resources = [
@@ -575,6 +659,7 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(result.current.currentFinding?.resourceUid).toBe(
       "arn:aws:s3:::first-bucket",
     );
+    expect(result.current.checkMeta?.checkTitle).toBe("S3 Check");
 
     // When
     await act(async () => {
@@ -586,6 +671,7 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(result.current.currentIndex).toBe(1);
     expect(result.current.currentFinding).toBeNull();
     expect(result.current.otherFindings).toEqual([]);
+    expect(result.current.checkMeta).toBeNull();
   });
 
   it("should clear other findings immediately while the next resource is loading", async () => {

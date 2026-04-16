@@ -376,9 +376,8 @@ describe("column-finding-groups — accessibility of check title cell", () => {
     );
   });
 
-  it("should allow expanding fallback groups when the displayed total is greater than zero", async () => {
+  it("should keep zero-resource fallback groups non-clickable even when fallback counts are present", () => {
     // Given
-    const user = userEvent.setup();
     const onDrillDown =
       vi.fn<(checkId: string, group: FindingGroupRow) => void>();
 
@@ -387,25 +386,15 @@ describe("column-finding-groups — accessibility of check title cell", () => {
       resourcesFail: 0,
       failCount: 0,
       passCount: 2,
+      manualCount: 1,
     });
 
-    // When
-    await user.click(
-      screen.getByRole("button", {
-        name: "Fallback IaC Check",
-      }),
-    );
-
     // Then
-    expect(onDrillDown).toHaveBeenCalledTimes(1);
-    expect(onDrillDown).toHaveBeenCalledWith(
-      "s3_check",
-      expect.objectContaining({
-        resourcesTotal: 0,
-        failCount: 0,
-        passCount: 2,
-      }),
-    );
+    expect(
+      screen.queryByRole("button", { name: "Fallback IaC Check" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Fallback IaC Check")).toBeInTheDocument();
+    expect(onDrillDown).not.toHaveBeenCalled();
   });
 
   it("should keep fallback groups non-clickable when the displayed total is zero", () => {
@@ -483,31 +472,23 @@ describe("column-finding-groups — group selection", () => {
     expect(screen.getByRole("checkbox", { name: "Select row" })).toBeDisabled();
   });
 
-  it("should show the chevron and drill down for fallback groups when the displayed total is greater than zero", async () => {
+  it("should hide the chevron for zero-resource fallback groups even when fallback counts are present", () => {
     // Given
-    const user = userEvent.setup();
     const { onDrillDown } = renderSelectCell({
       resourcesTotal: 0,
       resourcesFail: 0,
       failCount: 0,
       passCount: 2,
+      manualCount: 1,
     });
 
-    // When
-    await user.click(
-      screen.getByRole("button", { name: "Expand S3 Bucket Public Access" }),
-    );
-
     // Then
-    expect(onDrillDown).toHaveBeenCalledTimes(1);
-    expect(onDrillDown).toHaveBeenCalledWith(
-      "s3_check",
-      expect.objectContaining({
-        resourcesTotal: 0,
-        failCount: 0,
-        passCount: 2,
+    expect(
+      screen.queryByRole("button", {
+        name: "Expand S3 Bucket Public Access",
       }),
-    );
+    ).not.toBeInTheDocument();
+    expect(onDrillDown).not.toHaveBeenCalled();
   });
 
   it("should hide the chevron for zero-resource groups when the displayed total is zero", () => {

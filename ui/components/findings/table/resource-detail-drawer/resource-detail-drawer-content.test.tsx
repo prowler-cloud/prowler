@@ -134,8 +134,11 @@ vi.mock("@/components/shadcn/dropdown", () => ({
 }));
 
 vi.mock("@/components/shadcn/skeleton/skeleton", () => ({
-  Skeleton: ({ className }: { className?: string }) => (
-    <div data-testid="inline-skeleton" className={className} />
+  Skeleton: ({
+    className,
+    ...props
+  }: HTMLAttributes<HTMLDivElement> & { className?: string }) => (
+    <div data-testid="inline-skeleton" className={className} {...props} />
   ),
 }));
 
@@ -1044,18 +1047,73 @@ describe("ResourceDetailDrawerContent — current resource row display", () => {
     expect(screen.getByText("eu-west-1")).toBeInTheDocument();
     expect(screen.getByText("row-group")).toBeInTheDocument();
     expect(screen.getByText("row-type")).toBeInTheDocument();
-    expect(screen.getByText("PASS")).toBeInTheDocument();
-    expect(screen.getByText("low")).toBeInTheDocument();
+    expect(screen.getByText("FAIL")).toBeInTheDocument();
+    expect(screen.getByText("critical")).toBeInTheDocument();
     expect(screen.queryByText("finding-service")).not.toBeInTheDocument();
     expect(screen.queryByText("ap-south-1")).not.toBeInTheDocument();
     expect(screen.queryByText("finding-group")).not.toBeInTheDocument();
     expect(screen.queryByText("finding-type")).not.toBeInTheDocument();
   });
+
+  it("should prefer the fetched finding status and severity in the header when the current row is stale", () => {
+    // Given
+    const currentResource: FindingResourceRow = {
+      ...mockResourceRow,
+      severity: "critical",
+      status: "FAIL",
+      isMuted: false,
+    };
+    const fetchedFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      severity: "low",
+      status: "PASS",
+      isMuted: true,
+      mutedReason: "Muted after refresh",
+    };
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentResource={currentResource}
+        currentFinding={fetchedFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("PASS")).toBeInTheDocument();
+    expect(screen.getByText("low")).toBeInTheDocument();
+    expect(screen.queryByText("FAIL")).not.toBeInTheDocument();
+    expect(screen.queryByText("critical")).not.toBeInTheDocument();
+  });
 });
 
 describe("ResourceDetailDrawerContent — header skeleton while navigating", () => {
-  it("should replace the header with skeletons and hide stale header content during carousel navigation", () => {
-    // Given/When
+  it("should keep row-backed navigation chrome visible while hiding stale finding details during carousel navigation", () => {
+    // Given
+    const currentResource: FindingResourceRow = {
+      ...mockResourceRow,
+      checkId: mockCheckMeta.checkId,
+      resourceName: "next-bucket",
+      resourceUid: "next-resource-uid",
+      service: "ec2",
+      region: "eu-west-1",
+      resourceType: "Instance",
+      resourceGroup: "row-group",
+      severity: "low",
+      status: "PASS",
+      findingId: "finding-2",
+    };
+
+    // When
     render(
       <ResourceDetailDrawerContent
         isLoading={false}
@@ -1063,6 +1121,52 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
         checkMeta={mockCheckMeta}
         currentIndex={0}
         totalResources={2}
+        currentResource={currentResource}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("PASS")).toBeInTheDocument();
+    expect(screen.getByText("low")).toBeInTheDocument();
+    expect(screen.getByText("ec2")).toBeInTheDocument();
+    expect(screen.getByText("eu-west-1")).toBeInTheDocument();
+    expect(screen.getByText("row-group")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Finding Overview" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Other Findings For This Resource" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Status extended")).not.toBeInTheDocument();
+    expect(screen.queryByText("FAIL")).not.toBeInTheDocument();
+    expect(screen.queryByText("critical")).not.toBeInTheDocument();
+  });
+
+  it("should skeletonize stale check-level header content when navigating to a different check", () => {
+    // Given
+    const currentResource: FindingResourceRow = {
+      ...mockResourceRow,
+      checkId: "ec2_check",
+      findingId: "finding-2",
+      severity: "low",
+      status: "PASS",
+    };
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={currentResource}
         currentFinding={mockFinding}
         otherFindings={[]}
         onNavigatePrev={vi.fn()}
@@ -1073,9 +1177,174 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
 
     // Then
     expect(screen.getByTestId("drawer-header-skeleton")).toBeInTheDocument();
-    expect(screen.getByTestId("skeleton")).toBeInTheDocument();
     expect(screen.queryByText("S3 Check")).not.toBeInTheDocument();
-    expect(screen.queryByText("FAIL")).not.toBeInTheDocument();
-    expect(screen.queryByText("critical")).not.toBeInTheDocument();
+    expect(screen.queryByText("PCI-DSS")).not.toBeInTheDocument();
+    expect(screen.getByText("PASS")).toBeInTheDocument();
+    expect(screen.getByText("low")).toBeInTheDocument();
+  });
+
+  it("should keep same-check overview sections visible while hiding stale finding-specific details during navigation", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("Risk:")).toBeInTheDocument();
+    expect(screen.getByText("Description:")).toBeInTheDocument();
+    expect(screen.getByText("Remediation:")).toBeInTheDocument();
+    expect(screen.getByText("security")).toBeInTheDocument();
+    expect(screen.queryByText("Status Extended:")).not.toBeInTheDocument();
+    expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", {
+        name: "Analyze This Finding With Lighthouse AI",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should keep the overview tab shell visible with section skeletons when navigating to a different check", () => {
+    // Given
+    const currentResource: FindingResourceRow = {
+      ...mockResourceRow,
+      checkId: "ec2_check",
+      findingId: "finding-2",
+      severity: "low",
+      status: "PASS",
+    };
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={currentResource}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByTestId("overview-navigation-skeleton"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Risk:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Description:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Remediation:")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Finding Overview" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Other Findings For This Resource" }),
+    ).toBeInTheDocument();
+  });
+
+  it("should keep other findings table headers visible while skeletonizing only the rows during navigation", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Finding")).toBeInTheDocument();
+    expect(screen.getByText("Severity")).toBeInTheDocument();
+    expect(screen.getByText("Time")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("other-findings-total-entries-skeleton"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("other-findings-navigation-skeleton"),
+    ).toBeInTheDocument();
+  });
+
+  it("should keep scans labels visible while skeletonizing only the scan values during navigation", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByText("Showing the latest scan that evaluated this finding"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Scan Name")).toBeInTheDocument();
+    expect(screen.getByText("Resources Scanned")).toBeInTheDocument();
+    expect(screen.getByText("Progress")).toBeInTheDocument();
+    expect(screen.getByText("Trigger")).toBeInTheDocument();
+    expect(screen.getByText("State")).toBeInTheDocument();
+    expect(screen.getByText("Duration")).toBeInTheDocument();
+    expect(screen.getByText("Started At")).toBeInTheDocument();
+    expect(screen.getByText("Completed At")).toBeInTheDocument();
+    expect(screen.getByText("Launched At")).toBeInTheDocument();
+    expect(screen.getByText("Scheduled At")).toBeInTheDocument();
+    expect(screen.getByTestId("scans-navigation-skeleton")).toBeInTheDocument();
+  });
+
+  it("should keep the events tab shell visible while showing timeline row skeletons during navigation", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByRole("button", { name: "Events" })).toBeInTheDocument();
+    expect(
+      screen.getByTestId("events-navigation-skeleton"),
+    ).toBeInTheDocument();
   });
 });

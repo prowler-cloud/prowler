@@ -144,6 +144,11 @@ export function useResourceDetailDrawer({
     setIsNavigating(true);
   };
 
+  const resetCurrentResourceState = () => {
+    setCurrentFinding(null);
+    setOtherFindings([]);
+  };
+
   // Abort any in-flight request on unmount to prevent state updates
   // on an already-unmounted component.
   useEffect(() => {
@@ -218,9 +223,9 @@ export function useResourceDetailDrawer({
       // Discard stale response if a newer request was started
       if (controller.signal.aborted) return;
 
-      if (nextCurrentFinding) {
-        checkMetaRef.current = extractCheckMeta(nextCurrentFinding);
-      }
+      checkMetaRef.current = nextCurrentFinding
+        ? extractCheckMeta(nextCurrentFinding)
+        : null;
 
       setCurrentFinding(nextCurrentFinding);
       setOtherFindings(
@@ -230,6 +235,7 @@ export function useResourceDetailDrawer({
       );
     } catch (_error) {
       if (!controller.signal.aborted) {
+        checkMetaRef.current = null;
         setCurrentFinding(null);
         setOtherFindings([]);
       }
@@ -260,13 +266,10 @@ export function useResourceDetailDrawer({
     const resource = resources[index];
     if (!resource) return;
 
-    clearNavigationTimeout();
-    navigationStartedAtRef.current = null;
     setCurrentIndex(index);
     setIsOpen(true);
-    setIsNavigating(false);
-    setCurrentFinding(null);
-    setOtherFindings([]);
+    startNavigation();
+    resetCurrentResourceState();
     fetchFindings(resource);
   };
 
@@ -280,8 +283,7 @@ export function useResourceDetailDrawer({
     currentFindingCacheRef.current.delete(resource.findingId);
     otherFindingsCacheRef.current.delete(resource.resourceUid);
     startNavigation();
-    setCurrentFinding(null);
-    setOtherFindings([]);
+    resetCurrentResourceState();
     fetchFindings(resource);
   };
 
@@ -291,8 +293,7 @@ export function useResourceDetailDrawer({
 
     setCurrentIndex(index);
     startNavigation();
-    setCurrentFinding(null);
-    setOtherFindings([]);
+    resetCurrentResourceState();
     fetchFindings(resource);
   };
 

@@ -158,6 +158,24 @@ describe("getFindingGroupImpactedCounts", () => {
     expect(result).toEqual({ impacted: 3, total: 5 });
   });
 
+  it("should include manual findings in fallback counts when resources total is zero", () => {
+    // Given
+    const group = makeGroup({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 3,
+      passCount: 2,
+      manualCount: 4,
+      muted: false,
+    });
+
+    // When
+    const result = getFindingGroupImpactedCounts(group);
+
+    // Then
+    expect(result).toEqual({ impacted: 3, total: 9 });
+  });
+
   it("should include muted pass and fail counts in the denominator when the result is muted", () => {
     // Given
     const group = makeGroup({
@@ -209,16 +227,17 @@ describe("canDrillDownFindingGroup", () => {
     ).toBe(true);
   });
 
-  it("should allow drill-down for fallback groups when the displayed total is greater than zero", () => {
+  it("should keep zero-resource fallback groups non-expandable even when fallback counts are present", () => {
     expect(
       canDrillDownFindingGroup(
         makeGroup({
           resourcesTotal: 0,
           failCount: 0,
           passCount: 2,
+          manualCount: 1,
         }),
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("should keep drill-down disabled for zero-resource groups when the displayed total is zero", () => {
