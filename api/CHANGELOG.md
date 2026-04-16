@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🐞 Fixed
 
 - Attack Paths: Missing `tenant_id` filter while getting related findings after scan completes [(#10722)](https://github.com/prowler-cloud/prowler/pull/10722)
+- Finding group counters `pass_count`, `fail_count` and `manual_count` now exclude muted findings [(#10753)](https://github.com/prowler-cloud/prowler/pull/10753)
 
 ---
 
