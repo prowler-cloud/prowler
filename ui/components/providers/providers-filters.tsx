@@ -121,9 +121,14 @@ export const ProvidersFilters = ({
               onValuesChange={(values) => pushDropdownFilter(filter, values)}
             >
               <MultiSelectTrigger size="default">
-                <MultiSelectValue placeholder={filter.labelCheckboxGroup} />
+                <MultiSelectValue
+                  placeholder={`All ${filter.labelCheckboxGroup}`}
+                />
               </MultiSelectTrigger>
-              <MultiSelectContent search={false}>
+              <MultiSelectContent
+                search={false}
+                width={filter.width ?? "default"}
+              >
                 <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
                 <MultiSelectSeparator />
                 {filter.values.map((value) => {

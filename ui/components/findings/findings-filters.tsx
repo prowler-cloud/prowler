@@ -54,7 +54,9 @@ const FILTER_KEY_LABELS: Record<FilterParam, string> = {
   "filter[resource_type__in]": "Resource Type",
   "filter[category__in]": "Category",
   "filter[resource_groups__in]": "Resource Group",
-  "filter[scan__in]": "Scan ID",
+  "filter[scan__in]": "Scan",
+  "filter[scan_id]": "Scan",
+  "filter[scan_id__in]": "Scan",
   "filter[inserted_at]": "Date",
   "filter[muted]": "Muted",
 };
@@ -130,6 +132,7 @@ export const FindingsFilters = ({
       key: FilterType.SCAN,
       labelCheckboxGroup: "Scan ID",
       values: completedScanIds,
+      width: "wide" as const,
       valueLabelMapping: scanDetails,
       labelFormatter: (value: string) =>
         getFindingsFilterDisplayValue(`filter[${FilterType.SCAN}]`, value, {

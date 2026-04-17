@@ -17,14 +17,11 @@ import {
 } from "@/components/shadcn/tooltip";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { cn } from "@/lib/utils";
+import { FINDING_DELTA, type FindingDelta } from "@/types";
 
-export const DeltaValues = {
-  NEW: "new",
-  CHANGED: "changed",
-  NONE: "none",
-} as const;
+export const DeltaValues = FINDING_DELTA;
 
-export type DeltaType = (typeof DeltaValues)[keyof typeof DeltaValues];
+export type DeltaType = Exclude<FindingDelta, null>;
 
 interface NotificationIndicatorProps {
   delta?: DeltaType;
@@ -124,12 +121,12 @@ function MutedIndicator({ mutedReason }: { mutedReason?: string }) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex w-4 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
+          className="flex w-5 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
           onClick={(e) => e.stopPropagation()}
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
         >
-          <MutedIcon className="text-bg-data-muted size-2" />
+          <MutedIcon className="text-bg-data-muted size-3" />
         </button>
       </PopoverTrigger>
       <PopoverContent
