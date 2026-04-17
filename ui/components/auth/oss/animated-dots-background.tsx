@@ -17,7 +17,8 @@ const PARTICLE_ALPHA = 0.75;
 const CONNECTION_MAX_ALPHA = 0.35;
 const ALPHA_TIER_COUNT = 3;
 const MAX_DPR = 2;
-const ACCENT_FALLBACK = "rgb(110, 231, 183)";
+const ACCENT_LIGHT = "rgb(156, 163, 175)";
+const ACCENT_DARK_FALLBACK = "rgb(110, 231, 183)";
 const ACCENT_VAR = "--bg-button-primary";
 
 export const AnimatedDotsBackground = () => {
@@ -37,7 +38,7 @@ export const AnimatedDotsBackground = () => {
     let resizeFrameId = 0;
     let width = 0;
     let height = 0;
-    let accentColor = ACCENT_FALLBACK;
+    let accentColor = ACCENT_LIGHT;
     let count = 0;
     let xs = new Float32Array(0);
     let ys = new Float32Array(0);
@@ -51,10 +52,15 @@ export const AnimatedDotsBackground = () => {
     const mouse = { x: -9999, y: -9999, active: false };
 
     const readAccent = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      if (!isDark) {
+        accentColor = ACCENT_LIGHT;
+        return;
+      }
       const value = getComputedStyle(document.documentElement)
         .getPropertyValue(ACCENT_VAR)
         .trim();
-      accentColor = value || ACCENT_FALLBACK;
+      accentColor = value || ACCENT_DARK_FALLBACK;
     };
 
     const ensureTierCapacity = (n: number) => {

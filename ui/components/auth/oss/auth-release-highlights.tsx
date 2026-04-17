@@ -71,12 +71,7 @@ export const AuthReleaseHighlights = () => (
           ))}
         </ul>
 
-        <div className="flex items-center gap-3">
-          <Button asChild size="sm" className="shadow-lg shadow-emerald-950/25">
-            <a href={RELEASE.url} target="_blank" rel="noopener noreferrer">
-              See full release notes
-            </a>
-          </Button>
+        <div className="flex flex-wrap items-center gap-4">
           <Button
             asChild
             variant="outline"
@@ -88,6 +83,15 @@ export const AuthReleaseHighlights = () => (
               GitHub
             </a>
           </Button>
+          <a
+            href={RELEASE.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 transition-colors hover:text-emerald-800 dark:text-emerald-300 dark:hover:text-emerald-200"
+          >
+            See full release notes
+            <Icon aria-hidden="true" icon="mdi:arrow-top-right" width={14} />
+          </a>
         </div>
       </div>
     </div>
