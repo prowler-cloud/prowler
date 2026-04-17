@@ -337,8 +337,9 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                                 actions = self.extract_field(
                                     statement.get("Action", [])
                                 )
-                                # STRICT VALIDATION: Ensure only "StringEquals" with "aws:SourceAccount" exists
-                                # No additional condition operators or keys allowed
+                                # Validate that the service-principal Allow statement
+                                # has at least a "StringEquals" condition with "aws:SourceAccount".
+                                # Additional restrictive conditions (e.g. ArnLike on aws:SourceArn) are acceptable.
 
                                 # Collect specific issues for this service
                                 issues = []
