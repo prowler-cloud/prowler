@@ -1526,19 +1526,19 @@ typing-extensions = ">=4.6.0"
 
 [[package]]
 name = "azure-mgmt-resource"
-version = "23.3.0"
+version = "24.0.0"
 description = "Microsoft Azure Resource Management Client Library for Python"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "azure_mgmt_resource-23.3.0-py3-none-any.whl", hash = "sha256:ab216ee28e29db6654b989746e0c85a1181f66653929d2cb6e48fba66d9af323"},
-    {file = "azure_mgmt_resource-23.3.0.tar.gz", hash = "sha256:fc4f1fd8b6aad23f8af4ed1f913df5f5c92df117449dc354fea6802a2829fea4"},
+    {file = "azure_mgmt_resource-24.0.0-py3-none-any.whl", hash = "sha256:27b32cd223e2784269f5a0db3c282042886ee4072d79cedc638438ece7cd0df4"},
+    {file = "azure_mgmt_resource-24.0.0.tar.gz", hash = "sha256:cf6b8995fcdd407ac9ff1dd474087129429a1d90dbb1ac77f97c19b96237b265"},
 ]
 
 [package.dependencies]
 azure-common = ">=1.1"
-azure-mgmt-core = ">=1.3.2"
+azure-mgmt-core = ">=1.5.0"
 isodate = ">=0.6.1"
 typing-extensions = ">=4.6.0"
 
@@ -1822,19 +1822,19 @@ crt = ["awscrt (==0.27.6)"]
 
 [[package]]
 name = "cartography"
-version = "0.132.0"
+version = "0.135.0"
 description = "Explore assets and their relationships across your technical infrastructure."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "cartography-0.132.0-py3-none-any.whl", hash = "sha256:c070aa51d0ab4479cb043cae70b35e7df49f2fb5f1fa95ccf10000bbeb952262"},
-    {file = "cartography-0.132.0.tar.gz", hash = "sha256:7c6332bc57fd2629d7b83aee7bd95a7b2edb0d51ef746efa0461399e0b66625c"},
+    {file = "cartography-0.135.0-py3-none-any.whl", hash = "sha256:c62c32a6917b8f23a8b98fe2b6c7c4a918b50f55918482966c4dae1cf5f538e1"},
+    {file = "cartography-0.135.0.tar.gz", hash = "sha256:3f500cd22c3b392d00e8b49f62acc95fd4dcd559ce514aafe2eb8101133c7a49"},
 ]
 
 [package.dependencies]
 adal = ">=1.2.4"
-aioboto3 = ">=13.0.0"
+aioboto3 = ">=15.0.0"
 azure-cli-core = ">=2.26.0"
 azure-identity = ">=1.5.0"
 azure-keyvault-certificates = ">=4.0.0"
@@ -1852,9 +1852,9 @@ azure-mgmt-keyvault = ">=10.0.0"
 azure-mgmt-logic = ">=10.0.0"
 azure-mgmt-monitor = ">=3.0.0"
 azure-mgmt-network = ">=25.0.0"
-azure-mgmt-resource = ">=10.2.0,<25.0.0"
+azure-mgmt-resource = ">=24.0.0,<25"
 azure-mgmt-security = ">=5.0.0"
-azure-mgmt-sql = ">=3.0.1,<4"
+azure-mgmt-sql = ">=3.0.1"
 azure-mgmt-storage = ">=16.0.0"
 azure-mgmt-synapse = ">=2.0.0"
 azure-mgmt-web = ">=7.0.0"
@@ -1862,38 +1862,39 @@ azure-synapse-artifacts = ">=0.17.0"
 backoff = ">=2.1.2"
 boto3 = ">=1.15.1"
 botocore = ">=1.18.1"
-cloudflare = ">=4.1.0,<5.0.0"
+cloudflare = ">=4.1.0"
 crowdstrike-falconpy = ">=0.5.1"
-cryptography = "*"
-dnspython = ">=1.15.0"
-duo-client = "*"
-google-api-python-client = ">=1.7.8"
+cryptography = ">=45.0.0"
+dnspython = ">=2.0.0"
+duo-client = ">=5.5.0"
+google-api-python-client = ">=2.0.0"
 google-auth = ">=2.37.0"
 google-cloud-asset = ">=1.0.0"
 google-cloud-resource-manager = ">=1.14.2"
 httpx = ">=0.24.0"
 kubernetes = ">=22.6.0"
-marshmallow = ">=3.0.0rc7"
-msgraph-sdk = "*"
+marshmallow = ">=4.0.0"
+msgraph-sdk = ">=1.53.0"
 msrestazure = ">=0.6.4"
 neo4j = ">=6.0.0"
 oci = ">=2.71.0"
 okta = "<1.0.0"
-packageurl-python = "*"
-packaging = "*"
+packageurl-python = ">=0.17.0"
+packaging = ">=26.0.0"
 pagerduty = ">=4.0.1"
 policyuniverse = ">=1.1.0.0"
 PyJWT = {version = ">=2.0.0", extras = ["crypto"]}
-python-dateutil = "*"
+python-dateutil = ">=2.9.0"
 python-digitalocean = ">=1.16.0"
 pyyaml = ">=5.3.1"
 requests = ">=2.22.0"
 scaleway = ">=2.10.0"
 slack-sdk = ">=3.37.0"
-statsd = "*"
+statsd = ">=4.0.0"
 typer = ">=0.9.0"
-types-aiobotocore-ecr = "*"
-xmltodict = "*"
+types-aiobotocore-ecr = ">=3.1.0"
+workos = ">=5.44.0"
+xmltodict = ">=1.0.0"
 
 [[package]]
 name = "celery"
@@ -5193,23 +5194,15 @@ files = [
 
 [[package]]
 name = "marshmallow"
-version = "3.26.2"
+version = "4.3.0"
 description = "A lightweight library for converting complex datatypes to and from native Python datatypes."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main", "dev"]
 files = [
-    {file = "marshmallow-3.26.2-py3-none-any.whl", hash = "sha256:013fa8a3c4c276c24d26d84ce934dc964e2aa794345a0f8c7e5a7191482c8a73"},
-    {file = "marshmallow-3.26.2.tar.gz", hash = "sha256:bbe2adb5a03e6e3571b573f42527c6fe926e17467833660bebd11593ab8dfd57"},
+    {file = "marshmallow-4.3.0-py3-none-any.whl", hash = "sha256:46c4fe6984707e3cbd485dfebbf0a59874f58d695aad05c1668d15e8c6e13b46"},
+    {file = "marshmallow-4.3.0.tar.gz", hash = "sha256:fb43c53b3fe240b8f6af37223d6ef1636f927ad9bea8ab323afad95dff090880"},
 ]
-
-[package.dependencies]
-packaging = ">=17.0"
-
-[package.extras]
-dev = ["marshmallow[tests]", "pre-commit (>=3.5,<5.0)", "tox"]
-docs = ["autodocsumm (==0.2.14)", "furo (==2024.8.6)", "sphinx (==8.1.3)", "sphinx-copybutton (==0.5.2)", "sphinx-issues (==5.0.0)", "sphinxext-opengraph (==0.9.1)"]
-tests = ["pytest", "simplejson"]
 
 [[package]]
 name = "matplotlib"
@@ -5504,14 +5497,14 @@ dev = ["bumpver", "isort", "mypy", "pylint", "pytest", "yapf"]
 
 [[package]]
 name = "msgraph-sdk"
-version = "1.23.0"
+version = "1.55.0"
 description = "The Microsoft Graph Python SDK"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "msgraph_sdk-1.23.0-py3-none-any.whl", hash = "sha256:58e0047b4ca59fd82022c02cd73fec0170a3d84f3b76721e3db2a0314df9a58a"},
-    {file = "msgraph_sdk-1.23.0.tar.gz", hash = "sha256:6dd1ba9a46f5f0ce8599fd9610133adbd9d1493941438b5d3632fce9e55ed607"},
+    {file = "msgraph_sdk-1.55.0-py3-none-any.whl", hash = "sha256:c8e68ebc4b88af5111de312e7fa910a4e76ddf48a4534feadb1fb8a411c48cfc"},
+    {file = "msgraph_sdk-1.55.0.tar.gz", hash = "sha256:6df691a31954a050d26b8a678968017e157d940fb377f2a8a4e17a9741b98756"},
 ]
 
 [package.dependencies]
@@ -6672,7 +6665,11 @@ files = [
 
 [[package]]
 name = "prowler"
+<<<<<<< HEAD
 version = "5.24.0"
+=======
+version = "5.25.0"
+>>>>>>> 536e90f2a (perf(attack-paths): cleanup task prioritization, restore default batch sizes to 1000, upgrade Cartography to 0.135.0 (#10729))
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">=3.10,<3.13"
@@ -6714,7 +6711,7 @@ azure-mgmt-postgresqlflexibleservers = "1.1.0"
 azure-mgmt-rdbms = "10.1.0"
 azure-mgmt-recoveryservices = "3.1.0"
 azure-mgmt-recoveryservicesbackup = "9.2.0"
-azure-mgmt-resource = "23.3.0"
+azure-mgmt-resource = "24.0.0"
 azure-mgmt-search = "9.1.0"
 azure-mgmt-security = "7.0.0"
 azure-mgmt-sql = "3.0.1"
@@ -6740,7 +6737,7 @@ jsonschema = "4.23.0"
 kubernetes = "32.0.1"
 markdown = "3.10.2"
 microsoft-kiota-abstractions = "1.9.2"
-msgraph-sdk = "1.23.0"
+msgraph-sdk = "1.55.0"
 numpy = "2.0.2"
 oci = "2.169.0"
 openstacksdk = "4.2.0"
@@ -6761,8 +6758,13 @@ uuid6 = "2024.7.10"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
+<<<<<<< HEAD
 reference = "v5.24"
 resolved_reference = "ba5b23245f4805f46d67e67fc059aefd6831f7b3"
+=======
+reference = "master"
+resolved_reference = "ca29e354b622198ff6a70e2ea5eb04e4a44a0903"
+>>>>>>> 536e90f2a (perf(attack-paths): cleanup task prioritization, restore default batch sizes to 1000, upgrade Cartography to 0.135.0 (#10729))
 
 [[package]]
 name = "psutil"
@@ -8822,6 +8824,23 @@ markupsafe = ">=2.1.1"
 watchdog = ["watchdog (>=2.3)"]
 
 [[package]]
+name = "workos"
+version = "6.0.4"
+description = "WorkOS Python Client"
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "workos-6.0.4-py3-none-any.whl", hash = "sha256:548668b3702673536f853ba72a7b5bbbc269e467aaf9ac4f477b6e0177df5e21"},
+    {file = "workos-6.0.4.tar.gz", hash = "sha256:b0bfe8fd212b8567422c4ea3732eb33608794033eb3a69900c6b04db183c32d6"},
+]
+
+[package.dependencies]
+cryptography = ">=46.0,<47.0"
+httpx = ">=0.28,<1.0"
+pyjwt = ">=2.12,<3.0"
+
+[[package]]
 name = "wrapt"
 version = "1.17.3"
 description = "Module for decorators, wrappers and monkey patching."
@@ -9414,4 +9433,8 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
+<<<<<<< HEAD
 content-hash = "44caea5e040c54d4c726144d644e67c942b5acf7e316b1fcb2c22b0947614fbe"
+=======
+content-hash = "a3ab982d11a87d951ff15694d2ca7fd51f1f51a451abb0baa067ccf6966367a8"
+>>>>>>> 536e90f2a (perf(attack-paths): cleanup task prioritization, restore default batch sizes to 1000, upgrade Cartography to 0.135.0 (#10729))
