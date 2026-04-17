@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔒 Security
 
-- Upgrade React to 19.2.5 and Next.js to 16.2.3 to mitigate CVE-2026-23869 (React2DoS), a high-severity unauthenticated remote DoS vulnerability in the React Flight Protocol's Server Function deserialization [(#10754)](https://github.com/prowler-cloud/prowler/pull/10754)
+- Upgrade React to 19.2.5 and Next.js to 16.2.3 to mitigate CVE-2026-23869 (React2DoS), a high-severity unauthenticated remote DoS vulnerability in the React Flight Protocol's Server Function deserialization [(#10752)](https://github.com/prowler-cloud/prowler/pull/10752)
 
 ---
 
