@@ -48,6 +48,7 @@ interface UseResourceDetailDrawerOptions {
   onRequestMoreResources?: () => void;
   initialIndex?: number | null;
   canLoadOtherFindings?: boolean;
+  includeMutedInOtherFindings?: boolean;
 }
 
 interface UseResourceDetailDrawerReturn {
@@ -80,6 +81,7 @@ export function useResourceDetailDrawer({
   onRequestMoreResources,
   initialIndex = null,
   canLoadOtherFindings = true,
+  includeMutedInOtherFindings = false,
 }: UseResourceDetailDrawerOptions): UseResourceDetailDrawerReturn {
   const [isOpen, setIsOpen] = useState(initialIndex !== null);
   const [isLoading, setIsLoading] = useState(false);
@@ -199,13 +201,11 @@ export function useResourceDetailDrawer({
         return cached;
       }
 
-      const response = await getLatestFindingsByResourceUid(
-        {
-          resourceUid,
-          pageSize: 50,
-        },
-        { source: "resource-detail-drawer" },
-      );
+      const response = await getLatestFindingsByResourceUid({
+        resourceUid,
+        pageSize: 50,
+        includeMuted: includeMutedInOtherFindings,
+      });
       const adapted = adaptFindingsByResourceResponse(response);
 
       otherFindingsCacheRef.current.set(resourceUid, adapted);

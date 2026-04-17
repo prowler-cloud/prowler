@@ -244,13 +244,11 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
       "resources,scan.provider",
       { source: "resource-detail-drawer" },
     );
-    expect(getLatestFindingsByResourceUidMock).toHaveBeenCalledWith(
-      {
-        resourceUid: "arn:aws:s3:::my-bucket",
-        pageSize: 50,
-      },
-      { source: "resource-detail-drawer" },
-    );
+    expect(getLatestFindingsByResourceUidMock).toHaveBeenCalledWith({
+      resourceUid: "arn:aws:s3:::my-bucket",
+      pageSize: 50,
+      includeMuted: false,
+    });
     expect(result.current.currentFinding?.id).toBe("finding-1");
     expect(result.current.otherFindings.map((finding) => finding.id)).toEqual([
       "finding-3",
@@ -299,6 +297,31 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(getLatestFindingsByResourceUidMock).not.toHaveBeenCalled();
     expect(result.current.currentFinding?.id).toBe("synthetic-finding");
     expect(result.current.otherFindings).toEqual([]);
+  });
+
+  it("should request muted findings only when explicitly enabled", async () => {
+    const resources = [makeResource()];
+
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
+    adaptFindingsByResourceResponseMock.mockReturnValue([makeDrawerFinding()]);
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+        includeMutedInOtherFindings: true,
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(getLatestFindingsByResourceUidMock).toHaveBeenCalledWith({
+      resourceUid: "arn:aws:s3:::my-bucket",
+      pageSize: 50,
+      includeMuted: true,
+    });
   });
 
   it("should keep isNavigating true for a cached resource long enough to render skeletons", async () => {
