@@ -211,6 +211,86 @@ class TestCalendarService:
             assert calendar.policies.secondary_calendar_external_sharing is None
             assert calendar.policies.external_invitations_warning is None
 
+    def test_calendar_fetch_policies_ignores_ou_and_group_level(self):
+        """Test that OU-level and group-level policies are skipped, only customer-level used"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        # Response includes policies at different org levels:
+        # customer-level (no policyQuery), OU-level, and group-level
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    # Customer-level: no policyQuery → should be used
+                    "setting": {
+                        "type": "settings/calendar.primary_calendar_max_allowed_external_sharing",
+                        "value": {
+                            "maxAllowedExternalSharing": "EXTERNAL_FREE_BUSY_ONLY"
+                        },
+                    }
+                },
+                {
+                    # OU-level: has policyQuery.orgUnit → should be skipped
+                    "policyQuery": {"orgUnit": "orgUnits/sales_team"},
+                    "setting": {
+                        "type": "settings/calendar.primary_calendar_max_allowed_external_sharing",
+                        "value": {
+                            "maxAllowedExternalSharing": "EXTERNAL_ALL_INFO_READ_WRITE"
+                        },
+                    },
+                },
+                {
+                    # Group-level: has policyQuery.group → should be skipped
+                    "policyQuery": {"group": "groups/contractors"},
+                    "setting": {
+                        "type": "settings/calendar.external_invitations",
+                        "value": {"warnOnInvite": False},
+                    },
+                },
+                {
+                    # Customer-level: no policyQuery → should be used
+                    "setting": {
+                        "type": "settings/calendar.external_invitations",
+                        "value": {"warnOnInvite": True},
+                    }
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.calendar.calendar_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.calendar.calendar_service import (
+                Calendar,
+            )
+
+            calendar = Calendar(mock_provider)
+
+            assert calendar.policies_fetched is True
+            # Customer-level values should be stored
+            assert (
+                calendar.policies.primary_calendar_external_sharing
+                == "EXTERNAL_FREE_BUSY_ONLY"
+            )
+            assert calendar.policies.external_invitations_warning is True
+            # OU-level value (EXTERNAL_ALL_INFO_READ_WRITE) should NOT have overwritten
+            # Group-level value (warnOnInvite: False) should NOT have overwritten
+
     def test_calendar_policies_model(self):
         """Test CalendarPolicies Pydantic model"""
         from prowler.providers.googleworkspace.services.calendar.calendar_service import (

@@ -9,6 +9,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.issue.number }}
   cancel-in-progress: false
 
+permissions: {}
+
 jobs:
   update-labels:
     if: contains(github.event.issue.labels.*.name, 'status/awaiting-response')

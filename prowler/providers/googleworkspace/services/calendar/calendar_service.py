@@ -38,6 +38,8 @@ class Calendar(GoogleWorkspaceService):
                     response = request.execute()
 
                     for policy in response.get("policies", []):
+                        if not self._is_customer_level_policy(policy):
+                            continue
                         setting = policy.get("setting", {})
                         setting_type = setting.get("type", "").removeprefix("settings/")
                         value = setting.get("value", {})

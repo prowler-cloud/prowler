@@ -3,7 +3,7 @@
 import { getLatestFindings } from "@/actions/findings/findings";
 import { LighthouseBanner } from "@/components/lighthouse/banner";
 import { LinkToFindings } from "@/components/overview";
-import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
+import { ColumnLatestFindings } from "@/components/overview/new-findings-table/table";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
@@ -73,7 +73,7 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
 
       <DataTable
         key={`dashboard-findings-${Date.now()}`}
-        columns={ColumnNewFindingsToDate}
+        columns={ColumnLatestFindings}
         data={(expandedResponse?.data || []) as FindingProps[]}
       />
     </div>

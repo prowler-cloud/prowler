@@ -191,7 +191,7 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
         id: "other-1",
         checkId: "check-other-1",
         checkTitle: "Other 1",
-        status: "PASS",
+        status: "FAIL",
         severity: "critical",
       }),
       makeDrawerFinding({
@@ -219,6 +219,80 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
       "other-1",
       "other-2",
     ]);
+  });
+
+  it("should exclude non-FAIL findings from otherFindings", async () => {
+    const resources = [makeResource()];
+
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
+    adaptFindingsByResourceResponseMock.mockReturnValue([
+      makeDrawerFinding({
+        id: "current",
+        checkId: "s3_check",
+        status: "MANUAL",
+        severity: "informational",
+      }),
+      makeDrawerFinding({
+        id: "other-pass",
+        checkId: "check-pass",
+        status: "PASS",
+        severity: "low",
+      }),
+      makeDrawerFinding({
+        id: "other-manual",
+        checkId: "check-manual",
+        status: "MANUAL",
+        severity: "low",
+      }),
+      makeDrawerFinding({
+        id: "other-fail",
+        checkId: "check-fail",
+        status: "FAIL",
+        severity: "high",
+      }),
+    ]);
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+        checkId: "s3_check",
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(result.current.currentFinding?.id).toBe("current");
+    expect(result.current.otherFindings.map((f) => f.id)).toEqual([
+      "other-fail",
+    ]);
+  });
+
+  it("should request muted findings only when explicitly enabled", async () => {
+    const resources = [makeResource()];
+
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
+    adaptFindingsByResourceResponseMock.mockReturnValue([makeDrawerFinding()]);
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+        checkId: "s3_check",
+        includeMutedInOtherFindings: true,
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(getLatestFindingsByResourceUidMock).toHaveBeenCalledWith({
+      resourceUid: "arn:aws:s3:::my-bucket",
+      includeMuted: true,
+    });
   });
 
   it("should keep isNavigating true for a cached resource long enough to render skeletons", async () => {
@@ -376,5 +450,72 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(result.current.isNavigating).toBe(false);
 
     vi.useRealTimers();
+  });
+
+  it("should clear the previous resource findings when navigation to the next resource fails", async () => {
+    // Given
+    const resources = [
+      makeResource({
+        id: "row-1",
+        findingId: "finding-1",
+        resourceUid: "arn:aws:s3:::first-bucket",
+        resourceName: "first-bucket",
+      }),
+      makeResource({
+        id: "row-2",
+        findingId: "finding-2",
+        resourceUid: "arn:aws:s3:::second-bucket",
+        resourceName: "second-bucket",
+      }),
+    ];
+
+    getLatestFindingsByResourceUidMock.mockImplementation(
+      async ({ resourceUid }: { resourceUid: string }) => {
+        if (resourceUid.includes("second")) {
+          throw new Error("Fetch failed");
+        }
+
+        return { data: [resourceUid] };
+      },
+    );
+
+    adaptFindingsByResourceResponseMock.mockImplementation(
+      (response: { data: string[] }) => [
+        makeDrawerFinding({
+          id: response.data[0].includes("first") ? "finding-1" : "finding-2",
+          resourceUid: response.data[0],
+          resourceName: response.data[0].includes("first")
+            ? "first-bucket"
+            : "second-bucket",
+        }),
+      ],
+    );
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+        checkId: "s3_check",
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(result.current.currentFinding?.resourceUid).toBe(
+      "arn:aws:s3:::first-bucket",
+    );
+
+    // When
+    await act(async () => {
+      result.current.navigateNext();
+      await Promise.resolve();
+    });
+
+    // Then
+    expect(result.current.currentIndex).toBe(1);
+    expect(result.current.currentFinding).toBeNull();
+    expect(result.current.otherFindings).toEqual([]);
   });
 });

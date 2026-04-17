@@ -2,7 +2,52 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.23.0] (Prowler UNRELEASED)
+## [5.24.1] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- bumped `msgraph-sdk` from 1.23.0 to 1.55.0 and `azure-mgmt-resource` from 23.3.0 to 24.0.0, removing `marshmallow` as is a transitively dev dependency [(#10733)](https://github.com/prowler-cloud/prowler/pull/10733)
+
+### 🐞 Fixed
+
+- Cloudflare account-scoped API tokens failing connection test in the App with `CloudflareUserTokenRequiredError` [(#10723)](https://github.com/prowler-cloud/prowler/pull/10723)
+- `prowler image --registry` failing with `ImageNoImagesProvidedError` due to registry arguments not being forwarded to `ImageProvider` in `init_global_provider` [(#10470)](https://github.com/prowler-cloud/prowler/pull/10470)
+- Google Workspace Calendar checks false FAIL on unconfigured settings with secure Google defaults [(#10726)](https://github.com/prowler-cloud/prowler/pull/10726)
+- Cloudflare `validate_credentials` can hang in an infinite pagination loop when the SDK repeats accounts, blocking connection tests [(#10771)](https://github.com/prowler-cloud/prowler/pull/10771)
+
+---
+
+## [5.24.0] (Prowler v5.24.0)
+
+### 🚀 Added
+
+- `entra_conditional_access_policy_directory_sync_account_excluded` check for M365 provider [(#10620)](https://github.com/prowler-cloud/prowler/pull/10620)
+- `intune_device_compliance_policy_unassigned_devices_not_compliant_by_default` check for M365 provider [(#10599)](https://github.com/prowler-cloud/prowler/pull/10599)
+- `entra_conditional_access_policy_all_apps_all_users` check for M365 provider [(#10619)](https://github.com/prowler-cloud/prowler/pull/10619)
+- `bedrock_full_access_policy_attached` check for AWS provider [(#10577)](https://github.com/prowler-cloud/prowler/pull/10577)
+- `iam_role_access_not_stale_to_bedrock` and `iam_user_access_not_stale_to_bedrock` checks for AWS provider [(#10536)](https://github.com/prowler-cloud/prowler/pull/10536)
+- `iam_policy_no_wildcard_marketplace_subscribe` and `iam_inline_policy_no_wildcard_marketplace_subscribe` checks for AWS provider [(#10525)](https://github.com/prowler-cloud/prowler/pull/10525)
+- `bedrock_vpc_endpoints_configured` check for AWS provider [(#10591)](https://github.com/prowler-cloud/prowler/pull/10591)
+- `exchange_organization_delicensing_resiliency_enabled` check for M365 provider [(#10608)](https://github.com/prowler-cloud/prowler/pull/10608)
+- `entra_conditional_access_policy_mfa_enforced_for_guest_users` check for M365 provider [(#10616)](https://github.com/prowler-cloud/prowler/pull/10616)
+- `entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced` check for M365 provider [(#10618)](https://github.com/prowler-cloud/prowler/pull/10618)
+- `entra_conditional_access_policy_block_unknown_device_platforms` check for M365 provider [(#10615)](https://github.com/prowler-cloud/prowler/pull/10615)
+- `--excluded-region` CLI flag, `PROWLER_AWS_DISALLOWED_REGIONS` environment variable, and `aws.disallowed_regions` config entry to skip specific AWS regions during scans [(#10688)](https://github.com/prowler-cloud/prowler/pull/10688)
+
+### 🔄 Changed
+
+- Bump Poetry to `2.3.4` and consolidate SDK workflows onto the `setup-python-poetry` composite action with opt-in lockfile regeneration [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
+- Normalize Conditional Access platform values in Entra models and simplify platform-based checks [(#10635)](https://github.com/prowler-cloud/prowler/pull/10635)
+
+### 🐞 Fixed
+
+- `prowler image --registry-list` crashes with `AttributeError` because `ImageProvider.__init__` returns early before registering the global provider [(#10691)](https://github.com/prowler-cloud/prowler/pull/10691)
+- Vercel firewall config handling for team-scoped projects and current API response shapes [(#10695)](https://github.com/prowler-cloud/prowler/pull/10695)
+- Google Workspace Drive checks false FAIL on unconfigured settings with secure Google defaults [(#10727)](https://github.com/prowler-cloud/prowler/pull/10727)
+
+---
+
+## [5.23.0] (Prowler v5.23.0)
 
 ### 🚀 Added
 
@@ -18,22 +63,23 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CISA SCuBA Google Workspace Baselines compliance [(#10466)](https://github.com/prowler-cloud/prowler/pull/10466)
 - CIS Google Workspace Foundations Benchmark v1.3.0 compliance [(#10462)](https://github.com/prowler-cloud/prowler/pull/10462)
 - `calendar_external_sharing_primary_calendar`, `calendar_external_sharing_secondary_calendar`, and `calendar_external_invitations_warning` checks for Google Workspace provider using the Cloud Identity Policy API [(#10597)](https://github.com/prowler-cloud/prowler/pull/10597)
+- 11 Drive and Docs checks for Google Workspace provider (`drive_external_sharing_warn_users`, `drive_publishing_files_disabled`, `drive_sharing_allowlisted_domains`, `drive_warn_sharing_with_allowlisted_domains`, `drive_access_checker_recipients_only`, `drive_internal_users_distribute_content`, `drive_shared_drive_creation_allowed`, `drive_shared_drive_managers_cannot_override`, `drive_shared_drive_members_only_access`, `drive_shared_drive_disable_download_print_copy`, `drive_desktop_access_disabled`) using the Cloud Identity Policy API [(#10648)](https://github.com/prowler-cloud/prowler/pull/10648)
 - `entra_conditional_access_policy_device_registration_mfa_required` check and `entra_intune_enrollment_sign_in_frequency_every_time` enhancement for M365 provider [(#10222)](https://github.com/prowler-cloud/prowler/pull/10222)
 - `entra_conditional_access_policy_block_elevated_insider_risk` check for M365 provider [(#10234)](https://github.com/prowler-cloud/prowler/pull/10234)
 - `Vercel` provider support with 30 checks [(#10189)](https://github.com/prowler-cloud/prowler/pull/10189)
+- `internet-exposed` category for 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 - `stepfunctions_statemachine_no_secrets_in_definition` check for hardcoded secrets in AWS Step Functions state machine definitions [(#10570)](https://github.com/prowler-cloud/prowler/pull/10570)
 - CCC improvements with the latest checks and new mappings [(#10625)](https://github.com/prowler-cloud/prowler/pull/10625)
 
 ### 🔄 Changed
 
-- Added `internet-exposed` category to 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 - Minimum Python version from 3.9 to 3.10 and updated classifiers to reflect supported versions (3.10, 3.11, 3.12) [(#10464)](https://github.com/prowler-cloud/prowler/pull/10464)
 - Pin direct SDK dependencies to exact versions and rely on `poetry.lock` artifact hashes for reproducible installs [(#10593)](https://github.com/prowler-cloud/prowler/pull/10593)
 - Sensitive CLI flags now warn when values are passed directly, recommending environment variables instead [(#10532)](https://github.com/prowler-cloud/prowler/pull/10532)
 
 ### 🐞 Fixed
 
-- OCI mutelist support: pass `tenancy_id` to `is_finding_muted` and update `oraclecloud_mutelist_example.yaml` to use `Accounts` key [(#10565)](https://github.com/prowler-cloud/prowler/issues/10565)
+- OCI mutelist support: pass `tenancy_id` to `is_finding_muted` and update `oraclecloud_mutelist_example.yaml` to use `Accounts` key [(#10566)](https://github.com/prowler-cloud/prowler/pull/10566)
 - `return` statements in `finally` blocks replaced across IAM, Organizations, GCP provider, and custom checks metadata to stop silently swallowing exceptions [(#10102)](https://github.com/prowler-cloud/prowler/pull/10102)
 - `JiraConnection` now includes issue types per project fetched during `test_connection`, fixing `JiraInvalidIssueTypeError` on non-English Jira instances [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
 - `--list-checks` and `--list-checks-json` now include `threat-detection` category checks in their output [(#10578)](https://github.com/prowler-cloud/prowler/pull/10578)
@@ -42,6 +88,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `is_policy_public` now recognizes `kms:CallerAccount`, `kms:ViaService`, `aws:CalledVia`, `aws:CalledViaFirst`, and `aws:CalledViaLast` as restrictive condition keys, fixing false positives in `kms_key_policy_is_not_public` and other checks that use `is_condition_block_restrictive` [(#10600)](https://github.com/prowler-cloud/prowler/pull/10600)
 - `_enabled_regions` empty-set bug in `AwsProvider.generate_regional_clients` creating boto3 clients for all 36 AWS regions instead of the audited ones, causing random CI timeouts and slow test runs [(#10598)](https://github.com/prowler-cloud/prowler/pull/10598)
 - Retrieve only the latest version from a package in AWS CodeArtifact [(#10243)](https://github.com/prowler-cloud/prowler/pull/10243)
+- AWS global services (CloudFront, Route53, Shield, FMS) now use the partition's global region instead of the profile's default region [(#10458)](https://github.com/prowler-cloud/prowler/pull/10458)
+- Oracle Cloud `events_rule_idp_group_mapping_changes` now recognizes the CIS 3.1 `add/remove` event names to avoid false positives [(#10416)](https://github.com/prowler-cloud/prowler/pull/10416)
+- Oracle Cloud password policy checks now exclude immutable system-managed policies (`SimplePasswordPolicy`, `StandardPasswordPolicy`) to avoid false positives [(#10453)](https://github.com/prowler-cloud/prowler/pull/10453)
+- Oracle Cloud `kms_key_rotation_enabled` now checks current key version age to avoid false positives on vaults without auto-rotation support [(#10450)](https://github.com/prowler-cloud/prowler/pull/10450)
+- OCI filestorage, blockstorage, KMS, and compute services now honor `--region` for scanning outside the tenancy home region [(#10472)](https://github.com/prowler-cloud/prowler/pull/10472)
+- OCI provider now supports multi-region filtering via `--region` [(#10473)](https://github.com/prowler-cloud/prowler/pull/10473)
+- OCI multi-region support for identity client configuration in blockstorage, identity, and filestorage services [(#10520)](https://github.com/prowler-cloud/prowler/pull/10520)
+- Google Workspace Calendar checks now filter for customer-level policies only, skipping OU and group overrides that could produce incorrect audit results [(#10658)](https://github.com/prowler-cloud/prowler/pull/10658)
 
 ### 🔐 Security
 
@@ -49,21 +103,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `authlib` bumped from 1.6.5 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
 - `cryptography` bumped from 44.0.3 to 46.0.6 ([CVE-2026-26007](https://github.com/pyca/cryptography/security/advisories/GHSA-r6ph-v2qm-q3c2), [CVE-2026-34073](https://github.com/pyca/cryptography/security/advisories/GHSA-m959-cc7f-wv43)), `oci` to 2.169.0, and `alibabacloud-tea-openapi` to 0.4.4 [(#10535)](https://github.com/prowler-cloud/prowler/pull/10535)
 - `aiohttp` bumped from 3.13.3 to 3.13.5 to fix CVE-2026-34520 (the C parser accepted null bytes and control characters in response headers) [(#10537)](https://github.com/prowler-cloud/prowler/pull/10537)
-
----
-
-## [5.22.1] (Prowler UNRELEASED)
-
-### 🐞 Fixed
-
-- AWS global services (CloudFront, Route53, Shield, FMS) now use the partition's global region instead of the profile's default region [(#10458)](https://github.com/prowler-cloud/prowler/issues/10458)
-- Oracle Cloud `events_rule_idp_group_mapping_changes` now recognizes the CIS 3.1 `add/remove` event names to avoid false positives [(#10416)](https://github.com/prowler-cloud/prowler/pull/10416)
-- Oracle Cloud password policy checks now exclude immutable system-managed policies (`SimplePasswordPolicy`, `StandardPasswordPolicy`) to avoid false positives [(#10453)](https://github.com/prowler-cloud/prowler/pull/10453)
-- Oracle Cloud `kms_key_rotation_enabled` now checks current key version age to avoid false positives on vaults without auto-rotation support [(#10450)](https://github.com/prowler-cloud/prowler/pull/10450)
-- Oracle Cloud patch for filestorage, blockstorage, kms, and compute services in OCI to allow for region scanning outside home [(#10455)](https://github.com/prowler-cloud/prowler/pull/10472)
-- Oracle cloud provider now supports multi-region filtering [(#10435)](https://github.com/prowler-cloud/prowler/pull/10473)
-- `prowler image --registry` failing with `ImageNoImagesProvidedError` due to registry arguments not being forwarded to `ImageProvider` in `init_global_provider` [(#10457)](https://github.com/prowler-cloud/prowler/issues/10457)
-- Oracle Cloud multi-region support for identity client configuration in blockstorage, identity, and filestorage services [(#10519)](https://github.com/prowler-cloud/prowler/pull/10520)
 
 ---
 
@@ -769,7 +808,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - S3 `test_connection` uses AWS S3 API `HeadBucket` instead of `GetBucketLocation` [(#8456)](https://github.com/prowler-cloud/prowler/pull/8456)
 - Add more validations to Azure Storage models when some values are None to avoid serialization issues [(#8325)](https://github.com/prowler-cloud/prowler/pull/8325)
 - `sns_topics_not_publicly_accessible` false positive with `aws:SourceArn` conditions [(#8326)](https://github.com/prowler-cloud/prowler/issues/8326)
-- Remove typo from description req 1.2.3 - Prowler ThreatScore m365 [(#8384)](https://github.com/prowler-cloud/prowler/pull/8384)
+- Remove typo from description req 1.2.3 - Prowler ThreatScore M365 [(#8384)](https://github.com/prowler-cloud/prowler/pull/8384)
 - Way of counting FAILED/PASS reqs from `kisa_isms_p_2023_aws` table [(#8382)](https://github.com/prowler-cloud/prowler/pull/8382)
 - Use default tenant domain instead of first domain in list for Azure and M365 providers [(#8402)](https://github.com/prowler-cloud/prowler/pull/8402)
 - Avoid multiple module error calls in M365 provider [(#8353)](https://github.com/prowler-cloud/prowler/pull/8353)
@@ -810,7 +849,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Title & description wording for `iam_user_accesskey_unused` check for AWS provider [(#8233)](https://github.com/prowler-cloud/prowler/pull/8233)
 - Add GitHub provider to lateral panel in documentation and change -h environment variable output [(#8246)](https://github.com/prowler-cloud/prowler/pull/8246)
-- Show `m365_identity_type` and `m365_identity_id` in cloud reports [(#8247)](https://github.com/prowler-cloud/prowler/pull/8247)
+- Show `M365_identity_type` and `M365_identity_id` in cloud reports [(#8247)](https://github.com/prowler-cloud/prowler/pull/8247)
 - Ensure `is_service_role` only returns `True` for service roles [(#8274)](https://github.com/prowler-cloud/prowler/pull/8274)
 - Update DynamoDB check metadata to fix broken link [(#8273)](https://github.com/prowler-cloud/prowler/pull/8273)
 - Show correct count of findings in Dashboard Security Posture page [(#8270)](https://github.com/prowler-cloud/prowler/pull/8270)
@@ -932,9 +971,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 
-- `m365_powershell test_credentials` to use sanitized credentials [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
+- `M365_powershell test_credentials` to use sanitized credentials [(#7761)](https://github.com/prowler-cloud/prowler/pull/7761)
 - `admincenter_users_admins_reduced_license_footprint` check logic to pass when admin user has no license [(#7779)](https://github.com/prowler-cloud/prowler/pull/7779)
-- `m365_powershell` to close the PowerShell sessions in msgraph services [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
+- `M365_powershell` to close the PowerShell sessions in msgraph services [(#7816)](https://github.com/prowler-cloud/prowler/pull/7816)
 - `defender_ensure_notify_alerts_severity_is_high`check to accept high or lower severity [(#7862)](https://github.com/prowler-cloud/prowler/pull/7862)
 - Replace `Directory.Read.All` permission with `Domain.Read.All` which is more restrictive [(#7888)](https://github.com/prowler-cloud/prowler/pull/7888)
 - Split calls to list Azure Functions attributes [(#7778)](https://github.com/prowler-cloud/prowler/pull/7778)
@@ -1008,7 +1047,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - New check `teams_meeting_chat_anonymous_users_disabled` [(#7579)](https://github.com/prowler-cloud/prowler/pull/7579)
 - Prowler Threat Score Compliance Framework [(#7603)](https://github.com/prowler-cloud/prowler/pull/7603)
 - Documentation for M365 provider [(#7622)](https://github.com/prowler-cloud/prowler/pull/7622)
-- Support for m365 provider in Prowler Dashboard [(#7633)](https://github.com/prowler-cloud/prowler/pull/7633)
+- Support for M365 provider in Prowler Dashboard [(#7633)](https://github.com/prowler-cloud/prowler/pull/7633)
 - New check for Modern Authentication enabled for Exchange Online in M365 [(#7636)](https://github.com/prowler-cloud/prowler/pull/7636)
 - New check `sharepoint_onedrive_sync_restricted_unmanaged_devices` [(#7589)](https://github.com/prowler-cloud/prowler/pull/7589)
 - New check for Additional Storage restricted for Exchange in M365 [(#7638)](https://github.com/prowler-cloud/prowler/pull/7638)
@@ -1018,7 +1057,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - New check for MailTips full enabled for Exchange in M365 [(#7637)](https://github.com/prowler-cloud/prowler/pull/7637)
 - New check for Comprehensive Attachments Filter Applied for Defender in M365 [(#7661)](https://github.com/prowler-cloud/prowler/pull/7661)
 - Modified check `exchange_mailbox_properties_auditing_enabled` to make it configurable [(#7662)](https://github.com/prowler-cloud/prowler/pull/7662)
-- snapshots to m365 documentation [(#7673)](https://github.com/prowler-cloud/prowler/pull/7673)
+- snapshots to M365 documentation [(#7673)](https://github.com/prowler-cloud/prowler/pull/7673)
 - support for static credentials for sending findings to Amazon S3 and AWS Security Hub [(#7322)](https://github.com/prowler-cloud/prowler/pull/7322)
 - Prowler ThreatScore for M365 provider [(#7692)](https://github.com/prowler-cloud/prowler/pull/7692)
 - Microsoft User and User Credential auth to reports [(#7681)](https://github.com/prowler-cloud/prowler/pull/7681)

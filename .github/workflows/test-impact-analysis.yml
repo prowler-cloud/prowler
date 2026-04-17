@@ -31,6 +31,8 @@ on:
         description: "Whether there are UI E2E tests to run"
         value: ${{ jobs.analyze.outputs.has-ui-e2e }}
 
+permissions: {}
+
 jobs:
   analyze:
     runs-on: ubuntu-latest

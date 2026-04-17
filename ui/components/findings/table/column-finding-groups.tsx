@@ -10,11 +10,14 @@ import {
   StatusFindingBadge,
 } from "@/components/ui/table";
 import { cn } from "@/lib";
-import { FindingGroupRow, ProviderType } from "@/types";
+import {
+  getFilteredFindingGroupDelta,
+  isFindingGroupMuted,
+} from "@/lib/findings-groups";
+import { FindingGroupRow } from "@/types";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 import { canMuteFindingGroup } from "./finding-group-selection";
-import { ImpactedProvidersCell } from "./impacted-providers-cell";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 
@@ -25,6 +28,8 @@ interface GetColumnFindingGroupsOptions {
   expandedCheckId?: string | null;
   /** True when the expanded group has individually selected resources */
   hasResourceSelection?: boolean;
+  /** Active URL filters — used to make the delta indicator status-aware */
+  filters?: Record<string, string | string[] | undefined>;
 }
 
 const VISIBLE_DISABLED_CHECKBOX_CLASS =
@@ -36,6 +41,7 @@ export function getColumnFindingGroups({
   onDrillDown,
   expandedCheckId,
   hasResourceSelection = false,
+  filters = {},
 }: GetColumnFindingGroupsOptions): ColumnDef<FindingGroupRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -74,14 +80,13 @@ export function getColumnFindingGroups({
       },
       cell: ({ row }) => {
         const group = row.original;
-        const allMuted =
-          group.mutedCount > 0 && group.mutedCount === group.resourcesTotal;
+        const allMuted = isFindingGroupMuted(group);
         const isExpanded = expandedCheckId === group.checkId;
-
+        const deltaKey = getFilteredFindingGroupDelta(group, filters);
         const delta =
-          group.newCount > 0
+          deltaKey === "new"
             ? DeltaValues.NEW
-            : group.changedCount > 0
+            : deltaKey === "changed"
               ? DeltaValues.CHANGED
               : DeltaValues.NONE;
 
@@ -89,12 +94,17 @@ export function getColumnFindingGroups({
         const canSelect = canMuteFindingGroup({
           resourcesFail: group.resourcesFail,
           resourcesTotal: group.resourcesTotal,
+          muted: group.muted,
           mutedCount: group.mutedCount,
         });
 
         return (
           <div className="flex items-center gap-2">
-            <NotificationIndicator delta={delta} isMuted={allMuted} />
+            <NotificationIndicator
+              delta={delta}
+              isMuted={allMuted}
+              showDeltaWhenMuted
+            />
             {canExpand ? (
               <button
                 type="button"
@@ -149,9 +159,7 @@ export function getColumnFindingGroups({
         <DataTableColumnHeader column={column} title="Status" />
       ),
       cell: ({ row }) => {
-        const rawStatus = row.original.status as string;
-        const status = rawStatus === "MUTED" ? "FAIL" : row.original.status;
-        return <StatusFindingBadge status={status} />;
+        return <StatusFindingBadge status={row.original.status} />;
       },
       enableSorting: false,
     },
@@ -199,19 +207,6 @@ export function getColumnFindingGroups({
         />
       ),
       cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
-    },
-    // Impacted Providers column
-    {
-      id: "impactedProviders",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Impacted Providers" />
-      ),
-      cell: ({ row }) => (
-        <ImpactedProvidersCell
-          providers={row.original.providers as ProviderType[]}
-        />
-      ),
-      enableSorting: false,
     },
     // Impacted Resources column
     {

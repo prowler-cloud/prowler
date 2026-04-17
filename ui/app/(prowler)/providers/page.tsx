@@ -1,11 +1,6 @@
 import { Suspense } from "react";
 
-import {
-  AddProviderButton,
-  MutedFindingsConfigButton,
-  ProvidersAccountsTable,
-  ProvidersFilters,
-} from "@/components/providers";
+import { ProvidersAccountsView } from "@/components/providers";
 import { SkeletonTableProviders } from "@/components/providers/table";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { ContentLayout } from "@/components/ui";
@@ -55,15 +50,6 @@ export default async function Providers({
     </ContentLayout>
   );
 }
-
-const ProvidersActions = () => {
-  return (
-    <div className="flex flex-wrap gap-4 md:justify-end">
-      <MutedFindingsConfigButton />
-      <AddProviderButton />
-    </div>
-  );
-};
 
 const ProvidersTableFallback = () => {
   return (
@@ -120,17 +106,12 @@ const ProvidersAccountsContent = async ({
   });
 
   return (
-    <div className="flex flex-col gap-6">
-      <ProvidersFilters
-        filters={providersView.filters}
-        providers={providersView.providers}
-        actions={<ProvidersActions />}
-      />
-      <ProvidersAccountsTable
-        isCloud={process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"}
-        metadata={providersView.metadata}
-        rows={providersView.rows}
-      />
-    </div>
+    <ProvidersAccountsView
+      isCloud={process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"}
+      filters={providersView.filters}
+      providers={providersView.providers}
+      metadata={providersView.metadata}
+      rows={providersView.rows}
+    />
   );
 };
