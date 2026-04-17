@@ -25,12 +25,11 @@ If you don’t set `DJANGO_TOKEN_SIGNING_KEY` or `DJANGO_TOKEN_VERIFYING_KEY`, t
 **Important note**: Every Prowler version (or repository branches and tags) could have different variables set in its `.env` file. Please use the `.env` file that corresponds with each version.
 
 ## Local deployment
-Keep in mind if you export the `.env` file to use it with local deployment that you will have to do it within the context of the Poetry interpreter, not before. Otherwise, variables will not be loaded properly.
+Keep in mind if you export the `.env` file to use it with local deployment that you will have to do it within the context of the virtual environment, not before. Otherwise, variables will not be loaded properly.
 
 To do this, you can run:
 
 ```console
-poetry shell
 set -a
 source .env
 ```
@@ -78,7 +77,7 @@ docker logs -f $(docker ps --format "{{.Names}}" | grep 'api-')
 
 ## Local deployment
 
-To use this method, you'll need to set up a Python virtual environment (version ">=3.11,<3.13") and keep dependencies updated. Additionally, ensure that `poetry` and `docker compose` are installed.
+To use this method, you'll need to set up a Python virtual environment (version ">=3.11,<3.13") and keep dependencies updated. Additionally, ensure that `uv` and `docker compose` are installed.
 
 ### Clone the repository
 
@@ -90,11 +89,10 @@ git clone https://github.com/prowler-cloud/api.git
 git clone git@github.com:prowler-cloud/api.git
 
 ```
-### Install all dependencies with Poetry
+### Install all dependencies with uv
 
 ```console
-poetry install
-poetry shell
+uv sync
 ```
 
 ## Start the PostgreSQL Database and Valkey
@@ -139,7 +137,7 @@ gunicorn -c config/guniconf.py config.wsgi:application
 
 ## Local deployment
 
-To use this method, you'll need to set up a Python virtual environment (version ">=3.11,<3.13") and keep dependencies updated. Additionally, ensure that `poetry` and `docker compose` are installed.
+To use this method, you'll need to set up a Python virtual environment (version ">=3.11,<3.13") and keep dependencies updated. Additionally, ensure that `uv` and `docker compose` are installed.
 
 ### Clone the repository
 
@@ -165,11 +163,10 @@ docker compose up postgres valkey -d
 
 ### Install the Python dependencies
 
-> You must have Poetry installed
+> You must have uv installed
 
 ```console
-poetry install
-poetry shell
+uv sync
 ```
 
 ### Apply migrations
@@ -246,9 +243,8 @@ docker logs -f $(docker ps --format "{{.Names}}" | grep 'api-')
 For migrations, you need to force the `admin` database router. Assuming you have the correct environment variables and Python virtual environment, run:
 
 ```console
-poetry shell
 cd src/backend
-python manage.py migrate --database admin
+uv run python manage.py migrate --database admin
 ```
 
 ## Apply fixtures
@@ -256,9 +252,8 @@ python manage.py migrate --database admin
 Fixtures are used to populate the database with initial development data.
 
 ```console
-poetry shell
 cd src/backend
-python manage.py loaddata api/fixtures/0_dev_users.json --database admin
+uv run python manage.py loaddata api/fixtures/0_dev_users.json --database admin
 ```
 
 > The default credentials are `dev@prowler.com:Thisisapassword123@` or `dev2@prowler.com:Thisisapassword123@`
@@ -270,9 +265,8 @@ Note that the tests will fail if you use the same `.env` file as the development
 For best results, run in a new shell with no environment variables set.
 
 ```console
-poetry shell
 cd src/backend
-pytest
+uv run pytest
 ```
 
 # Custom commands
@@ -284,8 +278,7 @@ Django provides a way to create custom commands that can be run from the command
 To run a custom command, you need to be in the `prowler/api/src/backend` directory and run:
 
 ```console
-poetry shell
-python manage.py <command_name>
+uv run python manage.py <command_name>
 ```
 
 ## Generate dummy data
@@ -308,7 +301,7 @@ This command creates, for a given tenant, a provider, scan and a set of findings
 ### Example
 
 ```console
-~/backend $ poetry run python manage.py findings --tenant
+~/backend $ uv run python manage.py findings --tenant
 fffb1893-3fc7-4623-a5d9-fae47da1c528 --findings 25000 --re
 sources 1000 --batch 5000 --alias test-script
 

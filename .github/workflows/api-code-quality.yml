@@ -63,26 +63,25 @@ jobs:
             api/CHANGELOG.md
             api/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
-          update-lock: 'true'
 
-      - name: Poetry check
+      - name: uv lock check
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry check --lock
+        run: uv lock --check
 
       - name: Ruff lint
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run ruff check . --exclude contrib
+        run: uv run ruff check . --exclude contrib
 
       - name: Ruff format
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run ruff format --check . --exclude contrib
+        run: uv run ruff format --check . --exclude contrib
 
       - name: Pylint
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run pylint --disable=W,C,R,E -j 0 -rn -sn src/
+        run: uv run pylint --disable=W,C,R,E -j 0 -rn -sn src/

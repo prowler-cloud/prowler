@@ -66,25 +66,24 @@ jobs:
             api/CHANGELOG.md
             api/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
-          update-lock: 'true'
 
       - name: Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
+        run: uv run bandit -q -lll -x '*_test.py,./contrib/' -r .
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check --ignore 79023,79027,86217,71600
+        run: uv run safety check --ignore 79023,79027,86217,71600
         # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
         # TODO: 86217 because `alibabacloud-tea-openapi == 0.4.3` don't let us upgrade `cryptography >= 46.0.0`
         # TODO: 71600 CVE-2024-1135 false positive - fixed in gunicorn 22.0.0, project uses 23.0.0
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
+        run: uv run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
