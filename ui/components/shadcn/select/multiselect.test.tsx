@@ -47,6 +47,33 @@ describe("MultiSelect", () => {
     expect(
       within(screen.getByRole("combobox")).getByText("Production AWS"),
     ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("combobox")).queryByText("Select accounts"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the filter label context when a value is selected", () => {
+    render(
+      <MultiSelect values={["FAIL"]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="All Status" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectItem value="FAIL">FAIL</MultiSelectItem>
+          <MultiSelectItem value="PASS">PASS</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    expect(
+      within(screen.getByRole("combobox")).getByText("Status"),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("combobox")).getByText("FAIL"),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("combobox")).queryByText("All Status"),
+    ).not.toBeInTheDocument();
   });
 
   it("filters items without crashing when search is enabled", async () => {
