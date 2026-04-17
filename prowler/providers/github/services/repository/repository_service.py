@@ -256,7 +256,7 @@ class Repository(GithubService):
             status_checks = False
             enforce_admins = False
             conversation_resolution = False
-            dismiss_stale_reviews = False # additon
+            dismiss_stale_reviews = False 
             try:
                 branch = repo.get_branch(default_branch)
                 if branch.protected:
