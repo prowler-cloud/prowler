@@ -80,9 +80,9 @@ export function useFindingGroupResourceState({
 
   const drawer = useResourceDetailDrawer({
     resources,
-    checkId: group.checkId,
     totalResourceCount: totalCount ?? group.resourcesTotal,
     onRequestMoreResources: loadMore,
+    canLoadOtherFindings: group.resourcesTotal !== 0,
     includeMutedInOtherFindings: true,
   });
 
