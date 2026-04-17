@@ -270,6 +270,31 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     ]);
   });
 
+  it("should request muted findings only when explicitly enabled", async () => {
+    const resources = [makeResource()];
+
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
+    adaptFindingsByResourceResponseMock.mockReturnValue([makeDrawerFinding()]);
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+        checkId: "s3_check",
+        includeMutedInOtherFindings: true,
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(getLatestFindingsByResourceUidMock).toHaveBeenCalledWith({
+      resourceUid: "arn:aws:s3:::my-bucket",
+      includeMuted: true,
+    });
+  });
+
   it("should keep isNavigating true for a cached resource long enough to render skeletons", async () => {
     vi.useFakeTimers();
 

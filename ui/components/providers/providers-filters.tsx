@@ -125,7 +125,10 @@ export const ProvidersFilters = ({
                   placeholder={`All ${filter.labelCheckboxGroup}`}
                 />
               </MultiSelectTrigger>
-              <MultiSelectContent search={false}>
+              <MultiSelectContent
+                search={false}
+                width={filter.width ?? "default"}
+              >
                 <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
                 <MultiSelectSeparator />
                 {filter.values.map((value) => {
