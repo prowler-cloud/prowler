@@ -83,6 +83,7 @@ export function useFindingGroupResourceState({
     checkId: group.checkId,
     totalResourceCount: totalCount ?? group.resourcesTotal,
     onRequestMoreResources: loadMore,
+    includeMutedInOtherFindings: true,
   });
 
   const handleDrawerMuteComplete = () => {

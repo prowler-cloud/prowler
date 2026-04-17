@@ -43,6 +43,7 @@ vi.mock("@/actions/finding-groups", () => ({
 }));
 
 import {
+  getLatestFindingsByResourceUid,
   resolveFindingIdsByCheckIds,
   resolveFindingIdsByVisibleGroupResources,
 } from "./findings-by-resource";
@@ -260,5 +261,43 @@ describe("resolveFindingIdsByVisibleGroupResources", () => {
     expect(getFindingGroupResourcesMock).toHaveBeenCalledTimes(1);
     expect(getLatestFindingGroupResourcesMock).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("getLatestFindingsByResourceUid", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+  });
+
+  it("should exclude muted findings by default and always apply severity/time sorting", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+
+    await getLatestFindingsByResourceUid({
+      resourceUid: "resource-1",
+    });
+
+    const calledUrl = new URL(fetchMock.mock.calls[0][0]);
+    expect(calledUrl.pathname).toBe("/api/v1/findings/latest");
+    expect(calledUrl.searchParams.get("filter[resource_uid]")).toBe(
+      "resource-1",
+    );
+    expect(calledUrl.searchParams.get("filter[muted]")).toBe("false");
+    expect(calledUrl.searchParams.get("sort")).toBe("-severity,-updated_at");
+  });
+
+  it("should include muted findings only when explicitly requested", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+
+    await getLatestFindingsByResourceUid({
+      resourceUid: "resource-1",
+      includeMuted: true,
+    });
+
+    const calledUrl = new URL(fetchMock.mock.calls[0][0]);
+    expect(calledUrl.searchParams.get("filter[muted]")).toBe("include");
+    expect(calledUrl.searchParams.get("sort")).toBe("-severity,-updated_at");
   });
 });

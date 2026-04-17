@@ -15,6 +15,7 @@ export interface FilterOption {
   key: string;
   labelCheckboxGroup: string;
   values: string[];
+  width?: "default" | "wide";
   valueLabelMapping?: Array<{ [uid: string]: FilterEntity }>;
   labelFormatter?: (value: string) => string;
   index?: number;
