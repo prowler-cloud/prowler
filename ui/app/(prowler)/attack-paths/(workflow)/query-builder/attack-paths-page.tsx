@@ -78,6 +78,8 @@ interface NodeDetailPanelProps {
   onClose: () => void;
   headingId: string;
   compact?: boolean;
+  onViewFinding?: (findingId: string) => void;
+  viewFindingLoading?: boolean;
 }
 
 const NodeDetailPanel = ({
@@ -86,10 +88,13 @@ const NodeDetailPanel = ({
   onClose,
   headingId,
   compact,
+  onViewFinding,
+  viewFindingLoading = false,
 }: NodeDetailPanelProps) => {
   const isFinding = node.labels.some((label) =>
     label.toLowerCase().includes("finding"),
   );
+  const findingId = String(node.properties?.id || node.id);
 
   return (
     <>
@@ -103,7 +108,7 @@ const NodeDetailPanel = ({
           </h3>
           <p
             className={cn(
-              "text-text-neutral-secondary dark:text-text-neutral-secondary",
+              "text-text-neutral-secondary",
               compact ? "mb-4 text-xs" : "mt-1 text-sm",
             )}
           >
@@ -111,16 +116,19 @@ const NodeDetailPanel = ({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {!compact && isFinding && (
-            <Button asChild variant="default" size="sm">
-              <a
-                href={`/findings?id=${String(node.properties?.id || node.id)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`View finding ${String(node.properties?.id || node.id)}`}
-              >
-                View Finding →
-              </a>
+          {!compact && isFinding && onViewFinding && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onViewFinding(findingId)}
+              disabled={viewFindingLoading}
+              aria-label={`View finding ${findingId}`}
+            >
+              {viewFindingLoading ? (
+                <Spinner className="size-4" />
+              ) : (
+                "View Finding"
+              )}
             </Button>
           )}
           <Button
@@ -134,7 +142,12 @@ const NodeDetailPanel = ({
           </Button>
         </div>
       </div>
-      <NodeDetailContent node={node} allNodes={allNodes} />
+      <NodeDetailContent
+        node={node}
+        allNodes={allNodes}
+        onViewFinding={onViewFinding}
+        viewFindingLoading={viewFindingLoading}
+      />
     </>
   );
 };
@@ -400,9 +413,6 @@ export default function AttackPathsPage() {
   const handleCloseDetails = () => {
     graphState.selectNode(null);
   };
-
-  const getFindingId = (node: GraphNode | null) =>
-    node ? String(node.properties?.id || node.id) : "";
 
   const handleViewFinding = (findingId: string) => {
     if (!findingId) return;
