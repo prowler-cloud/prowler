@@ -1,5 +1,9 @@
 import type { KnipConfig } from "knip";
 
+// Baseline: the `lint:knip` script runs with `--max-issues 504` so CI only
+// fails on regressions beyond the current inventory of unused code. Reduce the
+// threshold as issues are cleaned up (tracked for the dead-code removal step
+// in the knip rollout roadmap).
 const config: KnipConfig = {
   entry: [
     // Next.js app conventions (pages, layouts, errors, route handlers)
@@ -14,6 +18,10 @@ const config: KnipConfig = {
     // Sentry runtime configs (dynamically imported by instrumentation.ts)
     "sentry/sentry.server.config.ts",
     "sentry/sentry.edge.config.ts",
+
+    // Note: Next.js auto-loaded entries (instrumentation.ts, instrumentation-client.ts,
+    // proxy.ts — the renamed middleware) are detected by knip's built-in Next.js plugin
+    // and do not need explicit entries here.
 
     // Build/postinstall scripts
     "scripts/*.js",
