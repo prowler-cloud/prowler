@@ -12,8 +12,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Cloudflare account-scoped API tokens failing connection test in the App with `CloudflareUserTokenRequiredError` [(#10723)](https://github.com/prowler-cloud/prowler/pull/10723)
 - Google Workspace Calendar checks false FAIL on unconfigured settings with secure Google defaults [(#10726)](https://github.com/prowler-cloud/prowler/pull/10726)
+<<<<<<< HEAD
 - `prowler image --registry` failing with `ImageNoImagesProvidedError` due to registry arguments not being forwarded to `ImageProvider` in `init_global_provider` [(#10470)](https://github.com/prowler-cloud/prowler/pull/10470)
 - Google Workspace Drive checks false FAIL on unconfigured settings with secure Google defaults [(#10727)](https://github.com/prowler-cloud/prowler/pull/10727)
+=======
+- Cloudflare `validate_credentials` can hang in an infinite pagination loop when the SDK repeats accounts, blocking connection tests [(#10771)](https://github.com/prowler-cloud/prowler/pull/10771)
+>>>>>>> 19c752c12 (fix(cloudflare): guard validate_credentials against paginator infinite loops (#10771))
 
 ---
 
