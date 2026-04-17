@@ -11,6 +11,7 @@ ENV TRIVY_VERSION=${TRIVY_VERSION}
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
+    git \
     libicu72 \
     gcc \
     g++ \
@@ -68,18 +69,18 @@ WORKDIR /home/prowler
 # Ensure output directory exists
 RUN mkdir -p /tmp/prowler_api_output
 
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir poetry==2.3.4
+    pip install --no-cache-dir uv==0.11.7
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
-# Add `--no-root` to avoid installing the current project as a package
-RUN poetry install --no-root && \
-    rm -rf ~/.cache/pip
+# Add `--no-install-project` to avoid installing the current project as a package
+RUN uv sync --no-install-project && \
+    rm -rf ~/.cache/uv
 
-RUN poetry run python "$(poetry env info --path)/src/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py"
+RUN .venv/bin/python .venv/lib/python3.12/site-packages/prowler/providers/m365/lib/powershell/m365_powershell.py
 
 COPY src/backend/ ./backend/
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
