@@ -47,6 +47,7 @@ interface UseResourceDetailDrawerOptions {
   totalResourceCount?: number;
   onRequestMoreResources?: () => void;
   initialIndex?: number | null;
+  includeMutedInOtherFindings?: boolean;
 }
 
 interface UseResourceDetailDrawerReturn {
@@ -79,6 +80,7 @@ export function useResourceDetailDrawer({
   totalResourceCount,
   onRequestMoreResources,
   initialIndex = null,
+  includeMutedInOtherFindings = false,
 }: UseResourceDetailDrawerOptions): UseResourceDetailDrawerReturn {
   const [isOpen, setIsOpen] = useState(initialIndex !== null);
   const [isLoading, setIsLoading] = useState(false);
@@ -165,7 +167,10 @@ export function useResourceDetailDrawer({
 
     setIsLoading(true);
     try {
-      const response = await getLatestFindingsByResourceUid({ resourceUid });
+      const response = await getLatestFindingsByResourceUid({
+        resourceUid,
+        includeMuted: includeMutedInOtherFindings,
+      });
 
       // Discard stale response if a newer request was started
       if (controller.signal.aborted) return;

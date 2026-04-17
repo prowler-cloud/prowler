@@ -132,6 +132,7 @@ export const FindingsFilters = ({
       key: FilterType.SCAN,
       labelCheckboxGroup: "Scan ID",
       values: completedScanIds,
+      width: "wide" as const,
       valueLabelMapping: scanDetails,
       labelFormatter: (value: string) =>
         getFindingsFilterDisplayValue(`filter[${FilterType.SCAN}]`, value, {
