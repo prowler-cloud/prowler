@@ -11,6 +11,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Findings and filter UX fixes: exclude muted findings by default in the resource detail drawer and finding group resource views, show category context label (for example `Status: FAIL`) on MultiSelect triggers instead of hiding the placeholder, and add a `wide` width option for filter dropdowns applied to the findings Scan filter to prevent label truncation [(#10734)](https://github.com/prowler-cloud/prowler/pull/10734)
+- Findings grouped view now handles zero-resource IaC counters, refines drawer loading states, and adds provider indicators to finding groups [(#10736)](https://github.com/prowler-cloud/prowler/pull/10736)
 
 ---
 
