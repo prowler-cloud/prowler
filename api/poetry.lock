@@ -6665,11 +6665,7 @@ files = [
 
 [[package]]
 name = "prowler"
-<<<<<<< HEAD
 version = "5.24.0"
-=======
-version = "5.25.0"
->>>>>>> 536e90f2a (perf(attack-paths): cleanup task prioritization, restore default batch sizes to 1000, upgrade Cartography to 0.135.0 (#10729))
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">=3.10,<3.13"
@@ -6758,13 +6754,8 @@ uuid6 = "2024.7.10"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-<<<<<<< HEAD
 reference = "v5.24"
 resolved_reference = "ba5b23245f4805f46d67e67fc059aefd6831f7b3"
-=======
-reference = "master"
-resolved_reference = "ca29e354b622198ff6a70e2ea5eb04e4a44a0903"
->>>>>>> 536e90f2a (perf(attack-paths): cleanup task prioritization, restore default batch sizes to 1000, upgrade Cartography to 0.135.0 (#10729))
 
 [[package]]
 name = "psutil"
@@ -6973,11 +6964,11 @@ description = "C parser in Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["main", "dev"]
+markers = "platform_python_implementation != \"PyPy\" and implementation_name != \"PyPy\""
 files = [
     {file = "pycparser-3.0-py3-none-any.whl", hash = "sha256:b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992"},
     {file = "pycparser-3.0.tar.gz", hash = "sha256:600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29"},
 ]
-markers = {main = "implementation_name != \"PyPy\" and platform_python_implementation != \"PyPy\"", dev = "platform_python_implementation != \"PyPy\" and implementation_name != \"PyPy\""}
 
 [[package]]
 name = "pydantic"
@@ -7225,7 +7216,7 @@ description = "The MSALRuntime Python Interop Package"
 optional = false
 python-versions = ">=3.6"
 groups = ["main"]
-markers = "(platform_system == \"Windows\" or platform_system == \"Darwin\" or platform_system == \"Linux\") and sys_platform == \"win32\""
+markers = "sys_platform == \"win32\" and (platform_system == \"Windows\" or platform_system == \"Darwin\" or platform_system == \"Linux\")"
 files = [
     {file = "pymsalruntime-0.18.1-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:0c22e2e83faa10de422bbfaacc1bb2887c9025ee8a53f0fc2e4f7db01c4a7b66"},
     {file = "pymsalruntime-0.18.1-cp310-cp310-macosx_14_0_x86_64.whl", hash = "sha256:8ce2944a0f944833d047bb121396091e00287e2b6373716106da86ea99abf379"},
@@ -9433,8 +9424,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-<<<<<<< HEAD
-content-hash = "44caea5e040c54d4c726144d644e67c942b5acf7e316b1fcb2c22b0947614fbe"
-=======
-content-hash = "a3ab982d11a87d951ff15694d2ca7fd51f1f51a451abb0baa067ccf6966367a8"
->>>>>>> 536e90f2a (perf(attack-paths): cleanup task prioritization, restore default batch sizes to 1000, upgrade Cartography to 0.135.0 (#10729))
+content-hash = "5781e74b0692aed541fe445d6713d2dfd792bb226789501420aac4a8cb45aa2a"
