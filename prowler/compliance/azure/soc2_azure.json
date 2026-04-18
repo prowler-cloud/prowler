@@ -221,7 +221,8 @@
         "monitor_alert_delete_policy_assignment",
         "monitor_alert_delete_public_ip_address_rule",
         "monitor_alert_delete_security_solution",
-        "monitor_alert_delete_sqlserver_fr"
+        "monitor_alert_delete_sqlserver_fr",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {

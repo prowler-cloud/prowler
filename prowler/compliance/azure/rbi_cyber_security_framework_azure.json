@@ -140,7 +140,8 @@
         "entra_policy_default_users_cannot_create_security_groups",
         "entra_policy_guest_invite_only_for_admin_roles",
         "entra_policy_guest_users_access_restrictions",
-        "app_function_identity_without_admin_privileges"
+        "app_function_identity_without_admin_privileges",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {

@@ -291,7 +291,8 @@
         "monitor_diagnostic_setting_with_appropriate_categories",
         "monitor_diagnostic_settings_exists",
         "monitor_storage_account_with_activity_logs_cmk_encrypted",
-        "monitor_storage_account_with_activity_logs_is_private"
+        "monitor_storage_account_with_activity_logs_is_private",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -332,7 +333,8 @@
         "entra_policy_guest_invite_only_for_admin_roles",
         "entra_policy_guest_users_access_restrictions",
         "entra_policy_restricts_user_consent_for_apps",
-        "entra_policy_user_consent_for_verified_apps"
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {

@@ -248,7 +248,9 @@
     {
       "Id": "1.4",
       "Description": "Ensure Access Review is Set Up for External Users in Azure AD Privileged Identity Management",
-      "Checks": [],
+      "Checks": [
+        "entra_user_with_recent_sign_in"
+      ],
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
