@@ -3380,7 +3380,8 @@
         }
       ],
       "Checks": [
-        "entra_global_admin_in_less_than_five_users"
+        "entra_global_admin_in_less_than_five_users",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -3488,7 +3489,8 @@
         "entra_global_admin_in_less_than_five_users",
         "keyvault_non_rbac_secret_expiration_set",
         "keyvault_rbac_secret_expiration_set",
-        "storage_key_rotation_90_days"
+        "storage_key_rotation_90_days",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
