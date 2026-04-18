@@ -1221,7 +1221,13 @@
       "Id": "2.5.2",
       "Name": "User Identification",
       "Description": "User accounts must be assigned unique identifiers that distinguish each user individually, and the use of easily guessable identifiers must be restricted. If the same identifier is shared by multiple users, the reason and justification must be reviewed, supplementary measures such as approval from a responsible party must be established, and accountability must be ensured.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_guest_users_access_restrictions",
+        "containerregistry_admin_user_disabled",
+        "sqlserver_azuread_administrator_enabled",
+        "cosmosdb_account_use_aad_and_rbac",
+        "storage_account_key_access_disabled"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1252,7 +1258,22 @@
       "Id": "2.5.3",
       "Name": "User Authentication",
       "Description": "User access to information systems, personal information, and critical information must be secured through safe authentication procedures and, if necessary, enhanced authentication methods. In addition, access control measures such as limiting login attempts and issuing warnings for illegal login attempts must be established and implemented.",
-      "Checks": [],
+      "Checks": [
+        "entra_privileged_user_has_mfa",
+        "entra_non_privileged_user_has_mfa",
+        "entra_conditional_access_policy_require_mfa_for_admin_portals",
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_security_defaults_enabled",
+        "entra_trusted_named_locations_exists",
+        "app_ensure_auth_is_set_up",
+        "app_client_certificates_on",
+        "app_function_access_keys_configured",
+        "sqlserver_azuread_administrator_enabled",
+        "postgresql_flexible_server_entra_id_authentication_enabled",
+        "cosmosdb_account_use_aad_and_rbac",
+        "storage_account_key_access_disabled"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1314,7 +1335,17 @@
       "Id": "2.5.5",
       "Name": "Management of Special Accounts and Privileges",
       "Description": "Accounts and privileges used for special purposes, such as managing information systems, personal information, and important information, should be granted minimally, separately identified, and controlled.",
-      "Checks": [],
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_privileged_user_has_mfa",
+        "entra_conditional_access_policy_require_mfa_for_admin_portals",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "iam_subscription_roles_owner_custom_not_created",
+        "iam_role_user_access_admin_restricted",
+        "app_function_identity_without_admin_privileges",
+        "storage_account_key_access_disabled"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1347,7 +1378,19 @@
       "Id": "2.5.6",
       "Name": "Review of Access Rights",
       "Description": "The registration, use, and deletion of user accounts accessing information systems, personal information, and important information, as well as the history of granting, changing, and deleting access rights, should be recorded and periodically reviewed to ensure their appropriateness.",
-      "Checks": [],
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "iam_subscription_roles_owner_custom_not_created",
+        "iam_role_user_access_admin_restricted",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_account_key_access_disabled",
+        "storage_default_to_entra_authorization_enabled",
+        "containerregistry_admin_user_disabled"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
