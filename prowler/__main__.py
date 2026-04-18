@@ -93,6 +93,7 @@ from prowler.lib.outputs.compliance.iso27001.iso27001_kubernetes import (
 from prowler.lib.outputs.compliance.iso27001.iso27001_m365 import M365ISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_nhn import NHNISO27001
 from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws import AWSKISAISMSP
+from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_azure import AzureKISAISMSP
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
@@ -861,6 +862,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(csa_ccm_4_0_azure)
                 csa_ccm_4_0_azure.batch_write_data_to_file()
+            elif compliance_name.startswith("kisa"):
+                # Generate KISA-ISMS-P Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                kisa_ismsp = AzureKISAISMSP(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(kisa_ismsp)
+                kisa_ismsp.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"

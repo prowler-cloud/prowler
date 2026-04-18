@@ -848,6 +848,77 @@ KISA_ISMSP_AWS = Compliance(
     ],
 )
 
+KISA_ISMSP_AZURE = Compliance(
+    Framework="KISA-ISMS-P",
+    Name="KISA ISMS compliance framework 2023",
+    Provider="Azure",
+    Version="2023",
+    Description="The ISMS-P certification, established by KISA Korea Internet & Security Agency",
+    Requirements=[
+        Compliance_Requirement(
+            Id="2.5.1",
+            Name="User Account Management",
+            Description="User account management for information systems",
+            Attributes=[
+                KISA_ISMSP_Requirement_Attribute(
+                    Domain="2. Protection Measure Requirements",
+                    Subdomain="2.5. Authentication and Authorization Management",
+                    Section="2.5.1 User Account Management",
+                    AuditChecklist=[
+                        "Has the organization established formal procedures for registering and deleting user accounts?",
+                        "Is access limited to the minimum necessary for each job?",
+                    ],
+                    RelatedRegulations=[
+                        "Personal Information Protection Act, Article 29",
+                        "Standards for Ensuring the Safety of Personal Information, Article 5",
+                    ],
+                    AuditEvidence=[
+                        "User account and access request forms",
+                        "Access classification table for information systems",
+                    ],
+                    NonComplianceCases=[
+                        "Case 1: User registration processed without proper approval records.",
+                        "Case 2: Users granted excessive permissions beyond job requirements.",
+                    ],
+                )
+            ],
+            Checks=[
+                "entra_global_admin_in_less_than_five_users",
+                "iam_subscription_roles_owner_custom_not_created",
+            ],
+        ),
+        Compliance_Requirement(
+            Id="2.5.2",
+            Name="User Identification",
+            Description="User identification for information systems",
+            Attributes=[
+                KISA_ISMSP_Requirement_Attribute(
+                    Domain="2. Protection Measure Requirements",
+                    Subdomain="2.5. Authentication and Authorization Management",
+                    Section="2.5.2 User Identification",
+                    AuditChecklist=[
+                        "Are unique identifiers assigned to users?",
+                        "Is the use of easily guessable identifiers restricted?",
+                    ],
+                    RelatedRegulations=[
+                        "Personal Information Protection Act, Article 29",
+                        "Standards for Ensuring the Safety of Personal Information, Article 5",
+                    ],
+                    AuditEvidence=[
+                        "Login screen for information systems",
+                        "Lists of administrators and users",
+                    ],
+                    NonComplianceCases=[
+                        "Case 1: Default administrator accounts still in use.",
+                        "Case 2: Developers sharing accounts without approval.",
+                    ],
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
 PROWLER_THREATSCORE_AWS = Compliance(
     Framework="ProwlerThreatScore",
     Name="Prowler ThreatScore Compliance Framework for AWS",
