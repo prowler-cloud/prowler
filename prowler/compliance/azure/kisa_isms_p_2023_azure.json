@@ -1422,7 +1422,37 @@
       "Id": "2.6.1",
       "Name": "Network Access",
       "Description": "In order to control unauthorized access to the network, management procedures such as IP management and device authentication must be established and implemented. Network segmentation (DMZ, server farm, DB zone, development zone, etc.) and access controls must be applied according to the business purpose and importance.",
-      "Checks": [],
+      "Checks": [
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_http_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "network_watcher_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_bastion_host_exists",
+        "network_public_ip_shodan",
+        "aks_clusters_public_access_disabled",
+        "aks_clusters_created_with_private_nodes",
+        "aks_network_policy_enabled",
+        "aks_cluster_rbac_enabled",
+        "app_function_not_publicly_accessible",
+        "app_function_vnet_integration_enabled",
+        "containerregistry_not_publicly_accessible",
+        "containerregistry_uses_private_link",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "cosmosdb_account_use_private_endpoints",
+        "aisearch_service_not_publicly_accessible",
+        "sqlserver_unrestricted_inbound_access",
+        "postgresql_flexible_server_allow_access_services_disabled",
+        "storage_default_network_access_rule_is_denied",
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_ensure_azure_services_are_trusted_to_access_is_enabled",
+        "keyvault_access_only_through_private_endpoints",
+        "keyvault_private_endpoints",
+        "databricks_workspace_vnet_injection_enabled"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1457,7 +1487,19 @@
       "Id": "2.6.2",
       "Name": "Access to Information Systems",
       "Description": "The users, access restriction methods, and secure access means for accessing information systems such as servers and network systems must be defined and controlled.",
-      "Checks": [],
+      "Checks": [
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "vm_jit_access_enabled",
+        "vm_linux_enforce_ssh_authentication",
+        "vm_trusted_launch_enabled",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_account_key_access_disabled",
+        "containerregistry_admin_user_disabled",
+        "app_ensure_auth_is_set_up",
+        "app_ftp_deployment_disabled",
+        "app_function_not_publicly_accessible"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1493,7 +1535,10 @@
       "Id": "2.6.3",
       "Name": "Access to Applications",
       "Description": "Access rights to applications must be restricted according to the user's tasks and the importance of the accessed information, and criteria should be established to minimize exposure of unnecessary or sensitive information.",
-      "Checks": [],
+      "Checks": [
+        "app_ensure_auth_is_set_up",
+        "app_client_certificates_on"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1535,7 +1580,18 @@
       "Id": "2.6.4",
       "Name": "Database Access",
       "Description": "Identify the information stored and managed in the database, such as the table list, and establish and implement access control policies according to the importance of the information and the type of applications and users.",
-      "Checks": [],
+      "Checks": [
+        "sqlserver_azuread_administrator_enabled",
+        "sqlserver_unrestricted_inbound_access",
+        "mysql_flexible_server_ssl_connection_enabled",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "postgresql_flexible_server_enforce_ssl_enabled",
+        "postgresql_flexible_server_entra_id_authentication_enabled",
+        "postgresql_flexible_server_allow_access_services_disabled",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "cosmosdb_account_use_aad_and_rbac",
+        "cosmosdb_account_use_private_endpoints"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1603,7 +1659,12 @@
       "Id": "2.6.6",
       "Name": "Remote Access Control",
       "Description": "Managing information systems and handling personal information outside of protected areas is, in principle, prohibited. However, if remote access is allowed for unavoidable reasons such as telecommuting, incident response, or remote collaboration, protective measures must be established and implemented, including approval from responsible personnel, designation of access devices, setting access scope and duration, enhanced authentication, encrypted communication, and securing access devices (e.g., antivirus, patches).",
-      "Checks": [],
+      "Checks": [
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "vm_jit_access_enabled",
+        "network_bastion_host_exists"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
