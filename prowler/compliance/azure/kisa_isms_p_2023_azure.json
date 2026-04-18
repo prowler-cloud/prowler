@@ -1738,7 +1738,28 @@
       "Id": "2.7.1",
       "Name": "Application of Encryption Policy",
       "Description": "To protect personal and important information, encryption policies that reflect legal requirements, such as encryption targets, encryption strength, and encryption usage policies, must be established. Encryption must be applied during the storage, transmission, and transfer of personal and important information.",
-      "Checks": [],
+      "Checks": [
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled",
+        "sqlserver_tde_encryption_enabled",
+        "sqlserver_tde_encrypted_with_cmk",
+        "databricks_workspace_cmk_encryption_enabled",
+        "storage_secure_transfer_required_is_enabled",
+        "storage_ensure_minimum_tls_version_12",
+        "storage_smb_channel_encryption_with_secure_algorithm",
+        "storage_smb_protocol_version_is_latest",
+        "app_minimum_tls_version_12",
+        "app_ensure_http_is_redirected_to_https",
+        "app_ensure_using_http20",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "mysql_flexible_server_ssl_connection_enabled",
+        "postgresql_flexible_server_enforce_ssl_enabled",
+        "sqlserver_recommended_minimal_tls_version",
+        "app_client_certificates_on",
+        "app_ftp_deployment_disabled"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1772,7 +1793,21 @@
       "Id": "2.7.2",
       "Name": "Cryptographic Key Management",
       "Description": "Establish and implement management procedures for the secure generation, use, storage, distribution, and destruction of cryptographic keys, and prepare recovery methods if necessary.",
-      "Checks": [],
+      "Checks": [
+        "keyvault_key_rotation_enabled",
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_recoverable",
+        "keyvault_rbac_enabled",
+        "keyvault_logging_enabled",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "storage_key_rotation_90_days",
+        "storage_account_key_access_disabled",
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
