@@ -66,6 +66,18 @@ updates:
     cooldown:
       default-days: 7
 
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 25
+    target-branch: master
+    labels:
+      - "dependencies"
+      - "pre-commit"
+    cooldown:
+      default-days: 7
+
   # Dependabot Updates are temporary disabled - 2025/04/15
   # v4.6
   # - package-ecosystem: "pip"

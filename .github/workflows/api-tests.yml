@@ -30,6 +30,8 @@ env:
   VALKEY_DB: 0
   API_WORKING_DIR: ./api
 
+permissions: {}
+
 jobs:
   api-tests:
     runs-on: ubuntu-latest

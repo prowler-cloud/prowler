@@ -108,6 +108,8 @@ interface DataTableProviderProps<TData, TValue> {
   renderAfterRow?: (row: Row<TData>) => ReactNode;
   /** Badge shown inside the search input (e.g., active drill-down group) */
   searchBadge?: { label: string; onDismiss: () => void };
+  /** Optional click handler for top-level rows. */
+  onRowClick?: (row: Row<TData>) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -137,6 +139,7 @@ export function DataTable<TData, TValue>({
   searchPlaceholder,
   renderAfterRow,
   searchBadge,
+  onRowClick,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -213,6 +216,18 @@ export function DataTable<TData, TValue>({
 
   const rows = table.getRowModel().rows;
 
+  const handleRowClick = (row: Row<TData>, target: HTMLElement | null) => {
+    if (!onRowClick) {
+      return;
+    }
+
+    if (target?.closest("a, button, input, [role=menuitem]")) {
+      return;
+    }
+
+    onRowClick(row);
+  };
+
   return (
     <div
       className={cn(
@@ -282,7 +297,13 @@ export function DataTable<TData, TValue>({
                   />
                 ) : (
                   <Fragment key={row.id}>
-                    <TableRow data-state={row.getIsSelected() && "selected"}>
+                    <TableRow
+                      data-state={row.getIsSelected() && "selected"}
+                      className={cn(onRowClick && "cursor-pointer")}
+                      onClick={(event) =>
+                        handleRowClick(row, event.target as HTMLElement)
+                      }
+                    >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
                           {flexRender(

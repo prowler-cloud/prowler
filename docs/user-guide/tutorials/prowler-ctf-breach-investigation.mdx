@@ -1,0 +1,59 @@
+---
+title: 'Prowler CTF - Breach Investigation'
+description: 'Investigate a simulated AWS data exfiltration case with Prowler Cloud and recover three flags.'
+---
+
+## Background
+
+Astoneta Corp's security team received an alert: someone has been exfiltrating data from an AWS account. Initial triage suggests that a threat actor found an entry point through a misconfigured storage resource, used leaked credentials to escalate privileges, and launched compute infrastructure to extract data.
+
+Use **Prowler** to scan the AWS account, investigate the findings, and uncover three flags hidden across the attack chain.
+
+## Getting Started
+
+You have been given a set of AWS credentials with read-only access. Use **Prowler Cloud** to connect the target account and run a scan:
+
+1. Log in to [Prowler Cloud](https://cloud.prowler.com).
+2. Add a new **AWS provider** using **Static Access Keys**. Follow the [setup guide](https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#credentials-static-access-keys).
+3. Enter the provided `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+4. Launch a scan and wait for it to complete.
+
+Once the scan finishes, examine the findings to trace the threat actor's steps.
+
+## Challenge 1 - The Entry Point
+
+> "Every breach starts somewhere. The attacker walked in through a door that should never have been open."
+
+An S3 bucket has been left publicly accessible. Anyone on the internet can read its contents, and the threat actor did exactly that.
+
+Find the misconfigured bucket in the Prowler findings and inspect its tags. The flag is the **base64 encoding of the value of the `CaseId` tag** on the vulnerable bucket.
+
+**Hint:** Look for findings related to S3 public access. Every resource in this environment carries a `CaseId` tag, but only the vulnerable bucket's value is the correct flag. Do not take the first `CaseId` you find. Use Prowler's findings to identify which bucket is misconfigured, then review its tags. In Prowler Cloud, resource tags are visible in the metadata view.
+
+## Challenge 2 - Compromised Identity
+
+> "Inside the bucket, the attacker found what every intruder dreams of: admin credentials with no second factor."
+
+The leaked credentials belong to an IAM user with console access and **no MFA enabled**, holding administrator-level permissions.
+
+Find the user flagged by Prowler for having console access without MFA. The flag is the **MD5 hash of the username**.
+
+**Hint:** Not every IAM user in the account is vulnerable. Some exist only for programmatic access and will not trigger this finding.
+
+## Challenge 3 - The Exfiltration Node
+
+> "With admin access secured, the attacker launched an EC2 instance wide open to the internet - their staging ground for data exfiltration."
+
+A security group allows inbound traffic from `0.0.0.0/0` on multiple sensitive ports. An EC2 instance uses this security group to run an exfiltration node.
+
+The flag is hidden in one of the instance's **tags**, but the instance has many tags and only one holds the flag. The `CaseId` tag is **not** the answer this time.
+
+To determine which tag matters, think through the exposed services. The flag is the **base64 encoding of the value of the correct tag**.
+
+**Hint:** The security group allows HTTP traffic. Try accessing the instance. It may point to the tag that matters. The page itself is not the flag. In Prowler Cloud, resource tags are visible in the metadata view.
+
+## Submission
+
+Submit all three flags.
+
+Good luck, investigator.

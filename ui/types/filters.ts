@@ -15,6 +15,7 @@ export interface FilterOption {
   key: string;
   labelCheckboxGroup: string;
   values: string[];
+  width?: "default" | "wide";
   valueLabelMapping?: Array<{ [uid: string]: FilterEntity }>;
   labelFormatter?: (value: string) => string;
   index?: number;
@@ -73,5 +74,7 @@ export type FilterParam =
   | "filter[category__in]"
   | "filter[resource_groups__in]"
   | "filter[scan__in]"
+  | "filter[scan_id]"
+  | "filter[scan_id__in]"
   | "filter[inserted_at]"
   | "filter[muted]";

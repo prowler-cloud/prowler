@@ -1,6 +1,6 @@
 # Code Review Setup - Prowler UI
 
-Guide to set up automatic code validation with Claude Code in the pre-commit hook.
+Guide to set up automatic code validation with Claude Code in the commit hook.
 
 ## Overview
 
@@ -35,7 +35,7 @@ In `/ui/.env`, find the "Code Review Configuration" section:
 
 ```bash
 #### Code Review Configuration ####
-# Enable Claude Code standards validation on pre-commit hook
+# Enable Claude Code standards validation on commit hook
 # Set to 'true' to validate changes against AGENTS.md standards via Claude Code
 # Set to 'false' to skip validation
 CODE_REVIEW_ENABLED=false  # ← Change this to 'true'
