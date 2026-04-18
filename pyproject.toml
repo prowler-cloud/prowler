@@ -9,7 +9,8 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12"
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
   "awsipranges==0.3.3",
@@ -58,7 +59,7 @@ dependencies = [
   "markdown==3.10.2",
   "microsoft-kiota-abstractions==1.9.2",
   "msgraph-sdk==1.23.0",
-  "numpy==2.0.2",
+  "numpy==2.2.6",
   "openstacksdk==4.2.0",
   "pandas==2.2.3",
   "py-ocsf-models==0.8.1",
@@ -94,8 +95,8 @@ license = "Apache-2.0"
 maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}]
 name = "prowler"
 readme = "README.md"
-requires-python = ">=3.10,<3.15"
-version = "5.24.0"
+requires-python = ">=3.10,<3.14"
+version = "5.25.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
