@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.security/pricings",
   "ResourceGroup": "security",
   "Description": "**Microsoft Defender for Cloud** Cloud Security Posture Management (CSPM) plan is evaluated for **standard tier** activation. Defender CSPM provides advanced posture management capabilities including attack path analysis, cloud security explorer, agentless scanning, and governance rules.",
   "Risk": "Without Defender CSPM, the subscription relies on **foundational CSPM** (free tier) which lacks attack path analysis, agentless vulnerability scanning, and security governance. Advanced threats exploiting misconfiguration chains go undetected.",
