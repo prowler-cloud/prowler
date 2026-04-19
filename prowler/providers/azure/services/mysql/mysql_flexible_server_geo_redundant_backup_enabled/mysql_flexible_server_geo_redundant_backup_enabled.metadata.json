@@ -18,9 +18,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az mysql flexible-server update --resource-group <rg> --name <server> --geo-redundant-backup Enabled",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to Azure portal\n2. Go to Azure Database for MySQL flexible servers\n3. Select the server\n4. Go to Settings > Backup and restore\n5. Enable Geo-redundant backup\n6. Click Save\nNote: Geo-redundant backup can only be set during server creation for some tiers.",
       "Terraform": ""
     },
     "Recommendation": {

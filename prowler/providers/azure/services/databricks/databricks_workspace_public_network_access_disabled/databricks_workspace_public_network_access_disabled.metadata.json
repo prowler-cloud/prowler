@@ -18,9 +18,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az databricks workspace update --resource-group <rg> --name <workspace> --public-network-access Disabled",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to Azure portal\n2. Go to Azure Databricks\n3. Select the workspace\n4. Go to Networking\n5. Set Public network access to Disabled\n6. Configure private endpoints\n7. Click Save",
       "Terraform": ""
     },
     "Recommendation": {

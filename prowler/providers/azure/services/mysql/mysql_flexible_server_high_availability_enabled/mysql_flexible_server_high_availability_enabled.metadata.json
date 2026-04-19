@@ -18,9 +18,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az mysql flexible-server update --resource-group <rg> --name <server> --high-availability ZoneRedundant",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to Azure portal\n2. Go to Azure Database for MySQL flexible servers\n3. Select the server\n4. Go to High availability\n5. Select Zone redundant or Same zone\n6. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
