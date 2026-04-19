@@ -7,25 +7,21 @@ class aks_cluster_azure_monitor_enabled(Check):
         findings = []
 
         for subscription_name, clusters in aks_client.clusters.items():
-            for cluster_id, cluster in clusters.items():
-                resource = cluster
+            for cluster in clusters.values():
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource=resource
+                    metadata=self.metadata(), resource=cluster
                 )
                 report.subscription = subscription_name
-                report.resource_name = resource.name
-                report.resource_id = resource.id
-                report.location = resource.location
 
-                if resource.azure_monitor_enabled:
+                if cluster.azure_monitor_enabled:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"{resource.name} has Azure Monitor enabled."
+                        f"Cluster '{cluster.name}' has Azure Monitor enabled."
                     )
                 else:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"{resource.name} does not have Azure Monitor enabled."
+                        f"Cluster '{cluster.name}' does not have Azure Monitor enabled."
                     )
 
                 findings.append(report)

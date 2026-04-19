@@ -6,26 +6,22 @@ class cosmosdb_account_minimal_tls_version_12(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        for subscription_name, accounts in cosmosdb_client.accounts.items():
+        for subscription, accounts in cosmosdb_client.accounts.items():
             for account in accounts:
-                resource = account
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource=resource
+                    metadata=self.metadata(), resource=account
                 )
-                report.subscription = subscription_name
-                report.resource_name = resource.name
-                report.resource_id = resource.id
-                report.location = resource.location
+                report.subscription = subscription
 
-                if resource.minimal_tls_version == "Tls12":
+                if account.minimal_tls_version == "Tls12":
                     report.status = "PASS"
                     report.status_extended = (
-                        f"{resource.name} enforces TLS 1.2 or higher."
+                        f"CosmosDB account {account.name} enforces TLS 1.2 or higher."
                     )
                 else:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"{resource.name} does not enforce TLS 1.2."
+                        f"CosmosDB account {account.name} does not enforce TLS 1.2."
                     )
 
                 findings.append(report)

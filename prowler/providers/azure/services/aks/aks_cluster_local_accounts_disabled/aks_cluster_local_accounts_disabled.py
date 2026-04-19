@@ -7,25 +7,21 @@ class aks_cluster_local_accounts_disabled(Check):
         findings = []
 
         for subscription_name, clusters in aks_client.clusters.items():
-            for cluster_id, cluster in clusters.items():
-                resource = cluster
+            for cluster in clusters.values():
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource=resource
+                    metadata=self.metadata(), resource=cluster
                 )
                 report.subscription = subscription_name
-                report.resource_name = resource.name
-                report.resource_id = resource.id
-                report.location = resource.location
 
-                if resource.local_accounts_disabled:
+                if cluster.local_accounts_disabled:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"{resource.name} has local accounts disabled."
+                        f"Cluster '{cluster.name}' has local accounts disabled."
                     )
                 else:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"{resource.name} has local accounts enabled."
+                        f"Cluster '{cluster.name}' has local accounts enabled."
                     )
 
                 findings.append(report)

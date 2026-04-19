@@ -48,17 +48,8 @@ class Test_aks_cluster_auto_upgrade_enabled:
             )
             from prowler.providers.azure.services.aks.aks_service import Cluster
 
-            aks_client.clusters = {AZURE_SUBSCRIPTION_ID: {"/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.ContainerService/managedClusters/test-cluster": Cluster(
-                id="/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.ContainerService/managedClusters/test-cluster",
-                name="test-cluster",
-                public_fqdn="test.eastus.azmk8s.io",
-                private_fqdn=None,
-                network_policy=None,
-                agent_pool_profiles=[],
-                rbac_enabled=True,
-                location="eastus",
-                auto_upgrade_channel="stable",
-            )}}
+            cluster = Cluster(id="/sub/rg/cluster1", name="test-cluster", public_fqdn="test.azmk8s.io", private_fqdn=None, network_policy=None, agent_pool_profiles=[], rbac_enabled=True, location="eastus", auto_upgrade_channel="stable")
+            aks_client.clusters = {AZURE_SUBSCRIPTION_ID: {cluster.id: cluster}}
 
             check = aks_cluster_auto_upgrade_enabled()
             result = check.execute()
@@ -83,17 +74,8 @@ class Test_aks_cluster_auto_upgrade_enabled:
             )
             from prowler.providers.azure.services.aks.aks_service import Cluster
 
-            aks_client.clusters = {AZURE_SUBSCRIPTION_ID: {"/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.ContainerService/managedClusters/test-cluster": Cluster(
-                id="/subscriptions/sub1/resourceGroups/rg1/providers/Microsoft.ContainerService/managedClusters/test-cluster",
-                name="test-cluster",
-                public_fqdn="test.eastus.azmk8s.io",
-                private_fqdn=None,
-                network_policy=None,
-                agent_pool_profiles=[],
-                rbac_enabled=True,
-                location="eastus",
-                auto_upgrade_channel=None,
-            )}}
+            cluster = Cluster(id="/sub/rg/cluster1", name="test-cluster", public_fqdn="test.azmk8s.io", private_fqdn=None, network_policy=None, agent_pool_profiles=[], rbac_enabled=True, location="eastus", auto_upgrade_channel=None)
+            aks_client.clusters = {AZURE_SUBSCRIPTION_ID: {cluster.id: cluster}}
 
             check = aks_cluster_auto_upgrade_enabled()
             result = check.execute()

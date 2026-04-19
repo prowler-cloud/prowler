@@ -63,16 +63,18 @@ class AKS(AzureService):
                                     defender_enabled=bool(
                                         getattr(
                                             getattr(
-                                                getattr(cluster, "security_profile", None),
-                                                "defender",
+                                                getattr(
+                                                    getattr(cluster, "security_profile", None),
+                                                    "defender",
+                                                    None,
+                                                ),
+                                                "security_monitoring",
                                                 None,
                                             ),
-                                            "security_monitoring",
-                                            None,
+                                            "enabled",
+                                            False,
                                         )
-                                    )
-                                    if getattr(cluster, "security_profile", None)
-                                    else False,
+                                    ),
                                     azure_monitor_enabled=bool(
                                         getattr(
                                             getattr(
