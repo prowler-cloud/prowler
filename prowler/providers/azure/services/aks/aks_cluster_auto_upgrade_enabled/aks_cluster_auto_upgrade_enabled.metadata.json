@@ -18,9 +18,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az aks update --resource-group <rg> --name <cluster> --auto-upgrade-channel stable",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to Azure portal\n2. Go to Kubernetes services and select the cluster\n3. Go to Cluster configuration\n4. Under Automatic upgrade, select a channel (stable recommended)\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {

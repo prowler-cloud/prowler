@@ -18,9 +18,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az cosmosdb update --resource-group <rg> --name <account> --backup-policy-type Continuous",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to Azure portal\n2. Go to Azure Cosmos DB and select the account\n3. Go to Backup & Restore\n4. Select Continuous backup mode\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {

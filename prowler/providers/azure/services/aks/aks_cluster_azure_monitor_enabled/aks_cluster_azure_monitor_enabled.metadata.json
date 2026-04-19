@@ -18,9 +18,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az aks enable-addons --resource-group <rg> --name <cluster> --addons monitoring",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to Azure portal\n2. Go to Kubernetes services and select the cluster\n3. Go to Monitoring > Insights\n4. Click Enable\n5. Select a Log Analytics workspace\n6. Click Configure",
       "Terraform": ""
     },
     "Recommendation": {

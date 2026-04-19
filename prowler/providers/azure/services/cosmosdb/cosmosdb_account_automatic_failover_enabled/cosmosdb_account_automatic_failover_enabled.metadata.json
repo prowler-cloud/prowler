@@ -18,9 +18,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az cosmosdb update --resource-group <rg> --name <account> --enable-automatic-failover true",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to Azure portal\n2. Go to Azure Cosmos DB and select the account\n3. Go to Replicate data globally\n4. Enable Automatic Failover\n5. Click Save",
       "Terraform": ""
     },
     "Recommendation": {
