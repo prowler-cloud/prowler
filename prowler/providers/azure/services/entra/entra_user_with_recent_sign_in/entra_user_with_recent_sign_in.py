@@ -18,13 +18,13 @@ class entra_user_with_recent_sign_in(Check):
             if not enabled_users:
                 continue
 
-            # Detect license issue: if ALL enabled users have no sign-in data,
-            # signInActivity is likely unavailable (requires Entra ID P1/P2).
-            # Report a single warning instead of mass false positives.
+            # If all enabled users are missing sign-in data, avoid claiming
+            # they never signed in. This usually indicates missing telemetry,
+            # often due to licensing or Graph permission limitations.
             all_null = all(
                 u.last_sign_in is None for u in enabled_users.values()
             )
-            if all_null and len(enabled_users) > 1:
+            if all_null:
                 first_user = next(iter(enabled_users.values()))
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=first_user
@@ -35,7 +35,8 @@ class entra_user_with_recent_sign_in(Check):
                 report.status_extended = (
                     f"No sign-in activity data available for any of the "
                     f"{len(enabled_users)} enabled users. This likely means "
-                    f"the tenant does not have an Entra ID P1/P2 license."
+                    f"the tenant is missing Entra ID P1/P2 licensing or the "
+                    f"required Graph permissions to read sign-in activity."
                 )
                 findings.append(report)
                 continue

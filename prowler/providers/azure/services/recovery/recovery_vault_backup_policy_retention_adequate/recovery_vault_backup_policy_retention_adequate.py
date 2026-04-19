@@ -11,6 +11,19 @@ class recovery_vault_backup_policy_retention_adequate(Check):
         for subscription_name, vaults in recovery_client.vaults.items():
             for vault_id, vault in vaults.items():
                 if not vault.backup_policies:
+                    report = Check_Report_Azure(
+                        metadata=self.metadata(), resource=vault
+                    )
+                    report.subscription = subscription_name
+                    report.resource_name = vault.name
+                    report.resource_id = vault.id
+                    report.location = vault.location
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"Recovery vault '{vault.name}' has no backup "
+                        f"policies configured."
+                    )
+                    findings.append(report)
                     continue
 
                 for policy_id, policy in vault.backup_policies.items():

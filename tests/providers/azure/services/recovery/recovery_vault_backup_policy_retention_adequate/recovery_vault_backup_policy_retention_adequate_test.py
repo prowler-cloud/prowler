@@ -1,6 +1,4 @@
 from unittest import mock
-from uuid import uuid4
-
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -64,7 +62,9 @@ class Test_recovery_vault_backup_policy_retention_adequate:
 
             check = recovery_vault_backup_policy_retention_adequate()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "has no backup policies configured" in result[0].status_extended
 
     def test_policy_adequate_retention(self):
         recovery_client = mock.MagicMock
