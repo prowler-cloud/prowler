@@ -163,6 +163,45 @@ class Test_entra_user_with_recent_sign_in:
             assert result[0].status == "PASS"
             assert "10 days ago" in result[0].status_extended
 
+    def test_entra_all_users_no_sign_in_data_license_issue(self):
+        entra_client = mock.MagicMock
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_user_with_recent_sign_in.entra_user_with_recent_sign_in.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.azure.services.entra.entra_user_with_recent_sign_in.entra_user_with_recent_sign_in import (
+                entra_user_with_recent_sign_in,
+            )
+            from prowler.providers.azure.services.entra.entra_service import User
+
+            # Multiple enabled users, ALL with no sign-in data = license issue
+            users = {}
+            for i in range(5):
+                uid = str(uuid4())
+                users[f"user{i}@{DOMAIN}"] = User(
+                    id=uid,
+                    name=f"user{i}",
+                    account_enabled=True,
+                    last_sign_in=None,
+                )
+
+            entra_client.users = {DOMAIN: users}
+
+            check = entra_user_with_recent_sign_in()
+            result = check.execute()
+            # Should produce 1 finding (license warning), not 5 individual FAILs
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "Entra ID P1/P2 license" in result[0].status_extended
+            assert "5 enabled users" in result[0].status_extended
+
     def test_entra_user_boundary_90_days(self):
         entra_client = mock.MagicMock
         user_id = str(uuid4())
