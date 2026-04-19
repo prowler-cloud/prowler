@@ -1315,7 +1315,11 @@ function OtherFindingRow({
         <TableCell className="w-10">
           <NotificationIndicator
             isMuted={isMuted}
-            delta={finding.delta ?? undefined}
+            delta={
+              finding.delta === "new" || finding.delta === "changed"
+                ? finding.delta
+                : undefined
+            }
             mutedReason={finding.mutedReason ?? undefined}
             showDeltaWhenMuted
           />
