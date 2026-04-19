@@ -19,7 +19,7 @@
   "Remediation": {
     "Code": {
       "CLI": "az cosmosdb update --resource-group <rg> --name <account> --public-network-access DISABLED",
-      "NativeIaC": "",
+      "NativeIaC": "```bicep\nresource account 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    databaseAccountOfferType: 'Standard'\n    publicNetworkAccess: 'Disabled' // Critical: disables public network access\n    locations: [{ locationName: resourceGroup().location }]\n  }\n}\n```",
       "Other": "1. Sign in to Azure portal\n2. Go to Azure Cosmos DB and select the account\n3. Go to Networking\n4. Under Public network access, select Disabled\n5. Configure private endpoints\n6. Click Save",
       "Terraform": "```hcl\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                          = \"<example_resource_name>\"\n  location                      = \"<example_resource_id>\"\n  resource_group_name           = \"<example_resource_id>\"\n  offer_type                    = \"Standard\"\n  public_network_access_enabled = false  # Critical: disables public network access\n\n  consistency_policy {\n    consistency_level = \"Session\"\n  }\n\n  geo_location {\n    location          = \"eastus\"\n    failover_priority = 0\n  }\n}\n```"
     },
