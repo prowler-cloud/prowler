@@ -1869,7 +1869,8 @@
       "Id": "7.6",
       "Description": "Ensure that Network Watcher is 'Enabled' for Azure Regions that are in use",
       "Checks": [
-        "network_watcher_enabled"
+        "network_watcher_enabled",
+        "recovery_vault_has_protected_items"
       ],
       "Attributes": [
         {
