@@ -1266,7 +1266,10 @@
           "Check_Summary": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled"
+      ]
     },
     {
       "Id": "A.8.14",
@@ -1293,7 +1296,11 @@
         "storage_ensure_private_endpoints_in_storage_accounts",
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_using_managed_disks",
-        "vm_trusted_launch_enabled"
+        "vm_trusted_launch_enabled",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "mysql_flexible_server_high_availability_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_high_availability_enabled"
       ]
     },
     {
@@ -1415,7 +1422,9 @@
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
         "network_udp_internet_access_restricted",
-        "network_watcher_enabled"
+        "network_watcher_enabled",
+        "databricks_workspace_public_network_access_disabled",
+        "databricks_workspace_no_public_ip_enabled"
       ]
     },
     {

@@ -438,7 +438,9 @@
         "storage_geo_redundant_enabled",
         "keyvault_recoverable",
         "sqlserver_auditing_retention_90_days",
-        "postgresql_flexible_server_log_retention_days_greater_3"
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled"
       ]
     },
     {
