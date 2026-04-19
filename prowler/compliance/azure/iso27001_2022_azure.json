@@ -1110,7 +1110,8 @@
         "app_minimum_tls_version_12",
         "sqlserver_tde_encryption_enabled",
         "storage_ensure_encryption_with_customer_managed_keys",
-        "storage_infrastructure_encryption_is_enabled"
+        "storage_infrastructure_encryption_is_enabled",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ]
     },
     {
