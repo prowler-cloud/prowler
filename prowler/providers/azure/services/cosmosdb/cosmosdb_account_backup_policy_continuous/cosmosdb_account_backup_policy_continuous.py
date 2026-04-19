@@ -6,26 +6,22 @@ class cosmosdb_account_backup_policy_continuous(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        for subscription_name, accounts in cosmosdb_client.accounts.items():
+        for subscription, accounts in cosmosdb_client.accounts.items():
             for account in accounts:
-                resource = account
                 report = Check_Report_Azure(
-                    metadata=self.metadata(), resource=resource
+                    metadata=self.metadata(), resource=account
                 )
-                report.subscription = subscription_name
-                report.resource_name = resource.name
-                report.resource_id = resource.id
-                report.location = resource.location
+                report.subscription = subscription
 
-                if resource.backup_policy_type == "Continuous":
+                if account.backup_policy_type == "Continuous":
                     report.status = "PASS"
                     report.status_extended = (
-                        f"{resource.name} uses continuous backup policy."
+                        f"CosmosDB account {account.name} uses continuous backup policy."
                     )
                 else:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"{resource.name} does not use continuous backup policy."
+                        f"CosmosDB account {account.name} does not use continuous backup policy."
                     )
 
                 findings.append(report)
