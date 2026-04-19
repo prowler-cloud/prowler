@@ -1518,7 +1518,8 @@
         "entra_policy_restricts_user_consent_for_apps",
         "entra_policy_user_consent_for_verified_apps",
         "entra_users_cannot_create_microsoft_365_groups",
-        "entra_user_with_recent_sign_in"
+        "entra_user_with_recent_sign_in",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ],
       "Attributes": [
         {

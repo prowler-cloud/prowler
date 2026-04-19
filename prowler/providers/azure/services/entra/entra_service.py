@@ -51,6 +51,7 @@ class Entra(AzureService):
                 self._get_directory_roles(),
                 self._get_conditional_access_policy(),
                 self._get_app_registrations(),
+                self._get_authentication_methods_policy(),
             )
         )
 
@@ -61,6 +62,7 @@ class Entra(AzureService):
         self.directory_roles = attributes[4]
         self.conditional_access_policy = attributes[5]
         self.app_registrations = attributes[6]
+        self.authentication_methods_policy = attributes[7]
 
         if created_loop:
             asyncio.set_event_loop(None)
@@ -503,6 +505,76 @@ class Entra(AzureService):
 
         return app_registrations
 
+    async def _get_authentication_methods_policy(self):
+        logger.info("Entra - Getting authentication methods policy...")
+        auth_methods_policy = {}
+        try:
+            for tenant, client in self.clients.items():
+                policy_response = await client.policies.authentication_methods_policy.get()
+
+                if not policy_response:
+                    auth_methods_policy[tenant] = None
+                    continue
+
+                # Parse registration enforcement
+                reg_enforcement = getattr(
+                    policy_response, "registration_enforcement", None
+                )
+                reg_campaign = (
+                    getattr(
+                        reg_enforcement,
+                        "authentication_methods_registration_campaign",
+                        None,
+                    )
+                    if reg_enforcement
+                    else None
+                )
+                registration_enforcement_state = (
+                    getattr(reg_campaign, "state", None)
+                    if reg_campaign
+                    else None
+                )
+
+                # Parse authentication method configurations
+                method_configs = []
+                for config in (
+                    getattr(
+                        policy_response,
+                        "authentication_method_configurations",
+                        [],
+                    )
+                    or []
+                ):
+                    odata_type = getattr(config, "odata_type", "") or ""
+                    # Extract method name from odata_type
+                    # e.g. "#microsoft.graph.microsoftAuthenticatorAuthenticationMethodConfiguration"
+                    method_name = (
+                        odata_type.split(".")[-1]
+                        .replace("AuthenticationMethodConfiguration", "")
+                        if odata_type
+                        else getattr(config, "id", "unknown")
+                    )
+                    method_configs.append(
+                        AuthMethodConfig(
+                            id=getattr(config, "id", "") or "",
+                            method_name=method_name,
+                            state=getattr(config, "state", "disabled") or "disabled",
+                        )
+                    )
+
+                auth_methods_policy[tenant] = AuthMethodsPolicy(
+                    id=getattr(policy_response, "id", "") or "",
+                    registration_enforcement_state=registration_enforcement_state,
+                    method_configurations=method_configs,
+                )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return auth_methods_policy
+
 
 class User(BaseModel):
     id: str
@@ -581,3 +653,15 @@ class AppRegistration(BaseModel):
     id: str
     name: str
     credentials: List[AppCredential] = []
+
+
+class AuthMethodConfig(BaseModel):
+    id: str = ""
+    method_name: str
+    state: str = "disabled"  # "enabled" or "disabled"
+
+
+class AuthMethodsPolicy(BaseModel):
+    id: str = ""
+    registration_enforcement_state: Optional[str] = None  # "enabled" or "disabled"
+    method_configurations: List[AuthMethodConfig] = []

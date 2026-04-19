@@ -341,7 +341,8 @@
       "Checks": [
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
-        "entra_security_defaults_enabled"
+        "entra_security_defaults_enabled",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ]
     },
     {

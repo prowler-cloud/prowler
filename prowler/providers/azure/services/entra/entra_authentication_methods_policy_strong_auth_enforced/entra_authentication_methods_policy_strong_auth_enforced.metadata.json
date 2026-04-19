@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "entra_authentication_methods_policy_strong_auth_enforced",
+  "CheckTitle": "Strong authentication methods are enabled with registration enforcement",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Microsoft Entra ID** authentication methods policy is evaluated for **strong authentication enforcement**. The check verifies that at least one strong method (Microsoft Authenticator, FIDO2, or X.509 Certificate) is enabled and that the MFA registration campaign is active to prompt users to enroll.",
+  "Risk": "Without strong authentication methods, the tenant relies on **passwords alone** or weak factors like SMS/voice. Password-only authentication enables **credential stuffing**, **phishing**, and **brute force** attacks. Without registration enforcement, users may never enroll in MFA even when it is available.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-methods-manage",
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-nudge-authenticator-app"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to Microsoft Entra admin center\n2. Go to Protection > Authentication methods > Policies\n3. Enable Microsoft Authenticator and/or FIDO2 security keys\n4. Go to Protection > Authentication methods > Registration campaign\n5. Set State to Enabled\n6. Configure included users/groups\n7. Consider disabling weak methods (SMS, Voice) after users migrate",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **Microsoft Authenticator** and **FIDO2 security keys** as authentication methods. Activate the **MFA registration campaign** to prompt users to register. Disable weak methods (SMS, voice) after migration. Use **Conditional Access** to require strong authentication for all users.",
+      "Url": "https://hub.prowler.com/check/entra_authentication_methods_policy_strong_auth_enforced"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check produces two findings per tenant: one for MFA registration enforcement and one for strong method availability. Microsoft recommends phishing-resistant methods (FIDO2, certificate-based) over app-based push notifications."
+}
