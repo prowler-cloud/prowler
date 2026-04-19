@@ -21,10 +21,10 @@
       "CLI": "az network vnet subnet update --resource-group <rg> --vnet-name <vnet> --name <subnet> --network-security-group <nsg_name>",
       "NativeIaC": "",
       "Other": "1. Sign in to Azure portal\n2. Go to Virtual networks and select the VNet\n3. Click on Subnets\n4. Select the subnet without an NSG\n5. Under Network security group, select an existing NSG or create a new one\n6. Click Save",
-      "Terraform": ""
+      "Terraform": "```hcl\nresource \"azurerm_subnet_network_security_group_association\" \"<example_resource_name>\" {\n  subnet_id                 = \"<example_resource_id>\"  # Critical: associates NSG with subnet\n  network_security_group_id = \"<example_resource_id>\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Associate a **Network Security Group** with every subnet. Create NSG rules following **least privilege** — deny all by default and allow only required traffic. Exclude Azure-managed subnets (GatewaySubnet, AzureFirewallSubnet, AzureBastionSubnet) which have their own security controls.",
+      "Text": "Associate a **Network Security Group** with every subnet. Create NSG rules following **least privilege** \u2014 deny all by default and allow only required traffic. Exclude Azure-managed subnets (GatewaySubnet, AzureFirewallSubnet, AzureBastionSubnet) which have their own security controls.",
       "Url": "https://hub.prowler.com/check/network_subnet_nsg_associated"
     }
   },
