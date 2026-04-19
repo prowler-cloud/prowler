@@ -18,9 +18,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "az postgres flexible-server update --resource-group <rg> --name <server> --geo-redundant-backup Enabled",
+      "CLI": "az postgres flexible-server create --resource-group <rg> --name <server> --geo-redundant-backup Enabled",
       "NativeIaC": "",
-      "Other": "1. Sign in to Azure portal\n2. Go to Azure Database for PostgreSQL flexible servers\n3. Select the server\n4. Go to Settings > Backup and restore\n5. Enable Geo-redundant backup\n6. Click Save\nNote: Geo-redundant backup can only be set during server creation for some tiers.",
+      "Other": "Geo-redundant backup can only be configured during server creation.\n1. Sign in to Azure portal\n2. Create a new Azure Database for PostgreSQL flexible server\n3. Under Backup, select Geo-redundant backup\n4. Complete the server creation\n5. Migrate data from the existing server to the new one",
       "Terraform": ""
     },
     "Recommendation": {
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Geo-redundant backup for PostgreSQL Flexible Server can only be enabled during server creation. Existing servers require recreation to enable this feature."
 }
