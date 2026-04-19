@@ -1,5 +1,5 @@
-from dataclasses import dataclass
-from typing import List
+from dataclasses import dataclass, field
+from typing import List, Optional
 
 from azure.mgmt.cosmosdb import CosmosDBManagementClient
 
@@ -44,6 +44,20 @@ class CosmosDB(AzureService):
                             disable_local_auth=getattr(
                                 account, "disable_local_auth", False
                             ),
+                            enable_automatic_failover=getattr(
+                                account, "enable_automatic_failover", False
+                            ),
+                            backup_policy_type=getattr(
+                                getattr(account, "backup_policy", None),
+                                "type",
+                                None,
+                            ),
+                            public_network_access=getattr(
+                                account, "public_network_access", None
+                            ),
+                            minimal_tls_version=getattr(
+                                account, "minimal_tls_version", None
+                            ),
                         )
                     )
             except Exception as error:
@@ -71,3 +85,7 @@ class Account:
     location: str
     private_endpoint_connections: List[PrivateEndpointConnection]
     disable_local_auth: bool = False
+    enable_automatic_failover: bool = False
+    backup_policy_type: Optional[str] = None
+    public_network_access: Optional[str] = None
+    minimal_tls_version: Optional[str] = None
