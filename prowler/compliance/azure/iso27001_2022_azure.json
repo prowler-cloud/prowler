@@ -1509,7 +1509,8 @@
         "storage_infrastructure_encryption_is_enabled",
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_attached_disks_encrypted_with_cmk",
-        "vm_ensure_unattached_disks_encrypted_with_cmk"
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {

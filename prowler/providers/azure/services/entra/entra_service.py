@@ -50,6 +50,7 @@ class Entra(AzureService):
                 self._get_named_locations(),
                 self._get_directory_roles(),
                 self._get_conditional_access_policy(),
+                self._get_app_registrations(),
             )
         )
 
@@ -59,6 +60,7 @@ class Entra(AzureService):
         self.named_locations = attributes[3]
         self.directory_roles = attributes[4]
         self.conditional_access_policy = attributes[5]
+        self.app_registrations = attributes[6]
 
         if created_loop:
             asyncio.set_event_loop(None)
@@ -435,6 +437,72 @@ class Entra(AzureService):
 
         return conditional_access_policy
 
+    async def _get_app_registrations(self):
+        logger.info("Entra - Getting app registrations...")
+        app_registrations = {}
+        try:
+            for tenant, client in self.clients.items():
+                app_registrations[tenant] = {}
+                apps_response = await client.applications.get()
+
+                try:
+                    while apps_response:
+                        for app in getattr(apps_response, "value", []) or []:
+                            credentials = []
+                            for cred in getattr(
+                                app, "password_credentials", []
+                            ) or []:
+                                credentials.append(
+                                    AppCredential(
+                                        display_name=getattr(
+                                            cred, "display_name", ""
+                                        )
+                                        or "",
+                                        credential_type="password",
+                                        end_date_time=getattr(
+                                            cred, "end_date_time", None
+                                        ),
+                                    )
+                                )
+                            for cred in getattr(
+                                app, "key_credentials", []
+                            ) or []:
+                                credentials.append(
+                                    AppCredential(
+                                        display_name=getattr(
+                                            cred, "display_name", ""
+                                        )
+                                        or "",
+                                        credential_type="certificate",
+                                        end_date_time=getattr(
+                                            cred, "end_date_time", None
+                                        ),
+                                    )
+                                )
+                            app_registrations[tenant][app.id] = AppRegistration(
+                                id=app.id,
+                                name=getattr(app, "display_name", "") or "",
+                                credentials=credentials,
+                            )
+
+                        next_link = getattr(apps_response, "odata_next_link", None)
+                        if not next_link:
+                            break
+                        apps_response = await client.applications.with_url(
+                            next_link
+                        ).get()
+
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return app_registrations
+
 
 class User(BaseModel):
     id: str
@@ -501,3 +569,15 @@ class ConditionalAccessPolicy(BaseModel):
     users: dict[str, List[str]]
     target_resources: dict[str, List[str]]
     access_controls: dict[str, List[str]]
+
+
+class AppCredential(BaseModel):
+    display_name: str = ""
+    credential_type: str  # "password" or "certificate"
+    end_date_time: Optional[datetime] = None
+
+
+class AppRegistration(BaseModel):
+    id: str
+    name: str
+    credentials: List[AppCredential] = []

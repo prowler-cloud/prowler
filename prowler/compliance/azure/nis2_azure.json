@@ -1307,7 +1307,8 @@
         "monitor_storage_account_with_activity_logs_cmk_encrypted",
         "sqlserver_tde_encrypted_with_cmk",
         "vm_ensure_attached_disks_encrypted_with_cmk",
-        "vm_ensure_unattached_disks_encrypted_with_cmk"
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "entra_app_registration_credential_not_expired"
       ],
       "Attributes": [
         {

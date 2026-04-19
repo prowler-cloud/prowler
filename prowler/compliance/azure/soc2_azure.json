@@ -242,7 +242,8 @@
         "app_function_not_publicly_accessible",
         "containerregistry_not_publicly_accessible",
         "network_public_ip_shodan",
-        "storage_blob_public_access_level_is_disabled"
+        "storage_blob_public_access_level_is_disabled",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {
@@ -308,7 +309,8 @@
         "app_minimum_tls_version_12",
         "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version",
-        "storage_ensure_minimum_tls_version_12"
+        "storage_ensure_minimum_tls_version_12",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {
