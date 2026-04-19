@@ -842,7 +842,9 @@
         "storage_blob_versioning_is_enabled",
         "storage_geo_redundant_enabled",
         "vm_scaleset_associated_with_load_balancer",
-        "vm_scaleset_not_empty"
+        "vm_scaleset_not_empty",
+        "cosmosdb_account_automatic_failover_enabled",
+        "cosmosdb_account_backup_policy_continuous"
       ]
     },
     {
@@ -1251,7 +1253,8 @@
         "storage_secure_transfer_required_is_enabled",
         "storage_smb_channel_encryption_with_secure_algorithm",
         "vm_ensure_attached_disks_encrypted_with_cmk",
-        "vm_ensure_unattached_disks_encrypted_with_cmk"
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "cosmosdb_account_minimal_tls_version_12"
       ]
     },
     {
@@ -6182,7 +6185,8 @@
       ],
       "Checks": [
         "monitor_diagnostic_setting_with_appropriate_categories",
-        "monitor_diagnostic_settings_exists"
+        "monitor_diagnostic_settings_exists",
+        "aks_cluster_azure_monitor_enabled"
       ]
     },
     {

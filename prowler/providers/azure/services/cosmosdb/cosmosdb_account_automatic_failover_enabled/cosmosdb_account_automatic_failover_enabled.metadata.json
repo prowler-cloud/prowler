@@ -1,0 +1,34 @@
+{
+  "Provider": "azure",
+  "CheckID": "cosmosdb_account_automatic_failover_enabled",
+  "CheckTitle": "Cosmos DB account has automatic failover enabled",
+  "CheckType": [],
+  "ServiceName": "cosmosdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Azure Cosmos DB** accounts are evaluated for **automatic failover** configuration. When enabled, Cosmos DB automatically promotes a secondary region to primary during a regional outage, ensuring continuous availability without manual intervention.",
+  "Risk": "Without automatic failover, a regional outage requires **manual failover** which delays recovery and risks data unavailability. Applications dependent on the primary region experience downtime until an operator intervenes.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://hub.prowler.com/check/cosmosdb_account_automatic_failover_enabled"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
