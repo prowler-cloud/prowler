@@ -52,8 +52,11 @@ class entra_user_with_recent_sign_in(Check):
                         f"User {user.name} has never signed in."
                     )
                 else:
+                    last = user.last_sign_in
+                    if last.tzinfo is None:
+                        last = last.replace(tzinfo=timezone.utc)
                     days_since = (
-                        datetime.now(timezone.utc) - user.last_sign_in
+                        datetime.now(timezone.utc) - last
                     ).days
                     if days_since > STALE_THRESHOLD_DAYS:
                         report.status = "FAIL"
