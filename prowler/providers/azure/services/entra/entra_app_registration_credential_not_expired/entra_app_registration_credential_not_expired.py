@@ -33,22 +33,25 @@ class entra_app_registration_credential_not_expired(Check):
                         )
                     else:
                         now = datetime.now(timezone.utc)
-                        if credential.end_date_time <= now:
-                            days_ago = (now - credential.end_date_time).days
+                        end = credential.end_date_time
+                        if end.tzinfo is None:
+                            end = end.replace(tzinfo=timezone.utc)
+                        if end <= now:
+                            days_ago = (now - end).days
                             report.status = "FAIL"
                             report.status_extended = (
                                 f"App '{app.name}' has a {credential.credential_type} "
                                 f"credential that expired {days_ago} days ago."
                             )
-                        elif (credential.end_date_time - now).days <= EXPIRY_WARNING_DAYS:
-                            days_left = (credential.end_date_time - now).days
+                        elif (end - now).days <= EXPIRY_WARNING_DAYS:
+                            days_left = (end - now).days
                             report.status = "FAIL"
                             report.status_extended = (
                                 f"App '{app.name}' has a {credential.credential_type} "
                                 f"credential expiring in {days_left} days."
                             )
                         else:
-                            days_left = (credential.end_date_time - now).days
+                            days_left = (end - now).days
                             report.status = "PASS"
                             report.status_extended = (
                                 f"App '{app.name}' has a {credential.credential_type} "
