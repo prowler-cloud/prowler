@@ -20,10 +20,10 @@
       "CLI": "az security pricing create -n CloudPosture --tier Standard",
       "NativeIaC": "",
       "Other": "1. Sign in to Azure portal\n2. Go to Microsoft Defender for Cloud\n3. Select Environment Settings\n4. Click on the subscription\n5. Set Cloud Security Posture Management (CSPM) to On\n6. Click Save",
-      "Terraform": ""
+      "Terraform": "```hcl\nresource \"azurerm_security_center_subscription_pricing\" \"<example_resource_name>\" {\n  tier          = \"Standard\"  # Critical: enables Defender CSPM\n  resource_type = \"CloudPosture\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable **Defender CSPM** standard tier for advanced cloud security posture management. Evaluate the cost against the security benefits — CSPM provides attack path analysis and agentless scanning.",
+      "Text": "Enable **Defender CSPM** standard tier for advanced cloud security posture management. Evaluate the cost against the security benefits \u2014 CSPM provides attack path analysis and agentless scanning.",
       "Url": "https://hub.prowler.com/check/defender_ensure_defender_cspm_is_on"
     }
   },
