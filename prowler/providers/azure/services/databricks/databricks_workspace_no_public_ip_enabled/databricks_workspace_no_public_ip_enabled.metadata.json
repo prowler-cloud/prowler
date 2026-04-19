@@ -21,7 +21,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "1. Sign in to Azure portal\n2. Create a new Databricks workspace (NPIP cannot be changed after creation)\n3. Under Networking, enable 'No Public IP' (Secure Cluster Connectivity)\n4. Configure VNet injection\n5. Deploy the workspace\nNote: This setting can only be configured during workspace creation.",
-      "Terraform": ""
+      "Terraform": "```hcl\nresource \"azurerm_databricks_workspace\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  sku                 = \"premium\"\n\n  custom_parameters {\n    no_public_ip = true  # Critical: no public IPs on cluster nodes\n  }\n}\n```"
     },
     "Recommendation": {
       "Text": "",
