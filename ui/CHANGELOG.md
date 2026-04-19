@@ -8,10 +8,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Findings and filter UX fixes: exclude muted findings by default in the resource detail drawer and finding group resource views, show category context label (for example `Status: FAIL`) on MultiSelect triggers instead of hiding the placeholder, and add a `wide` width option for filter dropdowns applied to the findings Scan filter to prevent label truncation [(#10734)](https://github.com/prowler-cloud/prowler/pull/10734)
 - Findings grouped view now handles zero-resource IaC counters, refines drawer loading states, and adds provider indicators to finding groups [(#10736)](https://github.com/prowler-cloud/prowler/pull/10736)
-- Other Findings for this resource: ordering by `severity` [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
-- Other Findings for this resource: show `delta` indicator [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
-- Compliance: Requirement's findings does not show `muted` [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
-- Latest new findings: link to finding groups order by `-severity,-last_seen_at` [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- Other Findings for this resource: ordering by `severity` [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
+- Other Findings for this resource: show `delta` indicator [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
+- Compliance: Requirement's findings does not show `muted` [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
+- Latest new findings: link to finding groups order by `-severity,-last_seen_at` [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
 
 ### 🔒 Security
 
