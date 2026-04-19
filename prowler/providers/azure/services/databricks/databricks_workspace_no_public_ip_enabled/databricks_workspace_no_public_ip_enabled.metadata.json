@@ -14,7 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/databricks/security/network/secure-cluster-connectivity",
-    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/no-public-ip"
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/secure-cluster-connectivity"
   ],
   "Remediation": {
     "Code": {

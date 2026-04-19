@@ -13,7 +13,7 @@
   "Risk": "Public network access exposes the workspace control plane and data plane to the internet. Attackers can attempt **credential stuffing**, exploit vulnerabilities, or exfiltrate data through the public endpoint.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/azure/databricks/security/network/front-end/front-end-private-link",
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/private-link",
     "https://learn.microsoft.com/en-us/azure/databricks/administration-guide/cloud-configurations/azure/private-link"
   ],
   "Remediation": {
