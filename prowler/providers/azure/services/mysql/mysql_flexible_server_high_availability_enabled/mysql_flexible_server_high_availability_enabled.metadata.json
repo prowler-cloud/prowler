@@ -12,7 +12,10 @@
   "Description": "**Azure MySQL Flexible Server** is evaluated for **high availability** mode. Zone-redundant or same-zone HA provides automatic failover to a standby replica during outages.",
   "Risk": "Without HA, a server failure causes **downtime** until manual recovery or redeployment. Applications experience extended unavailability during unplanned outages.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-high-availability",
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-configure-high-availability-cli"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

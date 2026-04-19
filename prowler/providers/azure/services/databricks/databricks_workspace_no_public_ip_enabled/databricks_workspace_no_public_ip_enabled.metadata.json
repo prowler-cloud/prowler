@@ -12,7 +12,10 @@
   "Description": "**Azure Databricks** workspaces are evaluated for **secure cluster connectivity** (No Public IP / NPIP). When enabled, cluster nodes do not receive public IP addresses, reducing the attack surface.",
   "Risk": "Cluster nodes with public IPs are directly reachable from the internet, enabling **port scanning**, **lateral movement** from compromised nodes, and **data exfiltration** bypassing network controls.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/secure-cluster-connectivity",
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/no-public-ip"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

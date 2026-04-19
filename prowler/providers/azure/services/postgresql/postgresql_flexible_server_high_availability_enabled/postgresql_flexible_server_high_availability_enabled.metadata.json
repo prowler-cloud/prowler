@@ -12,7 +12,10 @@
   "Description": "**Azure PostgreSQL Flexible Server** is evaluated for **high availability** mode. Zone-redundant or same-zone HA provides automatic failover to a standby replica.",
   "Risk": "Without HA, a server failure causes **downtime** until manual recovery. Critical databases require automated failover for business continuity.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-high-availability",
+    "https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-configure-high-availability-cli"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

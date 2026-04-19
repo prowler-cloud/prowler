@@ -12,7 +12,10 @@
   "Description": "**Azure MySQL Flexible Server** is evaluated for **geo-redundant backup**. Geo-redundant backup stores copies in a paired Azure region, enabling recovery from a full regional outage.",
   "Risk": "Without geo-redundant backup, a regional disaster causes **permanent data loss**. Locally redundant backups only protect against storage hardware failures within the same region.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-backup-restore",
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-restore-server-portal"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
