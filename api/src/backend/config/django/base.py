@@ -57,6 +57,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "api.middleware.APILoggingMiddleware",
+    "api.middleware.SAMLACSURLMiddleware",
     "allauth.account.middleware.AccountMiddleware",
 ]
 
