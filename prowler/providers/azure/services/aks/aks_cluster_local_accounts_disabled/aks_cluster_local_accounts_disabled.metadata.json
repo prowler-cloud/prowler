@@ -12,7 +12,10 @@
   "Description": "**Azure Kubernetes Service** clusters are evaluated for **local account** status. Disabling local accounts forces all authentication through Microsoft Entra ID, ensuring centralized identity management, MFA, and conditional access.",
   "Risk": "Local accounts bypass **Entra ID** authentication, MFA, and conditional access policies. Compromised local credentials provide persistent cluster access without audit trail or identity governance.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/aks/manage-local-accounts-managed-azure-ad",
+    "https://learn.microsoft.com/en-us/azure/aks/azure-ad-integration-cli"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

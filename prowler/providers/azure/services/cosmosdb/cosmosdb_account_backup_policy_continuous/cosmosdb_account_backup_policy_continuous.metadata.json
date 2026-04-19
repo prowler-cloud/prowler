@@ -12,7 +12,10 @@
   "Description": "**Azure Cosmos DB** accounts are evaluated for **continuous backup** policy. Continuous backup provides point-in-time restore (PITR) enabling recovery to any point within the retention window, unlike periodic backup which only supports full restores at fixed intervals.",
   "Risk": "Periodic backup limits recovery to the last backup snapshot. Data changes between snapshots are lost during restore. Continuous backup enables **granular recovery** from accidental deletes, corruption, or ransomware.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/continuous-backup-restore-introduction",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/provision-account-continuous-backup"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

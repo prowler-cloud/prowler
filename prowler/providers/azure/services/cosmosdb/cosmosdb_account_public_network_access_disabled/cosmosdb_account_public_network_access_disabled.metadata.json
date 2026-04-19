@@ -12,7 +12,10 @@
   "Description": "**Azure Cosmos DB** accounts are evaluated for **public network access**. Disabling public access ensures the account is only reachable through private endpoints or VNet service endpoints, reducing the attack surface.",
   "Risk": "Public network access exposes the database endpoint to the internet. Combined with weak authentication, this enables **unauthorized data access**, **enumeration**, and **brute force** attacks from any source.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-firewall"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

@@ -12,7 +12,10 @@
   "Description": "**Azure Cosmos DB** accounts are evaluated for **automatic failover** configuration. When enabled, Cosmos DB automatically promotes a secondary region to primary during a regional outage, ensuring continuous availability without manual intervention.",
   "Risk": "Without automatic failover, a regional outage requires **manual failover** which delays recovery and risks data unavailability. Applications dependent on the primary region experience downtime until an operator intervenes.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-manage-database-account#automatic-failover",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/high-availability"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

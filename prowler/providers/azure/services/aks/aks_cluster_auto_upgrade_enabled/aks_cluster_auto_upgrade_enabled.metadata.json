@@ -12,7 +12,10 @@
   "Description": "**Azure Kubernetes Service** clusters are evaluated for **automatic upgrade** configuration. An upgrade channel ensures the cluster automatically receives Kubernetes version updates and security patches.",
   "Risk": "Without auto-upgrade, clusters run outdated Kubernetes versions with **known CVEs**. Manual upgrades are often delayed, leaving clusters vulnerable to exploits targeting patched vulnerabilities.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/aks/auto-upgrade-cluster",
+    "https://learn.microsoft.com/en-us/azure/aks/upgrade-aks-cluster"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",

@@ -12,7 +12,10 @@
   "Description": "**Azure Kubernetes Service** clusters are evaluated for **Azure Monitor** integration. Monitor provides metrics collection, log aggregation, and alerting for cluster health and workload performance.",
   "Risk": "Without monitoring, cluster degradation, resource exhaustion, and anomalous behavior go undetected. Lack of observability delays incident detection and hampers forensic investigation.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-overview",
+    "https://learn.microsoft.com/en-us/azure/aks/monitor-aks"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
