@@ -19,7 +19,7 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
+      "NativeIaC": "```bicep\nresource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  sku: { name: 'premium' }\n  properties: {\n    managedResourceGroupId: '<example_resource_id>'\n    parameters: {\n      enableNoPublicIp: {\n        value: true // Critical: prevents public IPs on cluster nodes\n      }\n    }\n  }\n}\n```",
       "Other": "1. Sign in to Azure portal\n2. Create a new Databricks workspace (NPIP cannot be changed after creation)\n3. Under Networking, enable 'No Public IP' (Secure Cluster Connectivity)\n4. Configure VNet injection\n5. Deploy the workspace\nNote: This setting can only be configured during workspace creation.",
       "Terraform": "```hcl\nresource \"azurerm_databricks_workspace\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  sku                 = \"premium\"\n\n  custom_parameters {\n    no_public_ip = true  # Critical: no public IPs on cluster nodes\n  }\n}\n```"
     },

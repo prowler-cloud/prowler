@@ -19,7 +19,7 @@
   "Remediation": {
     "Code": {
       "CLI": "az postgres flexible-server update --resource-group <rg> --name <server> --high-availability ZoneRedundant",
-      "NativeIaC": "",
+      "NativeIaC": "```bicep\nresource server 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  sku: { name: 'Standard_D2ds_v4', tier: 'GeneralPurpose' }\n  properties: {\n    highAvailability: {\n      mode: 'ZoneRedundant' // Critical: enables zone-redundant HA\n    }\n  }\n}\n```",
       "Other": "1. Sign in to Azure portal\n2. Go to Azure Database for PostgreSQL flexible servers\n3. Select the server\n4. Go to High availability\n5. Select Zone redundant or Same zone\n6. Click Save",
       "Terraform": "```hcl\nresource \"azurerm_postgresql_flexible_server\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n\n  high_availability {\n    mode = \"ZoneRedundant\"  # Critical: enables zone-redundant HA\n  }\n\n  administrator_login    = \"adminuser\"\n  administrator_password = \"<admin_password>\"\n  sku_name               = \"GP_Standard_D2ds_v4\"\n  version                = \"14\"\n}\n```"
     },
