@@ -21,7 +21,7 @@
       "CLI": "az aks enable-addons --resource-group <rg> --name <cluster> --addons monitoring",
       "NativeIaC": "",
       "Other": "1. Sign in to Azure portal\n2. Go to Kubernetes services and select the cluster\n3. Go to Monitoring > Insights\n4. Click Enable\n5. Select a Log Analytics workspace\n6. Click Configure",
-      "Terraform": ""
+      "Terraform": "```hcl\nresource \"azurerm_kubernetes_cluster\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  dns_prefix          = \"<example_resource_name>\"\n\n  default_node_pool {\n    name       = \"default\"\n    node_count = 1\n    vm_size    = \"Standard_DS2_v2\"\n  }\n\n  identity {\n    type = \"SystemAssigned\"\n  }\n\n  oms_agent {\n    log_analytics_workspace_id = \"<example_resource_id>\"  # Critical: enables Azure Monitor\n  }\n}\n```"
     },
     "Recommendation": {
       "Text": "",

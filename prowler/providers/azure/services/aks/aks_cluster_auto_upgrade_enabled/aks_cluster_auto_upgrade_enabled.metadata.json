@@ -21,7 +21,7 @@
       "CLI": "az aks update --resource-group <rg> --name <cluster> --auto-upgrade-channel stable",
       "NativeIaC": "",
       "Other": "1. Sign in to Azure portal\n2. Go to Kubernetes services and select the cluster\n3. Go to Cluster configuration\n4. Under Automatic upgrade, select a channel (stable recommended)\n5. Click Save",
-      "Terraform": ""
+      "Terraform": "```hcl\nresource \"azurerm_kubernetes_cluster\" \"<example_resource_name>\" {\n  name                      = \"<example_resource_name>\"\n  location                  = \"<example_resource_id>\"\n  resource_group_name       = \"<example_resource_id>\"\n  dns_prefix                = \"<example_resource_name>\"\n  automatic_upgrade_channel = \"stable\"  # Critical: enables automatic cluster upgrades\n\n  default_node_pool {\n    name       = \"default\"\n    node_count = 1\n    vm_size    = \"Standard_DS2_v2\"\n  }\n\n  identity {\n    type = \"SystemAssigned\"\n  }\n}\n```"
     },
     "Recommendation": {
       "Text": "",

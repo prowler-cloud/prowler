@@ -20,7 +20,7 @@
       "CLI": "az cosmosdb update --resource-group <rg> --name <account> --minimal-tls-version Tls12",
       "NativeIaC": "",
       "Other": "1. Sign in to Azure portal\n2. Go to Azure Cosmos DB and select the account\n3. Go to Networking\n4. Set Minimum TLS version to 1.2\n5. Click Save",
-      "Terraform": ""
+      "Terraform": "```hcl\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  offer_type          = \"Standard\"\n  minimal_tls_version = \"Tls12\"  # Critical: enforces TLS 1.2 minimum\n\n  consistency_policy {\n    consistency_level = \"Session\"\n  }\n\n  geo_location {\n    location          = \"eastus\"\n    failover_priority = 0\n  }\n}\n```"
     },
     "Recommendation": {
       "Text": "",
