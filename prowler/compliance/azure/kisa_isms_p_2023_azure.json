@@ -1189,7 +1189,8 @@
         "storage_account_key_access_disabled",
         "storage_default_to_entra_authorization_enabled",
         "entra_user_with_recent_sign_in",
-        "entra_app_registration_credential_not_expired"
+        "entra_app_registration_credential_not_expired",
+        "entra_users_cannot_create_microsoft_365_groups"
       ],
       "Attributes": [
         {
@@ -1350,7 +1351,8 @@
         "iam_role_user_access_admin_restricted",
         "app_function_identity_without_admin_privileges",
         "storage_account_key_access_disabled",
-        "entra_app_registration_credential_not_expired"
+        "entra_app_registration_credential_not_expired",
+        "iam_custom_role_has_permissions_to_administer_resource_locks"
       ],
       "Attributes": [
         {
@@ -1458,7 +1460,8 @@
         "storage_ensure_azure_services_are_trusted_to_access_is_enabled",
         "keyvault_access_only_through_private_endpoints",
         "keyvault_private_endpoints",
-        "databricks_workspace_vnet_injection_enabled"
+        "databricks_workspace_vnet_injection_enabled",
+        "storage_cross_tenant_replication_disabled"
       ],
       "Attributes": [
         {
@@ -1765,7 +1768,8 @@
         "postgresql_flexible_server_enforce_ssl_enabled",
         "sqlserver_recommended_minimal_tls_version",
         "app_client_certificates_on",
-        "app_ftp_deployment_disabled"
+        "app_ftp_deployment_disabled",
+        "app_function_ftps_deployment_disabled"
       ],
       "Attributes": [
         {
@@ -2106,8 +2110,7 @@
         "storage_ensure_file_shares_soft_delete_is_enabled",
         "storage_blob_versioning_is_enabled",
         "storage_geo_redundant_enabled",
-        "keyvault_recoverable",
-        "sqlserver_auditing_retention_90_days"
+        "keyvault_recoverable"
       ],
       "Attributes": [
         {
@@ -2169,7 +2172,8 @@
         "postgresql_flexible_server_log_disconnections_on",
         "postgresql_flexible_server_log_retention_days_greater_3",
         "appinsights_ensure_is_configured",
-        "app_function_application_insights_enabled"
+        "app_function_application_insights_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on"
       ],
       "Attributes": [
         {
@@ -2333,7 +2337,9 @@
         "monitor_alert_delete_sqlserver_fr",
         "monitor_alert_create_update_public_ip_address_rule",
         "monitor_alert_delete_public_ip_address_rule",
-        "policy_ensure_asc_enforcement_enabled"
+        "policy_ensure_asc_enforcement_enabled",
+        "vm_ensure_using_managed_disks",
+        "defender_auto_provisioning_log_analytics_agent_vms_on"
       ],
       "Attributes": [
         {
@@ -2412,10 +2418,7 @@
         "vm_jit_access_enabled",
         "vm_linux_enforce_ssh_authentication",
         "vm_trusted_launch_enabled",
-        "vm_scaleset_associated_with_load_balancer",
-        "vm_scaleset_not_empty",
         "vm_ensure_using_approved_images",
-        "vm_desired_sku_size",
         "app_ensure_auth_is_set_up",
         "app_client_certificates_on",
         "app_ensure_http_is_redirected_to_https",
@@ -2739,7 +2742,8 @@
         "app_ensure_java_version_is_latest",
         "app_ensure_php_version_is_latest",
         "app_ensure_python_version_is_latest",
-        "app_function_latest_runtime_version"
+        "app_function_latest_runtime_version",
+        "vm_ensure_using_approved_images"
       ],
       "Attributes": [
         {

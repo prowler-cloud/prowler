@@ -861,7 +861,7 @@ KISA_ISMSP_AZURE = Compliance(
             Description="User account management for information systems",
             Attributes=[
                 KISA_ISMSP_Requirement_Attribute(
-                    Domain="2. Protection Measure Requirements",
+                    Domain="2. Control Measures Requirements",
                     Subdomain="2.5. Authentication and Authorization Management",
                     Section="2.5.1 User Account Management",
                     AuditChecklist=[
@@ -893,7 +893,7 @@ KISA_ISMSP_AZURE = Compliance(
             Description="User identification for information systems",
             Attributes=[
                 KISA_ISMSP_Requirement_Attribute(
-                    Domain="2. Protection Measure Requirements",
+                    Domain="2. Control Measures Requirements",
                     Subdomain="2.5. Authentication and Authorization Management",
                     Section="2.5.2 User Identification",
                     AuditChecklist=[
