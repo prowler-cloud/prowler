@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.network/virtualnetworks/subnets",
   "ResourceGroup": "network",
   "Description": "**Azure Virtual Network** subnets are evaluated for **Network Security Group (NSG)** association. Each subnet should have an NSG to enforce inbound and outbound traffic filtering rules. Subnets without NSGs allow all traffic by default.",
   "Risk": "Subnets without NSGs have **no network-level access control**. All inbound and outbound traffic is allowed by default, enabling **lateral movement**, **unauthorized access** to resources, and **data exfiltration** across the virtual network.",

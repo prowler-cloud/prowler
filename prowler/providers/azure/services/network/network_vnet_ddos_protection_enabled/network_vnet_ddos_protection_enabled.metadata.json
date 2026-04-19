@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.network/virtualnetworks",
   "ResourceGroup": "network",
   "Description": "**Azure Virtual Networks** are evaluated for **DDoS Network Protection**. When enabled, Azure DDoS Protection provides enhanced mitigation against volumetric, protocol, and application-layer DDoS attacks targeting resources deployed in the virtual network.",
   "Risk": "Without DDoS protection, Azure resources are only covered by **DDoS Infrastructure Protection** (basic), which may not mitigate sophisticated or large-scale attacks. Successful DDoS attacks cause **service unavailability** and potential **data exposure** during failover.",
