@@ -1346,7 +1346,8 @@
         "monitor_alert_delete_policy_assignment",
         "monitor_alert_delete_public_ip_address_rule",
         "monitor_alert_delete_security_solution",
-        "monitor_alert_delete_sqlserver_fr"
+        "monitor_alert_delete_sqlserver_fr",
+        "defender_ensure_defender_cspm_is_on"
       ]
     },
     {

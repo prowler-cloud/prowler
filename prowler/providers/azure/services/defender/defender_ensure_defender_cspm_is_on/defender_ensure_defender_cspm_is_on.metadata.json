@@ -1,0 +1,36 @@
+{
+  "Provider": "azure",
+  "CheckID": "defender_ensure_defender_cspm_is_on",
+  "CheckTitle": "Microsoft Defender CSPM is set to On",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Microsoft Defender for Cloud** Cloud Security Posture Management (CSPM) plan is evaluated for **standard tier** activation. Defender CSPM provides advanced posture management capabilities including attack path analysis, cloud security explorer, agentless scanning, and governance rules.",
+  "Risk": "Without Defender CSPM, the subscription relies on **foundational CSPM** (free tier) which lacks attack path analysis, agentless vulnerability scanning, and security governance. Advanced threats exploiting misconfiguration chains go undetected.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/concept-cloud-security-posture-management"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az security pricing create -n CloudPosture --tier Standard",
+      "NativeIaC": "",
+      "Other": "1. Sign in to Azure portal\n2. Go to Microsoft Defender for Cloud\n3. Select Environment Settings\n4. Click on the subscription\n5. Set Cloud Security Posture Management (CSPM) to On\n6. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **Defender CSPM** standard tier for advanced cloud security posture management. Evaluate the cost against the security benefits — CSPM provides attack path analysis and agentless scanning.",
+      "Url": "https://hub.prowler.com/check/defender_ensure_defender_cspm_is_on"
+    }
+  },
+  "Categories": [
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
