@@ -13,7 +13,8 @@
   "Risk": "Without Defender CSPM, the subscription relies on **foundational CSPM** (free tier) which lacks attack path analysis, agentless vulnerability scanning, and security governance. Advanced threats exploiting misconfiguration chains go undetected.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/concept-cloud-security-posture-management"
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/concept-cloud-security-posture-management",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/enable-enhanced-security"
   ],
   "Remediation": {
     "Code": {
