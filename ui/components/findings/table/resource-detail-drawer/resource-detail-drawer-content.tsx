@@ -1313,7 +1313,12 @@ function OtherFindingRow({
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
       >
         <TableCell className="w-10">
-          <NotificationIndicator isMuted={isMuted} />
+          <NotificationIndicator
+            isMuted={isMuted}
+            delta={finding.delta ?? undefined}
+            mutedReason={finding.mutedReason ?? undefined}
+            showDeltaWhenMuted
+          />
         </TableCell>
         <TableCell>
           <StatusFindingBadge status={finding.status as FindingStatus} />
