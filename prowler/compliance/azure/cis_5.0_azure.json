@@ -2889,7 +2889,9 @@
     {
       "Id": "8.3.11",
       "Description": "Ensure certificate 'Validity Period (in months)' is less than or equal to '12'",
-      "Checks": [],
+      "Checks": [
+        "entra_app_registration_credential_not_expired"
+      ],
       "Attributes": [
         {
           "Section": "8 Security Services",
