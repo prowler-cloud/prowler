@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.recoveryservices/vaults",
   "ResourceGroup": "storage",
   "Description": "**Azure Recovery Services** vaults are evaluated for **backup protected items**. A vault with no protected items indicates that no resources (VMs, databases, file shares) are configured for backup through this vault, potentially leaving critical workloads unprotected.",
   "Risk": "Empty vaults represent a gap in **disaster recovery** coverage. Resources without backup protection face permanent data loss from accidental deletion, ransomware, corruption, or regional outages. The vault may have been provisioned but backup was never configured.",

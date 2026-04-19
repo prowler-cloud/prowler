@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.recoveryservices/vaults",
   "ResourceGroup": "storage",
   "Description": "**Azure Recovery Services** backup policies are evaluated for adequate **daily retention**. Policies with fewer than 30 days of retention may not provide sufficient recovery points for incident investigation, compliance requirements, or ransomware recovery scenarios.",
   "Risk": "Short retention periods limit the ability to recover from **delayed-discovery incidents** such as ransomware that encrypts backups over time, data corruption that propagates across backup cycles, or compliance investigations requiring historical data. Insufficient retention may violate regulatory requirements.",
