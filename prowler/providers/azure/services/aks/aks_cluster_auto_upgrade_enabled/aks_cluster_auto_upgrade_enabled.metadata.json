@@ -14,7 +14,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/aks/auto-upgrade-cluster",
-    "https://learn.microsoft.com/en-us/azure/aks/upgrade-aks-cluster"
+    "https://learn.microsoft.com/en-us/azure/aks/upgrade-aks-cluster",
+    "https://learn.microsoft.com/en-us/azure/aks/planned-maintenance"
   ],
   "Remediation": {
     "Code": {

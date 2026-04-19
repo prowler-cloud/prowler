@@ -14,7 +14,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-manage-database-account#automatic-failover",
-    "https://learn.microsoft.com/en-us/azure/cosmos-db/high-availability"
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/high-availability",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-manage-database-account"
   ],
   "Remediation": {
     "Code": {

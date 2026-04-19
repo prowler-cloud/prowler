@@ -14,7 +14,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints",
-    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-firewall"
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-firewall",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-vnet-service-endpoint"
   ],
   "Remediation": {
     "Code": {

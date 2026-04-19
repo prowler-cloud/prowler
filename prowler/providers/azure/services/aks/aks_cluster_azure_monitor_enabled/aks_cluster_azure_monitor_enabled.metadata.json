@@ -14,7 +14,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-overview",
-    "https://learn.microsoft.com/en-us/azure/aks/monitor-aks"
+    "https://learn.microsoft.com/en-us/azure/aks/monitor-aks",
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-enable-aks"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,8 @@
   "Risk": "Allowing TLS 1.0/1.1 exposes connections to **POODLE**, **BEAST**, and other protocol downgrade attacks that can compromise data in transit confidentiality.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://learn.microsoft.com/en-us/azure/cosmos-db/security"
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/security",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-configure-firewall"
   ],
   "Remediation": {
     "Code": {

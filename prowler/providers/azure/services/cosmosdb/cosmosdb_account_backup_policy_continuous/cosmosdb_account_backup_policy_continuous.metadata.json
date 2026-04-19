@@ -14,7 +14,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/cosmos-db/continuous-backup-restore-introduction",
-    "https://learn.microsoft.com/en-us/azure/cosmos-db/provision-account-continuous-backup"
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/provision-account-continuous-backup",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/restore-account-continuous-backup"
   ],
   "Remediation": {
     "Code": {
