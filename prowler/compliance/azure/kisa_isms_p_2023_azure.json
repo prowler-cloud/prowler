@@ -1187,7 +1187,9 @@
         "cosmosdb_account_use_aad_and_rbac",
         "containerregistry_admin_user_disabled",
         "storage_account_key_access_disabled",
-        "storage_default_to_entra_authorization_enabled"
+        "storage_default_to_entra_authorization_enabled",
+        "entra_user_with_recent_sign_in",
+        "entra_app_registration_credential_not_expired"
       ],
       "Attributes": [
         {
@@ -1272,7 +1274,8 @@
         "sqlserver_azuread_administrator_enabled",
         "postgresql_flexible_server_entra_id_authentication_enabled",
         "cosmosdb_account_use_aad_and_rbac",
-        "storage_account_key_access_disabled"
+        "storage_account_key_access_disabled",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ],
       "Attributes": [
         {
@@ -1304,7 +1307,9 @@
       "Id": "2.5.4",
       "Name": "Password Management",
       "Description": "Procedures for managing passwords used by users of information systems, as well as customers and members, must be established and implemented, taking into account legal requirements and external threats.",
-      "Checks": [],
+      "Checks": [
+        "entra_authentication_methods_policy_strong_auth_enforced"
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1344,7 +1349,8 @@
         "iam_subscription_roles_owner_custom_not_created",
         "iam_role_user_access_admin_restricted",
         "app_function_identity_without_admin_privileges",
-        "storage_account_key_access_disabled"
+        "storage_account_key_access_disabled",
+        "entra_app_registration_credential_not_expired"
       ],
       "Attributes": [
         {
@@ -1389,7 +1395,8 @@
         "storage_blob_public_access_level_is_disabled",
         "storage_account_key_access_disabled",
         "storage_default_to_entra_authorization_enabled",
-        "containerregistry_admin_user_disabled"
+        "containerregistry_admin_user_disabled",
+        "entra_user_with_recent_sign_in"
       ],
       "Attributes": [
         {
@@ -1806,7 +1813,8 @@
         "storage_key_rotation_90_days",
         "storage_account_key_access_disabled",
         "storage_ensure_encryption_with_customer_managed_keys",
-        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "entra_app_registration_credential_not_expired"
       ],
       "Attributes": [
         {
@@ -2534,7 +2542,8 @@
         "databricks_workspace_cmk_encryption_enabled",
         "databricks_workspace_vnet_injection_enabled",
         "aisearch_service_not_publicly_accessible",
-        "apim_threat_detection_llm_jacking"
+        "apim_threat_detection_llm_jacking",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ],
       "Attributes": [
         {
