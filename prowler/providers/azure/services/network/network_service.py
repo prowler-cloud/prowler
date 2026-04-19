@@ -17,6 +17,7 @@ class Network(AzureService):
         self.bastion_hosts = self._get_bastion_hosts()
         self.network_watchers = self._get_network_watchers()
         self.public_ip_addresses = self._get_public_ip_addresses()
+        self.virtual_networks = self._get_virtual_networks()
 
     def _get_security_groups(self):
         logger.info("Network - Getting Network Security Groups...")
@@ -172,6 +173,41 @@ class Network(AzureService):
                 )
         return public_ip_addresses
 
+    def _get_virtual_networks(self):
+        logger.info("Network - Getting Virtual Networks...")
+        virtual_networks = {}
+        for subscription, client in self.clients.items():
+            try:
+                virtual_networks[subscription] = []
+                vnet_list = client.virtual_networks.list_all()
+                for vnet in vnet_list:
+                    subnets = []
+                    for subnet in getattr(vnet, "subnets", []) or []:
+                        nsg = getattr(subnet, "network_security_group", None)
+                        subnets.append(
+                            VNetSubnet(
+                                id=subnet.id,
+                                name=subnet.name,
+                                nsg_id=getattr(nsg, "id", None) if nsg else None,
+                            )
+                        )
+                    virtual_networks[subscription].append(
+                        VirtualNetwork(
+                            id=vnet.id,
+                            name=vnet.name,
+                            location=vnet.location,
+                            enable_ddos_protection=getattr(
+                                vnet, "enable_ddos_protection", False
+                            ),
+                            subnets=subnets,
+                        )
+                    )
+            except Exception as error:
+                logger.error(
+                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return virtual_networks
+
 
 @dataclass
 class BastionHost:
@@ -227,3 +263,23 @@ class PublicIp:
     name: str
     location: str
     ip_address: str
+
+
+@dataclass
+class VNetSubnet:
+    id: str
+    name: str
+    nsg_id: Optional[str] = None
+
+
+@dataclass
+class VirtualNetwork:
+    id: str
+    name: str
+    location: str
+    enable_ddos_protection: bool = False
+    subnets: List[VNetSubnet] = None
+
+    def __post_init__(self):
+        if self.subnets is None:
+            self.subnets = []
