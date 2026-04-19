@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { FindingGroupRow } from "@/types";
 
 import {
+  canDrillDownFindingGroup,
   getActiveStatusFilter,
   getFilteredFindingGroupDelta,
   getFindingGroupDelta,
+  getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "./findings-groups";
 
@@ -135,6 +137,119 @@ describe("getActiveStatusFilter", () => {
     expect(
       getActiveStatusFilter({ "filter[status__in]": "UNKNOWN,FOO" }),
     ).toBeNull();
+  });
+});
+
+describe("getFindingGroupImpactedCounts", () => {
+  it("should fall back to pass and fail counts when resources total is zero", () => {
+    // Given
+    const group = makeGroup({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 3,
+      passCount: 2,
+      muted: false,
+    });
+
+    // When
+    const result = getFindingGroupImpactedCounts(group);
+
+    // Then
+    expect(result).toEqual({ impacted: 3, total: 5 });
+  });
+
+  it("should include manual findings in fallback counts when resources total is zero", () => {
+    // Given
+    const group = makeGroup({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 3,
+      passCount: 2,
+      manualCount: 4,
+      muted: false,
+    });
+
+    // When
+    const result = getFindingGroupImpactedCounts(group);
+
+    // Then
+    expect(result).toEqual({ impacted: 3, total: 9 });
+  });
+
+  it("should include muted pass and fail counts in the denominator when the result is muted", () => {
+    // Given
+    const group = makeGroup({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 3,
+      passCount: 2,
+      failMutedCount: 4,
+      passMutedCount: 1,
+      muted: true,
+    });
+
+    // When
+    const result = getFindingGroupImpactedCounts(group);
+
+    // Then
+    expect(result).toEqual({ impacted: 3, total: 10 });
+  });
+
+  it("should keep resource-based counts when resources total is available", () => {
+    // Given
+    const group = makeGroup({
+      resourcesTotal: 6,
+      resourcesFail: 4,
+      failCount: 2,
+      passCount: 1,
+      failMutedCount: 5,
+      passMutedCount: 3,
+      muted: true,
+    });
+
+    // When
+    const result = getFindingGroupImpactedCounts(group);
+
+    // Then
+    expect(result).toEqual({ impacted: 4, total: 6 });
+  });
+});
+
+describe("canDrillDownFindingGroup", () => {
+  it("should allow drill-down when resources exist", () => {
+    expect(
+      canDrillDownFindingGroup(
+        makeGroup({
+          resourcesTotal: 2,
+          failCount: 0,
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("should keep zero-resource fallback groups non-expandable even when fallback counts are present", () => {
+    expect(
+      canDrillDownFindingGroup(
+        makeGroup({
+          resourcesTotal: 0,
+          failCount: 0,
+          passCount: 2,
+          manualCount: 1,
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("should keep drill-down disabled for zero-resource groups when the displayed total is zero", () => {
+    expect(
+      canDrillDownFindingGroup(
+        makeGroup({
+          resourcesTotal: 0,
+          failCount: 0,
+          passCount: 0,
+        }),
+      ),
+    ).toBe(false);
   });
 });
 

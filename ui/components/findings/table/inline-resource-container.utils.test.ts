@@ -4,6 +4,7 @@ import type { FindingGroupRow } from "@/types";
 
 import {
   getFilteredFindingGroupResourceCount,
+  getFindingGroupEmptyStateMessage,
   getFindingGroupSkeletonCount,
   isFailOnlyStatusFilter,
 } from "./inline-resource-container.utils";
@@ -97,5 +98,49 @@ describe("getFindingGroupSkeletonCount", () => {
         7,
       ),
     ).toBe(1);
+  });
+});
+
+describe("getFindingGroupEmptyStateMessage", () => {
+  it("returns the muted hint when muted findings are excluded and no visible resources remain", () => {
+    expect(
+      getFindingGroupEmptyStateMessage(
+        makeGroup({
+          resourcesTotal: 0,
+          resourcesFail: 0,
+          mutedCount: 1,
+          failCount: 0,
+          passCount: 0,
+        }),
+        {
+          "filter[status]": "FAIL",
+          "filter[muted]": "false",
+        },
+      ),
+    ).toBe(
+      "No resources match the current filters. Try enabling Include muted to view muted findings.",
+    );
+  });
+
+  it("keeps the generic filtered empty state when muted findings are already included", () => {
+    expect(
+      getFindingGroupEmptyStateMessage(
+        makeGroup({
+          resourcesTotal: 0,
+          resourcesFail: 0,
+          mutedCount: 1,
+        }),
+        {
+          "filter[status]": "FAIL",
+          "filter[muted]": "include",
+        },
+      ),
+    ).toBe("No resources found for the selected filters.");
+  });
+
+  it("keeps the generic empty state when no filters are active", () => {
+    expect(getFindingGroupEmptyStateMessage(makeGroup(), {})).toBe(
+      "No resources found.",
+    );
   });
 });

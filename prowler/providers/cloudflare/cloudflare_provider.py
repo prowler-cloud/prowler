@@ -274,8 +274,12 @@ class CloudflareProvider(Provider):
 
             for account in client.accounts.list():
                 account_id = getattr(account, "id", None)
-                # Prevent infinite loop - skip if we've seen this account
+                # Prevent infinite loop on repeated pages from the SDK paginator
                 if account_id in seen_account_ids:
+                    logger.warning(
+                        "Detected repeated Cloudflare account ID while listing accounts. "
+                        "Stopping pagination to avoid an infinite loop."
+                    )
                     break
                 seen_account_ids.add(account_id)
 
@@ -395,7 +399,20 @@ class CloudflareProvider(Provider):
 
         # Fallback: try accounts.list()
         try:
-            accounts = list(client.accounts.list())
+            accounts: list = []
+            seen_account_ids: set = set()
+            for account in client.accounts.list():
+                account_id = getattr(account, "id", None)
+                # Prevent infinite loop on repeated pages from the SDK paginator
+                if account_id in seen_account_ids:
+                    logger.warning(
+                        "Detected repeated Cloudflare account ID while validating credentials. "
+                        "Stopping pagination to avoid an infinite loop."
+                    )
+                    break
+                seen_account_ids.add(account_id)
+                accounts.append(account)
+
             if not accounts:
                 logger.error("CloudflareNoAccountsError: No accounts found")
                 raise CloudflareNoAccountsError(
