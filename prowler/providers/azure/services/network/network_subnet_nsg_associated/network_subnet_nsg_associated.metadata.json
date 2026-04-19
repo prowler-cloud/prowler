@@ -19,7 +19,7 @@
   "Remediation": {
     "Code": {
       "CLI": "az network vnet subnet update --resource-group <rg> --vnet-name <vnet> --name <subnet> --network-security-group <nsg_name>",
-      "NativeIaC": "",
+      "NativeIaC": "```bicep\nresource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {\n  name: '<example_resource_name>'\n  parent: vnet\n  properties: {\n    addressPrefix: '10.0.1.0/24'\n    networkSecurityGroup: {\n      id: '<example_resource_id>' // Critical: associates NSG with subnet\n    }\n  }\n}\n```",
       "Other": "1. Sign in to Azure portal\n2. Go to Virtual networks and select the VNet\n3. Click on Subnets\n4. Select the subnet without an NSG\n5. Under Network security group, select an existing NSG or create a new one\n6. Click Save",
       "Terraform": "```hcl\nresource \"azurerm_subnet_network_security_group_association\" \"<example_resource_name>\" {\n  subnet_id                 = \"<example_resource_id>\"  # Critical: associates NSG with subnet\n  network_security_group_id = \"<example_resource_id>\"\n}\n```"
     },

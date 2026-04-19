@@ -18,7 +18,7 @@
   "Remediation": {
     "Code": {
       "CLI": "az network ddos-protection create --resource-group <rg> --name <plan> && az network vnet update --resource-group <rg> --name <vnet> --ddos-protection-plan <plan_id>",
-      "NativeIaC": "",
+      "NativeIaC": "```bicep\nresource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  properties: {\n    addressSpace: { addressPrefixes: ['10.0.0.0/16'] }\n    enableDdosProtection: true // Critical: enables DDoS Protection\n    ddosProtectionPlan: { id: '<example_resource_id>' }\n  }\n}\n```",
       "Other": "1. Sign in to Azure portal\n2. Search for 'DDoS protection plans'\n3. Create a new DDoS protection plan\n4. Go to Virtual networks and select the target VNet\n5. Under DDoS protection, select 'Enable' and select the plan\n6. Click Save",
       "Terraform": "```hcl\nresource \"azurerm_virtual_network\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  address_space       = [\"10.0.0.0/16\"]\n\n  ddos_protection_plan {\n    id     = \"<example_resource_id>\"  # Critical: associates DDoS Protection Plan\n    enable = true\n  }\n}\n```"
     },
