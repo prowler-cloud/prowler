@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
   "Description": "**Azure PostgreSQL Flexible Server** is evaluated for **geo-redundant backup**. Geo-redundant backup stores copies in a paired Azure region, enabling cross-region disaster recovery.",
   "Risk": "Without geo-redundant backup, a regional disaster causes **permanent data loss**. Locally redundant backups only protect against storage hardware failures within the same region.",
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\nresource \"azurerm_postgresql_flexible_server\" \"<example_resource_name>\" {\n  name                         = \"<example_resource_name>\"\n  location                     = \"<example_resource_id>\"\n  resource_group_name          = \"<example_resource_id>\"\n  geo_redundant_backup_enabled = true  # Critical: enables geo-redundant backup\n  administrator_login          = \"adminuser\"\n  administrator_password       = \"<admin_password>\"\n  sku_name                     = \"GP_Standard_D2ds_v4\"\n  version                      = \"14\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Enable **geo-redundant backup** on PostgreSQL Flexible Server for cross-region disaster recovery. Geo-redundant backup can only be enabled during server **creation** \u2014 existing servers require recreation. Plan migrations carefully and verify application compatibility before switching.",
       "Url": "https://hub.prowler.com/check/postgresql_flexible_server_geo_redundant_backup_enabled"
     }
   },

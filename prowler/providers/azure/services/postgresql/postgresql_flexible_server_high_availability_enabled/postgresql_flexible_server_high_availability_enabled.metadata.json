@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.dbforpostgresql/flexibleservers",
   "ResourceGroup": "database",
   "Description": "**Azure PostgreSQL Flexible Server** is evaluated for **high availability** mode. Zone-redundant or same-zone HA provides automatic failover to a standby replica.",
   "Risk": "Without HA, a server failure causes **downtime** until manual recovery. Critical databases require automated failover for business continuity.",
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\nresource \"azurerm_postgresql_flexible_server\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n\n  high_availability {\n    mode = \"ZoneRedundant\"  # Critical: enables zone-redundant HA\n  }\n\n  administrator_login    = \"adminuser\"\n  administrator_password = \"<admin_password>\"\n  sku_name               = \"GP_Standard_D2ds_v4\"\n  version                = \"14\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Enable **zone-redundant high availability** on PostgreSQL Flexible Server for automatic failover to a standby replica. Use **ZoneRedundant** mode for production workloads. Monitor failover events via Azure Monitor and test failover procedures periodically.",
       "Url": "https://hub.prowler.com/check/postgresql_flexible_server_high_availability_enabled"
     }
   },

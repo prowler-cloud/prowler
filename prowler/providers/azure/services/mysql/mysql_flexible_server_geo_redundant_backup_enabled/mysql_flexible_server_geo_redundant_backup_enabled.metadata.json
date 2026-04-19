@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.dbformysql/flexibleservers",
   "ResourceGroup": "database",
   "Description": "**Azure MySQL Flexible Server** is evaluated for **geo-redundant backup**. Geo-redundant backup stores copies in a paired Azure region, enabling recovery from a full regional outage.",
   "Risk": "Without geo-redundant backup, a regional disaster causes **permanent data loss**. Locally redundant backups only protect against storage hardware failures within the same region.",
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\nresource \"azurerm_mysql_flexible_server\" \"<example_resource_name>\" {\n  name                         = \"<example_resource_name>\"\n  location                     = \"<example_resource_id>\"\n  resource_group_name          = \"<example_resource_id>\"\n  geo_redundant_backup_enabled = true  # Critical: enables geo-redundant backup\n  administrator_login          = \"adminuser\"\n  administrator_password       = \"<admin_password>\"\n  sku_name                     = \"GP_Standard_D2ds_v4\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Enable **geo-redundant backup** on MySQL Flexible Server to store backup copies in a paired Azure region. This provides cross-region disaster recovery capability. Note: geo-redundant backup can only be configured during server **creation** for some SKU tiers. Plan server provisioning accordingly.",
       "Url": "https://hub.prowler.com/check/mysql_flexible_server_geo_redundant_backup_enabled"
     }
   },

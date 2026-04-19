@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.dbformysql/flexibleservers",
   "ResourceGroup": "database",
   "Description": "**Azure MySQL Flexible Server** is evaluated for **high availability** mode. Zone-redundant or same-zone HA provides automatic failover to a standby replica during outages.",
   "Risk": "Without HA, a server failure causes **downtime** until manual recovery or redeployment. Applications experience extended unavailability during unplanned outages.",
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\nresource \"azurerm_mysql_flexible_server\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n\n  high_availability {\n    mode = \"ZoneRedundant\"  # Critical: enables zone-redundant HA\n  }\n\n  administrator_login    = \"adminuser\"\n  administrator_password = \"<admin_password>\"\n  sku_name               = \"GP_Standard_D2ds_v4\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Enable **zone-redundant high availability** on MySQL Flexible Server to provide automatic failover to a standby replica during outages. Choose **ZoneRedundant** mode for cross-zone protection or **SameZone** for lower-latency failover. Requires General Purpose or Business Critical SKU tier.",
       "Url": "https://hub.prowler.com/check/mysql_flexible_server_high_availability_enabled"
     }
   },

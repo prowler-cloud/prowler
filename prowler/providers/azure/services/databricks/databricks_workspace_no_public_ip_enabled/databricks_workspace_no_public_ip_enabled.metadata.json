@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.databricks/workspaces",
   "ResourceGroup": "network",
   "Description": "**Azure Databricks** workspaces are evaluated for **secure cluster connectivity** (No Public IP / NPIP). When enabled, cluster nodes do not receive public IP addresses, reducing the attack surface.",
   "Risk": "Cluster nodes with public IPs are directly reachable from the internet, enabling **port scanning**, **lateral movement** from compromised nodes, and **data exfiltration** bypassing network controls.",
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\nresource \"azurerm_databricks_workspace\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  sku                 = \"premium\"\n\n  custom_parameters {\n    no_public_ip = true  # Critical: no public IPs on cluster nodes\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Enable **secure cluster connectivity** (No Public IP) to ensure Databricks cluster nodes do not receive public IP addresses. This setting can only be configured during workspace **creation**. Deploy workspaces with VNet injection and configure appropriate NSG rules for outbound connectivity.",
       "Url": "https://hub.prowler.com/check/databricks_workspace_no_public_ip_enabled"
     }
   },

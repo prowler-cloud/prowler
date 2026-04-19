@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.databricks/workspaces",
   "ResourceGroup": "network",
   "Description": "**Azure Databricks** workspaces are evaluated for **public network access**. Disabling public access ensures the workspace is only reachable through private connectivity, reducing exposure to internet-based attacks.",
   "Risk": "Public network access exposes the workspace control plane and data plane to the internet. Attackers can attempt **credential stuffing**, exploit vulnerabilities, or exfiltrate data through the public endpoint.",
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\nresource \"azurerm_databricks_workspace\" \"<example_resource_name>\" {\n  name                          = \"<example_resource_name>\"\n  location                      = \"<example_resource_id>\"\n  resource_group_name           = \"<example_resource_id>\"\n  sku                           = \"premium\"\n  public_network_access_enabled = false  # Critical: disables public network access\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Disable **public network access** on Databricks workspaces and configure **private endpoints** for secure connectivity. Use **Azure Private Link** for the control plane and data plane. Requires Premium SKU tier. Verify all users and automation can reach the workspace through private connectivity before disabling public access.",
       "Url": "https://hub.prowler.com/check/databricks_workspace_public_network_access_disabled"
     }
   },
