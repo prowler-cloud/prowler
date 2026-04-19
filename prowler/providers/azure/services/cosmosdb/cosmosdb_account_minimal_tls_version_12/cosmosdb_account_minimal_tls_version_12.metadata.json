@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.documentdb/databaseaccounts",
   "ResourceGroup": "network",
   "Description": "**Azure Cosmos DB** accounts are evaluated for **minimum TLS version**. TLS 1.0 and 1.1 have known vulnerabilities. Enforcing TLS 1.2 ensures all client connections use modern, secure encryption protocols.",
   "Risk": "Allowing TLS 1.0/1.1 exposes connections to **POODLE**, **BEAST**, and other protocol downgrade attacks that can compromise data in transit confidentiality.",
@@ -23,7 +23,7 @@
       "Terraform": "```hcl\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  offer_type          = \"Standard\"\n  minimal_tls_version = \"Tls12\"  # Critical: enforces TLS 1.2 minimum\n\n  consistency_policy {\n    consistency_level = \"Session\"\n  }\n\n  geo_location {\n    location          = \"eastus\"\n    failover_priority = 0\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Set the **minimum TLS version** to **1.2** or higher on all Cosmos DB accounts. TLS 1.0 and 1.1 have known vulnerabilities including POODLE and BEAST attacks. Ensure all client applications and SDKs support TLS 1.2 before enforcing the minimum version to avoid connectivity disruptions.",
       "Url": "https://hub.prowler.com/check/cosmosdb_account_minimal_tls_version_12"
     }
   },

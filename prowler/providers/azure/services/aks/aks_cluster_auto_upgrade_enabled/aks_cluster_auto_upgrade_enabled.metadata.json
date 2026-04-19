@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.containerservice/managedclusters",
   "ResourceGroup": "container",
   "Description": "**Azure Kubernetes Service** clusters are evaluated for **automatic upgrade** configuration. An upgrade channel ensures the cluster automatically receives Kubernetes version updates and security patches.",
   "Risk": "Without auto-upgrade, clusters run outdated Kubernetes versions with **known CVEs**. Manual upgrades are often delayed, leaving clusters vulnerable to exploits targeting patched vulnerabilities.",
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\nresource \"azurerm_kubernetes_cluster\" \"<example_resource_name>\" {\n  name                      = \"<example_resource_name>\"\n  location                  = \"<example_resource_id>\"\n  resource_group_name       = \"<example_resource_id>\"\n  dns_prefix                = \"<example_resource_name>\"\n  automatic_upgrade_channel = \"stable\"  # Critical: enables automatic cluster upgrades\n\n  default_node_pool {\n    name       = \"default\"\n    node_count = 1\n    vm_size    = \"Standard_DS2_v2\"\n  }\n\n  identity {\n    type = \"SystemAssigned\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Configure an **automatic upgrade channel** for AKS clusters to receive Kubernetes version updates and security patches automatically. Use the **stable** channel for production workloads or **patch** for security-only updates. Schedule **maintenance windows** to control when upgrades occur and minimize disruption.",
       "Url": "https://hub.prowler.com/check/aks_cluster_auto_upgrade_enabled"
     }
   },

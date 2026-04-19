@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "NotDefined",
+  "ResourceType": "microsoft.documentdb/databaseaccounts",
   "ResourceGroup": "database",
   "Description": "**Azure Cosmos DB** accounts are evaluated for **automatic failover** configuration. When enabled, Cosmos DB automatically promotes a secondary region to primary during a regional outage, ensuring continuous availability without manual intervention.",
   "Risk": "Without automatic failover, a regional outage requires **manual failover** which delays recovery and risks data unavailability. Applications dependent on the primary region experience downtime until an operator intervenes.",
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  offer_type          = \"Standard\"\n\n  enable_automatic_failover = true  # Critical: enables automatic failover\n\n  consistency_policy {\n    consistency_level = \"Session\"\n  }\n\n  geo_location {\n    location          = \"eastus\"\n    failover_priority = 0\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "",
+      "Text": "Enable **automatic failover** on all Cosmos DB accounts with multiple geo-locations. This ensures continuous availability during regional outages without manual intervention. Configure at least two geo-locations with appropriate failover priorities. Use **zone-redundant** replicas where available for additional resilience within a region.",
       "Url": "https://hub.prowler.com/check/cosmosdb_account_automatic_failover_enabled"
     }
   },
