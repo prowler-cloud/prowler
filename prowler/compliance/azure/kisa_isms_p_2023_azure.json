@@ -1224,13 +1224,7 @@
       "Id": "2.5.2",
       "Name": "User Identification",
       "Description": "User accounts must be assigned unique identifiers that distinguish each user individually, and the use of easily guessable identifiers must be restricted. If the same identifier is shared by multiple users, the reason and justification must be reviewed, supplementary measures such as approval from a responsible party must be established, and accountability must be ensured.",
-      "Checks": [
-        "entra_policy_guest_users_access_restrictions",
-        "containerregistry_admin_user_disabled",
-        "sqlserver_azuread_administrator_enabled",
-        "cosmosdb_account_use_aad_and_rbac",
-        "storage_account_key_access_disabled"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1502,13 +1496,7 @@
         "network_ssh_internet_access_restricted",
         "vm_jit_access_enabled",
         "vm_linux_enforce_ssh_authentication",
-        "vm_trusted_launch_enabled",
-        "storage_blob_public_access_level_is_disabled",
-        "storage_account_key_access_disabled",
-        "containerregistry_admin_user_disabled",
-        "app_ensure_auth_is_set_up",
-        "app_ftp_deployment_disabled",
-        "app_function_not_publicly_accessible"
+        "app_ensure_auth_is_set_up"
       ],
       "Attributes": [
         {
@@ -2061,15 +2049,9 @@
       "Name": "Performance and Fault Management",
       "Description": "To ensure the availability of information systems, performance and capacity requirements must be defined, and the status must be continuously monitored. Procedures for detecting, recording, analyzing, recovering, and reporting in response to faults must be established and managed effectively.",
       "Checks": [
-        "vm_backup_enabled",
-        "vm_sufficient_daily_backup_retention_period",
         "vm_scaleset_associated_with_load_balancer",
         "vm_scaleset_not_empty",
-        "storage_geo_redundant_enabled",
-        "storage_ensure_soft_delete_is_enabled",
-        "defender_ensure_system_updates_are_applied",
-        "monitor_alert_service_health_exists",
-        "monitor_diagnostic_settings_exists"
+        "monitor_alert_service_health_exists"
       ],
       "Attributes": [
         {
