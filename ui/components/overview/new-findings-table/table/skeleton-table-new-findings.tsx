@@ -28,15 +28,18 @@ const SkeletonTableRow = () => {
       </td>
       {/* Provider icon */}
       <td className="px-3 py-4">
-        <Skeleton className="size-7 rounded" />
+        <Skeleton className="size-8 rounded-md" />
       </td>
       {/* Service */}
       <td className="px-3 py-4">
         <Skeleton className="h-4 w-16 rounded" />
       </td>
-      {/* Region */}
+      {/* Region — flag + name */}
       <td className="px-3 py-4">
-        <Skeleton className="h-4 w-20 rounded" />
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="size-4 rounded" />
+          <Skeleton className="h-4 w-20 rounded" />
+        </div>
       </td>
       {/* Time */}
       <td className="px-3 py-4">
@@ -82,9 +85,9 @@ export const SkeletonTableNewFindings = () => {
             <th className="px-3 py-3 text-left">
               <Skeleton className="h-4 w-16 rounded" />
             </th>
-            {/* Provider */}
+            {/* Cloud Provider */}
             <th className="px-3 py-3 text-left">
-              <Skeleton className="h-4 w-16 rounded" />
+              <Skeleton className="h-4 w-24 rounded" />
             </th>
             {/* Service */}
             <th className="px-3 py-3 text-left">
