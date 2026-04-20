@@ -2,11 +2,11 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.24.1] (Prowler UNRELEASED)
+## [5.24.1] (Prowler v5.24.1)
 
 ### 🔄 Changed
 
-- bumped `msgraph-sdk` from 1.23.0 to 1.55.0 and `azure-mgmt-resource` from 23.3.0 to 24.0.0, removing `marshmallow` as is a transitively dev dependency [(#10733)](https://github.com/prowler-cloud/prowler/pull/10733)
+- `msgraph-sdk` from 1.23.0 to 1.55.0 and `azure-mgmt-resource` from 23.3.0 to 24.0.0, removing `marshmallow` as is a transitively dev dependency [(#10733)](https://github.com/prowler-cloud/prowler/pull/10733)
 
 ### 🐞 Fixed
 
