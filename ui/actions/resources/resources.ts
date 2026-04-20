@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { getLatestFindings } from "@/actions/findings";
 import { listOrganizationsSafe } from "@/actions/organizations/organizations";
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl, FINDINGS_FILTERED_SORT, getAuthHeaders } from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { OrganizationResource } from "@/types/organizations";
@@ -285,7 +285,7 @@ export const getResourceDrawerData = async ({
         page,
         pageSize,
         query,
-        sort: "severity,-inserted_at",
+        sort: FINDINGS_FILTERED_SORT,
         filters: {
           "filter[resource_uid]": resourceUid,
           "filter[status]": "FAIL",

@@ -176,10 +176,12 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
   });
 
-  it("should load other findings from the current resource uid and exclude the current finding", async () => {
+  it("should load other findings from the current resource uid and exclude only the current finding (status filter is server-side)", async () => {
     const resources = [makeResource()];
 
-    // Given
+    // Given — the API call already applies filter[status]=FAIL, so the
+    // mock here returns ONLY FAIL rows. The hook's only client-side
+    // responsibility is to drop the row already shown above the table.
     getFindingByIdMock.mockResolvedValue({ data: ["detail"] });
     getLatestFindingsByResourceUidMock.mockResolvedValue({
       data: ["resource"],
@@ -192,7 +194,7 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
               id: "finding-1",
               checkId: "s3_check",
               checkTitle: "Current",
-              status: "MANUAL",
+              status: "FAIL",
               severity: "informational",
             }),
           ];
@@ -210,12 +212,6 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
             checkTitle: "Current finding duplicate from resource fetch",
             status: "FAIL",
             severity: "critical",
-          }),
-          makeDrawerFinding({
-            id: "finding-4",
-            checkTitle: "Manual finding should be filtered out",
-            status: "MANUAL",
-            severity: "low",
           }),
           makeDrawerFinding({
             id: "finding-5",
