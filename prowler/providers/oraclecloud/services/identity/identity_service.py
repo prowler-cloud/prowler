@@ -482,7 +482,7 @@ class Identity(OCIService):
                         if any(d.id == domain and d is not domain for d in domains):
                             if domain.home_region != regional_client.region:
                                 to_remove += [i]
-                    for i in sorted(to_remove, reversed=True):
+                    for i in sorted(to_remove, reverse=True):
                         del domains[i]
 
             except Exception as error:
