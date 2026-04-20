@@ -3,15 +3,12 @@
 import {
   flexRender,
   getCoreRowModel,
-  Row,
-  RowSelectionState,
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 
-import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Table,
   TableBody,
@@ -21,24 +18,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
-import { useInfiniteResources } from "@/hooks/use-infinite-resources";
-import { cn, hasDateOrScanFilter } from "@/lib";
+import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
+import { cn, hasHistoricalFindingFilter } from "@/lib";
 import {
   getFilteredFindingGroupDelta,
+  getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
-import { FindingGroupRow, FindingResourceRow } from "@/types";
+import { FindingGroupRow } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingResources } from "./column-finding-resources";
-import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
-import { DeltaValues, NotificationIndicator } from "./notification-indicator";
-import {
-  ResourceDetailDrawer,
-  useResourceDetailDrawer,
-} from "./resource-detail-drawer";
+import { getFindingGroupEmptyStateMessage } from "./inline-resource-container.utils";
+import { NotificationIndicator } from "./notification-indicator";
+import { ResourceDetailDrawer } from "./resource-detail-drawer";
 
 interface FindingsGroupDrillDownProps {
   group: FindingGroupRow;
@@ -50,13 +45,10 @@ export function FindingsGroupDrillDown({
   onCollapse,
 }: FindingsGroupDrillDownProps) {
   const searchParams = useSearchParams();
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [resources, setResources] = useState<FindingResourceRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Derive hasDateOrScan from current URL params
+  // Keep drill-down endpoint selection aligned with the grouped findings page.
   const currentParams = Object.fromEntries(searchParams.entries());
-  const hasDateOrScan = hasDateOrScanFilter(currentParams);
+  const hasHistoricalFilterActive = hasHistoricalFindingFilter(currentParams);
 
   // Extract filter params from search params
   const filters: Record<string, string> = {};
@@ -66,77 +58,26 @@ export function FindingsGroupDrillDown({
     }
   });
 
-  const handleSetResources = (
-    newResources: FindingResourceRow[],
-    _hasMore: boolean,
-  ) => {
-    setResources(newResources);
-    setIsLoading(false);
-  };
-
-  const handleAppendResources = (
-    newResources: FindingResourceRow[],
-    _hasMore: boolean,
-  ) => {
-    setResources((prev) => [...prev, ...newResources]);
-    setIsLoading(false);
-  };
-
-  const handleSetLoading = (loading: boolean) => {
-    setIsLoading(loading);
-  };
-
-  const { sentinelRef, refresh, loadMore, totalCount } = useInfiniteResources({
-    checkId: group.checkId,
-    hasDateOrScanFilter: hasDateOrScan,
-    filters,
-    onSetResources: handleSetResources,
-    onAppendResources: handleAppendResources,
-    onSetLoading: handleSetLoading,
-  });
-
-  // Resource detail drawer
-  const drawer = useResourceDetailDrawer({
+  const {
+    rowSelection,
     resources,
-    checkId: group.checkId,
-    totalResourceCount: totalCount ?? group.resourcesTotal,
-    onRequestMoreResources: loadMore,
+    isLoading,
+    sentinelRef,
+    drawer,
+    handleDrawerMuteComplete,
+    selectedFindingIds,
+    selectableRowCount,
+    getRowCanSelect,
+    clearSelection,
+    isSelected,
+    handleMuteComplete,
+    handleRowSelectionChange,
+    resolveSelectedFindingIds,
+  } = useFindingGroupResourceState({
+    group,
+    filters,
+    hasHistoricalData: hasHistoricalFilterActive,
   });
-
-  const handleDrawerMuteComplete = () => {
-    drawer.refetchCurrent();
-    refresh();
-  };
-
-  // Selection logic — tracks by findingId (resource_id) for checkbox consistency
-  const selectedFindingIds = Object.keys(rowSelection)
-    .filter((key) => rowSelection[key])
-    .map((idx) => resources[parseInt(idx)]?.findingId)
-    .filter((id): id is string => id !== null && id !== undefined && id !== "");
-
-  /** findingId values are already real finding UUIDs — no resolution needed. */
-  const resolveResourceIds = async (ids: string[]) => {
-    return ids.filter(Boolean);
-  };
-
-  const selectableRowCount = resources.filter(canMuteFindingResource).length;
-
-  const getRowCanSelect = (row: Row<FindingResourceRow>): boolean => {
-    return canMuteFindingResource(row.original);
-  };
-
-  const clearSelection = () => {
-    setRowSelection({});
-  };
-
-  const isSelected = (id: string) => {
-    return selectedFindingIds.includes(id);
-  };
-
-  const handleMuteComplete = () => {
-    clearSelection();
-    refresh();
-  };
 
   const columns = getColumnFindingResources({
     rowSelection,
@@ -148,7 +89,7 @@ export function FindingsGroupDrillDown({
     columns,
     enableRowSelection: getRowCanSelect,
     getCoreRowModel: getCoreRowModel(),
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: handleRowSelectionChange,
     manualPagination: true,
     state: {
       rowSelection,
@@ -157,14 +98,8 @@ export function FindingsGroupDrillDown({
 
   // Delta for the sticky header
   const deltaKey = getFilteredFindingGroupDelta(group, filters);
-  const delta =
-    deltaKey === "new"
-      ? DeltaValues.NEW
-      : deltaKey === "changed"
-        ? DeltaValues.CHANGED
-        : DeltaValues.NONE;
-
   const allMuted = isFindingGroupMuted(group);
+  const impactedCounts = getFindingGroupImpactedCounts(group);
 
   const rows = table.getRowModel().rows;
 
@@ -175,7 +110,7 @@ export function FindingsGroupDrillDown({
         selectedFindings: [],
         clearSelection,
         isSelected,
-        resolveMuteIds: resolveResourceIds,
+        resolveMuteIds: resolveSelectedFindingIds,
         onMuteComplete: handleMuteComplete,
       }}
     >
@@ -200,7 +135,7 @@ export function FindingsGroupDrillDown({
 
             {/* Notification indicator */}
             <NotificationIndicator
-              delta={delta}
+              delta={deltaKey}
               isMuted={allMuted}
               showDeltaWhenMuted
             />
@@ -220,8 +155,8 @@ export function FindingsGroupDrillDown({
 
             {/* Impacted resources count */}
             <ImpactedResourcesCell
-              impacted={group.resourcesFail}
-              total={group.resourcesTotal}
+              impacted={impactedCounts.impacted}
+              total={impactedCounts.total}
             />
           </div>
         </div>
@@ -270,9 +205,7 @@ export function FindingsGroupDrillDown({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    {Object.keys(filters).length > 0
-                      ? "No resources found for the selected filters."
-                      : "No resources found."}
+                    {getFindingGroupEmptyStateMessage(group, filters)}
                   </TableCell>
                 </TableRow>
               ) : null}
@@ -280,14 +213,7 @@ export function FindingsGroupDrillDown({
           </Table>
 
           {/* Loading indicator */}
-          {isLoading && (
-            <div className="flex items-center justify-center gap-2 py-8">
-              <Spinner className="size-6" />
-              <span className="text-text-neutral-tertiary text-sm">
-                Loading resources...
-              </span>
-            </div>
-          )}
+          {isLoading && <LoadingState label="Loading resources..." />}
 
           {/* Sentinel for infinite scroll */}
           <div ref={sentinelRef} className="h-1" />
@@ -299,7 +225,7 @@ export function FindingsGroupDrillDown({
           selectedCount={selectedFindingIds.length}
           selectedFindingIds={selectedFindingIds}
           onBeforeOpen={async () => {
-            return resolveResourceIds(selectedFindingIds);
+            return resolveSelectedFindingIds(selectedFindingIds);
           }}
           onComplete={handleMuteComplete}
           isBulkOperation
@@ -316,8 +242,10 @@ export function FindingsGroupDrillDown({
         checkMeta={drawer.checkMeta}
         currentIndex={drawer.currentIndex}
         totalResources={drawer.totalResources}
+        currentResource={drawer.currentResource}
         currentFinding={drawer.currentFinding}
         otherFindings={drawer.otherFindings}
+        showSyntheticResourceHint={group.resourcesTotal === 0}
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleDrawerMuteComplete}

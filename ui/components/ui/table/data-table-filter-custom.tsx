@@ -15,7 +15,12 @@ import {
 } from "@/components/shadcn/select/multiselect";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { isConnectionStatus, isScanEntity } from "@/lib/helper-filters";
+import {
+  getScanEntityLabel,
+  isConnectionStatus,
+  isScanEntity,
+} from "@/lib/helper-filters";
+import { cn } from "@/lib/utils";
 import {
   FilterEntity,
   FilterOption,
@@ -29,6 +34,8 @@ export interface DataTableFilterCustomProps {
   filters: FilterOption[];
   /** Optional element to render at the start of the filters grid */
   prependElement?: React.ReactNode;
+  /** Optional className override for the filters grid layout */
+  gridClassName?: string;
   /** Hide the clear filters button and active badges (useful when parent manages this) */
   hideClearButton?: boolean;
   /**
@@ -54,6 +61,7 @@ export interface DataTableFilterCustomProps {
 export const DataTableFilterCustom = ({
   filters,
   prependElement,
+  gridClassName,
   hideClearButton = false,
   mode = DATA_TABLE_FILTER_MODE.INSTANT,
   onBatchChange,
@@ -80,10 +88,11 @@ export const DataTableFilterCustom = ({
     if (!entity) return value;
 
     if (isScanEntity(entity as ScanEntity)) {
-      const scanEntity = entity as ScanEntity;
-      return (
-        scanEntity.providerInfo?.alias || scanEntity.providerInfo?.uid || value
-      );
+      // Match the summary-strip chip: "Scan: {provider} - {name}". Without the
+      // "Scan:" prefix, the trigger badge would just say "AWS Prod - Nightly",
+      // which reads as a generic account tag and hides that it's a scan filter.
+      const label = getScanEntityLabel(entity as ScanEntity);
+      return label ? `Scan: ${label}` : value;
     }
     if (isConnectionStatus(entity)) {
       const connectionStatus = entity as ProviderConnectionStatus;
@@ -173,7 +182,12 @@ export const DataTableFilterCustom = ({
   };
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
+        gridClassName,
+      )}
+    >
       {prependElement}
       {sortedFilters().map((filter) => {
         const selectedValues = getSelectedValues(filter);
@@ -185,9 +199,14 @@ export const DataTableFilterCustom = ({
             onValuesChange={(values) => pushDropdownFilter(filter, values)}
           >
             <MultiSelectTrigger size="default">
-              <MultiSelectValue placeholder={filter.labelCheckboxGroup} />
+              <MultiSelectValue
+                placeholder={`All ${filter.labelCheckboxGroup}`}
+              />
             </MultiSelectTrigger>
-            <MultiSelectContent search={false}>
+            <MultiSelectContent
+              search={false}
+              width={filter.width ?? "default"}
+            >
               <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
               <MultiSelectSeparator />
               {filter.values.map((value) => {

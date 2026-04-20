@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Setup Git Hooks for Prowler
-# This script installs pre-commit hooks using the project's Poetry environment
+# This script installs prek hooks using the project's Poetry environment
+# or a system-wide prek installation
 
 set -e
 
@@ -23,43 +24,50 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
   exit 1
 fi
 
-# Check if Poetry is installed
-if ! command -v poetry &>/dev/null; then
-  echo -e "${RED}❌ Poetry is not installed${NC}"
-  echo -e "${YELLOW}   Install Poetry: https://python-poetry.org/docs/#installation${NC}"
-  exit 1
-fi
-
-# Check if pyproject.toml exists
-if [ ! -f "pyproject.toml" ]; then
-  echo -e "${RED}❌ pyproject.toml not found${NC}"
-  echo -e "${YELLOW}   Please run this script from the repository root${NC}"
-  exit 1
-fi
-
-# Check if dependencies are already installed
-if ! poetry run python -c "import pre_commit" 2>/dev/null; then
-  echo -e "${YELLOW}📦 Installing project dependencies (including pre-commit)...${NC}"
-  poetry install --with dev
-else
-  echo -e "${GREEN}✓${NC} Dependencies already installed"
-fi
-
-echo ""
-# Clear any existing core.hooksPath to avoid pre-commit conflicts
+# Clear any existing core.hooksPath to avoid conflicts
 if git config --get core.hooksPath >/dev/null 2>&1; then
   echo -e "${YELLOW}🧹 Clearing existing core.hooksPath configuration...${NC}"
   git config --unset-all core.hooksPath
 fi
 
-echo -e "${YELLOW}🔗 Installing pre-commit hooks...${NC}"
-poetry run pre-commit install
+echo ""
+
+# Full setup requires Poetry for system hooks (pylint, bandit, safety, vulture, trufflehog)
+# These are installed as Python dev dependencies and used by local hooks in .pre-commit-config.yaml
+if command -v poetry &>/dev/null && [ -f "pyproject.toml" ]; then
+  if poetry run prek --version &>/dev/null 2>&1; then
+    echo -e "${GREEN}✓${NC} prek and dependencies found via Poetry"
+  else
+    echo -e "${YELLOW}📦 Installing project dependencies (including prek)...${NC}"
+    poetry install --with dev
+  fi
+  echo -e "${YELLOW}🔗 Installing prek hooks...${NC}"
+  poetry run prek install --overwrite
+elif command -v prek &>/dev/null; then
+  # prek is available system-wide but without Poetry dev deps
+  echo -e "${GREEN}✓${NC} prek found in PATH"
+  echo -e "${YELLOW}🔗 Installing prek hooks...${NC}"
+  prek install --overwrite
+  echo ""
+  echo -e "${YELLOW}⚠️  Warning: Some hooks require Python tools installed via Poetry:${NC}"
+  echo -e "   pylint, bandit, safety, vulture, trufflehog"
+  echo -e "   These hooks will be skipped unless you install them or run:"
+  echo -e "   ${GREEN}poetry install --with dev${NC}"
+else
+  echo -e "${RED}❌ prek is not installed${NC}"
+  echo -e "${YELLOW}   Install prek using one of these methods:${NC}"
+  echo -e "   • brew install prek"
+  echo -e "   • pnpm add -g @j178/prek"
+  echo -e "   • pip install prek"
+  echo -e "   • See https://prek.j178.dev/installation/ for more options"
+  exit 1
+fi
 
 echo ""
 echo -e "${GREEN}✅ Git hooks successfully configured!${NC}"
 echo ""
-echo -e "${YELLOW}📋 Pre-commit system:${NC}"
-echo -e "   • Python pre-commit manages all git hooks"
+echo -e "${YELLOW}📋 Prek hook system:${NC}"
+echo -e "   • Prek manages all git hooks"
 echo -e "   • API files: Python checks (black, flake8, bandit, etc.)"
 echo -e "   • UI files: UI checks (TypeScript, ESLint, Claude Code validation)"
 echo ""

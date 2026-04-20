@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { getFindings } from "@/actions/findings/findings";
 import {
-  getColumnFindings,
+  getStandaloneFindingColumns,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { Accordion } from "@/components/ui/accordion/Accordion";
@@ -33,6 +33,7 @@ export const ClientAccordionContent = ({
   const searchParams = useSearchParams();
   const pageNumber = searchParams.get("page") || "1";
   const complianceId = searchParams.get("complianceId");
+  const openFindingId = searchParams.get("id");
   const defaultSort = "severity,status,-inserted_at";
   const sort = searchParams.get("sort") || defaultSort;
   const loadedPageRef = useRef<string | null>(null);
@@ -61,6 +62,7 @@ export const ClientAccordionContent = ({
             filters: {
               "filter[check_id__in]": checkIds.join(","),
               "filter[scan]": scanId,
+              "filter[muted]": "false",
               ...(region && { "filter[region__in]": region }),
             },
             page: parseInt(pageNumber, 10),
@@ -159,12 +161,7 @@ export const ClientAccordionContent = ({
           <h4 className="mb-2 text-sm font-medium">Findings</h4>
 
           <DataTable
-            // Remove select and updated_at columns for compliance view
-            columns={getColumnFindings({}, 0).filter(
-              (col) =>
-                col.id !== "select" &&
-                !("accessorKey" in col && col.accessorKey === "updated_at"),
-            )}
+            columns={getStandaloneFindingColumns({ openFindingId })}
             data={expandedFindings || []}
             metadata={findings?.meta}
             disableScroll={true}
