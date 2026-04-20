@@ -1,0 +1,233 @@
+{
+  "Framework": "Essential-Eight",
+  "Name": "ASD Essential Eight Maturity Model - Cloud Controls (AWS)",
+  "Version": "1.0",
+  "Provider": "AWS",
+  "Description": "The Australian Signals Directorate (ASD) Essential Eight is a set of baseline mitigation strategies designed to protect organisations against cyber threats. This compliance mapping applies Essential Eight principles to AWS cloud infrastructure, mapping existing Prowler checks to the eight controls at Maturity Level 1.",
+  "Requirements": [
+    {
+      "Id": "E8-1",
+      "Description": "Application Control - Ensure only approved applications can execute",
+      "Checks": [
+        "apigateway_restapi_waf_acl_attached",
+        "cloudfront_distributions_using_waf",
+        "elbv2_waf_acl_attached",
+        "cognito_user_pool_waf_acl_attached",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_not_used",
+        "awslambda_function_url_public"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Application Control",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Application control restricts the execution of unauthorised software. In cloud environments, this maps to WAF policies, security groups, and Lambda function access controls that limit which applications and services can communicate.",
+          "RationaleStatement": "Preventing unauthorised applications from executing is the most effective mitigation strategy against malware. In AWS, WAF rules and security groups serve as the cloud equivalent of application whitelisting.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Attach WAF ACLs to all public-facing resources (API Gateway, CloudFront, ALB). Review and restrict security groups to minimum required access. Disable public URLs on Lambda functions unless explicitly required.",
+          "AuditProcedure": "Review WAF ACL attachments on API Gateway, CloudFront, and ELBv2. Verify security groups restrict traffic appropriately. Check Lambda function URL configurations.",
+          "AdditionalInformation": "ASD Essential Eight Control 1 - https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-2",
+      "Description": "Patch Applications - Ensure applications are patched within appropriate timeframes",
+      "Checks": [
+        "ssm_managed_compliant_patching",
+        "ec2_instance_managed_by_ssm",
+        "eks_cluster_uses_a_supported_version",
+        "ecs_service_fargate_latest_platform_version",
+        "dms_instance_minor_version_upgrade_enabled",
+        "elasticache_redis_cluster_auto_minor_version_upgrades",
+        "rds_instance_minor_version_upgrade_enabled",
+        "cloudformation_stack_cdktoolkit_bootstrap_version"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Patch Applications",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Patches for security vulnerabilities in applications should be applied within an appropriate timeframe. In AWS, this includes ensuring managed services use current versions and auto-upgrade is enabled.",
+          "RationaleStatement": "Unpatched applications are a common entry point for attackers. AWS managed services should be configured to auto-upgrade, and EC2 instances should be managed by SSM for patch compliance.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Enable SSM management for all EC2 instances. Enable auto minor version upgrades for RDS, ElastiCache, and DMS. Ensure EKS clusters and ECS services use supported/latest versions.",
+          "AuditProcedure": "Check SSM patch compliance status. Verify auto-upgrade settings on managed services. Confirm EKS and ECS versions are current.",
+          "AdditionalInformation": "ASD Essential Eight Control 2",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-3",
+      "Description": "Configure Microsoft Office Macro Settings - Restrict macro execution",
+      "Checks": [
+        "ssm_managed_compliant_patching",
+        "ec2_instance_managed_by_ssm",
+        "guardduty_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Configure Microsoft Office Macro Settings",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Macro settings should be configured to block macros from the internet and only allow vetted macros. In cloud environments, this control maps to ensuring endpoint management and threat detection are in place for workloads that process Office documents.",
+          "RationaleStatement": "While macro configuration is primarily an endpoint control, cloud-hosted workstations and document processing pipelines should be managed via SSM and monitored by GuardDuty for malicious activity.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Ensure all EC2 instances processing Office documents are managed by SSM with compliant patching. Enable GuardDuty for threat detection.",
+          "AuditProcedure": "Verify SSM management and patch compliance. Confirm GuardDuty is enabled in all regions.",
+          "AdditionalInformation": "ASD Essential Eight Control 3 - Cloud applicability is limited; primary enforcement is at endpoint level.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-4",
+      "Description": "User Application Hardening - Harden application configurations",
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "apigatewayv2_api_access_logging_enabled",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "ec2_instance_imdsv2_enabled",
+        "ec2_instance_public_ip",
+        "s3_bucket_public_access",
+        "rds_snapshots_public_access",
+        "s3_bucket_ssl_requests_only",
+        "elb_ssl_listeners"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 User Application Hardening",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Applications should be hardened to reduce their attack surface. In AWS, this includes enforcing IMDSv2, restricting public access, enabling SSL/TLS, and comprehensive logging.",
+          "RationaleStatement": "Hardening cloud applications reduces the attack surface available to adversaries. Public access restrictions, encryption in transit, and metadata service hardening are critical cloud-specific controls.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Enable IMDSv2 on all EC2 instances. Block public access on S3 buckets and RDS snapshots. Enforce SSL on all load balancers and S3 buckets. Enable API Gateway and CloudTrail logging.",
+          "AuditProcedure": "Check IMDSv2 enforcement. Verify S3 and RDS public access settings. Confirm SSL/TLS configuration. Review logging status.",
+          "AdditionalInformation": "ASD Essential Eight Control 4",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-5",
+      "Description": "Restrict Administrative Privileges - Limit and secure administrative access",
+      "Checks": [
+        "iam_no_root_access_key",
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_administrator_access_with_mfa",
+        "iam_group_administrator_access_policy",
+        "iam_user_two_active_access_key",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "iam_policy_no_full_access_to_kms",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudtrail_threat_detection_privilege_escalation"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 Restrict Administrative Privileges",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Administrative privileges should be restricted to only those users who require them. In AWS, this means securing root accounts, enforcing MFA on admin users, monitoring for privilege escalation, and removing unused credentials.",
+          "RationaleStatement": "Compromised administrative credentials provide attackers with unrestricted access. Limiting admin privileges, enforcing MFA, and monitoring root account usage are critical controls.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Remove root access keys. Enable hardware MFA on root account. Enforce MFA on all IAM users with administrator access. Remove unused access keys and console access. Monitor for privilege escalation via CloudTrail.",
+          "AuditProcedure": "Verify no root access keys exist. Confirm MFA on root and admin accounts. Check for unused credentials. Review CloudTrail for privilege escalation events.",
+          "AdditionalInformation": "ASD Essential Eight Control 5",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-6",
+      "Description": "Patch Operating Systems - Ensure operating systems are patched within appropriate timeframes",
+      "Checks": [
+        "ssm_managed_compliant_patching",
+        "ec2_instance_managed_by_ssm",
+        "eks_cluster_uses_a_supported_version",
+        "ecs_service_fargate_latest_platform_version",
+        "rds_instance_minor_version_upgrade_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 Patch Operating Systems",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Operating systems should be patched within an appropriate timeframe. In AWS, EC2 instances should be managed by SSM with compliant patching, and managed services should use supported versions.",
+          "RationaleStatement": "Unpatched operating systems are vulnerable to known exploits. SSM Patch Manager provides automated patching for EC2 instances, and managed services should always run supported versions.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Enable SSM Agent and Patch Manager on all EC2 instances. Configure patch baselines and maintenance windows. Enable auto minor version upgrades on RDS instances.",
+          "AuditProcedure": "Check SSM patch compliance reports. Verify managed service versions are supported. Review maintenance window configurations.",
+          "AdditionalInformation": "ASD Essential Eight Control 6",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-7",
+      "Description": "Multi-Factor Authentication - Implement MFA for all users",
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_user_hardware_mfa_enabled",
+        "iam_administrator_access_with_mfa",
+        "cognito_user_pool_mfa_enabled",
+        "directoryservice_supported_mfa_radius_enabled",
+        "cloudwatch_log_metric_filter_sign_in_without_mfa",
+        "s3_bucket_no_mfa_delete",
+        "cloudtrail_bucket_requires_mfa_delete"
+      ],
+      "Attributes": [
+        {
+          "Section": "7 Multi-Factor Authentication",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "MFA should be implemented for all users accessing important data repositories and internet-facing services. In AWS, this means enforcing MFA on all IAM users, the root account, Cognito user pools, and directory services.",
+          "RationaleStatement": "MFA provides an additional layer of authentication beyond passwords. Compromised credentials without MFA allow immediate access. AWS provides multiple MFA options including hardware tokens, virtual MFA, and FIDO security keys.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Enable MFA on root account (hardware MFA recommended). Enable MFA for all IAM users with console access. Configure MFA for Cognito user pools and Directory Service. Set up CloudWatch alarms for sign-ins without MFA.",
+          "AuditProcedure": "Verify MFA status on root account and all IAM users. Check Cognito and Directory Service MFA configuration. Review CloudWatch metric filters for MFA-less sign-ins.",
+          "AdditionalInformation": "ASD Essential Eight Control 7",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-8",
+      "Description": "Regular Backups - Perform and test regular backups of important data",
+      "Checks": [
+        "backup_plans_exist",
+        "backup_recovery_point_encrypted",
+        "backup_reportplans_exist",
+        "backup_vaults_encrypted",
+        "rds_instance_backup_enabled",
+        "rds_instance_protected_by_backup_plan",
+        "rds_cluster_protected_by_backup_plan",
+        "s3_bucket_object_versioning",
+        "dynamodb_tables_pitr_enabled",
+        "efs_have_backup_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "8 Regular Backups",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Regular backups of important data should be performed and tested. In AWS, this includes AWS Backup plans, RDS automated backups, S3 versioning, DynamoDB point-in-time recovery, and EFS backups.",
+          "RationaleStatement": "Backups are essential for recovery from ransomware, accidental deletion, and disaster scenarios. AWS Backup provides a centralised service for managing backups across AWS resources.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Create AWS Backup plans covering all critical resources. Enable automated backups on RDS instances. Enable versioning on S3 buckets. Enable PITR on DynamoDB tables. Configure backup report plans for compliance monitoring.",
+          "AuditProcedure": "Verify AWS Backup plans exist and cover critical resources. Check RDS backup configuration. Confirm S3 versioning and DynamoDB PITR status. Review backup report plans.",
+          "AdditionalInformation": "ASD Essential Eight Control 8",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    }
+  ]
+}
