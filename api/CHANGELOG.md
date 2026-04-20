@@ -12,6 +12,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Attack Paths: Missing `tenant_id` filter while getting related findings after scan completes [(#10722)](https://github.com/prowler-cloud/prowler/pull/10722)
 - Finding group counters `pass_count`, `fail_count` and `manual_count` now exclude muted findings [(#10753)](https://github.com/prowler-cloud/prowler/pull/10753)
+- Silent data loss in `ResourceFindingMapping` bulk insert that left findings orphaned when `INSERT ... ON CONFLICT DO NOTHING` dropped rows without raising; added explicit `unique_fields` [(#10724)](https://github.com/prowler-cloud/prowler/pull/10724)
 
 ---
 
