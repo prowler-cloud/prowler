@@ -161,14 +161,12 @@ class OraclecloudProvider(Provider):
 
         # Get regions
         self._regions = self.get_regions_to_audit(region)
-        if self._regions:
-            self._home_region = next(
-                (region.key for region in self._regions if region.is_home_region),
-                self._regions[0],
-            )
-        else:
-            self._home_region = "us-ashburn-1"
-        logger.warn(f"Home region is: {self._home_region}")
+        self._home_region = next(
+            (region.key for region in self._regions if region.is_home_region),
+            self._regions[0],
+        )
+        logger.info(f"Home region is: {self._home_region}")
+
         # Get compartments
         self._compartments = self.get_compartments_to_audit(
             compartment_ids, self._identity.tenancy_id
