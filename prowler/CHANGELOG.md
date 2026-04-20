@@ -13,6 +13,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `bedrock_prompt_management_exists` check for AWS provider [(#10878)](https://github.com/prowler-cloud/prowler/pull/10878)
 - 8 Gmail attachment safety and spoofing protection checks for Google Workspace provider using the Cloud Identity Policy API [(#10980)](https://github.com/prowler-cloud/prowler/pull/10980)
 
+### 🚀 Added
+
+- `entra_service_principal_no_secrets_for_permanent_tier0_roles` check for m365 provider [(#10788)](https://github.com/prowler-cloud/prowler/pull/10788)
+
 ### 🔄 Changed
 
 - Azure Network Watcher flow log checks now require workspace-backed Traffic Analytics for `network_flow_log_captured_sent` and align metadata with VNet-compatible flow log guidance [(#10645)](https://github.com/prowler-cloud/prowler/pull/10645)
