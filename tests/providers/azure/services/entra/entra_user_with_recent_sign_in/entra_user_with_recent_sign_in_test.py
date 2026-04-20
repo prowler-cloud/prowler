@@ -128,7 +128,7 @@ class Test_entra_user_with_recent_sign_in:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "No sign-in activity data available" in result[0].status_extended
-            assert "1 enabled users" in result[0].status_extended
+            assert "1 enabled user" in result[0].status_extended
 
     def test_entra_user_stale_sign_in(self):
         entra_client = mock.MagicMock

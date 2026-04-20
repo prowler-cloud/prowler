@@ -603,9 +603,7 @@
     {
       "Id": "5.3.5",
       "Description": "Ensure disabled user accounts do not have read, write, or owner permissions",
-      "Checks": [
-        "entra_user_with_recent_sign_in"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "5 Identity Services",
