@@ -844,6 +844,7 @@ class Entra(M365Service):
                         authentication_methods=reg_info.get(
                             "authentication_methods", []
                         ),
+                        user_type=getattr(user, "user_type", None) or "Member",
                     )
 
                 next_link = getattr(users_response, "odata_next_link", None)
@@ -1409,6 +1410,8 @@ class User(BaseModel):
         account_enabled: Whether the user account is enabled.
         authentication_methods: List of authentication method types registered by the user
             (e.g., 'fido2SecurityKey', 'microsoftAuthenticatorPush', 'mobilePhone').
+        user_type: The user account type as reported by Microsoft Graph
+            (typically 'Member' or 'Guest'). Defaults to 'Member' when unknown.
     """
 
     id: str
@@ -1418,6 +1421,7 @@ class User(BaseModel):
     is_mfa_capable: bool = False
     account_enabled: bool = True
     authentication_methods: List[str] = []
+    user_type: str = "Member"
 
 
 class InvitationsFrom(Enum):
