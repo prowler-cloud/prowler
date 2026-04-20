@@ -14,12 +14,14 @@ const {
   mockWindowOpen,
   mockClipboardWriteText,
   mockSearchParamsState,
+  mockNotificationIndicator,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
   mockGetCompliancesOverview: vi.fn(),
   mockWindowOpen: vi.fn(),
   mockClipboardWriteText: vi.fn(),
   mockSearchParamsState: { value: "" },
+  mockNotificationIndicator: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -298,7 +300,11 @@ vi.mock("../delta-indicator", () => ({
 }));
 
 vi.mock("../notification-indicator", () => ({
-  NotificationIndicator: () => null,
+  NotificationIndicator: (props: Record<string, unknown>) => {
+    mockNotificationIndicator(props);
+    return null;
+  },
+  DeltaValues: { NEW: "new", CHANGED: "changed", NONE: "none" } as const,
 }));
 
 vi.mock("./resource-detail-skeleton", () => ({
@@ -1346,5 +1352,81 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(
       screen.getByTestId("events-navigation-skeleton"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — other findings delta/muted indicator", () => {
+  const renderWithOtherFinding = (
+    overrides: Partial<ResourceDrawerFinding>,
+  ) => {
+    const otherFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      id: "finding-2",
+      uid: "uid-2",
+      checkId: "ec2_check",
+      checkTitle: "EC2 Check",
+      ...overrides,
+    };
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[otherFinding]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+  };
+
+  const lastNotificationIndicatorPropsForOtherRow = () => {
+    const calls = mockNotificationIndicator.mock.calls;
+    // Last call corresponds to the other-finding row (current finding row renders first).
+    return calls[calls.length - 1][0];
+  };
+
+  it("should forward delta='new' to the NotificationIndicator for a new other finding", () => {
+    renderWithOtherFinding({ delta: "new" });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: "new",
+      isMuted: false,
+      showDeltaWhenMuted: true,
+    });
+  });
+
+  it("should forward delta='changed' to the NotificationIndicator for a changed other finding", () => {
+    renderWithOtherFinding({ delta: "changed" });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: "changed",
+    });
+  });
+
+  it("should pass delta=undefined when the finding has delta='none'", () => {
+    renderWithOtherFinding({ delta: "none" });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: undefined,
+    });
+  });
+
+  it("should forward mutedReason and keep delta when a muted other finding is also new", () => {
+    renderWithOtherFinding({
+      delta: "new",
+      isMuted: true,
+      mutedReason: "False positive",
+    });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: "new",
+      isMuted: true,
+      mutedReason: "False positive",
+      showDeltaWhenMuted: true,
+    });
   });
 });
