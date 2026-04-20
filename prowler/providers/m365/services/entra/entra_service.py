@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID
 
+from kiota_abstractions.request_information import RequestInformation
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
@@ -36,6 +37,7 @@ class Entra(M365Service):
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
         authentication_method_configurations (dict): Dictionary of authentication method configurations.
+        premium_license_insight (Optional[PremiumLicenseInsight]): Premium license utilization insight data.
     """
 
     def __init__(self, provider: M365Provider):
@@ -83,6 +85,7 @@ class Entra(M365Service):
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
+                self._get_premium_license_insight(),
             )
         )
 
@@ -98,6 +101,7 @@ class Entra(M365Service):
         self.authentication_method_configurations: Dict[
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
+        self.premium_license_insight: Optional[PremiumLicenseInsight] = attributes[10]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -1054,6 +1058,74 @@ OAuthAppInfo
             )
         return authentication_method_configurations
 
+    async def _get_premium_license_insight(
+        self,
+    ) -> Optional["PremiumLicenseInsight"]:
+        """Retrieve Entra ID premium license utilization insight from Microsoft Graph beta API.
+
+        Fetches the ``reports/azureADPremiumLicenseInsight`` resource to determine
+        how many P2 licenses are entitled versus how many users are actively
+        consuming P2-level features (risk-based Conditional Access).
+
+        Returns:
+            Optional[PremiumLicenseInsight]: The license insight data, or None
+                if the API call failed.
+        """
+        logger.info("Entra - Getting premium license insight...")
+        try:
+            request_info = RequestInformation()
+            request_info.http_method = "GET"
+            request_info.url = (
+                "https://graph.microsoft.com/beta/reports/azureADPremiumLicenseInsight"
+            )
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+
+                p2_utilizations = data.get("p2FeatureUtilizations", {})
+                p1_utilizations = data.get("p1FeatureUtilizations", {})
+
+                p2_risk_based_ca = p2_utilizations.get(
+                    "riskBasedConditionalAccess", {}
+                )
+                p2_risk_based_ca_guests = p2_utilizations.get(
+                    "riskBasedConditionalAccessGuestUsers", {}
+                )
+                p1_ca = p1_utilizations.get("conditionalAccess", {})
+                p1_ca_guests = p1_utilizations.get(
+                    "conditionalAccessGuestUsers", {}
+                )
+
+                total_user_count = data.get("totalLicenseCount", 0)
+                entitled_p2 = min(
+                    data.get("entitledP2LicenseCount", 0), total_user_count
+                )
+                entitled_p1 = min(
+                    data.get("entitledP1LicenseCount", 0), total_user_count
+                )
+
+                p2_utilized = p2_risk_based_ca.get(
+                    "userCount", 0
+                ) + p2_risk_based_ca_guests.get("userCount", 0)
+                p1_utilized = p1_ca.get("userCount", 0) + p1_ca_guests.get(
+                    "userCount", 0
+                )
+
+                return PremiumLicenseInsight(
+                    total_user_count=total_user_count,
+                    entitled_p1_license_count=entitled_p1,
+                    entitled_p2_license_count=entitled_p2,
+                    p1_licenses_utilized=p1_utilized,
+                    p2_licenses_utilized=p2_utilized,
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return None
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -1481,3 +1553,24 @@ class OAuthApp(BaseModel):
     is_admin_consented: bool = False
     last_used_time: Optional[str] = None
     app_origin: str = ""
+
+
+class PremiumLicenseInsight(BaseModel):
+    """Model representing Microsoft Entra ID premium license utilization insight.
+
+    Contains entitlement counts and actual utilization counts for P1 and P2
+    license features, enabling compliance validation of premium feature usage.
+
+    Attributes:
+        total_user_count: Total number of users in the tenant.
+        entitled_p1_license_count: Number of entitled P1 licenses (capped at total users).
+        entitled_p2_license_count: Number of entitled P2 licenses (capped at total users).
+        p1_licenses_utilized: Number of users consuming P1 features (Conditional Access).
+        p2_licenses_utilized: Number of users consuming P2 features (risk-based Conditional Access).
+    """
+
+    total_user_count: int = 0
+    entitled_p1_license_count: int = 0
+    entitled_p2_license_count: int = 0
+    p1_licenses_utilized: int = 0
+    p2_licenses_utilized: int = 0
