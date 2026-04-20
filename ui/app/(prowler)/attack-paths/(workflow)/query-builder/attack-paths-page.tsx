@@ -28,6 +28,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -643,6 +644,10 @@ export default function AttackPathsPage() {
                           <DialogContent className="flex h-full max-h-screen w-full max-w-full flex-col gap-0 rounded-none border-0 p-0 sm:max-w-full">
                             <DialogHeader className="sr-only">
                               <DialogTitle>Fullscreen graph view</DialogTitle>
+                              <DialogDescription>
+                                Explore the attack path graph at full size. Use
+                                the toolbar to zoom, fit, or export the graph.
+                              </DialogDescription>
                             </DialogHeader>
                             <div className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
                               <GraphControls
