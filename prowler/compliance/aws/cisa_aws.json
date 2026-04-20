@@ -184,6 +184,8 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "elbv2_ssl_listeners",
         "iam_no_custom_policy_permissive_role_assumption",
         "iam_aws_attached_policy_no_administrative_privileges",

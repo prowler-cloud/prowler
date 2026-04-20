@@ -752,11 +752,19 @@ def _process_finding_micro_batch(
             )
 
         if mappings_to_create:
-            ResourceFindingMapping.objects.bulk_create(
+            created_mappings = ResourceFindingMapping.objects.bulk_create(
                 mappings_to_create,
                 batch_size=SCAN_DB_BATCH_SIZE,
                 ignore_conflicts=True,
+                unique_fields=["tenant_id", "resource_id", "finding_id"],
             )
+            inserted = sum(1 for m in created_mappings if m.pk)
+            if inserted != len(mappings_to_create):
+                logger.error(
+                    f"scan {scan_instance.id}: expected "
+                    f"{len(mappings_to_create)} ResourceFindingMapping rows, "
+                    f"inserted {inserted}. Rolling back micro-batch."
+                )
 
         # Update finding denormalized arrays
         findings_to_update = []
@@ -1803,7 +1811,10 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
             output_field=IntegerField(),
         )
 
-        # Aggregate findings by check_id for this scan
+        # Aggregate findings by check_id for this scan.
+        # `pass_count`, `fail_count` and `manual_count` only count non-muted
+        # findings. Muted findings are tracked separately via the
+        # `*_muted_count` fields.
         aggregated = (
             Finding.objects.filter(
                 tenant_id=tenant_id,
@@ -1814,9 +1825,50 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                 severity_order=Max(severity_case),
                 pass_count=Count("id", filter=Q(status="PASS", muted=False)),
                 fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                manual_count=Count("id", filter=Q(status="MANUAL", muted=False)),
+                pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
+                fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
+                manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),
                 muted_count=Count("id", filter=Q(muted=True)),
+                nonmuted_count=Count("id", filter=Q(muted=False)),
                 new_count=Count("id", filter=Q(delta="new", muted=False)),
                 changed_count=Count("id", filter=Q(delta="changed", muted=False)),
+                new_fail_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=False)
+                ),
+                new_fail_muted_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=True)
+                ),
+                new_pass_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=False)
+                ),
+                new_pass_muted_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=True)
+                ),
+                new_manual_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=False)
+                ),
+                new_manual_muted_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=True)
+                ),
+                changed_fail_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=False)
+                ),
+                changed_fail_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=True)
+                ),
+                changed_pass_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=False)
+                ),
+                changed_pass_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=True)
+                ),
+                changed_manual_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=False)
+                ),
+                changed_manual_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=True)
+                ),
                 resources_total=Count("resources__id", distinct=True),
                 resources_fail=Count(
                     "resources__id",
@@ -1895,9 +1947,26 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                     severity_order=row["severity_order"] or 1,
                     pass_count=row["pass_count"],
                     fail_count=row["fail_count"],
+                    manual_count=row["manual_count"],
+                    pass_muted_count=row["pass_muted_count"],
+                    fail_muted_count=row["fail_muted_count"],
+                    manual_muted_count=row["manual_muted_count"],
                     muted_count=row["muted_count"],
+                    muted=row["nonmuted_count"] == 0,
                     new_count=row["new_count"],
                     changed_count=row["changed_count"],
+                    new_fail_count=row["new_fail_count"],
+                    new_fail_muted_count=row["new_fail_muted_count"],
+                    new_pass_count=row["new_pass_count"],
+                    new_pass_muted_count=row["new_pass_muted_count"],
+                    new_manual_count=row["new_manual_count"],
+                    new_manual_muted_count=row["new_manual_muted_count"],
+                    changed_fail_count=row["changed_fail_count"],
+                    changed_fail_muted_count=row["changed_fail_muted_count"],
+                    changed_pass_count=row["changed_pass_count"],
+                    changed_pass_muted_count=row["changed_pass_muted_count"],
+                    changed_manual_count=row["changed_manual_count"],
+                    changed_manual_muted_count=row["changed_manual_muted_count"],
                     resources_total=row["resources_total"],
                     resources_fail=row["resources_fail"],
                     first_seen_at=row["agg_first_seen_at"],
@@ -1917,9 +1986,26 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                     "severity_order",
                     "pass_count",
                     "fail_count",
+                    "manual_count",
+                    "pass_muted_count",
+                    "fail_muted_count",
+                    "manual_muted_count",
                     "muted_count",
+                    "muted",
                     "new_count",
                     "changed_count",
+                    "new_fail_count",
+                    "new_fail_muted_count",
+                    "new_pass_count",
+                    "new_pass_muted_count",
+                    "new_manual_count",
+                    "new_manual_muted_count",
+                    "changed_fail_count",
+                    "changed_fail_muted_count",
+                    "changed_pass_count",
+                    "changed_pass_muted_count",
+                    "changed_manual_count",
+                    "changed_manual_muted_count",
                     "resources_total",
                     "resources_fail",
                     "first_seen_at",

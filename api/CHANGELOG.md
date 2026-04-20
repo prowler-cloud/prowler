@@ -2,23 +2,68 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.24.0] (Prowler UNRELEASED)
+## [1.25.2] (Prowler v5.24.2)
 
-### 🚀 Added
+### 🐞 Fixed
 
-- Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
-- Filter RBAC role lookup by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
-- `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
-- `Vercel` provider support [(#10190)](https://github.com/prowler-cloud/prowler/pull/10190)
-- Finding groups list and latest endpoints support `sort=delta`, ordering by `new_count` then `changed_count` so groups with the most new findings rank highest [(#10606)](https://github.com/prowler-cloud/prowler/pull/10606)
+- `/finding-groups/latest/<check_id>/resources` now selects the latest completed scan per provider by `-completed_at` (then `-inserted_at`) instead of `-inserted_at`, matching the `/finding-groups/latest` summary path and the daily-summary upsert so overlapping scans no longer produce diverging `delta`/`new_count` between the two endpoints [(#10802)](https://github.com/prowler-cloud/prowler/pull/10802)
+
+---
+
+## [1.25.1] (Prowler v5.24.1)
 
 ### 🔄 Changed
 
+- Attack Paths: Restore `SYNC_BATCH_SIZE` and `FINDINGS_BATCH_SIZE` defaults to 1000, upgrade Cartography to 0.135.0, enable Celery queue priority for cleanup task, rewrite Finding insertion, remove AWS graph cleanup and add timing logs [(#10729)](https://github.com/prowler-cloud/prowler/pull/10729)
+
+### 🐞 Fixed
+
+- Finding group resources endpoints now include findings without associated resources (orphaned IaC findings) as simulated resource rows, and return one row per finding when multiple findings share a resource [(#10708)](https://github.com/prowler-cloud/prowler/pull/10708)
+- Attack Paths: Missing `tenant_id` filter while getting related findings after scan completes [(#10722)](https://github.com/prowler-cloud/prowler/pull/10722)
+- Finding group counters `pass_count`, `fail_count` and `manual_count` now exclude muted findings [(#10753)](https://github.com/prowler-cloud/prowler/pull/10753)
+- Silent data loss in `ResourceFindingMapping` bulk insert that left findings orphaned when `INSERT ... ON CONFLICT DO NOTHING` dropped rows without raising; added explicit `unique_fields` [(#10724)](https://github.com/prowler-cloud/prowler/pull/10724)
+
+---
+
+## [1.25.0] (Prowler v5.24.0)
+
+### 🔄 Changed
+
+- Bump Poetry to `2.3.4` in Dockerfile and pre-commit hooks. Regenerate `api/poetry.lock` [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
+- Attack Paths: Remove dead `cleanup_findings` no-op and its supporting `prowler_finding_lastupdated` index [(#10684)](https://github.com/prowler-cloud/prowler/pull/10684)
+
+### 🐞 Fixed
+
+- Worker-beat race condition on cold start: replaced `sleep 15` with API service healthcheck dependency (Docker Compose) and init containers (Helm), aligned Gunicorn default port to `8080` [(#10603)](https://github.com/prowler-cloud/prowler/pull/10603)
+- API container startup crash on Linux due to root-owned bind-mount preventing JWT key generation [(#10646)](https://github.com/prowler-cloud/prowler/pull/10646)
+
+### 🔐 Security
+
+- `pytest` from 8.2.2 to 9.0.3 to fix CVE-2025-71176 [(#10678)](https://github.com/prowler-cloud/prowler/pull/10678)
+
+---
+
+## [1.24.0] (Prowler v5.23.0)
+
+### 🚀 Added
+
+- RBAC role lookup filtered by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
+- `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
+- `Vercel` provider support [(#10190)](https://github.com/prowler-cloud/prowler/pull/10190)
+- Finding groups list and latest endpoints support `sort=delta`, ordering by `new_count` then `changed_count` so groups with the most new findings rank highest [(#10606)](https://github.com/prowler-cloud/prowler/pull/10606)
+- Finding group resources endpoints (`/finding-groups/{check_id}/resources` and `/finding-groups/latest/{check_id}/resources`) now expose `finding_id` per row, pointing to the most recent matching Finding for each resource. UUIDv7 ordering guarantees `Max(finding__id)` resolves to the latest snapshot [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
+- Handle CIS and CISA SCuBA compliance framework from google workspace [(#10629)](https://github.com/prowler-cloud/prowler/pull/10629)
+- Sort support for all finding group counter fields: `pass_muted_count`, `fail_muted_count`, `manual_muted_count`, and all `new_*`/`changed_*` status-mute breakdown counters [(#10655)](https://github.com/prowler-cloud/prowler/pull/10655)
+
+### 🔄 Changed
+
+- Finding groups list/latest/resources now expose `status` ∈ `{FAIL, PASS, MANUAL}` and `muted: bool` as orthogonal fields. The aggregated `status` reflects the underlying check outcome regardless of mute state, and `muted=true` signals that every finding in the group/resource is muted. New `manual_count` is exposed alongside `pass_count`/`fail_count`, plus `pass_muted_count`/`fail_muted_count`/`manual_muted_count` siblings so clients can isolate the muted half of each status. The `new_*`/`changed_*` deltas are now broken down by status and mute state via 12 new counters (`new_fail_count`, `new_fail_muted_count`, `new_pass_count`, `new_pass_muted_count`, `new_manual_count`, `new_manual_muted_count` and the matching `changed_*` set). New `filter[muted]=true|false` and `sort=status` (FAIL > PASS > MANUAL) / `sort=muted` are supported. `filter[status]=MUTED` is no longer accepted [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
 - Attack Paths: Periodic cleanup of stale scans with dead-worker detection via Celery inspect, marking orphaned `EXECUTING` scans as `FAILED` and recovering `graph_data_ready` [(#10387)](https://github.com/prowler-cloud/prowler/pull/10387)
 - Attack Paths: Replace `_provider_id` property with `_Provider_{uuid}` label for provider isolation, add regex-based label injection for custom queries [(#10402)](https://github.com/prowler-cloud/prowler/pull/10402)
 
 ### 🐞 Fixed
 
+- `reaggregate_all_finding_group_summaries_task` now refreshes finding group daily summaries for every `(provider, day)` combination instead of only the latest scan per provider, matching the unbounded scope of `mute_historical_findings_task`. Mute rule operations no longer leave older daily summaries drifting from the underlying muted findings [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
 - Finding groups list/latest now apply computed status/severity filters and finding-level prefilters (delta, region, service, category, resource group, scan, resource type), plus `check_title` support for sort/filter consistency [(#10428)](https://github.com/prowler-cloud/prowler/pull/10428)
 - Populate compliance data inside `check_metadata` for findings, which was always returned as `null` [(#10449)](https://github.com/prowler-cloud/prowler/pull/10449)
 - 403 error for admin users listing tenants due to roles query not using the admin database connection [(#10460)](https://github.com/prowler-cloud/prowler/pull/10460)
@@ -36,6 +81,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
 - `authlib` bumped from 1.6.6 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
+- `aiohttp` bumped from 3.13.3 to 3.13.5 to fix CVE-2026-34520 (the C parser accepted null bytes and control characters in response headers) [(#10538)](https://github.com/prowler-cloud/prowler/pull/10538)
 
 ---
 

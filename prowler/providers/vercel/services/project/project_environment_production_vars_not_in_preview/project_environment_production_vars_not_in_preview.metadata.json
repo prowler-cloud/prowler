@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Maintain strict **environment separation** between production and preview deployments.\n- Use dedicated, limited-scope credentials for preview environments\n- Never share production database credentials, API keys, or signing keys with preview builds\n- Enable Vercel's deployment protection features to further restrict access to preview deployments\n- Regularly audit which environment variables target multiple environments",
-      "Url": "https://hub.prowler.com/checks/vercel/project_environment_production_vars_not_in_preview"
+      "Url": "https://hub.prowler.com/check/project_environment_production_vars_not_in_preview"
     }
   },
   "Categories": [

@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-
 import { Badge } from "@/components/shadcn/badge/badge";
+import { Button } from "@/components/shadcn/button/button";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 
 interface Finding {
   id: string;
@@ -13,12 +13,18 @@ interface Finding {
 
 interface NodeRemediationProps {
   findings: Finding[];
+  onViewFinding?: (findingId: string) => void;
+  viewFindingLoading?: boolean;
 }
 
 /**
  * Node remediation section showing related Prowler findings
  */
-export const NodeRemediation = ({ findings }: NodeRemediationProps) => {
+export const NodeRemediation = ({
+  findings,
+  onViewFinding,
+  viewFindingLoading = false,
+}: NodeRemediationProps) => {
   const getSeverityVariant = (severity: string) => {
     switch (severity) {
       case "critical":
@@ -66,15 +72,20 @@ export const NodeRemediation = ({ findings }: NodeRemediationProps) => {
             </div>
           </div>
           <div className="mt-2">
-            <Link
-              href={`/findings?id=${finding.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => onViewFinding?.(finding.id)}
+              disabled={viewFindingLoading}
               aria-label={`View full finding for ${finding.title}`}
-              className="text-text-info dark:text-text-info text-sm transition-all hover:opacity-80 dark:hover:opacity-80"
+              className="text-text-info dark:text-text-info h-auto p-0 text-sm transition-all hover:opacity-80 dark:hover:opacity-80"
             >
-              View Full Finding →
-            </Link>
+              {viewFindingLoading ? (
+                <Spinner className="size-4" />
+              ) : (
+                "View Full Finding →"
+              )}
+            </Button>
           </div>
         </div>
       ))}

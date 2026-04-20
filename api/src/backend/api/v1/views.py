@@ -26,19 +26,22 @@ from config.settings.social_login import (
 )
 from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
-from django.contrib.postgres.aggregates import ArrayAgg, StringAgg
+from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
 from django.db.models import (
+    BooleanField,
     Case,
     CharField,
     Count,
     DecimalField,
+    Exists,
     ExpressionWrapper,
     F,
     IntegerField,
     Max,
     Min,
+    OuterRef,
     Prefetch,
     Q,
     QuerySet,
@@ -414,7 +417,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.24.0"
+        spectacular_settings.VERSION = "1.26.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -7076,9 +7079,29 @@ class FindingGroupViewSet(BaseRLSViewSet):
             severity_order=Max("severity_order"),
             pass_count=Sum("pass_count"),
             fail_count=Sum("fail_count"),
+            manual_count=Sum("manual_count"),
+            pass_muted_count=Sum("pass_muted_count"),
+            fail_muted_count=Sum("fail_muted_count"),
+            manual_muted_count=Sum("manual_muted_count"),
             muted_count=Sum("muted_count"),
+            # The group is muted only if every contributing daily summary is
+            # itself fully muted. BoolAnd returns False as soon as one row has
+            # at least one actionable finding.
+            muted=BoolAnd("muted"),
             new_count=Sum("new_count"),
             changed_count=Sum("changed_count"),
+            new_fail_count=Sum("new_fail_count"),
+            new_fail_muted_count=Sum("new_fail_muted_count"),
+            new_pass_count=Sum("new_pass_count"),
+            new_pass_muted_count=Sum("new_pass_muted_count"),
+            new_manual_count=Sum("new_manual_count"),
+            new_manual_muted_count=Sum("new_manual_muted_count"),
+            changed_fail_count=Sum("changed_fail_count"),
+            changed_fail_muted_count=Sum("changed_fail_muted_count"),
+            changed_pass_count=Sum("changed_pass_count"),
+            changed_pass_muted_count=Sum("changed_pass_muted_count"),
+            changed_manual_count=Sum("changed_manual_count"),
+            changed_manual_muted_count=Sum("changed_manual_muted_count"),
             resources_total=Sum("resources_total"),
             resources_fail=Sum("resources_fail"),
             impacted_providers_str=StringAgg(
@@ -7104,39 +7127,94 @@ class FindingGroupViewSet(BaseRLSViewSet):
             output_field=IntegerField(),
         )
 
-        return queryset.values("check_id").annotate(
-            severity_order=Max(severity_case),
-            pass_count=Count("id", filter=Q(status="PASS", muted=False)),
-            fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
-            muted_count=Count("id", filter=Q(muted=True)),
-            new_count=Count("id", filter=Q(delta="new", muted=False)),
-            changed_count=Count("id", filter=Q(delta="changed", muted=False)),
-            resources_total=Count("resources__id", distinct=True),
-            resources_fail=Count(
-                "resources__id",
-                distinct=True,
-                filter=Q(status="FAIL", muted=False),
-            ),
-            impacted_providers_str=StringAgg(
-                Cast("scan__provider__provider", CharField()),
-                delimiter=",",
-                distinct=True,
-                default="",
-            ),
-            agg_first_seen_at=Min("first_seen_at"),
-            agg_last_seen_at=Max("inserted_at"),
-            agg_failing_since=Min(
-                "first_seen_at", filter=Q(status="FAIL", muted=False)
-            ),
-            check_title=Coalesce(
-                Max(KeyTextTransform("checktitle", "check_metadata")),
-                Max(KeyTextTransform("CheckTitle", "check_metadata")),
-                Max(KeyTextTransform("Checktitle", "check_metadata")),
-            ),
-            check_description=Coalesce(
-                Max(KeyTextTransform("description", "check_metadata")),
-                Max(KeyTextTransform("Description", "check_metadata")),
-            ),
+        # `pass_count`, `fail_count` and `manual_count` only count non-muted
+        # findings. Muted findings are tracked separately via the
+        # `*_muted_count` fields.
+        return (
+            queryset.values("check_id")
+            .annotate(
+                severity_order=Max(severity_case),
+                pass_count=Count("id", filter=Q(status="PASS", muted=False)),
+                fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                manual_count=Count("id", filter=Q(status="MANUAL", muted=False)),
+                pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
+                fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
+                manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),
+                muted_count=Count("id", filter=Q(muted=True)),
+                nonmuted_count=Count("id", filter=Q(muted=False)),
+                new_count=Count("id", filter=Q(delta="new", muted=False)),
+                changed_count=Count("id", filter=Q(delta="changed", muted=False)),
+                new_fail_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=False)
+                ),
+                new_fail_muted_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=True)
+                ),
+                new_pass_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=False)
+                ),
+                new_pass_muted_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=True)
+                ),
+                new_manual_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=False)
+                ),
+                new_manual_muted_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=True)
+                ),
+                changed_fail_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=False)
+                ),
+                changed_fail_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=True)
+                ),
+                changed_pass_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=False)
+                ),
+                changed_pass_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=True)
+                ),
+                changed_manual_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=False)
+                ),
+                changed_manual_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=True)
+                ),
+                resources_total=Count("resources__id", distinct=True),
+                resources_fail=Count(
+                    "resources__id",
+                    distinct=True,
+                    filter=Q(status="FAIL", muted=False),
+                ),
+                impacted_providers_str=StringAgg(
+                    Cast("scan__provider__provider", CharField()),
+                    delimiter=",",
+                    distinct=True,
+                    default="",
+                ),
+                agg_first_seen_at=Min("first_seen_at"),
+                agg_last_seen_at=Max("inserted_at"),
+                agg_failing_since=Min(
+                    "first_seen_at", filter=Q(status="FAIL", muted=False)
+                ),
+                check_title=Coalesce(
+                    Max(KeyTextTransform("checktitle", "check_metadata")),
+                    Max(KeyTextTransform("CheckTitle", "check_metadata")),
+                    Max(KeyTextTransform("Checktitle", "check_metadata")),
+                ),
+                check_description=Coalesce(
+                    Max(KeyTextTransform("description", "check_metadata")),
+                    Max(KeyTextTransform("Description", "check_metadata")),
+                ),
+            )
+            .annotate(
+                # Group is muted only if it has zero non-muted findings.
+                muted=Case(
+                    When(nonmuted_count=0, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                ),
+            )
         )
 
     def _split_computed_aggregate_filters(
@@ -7148,6 +7226,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
             "status__in",
             "severity",
             "severity__in",
+            "muted",
             "include_muted",
         }
         finding_params = QueryDict(mutable=True)
@@ -7179,7 +7258,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
         Post-process aggregation results to add computed fields.
 
         - Converts severity integer back to string
-        - Computes aggregated status (FAIL > PASS > MUTED)
+        - Computes aggregated status (FAIL > PASS > MANUAL); the orthogonal
+          ``muted`` boolean is already on the row from the SQL aggregation
         - Converts provider string to list
         """
         results = []
@@ -7197,13 +7277,21 @@ class FindingGroupViewSet(BaseRLSViewSet):
             if "agg_failing_since" in row:
                 row["failing_since"] = row.pop("agg_failing_since")
 
-            # Compute aggregated status
-            if row.get("fail_count", 0) > 0:
+            # Drop the helper count we use to derive `muted` in the
+            # finding-level aggregation path.
+            row.pop("nonmuted_count", None)
+
+            # Compute aggregated status from non-muted counts first, then
+            # fall back to muted counts so fully-muted groups still reflect
+            # the underlying check outcome.
+            total_fail = row.get("fail_count", 0) + row.get("fail_muted_count", 0)
+            total_pass = row.get("pass_count", 0) + row.get("pass_muted_count", 0)
+            if total_fail > 0:
                 row["status"] = "FAIL"
-            elif row.get("pass_count", 0) > 0:
+            elif total_pass > 0:
                 row["status"] = "PASS"
             else:
-                row["status"] = "MUTED"
+                row["status"] = "MANUAL"
 
             # Convert provider string to list
             providers_str = row.pop("impacted_providers_str", "") or ""
@@ -7219,12 +7307,30 @@ class FindingGroupViewSet(BaseRLSViewSet):
         "check_id": "check_id",
         "check_title": "check_title",
         "severity": "severity_order",
+        "status": "status_order",
+        "muted": "muted",
         "delta": "delta_order",
         "fail_count": "fail_count",
         "pass_count": "pass_count",
+        "manual_count": "manual_count",
         "muted_count": "muted_count",
+        "pass_muted_count": "pass_muted_count",
+        "fail_muted_count": "fail_muted_count",
+        "manual_muted_count": "manual_muted_count",
         "new_count": "new_count",
+        "new_fail_count": "new_fail_count",
+        "new_fail_muted_count": "new_fail_muted_count",
+        "new_pass_count": "new_pass_count",
+        "new_pass_muted_count": "new_pass_muted_count",
+        "new_manual_count": "new_manual_count",
+        "new_manual_muted_count": "new_manual_muted_count",
         "changed_count": "changed_count",
+        "changed_fail_count": "changed_fail_count",
+        "changed_fail_muted_count": "changed_fail_muted_count",
+        "changed_pass_count": "changed_pass_count",
+        "changed_pass_muted_count": "changed_pass_muted_count",
+        "changed_manual_count": "changed_manual_count",
+        "changed_manual_muted_count": "changed_manual_muted_count",
         "resources_total": "resources_total",
         "resources_fail": "resources_fail",
         "first_seen_at": "agg_first_seen_at",
@@ -7276,23 +7382,28 @@ class FindingGroupViewSet(BaseRLSViewSet):
         return ordering
 
     def _apply_aggregated_computed_filters(self, queryset, computed_params: QueryDict):
-        """Apply computed filters (status/severity) on aggregated finding-group rows."""
+        """Apply computed filters (status/severity/muted) on aggregated finding-group rows."""
         if not computed_params:
             return queryset
 
         if computed_params.get("status") or computed_params.getlist("status__in"):
             queryset = queryset.annotate(
+                total_fail=F("fail_count") + F("fail_muted_count"),
+                total_pass=F("pass_count") + F("pass_muted_count"),
+            ).annotate(
                 aggregated_status=Case(
-                    When(fail_count__gt=0, then=Value("FAIL")),
-                    When(pass_count__gt=0, then=Value("PASS")),
-                    default=Value("MUTED"),
+                    When(total_fail__gt=0, then=Value("FAIL")),
+                    When(total_pass__gt=0, then=Value("PASS")),
+                    default=Value("MANUAL"),
                     output_field=CharField(),
                 )
             )
 
-        # Exclude fully-muted groups by default unless include_muted is set
-        if "include_muted" not in computed_params:
-            queryset = queryset.exclude(fail_count=0, pass_count=0, muted_count__gt=0)
+        # Exclude fully-muted groups by default unless the caller has opted in
+        # via either `include_muted` or an explicit `muted` filter (the latter
+        # gives the caller direct control over the column).
+        if "include_muted" not in computed_params and "muted" not in computed_params:
+            queryset = queryset.exclude(muted=True)
 
         filterset = FindingGroupAggregatedComputedFilter(
             computed_params, queryset=queryset
@@ -7347,18 +7458,14 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 provider_type=Max("resource__provider__provider"),
                 provider_uid=Max("resource__provider__uid"),
                 provider_alias=Max("resource__provider__alias"),
+                # status_order considers ALL findings (muted or not) so it
+                # surfaces FAIL/PASS/MANUAL based on the underlying check
+                # outcome. Whether the resource is actionable is signalled by
+                # the orthogonal `muted` flag below.
                 status_order=Max(
                     Case(
-                        When(
-                            finding__status="FAIL",
-                            finding__muted=False,
-                            then=Value(3),
-                        ),
-                        When(
-                            finding__status="PASS",
-                            finding__muted=False,
-                            then=Value(2),
-                        ),
+                        When(finding__status="FAIL", then=Value(3)),
+                        When(finding__status="PASS", then=Value(2)),
                         default=Value(1),
                         output_field=IntegerField(),
                     )
@@ -7390,6 +7497,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 ),
                 first_seen_at=Min("finding__first_seen_at"),
                 last_seen_at=Max("finding__inserted_at"),
+                # True only if every finding for this resource+check is muted.
+                muted=BoolAnd("finding__muted"),
                 # Max() on muted_reason / check_metadata is safe because
                 # all findings for the same resource+check share identical
                 # values (mute rules and metadata are applied per-check).
@@ -7397,6 +7506,12 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 resource_group=Max(
                     KeyTextTransform("resourcegroup", "finding__check_metadata")
                 ),
+                # Most recent matching Finding for this (resource, check):
+                # Finding.id is a UUIDv7 (time-ordered in its high 48 bits).
+                # Cast to text first because PostgreSQL has no built-in
+                # `max(uuid)` aggregate; on the canonical lowercase form a
+                # lexicographic Max() still resolves to the latest snapshot.
+                finding_id=Max(Cast("finding__id", output_field=CharField())),
             )
             .filter(resource_id__isnull=False)
         )
@@ -7405,8 +7520,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
     _RESOURCE_SORT_ANNOTATIONS = {
         "status_order": lambda: Max(
             Case(
-                When(finding__status="FAIL", finding__muted=False, then=Value(3)),
-                When(finding__status="PASS", finding__muted=False, then=Value(2)),
+                When(finding__status="FAIL", then=Value(3)),
+                When(finding__status="PASS", then=Value(2)),
                 default=Value(1),
                 output_field=IntegerField(),
             )
@@ -7469,6 +7584,53 @@ class FindingGroupViewSet(BaseRLSViewSet):
             .order_by(*ordering)
         )
 
+    def _orphan_findings_queryset(self, filtered_queryset, finding_ids=None):
+        """Findings in the filtered set with no ResourceFindingMapping entries."""
+        orphan_qs = filtered_queryset.filter(
+            ~Exists(ResourceFindingMapping.objects.filter(finding_id=OuterRef("pk")))
+        )
+        if finding_ids is not None:
+            orphan_qs = orphan_qs.filter(id__in=finding_ids)
+        return orphan_qs
+
+    def _has_orphan_findings(self, filtered_queryset) -> bool:
+        """Return True if any finding in the filtered set has no resource mapping."""
+        return self._orphan_findings_queryset(filtered_queryset).exists()
+
+    def _orphan_aggregation_values(self, orphan_queryset):
+        """Raw rows for orphan findings; resource payload synthesized from metadata.
+
+        check_metadata is stored with lowercase keys (see
+        `prowler.lib.outputs.finding.Finding.get_metadata`) and
+        `Finding.resource_groups` is already denormalized at ingest time.
+        """
+        return orphan_queryset.annotate(
+            _provider_type=F("scan__provider__provider"),
+            _provider_uid=F("scan__provider__uid"),
+            _provider_alias=F("scan__provider__alias"),
+            _svc=KeyTextTransform("servicename", "check_metadata"),
+            _region=KeyTextTransform("region", "check_metadata"),
+            _rtype=KeyTextTransform("resourcetype", "check_metadata"),
+            _rgroup=F("resource_groups"),
+        ).values(
+            "id",
+            "uid",
+            "status",
+            "severity",
+            "delta",
+            "muted",
+            "muted_reason",
+            "first_seen_at",
+            "inserted_at",
+            "_provider_type",
+            "_provider_uid",
+            "_provider_alias",
+            "_svc",
+            "_region",
+            "_rtype",
+            "_rgroup",
+        )
+
     def _post_process_resources(self, resource_data):
         """Convert resource aggregation rows to API output."""
         results = []
@@ -7480,7 +7642,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
             elif status_order == 2:
                 status = "PASS"
             else:
-                status = "MUTED"
+                status = "MANUAL"
 
             delta_order = row.get("delta_order", 0)
             if delta_order == 2:
@@ -7490,9 +7652,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
             else:
                 delta = None
 
+            resource_id = row["resource_id"]
+            finding_id = str(row["finding_id"]) if row.get("finding_id") else None
+
             results.append(
                 {
-                    "resource_id": row["resource_id"],
+                    "row_id": resource_id,
+                    "resource_id": resource_id,
                     "resource_uid": row["resource_uid"],
                     "resource_name": row["resource_name"],
                     "resource_service": row["resource_service"],
@@ -7508,8 +7674,49 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     "delta": delta,
                     "first_seen_at": row["first_seen_at"],
                     "last_seen_at": row["last_seen_at"],
+                    "muted": bool(row.get("muted", False)),
                     "muted_reason": row.get("muted_reason"),
                     "resource_group": row.get("resource_group", ""),
+                    "finding_id": finding_id,
+                }
+            )
+
+        return results
+
+    def _post_process_orphans(self, orphan_rows):
+        """Convert orphan finding rows into the same API shape as mapping rows."""
+        results = []
+        for row in orphan_rows:
+            status_val = row["status"]
+            status = status_val if status_val in ("FAIL", "PASS") else "MANUAL"
+
+            muted = bool(row["muted"])
+            delta_val = row.get("delta")
+            delta = delta_val if delta_val in ("new", "changed") and not muted else None
+
+            finding_id = str(row["id"])
+
+            results.append(
+                {
+                    "row_id": finding_id,
+                    "resource_id": None,
+                    "resource_uid": row["uid"],
+                    "resource_name": row["uid"],
+                    "resource_service": row["_svc"] or "",
+                    "resource_region": row["_region"] or "",
+                    "resource_type": row["_rtype"] or "",
+                    "provider_type": row["_provider_type"],
+                    "provider_uid": row["_provider_uid"],
+                    "provider_alias": row["_provider_alias"],
+                    "status": status,
+                    "severity": row["severity"],
+                    "delta": delta,
+                    "first_seen_at": row["first_seen_at"],
+                    "last_seen_at": row["inserted_at"],
+                    "muted": muted,
+                    "muted_reason": row.get("muted_reason"),
+                    "resource_group": row["_rgroup"] or "",
+                    "finding_id": finding_id,
                 }
             )
 
@@ -7570,11 +7777,19 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 sort_param, self._FINDING_GROUP_SORT_MAP
             )
             if ordering:
-                # delta_order is a virtual sort field: expand it to a
-                # lexicographic ordering by (new_count, changed_count) so groups
-                # with more new findings rank higher, with changed_count as the
-                # tie-breaker (preserves the "new > changed" priority used by
-                # the resources endpoint, but driven by the actual counters).
+                if any(field.lstrip("-") == "status_order" for field in ordering):
+                    aggregated_queryset = aggregated_queryset.annotate(
+                        total_fail_for_sort=F("fail_count") + F("fail_muted_count"),
+                        total_pass_for_sort=F("pass_count") + F("pass_muted_count"),
+                    ).annotate(
+                        status_order=Case(
+                            When(total_fail_for_sort__gt=0, then=Value(3)),
+                            When(total_pass_for_sort__gt=0, then=Value(2)),
+                            default=Value(1),
+                            output_field=IntegerField(),
+                        )
+                    )
+
                 expanded_ordering = []
                 for field in ordering:
                     if field.lstrip("-") == "delta_order":
@@ -7608,41 +7823,64 @@ class FindingGroupViewSet(BaseRLSViewSet):
     def _paginated_resource_response(
         self, request, filtered_queryset, resource_ids, tenant_id
     ):
-        """Paginate and return resources.
+        """Paginate and return resources, appending orphan findings when present.
 
-        Without sort: paginate lightweight resource IDs first, aggregate only the page.
-        With sort: build a lightweight ordering subquery (resource_id + sort keys),
-        paginate that, then aggregate full details only for the page.
+        Hot path (no orphans, or resource filter applied): resources come from
+        ResourceFindingMapping aggregation. Untouched pre-existing behaviour.
+
+        Orphan fallback: findings without a mapping (e.g. IaC) are appended
+        after mapping rows as synthesised resource-like rows so they remain
+        visible in the UI without paying the aggregation cost on the hot path.
         """
         sort_param = request.query_params.get("sort")
-
+        ordering = None
         if sort_param:
-            ordering = self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
-            if ordering:
-                if "resource_id" not in {field.lstrip("-") for field in ordering}:
-                    ordering.append("resource_id")
+            validated = self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
+            ordering = validated if validated else None
 
-                # Phase 1: lightweight aggregation with only sort keys, paginate
-                ordering_qs = self._build_resource_ordering_queryset(
-                    filtered_queryset,
-                    resource_ids=resource_ids,
-                    tenant_id=tenant_id,
-                    ordering=ordering,
-                )
-                page = self.paginate_queryset(ordering_qs)
-                if page is not None:
-                    page_ids = [row["resource_id"] for row in page]
-                    resource_data = self._build_resource_aggregation(
-                        filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
-                    )
-                    # Re-sort to match the page ordering
-                    id_order = {rid: idx for idx, rid in enumerate(page_ids)}
-                    results = self._post_process_resources(resource_data)
-                    results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
-                    serializer = FindingGroupResourceSerializer(results, many=True)
-                    return self.get_paginated_response(serializer.data)
+        # Resource filters can only match findings with resources; skip orphan
+        # detection entirely when they are present.
+        if resource_ids is not None:
+            return self._mapping_paginated_response(
+                request, filtered_queryset, resource_ids, tenant_id, ordering
+            )
 
-                page_ids = [row["resource_id"] for row in ordering_qs]
+        has_mappings = self._build_resource_mapping_queryset(
+            filtered_queryset, resource_ids=None, tenant_id=tenant_id
+        ).exists()
+
+        if has_mappings:
+            # Normal or mixed group: serve only resource-mapped rows.
+            # TODO: Orphan findings in mixed groups are intentionally excluded
+            # until the ephemeral resources strategy is decided. When resolved,
+            # route mixed groups to _combined_paginated_response instead.
+            return self._mapping_paginated_response(
+                request, filtered_queryset, resource_ids, tenant_id, ordering
+            )
+
+        # Pure orphan group (e.g. IaC): synthesize resource-like rows.
+        return self._combined_paginated_response(
+            request, filtered_queryset, tenant_id, ordering
+        )
+
+    def _mapping_paginated_response(
+        self, request, filtered_queryset, resource_ids, tenant_id, ordering
+    ):
+        """Mapping-only paginated response (original fast path)."""
+        if ordering:
+            if "resource_id" not in {field.lstrip("-") for field in ordering}:
+                ordering.append("resource_id")
+
+            # Phase 1: lightweight aggregation with only sort keys, paginate
+            ordering_qs = self._build_resource_ordering_queryset(
+                filtered_queryset,
+                resource_ids=resource_ids,
+                tenant_id=tenant_id,
+                ordering=ordering,
+            )
+            page = self.paginate_queryset(ordering_qs)
+            if page is not None:
+                page_ids = [row["resource_id"] for row in page]
                 resource_data = self._build_resource_aggregation(
                     filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
                 )
@@ -7650,10 +7888,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 results = self._post_process_resources(resource_data)
                 results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
                 serializer = FindingGroupResourceSerializer(results, many=True)
-                return Response(serializer.data)
+                return self.get_paginated_response(serializer.data)
 
-        # No sort (or only empty sort fragments): paginate lightweight resource IDs
-        # first, aggregate only the page.
+            page_ids = [row["resource_id"] for row in ordering_qs]
+            resource_data = self._build_resource_aggregation(
+                filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
+            )
+            id_order = {rid: idx for idx, rid in enumerate(page_ids)}
+            results = self._post_process_resources(resource_data)
+            results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
+            serializer = FindingGroupResourceSerializer(results, many=True)
+            return Response(serializer.data)
+
         mapping_qs = self._build_resource_mapping_queryset(
             filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
         )
@@ -7679,6 +7925,95 @@ class FindingGroupViewSet(BaseRLSViewSet):
         ).order_by("resource_id")
         results = self._post_process_resources(resource_data)
         serializer = FindingGroupResourceSerializer(results, many=True)
+        return Response(serializer.data)
+
+    def _combined_paginated_response(
+        self, request, filtered_queryset, tenant_id, ordering
+    ):
+        """Mapping rows + orphan findings appended at end.
+
+        Orphans sit after mapping rows regardless of sort. This keeps the
+        mapping-only code path intact for checks that have no orphans (the
+        common case) and avoids paying UNION/coalesce costs there.
+        """
+        mapping_qs = self._build_resource_mapping_queryset(
+            filtered_queryset, resource_ids=None, tenant_id=tenant_id
+        )
+        mapping_count = mapping_qs.values("resource_id").distinct().count()
+
+        orphan_ids = list(
+            self._orphan_findings_queryset(filtered_queryset)
+            .order_by("id")
+            .values_list("id", flat=True)
+        )
+        orphan_count = len(orphan_ids)
+        total = mapping_count + orphan_count
+
+        # Paginate a simple [0..total) index sequence so DRF produces proper
+        # links/meta; then slice mapping / orphan sources accordingly.
+        page = self.paginate_queryset(range(total))
+        page_indices = list(page) if page is not None else list(range(total))
+
+        mapping_indices = [i for i in page_indices if i < mapping_count]
+        orphan_positions = [
+            i - mapping_count for i in page_indices if i >= mapping_count
+        ]
+
+        mapping_results = []
+        if mapping_indices:
+            start = mapping_indices[0]
+            stop = mapping_indices[-1] + 1
+            if ordering:
+                ordering_fields = list(ordering)
+                if "resource_id" not in {
+                    field.lstrip("-") for field in ordering_fields
+                }:
+                    ordering_fields.append("resource_id")
+                ordered_qs = self._build_resource_ordering_queryset(
+                    filtered_queryset,
+                    resource_ids=None,
+                    tenant_id=tenant_id,
+                    ordering=ordering_fields,
+                )
+                slice_rids = [row["resource_id"] for row in ordered_qs[start:stop]]
+            else:
+                slice_rids = list(
+                    mapping_qs.values_list("resource_id", flat=True)
+                    .distinct()
+                    .order_by("resource_id")[start:stop]
+                )
+            if slice_rids:
+                resource_data = self._build_resource_aggregation(
+                    filtered_queryset,
+                    resource_ids=slice_rids,
+                    tenant_id=tenant_id,
+                )
+                rows_by_rid = {row["resource_id"]: row for row in resource_data}
+                ordered_rows = [
+                    rows_by_rid[rid] for rid in slice_rids if rid in rows_by_rid
+                ]
+                mapping_results = self._post_process_resources(ordered_rows)
+
+        orphan_results = []
+        if orphan_positions:
+            slice_fids = [orphan_ids[pos] for pos in orphan_positions]
+            raw_rows = list(
+                self._orphan_aggregation_values(
+                    self._orphan_findings_queryset(
+                        filtered_queryset, finding_ids=slice_fids
+                    )
+                )
+            )
+            rows_by_fid = {row["id"]: row for row in raw_rows}
+            ordered_rows = [
+                rows_by_fid[fid] for fid in slice_fids if fid in rows_by_fid
+            ]
+            orphan_results = self._post_process_orphans(ordered_rows)
+
+        results = mapping_results + orphan_results
+        serializer = FindingGroupResourceSerializer(results, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
@@ -7810,10 +8145,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
         tenant_id = request.tenant_id
         queryset = self._get_finding_queryset()
 
-        # Get latest completed scan for each provider
+        # Order by -completed_at (matching the /latest summary path and the
+        # daily summary upsert keyed on midnight(completed_at)) so that
+        # overlapping scans do not make /resources and /latest read from
+        # different scans and report diverging counts.
         latest_scan_ids = (
             Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
+            .order_by("provider_id", "-completed_at", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
