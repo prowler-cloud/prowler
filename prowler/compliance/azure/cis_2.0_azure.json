@@ -2714,7 +2714,8 @@
       "Id": "6.6",
       "Description": "Ensure that Network Watcher is 'Enabled'",
       "Checks": [
-        "network_watcher_enabled"
+        "network_watcher_enabled",
+        "network_vnet_ddos_protection_enabled"
       ],
       "Attributes": [
         {

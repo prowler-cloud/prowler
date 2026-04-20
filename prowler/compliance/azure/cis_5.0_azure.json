@@ -1974,7 +1974,9 @@
     {
       "Id": "7.11",
       "Description": "Ensure subnets are associated with network security groups",
-      "Checks": [],
+      "Checks": [
+        "network_subnet_nsg_associated"
+      ],
       "Attributes": [
         {
           "Section": "7 Networking Services",
@@ -2931,7 +2933,9 @@
     {
       "Id": "8.5",
       "Description": "Ensure Azure DDoS Network Protection is enabled on virtual networks",
-      "Checks": [],
+      "Checks": [
+        "network_vnet_ddos_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "8 Security Services",

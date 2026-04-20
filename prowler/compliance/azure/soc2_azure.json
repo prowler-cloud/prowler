@@ -307,7 +307,8 @@
         "app_minimum_tls_version_12",
         "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version",
-        "storage_ensure_minimum_tls_version_12"
+        "storage_ensure_minimum_tls_version_12",
+        "network_subnet_nsg_associated"
       ]
     },
     {

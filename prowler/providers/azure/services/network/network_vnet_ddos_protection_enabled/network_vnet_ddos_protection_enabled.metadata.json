@@ -1,0 +1,36 @@
+{
+  "Provider": "azure",
+  "CheckID": "network_vnet_ddos_protection_enabled",
+  "CheckTitle": "Virtual network has Azure DDoS Network Protection enabled",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.network/virtualnetworks",
+  "ResourceGroup": "network",
+  "Description": "**Azure Virtual Networks** are evaluated for **DDoS Network Protection**. When enabled, Azure DDoS Protection provides enhanced mitigation against volumetric, protocol, and application-layer DDoS attacks targeting resources deployed in the virtual network.",
+  "Risk": "Without DDoS protection, Azure resources are only covered by **DDoS Infrastructure Protection** (basic), which may not mitigate sophisticated or large-scale attacks. Successful DDoS attacks cause **service unavailability** and potential **data exposure** during failover.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/ddos-protection/ddos-protection-overview"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az network ddos-protection create --resource-group <rg> --name <plan> && az network vnet update --resource-group <rg> --name <vnet> --ddos-protection-plan <plan_id>",
+      "NativeIaC": "```bicep\nresource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  properties: {\n    addressSpace: { addressPrefixes: ['10.0.0.0/16'] }\n    enableDdosProtection: true // Critical: enables DDoS Protection\n    ddosProtectionPlan: { id: '<example_resource_id>' }\n  }\n}\n```",
+      "Other": "1. Sign in to Azure portal\n2. Search for 'DDoS protection plans'\n3. Create a new DDoS protection plan\n4. Go to Virtual networks and select the target VNet\n5. Under DDoS protection, select 'Enable' and select the plan\n6. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_virtual_network\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  address_space       = [\"10.0.0.0/16\"]\n\n  ddos_protection_plan {\n    id     = \"<example_resource_id>\"  # Critical: associates DDoS Protection Plan\n    enable = true\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Azure DDoS Network Protection** on virtual networks hosting internet-facing workloads. Consider cost implications \u2014 DDoS Network Protection has a monthly charge per plan. Use **DDoS IP Protection** as a lower-cost alternative for individual public IPs.",
+      "Url": "https://hub.prowler.com/check/network_vnet_ddos_protection_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Azure DDoS Network Protection has a monthly cost (~$2,944/month per plan). Consider whether the workload justifies this cost. Internal-only VNets without internet-facing resources may not need DDoS protection."
+}

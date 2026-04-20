@@ -4926,7 +4926,8 @@
         "cosmosdb_account_use_private_endpoints",
         "databricks_workspace_vnet_injection_enabled",
         "network_http_internet_access_restricted",
-        "storage_ensure_private_endpoints_in_storage_accounts"
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "network_subnet_nsg_associated"
       ]
     },
     {
