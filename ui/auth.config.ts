@@ -90,7 +90,8 @@ const applyDecodedClaims = (
     target.accessTokenExpires = decodedToken.exp
       ? decodedToken.exp * 1000
       : target.accessTokenExpires;
-    target.user_id = decodedToken.user_id ?? target.user_id;
+    // Map standard JWT "sub" field to user_id if user_id is not present
+    target.user_id = decodedToken.user_id ?? decodedToken.sub ?? target.user_id;
     target.tenant_id = decodedToken.tenant_id ?? target.tenant_id;
   } catch (decodeError) {
     // eslint-disable-next-line no-console
