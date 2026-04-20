@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.25.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Support for Python 3.13 [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
+
 ## [5.24.1] (Prowler UNRELEASED)
 
 ### 🔄 Changed

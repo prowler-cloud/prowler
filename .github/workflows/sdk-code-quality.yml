@@ -1,14 +1,14 @@
-name: 'SDK: Code Quality'
+name: "SDK: Code Quality"
 
 on:
   push:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
   pull_request:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -26,9 +26,10 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - '3.10'
-          - '3.11'
-          - '3.12'
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
 
     steps:
       - name: Harden Runner
