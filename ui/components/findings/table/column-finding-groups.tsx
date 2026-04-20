@@ -5,18 +5,30 @@ import { ChevronRight } from "lucide-react";
 
 import { Checkbox } from "@/components/shadcn";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import {
   DataTableColumnHeader,
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/ui/table";
 import { cn } from "@/lib";
-import { FindingGroupRow, ProviderType } from "@/types";
+import {
+  canDrillDownFindingGroup,
+  getFilteredFindingGroupDelta,
+  getFindingGroupImpactedCounts,
+  isFindingGroupMuted,
+} from "@/lib/findings-groups";
+import { FindingGroupRow } from "@/types";
+import { getProviderDisplayName } from "@/types/providers";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 import { canMuteFindingGroup } from "./finding-group-selection";
-import { ImpactedProvidersCell } from "./impacted-providers-cell";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
-import { DeltaValues, NotificationIndicator } from "./notification-indicator";
+import { NotificationIndicator } from "./notification-indicator";
+import { ProviderIconCell } from "./provider-icon-cell";
 
 interface GetColumnFindingGroupsOptions {
   rowSelection: RowSelectionState;
@@ -25,6 +37,8 @@ interface GetColumnFindingGroupsOptions {
   expandedCheckId?: string | null;
   /** True when the expanded group has individually selected resources */
   hasResourceSelection?: boolean;
+  /** Active URL filters — used to make the delta indicator status-aware */
+  filters?: Record<string, string | string[] | undefined>;
 }
 
 const VISIBLE_DISABLED_CHECKBOX_CLASS =
@@ -36,6 +50,7 @@ export function getColumnFindingGroups({
   onDrillDown,
   expandedCheckId,
   hasResourceSelection = false,
+  filters = {},
 }: GetColumnFindingGroupsOptions): ColumnDef<FindingGroupRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -74,27 +89,24 @@ export function getColumnFindingGroups({
       },
       cell: ({ row }) => {
         const group = row.original;
-        const allMuted =
-          group.mutedCount > 0 && group.mutedCount === group.resourcesTotal;
+        const allMuted = isFindingGroupMuted(group);
         const isExpanded = expandedCheckId === group.checkId;
-
-        const delta =
-          group.newCount > 0
-            ? DeltaValues.NEW
-            : group.changedCount > 0
-              ? DeltaValues.CHANGED
-              : DeltaValues.NONE;
-
-        const canExpand = group.resourcesTotal > 0;
+        const deltaKey = getFilteredFindingGroupDelta(group, filters);
+        const canExpand = canDrillDownFindingGroup(group);
         const canSelect = canMuteFindingGroup({
           resourcesFail: group.resourcesFail,
           resourcesTotal: group.resourcesTotal,
+          muted: group.muted,
           mutedCount: group.mutedCount,
         });
 
         return (
           <div className="flex items-center gap-2">
-            <NotificationIndicator delta={delta} isMuted={allMuted} />
+            <NotificationIndicator
+              delta={deltaKey}
+              isMuted={allMuted}
+              showDeltaWhenMuted
+            />
             {canExpand ? (
               <button
                 type="button"
@@ -149,9 +161,7 @@ export function getColumnFindingGroups({
         <DataTableColumnHeader column={column} title="Status" />
       ),
       cell: ({ row }) => {
-        const rawStatus = row.original.status as string;
-        const status = rawStatus === "MUTED" ? "FAIL" : row.original.status;
-        return <StatusFindingBadge status={status} />;
+        return <StatusFindingBadge status={row.original.status} />;
       },
       enableSorting: false,
     },
@@ -167,23 +177,43 @@ export function getColumnFindingGroups({
       ),
       cell: ({ row }) => {
         const group = row.original;
-        const canExpand = group.resourcesTotal > 0;
+        const canExpand = canDrillDownFindingGroup(group);
+        const provider = group.providers[0];
+        const providerName = provider
+          ? getProviderDisplayName(provider)
+          : undefined;
 
         return (
-          <div>
-            {canExpand ? (
-              <button
-                type="button"
-                className="text-text-neutral-primary hover:text-button-tertiary w-full cursor-pointer border-none bg-transparent p-0 text-left text-sm break-words whitespace-normal hover:underline"
-                onClick={() => onDrillDown(group.checkId, group)}
-              >
-                {group.checkTitle}
-              </button>
-            ) : (
-              <span className="text-text-neutral-primary w-full text-left text-sm break-words whitespace-normal">
-                {group.checkTitle}
-              </span>
-            )}
+          <div className="flex items-center gap-2">
+            {provider && providerName ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="shrink-0">
+                    <ProviderIconCell
+                      provider={provider}
+                      size={20}
+                      className="size-5 rounded-none bg-transparent"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top">{providerName}</TooltipContent>
+              </Tooltip>
+            ) : null}
+            <div>
+              {canExpand ? (
+                <button
+                  type="button"
+                  className="text-text-neutral-primary hover:text-button-tertiary w-full cursor-pointer border-none bg-transparent p-0 text-left text-sm break-words whitespace-normal hover:underline"
+                  onClick={() => onDrillDown(group.checkId, group)}
+                >
+                  {group.checkTitle}
+                </button>
+              ) : (
+                <span className="text-text-neutral-primary w-full text-left text-sm break-words whitespace-normal">
+                  {group.checkTitle}
+                </span>
+              )}
+            </div>
           </div>
         );
       },
@@ -200,19 +230,6 @@ export function getColumnFindingGroups({
       ),
       cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
     },
-    // Impacted Providers column
-    {
-      id: "impactedProviders",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Impacted Providers" />
-      ),
-      cell: ({ row }) => (
-        <ImpactedProvidersCell
-          providers={row.original.providers as ProviderType[]}
-        />
-      ),
-      enableSorting: false,
-    },
     // Impacted Resources column
     {
       id: "impactedResources",
@@ -221,10 +238,11 @@ export function getColumnFindingGroups({
       ),
       cell: ({ row }) => {
         const group = row.original;
+        const counts = getFindingGroupImpactedCounts(group);
         return (
           <ImpactedResourcesCell
-            impacted={group.resourcesFail}
-            total={group.resourcesTotal}
+            impacted={counts.impacted}
+            total={counts.total}
           />
         );
       },

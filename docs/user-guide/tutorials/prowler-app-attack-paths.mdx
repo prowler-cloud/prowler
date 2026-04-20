@@ -105,6 +105,102 @@ If a query requires no parameters, the form displays a message confirming that t
   width="700"
 />
 
+## Writing Custom openCypher Queries
+
+In addition to the built-in queries, Attack Paths supports custom read-only [openCypher](https://opencypher.org/) queries. Custom queries provide direct access to the underlying graph so security teams can answer ad-hoc questions, prototype detections, or extend coverage beyond the built-in catalogue.
+
+To write a custom query, select **Custom openCypher query** from the query dropdown. A code editor with syntax highlighting and line numbers appears, ready to receive the query.
+
+### Constraints and Safety Limits
+
+Custom queries are sandboxed to keep the graph database safe and responsive:
+
+- **Read-only:** Only read operations are allowed. Statements that mutate the graph (`CREATE`, `MERGE`, `SET`, `DELETE`, `REMOVE`, `DROP`, `LOAD CSV`, `CALL { ... }` writes, etc.) are rejected before execution.
+- **Length limit:** Each query is capped at **10,000 characters**.
+- **Scoped to the selected scan:** Results are automatically scoped to the provider and scan selected on the left panel. There is no need to filter by tenant or scan identifier in the query body.
+
+### Example Queries
+
+The following examples are read-only and can be pasted directly into the editor. Each one demonstrates a different graph traversal pattern.
+
+**Internet-exposed EC2 instances with their security group rules:**
+
+```cypher
+MATCH (i:EC2Instance)--(sg:EC2SecurityGroup)--(rule:IpPermissionInbound)
+WHERE i.exposed_internet = true
+RETURN i.instanceid AS instance, sg.name AS security_group,
+       rule.fromport AS from_port, rule.toport AS to_port
+LIMIT 25
+```
+
+**EC2 instances that can assume IAM roles:**
+
+```cypher
+MATCH (i:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(r:AWSRole)
+WHERE i.exposed_internet = true
+RETURN i.instanceid AS instance, r.name AS role_name, r.arn AS role_arn
+LIMIT 25
+```
+
+**IAM principals with wildcard Allow statements:**
+
+```cypher
+MATCH (principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
+WHERE stmt.effect = 'Allow'
+  AND ANY(action IN stmt.action WHERE action = '*')
+RETURN principal.arn AS principal, policy.arn AS policy,
+       stmt.action AS actions, stmt.resource AS resources
+LIMIT 25
+```
+
+**Critical findings on internet-exposed resources:**
+
+```cypher
+MATCH (i:EC2Instance)-[:HAS_FINDING]->(f:ProwlerFinding)
+WHERE i.exposed_internet = true AND f.status = 'FAIL'
+  AND f.severity IN ['critical', 'high']
+RETURN i.instanceid AS instance, f.check_id AS check,
+       f.severity AS severity, f.status AS status
+LIMIT 50
+```
+
+**Roles trusting an AWS service (building block for PassRole escalation):**
+
+```cypher
+MATCH (r:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(p:AWSPrincipal)
+WHERE p.arn ENDS WITH '.amazonaws.com'
+RETURN r.name AS role_name, r.arn AS role_arn, p.arn AS trusted_service
+LIMIT 25
+```
+
+### Tips for Writing Queries
+
+- Start small with `LIMIT` to inspect the shape of the data before broadening the pattern.
+- Use `RETURN` projections (`RETURN n.name, n.region`) instead of returning whole nodes to keep responses compact.
+- Combine resource nodes with `ProwlerFinding` nodes via `HAS_FINDING` to correlate misconfigurations with the affected resources.
+- When a query times out or returns no rows, simplify the pattern step by step until the first variant runs successfully, then add constraints back.
+
+### Cartography Schema Reference
+
+Attack Paths graphs are populated by [Cartography](https://github.com/cartography-cncf/cartography), an open-source graph ingestion framework. The node labels, relationship types, and properties available in custom queries follow the upstream Cartography schema for the corresponding provider.
+
+For the complete catalogue of node labels and relationships available in custom queries, refer to the official Cartography schema documentation:
+
+- **AWS:** [Cartography AWS Schema](https://cartography-cncf.github.io/cartography/modules/aws/schema.html)
+
+In addition to the upstream schema, Prowler enriches the graph with:
+
+- **`ProwlerFinding`** nodes representing Prowler check results, linked to affected resources via `HAS_FINDING` relationships.
+- **`Internet`** nodes used to model exposure paths from the public internet to internal resources.
+
+<Note>
+  AI assistants connected through Prowler MCP Server can fetch the exact
+  Cartography schema for the active scan via the
+  `prowler_app_get_attack_paths_cartography_schema` tool. This guarantees that
+  generated queries match the schema version pinned by the running Prowler
+  release.
+</Note>
+
 ## Executing a Query
 
 To run the selected query against the scan data, click **Execute Query**. The button displays a loading state while the query processes.

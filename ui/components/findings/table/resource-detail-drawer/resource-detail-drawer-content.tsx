@@ -37,13 +37,18 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import {
+  QUERY_EDITOR_LANGUAGE,
+  QueryCodeEditor,
+  type QueryEditorLanguage,
+} from "@/components/shared/query-code-editor";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -65,6 +70,7 @@ import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
 import type { ComplianceOverviewData } from "@/types/compliance";
+import type { FindingResourceRow } from "@/types/findings-table";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
@@ -78,6 +84,59 @@ function stripCodeFences(code: string): string {
     .replace(/^```\w*\n?/, "")
     .replace(/\n?```\s*$/, "")
     .trim();
+}
+
+function resolveNativeIacConfig(providerType: string | undefined): {
+  label: string;
+  language: QueryEditorLanguage;
+} {
+  switch (providerType) {
+    case "aws":
+      return {
+        label: "CloudFormation",
+        language: QUERY_EDITOR_LANGUAGE.YAML,
+      };
+    case "azure":
+      return {
+        label: "Bicep",
+        language: QUERY_EDITOR_LANGUAGE.BICEP,
+      };
+    case "kubernetes":
+      return {
+        label: "Kubernetes Manifest",
+        language: QUERY_EDITOR_LANGUAGE.YAML,
+      };
+    default:
+      return {
+        label: "Native IaC",
+        language: QUERY_EDITOR_LANGUAGE.PLAIN_TEXT,
+      };
+  }
+}
+
+function renderRemediationCodeBlock({
+  label,
+  value,
+  copyValue,
+  language = QUERY_EDITOR_LANGUAGE.PLAIN_TEXT,
+}: {
+  label: string;
+  value: string;
+  copyValue?: string;
+  language?: QueryEditorLanguage;
+}) {
+  return (
+    <QueryCodeEditor
+      ariaLabel={label}
+      language={language}
+      value={value}
+      copyValue={copyValue}
+      editable={false}
+      minHeight={96}
+      showCopyButton
+      onChange={() => {}}
+    />
+  );
 }
 
 function normalizeComplianceFrameworkName(framework: string): string {
@@ -218,16 +277,12 @@ function buildComplianceDetailHref({
   version,
   scanId,
   regionFilter,
-  currentFinding,
-  includeScanData,
 }: {
   complianceId: string;
   framework: string;
   version: string;
   scanId: string;
   regionFilter: string | null;
-  currentFinding: ResourceDrawerFinding | null;
-  includeScanData: boolean;
 }): string {
   const params = new URLSearchParams();
   params.set("complianceId", complianceId);
@@ -240,24 +295,6 @@ function buildComplianceDetailHref({
     params.set("filter[region__in]", regionFilter);
   }
 
-  if (includeScanData && currentFinding?.scan?.completedAt) {
-    params.set(
-      "scanData",
-      JSON.stringify({
-        id: currentFinding.scan.id,
-        providerInfo: {
-          provider: currentFinding.providerType,
-          alias: currentFinding.providerAlias,
-          uid: currentFinding.providerUid,
-        },
-        attributes: {
-          name: currentFinding.scan.name,
-          completed_at: currentFinding.scan.completedAt,
-        },
-      }),
-    );
-  }
-
   return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
 }
 
@@ -267,8 +304,10 @@ interface ResourceDetailDrawerContentProps {
   checkMeta: CheckMeta | null;
   currentIndex: number;
   totalResources: number;
+  currentResource?: FindingResourceRow | null;
   currentFinding: ResourceDrawerFinding | null;
   otherFindings: ResourceDrawerFinding[];
+  showSyntheticResourceHint?: boolean;
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
   onMuteComplete: () => void;
@@ -280,8 +319,10 @@ export function ResourceDetailDrawerContent({
   checkMeta,
   currentIndex,
   totalResources,
+  currentResource = null,
   currentFinding,
   otherFindings,
+  showSyntheticResourceHint = false,
   onNavigatePrev,
   onNavigateNext,
   onMuteComplete,
@@ -335,8 +376,30 @@ export function ResourceDetailDrawerContent({
   }
 
   // checkMeta is always available from here.
-  // currentFinding may be null during resource loading (e.g. drawer reopen).
-  const f = currentFinding;
+  // During carousel navigation we only trust row-backed data until the next
+  // finding payload is fully ready, otherwise stale details flash briefly.
+  const f = isNavigating ? null : currentFinding;
+  const isCheckMetaFresh =
+    !currentResource?.checkId || currentResource.checkId === checkMeta.checkId;
+  const showCheckMetaContent = !isNavigating || isCheckMetaFresh;
+  const findingStatus = f?.status ?? currentResource?.status;
+  const findingSeverity = f?.severity ?? currentResource?.severity;
+  const findingDelta = f?.delta ?? currentResource?.delta;
+  const findingIsMuted = f?.isMuted ?? currentResource?.isMuted;
+  const findingMutedReason =
+    f?.mutedReason ?? currentResource?.mutedReason ?? "This finding is muted";
+  const providerType = currentResource?.providerType ?? f?.providerType;
+  const providerAlias = currentResource?.providerAlias ?? f?.providerAlias;
+  const providerUid = currentResource?.providerUid ?? f?.providerUid;
+  const resourceName = currentResource?.resourceName ?? f?.resourceName;
+  const resourceUid = currentResource?.resourceUid ?? f?.resourceUid;
+  const resourceService = currentResource?.service ?? f?.resourceService;
+  const resourceRegion = currentResource?.region ?? f?.resourceRegion;
+  const resourceGroup = currentResource?.resourceGroup ?? f?.resourceGroup;
+  const resourceType = currentResource?.resourceType ?? f?.resourceType;
+  const resourceRegionLabel = resourceRegion || "-";
+  const firstSeenAt = currentResource?.firstSeenAt ?? f?.firstSeenAt ?? null;
+  const lastSeenAt = currentResource?.lastSeenAt ?? f?.updatedAt ?? null;
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalResources - 1;
   const selectedScanIds = parseSelectedScanIds(
@@ -349,6 +412,9 @@ export function ResourceDetailDrawerContent({
         ? (f?.scan?.id ?? null)
         : null;
   const regionFilter = searchParams.get("filter[region__in]");
+  const nativeIacConfig = resolveNativeIacConfig(providerType);
+  const showOverviewCheckMetaContent = showCheckMetaContent;
+  const showOverviewFindingContent = Boolean(f);
 
   const handleOpenCompliance = async (framework: string) => {
     if (!complianceScanId || resolvingFramework) {
@@ -377,8 +443,6 @@ export function ResourceDetailDrawerContent({
           version: complianceMatch.version,
           scanId: complianceScanId,
           regionFilter,
-          currentFinding: f,
-          includeScanData: f?.scan?.id === complianceScanId,
         }),
         "_blank",
         "noopener,noreferrer",
@@ -413,104 +477,130 @@ export function ResourceDetailDrawerContent({
         />
       )}
 
-      {/* Header: status badges + title (check-level from checkMeta) */}
+      {/* Header: keep row-backed badges visible; only hide stale check metadata */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          {f && <StatusFindingBadge status={f.status as FindingStatus} />}
-          {f && <SeverityBadge severity={f.severity} />}
-          {f?.delta && (
+          {findingStatus && (
+            <StatusFindingBadge status={findingStatus as FindingStatus} />
+          )}
+          {findingSeverity && <SeverityBadge severity={findingSeverity} />}
+          {findingDelta && (
             <div className="flex items-center gap-1 capitalize">
-              <DeltaIndicator delta={f.delta} />
+              <DeltaIndicator delta={findingDelta} />
               <span className="text-text-neutral-secondary text-xs">
-                {f.delta}
+                {findingDelta}
               </span>
             </div>
           )}
-          {f && (
-            <Muted
-              isMuted={f.isMuted}
-              mutedReason={f.mutedReason || "This finding is muted"}
-            />
+          {findingIsMuted !== undefined && (
+            <Muted isMuted={findingIsMuted} mutedReason={findingMutedReason} />
           )}
         </div>
 
-        <h2 className="text-text-neutral-primary line-clamp-2 text-lg leading-tight font-medium">
-          {checkMeta.checkTitle}
-        </h2>
+        {showCheckMetaContent ? (
+          <>
+            <h2 className="text-text-neutral-primary line-clamp-2 text-lg leading-tight font-medium">
+              {checkMeta.checkTitle}
+            </h2>
 
-        {checkMeta.complianceFrameworks.length > 0 && (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-text-neutral-tertiary text-xs font-medium">
-              Compliance Frameworks:
-            </span>
-            <div className="flex flex-wrap items-center gap-2">
-              {checkMeta.complianceFrameworks.map((framework) => {
-                const icon = getComplianceIcon(framework);
-                const isNavigable = Boolean(complianceScanId);
-                const isResolving = resolvingFramework === framework;
+            {checkMeta.complianceFrameworks.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-text-neutral-tertiary text-xs font-medium">
+                  Compliance Frameworks:
+                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  {checkMeta.complianceFrameworks.map((framework) => {
+                    const icon = getComplianceIcon(framework);
+                    const isNavigable = Boolean(complianceScanId);
+                    const isResolving = resolvingFramework === framework;
 
-                return icon ? (
-                  <Tooltip key={framework}>
-                    <TooltipTrigger asChild>
-                      {isNavigable ? (
-                        <button
-                          type="button"
-                          aria-label={`Open ${framework} compliance details`}
-                          onClick={() => void handleOpenCompliance(framework)}
-                          disabled={Boolean(resolvingFramework)}
-                          className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-                        >
-                          <Image
-                            src={icon}
-                            alt={framework}
-                            width={20}
-                            height={20}
-                            className="size-5 object-contain"
-                          />
-                          {isResolving && (
-                            <span className="sr-only">Opening compliance</span>
+                    return icon ? (
+                      <Tooltip key={framework}>
+                        <TooltipTrigger asChild>
+                          {isNavigable ? (
+                            <button
+                              type="button"
+                              aria-label={`Open ${framework} compliance details`}
+                              onClick={() =>
+                                void handleOpenCompliance(framework)
+                              }
+                              disabled={Boolean(resolvingFramework)}
+                              className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
+                            >
+                              <Image
+                                src={icon}
+                                alt={framework}
+                                width={20}
+                                height={20}
+                                className="size-5 object-contain"
+                              />
+                              {isResolving && (
+                                <span className="sr-only">
+                                  Opening compliance
+                                </span>
+                              )}
+                            </button>
+                          ) : (
+                            <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
+                              <Image
+                                src={icon}
+                                alt={framework}
+                                width={20}
+                                height={20}
+                                className="size-5 object-contain"
+                              />
+                            </div>
                           )}
-                        </button>
-                      ) : (
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
-                          <Image
-                            src={icon}
-                            alt={framework}
-                            width={20}
-                            height={20}
-                            className="size-5 object-contain"
-                          />
-                        </div>
-                      )}
-                    </TooltipTrigger>
-                    <TooltipContent>{framework}</TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <Tooltip key={framework}>
-                    <TooltipTrigger asChild>
-                      {isNavigable ? (
-                        <button
-                          type="button"
-                          aria-label={`Open ${framework} compliance details`}
-                          onClick={() => void handleOpenCompliance(framework)}
-                          disabled={Boolean(resolvingFramework)}
-                          className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-                        >
-                          {framework}
-                          {isResolving && (
-                            <span className="sr-only">Opening compliance</span>
+                        </TooltipTrigger>
+                        <TooltipContent>{framework}</TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip key={framework}>
+                        <TooltipTrigger asChild>
+                          {isNavigable ? (
+                            <button
+                              type="button"
+                              aria-label={`Open ${framework} compliance details`}
+                              onClick={() =>
+                                void handleOpenCompliance(framework)
+                              }
+                              disabled={Boolean(resolvingFramework)}
+                              className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
+                            >
+                              {framework}
+                              {isResolving && (
+                                <span className="sr-only">
+                                  Opening compliance
+                                </span>
+                              )}
+                            </button>
+                          ) : (
+                            <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
+                              {framework}
+                            </span>
                           )}
-                        </button>
-                      ) : (
-                        <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
-                          {framework}
-                        </span>
-                      )}
-                    </TooltipTrigger>
-                    <TooltipContent>{framework}</TooltipContent>
-                  </Tooltip>
-                );
-              })}
+                        </TooltipTrigger>
+                        <TooltipContent>{framework}</TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div
+            data-testid="drawer-header-skeleton"
+            aria-hidden="true"
+            className="flex flex-col gap-2"
+          >
+            <Skeleton className="h-6 w-3/4 rounded" />
+            <div className="flex flex-col gap-1.5">
+              <Skeleton className="h-4 w-28 rounded" />
+              <div className="flex flex-wrap items-center gap-2">
+                <Skeleton className="h-7 w-16 rounded-md" />
+                <Skeleton className="h-7 w-20 rounded-md" />
+              </div>
             </div>
           </div>
         )}
@@ -549,7 +639,7 @@ export function ResourceDetailDrawerContent({
       {/* Resource card */}
       <div className="border-border-neutral-secondary bg-bg-neutral-secondary minimal-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-lg border p-4">
         {/* Resource info — shows loading when currentFinding is not yet available */}
-        {!f || isNavigating ? (
+        {!currentResource && !f ? (
           <ResourceDetailSkeleton />
         ) : (
           <>
@@ -558,95 +648,110 @@ export function ResourceDetailDrawerContent({
               <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
                 {/* Row 1: Account, Resource, Service, Region */}
                 <EntityInfo
-                  cloudProvider={f.providerType}
+                  cloudProvider={providerType}
                   nameIcon={<Box className="size-4" />}
-                  entityAlias={f.providerAlias}
-                  entityId={f.providerUid}
+                  entityAlias={providerAlias}
+                  entityId={providerUid}
                 />
                 <EntityInfo
                   nameIcon={<Container className="size-4" />}
-                  entityAlias={f.resourceName}
-                  entityId={f.resourceUid}
+                  entityAlias={resourceName}
+                  entityId={resourceUid}
                   idLabel="UID"
                 />
                 <InfoField label="Service" variant="compact">
-                  {f.resourceService}
+                  {resourceService}
                 </InfoField>
                 <InfoField label="Region" variant="compact">
                   <span className="flex items-center gap-1.5">
-                    {getRegionFlag(f.resourceRegion) && (
+                    {getRegionFlag(resourceRegionLabel) && (
                       <span className="translate-y-px text-base leading-none">
-                        {getRegionFlag(f.resourceRegion)}
+                        {getRegionFlag(resourceRegionLabel)}
                       </span>
                     )}
-                    {f.resourceRegion}
+                    {resourceRegionLabel}
                   </span>
                 </InfoField>
 
                 {/* Row 2: Dates */}
                 <InfoField label="Last detected" variant="compact">
-                  <DateWithTime inline dateTime={f.updatedAt || "-"} />
+                  <DateWithTime inline dateTime={lastSeenAt || "-"} />
                 </InfoField>
                 <InfoField label="First seen" variant="compact">
-                  <DateWithTime inline dateTime={f.firstSeenAt || "-"} />
+                  <DateWithTime inline dateTime={firstSeenAt || "-"} />
                 </InfoField>
                 <InfoField label="Failing for" variant="compact">
-                  {getFailingForLabel(f.firstSeenAt) || "-"}
+                  {getFailingForLabel(firstSeenAt) || "-"}
                 </InfoField>
                 <InfoField label="Group" variant="compact">
-                  {f.resourceGroup || "-"}
+                  {resourceGroup || "-"}
                 </InfoField>
 
                 {/* Row 3: IDs */}
                 <InfoField label="Check ID" variant="compact">
                   <CodeSnippet
-                    value={checkMeta.checkId}
+                    value={currentResource?.checkId ?? checkMeta.checkId}
                     transparent
                     className="max-w-full text-sm"
                   />
                 </InfoField>
                 <InfoField label="Finding ID" variant="compact">
-                  <CodeSnippet
-                    value={f.id}
-                    transparent
-                    className="max-w-full text-sm"
-                  />
+                  {currentResource?.findingId || f?.id ? (
+                    <CodeSnippet
+                      value={currentResource?.findingId ?? f?.id ?? "-"}
+                      transparent
+                      className="max-w-full text-sm"
+                    />
+                  ) : (
+                    <Skeleton className="h-5 w-28 rounded" />
+                  )}
                 </InfoField>
                 <InfoField label="Finding UID" variant="compact">
-                  <CodeSnippet
-                    value={f.uid}
-                    transparent
-                    className="max-w-full text-sm"
-                  />
+                  {f?.uid ? (
+                    <CodeSnippet
+                      value={f.uid}
+                      transparent
+                      className="max-w-full text-sm"
+                    />
+                  ) : (
+                    <Skeleton className="h-5 w-36 rounded" />
+                  )}
                 </InfoField>
 
                 {/* Row 4: Resource metadata */}
                 <InfoField label="Resource type" variant="compact">
-                  {f.resourceType || "-"}
+                  {resourceType || "-"}
                 </InfoField>
               </div>
 
               {/* Actions button — fixed size, aligned with row 1 */}
               <div className="shrink-0">
-                <ActionDropdown variant="bordered" ariaLabel="Resource actions">
-                  <ActionDropdownItem
-                    icon={
-                      f.isMuted ? (
-                        <VolumeOff className="size-5" />
-                      ) : (
-                        <VolumeX className="size-5" />
-                      )
-                    }
-                    label={f.isMuted ? "Muted" : "Mute"}
-                    disabled={f.isMuted}
-                    onSelect={() => setIsMuteModalOpen(true)}
-                  />
-                  <ActionDropdownItem
-                    icon={<JiraIcon size={20} />}
-                    label="Send to Jira"
-                    onSelect={() => setIsJiraModalOpen(true)}
-                  />
-                </ActionDropdown>
+                {f ? (
+                  <ActionDropdown
+                    variant="bordered"
+                    ariaLabel="Resource actions"
+                  >
+                    <ActionDropdownItem
+                      icon={
+                        f.isMuted ? (
+                          <VolumeOff className="size-5" />
+                        ) : (
+                          <VolumeX className="size-5" />
+                        )
+                      }
+                      label={f.isMuted ? "Muted" : "Mute"}
+                      disabled={f.isMuted}
+                      onSelect={() => setIsMuteModalOpen(true)}
+                    />
+                    <ActionDropdownItem
+                      icon={<JiraIcon size={20} />}
+                      label="Send to Jira"
+                      onSelect={() => setIsJiraModalOpen(true)}
+                    />
+                  </ActionDropdown>
+                ) : (
+                  <Skeleton className="size-8 rounded-md" />
+                )}
               </div>
             </div>
           </>
@@ -673,171 +778,170 @@ export function ResourceDetailDrawerContent({
             value="overview"
             className="minimal-scrollbar flex flex-col gap-4 overflow-y-auto"
           >
-            {/* Card 1: Risk + Description + Status Extended */}
-            {(checkMeta.risk || checkMeta.description || f?.statusExtended) && (
-              <Card variant="inner">
-                {checkMeta.risk && (
-                  <Card variant="danger">
-                    <span className="text-text-neutral-secondary text-sm font-semibold">
-                      Risk:
-                    </span>
-                    <MarkdownContainer>{checkMeta.risk}</MarkdownContainer>
-                  </Card>
-                )}
-                {checkMeta.description && (
-                  <div className="border-default-200 flex flex-col gap-1 border-b pb-4">
-                    <span className="text-text-neutral-secondary text-sm font-semibold">
-                      Description:
-                    </span>
-                    <MarkdownContainer>
-                      {checkMeta.description}
-                    </MarkdownContainer>
-                  </div>
-                )}
-                {f?.statusExtended && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-sm font-semibold">
-                      Status Extended:
-                    </span>
-                    <p className="text-text-neutral-primary text-sm">
-                      {f.statusExtended}
-                    </p>
-                  </div>
-                )}
-              </Card>
-            )}
-
-            {/* Card 2: Remediation + Commands */}
-            {(checkMeta.remediation.recommendation.text ||
-              checkMeta.remediation.code.cli ||
-              checkMeta.remediation.code.terraform ||
-              checkMeta.remediation.code.nativeiac) && (
-              <Card variant="inner">
-                {checkMeta.remediation.recommendation.text && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      Remediation:
-                    </span>
-                    <div className="flex items-start gap-3">
-                      <div className="text-text-neutral-primary flex-1 text-sm">
+            {showOverviewCheckMetaContent ? (
+              <>
+                {/* Card 1: Risk + Description + Status Extended */}
+                {(checkMeta.risk ||
+                  checkMeta.description ||
+                  showOverviewFindingContent) && (
+                  <Card variant="inner">
+                    {checkMeta.risk && (
+                      <Card variant="danger">
+                        <span className="text-text-neutral-secondary text-sm font-semibold">
+                          Risk:
+                        </span>
+                        <MarkdownContainer>{checkMeta.risk}</MarkdownContainer>
+                      </Card>
+                    )}
+                    {checkMeta.description && (
+                      <div className="border-default-200 flex flex-col gap-1 border-b pb-4">
+                        <span className="text-text-neutral-secondary text-sm font-semibold">
+                          Description:
+                        </span>
                         <MarkdownContainer>
-                          {checkMeta.remediation.recommendation.text}
+                          {checkMeta.description}
                         </MarkdownContainer>
                       </div>
-                      {checkMeta.remediation.recommendation.url && (
-                        <CustomLink
-                          href={checkMeta.remediation.recommendation.url}
-                          size="sm"
-                          className="shrink-0"
-                        >
-                          View in Prowler Hub
-                        </CustomLink>
-                      )}
+                    )}
+                    {showOverviewFindingContent && f?.statusExtended && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-text-neutral-secondary text-sm font-semibold">
+                          Status Extended:
+                        </span>
+                        <p className="text-text-neutral-primary text-sm">
+                          {f.statusExtended}
+                        </p>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
+                {/* Card 2: Remediation + Commands */}
+                {(checkMeta.remediation.recommendation.text ||
+                  checkMeta.remediation.code.cli ||
+                  checkMeta.remediation.code.terraform ||
+                  checkMeta.remediation.code.nativeiac) && (
+                  <Card variant="inner">
+                    {checkMeta.remediation.recommendation.text && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-text-neutral-secondary text-xs">
+                          Remediation:
+                        </span>
+                        <div className="flex items-start gap-3">
+                          <div className="text-text-neutral-primary flex-1 text-sm">
+                            <MarkdownContainer>
+                              {checkMeta.remediation.recommendation.text}
+                            </MarkdownContainer>
+                          </div>
+                          {checkMeta.remediation.recommendation.url && (
+                            <CustomLink
+                              href={checkMeta.remediation.recommendation.url}
+                              size="sm"
+                              className="shrink-0"
+                            >
+                              View in Prowler Hub
+                            </CustomLink>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {checkMeta.remediation.code.cli && (
+                      <div className="flex flex-col gap-1">
+                        {renderRemediationCodeBlock({
+                          label: "CLI Command",
+                          language: QUERY_EDITOR_LANGUAGE.SHELL,
+                          value: `$ ${stripCodeFences(checkMeta.remediation.code.cli)}`,
+                          copyValue: stripCodeFences(
+                            checkMeta.remediation.code.cli,
+                          ),
+                        })}
+                      </div>
+                    )}
+
+                    {checkMeta.remediation.code.terraform && (
+                      <div className="flex flex-col gap-1">
+                        {renderRemediationCodeBlock({
+                          label: "Terraform",
+                          language: QUERY_EDITOR_LANGUAGE.HCL,
+                          value: stripCodeFences(
+                            checkMeta.remediation.code.terraform,
+                          ),
+                        })}
+                      </div>
+                    )}
+
+                    {checkMeta.remediation.code.nativeiac && providerType && (
+                      <div className="flex flex-col gap-1">
+                        {renderRemediationCodeBlock({
+                          label: nativeIacConfig.label,
+                          language: nativeIacConfig.language,
+                          value: stripCodeFences(
+                            checkMeta.remediation.code.nativeiac,
+                          ),
+                        })}
+                      </div>
+                    )}
+
+                    {checkMeta.remediation.code.other && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-text-neutral-secondary text-xs">
+                          Remediation Steps:
+                        </span>
+                        <MarkdownContainer>
+                          {checkMeta.remediation.code.other}
+                        </MarkdownContainer>
+                      </div>
+                    )}
+                  </Card>
+                )}
+
+                {checkMeta.additionalUrls.length > 0 && (
+                  <Card variant="inner">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-text-neutral-secondary text-xs">
+                        References:
+                      </span>
+                      <ul className="list-inside list-disc space-y-1">
+                        {checkMeta.additionalUrls.map((link, idx) => (
+                          <li key={idx}>
+                            <CustomLink
+                              href={link}
+                              size="sm"
+                              className="break-all whitespace-normal!"
+                            >
+                              {link}
+                            </CustomLink>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                  </div>
+                  </Card>
                 )}
 
-                {checkMeta.remediation.code.cli && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CLI Command:
-                    </span>
-                    <CodeSnippet
-                      value={`$ ${stripCodeFences(checkMeta.remediation.code.cli)}`}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
-                  </div>
+                {checkMeta.categories.length > 0 && (
+                  <Card variant="inner">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-text-neutral-secondary text-xs">
+                        Categories:
+                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {checkMeta.categories.map((category) => (
+                          <Badge
+                            key={category}
+                            variant="outline"
+                            className="text-xs capitalize"
+                          >
+                            {category}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </Card>
                 )}
-
-                {checkMeta.remediation.code.terraform && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      Terraform:
-                    </span>
-                    <CodeSnippet
-                      value={stripCodeFences(
-                        checkMeta.remediation.code.terraform,
-                      )}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
-                  </div>
-                )}
-
-                {checkMeta.remediation.code.nativeiac && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CloudFormation:
-                    </span>
-                    <CodeSnippet
-                      value={stripCodeFences(
-                        checkMeta.remediation.code.nativeiac,
-                      )}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
-                  </div>
-                )}
-
-                {checkMeta.remediation.code.other && (
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      Remediation Steps:
-                    </span>
-                    <MarkdownContainer>
-                      {checkMeta.remediation.code.other}
-                    </MarkdownContainer>
-                  </div>
-                )}
-              </Card>
-            )}
-
-            {checkMeta.additionalUrls.length > 0 && (
-              <Card variant="inner">
-                <div className="flex flex-col gap-1">
-                  <span className="text-text-neutral-secondary text-xs">
-                    References:
-                  </span>
-                  <ul className="list-inside list-disc space-y-1">
-                    {checkMeta.additionalUrls.map((link, idx) => (
-                      <li key={idx}>
-                        <CustomLink
-                          href={link}
-                          size="sm"
-                          className="break-all whitespace-normal!"
-                        >
-                          {link}
-                        </CustomLink>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Card>
-            )}
-
-            {checkMeta.categories.length > 0 && (
-              <Card variant="inner">
-                <div className="flex flex-col gap-1">
-                  <span className="text-text-neutral-secondary text-xs">
-                    Categories:
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {checkMeta.categories.map((category) => (
-                      <Badge
-                        key={category}
-                        variant="outline"
-                        className="text-xs capitalize"
-                      >
-                        {category}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </Card>
+              </>
+            ) : (
+              <OverviewNavigationSkeleton />
             )}
           </TabsContent>
 
@@ -846,16 +950,21 @@ export function ResourceDetailDrawerContent({
             value="other-findings"
             className="minimal-scrollbar flex flex-col gap-2 overflow-y-auto"
           >
-            {!f || isNavigating ? (
-              <div className="flex items-center justify-center py-8">
-                <Spinner className="size-5" />
-              </div>
+            {!f && !isNavigating ? (
+              <LoadingState spinnerClassName="size-5" />
             ) : (
               <>
                 <div className="flex items-center justify-end">
-                  <span className="text-text-neutral-tertiary text-sm">
-                    {otherFindings.length} Total Entries
-                  </span>
+                  {isNavigating ? (
+                    <Skeleton
+                      className="h-4 w-24 rounded"
+                      data-testid="other-findings-total-entries-skeleton"
+                    />
+                  ) : (
+                    <span className="text-text-neutral-tertiary text-sm">
+                      {otherFindings.length} Total Entries
+                    </span>
+                  )}
                 </div>
 
                 <Table>
@@ -886,7 +995,9 @@ export function ResourceDetailDrawerContent({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {otherFindings.length > 0 ? (
+                    {isNavigating ? (
+                      <OtherFindingsNavigationSkeletonRows />
+                    ) : otherFindings.length > 0 ? (
                       otherFindings.map((finding) => (
                         <OtherFindingRow
                           key={finding.id}
@@ -905,7 +1016,9 @@ export function ResourceDetailDrawerContent({
                       <TableRow>
                         <TableCell colSpan={6} className="h-16 text-center">
                           <span className="text-text-neutral-tertiary text-sm">
-                            No other findings for this resource.
+                            {showSyntheticResourceHint
+                              ? "No other findings are available for this IaC resource."
+                              : "No other findings for this resource."}
                           </span>
                         </TableCell>
                       </TableRow>
@@ -918,7 +1031,13 @@ export function ResourceDetailDrawerContent({
 
           {/* Scans Tab */}
           <TabsContent value="scans" className="flex flex-col gap-4">
-            {f?.scan ? (
+            {!f && !isNavigating ? (
+              <p className="text-text-neutral-tertiary text-sm">
+                Scan information is not available.
+              </p>
+            ) : isNavigating ? (
+              <ScansNavigationSkeleton />
+            ) : (
               <>
                 <div className="flex items-center justify-between">
                   <p className="text-text-neutral-secondary text-xs">
@@ -926,7 +1045,7 @@ export function ResourceDetailDrawerContent({
                   </p>
                   <Button variant="link" size="link-sm" asChild>
                     <Link
-                      href={`/scans?filter[id__in]=${f.scan.id}`}
+                      href={`/scans?filter[id__in]=${f?.scan?.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -937,49 +1056,53 @@ export function ResourceDetailDrawerContent({
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <InfoField label="Scan Name" variant="compact">
-                    {f.scan.name || "N/A"}
+                    {f?.scan?.name || "N/A"}
                   </InfoField>
                   <InfoField label="Resources Scanned" variant="compact">
-                    {f.scan.uniqueResourceCount}
+                    {f?.scan?.uniqueResourceCount}
                   </InfoField>
                   <InfoField label="Progress" variant="compact">
-                    {f.scan.progress}%
+                    {f?.scan?.progress}%
                   </InfoField>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <InfoField label="Trigger" variant="compact">
-                    {f.scan.trigger}
+                    {f?.scan?.trigger}
                   </InfoField>
                   <InfoField label="State" variant="compact">
-                    {f.scan.state}
+                    {f?.scan?.state}
                   </InfoField>
                   <InfoField label="Duration" variant="compact">
-                    {formatDuration(f.scan.duration)}
+                    {f?.scan?.duration !== undefined
+                      ? formatDuration(f.scan.duration)
+                      : "-"}
                   </InfoField>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <InfoField label="Started At" variant="compact">
-                    <DateWithTime inline dateTime={f.scan.startedAt || "-"} />
+                    <DateWithTime inline dateTime={f?.scan?.startedAt || "-"} />
                   </InfoField>
                   <InfoField label="Completed At" variant="compact">
-                    <DateWithTime inline dateTime={f.scan.completedAt || "-"} />
+                    <DateWithTime
+                      inline
+                      dateTime={f?.scan?.completedAt || "-"}
+                    />
                   </InfoField>
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <InfoField label="Launched At" variant="compact">
-                    <DateWithTime inline dateTime={f.scan.insertedAt || "-"} />
+                    <DateWithTime
+                      inline
+                      dateTime={f?.scan?.insertedAt || "-"}
+                    />
                   </InfoField>
-                  {f.scan.scheduledAt && (
+                  {f?.scan?.scheduledAt && (
                     <InfoField label="Scheduled At" variant="compact">
                       <DateWithTime inline dateTime={f.scan.scheduledAt} />
                     </InfoField>
                   )}
                 </div>
               </>
-            ) : (
-              <p className="text-text-neutral-tertiary text-sm">
-                Scan information is not available.
-              </p>
             )}
           </TabsContent>
 
@@ -988,25 +1111,165 @@ export function ResourceDetailDrawerContent({
             value="events"
             className="flex min-h-0 flex-1 flex-col gap-4"
           >
-            <EventsTimeline
-              resourceId={f?.resourceId}
-              isAwsProvider={f?.providerType === "aws"}
-            />
+            {isNavigating ? (
+              <EventsNavigationSkeleton />
+            ) : (
+              <>
+                <EventsTimeline
+                  resourceId={f?.resourceId}
+                  isAwsProvider={f?.providerType === "aws"}
+                />
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </div>
 
       {/* Lighthouse AI button */}
-      <a
-        href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
-        className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
-        style={{
-          background: "var(--gradient-lighthouse)",
-        }}
-      >
-        <CircleArrowRight className="size-5" />
-        Analyze This Finding With Lighthouse AI
-      </a>
+      {!isNavigating && (
+        <a
+          href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
+          className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
+          style={{
+            background: "var(--gradient-lighthouse)",
+          }}
+        >
+          <CircleArrowRight className="size-5" />
+          Analyze This Finding With Lighthouse AI
+        </a>
+      )}
+    </div>
+  );
+}
+
+function OverviewNavigationSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-4"
+      data-testid="overview-navigation-skeleton"
+    >
+      <Card variant="inner">
+        <OverviewCardSkeleton lineWidths={["w-24", "w-full", "w-5/6"]} />
+      </Card>
+      <Card variant="inner">
+        <OverviewCardSkeleton
+          lineWidths={["w-28", "w-3/4", "w-full", "w-2/3"]}
+        />
+      </Card>
+      <Card variant="inner">
+        <OverviewCardSkeleton lineWidths={["w-20", "w-40", "w-24"]} />
+      </Card>
+    </div>
+  );
+}
+
+function OverviewCardSkeleton({ lineWidths }: { lineWidths: string[] }) {
+  return (
+    <div className="flex flex-col gap-3" aria-hidden="true">
+      {lineWidths.map((lineWidth, index) => (
+        <Skeleton
+          key={`${lineWidth}-${index}`}
+          className={`h-4 ${lineWidth} rounded`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function OtherFindingsNavigationSkeletonRows() {
+  return (
+    <>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <TableRow
+          key={index}
+          data-testid={
+            index === 0 ? "other-findings-navigation-skeleton" : undefined
+          }
+          aria-hidden="true"
+        >
+          <TableCell className="w-10">
+            <Skeleton className="h-5 w-5 rounded-full" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-16 rounded" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-3/4 rounded" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-14 rounded" />
+          </TableCell>
+          <TableCell>
+            <Skeleton className="h-5 w-20 rounded" />
+          </TableCell>
+          <TableCell className="w-10">
+            <Skeleton className="h-5 w-5 rounded" />
+          </TableCell>
+        </TableRow>
+      ))}
+    </>
+  );
+}
+
+function ScansNavigationSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-4"
+      data-testid="scans-navigation-skeleton"
+      aria-hidden="true"
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-text-neutral-secondary text-xs">
+          Showing the latest scan that evaluated this finding
+        </p>
+        <Skeleton className="h-4 w-16 rounded" />
+      </div>
+      <ScansInfoGridSkeleton
+        labels={["Scan Name", "Resources Scanned", "Progress"]}
+      />
+      <ScansInfoGridSkeleton labels={["Trigger", "State", "Duration"]} />
+      <ScansInfoGridSkeleton labels={["Started At", "Completed At"]} />
+      <ScansInfoGridSkeleton labels={["Launched At", "Scheduled At"]} />
+    </div>
+  );
+}
+
+function ScansInfoGridSkeleton({ labels }: { labels: string[] }) {
+  const columnCount = labels.length;
+
+  return (
+    <div
+      className={`grid grid-cols-1 gap-4 ${columnCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}
+    >
+      {labels.map((label, index) => (
+        <div key={index} className="flex flex-col gap-1">
+          <span className="text-text-neutral-secondary text-xs">{label}</span>
+          <Skeleton className="h-5 w-28 rounded" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EventsNavigationSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-4"
+      data-testid="events-navigation-skeleton"
+      aria-hidden="true"
+    >
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div
+          key={index}
+          className="flex items-start gap-3 rounded-lg border p-4"
+        >
+          <Skeleton className="mt-0.5 size-3 rounded-full" />
+          <div className="flex flex-1 flex-col gap-2">
+            <Skeleton className="h-4 w-1/3 rounded" />
+            <Skeleton className="h-4 w-5/6 rounded" />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

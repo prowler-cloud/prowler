@@ -17,6 +17,8 @@ concurrency:
 env:
   IMAGE_NAME: prowler
 
+permissions: {}
+
 jobs:
   sdk-dockerfile-lint:
     if: github.repository == 'prowler-cloud/prowler'
@@ -85,6 +87,7 @@ jobs:
             check.trivy.dev:443
             debian.map.fastlydns.net:80
             release-assets.githubusercontent.com:443
+            objects.githubusercontent.com:443
             pypi.org:443
             files.pythonhosted.org:443
             www.powershellgallery.com:443
