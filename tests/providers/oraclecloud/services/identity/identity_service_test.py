@@ -50,6 +50,7 @@ class TestIdentityService:
             identity_client.domains = []
             regional_client = MagicMock()
             regional_client.region = "us-ashburn-1"
+            domains = []
             for region in ["us-phoenix-1", "us-ashburn-1", "us-chicago-1"]:
                 domain = MagicMock()
                 domain.id = "ocid1.domain.oc1.iad.aaaaaaaaexampleuniqueID"
@@ -59,7 +60,7 @@ class TestIdentityService:
                 domain.home_region = region
                 domain.lifecycle_state = "ACTIVE"
                 domain.time_created = None
-                identity_client.domains += [domain]
+                domains.append(domain)
             with (
                 patch(
                     "prowler.providers.oraclecloud.services.identity.identity_service.Identity.__get_client__",
@@ -67,7 +68,7 @@ class TestIdentityService:
                 ),
                 patch(
                     "prowler.providers.oraclecloud.services.identity.identity_service.oci.pagination.list_call_get_all_results",
-                    return_value=MagicMock(data=[domain]),
+                    return_value=MagicMock(data=domains),
                 ),
             ):
                 identity_client.__list_domains__(regional_client)
