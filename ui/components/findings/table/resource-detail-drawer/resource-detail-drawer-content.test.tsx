@@ -1356,7 +1356,9 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
 });
 
 describe("ResourceDetailDrawerContent — other findings delta/muted indicator", () => {
-  const renderWithOtherFinding = (overrides: Partial<ResourceDrawerFinding>) => {
+  const renderWithOtherFinding = (
+    overrides: Partial<ResourceDrawerFinding>,
+  ) => {
     const otherFinding: ResourceDrawerFinding = {
       ...mockFinding,
       id: "finding-2",

@@ -67,9 +67,9 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
         header={
           <div className="flex w-full items-center justify-between gap-4">
             <div className="flex flex-col gap-0.5">
-              <CardTitle>Latest new failing findings</CardTitle>
+              <CardTitle>Latest New Failed Findings</CardTitle>
               <p className="text-text-neutral-tertiary text-xs">
-                Showing the latest 10 new failing findings by severity.
+                Showing the latest 10 sorted by severity
               </p>
             </div>
             <LinkToFindings />
