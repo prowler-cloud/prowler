@@ -1,5 +1,6 @@
 from unittest.mock import patch
 from unittest.mock import MagicMock
+from datetime import datetime
 
 from tests.providers.oraclecloud.oci_fixtures import set_mocked_oraclecloud_provider
 
@@ -59,7 +60,7 @@ class TestIdentityService:
                 domain.url = "https://idcs-example.identity.oraclecloud.com"
                 domain.home_region = region
                 domain.lifecycle_state = "ACTIVE"
-                domain.time_created = None
+                domain.time_created = datetime.now()
                 domains.append(domain)
             with (
                 patch(
