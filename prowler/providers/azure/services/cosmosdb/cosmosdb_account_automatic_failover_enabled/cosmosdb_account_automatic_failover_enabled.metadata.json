@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "cosmosdb_account_automatic_failover_enabled",
+  "CheckTitle": "Cosmos DB account has automatic failover enabled",
+  "CheckType": [],
+  "ServiceName": "cosmosdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.documentdb/databaseaccounts",
+  "ResourceGroup": "database",
+  "Description": "**Azure Cosmos DB** accounts are evaluated for **automatic failover** configuration. When enabled, Cosmos DB automatically promotes a secondary region to primary during a regional outage, ensuring continuous availability without manual intervention.",
+  "Risk": "Without automatic failover, a regional outage requires **manual failover** which delays recovery and risks data unavailability. Applications dependent on the primary region experience downtime until an operator intervenes.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-manage-database-account#automatic-failover",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/high-availability",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/how-to-manage-database-account"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az cosmosdb update --resource-group <rg> --name <account> --enable-automatic-failover true",
+      "NativeIaC": "```bicep\nresource account 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    databaseAccountOfferType: 'Standard'\n    enableAutomaticFailover: true // Critical: enables automatic failover\n    locations: [{ locationName: resourceGroup().location }]\n  }\n}\n```",
+      "Other": "1. Sign in to Azure portal\n2. Go to Azure Cosmos DB and select the account\n3. Go to Replicate data globally\n4. Enable Automatic Failover\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  offer_type          = \"Standard\"\n\n  enable_automatic_failover = true  # Critical: enables automatic failover\n\n  consistency_policy {\n    consistency_level = \"Session\"\n  }\n\n  geo_location {\n    location          = \"eastus\"\n    failover_priority = 0\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **automatic failover** on all Cosmos DB accounts with multiple geo-locations. This ensures continuous availability during regional outages without manual intervention. Configure at least two geo-locations with appropriate failover priorities. Use **zone-redundant** replicas where available for additional resilience within a region.",
+      "Url": "https://hub.prowler.com/check/cosmosdb_account_automatic_failover_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

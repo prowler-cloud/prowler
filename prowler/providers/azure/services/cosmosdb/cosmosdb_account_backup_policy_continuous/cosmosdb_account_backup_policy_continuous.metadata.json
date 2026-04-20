@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "cosmosdb_account_backup_policy_continuous",
+  "CheckTitle": "Cosmos DB account uses continuous backup policy",
+  "CheckType": [],
+  "ServiceName": "cosmosdb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.documentdb/databaseaccounts",
+  "ResourceGroup": "database",
+  "Description": "**Azure Cosmos DB** accounts are evaluated for **continuous backup** policy. Continuous backup provides point-in-time restore (PITR) enabling recovery to any point within the retention window, unlike periodic backup which only supports full restores at fixed intervals.",
+  "Risk": "Periodic backup limits recovery to the last backup snapshot. Data changes between snapshots are lost during restore. Continuous backup enables **granular recovery** from accidental deletes, corruption, or ransomware.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/continuous-backup-restore-introduction",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/provision-account-continuous-backup",
+    "https://learn.microsoft.com/en-us/azure/cosmos-db/restore-account-continuous-backup"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az cosmosdb update --resource-group <rg> --name <account> --backup-policy-type Continuous",
+      "NativeIaC": "```bicep\nresource account 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    databaseAccountOfferType: 'Standard'\n    backupPolicy: {\n      type: 'Continuous' // Critical: enables continuous backup (PITR)\n    }\n    locations: [{ locationName: resourceGroup().location }]\n  }\n}\n```",
+      "Other": "1. Sign in to Azure portal\n2. Go to Azure Cosmos DB and select the account\n3. Go to Backup & Restore\n4. Select Continuous backup mode\n5. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_cosmosdb_account\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  offer_type          = \"Standard\"\n\n  backup {\n    type = \"Continuous\"  # Critical: enables continuous backup (PITR)\n  }\n\n  consistency_policy {\n    consistency_level = \"Session\"\n  }\n\n  geo_location {\n    location          = \"eastus\"\n    failover_priority = 0\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Switch Cosmos DB accounts from **periodic** to **continuous backup** policy to enable point-in-time restore (PITR). Continuous backup allows recovery to any point within the retention window (7 or 30 days), providing granular protection against accidental deletes, corruption, and ransomware. Note: migration from periodic to continuous is one-way.",
+      "Url": "https://hub.prowler.com/check/cosmosdb_account_backup_policy_continuous"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

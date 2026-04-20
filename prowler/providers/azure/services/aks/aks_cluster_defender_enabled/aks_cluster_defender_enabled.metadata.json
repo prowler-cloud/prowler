@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_cluster_defender_enabled",
+  "CheckTitle": "AKS cluster has Microsoft Defender for Containers enabled",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.containerservice/managedclusters",
+  "ResourceGroup": "container",
+  "Description": "**Azure Kubernetes Service** clusters are evaluated for **Microsoft Defender for Containers** security monitoring. Defender provides runtime threat detection, vulnerability assessment, and security alerts for containerized workloads.",
+  "Risk": "Without Defender, container runtime threats such as **cryptomining**, **container escape**, and **malicious image execution** go undetected. Compromised containers can pivot to cluster resources and cloud APIs.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-containers-introduction",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/defender-for-containers-enable",
+    "https://learn.microsoft.com/en-us/azure/defender-for-cloud/supported-machines-endpoint-solutions-clouds-containers"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az security pricing create -n Containers --tier Standard",
+      "NativeIaC": "```bicep\ntargetScope = 'subscription'\n\nresource defenderContainers 'Microsoft.Security/pricings@2024-01-01' = {\n  name: 'Containers'\n  properties: {\n    pricingTier: 'Standard' // Critical: enables Defender for Containers\n  }\n}\n```",
+      "Other": "1. Sign in to Azure portal\n2. Go to Microsoft Defender for Cloud\n3. Select Environment Settings\n4. Click on the subscription\n5. Set Containers plan to On\n6. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_security_center_subscription_pricing\" \"<example_resource_name>\" {\n  tier          = \"Standard\"  # Critical: enables Defender for Containers\n  resource_type = \"Containers\"\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Microsoft Defender for Containers** to provide runtime threat detection, vulnerability assessment, and security alerts for AKS workloads. Defender monitors container images, cluster configurations, and runtime behavior to detect cryptomining, container escapes, and suspicious activity.",
+      "Url": "https://hub.prowler.com/check/aks_cluster_defender_enabled"
+    }
+  },
+  "Categories": [
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

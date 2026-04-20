@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_cluster_azure_monitor_enabled",
+  "CheckTitle": "AKS cluster has Azure Monitor metrics enabled",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.containerservice/managedclusters",
+  "ResourceGroup": "container",
+  "Description": "**Azure Kubernetes Service** clusters are evaluated for **Azure Monitor** integration. Monitor provides metrics collection, log aggregation, and alerting for cluster health and workload performance.",
+  "Risk": "Without monitoring, cluster degradation, resource exhaustion, and anomalous behavior go undetected. Lack of observability delays incident detection and hampers forensic investigation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-overview",
+    "https://learn.microsoft.com/en-us/azure/aks/monitor-aks",
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/containers/container-insights-enable-aks"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az aks enable-addons --resource-group <rg> --name <cluster> --addons monitoring",
+      "NativeIaC": "```bicep\nresource aks 'Microsoft.ContainerService/managedClusters@2024-05-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  properties: {\n    addonProfiles: {\n      omsagent: {\n        enabled: true // Critical: enables Azure Monitor (Container Insights)\n        config: {\n          logAnalyticsWorkspaceResourceID: '<example_resource_id>'\n        }\n      }\n    }\n  }\n}\n```",
+      "Other": "1. Sign in to Azure portal\n2. Go to Kubernetes services and select the cluster\n3. Go to Monitoring > Insights\n4. Click Enable\n5. Select a Log Analytics workspace\n6. Click Configure",
+      "Terraform": "```hcl\nresource \"azurerm_kubernetes_cluster\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  dns_prefix          = \"<example_resource_name>\"\n\n  default_node_pool {\n    name       = \"default\"\n    node_count = 1\n    vm_size    = \"Standard_DS2_v2\"\n  }\n\n  identity {\n    type = \"SystemAssigned\"\n  }\n\n  oms_agent {\n    log_analytics_workspace_id = \"<example_resource_id>\"  # Critical: enables Azure Monitor\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Azure Monitor** (Container Insights) for AKS clusters to collect performance metrics, container logs, and Kubernetes events. Configure a **Log Analytics workspace** for centralized log storage and alerting. Use monitor data to detect anomalies, troubleshoot issues, and support incident investigation.",
+      "Url": "https://hub.prowler.com/check/aks_cluster_azure_monitor_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
