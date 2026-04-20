@@ -11,23 +11,12 @@ vi.mock("next/link", () => ({
     children: ReactNode;
     href: string;
     "aria-label"?: string;
+    className?: string;
   }) => (
     <a href={href} {...rest}>
       {children}
     </a>
   ),
-}));
-
-vi.mock("@/components/shadcn/button/button", () => ({
-  Button: ({
-    children,
-    asChild,
-  }: {
-    children?: ReactNode;
-    asChild?: boolean;
-    variant?: string;
-    size?: string;
-  }) => <>{asChild ? children : <button>{children}</button>}</>,
 }));
 
 import { LinkToFindings } from "./link-to-findings";
@@ -47,5 +36,13 @@ describe("LinkToFindings", () => {
     // register `delta__in`, so the plural form is silently dropped by the API.
     expect(params.get("filter[delta]")).toBe("new");
     expect(params.has("filter[delta__in]")).toBe(false);
+  });
+
+  it("should render as a tertiary text link (not a solid button) to match the overview Card pattern", () => {
+    render(<LinkToFindings />);
+
+    const link = screen.getByRole("link", { name: "Go to Findings page" });
+    expect(link.className).toContain("text-button-tertiary");
+    expect(link.className).toContain("hover:text-button-tertiary-hover");
   });
 });
