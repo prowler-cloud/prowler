@@ -14,7 +14,11 @@ import {
 import { Progress } from "@/components/shadcn/progress";
 import { toast } from "@/components/ui";
 import { COMPLIANCE_REPORT_TYPES } from "@/lib/compliance/compliance-report-types";
-import { getScoreColor, getScoreTextClass } from "@/lib/compliance/score-utils";
+import {
+  getScoreColor,
+  getScoreIndicatorClass,
+  getScoreTextClass,
+} from "@/lib/compliance/score-utils";
 import {
   downloadComplianceCsv,
   downloadComplianceReportPdf,
@@ -41,18 +45,6 @@ export const ThreatScoreBadge = ({
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const complianceId = `prowler_threatscore_${provider.toLowerCase()}`;
-
-  const getProgressIndicatorClassName = (value: number) => {
-    const color = getScoreColor(value);
-
-    if (color === "danger") {
-      return "bg-bg-fail";
-    }
-    if (color === "warning") {
-      return "bg-bg-warning";
-    }
-    return "bg-bg-pass";
-  };
 
   const handleCardClick = () => {
     const title = "ProwlerThreatScore";
@@ -116,7 +108,7 @@ export const ThreatScoreBadge = ({
               aria-label="ThreatScore progress"
               value={score}
               className="border-border-neutral-secondary h-2.5 w-24 border"
-              indicatorClassName={getProgressIndicatorClassName(score)}
+              indicatorClassName={getScoreIndicatorClass(getScoreColor(score))}
             />
           </div>
         </button>
@@ -135,8 +127,8 @@ export const ThreatScoreBadge = ({
                     aria-label={`${section} score`}
                     value={sectionScore}
                     className="border-border-neutral-secondary h-2 min-w-16 flex-1 border"
-                    indicatorClassName={getProgressIndicatorClassName(
-                      sectionScore,
+                    indicatorClassName={getScoreIndicatorClass(
+                      getScoreColor(sectionScore),
                     )}
                   />
                   <span

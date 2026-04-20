@@ -11,6 +11,10 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
+import {
+  getScoreIndicatorClass,
+  type ScoreColorVariant,
+} from "@/lib/compliance/score-utils";
 import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
@@ -50,14 +54,10 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     (passingRequirements / totalRequirements) * 100,
   );
 
-  const getRatingIndicatorClassName = (ratingPercentage: number) => {
-    if (ratingPercentage <= 10) {
-      return "bg-bg-fail";
-    }
-    if (ratingPercentage <= 40) {
-      return "bg-bg-warning";
-    }
-    return "bg-bg-pass";
+  const getRatingVariant = (value: number): ScoreColorVariant => {
+    if (value <= 10) return "danger";
+    if (value <= 40) return "warning";
+    return "success";
   };
 
   const navigateToDetail = () => {
@@ -143,8 +143,8 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                 aria-label="Compliance score"
                 value={ratingPercentage}
                 className="border-border-neutral-secondary h-2.5 border drop-shadow-sm"
-                indicatorClassName={getRatingIndicatorClassName(
-                  ratingPercentage,
+                indicatorClassName={getScoreIndicatorClass(
+                  getRatingVariant(ratingPercentage),
                 )}
               />
             </div>
