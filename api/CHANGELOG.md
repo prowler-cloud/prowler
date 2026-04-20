@@ -2,14 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.26.0] (Prowler UNRELEASED)
-
-### 🔐 Security
-
-- `pyasn1` from 0.6.2 to 0.6.3 [(#10366)](https://github.com/prowler-cloud/prowler/pull/10366)
-
----
-
 ## [1.25.1] (Prowler v5.24.1)
 
 ### 🔄 Changed
