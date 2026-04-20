@@ -110,6 +110,8 @@ interface DataTableProviderProps<TData, TValue> {
   searchBadge?: { label: string; onDismiss: () => void };
   /** Optional click handler for top-level rows. */
   onRowClick?: (row: Row<TData>) => void;
+  /** Optional header rendered inside the table container, above the toolbar. */
+  header?: ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -140,6 +142,7 @@ export function DataTable<TData, TValue>({
   renderAfterRow,
   searchBadge,
   onRowClick,
+  header,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -235,6 +238,7 @@ export function DataTable<TData, TValue>({
         isPending && "pointer-events-none opacity-60",
       )}
     >
+      {header && <div className="w-full">{header}</div>}
       {/* Table Toolbar */}
       {showToolbar && (
         <div className="flex items-center justify-between">
