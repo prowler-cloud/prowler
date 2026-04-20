@@ -1461,7 +1461,8 @@
         "keyvault_access_only_through_private_endpoints",
         "keyvault_private_endpoints",
         "keyvault_rbac_enabled",
-        "storage_ensure_encryption_with_customer_managed_keys"
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {
@@ -1650,7 +1651,8 @@
         "keyvault_non_rbac_secret_expiration_set",
         "keyvault_rbac_key_expiration_set",
         "keyvault_rbac_secret_expiration_set",
-        "storage_key_rotation_90_days"
+        "storage_key_rotation_90_days",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {
@@ -3385,7 +3387,8 @@
         }
       ],
       "Checks": [
-        "entra_global_admin_in_less_than_five_users"
+        "entra_global_admin_in_less_than_five_users",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -3493,7 +3496,8 @@
         "entra_global_admin_in_less_than_five_users",
         "keyvault_non_rbac_secret_expiration_set",
         "keyvault_rbac_secret_expiration_set",
-        "storage_key_rotation_90_days"
+        "storage_key_rotation_90_days",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -4085,7 +4089,9 @@
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_security_defaults_enabled",
-        "entra_user_with_vm_access_has_mfa"
+        "entra_user_with_vm_access_has_mfa",
+        "entra_app_registration_credential_not_expired",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ]
     },
     {

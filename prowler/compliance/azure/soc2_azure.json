@@ -221,7 +221,8 @@
         "monitor_alert_delete_policy_assignment",
         "monitor_alert_delete_public_ip_address_rule",
         "monitor_alert_delete_security_solution",
-        "monitor_alert_delete_sqlserver_fr"
+        "monitor_alert_delete_sqlserver_fr",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -241,7 +242,9 @@
         "app_function_not_publicly_accessible",
         "containerregistry_not_publicly_accessible",
         "network_public_ip_shodan",
-        "storage_blob_public_access_level_is_disabled"
+        "storage_blob_public_access_level_is_disabled",
+        "entra_app_registration_credential_not_expired",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ]
     },
     {
@@ -308,7 +311,8 @@
         "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version",
         "storage_ensure_minimum_tls_version_12",
-        "network_subnet_nsg_associated"
+        "network_subnet_nsg_associated",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {

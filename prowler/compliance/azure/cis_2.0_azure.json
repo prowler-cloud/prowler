@@ -248,7 +248,9 @@
     {
       "Id": "1.4",
       "Description": "Ensure Access Review is Set Up for External Users in Azure AD Privileged Identity Management",
-      "Checks": [],
+      "Checks": [
+        "entra_user_with_recent_sign_in"
+      ],
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
@@ -3302,7 +3304,9 @@
     {
       "Id": "9.11",
       "Description": "Ensure Azure Key Vaults are Used to Store Secrets",
-      "Checks": [],
+      "Checks": [
+        "entra_app_registration_credential_not_expired"
+      ],
       "Attributes": [
         {
           "Section": "9 AppService",

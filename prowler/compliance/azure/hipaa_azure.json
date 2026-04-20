@@ -187,7 +187,8 @@
         "keyvault_rbac_key_expiration_set",
         "keyvault_rbac_secret_expiration_set",
         "keyvault_key_expiration_set_in_non_rbac",
-        "keyvault_non_rbac_secret_expiration_set"
+        "keyvault_non_rbac_secret_expiration_set",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -576,7 +577,9 @@
         "aisearch_service_not_publicly_accessible",
         "cosmosdb_account_firewall_use_selected_networks",
         "cosmosdb_account_use_private_endpoints",
-        "aks_clusters_public_access_disabled"
+        "aks_clusters_public_access_disabled",
+        "entra_user_with_recent_sign_in",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ]
     },
     {
