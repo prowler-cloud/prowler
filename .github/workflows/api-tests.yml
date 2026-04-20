@@ -112,17 +112,16 @@ jobs:
             api/CHANGELOG.md
             api/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
-          update-lock: 'true'
 
       - name: Run tests with pytest
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run pytest --cov=./src/backend --cov-report=xml src/backend
+        run: uv run pytest --cov=./src/backend --cov-report=xml src/backend
 
       - name: Upload coverage reports to Codecov
         if: steps.check-changes.outputs.any_changed == 'true'

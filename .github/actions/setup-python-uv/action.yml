@@ -1,0 +1,88 @@
+name: 'Setup Python with uv'
+description: 'Setup Python environment with uv and install dependencies'
+author: 'Prowler'
+
+inputs:
+  python-version:
+    description: 'Python version to use'
+    required: true
+  working-directory:
+    description: 'Working directory for uv'
+    required: false
+    default: '.'
+  uv-version:
+    description: 'uv version to install'
+    required: false
+    default: '0.11.7'
+  install-dependencies:
+    description: 'Install Python dependencies with uv'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Replace @master with current branch in pyproject.toml (prowler repo only)
+      if: github.event_name == 'pull_request' && github.base_ref == 'master' && github.repository == 'prowler-cloud/prowler'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+      run: |
+        BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+        UPSTREAM="prowler-cloud/prowler"
+        if [ "$HEAD_REPO" != "$UPSTREAM" ]; then
+          echo "Fork PR detected (${HEAD_REPO}), rewriting VCS URL to fork"
+          sed -i "s|git+https://github.com/prowler-cloud/prowler\([^@]*\)@master|git+https://github.com/${HEAD_REPO}\1@$BRANCH_NAME|g" pyproject.toml
+        else
+          echo "Same-repo PR, using branch: $BRANCH_NAME"
+          sed -i "s|\(git+https://github.com/prowler-cloud/prowler[^@]*\)@master|\1@$BRANCH_NAME|g" pyproject.toml
+        fi
+
+    - name: Update uv.lock with latest Prowler commit
+      if: github.repository_owner == 'prowler-cloud' && github.repository != 'prowler-cloud/prowler'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+        echo "Latest commit hash: $LATEST_COMMIT"
+        sed -i "s|\(git = \"https://github\.com/prowler-cloud/prowler\.git?rev=master\)#[a-f0-9]\{40\}\"|\1#${LATEST_COMMIT}\"|g" uv.lock
+        echo "Updated uv.lock entry:"
+        grep "prowler-cloud/prowler" uv.lock
+
+    - name: Update uv.lock SDK commit (prowler repo on push)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'prowler-cloud/prowler'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+        echo "Latest commit hash: $LATEST_COMMIT"
+        sed -i "s|\(git = \"https://github\.com/prowler-cloud/prowler\.git?rev=master\)#[a-f0-9]\{40\}\"|\1#${LATEST_COMMIT}\"|g" uv.lock
+        echo "Updated uv.lock entry:"
+        grep "prowler-cloud/prowler" uv.lock
+
+    - name: Install uv
+      shell: bash
+      run: pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir uv==${{ inputs.uv-version }}
+
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: 'pip'
+
+    - name: Install Python dependencies
+      if: inputs.install-dependencies == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        uv sync --no-install-project
+        uv run pip list
+
+    - name: Update Prowler Cloud API Client
+      if: github.repository_owner == 'prowler-cloud' && github.repository != 'prowler-cloud/prowler'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        uv remove prowler-cloud-api-client
+        uv add ./prowler-cloud-api-client
