@@ -54,7 +54,7 @@ class TestIdentityService:
             domains = []
             for region in ["us-phoenix-1", "us-ashburn-1", "us-chicago-1"]:
                 domain = MagicMock()
-                domain.id = "ocid1.domain.oc1.iad.aaaaaaaaexampleuniqueID"
+                domain.id ="ocid1.domain.oc1.iad.aaaaaaaaexampleuniqueID" if region == "us-chicago-1" else "ocid1.domain.oc1.iad.aaaaaaaaexampleuniqueID2"
                 domain.display_name = "exampledomain"
                 domain.description = "example"
                 domain.url = "https://idcs-example.identity.oraclecloud.com"
