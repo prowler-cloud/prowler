@@ -74,7 +74,7 @@ import type { FindingResourceRow } from "@/types/findings-table";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
-import { NotificationIndicator } from "../notification-indicator";
+import { DeltaValues, NotificationIndicator } from "../notification-indicator";
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
 
@@ -1316,7 +1316,8 @@ function OtherFindingRow({
           <NotificationIndicator
             isMuted={isMuted}
             delta={
-              finding.delta === "new" || finding.delta === "changed"
+              finding.delta === DeltaValues.NEW ||
+              finding.delta === DeltaValues.CHANGED
                 ? finding.delta
                 : undefined
             }
