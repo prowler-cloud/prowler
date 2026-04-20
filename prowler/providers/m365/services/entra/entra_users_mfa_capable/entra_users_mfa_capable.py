@@ -20,17 +20,19 @@ class entra_users_mfa_capable(Check):
         Execute the MFA capable check for all enabled member users.
 
         Iterates over the users retrieved from the Entra client and generates a report
-        indicating if member users are MFA capable. Guest users and disabled accounts
-        are skipped, in line with the CIS recommendation that scopes the control to
-        member users only.
+        indicating if member users are MFA capable. Users explicitly typed as ``Guest``
+        and disabled accounts are skipped, in line with the CIS recommendation that
+        scopes the control to member users only. Users whose ``user_type`` could not
+        be determined are still evaluated to avoid silently dropping accounts when
+        Microsoft Graph does not return the property.
 
         Returns:
-            List[CheckReportM365]: A list with one report per evaluated member user.
+            List[CheckReportM365]: A list with one report per evaluated user.
         """
         findings = []
 
         for user in entra_client.users.values():
-            if user.user_type != "Member" or not user.account_enabled:
+            if user.user_type == "Guest" or not user.account_enabled:
                 continue
 
             report = CheckReportM365(

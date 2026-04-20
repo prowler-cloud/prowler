@@ -371,3 +371,52 @@ class Test_entra_users_mfa_capable:
             assert result[0].resource == entra_client.users[member_user_id]
             assert result[0].resource_name == "Member User"
             assert result[0].resource_id == member_user_id
+
+    def test_unknown_user_type_is_evaluated(self):
+        """Users without a ``user_type`` reported by Microsoft Graph must not be
+        silently dropped.
+
+        We only skip users that Graph explicitly reports as ``Guest``; for everyone
+        else (including ``user_type=None``) the check still evaluates MFA capability
+        so that we never mask findings on accounts whose type cannot be determined.
+        """
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable import (
+                entra_users_mfa_capable,
+            )
+
+            user_id = str(uuid4())
+            entra_client.users = {
+                user_id: User(
+                    id=user_id,
+                    name="Test User",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=False,
+                    account_enabled=True,
+                    user_type=None,
+                )
+            }
+
+            check = entra_users_mfa_capable()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].status_extended == "User Test User is not MFA capable."
+            assert result[0].resource == entra_client.users[user_id]
+            assert result[0].resource_name == "Test User"
+            assert result[0].resource_id == user_id
