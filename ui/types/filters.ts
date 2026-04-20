@@ -39,7 +39,9 @@ export enum FilterType {
   RESOURCE_TYPE = "resource_type__in",
   SEVERITY = "severity__in",
   STATUS = "status__in",
-  DELTA = "delta__in",
+  // The API only registers `delta` (exact, singular). `delta__in` is silently
+  // dropped, so the dropdown, URL, and backend must all use `delta`.
+  DELTA = "delta",
   CATEGORY = "category__in",
   RESOURCE_GROUPS = "resource_groups__in",
 }
@@ -68,11 +70,13 @@ export type FilterParam =
   | "filter[severity__in]"
   | "filter[status__in]"
   | "filter[delta__in]"
+  | "filter[delta]"
   | "filter[region__in]"
   | "filter[service__in]"
   | "filter[resource_type__in]"
   | "filter[category__in]"
   | "filter[resource_groups__in]"
+  | "filter[scan]"
   | "filter[scan__in]"
   | "filter[scan_id]"
   | "filter[scan_id__in]"

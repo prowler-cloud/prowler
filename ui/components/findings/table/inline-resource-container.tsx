@@ -20,6 +20,7 @@ import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   getFilteredFindingGroupResourceCount,
+  getFindingGroupEmptyStateMessage,
   getFindingGroupSkeletonCount,
 } from "./inline-resource-container.utils";
 import { ResourceDetailDrawer } from "./resource-detail-drawer";
@@ -278,9 +279,7 @@ export function InlineResourceContainer({
                             colSpan={columns.length}
                             className="h-24 text-center"
                           >
-                            {Object.keys(filters).length > 0
-                              ? "No resources found for the selected filters."
-                              : "No resources found."}
+                            {getFindingGroupEmptyStateMessage(group, filters)}
                           </TableCell>
                         </TableRow>
                       )}
@@ -334,8 +333,10 @@ export function InlineResourceContainer({
         checkMeta={drawer.checkMeta}
         currentIndex={drawer.currentIndex}
         totalResources={drawer.totalResources}
+        currentResource={drawer.currentResource}
         currentFinding={drawer.currentFinding}
         otherFindings={drawer.otherFindings}
+        showSyntheticResourceHint={group.resourcesTotal === 0}
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleDrawerMuteComplete}

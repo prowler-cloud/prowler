@@ -115,4 +115,35 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
     expect(result[0].id).toBe("finding-1");
     expect(result[0].checkId).toBe("s3_check");
   });
+
+  it("should normalize a single finding response into a one-item drawer array", () => {
+    // Given — getFindingById returns a single JSON:API resource object
+    const input = {
+      data: {
+        id: "finding-1",
+        attributes: {
+          uid: "uid-1",
+          check_id: "s3_check",
+          status: "FAIL",
+          severity: "critical",
+          check_metadata: {
+            checktitle: "S3 Check",
+          },
+        },
+        relationships: {
+          resources: { data: [] },
+          scan: { data: null },
+        },
+      },
+      included: [],
+    };
+
+    // When
+    const result = adaptFindingsByResourceResponse(input);
+
+    // Then
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("finding-1");
+    expect(result[0].checkTitle).toBe("S3 Check");
+  });
 });
