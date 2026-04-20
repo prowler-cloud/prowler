@@ -76,6 +76,7 @@ export type FilterParam =
   | "filter[resource_type__in]"
   | "filter[category__in]"
   | "filter[resource_groups__in]"
+  | "filter[scan]"
   | "filter[scan__in]"
   | "filter[scan_id]"
   | "filter[scan_id__in]"

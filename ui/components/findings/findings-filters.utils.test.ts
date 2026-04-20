@@ -101,7 +101,7 @@ describe("getFindingsFilterDisplayValue", () => {
   it("shows the resolved scan badge label for scan filters instead of formatting the raw scan id", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-1", { scans }),
-    ).toBe("Nightly scan");
+    ).toBe("AWS - Nightly scan");
   });
 
   it("normalizes finding statuses for display", () => {
@@ -132,7 +132,7 @@ describe("getFindingsFilterDisplayValue", () => {
     );
   });
 
-  it("falls back to the scan provider uid when the alias is missing", () => {
+  it("uses the provider display name regardless of account alias/uid", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-2", {
         scans: [
@@ -146,17 +146,17 @@ describe("getFindingsFilterDisplayValue", () => {
           }),
         ],
       }),
-    ).toBe("Weekly scan");
+    ).toBe("AWS - Weekly scan");
   });
 
-  it("falls back to the provider alias when the scan name is missing", () => {
+  it("returns only the provider name when the scan name is missing", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-3", {
         scans: [
           ...scans,
           makeScanMap("scan-3", {
             providerInfo: {
-              provider: "aws",
+              provider: "gcp",
               alias: "Fallback Account",
               uid: "333333333333",
             },
@@ -167,7 +167,7 @@ describe("getFindingsFilterDisplayValue", () => {
           }),
         ],
       }),
-    ).toBe("Fallback Account");
+    ).toBe("Google Cloud");
   });
 
   it("keeps the raw scan value when the scan cannot be resolved", () => {
@@ -240,16 +240,18 @@ describe("buildFindingsFilterChips", () => {
     });
 
     // Then — both shapes produce the same human labels and display values
-    expect(chipsSingular.map((c) => ({ label: c.label, v: c.displayValue })))
-      .toEqual([
-        { label: "Delta", v: "New" },
-        { label: "Delta", v: "Changed" },
-      ]);
-    expect(chipsPlural.map((c) => ({ label: c.label, v: c.displayValue })))
-      .toEqual([
-        { label: "Delta", v: "New" },
-        { label: "Delta", v: "Changed" },
-      ]);
+    expect(
+      chipsSingular.map((c) => ({ label: c.label, v: c.displayValue })),
+    ).toEqual([
+      { label: "Delta", v: "New" },
+      { label: "Delta", v: "Changed" },
+    ]);
+    expect(
+      chipsPlural.map((c) => ({ label: c.label, v: c.displayValue })),
+    ).toEqual([
+      { label: "Delta", v: "New" },
+      { label: "Delta", v: "Changed" },
+    ]);
   });
 
   it("skips the silent default filter[muted]=false", () => {

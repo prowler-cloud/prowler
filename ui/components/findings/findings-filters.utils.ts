@@ -1,5 +1,6 @@
 import type { FilterChip } from "@/components/filters/filter-summary-strip";
 import { formatLabel, getCategoryLabel, getGroupLabel } from "@/lib/categories";
+import { getScanEntityLabel } from "@/lib/helper-filters";
 import { FINDING_STATUS_DISPLAY_NAMES } from "@/types";
 import { FilterParam } from "@/types/filters";
 import { getProviderDisplayName, ProviderProps } from "@/types/providers";
@@ -37,12 +38,7 @@ function getScanDisplayValue(
     return scanId;
   }
 
-  return (
-    scan.attributes.name ||
-    scan.providerInfo.alias ||
-    scan.providerInfo.uid ||
-    scanId
-  );
+  return getScanEntityLabel(scan) || scanId;
 }
 
 export function getFindingsFilterDisplayValue(
@@ -57,7 +53,7 @@ export function getFindingsFilterDisplayValue(
   if (filterKey === "filter[provider_id__in]") {
     return getProviderAccountDisplayValue(value, options.providers || []);
   }
-  if (filterKey === "filter[scan__in]") {
+  if (filterKey === "filter[scan__in]" || filterKey === "filter[scan]") {
     return getScanDisplayValue(value, options.scans || []);
   }
   if (filterKey === "filter[severity__in]") {
@@ -114,6 +110,7 @@ export const FILTER_KEY_LABELS: Record<FilterParam, string> = {
   "filter[resource_type__in]": "Resource Type",
   "filter[category__in]": "Category",
   "filter[resource_groups__in]": "Resource Group",
+  "filter[scan]": "Scan",
   "filter[scan__in]": "Scan",
   "filter[scan_id]": "Scan",
   "filter[scan_id__in]": "Scan",
