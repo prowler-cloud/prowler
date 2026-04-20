@@ -65,7 +65,23 @@ class secretsmanager_has_restrictive_resource_policy(Check):
             )
 
             if secret.policy:
+                # Normalize Statement to a list (IAM spec allows a single dict)
                 statements = secret.policy.get("Statement", [])
+                if not isinstance(statements, list):
+                    statements = [statements]
+                # Normalize condition keys to lowercase (IAM condition keys are case-insensitive)
+                statements = [
+                    (
+                        {
+                            **s,
+                            "Condition": self._normalize_condition_keys(s["Condition"]),
+                        }
+                        if "Condition" in s
+                        else s
+                    )
+                    for s in statements
+                ]
+
                 not_denied_principals = []
                 not_denied_services = []
                 arn_not_like_principals = []  # Store ARN patterns from ArnNotLike
@@ -130,9 +146,9 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                             "StringNotEqualsIfExists", {}
                         )
 
-                    uses_principal_arn = "aws:PrincipalArn" in condition_principals
+                    uses_principal_arn = "aws:principalarn" in condition_principals
                     uses_principal_service = (
-                        "aws:PrincipalServiceName" in condition_principals
+                        "aws:principalservicename" in condition_principals
                     )
 
                     # Check for ArnNotLike condition
@@ -140,18 +156,18 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                     uses_arn_not_like = False
                     if "ArnNotLike" in condition:
                         arn_not_like_condition = condition.get("ArnNotLike", {})
-                        uses_arn_not_like = "aws:PrincipalArn" in arn_not_like_condition
+                        uses_arn_not_like = "aws:principalarn" in arn_not_like_condition
 
                     # Update valid keys to include ArnNotLike
-                    valid_keys = {"aws:PrincipalArn", "aws:PrincipalServiceName"}
+                    valid_keys = {"aws:principalarn", "aws:principalservicename"}
                     if not set(condition_principals.keys()).issubset(valid_keys):
                         continue
 
                     # check values of principals
                     all_valid = True
                     for key, (not_denied_list, pattern) in {
-                        "aws:PrincipalArn": (not_denied_principals, arn_pattern),
-                        "aws:PrincipalServiceName": (
+                        "aws:principalarn": (not_denied_principals, arn_pattern),
+                        "aws:principalservicename": (
                             not_denied_services,
                             service_pattern,
                         ),
@@ -166,10 +182,10 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                     if not all_valid:
                         continue
 
-                    # NEW: Validate ArnNotLike principals (must have at least 12 chars prefix before *)
+                    # Validate ArnNotLike principals (must have at least 12 chars prefix before *)
                     if uses_arn_not_like:
                         arn_not_like_values = self.extract_field(
-                            arn_not_like_condition.get("aws:PrincipalArn", [])
+                            arn_not_like_condition.get("aws:principalarn", [])
                         )
                         for arn in arn_not_like_values:
                             if not re.match(arn_wildcard_pattern, arn):
@@ -199,8 +215,8 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                             null_condition = condition.get("Null", {})
                             # STRICT: Null condition must have exactly these two keys with value "true"
                             if null_condition == {
-                                "aws:PrincipalArn": "true",
-                                "aws:PrincipalServiceName": "true",
+                                "aws:principalarn": "true",
+                                "aws:principalservicename": "true",
                             }:
                                 has_explicit_deny_for_all = True
                                 break
@@ -227,9 +243,9 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                             condition = statement.get("Condition", {})
                             if "ArnLike" in condition:
                                 arn_like_condition = condition.get("ArnLike", {})
-                                if "aws:PrincipalArn" in arn_like_condition:
+                                if "aws:principalarn" in arn_like_condition:
                                     arn_like_value = self.extract_field(
-                                        arn_like_condition.get("aws:PrincipalArn", [])
+                                        arn_like_condition.get("aws:principalarn", [])
                                     )
                                     arn_like_values.extend(arn_like_value)
                                     # Check if all ArnNotLike principals are present in Deny-Statements with ArnLike Condition
@@ -262,13 +278,13 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                         and len(statement["Condition"])
                         == 1  # STRICT: only StringNotEquals, no additional operators
                         and "StringNotEquals" in statement["Condition"]
-                        and "aws:PrincipalOrgID"
+                        and "aws:principalorgid"
                         in statement["Condition"]["StringNotEquals"]
                         and all(
                             v in organizations_trusted_ids
                             for v in self.extract_field(
                                 statement["Condition"]["StringNotEquals"][
-                                    "aws:PrincipalOrgID"
+                                    "aws:principalorgid"
                                 ]
                             )
                         )
@@ -279,19 +295,22 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                                 and set(
                                     statement["Condition"]["StringNotEquals"].keys()
                                 )
-                                == {"aws:PrincipalOrgID"}
+                                == {"aws:principalorgid"}
                             )
                             or (
                                 not_denied_services
                                 and set(
                                     statement["Condition"]["StringNotEquals"].keys()
                                 )
-                                == {"aws:PrincipalOrgID", "aws:PrincipalServiceName"}
+                                == {
+                                    "aws:principalorgid",
+                                    "aws:principalservicename",
+                                }
                                 and all(
                                     s in not_denied_services
                                     for s in self.extract_field(
                                         statement["Condition"]["StringNotEquals"][
-                                            "aws:PrincipalServiceName"
+                                            "aws:principalservicename"
                                         ]
                                     )
                                 )
@@ -326,48 +345,16 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                                 ):
                                     failed_principals.append(principal)
 
-                # Allow-Statement for not-denied services must not have any wildcards in "Action"
-                # and "SourceAccount" must be the audited account
+                # Validate service-principal Allow statements
                 for statement in statements:
                     if statement.get("Effect") == "Allow":
                         principals = self.extract_field(statement.get("Principal", {}))
                         for service in principals:
                             if service in not_denied_services:
-                                condition = statement.get("Condition", {})
-                                actions = self.extract_field(
-                                    statement.get("Action", [])
+                                issues = self._validate_service_allow_statement(
+                                    statement,
+                                    secretsmanager_client.audited_account,
                                 )
-                                # Validate that the service-principal Allow statement
-                                # has at least a "StringEquals" condition with "aws:SourceAccount".
-                                # Additional restrictive conditions (e.g. ArnLike on aws:SourceArn) are acceptable.
-
-                                # Collect specific issues for this service
-                                issues = []
-                                has_wildcard_action = any(
-                                    "*" in action for action in actions
-                                )
-                                # Accept the condition if it contains at least
-                                # StringEquals with aws:SourceAccount matching the
-                                # audited account. Additional restrictive conditions
-                                # (e.g. ArnLike on aws:SourceArn) are acceptable.
-                                has_correct_condition = (
-                                    "StringEquals" in condition
-                                    and condition.get("StringEquals", {}).get(
-                                        "aws:SourceAccount"
-                                    )
-                                    == secretsmanager_client.audited_account
-                                )
-
-                                if has_wildcard_action:
-                                    issues.append("contains wildcard in Action field")
-                                if not has_correct_condition:
-                                    if not condition:
-                                        issues.append("missing Condition block")
-                                    else:
-                                        issues.append(
-                                            f"incorrect Condition (expected: StringEquals with aws:SourceAccount={secretsmanager_client.audited_account})"
-                                        )
-
                                 if issues:
                                     failed_services.append(
                                         {"service": service, "issues": issues}
@@ -403,7 +390,7 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                         # Build a helpful error message showing which principals are expected
                         expected_parts = []
 
-                        # Case 1: Only PrincipalArn exists → StringNotEquals
+                        # Case 1: Only PrincipalArn exists -> StringNotEquals
                         if not_denied_principals and not not_denied_services:
                             principals_str = ", ".join(
                                 not_denied_principals[:max_principals_to_display]
@@ -414,7 +401,7 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                                 f"StringNotEquals with aws:PrincipalArn: {principals_str}"
                             )
 
-                        # Case 2: Both PrincipalArn and PrincipalServiceName exist → StringNotEqualsIfExists + Null
+                        # Case 2: Both PrincipalArn and PrincipalServiceName exist -> StringNotEqualsIfExists + Null
                         elif not_denied_principals and not_denied_services:
                             principals_str = ", ".join(
                                 not_denied_principals[:max_principals_to_display]
@@ -493,6 +480,67 @@ class secretsmanager_has_restrictive_resource_policy(Check):
             findings.append(report)
 
         return findings
+
+    def _normalize_condition_keys(self, condition):
+        """Normalize condition keys to lowercase for case-insensitive matching.
+
+        IAM condition key names are case-insensitive per AWS specification.
+        See: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
+        """
+        normalized = {}
+        for operator, keys_dict in condition.items():
+            if isinstance(keys_dict, dict):
+                normalized[operator] = {k.lower(): v for k, v in keys_dict.items()}
+            else:
+                normalized[operator] = keys_dict
+        return normalized
+
+    def _validate_service_allow_statement(self, statement, audited_account):
+        """Validate a service-principal Allow statement.
+
+        Checks that the statement uses explicit Action (not NotAction),
+        does not use NotResource, contains no wildcards in Action, and
+        has a StringEquals condition with aws:SourceAccount matching the
+        audited account.
+
+        Returns a list of issues found, or an empty list if valid.
+        """
+        issues = []
+
+        # Reject inverted elements that broaden scope
+        if "NotAction" in statement:
+            issues.append("uses NotAction instead of Action (too broad)")
+        if "NotResource" in statement:
+            issues.append("uses NotResource instead of Resource (too broad)")
+        if issues:
+            return issues
+
+        # Require explicit Action field
+        if "Action" not in statement:
+            issues.append("missing Action field")
+        else:
+            actions = self.extract_field(statement.get("Action", []))
+            if any(isinstance(action, str) and "*" in action for action in actions):
+                issues.append("contains wildcard in Action field")
+
+        # Validate condition: require at least StringEquals with aws:SourceAccount
+        # Additional restrictive conditions (e.g. ArnLike on aws:SourceArn) are acceptable.
+        condition = statement.get("Condition", {})
+        has_correct_condition = (
+            "StringEquals" in condition
+            and condition.get("StringEquals", {}).get("aws:sourceaccount")
+            == audited_account
+        )
+
+        if not has_correct_condition:
+            if not condition:
+                issues.append("missing Condition block")
+            else:
+                issues.append(
+                    f"incorrect Condition (expected: StringEquals with aws:SourceAccount={audited_account})"
+                )
+
+        return issues
 
     # Extract values from a field to return an array containing the field,
     # handling single values, arrays and dict with keys "AWS" or "Service".
