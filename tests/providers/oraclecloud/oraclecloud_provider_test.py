@@ -219,7 +219,7 @@ class TestOraclecloudProviderInit:
         )
         mock_regions = [
             OCIRegion(key="us-phoenix-1", name="us-phoenix-1", is_home_region=False),
-            OCIRegion(key="us-ashburn-1", name="us-ashburn-1", is_home_region=True)
+            OCIRegion(key="us-ashburn-1", name="us-ashburn-1", is_home_region=True),
         ]
         mock_compartments = ["ocid1.compartment.oc1..aaaaaaaexample"]
         with (
