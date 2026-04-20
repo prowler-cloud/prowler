@@ -74,7 +74,7 @@ import type { FindingResourceRow } from "@/types/findings-table";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
-import { NotificationIndicator } from "../notification-indicator";
+import { DeltaValues, NotificationIndicator } from "../notification-indicator";
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
 
@@ -1313,7 +1313,17 @@ function OtherFindingRow({
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
       >
         <TableCell className="w-10">
-          <NotificationIndicator isMuted={isMuted} />
+          <NotificationIndicator
+            isMuted={isMuted}
+            delta={
+              finding.delta === DeltaValues.NEW ||
+              finding.delta === DeltaValues.CHANGED
+                ? finding.delta
+                : undefined
+            }
+            mutedReason={finding.mutedReason ?? undefined}
+            showDeltaWhenMuted
+          />
         </TableCell>
         <TableCell>
           <StatusFindingBadge status={finding.status as FindingStatus} />
