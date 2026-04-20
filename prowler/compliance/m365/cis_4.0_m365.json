@@ -1502,7 +1502,9 @@
     {
       "Id": "5.3.1",
       "Description": "Microsoft Entra Privileged Identity Management can be used to audit roles, allow just in time activation of roles and allow for periodic role attestation. Organizations should remove permanent members from privileged Office 365 roles and instead make them eligible, through a JIT activation workflow.",
-      "Checks": [],
+      "Checks": [
+        "entra_pim_stale_sign_in_alert"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1544,7 +1546,9 @@
     {
       "Id": "5.3.3",
       "Description": "Access reviews enable administrators to establish an efficient automated process for reviewing group memberships, access to enterprise applications, and role assignments. These reviews can be scheduled to recur regularly, with flexible options for delegating the task of reviewing membership to different members of the organization.Ensure `Access reviews` for high privileged Entra ID roles are done `monthly` or more frequently. These reviews should include **at a minimum** the roles listed below:- Global Administrator- Exchange Administrator- SharePoint Administrator- Teams Administrator- Security Administrator**Note:** An access review is created for each role selected after completing the process.",
-      "Checks": [],
+      "Checks": [
+        "entra_pim_stale_sign_in_alert"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",

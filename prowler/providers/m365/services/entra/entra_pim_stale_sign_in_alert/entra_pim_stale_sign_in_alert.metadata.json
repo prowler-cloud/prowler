@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_pim_stale_sign_in_alert",
+  "CheckTitle": "PIM stale sign-in alert detects unused privileged accounts that may be compromised",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "Microsoft Entra PIM monitors privileged role assignments and raises a **stale sign-in alert** when accounts have not authenticated within a configured period (default 30 days).\n\n*Stale privileged accounts indicate roles that may be over-provisioned or abandoned.*",
+  "Risk": "Stale accounts retaining **privileged roles** expand the attack surface by providing dormant credentials that attackers can exploit undetected. Compromised stale accounts enable **privilege escalation** and **lateral movement** without triggering normal user activity alerts, weakening confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-configure-security-alerts",
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-security-alerts",
+    "https://maester.dev/docs/tests/MT.1029"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center\n2. Navigate to Identity governance > Privileged Identity Management > Alerts\n3. Review the 'Potential stale accounts in a privileged role' alert\n4. For each affected account, remove unnecessary role assignments or confirm the account is still required\n5. Investigate whether stale accounts show signs of compromise",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Apply **least privilege** by removing privileged role assignments from accounts that no longer require them. Implement **just-in-time access** via PIM eligible assignments instead of permanent roles. Establish periodic **access reviews** to detect and remediate stale privileged accounts before they can be exploited.",
+      "Url": "https://hub.prowler.com/check/entra_pim_stale_sign_in_alert"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Requires Microsoft Entra ID P2 license and RoleManagement.Read.All permission. The stale sign-in threshold is configurable in PIM alert settings (default: 30 days)."
+}
