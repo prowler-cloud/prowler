@@ -5,6 +5,8 @@ from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID
 
+from kiota_abstractions.method import Method
+from kiota_abstractions.request_information import RequestInformation
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
@@ -36,6 +38,7 @@ class Entra(M365Service):
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
         authentication_method_configurations (dict): Dictionary of authentication method configurations.
+        premium_license_insight (PremiumLicenseInsight): Azure AD Premium license utilization insight.
     """
 
     def __init__(self, provider: M365Provider):
@@ -83,6 +86,7 @@ class Entra(M365Service):
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
+                self._get_premium_license_insight(),
             )
         )
 
@@ -98,6 +102,7 @@ class Entra(M365Service):
         self.authentication_method_configurations: Dict[
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
+        self.premium_license_insight: Optional[PremiumLicenseInsight] = attributes[10]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -1019,6 +1024,44 @@ OAuthAppInfo
 
         return oauth_apps
 
+    async def _get_premium_license_insight(self) -> Optional["PremiumLicenseInsight"]:
+        """Retrieve Azure AD Premium license insight from the Microsoft Graph beta API.
+
+        Fetches the premium license utilization report which includes the total
+        number of entitled P1 licenses and the number of users actively utilizing
+        Conditional Access (a P1 feature).
+
+        Returns:
+            Optional[PremiumLicenseInsight]: The premium license insight data,
+                or None if the API call failed or data is unavailable.
+        """
+        logger.info("Entra - Getting premium license insight...")
+        try:
+            request_info = RequestInformation()
+            request_info.http_method = Method.GET
+            request_info.url_template = (
+                "{+baseurl}/reports/azureADPremiumLicenseInsight"
+            )
+            request_info.path_parameters = {
+                "baseurl": "https://graph.microsoft.com/beta"
+            }
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                return PremiumLicenseInsight(
+                    p1_license_count=data.get("p1LicenseCount", 0),
+                    conditional_access_users_count=data.get(
+                        "conditionalAccessUsersCount", 0
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return None
+
     async def _get_authentication_method_configurations(self):
         """Retrieve authentication method configurations from Microsoft Entra.
 
@@ -1481,3 +1524,18 @@ class OAuthApp(BaseModel):
     is_admin_consented: bool = False
     last_used_time: Optional[str] = None
     app_origin: str = ""
+
+
+class PremiumLicenseInsight(BaseModel):
+    """Model representing Azure AD Premium license utilization insight.
+
+    Contains the total number of entitled P1 licenses and the number
+    of users actively utilizing Conditional Access, a P1-gated feature.
+
+    Attributes:
+        p1_license_count: Total number of entitled P1 (or P2) licenses.
+        conditional_access_users_count: Number of users utilizing Conditional Access.
+    """
+
+    p1_license_count: int = 0
+    conditional_access_users_count: int = 0
