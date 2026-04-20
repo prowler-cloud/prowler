@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "microsoft.recoveryservices/vaults",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "storage",
   "Description": "**Azure Recovery Services** vaults are evaluated for **backup protected items**. A vault with no protected items indicates that no resources (VMs, databases, file shares) are configured for backup through this vault, potentially leaving critical workloads unprotected.",
   "Risk": "Empty vaults represent a gap in **disaster recovery** coverage. Resources without backup protection face permanent data loss from accidental deletion, ransomware, corruption, or regional outages. The vault may have been provisioned but backup was never configured.",
@@ -19,9 +19,9 @@
   "Remediation": {
     "Code": {
       "CLI": "az backup protection enable-for-vm --resource-group <rg> --vault-name <vault> --vm <vm_id> --policy-name DefaultPolicy",
-      "NativeIaC": "```bicep\nresource vault 'Microsoft.RecoveryServices/vaults@2024-04-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource protectedItem 'Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems@2024-04-01' = {\n  name: '${vault.name}/Azure/<example_resource_name>/<example_resource_name>'\n  properties: {\n    protectedItemType: 'Microsoft.Compute/virtualMachines' // Critical: registers VM for backup\n    policyId: '${vault.id}/backupPolicies/DefaultPolicy'\n    sourceResourceId: '<example_resource_id>'\n  }\n}\n```",
+      "NativeIaC": "",
       "Other": "1. Sign in to the Azure portal\n2. Go to Recovery Services vaults and select the vault\n3. Click + Backup\n4. Select the workload type (Azure VM, SQL, File Share, etc.)\n5. Select the backup policy\n6. Choose the resources to protect\n7. Click Enable Backup",
-      "Terraform": "```hcl\nresource \"azurerm_backup_protected_vm\" \"<example_resource_name>\" {\n  resource_group_name = \"<example_resource_id>\"\n  recovery_vault_name = \"<example_resource_name>\"\n  source_vm_id        = \"<example_resource_id>\"  # Critical: registers VM for backup\n  backup_policy_id    = \"<example_resource_id>\"\n}\n```"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Configure **backup protection** for critical resources including VMs, databases, and file shares. Use **Azure Backup policies** with appropriate retention and frequency. If the vault is unused, consider deleting it to reduce resource sprawl.",

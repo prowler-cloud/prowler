@@ -13,17 +13,15 @@ class cosmosdb_account_minimal_tls_version_12(Check):
                 )
                 report.subscription = subscription
 
-                if account.minimal_tls_version in ("Tls12", "Tls13"):
+                if account.minimal_tls_version == "Tls12":
                     report.status = "PASS"
                     report.status_extended = (
-                        f"CosmosDB account {account.name} enforces "
-                        f"{account.minimal_tls_version}."
+                        f"CosmosDB account {account.name} enforces TLS 1.2 or higher."
                     )
                 else:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"CosmosDB account {account.name} does not enforce "
-                        f"TLS 1.2 or higher (current: {account.minimal_tls_version})."
+                        f"CosmosDB account {account.name} does not enforce TLS 1.2."
                     )
 
                 findings.append(report)

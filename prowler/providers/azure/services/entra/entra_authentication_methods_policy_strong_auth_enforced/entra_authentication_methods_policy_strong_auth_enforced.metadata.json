@@ -14,7 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-methods-manage",
-    "https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-mfa-registration-campaign"
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-nudge-authenticator-app"
   ],
   "Remediation": {
     "Code": {
