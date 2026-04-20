@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - `entra_conditional_access_policy_p1_license_utilization` check for m365 provider [(#10783)](https://github.com/prowler-cloud/prowler/pull/10783)
+- `entra_conditional_access_policy_p2_license_utilization` check for m365 provider [(#10784)](https://github.com/prowler-cloud/prowler/pull/10784)
 
 ### 🔄 Changed
 

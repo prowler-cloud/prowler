@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_p2_license_utilization",
+  "CheckTitle": "P2 license entitlements ensure sufficient coverage for risk-based Conditional Access users",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Verifies that the entitled Microsoft Entra ID P2 license count covers all users actively using **risk-based Conditional Access** (regular plus guest). P1 entitlements do not include P2 features. For non-risk-based (P1) Conditional Access, see `entra_conditional_access_policy_p1_license_utilization`.",
+  "Risk": "When more users consume risk-based Conditional Access than the organization has P2 licenses for, it creates a **licensing compliance gap**. Microsoft may flag the tenant during audits, leading to retroactive charges or service restrictions. Additionally, unlicensed users may lose Identity Protection coverage if Microsoft enforces entitlements.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+    "https://learn.microsoft.com/en-us/graph/api/resources/azureadpremiumlicenseinsight?view=graph-rest-beta",
+    "https://learn.microsoft.com/en-us/entra/fundamentals/licensing",
+    "https://maester.dev/docs/tests/MT.1023"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the **Microsoft Entra admin center** (https://entra.microsoft.com).\n2. Go to **Identity** > **Billing** > **Licenses** > **Licensed features**.\n3. Review the **License utilization** report for P2 features.\n4. Purchase additional P2 licenses, or reduce the scope of risk-based Conditional Access policies to only include users that hold a P2 license.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review the Microsoft Entra ID Premium license utilization report and ensure that P2 license entitlements match or exceed the number of users utilizing risk-based Conditional Access (regular and guest). Purchase additional P2 licenses or adjust policy scope as needed.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_p2_license_utilization"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Uses Microsoft Graph beta reports/azureADPremiumLicenseInsight. Requires Reports.Read.All. Returns MANUAL when the tenant has no Microsoft Entra ID P1 or P2 license (Graph returns 403 missingLicense). Compares risk-based Conditional Access utilization (regular + guest) against the entitled P2 license count only; P1 entitlements do not cover P2 features."
+}
