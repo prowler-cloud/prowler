@@ -23,6 +23,8 @@ flowchart TB
     user --> ui
     user --> cli
     ui -->|REST| api
+    ui -->|MCP HTTP| mcp
+    mcp -->|REST| api
     api --> pg
     api --> valkey
     beat -->|enqueue jobs| valkey
@@ -31,7 +33,5 @@ flowchart TB
     worker -->|Attack Paths| neo4j
     worker -->|invokes| sdk
     cli --> sdk
-    api -. AI tools .-> mcp
-    mcp -. context .-> api
 
     sdk --> providers

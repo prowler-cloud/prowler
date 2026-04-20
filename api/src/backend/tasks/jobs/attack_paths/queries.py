@@ -32,17 +32,14 @@ ADD_RESOURCE_LABEL_TEMPLATE = """
 """
 
 INSERT_FINDING_TEMPLATE = f"""
-    MATCH (account:__ROOT_NODE_LABEL__ {{id: $provider_uid}})
     UNWIND $findings_data AS finding_data
 
-    OPTIONAL MATCH (account)-->(resource_by_uid:__RESOURCE_LABEL__)
-        WHERE resource_by_uid.__NODE_UID_FIELD__ = finding_data.resource_uid
-    WITH account, finding_data, resource_by_uid
+    OPTIONAL MATCH (resource_by_uid:__RESOURCE_LABEL__ {{__NODE_UID_FIELD__: finding_data.resource_uid}})
+    WITH finding_data, resource_by_uid
 
-    OPTIONAL MATCH (account)-->(resource_by_id:__RESOURCE_LABEL__)
+    OPTIONAL MATCH (resource_by_id:__RESOURCE_LABEL__ {{id: finding_data.resource_uid}})
         WHERE resource_by_uid IS NULL
-            AND resource_by_id.id = finding_data.resource_uid
-    WITH account, finding_data, COALESCE(resource_by_uid, resource_by_id) AS resource
+    WITH finding_data, COALESCE(resource_by_uid, resource_by_id) AS resource
         WHERE resource IS NOT NULL
 
     MERGE (finding:{PROWLER_FINDING_LABEL} {{id: finding_data.id}})
@@ -78,17 +75,6 @@ INSERT_FINDING_TEMPLATE = f"""
             rel._module_version = $prowler_version
         ON MATCH SET
             rel.lastupdated = $last_updated
-"""
-
-CLEANUP_FINDINGS_TEMPLATE = f"""
-    MATCH (finding:{PROWLER_FINDING_LABEL})
-        WHERE finding.lastupdated < $last_updated
-
-    WITH finding LIMIT $batch_size
-
-    DETACH DELETE finding
-
-    RETURN COUNT(finding) AS deleted_findings_count
 """
 
 # Internet queries (used by internet.py)

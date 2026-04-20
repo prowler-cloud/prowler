@@ -20,10 +20,13 @@ import { DataTableFilterCustom } from "@/components/ui/table";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
 import { FilterType, ScanEntity } from "@/types";
-import { DATA_TABLE_FILTER_MODE, FilterParam } from "@/types/filters";
+import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
 import { ProviderProps } from "@/types/providers";
 
-import { getFindingsFilterDisplayValue } from "./findings-filters.utils";
+import {
+  buildFindingsFilterChips,
+  getFindingsFilterDisplayValue,
+} from "./findings-filters.utils";
 
 interface FindingsFiltersProps {
   /** Provider data for ProviderTypeSelector and AccountsSelector */
@@ -36,28 +39,6 @@ interface FindingsFiltersProps {
   uniqueCategories: string[];
   uniqueGroups: string[];
 }
-
-/**
- * Maps raw filter param keys (e.g. "filter[severity__in]") to human-readable labels.
- * Used to render chips in the FilterSummaryStrip.
- * Typed as Record<FilterParam, string> so TypeScript enforces exhaustiveness — any
- * addition to FilterParam will cause a compile error here if the label is missing.
- */
-const FILTER_KEY_LABELS: Record<FilterParam, string> = {
-  "filter[provider_type__in]": "Provider",
-  "filter[provider_id__in]": "Account",
-  "filter[severity__in]": "Severity",
-  "filter[status__in]": "Status",
-  "filter[delta__in]": "Delta",
-  "filter[region__in]": "Region",
-  "filter[service__in]": "Service",
-  "filter[resource_type__in]": "Resource Type",
-  "filter[category__in]": "Category",
-  "filter[resource_groups__in]": "Resource Group",
-  "filter[scan__in]": "Scan ID",
-  "filter[inserted_at]": "Date",
-  "filter[muted]": "Muted",
-};
 
 export const FindingsFilters = ({
   providers,
@@ -130,6 +111,7 @@ export const FindingsFilters = ({
       key: FilterType.SCAN,
       labelCheckboxGroup: "Scan ID",
       values: completedScanIds,
+      width: "wide" as const,
       valueLabelMapping: scanDetails,
       labelFormatter: (value: string) =>
         getFindingsFilterDisplayValue(`filter[${FilterType.SCAN}]`, value, {
@@ -142,25 +124,9 @@ export const FindingsFilters = ({
 
   const hasCustomFilters = customFilters.length > 0;
 
-  // Build FilterChip[] from pendingFilters — one chip per individual value, not per key.
-  // Skip filter[muted]="false" — it is the silent default and should not appear as a chip.
-  const filterChips: FilterChip[] = [];
-  Object.entries(pendingFilters).forEach(([key, values]) => {
-    if (!values || values.length === 0) return;
-    const label = FILTER_KEY_LABELS[key as FilterParam] ?? key;
-    values.forEach((value) => {
-      // Do not show a chip for the default muted=false state
-      if (key === "filter[muted]" && value === "false") return;
-      filterChips.push({
-        key,
-        label,
-        value,
-        displayValue: getFindingsFilterDisplayValue(key, value, {
-          providers,
-          scans: scanDetails,
-        }),
-      });
-    });
+  const filterChips: FilterChip[] = buildFindingsFilterChips(pendingFilters, {
+    providers,
+    scans: scanDetails,
   });
 
   // Handler for removing a single chip: update the pending filter to remove that value.

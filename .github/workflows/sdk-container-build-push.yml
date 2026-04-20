@@ -47,6 +47,8 @@ env:
   # AWS configuration (for ECR)
   AWS_REGION: us-east-1
 
+permissions: {}
+
 jobs:
   setup:
     if: github.repository == 'prowler-cloud/prowler'

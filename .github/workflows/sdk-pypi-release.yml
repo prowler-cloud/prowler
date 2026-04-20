@@ -13,6 +13,8 @@ env:
   RELEASE_TAG: ${{ github.event.release.tag_name }}
   PYTHON_VERSION: '3.12'
 
+permissions: {}
+
 jobs:
   validate-release:
     if: github.repository == 'prowler-cloud/prowler'

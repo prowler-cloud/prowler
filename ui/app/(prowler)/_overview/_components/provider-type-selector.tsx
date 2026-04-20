@@ -7,6 +7,7 @@ import {
   MultiSelect,
   MultiSelectContent,
   MultiSelectItem,
+  type MultiSelectSearchProp,
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
@@ -164,6 +165,7 @@ const PROVIDER_DATA: Record<
 /** Common props shared by both batch and instant modes. */
 interface ProviderTypeSelectorBaseProps {
   providers: ProviderProps[];
+  search?: MultiSelectSearchProp;
 }
 
 /** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
@@ -198,6 +200,10 @@ export const ProviderTypeSelector = ({
   providers,
   onBatchChange,
   selectedValues,
+  search = {
+    placeholder: "Search providers...",
+    emptyMessage: "No providers found.",
+  },
 }: ProviderTypeSelectorProps) => {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
@@ -284,7 +290,7 @@ export const ProviderTypeSelector = ({
         >
           {selectedLabel() || <MultiSelectValue placeholder="All providers" />}
         </MultiSelectTrigger>
-        <MultiSelectContent search={false}>
+        <MultiSelectContent search={search}>
           {availableTypes.length > 0 ? (
             <>
               <div
@@ -308,6 +314,7 @@ export const ProviderTypeSelector = ({
                   key={providerType}
                   value={providerType}
                   badgeLabel={PROVIDER_DATA[providerType].label}
+                  keywords={[providerType, PROVIDER_DATA[providerType].label]}
                   aria-label={`${PROVIDER_DATA[providerType].label} provider`}
                 >
                   <span aria-hidden="true">{renderIcon(providerType)}</span>
