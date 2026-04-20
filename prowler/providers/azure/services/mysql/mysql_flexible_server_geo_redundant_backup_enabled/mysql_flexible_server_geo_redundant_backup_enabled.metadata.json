@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "mysql_flexible_server_geo_redundant_backup_enabled",
+  "CheckTitle": "MySQL flexible server has geo-redundant backup enabled",
+  "CheckType": [],
+  "ServiceName": "mysql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.dbformysql/flexibleservers",
+  "ResourceGroup": "database",
+  "Description": "**Azure MySQL Flexible Server** is evaluated for **geo-redundant backup**. Geo-redundant backup stores copies in a paired Azure region, enabling recovery from a full regional outage.",
+  "Risk": "Without geo-redundant backup, a regional disaster causes **permanent data loss**. Locally redundant backups only protect against storage hardware failures within the same region.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-backup-restore",
+    "https://learn.microsoft.com/en-us/azure/mysql/flexible-server/how-to-restore-server-portal"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az mysql flexible-server update --resource-group <rg> --name <server> --geo-redundant-backup Enabled",
+      "NativeIaC": "```bicep\nresource server 'Microsoft.DBforMySQL/flexibleServers@2021-12-01-preview' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  sku: { name: 'Standard_D2ds_v4', tier: 'GeneralPurpose' }\n  properties: {\n    backup: {\n      geoRedundantBackup: 'Enabled' // Critical: enables geo-redundant backup\n      backupRetentionDays: 7\n    }\n  }\n}\n```",
+      "Other": "1. Sign in to Azure portal\n2. Go to Azure Database for MySQL flexible servers\n3. Select the server\n4. Go to Settings > Backup and restore\n5. Enable Geo-redundant backup\n6. Click Save\nNote: Geo-redundant backup can only be set during server creation for some tiers.",
+      "Terraform": "```hcl\nresource \"azurerm_mysql_flexible_server\" \"<example_resource_name>\" {\n  name                         = \"<example_resource_name>\"\n  location                     = \"<example_resource_id>\"\n  resource_group_name          = \"<example_resource_id>\"\n  geo_redundant_backup_enabled = true  # Critical: enables geo-redundant backup\n  administrator_login          = \"adminuser\"\n  administrator_password       = \"<admin_password>\"\n  sku_name                     = \"GP_Standard_D2ds_v4\"\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **geo-redundant backup** on MySQL Flexible Server to store backup copies in a paired Azure region. This provides cross-region disaster recovery capability. Note: geo-redundant backup can only be configured during server **creation** for some SKU tiers. Plan server provisioning accordingly.",
+      "Url": "https://hub.prowler.com/check/mysql_flexible_server_geo_redundant_backup_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

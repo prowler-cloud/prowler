@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "databricks_workspace_no_public_ip_enabled",
+  "CheckTitle": "Databricks workspace has secure cluster connectivity (no public IP)",
+  "CheckType": [],
+  "ServiceName": "databricks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.databricks/workspaces",
+  "ResourceGroup": "network",
+  "Description": "**Azure Databricks** workspaces are evaluated for **secure cluster connectivity** (No Public IP / NPIP). When enabled, cluster nodes do not receive public IP addresses, reducing the attack surface.",
+  "Risk": "Cluster nodes with public IPs are directly reachable from the internet, enabling **port scanning**, **lateral movement** from compromised nodes, and **data exfiltration** bypassing network controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/secure-cluster-connectivity",
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/secure-cluster-connectivity"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```bicep\nresource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  sku: { name: 'premium' }\n  properties: {\n    managedResourceGroupId: '<example_resource_id>'\n    parameters: {\n      enableNoPublicIp: {\n        value: true // Critical: prevents public IPs on cluster nodes\n      }\n    }\n  }\n}\n```",
+      "Other": "1. Sign in to Azure portal\n2. Create a new Databricks workspace (NPIP cannot be changed after creation)\n3. Under Networking, enable 'No Public IP' (Secure Cluster Connectivity)\n4. Configure VNet injection\n5. Deploy the workspace\nNote: This setting can only be configured during workspace creation.",
+      "Terraform": "```hcl\nresource \"azurerm_databricks_workspace\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_resource_id>\"\n  resource_group_name = \"<example_resource_id>\"\n  sku                 = \"premium\"\n\n  custom_parameters {\n    no_public_ip = true  # Critical: no public IPs on cluster nodes\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **secure cluster connectivity** (No Public IP) to ensure Databricks cluster nodes do not receive public IP addresses. This setting can only be configured during workspace **creation**. Deploy workspaces with VNet injection and configure appropriate NSG rules for outbound connectivity.",
+      "Url": "https://hub.prowler.com/check/databricks_workspace_no_public_ip_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

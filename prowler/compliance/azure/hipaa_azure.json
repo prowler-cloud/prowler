@@ -441,7 +441,9 @@
         "postgresql_flexible_server_log_retention_days_greater_3",
         "recovery_vault_has_protected_items",
         "recovery_vault_backup_policy_retention_adequate",
-        "cosmosdb_account_backup_policy_continuous"
+        "cosmosdb_account_backup_policy_continuous",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled"
       ]
     },
     {

@@ -1272,7 +1272,9 @@
       "Checks": [
         "recovery_vault_has_protected_items",
         "recovery_vault_backup_policy_retention_adequate",
-        "cosmosdb_account_backup_policy_continuous"
+        "cosmosdb_account_backup_policy_continuous",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled"
       ]
     },
     {
@@ -1301,7 +1303,11 @@
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_using_managed_disks",
         "vm_trusted_launch_enabled",
-        "cosmosdb_account_automatic_failover_enabled"
+        "cosmosdb_account_automatic_failover_enabled",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "mysql_flexible_server_high_availability_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_high_availability_enabled"
       ]
     },
     {
@@ -1429,7 +1435,9 @@
         "network_watcher_enabled",
         "network_vnet_ddos_protection_enabled",
         "network_subnet_nsg_associated",
-        "cosmosdb_account_public_network_access_disabled"
+        "cosmosdb_account_public_network_access_disabled",
+        "databricks_workspace_public_network_access_disabled",
+        "databricks_workspace_no_public_ip_enabled"
       ]
     },
     {
