@@ -2,11 +2,19 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<<<<<<< PROWLER-284/user-and-membership-deletion
 ## [1.26.0] (Prowler UNRELEASED)
 
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+=======
+## [1.25.2] (Prowler v5.24.2)
+
+### 🐞 Fixed
+
+- `/finding-groups/latest/<check_id>/resources` now selects the latest completed scan per provider by `-completed_at` (then `-inserted_at`) instead of `-inserted_at`, matching the `/finding-groups/latest` summary path and the daily-summary upsert so overlapping scans no longer produce diverging `delta`/`new_count` between the two endpoints [(#10802)](https://github.com/prowler-cloud/prowler/pull/10802)
+>>>>>>> master
 
 ---
 
