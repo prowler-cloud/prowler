@@ -4,9 +4,11 @@ import "@xyflow/react/dist/style.css";
 
 import {
   Background,
+  MiniMap,
   type Node,
   ReactFlow,
   ReactFlowProvider,
+  type Rect,
   useReactFlow,
 } from "@xyflow/react";
 import {
@@ -36,6 +38,7 @@ export interface GraphHandle {
   resetZoom: () => void;
   getZoomLevel: () => number;
   getContainerElement: () => HTMLDivElement | null;
+  getNodesBounds: () => Rect | null;
 }
 
 interface AttackPathGraphProps {
@@ -136,7 +139,8 @@ const GraphCanvas = ({
   onInitialFilter,
   ref,
 }: GraphCanvasProps) => {
-  const { zoomIn, zoomOut, fitView, getZoom } = useReactFlow();
+  const { zoomIn, zoomOut, fitView, getZoom, getNodes, getNodesBounds } =
+    useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
 
@@ -270,6 +274,11 @@ const GraphCanvas = ({
     resetZoom: () => fitView({ duration: 300 }),
     getZoomLevel: () => getZoom(),
     getContainerElement: () => containerRef.current,
+    getNodesBounds: () => {
+      const rfNodes = getNodes();
+      if (rfNodes.length === 0) return null;
+      return getNodesBounds(rfNodes);
+    },
   }));
 
   const handleNodeClick = (_event: MouseEvent, node: Node) => {
@@ -323,6 +332,7 @@ const GraphCanvas = ({
         proOptions={{ hideAttribution: true }}
       >
         <Background />
+        <MiniMap pannable zoomable ariaLabel="Graph minimap" />
       </ReactFlow>
     </div>
   );

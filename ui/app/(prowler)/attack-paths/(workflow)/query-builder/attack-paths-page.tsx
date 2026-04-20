@@ -6,8 +6,6 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
-import { cn } from "@/lib/utils";
-
 import {
   buildAttackPathQueries,
   executeCustomQuery,
@@ -36,6 +34,7 @@ import {
 } from "@/components/shadcn/dialog";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { useToast } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
@@ -60,6 +59,7 @@ import {
 import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
+import { exportGraphAsPNG } from "./_lib";
 
 const getNodeDisplayTitle = (node: GraphNode): string => {
   const isFinding = node.labels.some((l) =>
@@ -102,7 +102,9 @@ const NodeDetailPanel = ({
         <div className="flex-1">
           <h3
             id={headingId}
-            className={compact ? "text-sm font-semibold" : "text-lg font-semibold"}
+            className={
+              compact ? "text-sm font-semibold" : "text-lg font-semibold"
+            }
           >
             Node Details
           </h3>
@@ -286,7 +288,6 @@ export default function AttackPathsPage() {
     loadQueries();
   }, [scanId, toast]);
 
-
   const showErrorToast = (title: string, description: string) => {
     toast({
       title,
@@ -419,6 +420,27 @@ export default function AttackPathsPage() {
     void finding.navigateToFinding(findingId);
   };
 
+  const handleGraphExport = async (target: "main" | "fullscreen") => {
+    const ref = target === "fullscreen" ? fullscreenGraphRef : graphRef;
+    const handle = ref.current;
+    if (!handle) return;
+
+    try {
+      await exportGraphAsPNG(
+        handle.getContainerElement(),
+        handle.getNodesBounds(),
+      );
+      toast({
+        title: "Success",
+        description: "Graph exported",
+        variant: "default",
+      });
+    } catch (error) {
+      const description =
+        error instanceof Error ? error.message : "Failed to export graph";
+      showErrorToast("Export failed", description);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -599,6 +621,7 @@ export default function AttackPathsPage() {
                         onZoomIn={() => graphRef.current?.zoomIn()}
                         onZoomOut={() => graphRef.current?.zoomOut()}
                         onFitToScreen={() => graphRef.current?.resetZoom()}
+                        onExport={() => handleGraphExport("main")}
                       />
 
                       {/* Fullscreen button */}
@@ -632,6 +655,7 @@ export default function AttackPathsPage() {
                                 onFitToScreen={() =>
                                   fullscreenGraphRef.current?.resetZoom()
                                 }
+                                onExport={() => handleGraphExport("fullscreen")}
                               />
                             </div>
                             <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6 lg:flex-row">

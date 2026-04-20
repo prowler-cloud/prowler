@@ -138,10 +138,10 @@
   {
     "section": "dependencies",
     "name": "@next/third-parties",
-    "from": "16.1.3",
-    "to": "16.1.6",
+    "from": "16.1.6",
+    "to": "16.2.3",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-04-20T09:33:38.114Z"
   },
   {
     "section": "dependencies",
@@ -369,14 +369,6 @@
   },
   {
     "section": "dependencies",
-    "name": "@types/dagre",
-    "from": "0.7.53",
-    "to": "0.7.53",
-    "strategy": "installed",
-    "generatedAt": "2025-11-27T11:47:22.908Z"
-  },
-  {
-    "section": "dependencies",
     "name": "@types/js-yaml",
     "from": "4.0.9",
     "to": "4.0.9",
@@ -457,14 +449,6 @@
   },
   {
     "section": "dependencies",
-    "name": "dagre",
-    "from": "0.8.5",
-    "to": "0.8.5",
-    "strategy": "installed",
-    "generatedAt": "2025-11-27T11:47:22.908Z"
-  },
-  {
-    "section": "dependencies",
     "name": "date-fns",
     "from": "4.1.0",
     "to": "4.1.0",
@@ -478,6 +462,14 @@
     "to": "11.18.2",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "html-to-image",
+    "from": "1.11.13",
+    "to": "1.11.13",
+    "strategy": "installed",
+    "generatedAt": "2026-04-20T09:33:38.114Z"
   },
   {
     "section": "dependencies",
@@ -554,10 +546,10 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "16.1.3",
-    "to": "16.1.6",
+    "from": "16.1.6",
+    "to": "16.2.3",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-04-20T09:33:38.114Z"
   },
   {
     "section": "dependencies",
@@ -586,10 +578,10 @@
   {
     "section": "dependencies",
     "name": "react",
-    "from": "19.2.3",
-    "to": "19.2.4",
+    "from": "19.2.4",
+    "to": "19.2.5",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-04-20T09:33:38.114Z"
   },
   {
     "section": "dependencies",
@@ -602,10 +594,10 @@
   {
     "section": "dependencies",
     "name": "react-dom",
-    "from": "19.2.3",
-    "to": "19.2.4",
+    "from": "19.2.4",
+    "to": "19.2.5",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-04-20T09:33:38.114Z"
   },
   {
     "section": "dependencies",
@@ -770,10 +762,10 @@
   {
     "section": "devDependencies",
     "name": "@next/eslint-plugin-next",
-    "from": "16.1.3",
-    "to": "16.1.6",
+    "from": "16.1.6",
+    "to": "16.2.3",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-04-20T09:33:38.114Z"
   },
   {
     "section": "devDependencies",
@@ -938,10 +930,10 @@
   {
     "section": "devDependencies",
     "name": "eslint-config-next",
-    "from": "16.1.3",
-    "to": "16.1.6",
+    "from": "16.1.6",
+    "to": "16.2.3",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-04-20T09:33:38.114Z"
   },
   {
     "section": "devDependencies",
@@ -1033,27 +1025,11 @@
   },
   {
     "section": "devDependencies",
-    "name": "husky",
-    "from": "9.1.7",
-    "to": "9.1.7",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
     "name": "jsdom",
     "from": "27.4.0",
     "to": "27.4.0",
     "strategy": "installed",
     "generatedAt": "2026-01-29T16:42:27.795Z"
-  },
-  {
-    "section": "devDependencies",
-    "name": "lint-staged",
-    "from": "15.5.2",
-    "to": "15.5.2",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
   },
   {
     "section": "devDependencies",

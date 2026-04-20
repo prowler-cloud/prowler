@@ -1,8 +1,4 @@
-export {
-  exportGraphAsJSON,
-  exportGraphAsPNG,
-  exportGraphAsSVG,
-} from "./export";
+export { exportGraphAsJSON, exportGraphAsPNG } from "./export";
 export { formatNodeLabel, formatNodeLabels } from "./format";
 export {
   getNodeBorderColor,
