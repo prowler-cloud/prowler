@@ -56,7 +56,7 @@ class TestIdentityService:
                 domain.display_name = "exampledomain"
                 domain.description = "example"
                 domain.url = "https://idcs-example.identity.oraclecloud.com"
-                domain.home_region = "us-ashburn-1"
+                domain.home_region = region
                 domain.lifecycle_state = "ACTIVE"
                 domain.time_created = None
                 identity_client.domains += [domain]
