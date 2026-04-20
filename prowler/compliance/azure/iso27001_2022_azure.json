@@ -1266,7 +1266,10 @@
           "Check_Summary": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "recovery_vault_has_protected_items",
+        "recovery_vault_backup_policy_retention_adequate"
+      ]
     },
     {
       "Id": "A.8.14",
