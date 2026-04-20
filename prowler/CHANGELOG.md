@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔄 Changed
 
 - bumped `msgraph-sdk` from 1.23.0 to 1.55.0 and `azure-mgmt-resource` from 23.3.0 to 24.0.0, removing `marshmallow` as is a transitively dev dependency [(#10733)](https://github.com/prowler-cloud/prowler/pull/10733)
+- bumped `pyasn1` from 0.6.2 to 0.6.3 [(#10366)](https://github.com/prowler-cloud/prowler/pull/10366)
 
 ### 🐞 Fixed
 
