@@ -68,6 +68,7 @@ export type FilterParam =
   | "filter[severity__in]"
   | "filter[status__in]"
   | "filter[delta__in]"
+  | "filter[delta]"
   | "filter[region__in]"
   | "filter[service__in]"
   | "filter[resource_type__in]"

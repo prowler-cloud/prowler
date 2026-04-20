@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
-import { getFindingsFilterDisplayValue } from "./findings-filters.utils";
+import {
+  buildFindingsFilterChips,
+  getFindingsFilterDisplayValue,
+} from "./findings-filters.utils";
 
 function makeProvider(
   overrides: Partial<ProviderProps> & { id: string },
@@ -119,6 +122,16 @@ describe("getFindingsFilterDisplayValue", () => {
     );
   });
 
+  it("formats the singular delta filter the same as delta__in", () => {
+    // The API registers the filter as `filter[delta]` (exact), not `delta__in`.
+    // Both shapes must resolve to the same human label so chips don't show
+    // the raw "new" going through formatLabel ("NEW" via the 3-letter acronym heuristic).
+    expect(getFindingsFilterDisplayValue("filter[delta]", "new")).toBe("New");
+    expect(getFindingsFilterDisplayValue("filter[delta]", "changed")).toBe(
+      "Changed",
+    );
+  });
+
   it("falls back to the scan provider uid when the alias is missing", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-2", {
@@ -183,5 +196,85 @@ describe("getFindingsFilterDisplayValue", () => {
         {},
       ),
     ).toBe("2026-04-07");
+  });
+});
+
+describe("buildFindingsFilterChips", () => {
+  it("creates one chip per value with normalized labels", () => {
+    // Given — this is the exact pending state derived from the LinkToFindings URL:
+    // /findings?sort=...&filter[status__in]=FAIL&filter[delta]=new
+    const pendingFilters = {
+      "filter[status__in]": ["FAIL"],
+      "filter[delta]": ["new"],
+    };
+
+    // When
+    const chips = buildFindingsFilterChips(pendingFilters);
+
+    // Then — both chips must appear; the delta chip must use "Delta" as label
+    // (not the raw "filter[delta]") and "New" as displayValue (not "NEW" via
+    // the short-word acronym heuristic in formatLabel).
+    expect(chips).toEqual([
+      {
+        key: "filter[status__in]",
+        label: "Status",
+        value: "FAIL",
+        displayValue: "Fail",
+      },
+      {
+        key: "filter[delta]",
+        label: "Delta",
+        value: "new",
+        displayValue: "New",
+      },
+    ]);
+  });
+
+  it("treats filter[delta] and filter[delta__in] identically", () => {
+    // Given
+    const chipsSingular = buildFindingsFilterChips({
+      "filter[delta]": ["new", "changed"],
+    });
+    const chipsPlural = buildFindingsFilterChips({
+      "filter[delta__in]": ["new", "changed"],
+    });
+
+    // Then — both shapes produce the same human labels and display values
+    expect(chipsSingular.map((c) => ({ label: c.label, v: c.displayValue })))
+      .toEqual([
+        { label: "Delta", v: "New" },
+        { label: "Delta", v: "Changed" },
+      ]);
+    expect(chipsPlural.map((c) => ({ label: c.label, v: c.displayValue })))
+      .toEqual([
+        { label: "Delta", v: "New" },
+        { label: "Delta", v: "Changed" },
+      ]);
+  });
+
+  it("skips the silent default filter[muted]=false", () => {
+    const chips = buildFindingsFilterChips({
+      "filter[muted]": ["false"],
+      "filter[delta]": ["new"],
+    });
+
+    // Only the delta chip — the default muted=false should not surface
+    expect(chips).toHaveLength(1);
+    expect(chips[0].key).toBe("filter[delta]");
+  });
+
+  it("surfaces unmapped keys using the raw key as label (fallback)", () => {
+    const chips = buildFindingsFilterChips({
+      "filter[unknown_future_key]": ["value"],
+    });
+
+    expect(chips).toEqual([
+      {
+        key: "filter[unknown_future_key]",
+        label: "filter[unknown_future_key]",
+        value: "value",
+        displayValue: "Value",
+      },
+    ]);
   });
 });

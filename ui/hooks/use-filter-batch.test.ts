@@ -61,6 +61,24 @@ describe("useFilterBatch", () => {
       });
       expect(result.current.hasChanges).toBe(false);
     });
+
+    it("should include both filter[status__in] and filter[delta] from the overview deep link", () => {
+      // Given — URL produced by LinkToFindings: /findings?...&filter[status__in]=FAIL&filter[delta]=new
+      setSearchParams({
+        "filter[status__in]": "FAIL",
+        "filter[delta]": "new",
+      });
+
+      // When
+      const { result } = renderHook(() => useFilterBatch());
+
+      // Then — the singular `filter[delta]` key must be captured in pendingFilters
+      // so FindingsFilters can render a chip for it (same as filter[status__in]).
+      expect(result.current.pendingFilters).toEqual({
+        "filter[status__in]": ["FAIL"],
+        "filter[delta]": ["new"],
+      });
+    });
   });
 
   // ── Excluded keys ──────────────────────────────────────────────────────────
