@@ -2097,7 +2097,9 @@
     {
       "Id": "8.1.1.1",
       "Description": "Ensure Microsoft Defender CSPM is set to 'On'",
-      "Checks": [],
+      "Checks": [
+        "defender_ensure_defender_cspm_is_on"
+      ],
       "Attributes": [
         {
           "Section": "8 Security Services",

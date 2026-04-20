@@ -6823,7 +6823,8 @@
         "defender_assessments_vm_endpoint_protection_installed",
         "defender_auto_provisioning_log_analytics_agent_vms_on",
         "defender_ensure_defender_for_server_is_on",
-        "defender_ensure_wdatp_is_enabled"
+        "defender_ensure_wdatp_is_enabled",
+        "defender_ensure_defender_cspm_is_on"
       ]
     },
     {
