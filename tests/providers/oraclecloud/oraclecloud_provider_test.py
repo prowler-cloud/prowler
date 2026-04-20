@@ -252,4 +252,5 @@ class TestOraclecloudProviderInit:
         assert provider.identity == mock_identity
         assert provider.regions == mock_regions
         assert provider.compartments == mock_compartments
+        assert provider.home_region == "us-ashburn-1"
         mock_set_global.assert_called_once_with(provider)
