@@ -36,20 +36,20 @@ class calendar_external_sharing_primary_calendar(Check):
                     f"{calendar_client.provider.identity.domain} is restricted to "
                     f"free/busy information only."
                 )
+            elif sharing is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Primary calendar external sharing uses Google's secure default "
+                    f"configuration (free/busy only) "
+                    f"in domain {calendar_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if sharing is None:
-                    report.status_extended = (
-                        f"Primary calendar external sharing is not explicitly configured "
-                        f"in domain {calendar_client.provider.identity.domain}. "
-                        f"External sharing should be restricted to free/busy information only."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Primary calendar external sharing in domain "
-                        f"{calendar_client.provider.identity.domain} is set to {sharing}. "
-                        f"External sharing should be restricted to free/busy information only."
-                    )
+                report.status_extended = (
+                    f"Primary calendar external sharing in domain "
+                    f"{calendar_client.provider.identity.domain} is set to {sharing}. "
+                    f"External sharing should be restricted to free/busy information only."
+                )
 
             findings.append(report)
 

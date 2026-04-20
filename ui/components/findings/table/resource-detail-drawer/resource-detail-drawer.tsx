@@ -11,6 +11,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/shadcn";
+import type { FindingResourceRow } from "@/types";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -23,8 +24,10 @@ interface ResourceDetailDrawerProps {
   checkMeta: CheckMeta | null;
   currentIndex: number;
   totalResources: number;
+  currentResource: FindingResourceRow | null;
   currentFinding: ResourceDrawerFinding | null;
   otherFindings: ResourceDrawerFinding[];
+  showSyntheticResourceHint?: boolean;
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
   onMuteComplete: () => void;
@@ -38,8 +41,10 @@ export function ResourceDetailDrawer({
   checkMeta,
   currentIndex,
   totalResources,
+  currentResource,
   currentFinding,
   otherFindings,
+  showSyntheticResourceHint = false,
   onNavigatePrev,
   onNavigateNext,
   onMuteComplete,
@@ -64,8 +69,10 @@ export function ResourceDetailDrawer({
             checkMeta={checkMeta}
             currentIndex={currentIndex}
             totalResources={totalResources}
+            currentResource={currentResource}
             currentFinding={currentFinding}
             otherFindings={otherFindings}
+            showSyntheticResourceHint={showSyntheticResourceHint}
             onNavigatePrev={onNavigatePrev}
             onNavigateNext={onNavigateNext}
             onMuteComplete={onMuteComplete}

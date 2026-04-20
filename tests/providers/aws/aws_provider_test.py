@@ -840,6 +840,132 @@ aws:
         assert isinstance(aws_provider, AwsProvider)
 
     @mock_aws
+    def test_excluded_regions_removed_from_enabled_regions(self):
+        aws_provider = AwsProvider(excluded_regions={AWS_REGION_EU_WEST_1})
+
+        assert AWS_REGION_EU_WEST_1 not in aws_provider._enabled_regions
+        assert AWS_REGION_EU_WEST_1 not in aws_provider.generate_regional_clients("ec2")
+
+    @mock_aws
+    def test_excluded_regions_pruned_from_input_regions(self):
+        aws_provider = AwsProvider(
+            regions={AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1},
+            excluded_regions={AWS_REGION_EU_WEST_1},
+        )
+
+        assert AWS_REGION_EU_WEST_1 not in aws_provider._identity.audited_regions
+        assert AWS_REGION_US_EAST_1 in aws_provider._identity.audited_regions
+
+    @mock_aws
+    def test_excluded_regions_from_config_file(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
+            tmp.write(f"aws:\n  disallowed_regions:\n    - {AWS_REGION_EU_WEST_1}\n")
+            config_path = tmp.name
+        try:
+            aws_provider = AwsProvider(config_path=config_path)
+            assert AWS_REGION_EU_WEST_1 not in aws_provider._enabled_regions
+            assert aws_provider._excluded_regions == {AWS_REGION_EU_WEST_1}
+        finally:
+            os.remove(config_path)
+
+    @mock_aws
+    def test_excluded_regions_from_env_on_direct_provider_init(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_DISALLOWED_REGIONS": AWS_REGION_EU_WEST_1},
+            clear=False,
+        ):
+            aws_provider = AwsProvider()
+
+        assert aws_provider._excluded_regions == {AWS_REGION_EU_WEST_1}
+        assert AWS_REGION_EU_WEST_1 not in aws_provider._enabled_regions
+
+    @mock_aws
+    def test_excluded_regions_precedence_explicit_over_env_and_config(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
+            tmp.write(f"aws:\n  disallowed_regions:\n    - {AWS_REGION_EU_WEST_1}\n")
+            config_path = tmp.name
+        try:
+            with mock.patch.dict(
+                os.environ,
+                {"PROWLER_AWS_DISALLOWED_REGIONS": AWS_REGION_US_EAST_1},
+                clear=False,
+            ):
+                aws_provider = AwsProvider(
+                    config_path=config_path,
+                    excluded_regions={AWS_REGION_US_EAST_2},
+                )
+
+            assert aws_provider._excluded_regions == {AWS_REGION_US_EAST_2}
+            assert AWS_REGION_US_EAST_2 not in aws_provider._enabled_regions
+            assert AWS_REGION_EU_WEST_1 in aws_provider._enabled_regions
+            assert AWS_REGION_US_EAST_1 in aws_provider._enabled_regions
+        finally:
+            os.remove(config_path)
+
+    @mock_aws
+    def test_excluded_regions_from_config_avoid_excluded_profile_region(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_EU_WEST_1)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as tmp:
+            tmp.write(f"aws:\n  disallowed_regions:\n    - {AWS_REGION_EU_WEST_1}\n")
+            config_path = tmp.name
+        try:
+            aws_provider = AwsProvider(config_path=config_path)
+
+            assert aws_provider.identity.profile_region == AWS_REGION_US_EAST_1
+        finally:
+            os.remove(config_path)
+
+    @mock_aws
+    def test_aws_provider_raises_when_all_input_regions_are_excluded(self):
+        with raises(AWSArgumentTypeValidationError):
+            AwsProvider(
+                regions={AWS_REGION_EU_WEST_1},
+                excluded_regions={AWS_REGION_EU_WEST_1},
+            )
+
+    def test_get_excluded_regions_from_env_parses_comma_list(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_DISALLOWED_REGIONS": " me-south-1 , ap-east-1 ,, "},
+        ):
+            assert Provider.get_excluded_regions_from_env() == {
+                "me-south-1",
+                "ap-east-1",
+            }
+
+    def test_get_excluded_regions_from_env_ignores_legacy_generic_name(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_DISALLOWED_REGIONS": "me-south-1"},
+            clear=True,
+        ):
+            assert Provider.get_excluded_regions_from_env() == set()
+
+    def test_get_excluded_regions_from_env_unset(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            assert Provider.get_excluded_regions_from_env() == set()
+
+    @mock_aws
+    def test_print_credentials_shows_all_except_excluded_regions(self):
+        aws_provider = AwsProvider(
+            excluded_regions={AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1}
+        )
+
+        with patch(
+            "prowler.providers.aws.aws_provider.print_boxes"
+        ) as mock_print_boxes:
+            aws_provider.print_credentials()
+
+        report_lines = mock_print_boxes.call_args.args[0]
+        assert any(
+            "AWS Regions:" in line and "all except eu-west-1, us-east-1" in line
+            for line in report_lines
+        )
+
+    @mock_aws
     def test_generate_regional_clients_all_enabled_regions(self):
         aws_provider = AwsProvider()
         response = aws_provider.generate_regional_clients("ec2")
@@ -2031,6 +2157,24 @@ aws:
         assert (
             get_aws_region_for_sts(session_region, input_regions)
             == AWS_REGION_EU_WEST_1
+        )
+
+    def test_get_aws_region_for_sts_avoids_excluded_session_region(self):
+        input_regions = None
+        session_region = AWS_REGION_EU_WEST_1
+        assert (
+            get_aws_region_for_sts(
+                session_region, input_regions, {AWS_REGION_EU_WEST_1}
+            )
+            == AWS_REGION_US_EAST_1
+        )
+
+    def test_get_profile_region_avoids_excluded_session_region(self):
+        mocked_session = mock.Mock(region_name=AWS_REGION_EU_WEST_1)
+
+        assert (
+            AwsProvider.get_profile_region(mocked_session, {AWS_REGION_EU_WEST_1})
+            == AWS_REGION_US_EAST_1
         )
 
     @mock_aws

@@ -1,11 +1,10 @@
 "use client";
 
-import { Input, Textarea } from "@heroui/input";
 import { Dispatch, SetStateAction, useState, useTransition } from "react";
 
 import { createMuteRule } from "@/actions/mute-rules";
 import { MuteRuleActionState } from "@/actions/mute-rules/types";
-import { Button } from "@/components/shadcn";
+import { Button, Input, Textarea } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
@@ -44,6 +43,8 @@ export function MuteFindingsModal({
     isPreparing ||
     findingIds.length === 0 ||
     Boolean(preparationError);
+  const nameError = state?.errors?.name;
+  const reasonError = state?.errors?.reason;
 
   return (
     <Modal
@@ -115,10 +116,12 @@ export function MuteFindingsModal({
               <div className="space-y-2">
                 <Skeleton className="h-4 w-24 rounded" />
                 <Skeleton className="h-11 w-full rounded-lg" />
+                <Skeleton className="h-3 w-40 rounded" />
               </div>
               <div className="space-y-2">
                 <Skeleton className="h-4 w-20 rounded" />
                 <Skeleton className="h-24 w-full rounded-lg" />
+                <Skeleton className="h-3 w-44 rounded" />
               </div>
             </div>
 
@@ -175,31 +178,78 @@ export function MuteFindingsModal({
               </p>
             </div>
 
-            <Input
-              name="name"
-              label="Rule Name"
-              placeholder="e.g., Ignore dev environment S3 buckets"
-              isRequired
-              variant="bordered"
-              isInvalid={!!state?.errors?.name}
-              errorMessage={state?.errors?.name}
-              isDisabled={isPending}
-              description="A descriptive name for this mute rule"
-            />
+            <div className="space-y-2">
+              <label
+                className="text-sm font-medium text-slate-900 dark:text-white"
+                htmlFor="mute-rule-name"
+              >
+                Rule Name
+              </label>
+              <Input
+                id="mute-rule-name"
+                name="name"
+                placeholder="e.g., Ignore dev environment S3 buckets"
+                required
+                disabled={isPending}
+                aria-invalid={nameError ? "true" : "false"}
+                aria-describedby={
+                  nameError
+                    ? "mute-rule-name-error"
+                    : "mute-rule-name-description"
+                }
+              />
+              <p
+                id="mute-rule-name-description"
+                className="text-xs text-slate-500 dark:text-slate-400"
+              >
+                A descriptive name for this mute rule
+              </p>
+              {nameError ? (
+                <p
+                  id="mute-rule-name-error"
+                  className="text-text-error-primary text-xs"
+                >
+                  {nameError}
+                </p>
+              ) : null}
+            </div>
 
-            <Textarea
-              name="reason"
-              label="Reason"
-              placeholder="e.g., These are expected findings in the development environment"
-              isRequired
-              variant="bordered"
-              minRows={3}
-              maxRows={6}
-              isInvalid={!!state?.errors?.reason}
-              errorMessage={state?.errors?.reason}
-              isDisabled={isPending}
-              description="Explain why these findings are being muted"
-            />
+            <div className="space-y-2">
+              <label
+                className="text-sm font-medium text-slate-900 dark:text-white"
+                htmlFor="mute-rule-reason"
+              >
+                Reason
+              </label>
+              <Textarea
+                id="mute-rule-reason"
+                name="reason"
+                placeholder="e.g., These are expected findings in the development environment"
+                required
+                disabled={isPending}
+                rows={4}
+                aria-invalid={reasonError ? "true" : "false"}
+                aria-describedby={
+                  reasonError
+                    ? "mute-rule-reason-error"
+                    : "mute-rule-reason-description"
+                }
+              />
+              <p
+                id="mute-rule-reason-description"
+                className="text-xs text-slate-500 dark:text-slate-400"
+              >
+                Explain why these findings are being muted
+              </p>
+              {reasonError ? (
+                <p
+                  id="mute-rule-reason-error"
+                  className="text-text-error-primary text-xs"
+                >
+                  {reasonError}
+                </p>
+              ) : null}
+            </div>
 
             <FormButtons
               setIsOpen={onOpenChange}

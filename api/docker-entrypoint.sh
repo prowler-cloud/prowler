@@ -56,7 +56,6 @@ start_worker() {
 
 start_worker_beat() {
   echo "Starting the worker-beat..."
-  sleep 15
   poetry run python -m celery -A config.celery beat -l "${DJANGO_LOGGING_LEVEL:-info}" --scheduler django_celery_beat.schedulers:DatabaseScheduler
 }
 

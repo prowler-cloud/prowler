@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   adaptFindingsByResourceResponse,
+  getFindingById,
   getLatestFindingsByResourceUid,
   type ResourceDrawerFinding,
 } from "@/actions/findings";
@@ -43,9 +44,11 @@ function extractCheckMeta(finding: ResourceDrawerFinding): CheckMeta {
 
 interface UseResourceDetailDrawerOptions {
   resources: FindingResourceRow[];
-  checkId: string;
   totalResourceCount?: number;
   onRequestMoreResources?: () => void;
+  initialIndex?: number | null;
+  canLoadOtherFindings?: boolean;
+  includeMutedInOtherFindings?: boolean;
 }
 
 interface UseResourceDetailDrawerReturn {
@@ -55,9 +58,9 @@ interface UseResourceDetailDrawerReturn {
   checkMeta: CheckMeta | null;
   currentIndex: number;
   totalResources: number;
+  currentResource: FindingResourceRow | null;
   currentFinding: ResourceDrawerFinding | null;
   otherFindings: ResourceDrawerFinding[];
-  allFindings: ResourceDrawerFinding[];
   openDrawer: (index: number) => void;
   closeDrawer: () => void;
   navigatePrev: () => void;
@@ -69,22 +72,33 @@ interface UseResourceDetailDrawerReturn {
 /**
  * Manages the resource detail drawer state, fetching, and navigation.
  *
- * Caches findings per resourceUid in a Map ref so navigating prev/next
+ * Caches findings per findingId in a Map ref so navigating prev/next
  * doesn't re-fetch already-visited resources.
  */
 export function useResourceDetailDrawer({
   resources,
-  checkId,
   totalResourceCount,
   onRequestMoreResources,
+  initialIndex = null,
+  canLoadOtherFindings = true,
+  includeMutedInOtherFindings = false,
 }: UseResourceDetailDrawerOptions): UseResourceDetailDrawerReturn {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialIndex !== null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [findings, setFindings] = useState<ResourceDrawerFinding[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex ?? 0);
+  const [currentFinding, setCurrentFinding] =
+    useState<ResourceDrawerFinding | null>(null);
+  const [otherFindings, setOtherFindings] = useState<ResourceDrawerFinding[]>(
+    [],
+  );
   const [isNavigating, setIsNavigating] = useState(false);
 
-  const cacheRef = useRef<Map<string, ResourceDrawerFinding[]>>(new Map());
+  const currentFindingCacheRef = useRef<
+    Map<string, ResourceDrawerFinding | null>
+  >(new Map());
+  const otherFindingsCacheRef = useRef<Map<string, ResourceDrawerFinding[]>>(
+    new Map(),
+  );
   const checkMetaRef = useRef<CheckMeta | null>(null);
   const fetchControllerRef = useRef<AbortController | null>(null);
   const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -132,6 +146,11 @@ export function useResourceDetailDrawer({
     setIsNavigating(true);
   };
 
+  const resetCurrentResourceState = () => {
+    setCurrentFinding(null);
+    setOtherFindings([]);
+  };
+
   // Abort any in-flight request on unmount to prevent state updates
   // on an already-unmounted component.
   useEffect(() => {
@@ -142,46 +161,83 @@ export function useResourceDetailDrawer({
     };
   }, []);
 
-  const fetchFindings = async (resourceUid: string) => {
+  const fetchFindings = async (resource: FindingResourceRow) => {
     // Abort any in-flight request to prevent stale data from out-of-order responses
     fetchControllerRef.current?.abort();
     clearNavigationTimeout();
     const controller = new AbortController();
     fetchControllerRef.current = controller;
 
-    // Check cache first
-    const cached = cacheRef.current.get(resourceUid);
-    if (cached) {
-      if (!checkMetaRef.current) {
-        const main = cached.find((f) => f.checkId === checkId) ?? cached[0];
-        if (main) checkMetaRef.current = extractCheckMeta(main);
+    const { findingId, resourceUid } = resource;
+
+    const fetchCurrentFinding = async () => {
+      const cached = currentFindingCacheRef.current.get(findingId);
+      if (cached !== undefined) {
+        return cached;
       }
-      setFindings(cached);
-      finishNavigation();
-      return;
-    }
+
+      const response = await getFindingById(
+        findingId,
+        "resources,scan.provider",
+        { source: "resource-detail-drawer" },
+      );
+
+      const adapted = adaptFindingsByResourceResponse(response);
+      const finding =
+        adapted.find((item) => item.id === findingId) ?? adapted[0] ?? null;
+
+      currentFindingCacheRef.current.set(findingId, finding);
+
+      return finding;
+    };
+
+    const fetchOtherFindings = async () => {
+      if (!canLoadOtherFindings || !resourceUid) {
+        return [];
+      }
+
+      const cached = otherFindingsCacheRef.current.get(resourceUid);
+      if (cached) {
+        return cached;
+      }
+
+      const response = await getLatestFindingsByResourceUid({
+        resourceUid,
+        pageSize: 50,
+        includeMuted: includeMutedInOtherFindings,
+      });
+      const adapted = adaptFindingsByResourceResponse(response);
+
+      otherFindingsCacheRef.current.set(resourceUid, adapted);
+
+      return adapted;
+    };
 
     setIsLoading(true);
     try {
-      const response = await getLatestFindingsByResourceUid({ resourceUid });
+      const [nextCurrentFinding, nextOtherFindings] = await Promise.all([
+        fetchCurrentFinding(),
+        fetchOtherFindings(),
+      ]);
 
       // Discard stale response if a newer request was started
       if (controller.signal.aborted) return;
 
-      const adapted = adaptFindingsByResourceResponse(response);
-      cacheRef.current.set(resourceUid, adapted);
+      checkMetaRef.current = nextCurrentFinding
+        ? extractCheckMeta(nextCurrentFinding)
+        : null;
 
-      // Extract check-level metadata once (stable across all resources)
-      if (!checkMetaRef.current) {
-        const main = adapted.find((f) => f.checkId === checkId) ?? adapted[0];
-        if (main) checkMetaRef.current = extractCheckMeta(main);
-      }
-
-      setFindings(adapted);
-    } catch (error) {
+      setCurrentFinding(nextCurrentFinding);
+      // The API already filters to status=FAIL (see getLatestFindingsByResourceUid).
+      // Only need to drop the current finding from the list.
+      setOtherFindings(
+        nextOtherFindings.filter((finding) => finding.id !== findingId),
+      );
+    } catch (_error) {
       if (!controller.signal.aborted) {
-        console.error("Error fetching findings for resource:", error);
-        // Don't clear findings — keep previous data as fallback during navigation
+        checkMetaRef.current = null;
+        setCurrentFinding(null);
+        setOtherFindings([]);
       }
     } finally {
       if (!controller.signal.aborted) {
@@ -190,17 +246,31 @@ export function useResourceDetailDrawer({
     }
   };
 
+  useEffect(() => {
+    if (initialIndex === null) {
+      return;
+    }
+
+    const resource = resources[initialIndex];
+    if (!resource) {
+      return;
+    }
+
+    fetchFindings(resource);
+    // Only initialize once on mount for deep-link/inline entry points.
+    // User-driven navigations use openDrawer/navigateTo afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const openDrawer = (index: number) => {
     const resource = resources[index];
     if (!resource) return;
 
-    clearNavigationTimeout();
-    navigationStartedAtRef.current = null;
     setCurrentIndex(index);
     setIsOpen(true);
-    setIsNavigating(false);
-    setFindings([]);
-    fetchFindings(resource.resourceUid);
+    startNavigation();
+    resetCurrentResourceState();
+    fetchFindings(resource);
   };
 
   const closeDrawer = () => {
@@ -210,9 +280,11 @@ export function useResourceDetailDrawer({
   const refetchCurrent = () => {
     const resource = resources[currentIndex];
     if (!resource) return;
-    cacheRef.current.delete(resource.resourceUid);
+    currentFindingCacheRef.current.delete(resource.findingId);
+    otherFindingsCacheRef.current.delete(resource.resourceUid);
     startNavigation();
-    fetchFindings(resource.resourceUid);
+    resetCurrentResourceState();
+    fetchFindings(resource);
   };
 
   const navigateTo = (index: number) => {
@@ -221,7 +293,8 @@ export function useResourceDetailDrawer({
 
     setCurrentIndex(index);
     startNavigation();
-    fetchFindings(resource.resourceUid);
+    resetCurrentResourceState();
+    fetchFindings(resource);
   };
 
   const navigatePrev = () => {
@@ -245,14 +318,7 @@ export function useResourceDetailDrawer({
     }
   };
 
-  // The finding whose checkId matches the drill-down's checkId
-  const currentFinding =
-    findings.find((f) => f.checkId === checkId) ?? findings[0] ?? null;
-
-  // All other findings for this resource
-  const otherFindings = currentFinding
-    ? findings.filter((f) => f.id !== currentFinding.id)
-    : findings;
+  const currentResource = resources[currentIndex];
 
   return {
     isOpen,
@@ -261,9 +327,9 @@ export function useResourceDetailDrawer({
     checkMeta: checkMetaRef.current,
     currentIndex,
     totalResources: totalResourceCount ?? resources.length,
+    currentResource: currentResource ?? null,
     currentFinding,
     otherFindings,
-    allFindings: findings,
     openDrawer,
     closeDrawer,
     navigatePrev,
