@@ -6,7 +6,7 @@ from prowler.providers.oraclecloud.exceptions.exceptions import (
     OCIAuthenticationError,
     OCIInvalidConfigError,
 )
-from prowler.providers.oraclecloud.models import OCISession, OCIIdentityInfo
+from prowler.providers.oraclecloud.models import OCISession, OCIIdentityInfo, OCIRegion
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
 
@@ -217,7 +217,12 @@ class TestOraclecloudProviderInit:
             audited_regions=set(),
             audited_compartments=[],
         )
-        mock_regions = ["us-ashburn-1"]
+        mock_regions = [
+            OCIRegion(
+                key="us-ashburn-1",
+                name="us-ashburn-1",
+                is_home_region=true
+            )]
         mock_compartments = ["ocid1.compartment.oc1..aaaaaaaexample"]
         with (
             patch(
