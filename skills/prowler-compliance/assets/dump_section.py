@@ -55,6 +55,8 @@ def main() -> int:
         print(f"No files matching '{framework_key}'", file=sys.stderr)
         return 2
 
+    discovered_providers = sorted({prov for prov, _ in candidates})
+
     by_id: dict[str, dict] = defaultdict(dict)
     for prov, path in candidates:
         with open(path) as f:
@@ -79,8 +81,7 @@ def main() -> int:
             print(f"  sec : {sample['sec']}")
         if sample["obj"]:
             print(f"  obj : {sample['obj']}")
-        for prov in ["aws", "azure", "gcp", "kubernetes", "m365", "github",
-                     "oraclecloud", "alibabacloud"]:
+        for prov in discovered_providers:
             if prov in rows:
                 checks = rows[prov]["checks"]
                 print(f"  {prov}: ({len(checks)}) {checks}")

@@ -128,10 +128,14 @@ def resolve_json_path(provider: str) -> Path:
     )
 
 
-def apply_for_provider(provider: str) -> tuple[int, int, int]:
-    """Apply DECISIONS to the JSON for one provider.
+def plan_for_provider(
+    provider: str,
+) -> tuple[Path, dict, tuple[int, int, int], list[tuple[str, str]]]:
+    """Build the updated JSON for one provider without writing it.
 
-    Returns (touched, added, removed).
+    Returns (path, mutated_data, (touched, added, removed), unknowns).
+    Writing is deferred to a second pass so that a typo in any provider
+    aborts the whole run before any file on disk changes.
     """
     path = resolve_json_path(provider)
     with open(path) as f:
@@ -158,17 +162,7 @@ def apply_for_provider(provider: str) -> tuple[int, int, int]:
         req["Checks"] = new_checks
         touched += 1
 
-    if unknown:
-        print(f"\n!! {provider} — UNKNOWN CHECK IDS (typos?):", file=sys.stderr)
-        for rid, c in unknown:
-            print(f"   {rid} -> {c}", file=sys.stderr)
-        print("\nAborting: fix the check ids above and re-run.", file=sys.stderr)
-        sys.exit(2)
-
-    with open(path, "w") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-        f.write("\n")
-    return touched, add_count, rm_count
+    return path, data, (touched, add_count, rm_count), unknown
 
 
 def main() -> int:
@@ -176,8 +170,33 @@ def main() -> int:
         print("No DECISIONS encoded. Fill in the DECISIONS dict and re-run.")
         return 1
     print(f"Applying {len(DECISIONS)} decisions to framework '{FRAMEWORK_KEY}'...")
+
+    # Pass 1: validate every provider before touching disk. A typo in any
+    # provider must abort the run before ANY file has been rewritten.
+    plans: list[tuple[str, Path, dict, tuple[int, int, int]]] = []
+    all_unknown: list[tuple[str, str, str]] = []
     for provider in PROVIDERS:
-        touched, added, removed = apply_for_provider(provider)
+        path, data, counts, unknown = plan_for_provider(provider)
+        for rid, c in unknown:
+            all_unknown.append((provider, rid, c))
+        plans.append((provider, path, data, counts))
+
+    if all_unknown:
+        print("\n!! UNKNOWN CHECK IDS (typos?):", file=sys.stderr)
+        for provider, rid, c in all_unknown:
+            print(f"   {provider} {rid} -> {c}", file=sys.stderr)
+        print(
+            "\nAborting: fix the check ids above and re-run. "
+            "No files were modified.",
+            file=sys.stderr,
+        )
+        return 2
+
+    # Pass 2: all providers validated cleanly — write.
+    for provider, path, data, (touched, added, removed) in plans:
+        with open(path, "w") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+            f.write("\n")
         print(
             f"  {provider}: touched={touched} added={added} removed={removed}"
         )

@@ -105,6 +105,15 @@ post_processing:
   # top-level attribute field. CIS would use (Section, Profile). NIST would
   # use (ItemId,). The fallback is how renumbered or rewritten ids still
   # recover their check mappings.
+  #
+  # legacy_path_template (optional): path to read legacy Checks FROM.
+  # Defaults to output.path_template, which is correct for unversioned
+  # frameworks (like CCC) where regeneration overwrites the same file.
+  # For versioned frameworks that write to a new file on each version
+  # bump (e.g. cis_5.1_aws.json while the legacy mappings live in
+  # cis_5.0_aws.json), set this to the previous-version path so Checks
+  # are preserved instead of lost:
+  #   legacy_path_template: "prowler/compliance/{provider}/cis_5.0_{provider}.json"
   check_preservation:
     primary_key: Id
     fallback_keys:

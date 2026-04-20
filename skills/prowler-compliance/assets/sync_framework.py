@@ -27,6 +27,12 @@ Pipeline:
        using a config-driven primary key + fallback key chain. CCC uses
        ``(Section, Applicability)`` as fallback; CIS would use
        ``(Section, Profile)``; NIST would use ``(ItemId,)``.
+       For versioned frameworks (e.g. ``cis_<version>_<provider>.json``)
+       where a version bump writes to a brand-new file, set
+       ``post_processing.check_preservation.legacy_path_template`` to
+       point at the previous version's file so its Checks are preserved
+       instead of silently lost. Defaults to ``output.path_template``
+       when omitted, which is correct for unversioned frameworks.
     7. Wrap each provider's requirements in the framework metadata dict
        built from the config templates.
     8. Write each provider's JSON to the path resolved from
@@ -340,8 +346,16 @@ def build_provider_json(
     primary_key = preservation["primary_key"]
     fallback_keys = preservation.get("fallback_keys") or []
 
+    # For versioned frameworks, the file we WRITE (output.path_template
+    # resolved at the new version) is not the file we want to READ legacy
+    # Checks from. Allow the config to override the legacy source path so
+    # a version bump can still preserve mappings from the previous file.
+    legacy_template = (
+        preservation.get("legacy_path_template")
+        or config["output"]["path_template"]
+    )
     legacy_path = resolve_output_path(
-        config["output"]["path_template"], framework, provider["key"]
+        legacy_template, framework, provider["key"]
     )
     by_primary, by_fallback = load_legacy_check_maps(
         legacy_path, primary_key, fallback_keys
