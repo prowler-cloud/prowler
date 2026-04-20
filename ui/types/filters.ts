@@ -39,7 +39,9 @@ export enum FilterType {
   RESOURCE_TYPE = "resource_type__in",
   SEVERITY = "severity__in",
   STATUS = "status__in",
-  DELTA = "delta__in",
+  // The API only registers `delta` (exact, singular). `delta__in` is silently
+  // dropped, so the dropdown, URL, and backend must all use `delta`.
+  DELTA = "delta",
   CATEGORY = "category__in",
   RESOURCE_GROUPS = "resource_groups__in",
 }
