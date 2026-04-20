@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
 
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import {
@@ -20,26 +19,17 @@ import { ScanSelector, SelectScanComplianceDataProps } from "./scan-selector";
 interface ComplianceFiltersProps {
   scans: SelectScanComplianceDataProps["scans"];
   uniqueRegions: string[];
+  selectedScanId: string;
 }
 
 export const ComplianceFilters = ({
   scans,
   uniqueRegions,
+  selectedScanId,
 }: ComplianceFiltersProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { updateFilter } = useUrlFilters();
-
-  const scanIdParam = searchParams.get("scanId");
-  const selectedScanId = scanIdParam || (scans.length > 0 ? scans[0].id : "");
-
-  useEffect(() => {
-    if (!scanIdParam && scans.length > 0) {
-      const params = new URLSearchParams(searchParams);
-      params.set("scanId", scans[0].id);
-      router.replace(`?${params.toString()}`, { scroll: false });
-    }
-  }, [scans, scanIdParam, searchParams, router]);
 
   const handleScanChange = (selectedKey: string) => {
     const params = new URLSearchParams(searchParams);

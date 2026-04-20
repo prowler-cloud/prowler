@@ -76,8 +76,12 @@ export default async function Compliance({
     .filter(Boolean) as ExpandedScanData[];
 
   // Use scanId from URL, or select the first scan if not provided
-  const selectedScanId =
-    resolvedSearchParams.scanId || expandedScansData[0]?.id || null;
+  const scanIdParam = resolvedSearchParams.scanId;
+  const scanIdFromUrl = Array.isArray(scanIdParam)
+    ? scanIdParam[0]
+    : scanIdParam;
+  const selectedScanId: string | null =
+    scanIdFromUrl || expandedScansData[0]?.id || null;
 
   // Find the selected scan
   const selectedScan = expandedScansData.find(
@@ -131,6 +135,7 @@ export default async function Compliance({
             <ComplianceFilters
               scans={expandedScansData}
               uniqueRegions={uniqueRegions}
+              selectedScanId={selectedScanId}
             />
           </div>
 
