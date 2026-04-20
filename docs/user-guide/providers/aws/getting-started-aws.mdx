@@ -46,15 +46,15 @@ Before proceeding, choose the preferred authentication mode:
 
 **Credentials**
 
-* Quick scan as current user
-* No extra setup
-* Credentials time out
+* Quick scan as the current IAM user
+* No extra setup in AWS
+* Static keys can be rotated or revoked at any time
 
 **Assumed Role**
 
-* Preferred Setup
-* Permanent Credentials
-* Requires access to create role
+* Recommended for production
+* No long-lived keys stored in Prowler
+* Requires permission to create an IAM role in the target account
 
 
 ---
@@ -67,17 +67,22 @@ This method grants permanent access and is the recommended setup for production 
 
 For detailed instructions on how to create the role, see [Authentication > Assume Role](/user-guide/providers/aws/authentication#assume-role-recommended).
 
-8. Once the role is created, go to the **IAM Console**, click on the "ProwlerScan" role to open its details:
+7. Once the role is created, go to the **IAM Console**, click on the "ProwlerScan" role to open its details:
 
     ![ProwlerScan role info](/images/providers/prowler-scan-pre-info.png)
 
-9. Copy the **Role ARN**
+8. Copy the **Role ARN**
 
     ![New Role Info](/images/providers/get-role-arn.png)
 
-10. Paste the ARN into the corresponding field in Prowler Cloud or Prowler App
+9. Paste the ARN into the corresponding field in Prowler Cloud or Prowler App
 
     ![Input the Role ARN](/images/providers/paste-role-arn-prowler.png)
+
+10. Select the credential source Prowler should use to call `sts:AssumeRole`:
+
+    - **AWS SDK Default** (default in Prowler Cloud): Prowler uses the credentials available in the API and worker environment through the [AWS SDK default credential chain](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html). In self-hosted Prowler App, these containers have no AWS credentials by default — see [Configuring AWS SDK Default for Self-Hosted Prowler App](/user-guide/providers/aws/authentication#configuring-aws-sdk-default-for-self-hosted-prowler-app) before choosing this option, or the connection test will fail with `InvalidClientTokenId`.
+    - **Access & Secret Key**: Paste an IAM user's `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` (and optional `AWS_SESSION_TOKEN`) into the form. The IAM principal must be allowed to assume the target role and must match the `IAMPrincipal` parameter of the scan role template (default: `role/prowler*`).
 
 11. Click "Next", then "Launch Scan"
 
