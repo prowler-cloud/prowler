@@ -58,15 +58,20 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
   };
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full flex-col">
       <LighthouseBanner />
       <DataTable
         key={`dashboard-findings-${Date.now()}`}
         columns={ColumnLatestFindings}
         data={(expandedResponse?.data || []) as FindingProps[]}
         header={
-          <div className="flex w-full items-center justify-between">
-            <CardTitle>Latest new failing findings</CardTitle>
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="flex flex-col gap-0.5">
+              <CardTitle>Latest new failing findings</CardTitle>
+              <p className="text-text-neutral-tertiary text-xs">
+                Showing the latest 10 new failing findings by severity.
+              </p>
+            </div>
             <LinkToFindings />
           </div>
         }
