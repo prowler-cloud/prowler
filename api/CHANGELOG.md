@@ -2,12 +2,19 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.26.0] (Prowler UNRELEASED)
+
+### 🔐 Security
+
+- `pyasn1` from 0.6.2 to 0.6.3 [(#10366)](https://github.com/prowler-cloud/prowler/pull/10366)
+
+---
+
 ## [1.25.1] (Prowler v5.24.1)
 
 ### 🔄 Changed
 
 - Attack Paths: Restore `SYNC_BATCH_SIZE` and `FINDINGS_BATCH_SIZE` defaults to 1000, upgrade Cartography to 0.135.0, enable Celery queue priority for cleanup task, rewrite Finding insertion, remove AWS graph cleanup and add timing logs [(#10729)](https://github.com/prowler-cloud/prowler/pull/10729)
-- bumped `pyasn1` from 0.6.2 to 0.6.3 [(#10366)](https://github.com/prowler-cloud/prowler/pull/10366)
 
 ### 🐞 Fixed
 
