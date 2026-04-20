@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
+import { getScanEntityLabel } from "@/lib/helper-filters";
 import { ProviderType, ScanProps } from "@/types";
 
 import { ComplianceScanInfo } from "./compliance-scan-info";
@@ -30,11 +31,7 @@ export const ScanSelector = ({
   onSelectionChange,
 }: SelectScanComplianceDataProps) => {
   const selectedScan = scans.find((item) => item.id === selectedScanId);
-  const triggerLabel =
-    selectedScan?.attributes.name ||
-    selectedScan?.providerInfo.alias ||
-    selectedScan?.providerInfo.uid ||
-    "";
+  const triggerLabel = selectedScan ? getScanEntityLabel(selectedScan) : "";
 
   return (
     <Select
