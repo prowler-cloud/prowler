@@ -33,6 +33,18 @@ export function isFailOnlyStatusFilter(
   return multiStatusValues.length === 1 && multiStatusValues[0] === "FAIL";
 }
 
+function includesMutedFindings(
+  filters: Record<string, string | string[] | undefined>,
+): boolean {
+  const mutedFilter = filters["filter[muted]"];
+
+  if (Array.isArray(mutedFilter)) {
+    return mutedFilter.includes("include");
+  }
+
+  return mutedFilter === "include";
+}
+
 export function getFilteredFindingGroupResourceCount(
   group: FindingGroupRow,
   filters: Record<string, string | string[] | undefined>,
@@ -52,4 +64,25 @@ export function getFindingGroupSkeletonCount(
   // Reserve at least one row so the drill-down keeps visual space while the
   // empty state ("No resources found") replaces the skeleton.
   return Math.max(1, Math.min(filteredTotal, maxSkeletonRows));
+}
+
+export function getFindingGroupEmptyStateMessage(
+  group: FindingGroupRow,
+  filters: Record<string, string | string[] | undefined>,
+): string {
+  const hasFilters = Object.keys(filters).length > 0;
+
+  if (!hasFilters) {
+    return "No resources found.";
+  }
+
+  const mutedExcluded = !includesMutedFindings(filters);
+  const hasMutedFindings = (group.mutedCount ?? 0) > 0;
+  const visibleCount = getFilteredFindingGroupResourceCount(group, filters);
+
+  if (mutedExcluded && hasMutedFindings && visibleCount === 0) {
+    return "No resources match the current filters. Try enabling Include muted to view muted findings.";
+  }
+
+  return "No resources found for the selected filters.";
 }
