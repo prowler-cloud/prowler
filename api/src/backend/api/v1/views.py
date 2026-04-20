@@ -8145,10 +8145,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
         tenant_id = request.tenant_id
         queryset = self._get_finding_queryset()
 
-        # Get latest completed scan for each provider
+        # Order by -completed_at (matching the /latest summary path and the
+        # daily summary upsert keyed on midnight(completed_at)) so that
+        # overlapping scans do not make /resources and /latest read from
+        # different scans and report diverging counts.
         latest_scan_ids = (
             Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
+            .order_by("provider_id", "-completed_at", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
