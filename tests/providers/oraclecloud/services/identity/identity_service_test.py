@@ -62,8 +62,8 @@ class TestIdentityService:
                 domain.display_name = "exampledomain"
                 domain.description = "example"
                 domain.url = "https://idcs-example.identity.oraclecloud.com"
-                domain.home_region = "us-ashburn-1"
-                domain.region = region
+                domain.home_region = region
+                domain.region = "us-ashburn-1"
                 domain.lifecycle_state = "ACTIVE"
                 domain.time_created = datetime.now()
                 domains.append(domain)
