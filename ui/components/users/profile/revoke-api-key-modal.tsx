@@ -1,6 +1,5 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
 import { Trash2Icon } from "lucide-react";
 
 import { revokeApiKey } from "@/actions/api-keys/api-keys";
@@ -10,6 +9,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert/Alert";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { ModalButtons } from "@/components/ui/custom/custom-modal-buttons";
 
 import { FALLBACK_VALUES } from "./api-keys/constants";
@@ -67,16 +67,12 @@ export const RevokeApiKeyModal = ({
         <div className="flex flex-col gap-2">
           <p>Are you sure you want to revoke this API key?</p>
 
-          <Snippet
-            hideSymbol
-            hideCopyButton={true}
-            classNames={{
-              pre: "font-mono text-sm break-all whitespace-pre-wrap",
-            }}
-          >
-            <p>{apiKey?.attributes.name || FALLBACK_VALUES.UNNAMED_KEY}</p>
-            <p className="mt-1 text-xs">Prefix: {apiKey?.attributes.prefix}</p>
-          </Snippet>
+          <CodeSnippet
+            value={`${apiKey?.attributes.name || FALLBACK_VALUES.UNNAMED_KEY}\nPrefix: ${apiKey?.attributes.prefix}`}
+            hideCopyButton
+            multiline
+            className="w-full px-3 py-2 text-sm"
+          />
         </div>
 
         {error && (

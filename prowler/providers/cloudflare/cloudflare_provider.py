@@ -1,7 +1,16 @@
+import logging
 import os
 from typing import Iterable
 
 from cloudflare import Cloudflare
+from cloudflare._exceptions import (
+    AuthenticationError as CloudflareSDKAuthenticationError,
+)
+from cloudflare._exceptions import (
+    BadRequestError,
+    PermissionDeniedError,
+    RateLimitError,
+)
 from colorama import Fore, Style
 
 from prowler.config.config import (
@@ -12,10 +21,16 @@ from prowler.config.config import (
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.cloudflare.exceptions.exceptions import (
+    CloudflareAuthenticationError,
     CloudflareCredentialsError,
     CloudflareIdentityError,
     CloudflareInvalidAccountError,
+    CloudflareInvalidAPIKeyError,
+    CloudflareInvalidAPITokenError,
+    CloudflareNoAccountsError,
+    CloudflareRateLimitError,
     CloudflareSessionError,
+    CloudflareUserTokenRequiredError,
 )
 from prowler.providers.cloudflare.lib.mutelist.mutelist import CloudflareMutelist
 from prowler.providers.cloudflare.models import (
@@ -54,6 +69,9 @@ class CloudflareProvider(Provider):
         api_email: str = None,
     ):
         logger.info("Instantiating Cloudflare provider...")
+
+        # Mute HPACK library logs to prevent token leakage in debug mode
+        logging.getLogger("hpack").setLevel(logging.CRITICAL)
 
         if config_content:
             self._audit_config = config_content
@@ -160,6 +178,13 @@ class CloudflareProvider(Provider):
             api_token: Cloudflare API token (optional, falls back to env var).
             api_key: Cloudflare API key (optional, falls back to env var).
             api_email: Cloudflare API email (optional, falls back to env var).
+
+        Returns:
+            CloudflareSession: The initialized Cloudflare session.
+
+        Raises:
+            CloudflareCredentialsError: If no credentials are provided.
+            CloudflareSessionError: If session setup fails.
         """
         # Use provided credentials or fall back to environment variables
         token = api_token or os.environ.get("CLOUDFLARE_API_TOKEN", "")
@@ -168,10 +193,10 @@ class CloudflareProvider(Provider):
 
         # Warn if both auth methods are set, use API Token (recommended)
         if token and key and email:
-            logger.error(
+            logger.warning(
                 "Both API Token and API Key + Email credentials are set. "
                 "Using API Token (recommended). "
-                "To avoid this error, unset CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL, or CLOUDFLARE_API_TOKEN."
+                "To avoid this warning, unset CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL, or CLOUDFLARE_API_TOKEN."
             )
 
         # The Cloudflare SDK reads credentials from environment variables automatically.
@@ -190,7 +215,7 @@ class CloudflareProvider(Provider):
             else:
                 raise CloudflareCredentialsError(
                     file=os.path.basename(__file__),
-                    message="Cloudflare credentials not found. Set CLOUDFLARE_API_TOKEN or both CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL environment variables.",
+                    message="Cloudflare credentials not found. Set CLOUDFLARE_API_TOKEN or both CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL.",
                 )
 
             return CloudflareSession(
@@ -199,6 +224,8 @@ class CloudflareProvider(Provider):
                 api_key=key or None,
                 api_email=email or None,
             )
+        except CloudflareCredentialsError:
+            raise
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -218,7 +245,17 @@ class CloudflareProvider(Provider):
 
     @staticmethod
     def setup_identity(session: CloudflareSession) -> CloudflareIdentityInfo:
-        """Fetch user and account metadata for Cloudflare."""
+        """Fetch user and account metadata for Cloudflare.
+
+        Args:
+            session: The Cloudflare session.
+
+        Returns:
+            CloudflareIdentityInfo: The identity information.
+
+        Raises:
+            CloudflareIdentityError: If identity setup fails.
+        """
         try:
             client = session.client
             user_id = None
@@ -237,8 +274,12 @@ class CloudflareProvider(Provider):
 
             for account in client.accounts.list():
                 account_id = getattr(account, "id", None)
-                # Prevent infinite loop - skip if we've seen this account
+                # Prevent infinite loop on repeated pages from the SDK paginator
                 if account_id in seen_account_ids:
+                    logger.warning(
+                        "Detected repeated Cloudflare account ID while listing accounts. "
+                        "Stopping pagination to avoid an infinite loop."
+                    )
                     break
                 seen_account_ids.add(account_id)
 
@@ -265,6 +306,181 @@ class CloudflareProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
             raise CloudflareIdentityError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+
+    @staticmethod
+    def validate_credentials(session: CloudflareSession) -> None:
+        """Validate Cloudflare credentials by making API calls.
+
+        This method validates the credentials by attempting to retrieve user info
+        and falling back to listing accounts if user.get() fails.
+
+        Args:
+            session: The Cloudflare session to validate.
+
+        Raises:
+            CloudflareUserTokenRequiredError: If the token requires user-level auth.
+            CloudflareInvalidAPITokenError: If the API token format is invalid.
+            CloudflareInvalidAPIKeyError: If the API key or email is invalid.
+            CloudflareNoAccountsError: If no accounts are accessible.
+            CloudflareRateLimitError: If rate limited by Cloudflare API.
+            CloudflareAuthenticationError: For other authentication errors.
+        """
+        client = session.client
+
+        try:
+            # Try user.get() first - this validates the token quickly
+            client.user.get()
+            return
+        except PermissionDeniedError as error:
+            error_str = str(error)
+            # Check for invalid API key or email (code 9103) - comes as 403
+            if "9103" in error_str or "Unknown X-Auth-Key" in error_str:
+                logger.error(f"CloudflareInvalidAPIKeyError: {error}")
+                raise CloudflareInvalidAPIKeyError(
+                    file=os.path.basename(__file__),
+                )
+            # For permission errors (including 9109 account-scoped tokens),
+            # try accounts.list() as fallback before failing.
+            # Error 9109 means the token is account-scoped, not user-level,
+            # which is valid for scanning — only fail if accounts.list() also fails.
+            logger.warning(
+                f"Unable to retrieve Cloudflare user info: {error}. "
+                "Trying accounts.list() as fallback."
+            )
+        except BadRequestError as error:
+            error_str = str(error)
+            # Invalid credentials format (code 6003/6111)
+            # Differentiate based on which auth method was used
+            if "6003" in error_str or "6111" in error_str:
+                if session.api_key and session.api_email:
+                    # User is using API Key + Email
+                    logger.error(f"CloudflareInvalidAPIKeyError: {error}")
+                    raise CloudflareInvalidAPIKeyError(
+                        file=os.path.basename(__file__),
+                    )
+                else:
+                    # User is using API Token
+                    logger.error(f"CloudflareInvalidAPITokenError: {error}")
+                    raise CloudflareInvalidAPITokenError(
+                        file=os.path.basename(__file__),
+                    )
+            # Invalid API key or email (explicit message)
+            if "Unknown X-Auth-Key" in error_str or "X-Auth-Email" in error_str:
+                logger.error(f"CloudflareInvalidAPIKeyError: {error}")
+                raise CloudflareInvalidAPIKeyError(
+                    file=os.path.basename(__file__),
+                )
+            # Re-raise for other bad request errors
+            raise CloudflareAuthenticationError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+        except CloudflareSDKAuthenticationError as error:
+            logger.error(f"CloudflareAuthenticationError: {error}")
+            raise CloudflareAuthenticationError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+        except RateLimitError as error:
+            logger.error(f"CloudflareRateLimitError: {error}")
+            raise CloudflareRateLimitError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+        except Exception as error:
+            # For unexpected errors during user.get(), try fallback
+            logger.warning(
+                f"Unable to retrieve Cloudflare user info: {error}. "
+                "Trying accounts.list() as fallback."
+            )
+
+        # Fallback: try accounts.list()
+        try:
+            accounts: list = []
+            seen_account_ids: set = set()
+            for account in client.accounts.list():
+                account_id = getattr(account, "id", None)
+                # Prevent infinite loop on repeated pages from the SDK paginator
+                if account_id in seen_account_ids:
+                    logger.warning(
+                        "Detected repeated Cloudflare account ID while validating credentials. "
+                        "Stopping pagination to avoid an infinite loop."
+                    )
+                    break
+                seen_account_ids.add(account_id)
+                accounts.append(account)
+
+            if not accounts:
+                logger.error("CloudflareNoAccountsError: No accounts found")
+                raise CloudflareNoAccountsError(
+                    file=os.path.basename(__file__),
+                )
+        except PermissionDeniedError as error:
+            error_str = str(error)
+            if "9109" in error_str:
+                logger.error(f"CloudflareUserTokenRequiredError: {error}")
+                raise CloudflareUserTokenRequiredError(
+                    file=os.path.basename(__file__),
+                )
+            # Check for invalid API key or email (code 9103) - comes as 403
+            if "9103" in error_str or "Unknown X-Auth-Key" in error_str:
+                logger.error(f"CloudflareInvalidAPIKeyError: {error}")
+                raise CloudflareInvalidAPIKeyError(
+                    file=os.path.basename(__file__),
+                )
+            logger.error(f"CloudflareAuthenticationError: {error}")
+            raise CloudflareAuthenticationError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+        except BadRequestError as error:
+            error_str = str(error)
+            # Invalid credentials format (code 6003/6111)
+            if "6003" in error_str or "6111" in error_str:
+                if session.api_key and session.api_email:
+                    logger.error(f"CloudflareInvalidAPIKeyError: {error}")
+                    raise CloudflareInvalidAPIKeyError(
+                        file=os.path.basename(__file__),
+                    )
+                else:
+                    logger.error(f"CloudflareInvalidAPITokenError: {error}")
+                    raise CloudflareInvalidAPITokenError(
+                        file=os.path.basename(__file__),
+                    )
+            if "Unknown X-Auth-Key" in error_str or "X-Auth-Email" in error_str:
+                logger.error(f"CloudflareInvalidAPIKeyError: {error}")
+                raise CloudflareInvalidAPIKeyError(
+                    file=os.path.basename(__file__),
+                )
+            raise CloudflareAuthenticationError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+        except CloudflareSDKAuthenticationError as error:
+            logger.error(f"CloudflareAuthenticationError: {error}")
+            raise CloudflareAuthenticationError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+        except RateLimitError as error:
+            logger.error(f"CloudflareRateLimitError: {error}")
+            raise CloudflareRateLimitError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+        except (
+            CloudflareNoAccountsError,
+            CloudflareUserTokenRequiredError,
+            CloudflareInvalidAPITokenError,
+            CloudflareInvalidAPIKeyError,
+        ):
+            raise
+        except Exception as error:
+            logger.error(f"CloudflareAuthenticationError: {error}")
+            raise CloudflareAuthenticationError(
                 file=os.path.basename(__file__),
                 original_exception=error,
             )
@@ -331,22 +547,107 @@ class CloudflareProvider(Provider):
 
         Returns:
             Connection: Connection object with is_connected status.
+
+        Raises:
+            CloudflareCredentialsError: If no credentials are provided.
+            CloudflareSessionError: If session setup fails.
+            CloudflareUserTokenRequiredError: If the token requires user-level auth.
+            CloudflareInvalidAPITokenError: If the API token format is invalid.
+            CloudflareInvalidAPIKeyError: If the API key or email is invalid.
+            CloudflareNoAccountsError: If no accounts are accessible.
+            CloudflareRateLimitError: If rate limited by Cloudflare API.
+            CloudflareAuthenticationError: For other authentication errors.
         """
         try:
+            # Use max_retries=0 for connection test to get immediate feedback
+            # on invalid credentials without waiting for retry attempts
             session = CloudflareProvider.setup_session(
                 api_token=api_token,
                 api_key=api_key,
                 api_email=api_email,
+                max_retries=0,
             )
-            _ = session.client.user.get()
+
+            # Validate credentials
+            CloudflareProvider.validate_credentials(session)
+
             return Connection(is_connected=True)
-        except Exception as error:
+
+        except CloudflareCredentialsError as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             if raise_on_exception:
                 raise error
             return Connection(is_connected=False, error=error)
+
+        except CloudflareSessionError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(is_connected=False, error=error)
+
+        except CloudflareUserTokenRequiredError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(is_connected=False, error=error)
+
+        except CloudflareInvalidAPITokenError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(is_connected=False, error=error)
+
+        except CloudflareInvalidAPIKeyError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(is_connected=False, error=error)
+
+        except CloudflareNoAccountsError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(is_connected=False, error=error)
+
+        except CloudflareRateLimitError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(is_connected=False, error=error)
+
+        except CloudflareAuthenticationError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise error
+            return Connection(is_connected=False, error=error)
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            formatted_error = CloudflareAuthenticationError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+            if raise_on_exception:
+                raise formatted_error
+            return Connection(is_connected=False, error=formatted_error)
 
     def validate_arguments(self) -> None:
         return None

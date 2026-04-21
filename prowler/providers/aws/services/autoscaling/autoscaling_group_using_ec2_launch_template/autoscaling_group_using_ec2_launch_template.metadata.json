@@ -15,7 +15,7 @@
   "Risk": "Without a launch template, there is no **versioned, auditable baseline** for instance settings, increasing configuration drift. Inconsistent metadata and network options can enable unauthorized access or unstable deployments, degrading confidentiality and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/asg-launch-template.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/AutoScaling/asg-launch-template.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-9",
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/create-asg-launch-template.html"
   ],

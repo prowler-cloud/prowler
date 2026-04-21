@@ -1,11 +1,11 @@
-FROM python:3.12.10-slim-bookworm AS build
+FROM python:3.12.10-slim-bookworm@sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
-ARG TRIVY_VERSION=0.66.0
+ARG TRIVY_VERSION=0.69.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 # hadolint ignore=DL3008
@@ -71,7 +71,7 @@ RUN mkdir -p /tmp/prowler_api_output
 COPY pyproject.toml ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir poetry
+    pip install --no-cache-dir poetry==2.3.4
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 

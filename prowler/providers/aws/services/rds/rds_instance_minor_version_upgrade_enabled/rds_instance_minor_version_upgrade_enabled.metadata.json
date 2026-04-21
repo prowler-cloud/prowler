@@ -16,7 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://aws.amazon.com/blogs/database/best-practices-for-upgrading-amazon-rds-to-major-and-minor-versions-of-postgresql/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/RDS/rds-auto-minor-version-upgrade.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/RDS/rds-auto-minor-version-upgrade.html"
   ],
   "Remediation": {
     "Code": {

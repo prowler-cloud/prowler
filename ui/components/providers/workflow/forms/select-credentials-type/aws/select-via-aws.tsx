@@ -9,9 +9,13 @@ import { RadioGroupAWSViaCredentialsTypeForm } from "./radio-group-aws-via-crede
 
 interface SelectViaAWSProps {
   initialVia?: string;
+  onViaChange?: (via: string) => void;
 }
 
-export const SelectViaAWS = ({ initialVia }: SelectViaAWSProps) => {
+export const SelectViaAWS = ({
+  initialVia,
+  onViaChange,
+}: SelectViaAWSProps) => {
   const router = useRouter();
   const form = useForm({
     defaultValues: {
@@ -20,6 +24,11 @@ export const SelectViaAWS = ({ initialVia }: SelectViaAWSProps) => {
   });
 
   const handleSelectionChange = (value: string) => {
+    if (onViaChange) {
+      onViaChange(value);
+      return;
+    }
+
     const url = new URL(window.location.href);
     url.searchParams.set("via", value);
     router.push(url.toString());

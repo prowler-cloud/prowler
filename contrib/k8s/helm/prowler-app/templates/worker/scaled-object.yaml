@@ -1,0 +1,32 @@
+{{- if .Values.worker.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "prowler.fullname" . }}-worker
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "prowler.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    name: {{ include "prowler.fullname" . }}-worker
+    envSourceContainerName: worker
+    kind: Deployment
+  minReplicaCount: {{ .Values.worker.keda.minReplicas }}
+  maxReplicaCount: {{ .Values.worker.keda.maxReplicas }}
+  pollingInterval: {{ .Values.worker.keda.pollingInterval }}
+  cooldownPeriod: {{ .Values.worker.keda.cooldownPeriod }}
+  triggers:
+    - type: {{ .Values.worker.keda.triggerType }}
+      metadata:
+        userName: "postgres"
+        passwordFromEnv: POSTGRES_ADMIN_PASSWORD
+        host: {{ .Release.Name }}-postgresql
+        port: {{ .Values.postgresql.port | quote }}
+        dbName: {{ .Values.postgresql.auth.database | quote }}
+        sslmode: disable
+        # Query for KEDA to count the number of scans that are in executing, available, or scheduled states,
+        # where the scheduled time is within the last 2 hours and is before NOW(). Used for scaling workers.
+        query: >-
+          SELECT COUNT(*) FROM scans WHERE ((state='executing' OR state='available' OR state='scheduled') and scheduled_at < NOW() and scheduled_at > NOW() - INTERVAL '2 hours')
+        targetQueryValue: "1"
+{{- end }}

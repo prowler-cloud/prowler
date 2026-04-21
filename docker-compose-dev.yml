@@ -1,4 +1,11 @@
 services:
+  api-dev-init:
+    image: busybox:1.37.0
+    volumes:
+      - ./_data/api:/data
+    command: ["sh", "-c", "chown -R 1000:1000 /data"]
+    restart: "no"
+
   api-dev:
     hostname: "prowler-api"
     image: prowler-api-dev
@@ -21,12 +28,20 @@ services:
       - ./_data/api:/home/prowler/.config/prowler-api
       - outputs:/tmp/prowler_api_output
     depends_on:
+      api-dev-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       valkey:
         condition: service_healthy
       neo4j:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:${DJANGO_PORT:-8080}/api/v1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "dev"
@@ -103,12 +118,13 @@ services:
       - NEO4J_server_memory_heap_initial__size=${NEO4J_SERVER_MEMORY_HEAP_INITIAL__SIZE:-1G}
       - NEO4J_server_memory_heap_max__size=${NEO4J_SERVER_MEMORY_HEAP_MAX__SIZE:-1G}
       # APOC
-      - apoc.export.file.enabled=${NEO4J_POC_EXPORT_FILE_ENABLED:-true}
-      - apoc.import.file.enabled=${NEO4J_APOC_IMPORT_FILE_ENABLED:-true}
-      - apoc.import.file.use_neo4j_config=${NEO4J_APOC_IMPORT_FILE_USE_NEO4J_CONFIG:-true}
       - "NEO4J_PLUGINS=${NEO4J_PLUGINS:-[\"apoc\"]}"
       - "NEO4J_dbms_security_procedures_allowlist=${NEO4J_DBMS_SECURITY_PROCEDURES_ALLOWLIST:-apoc.*}"
-      - "NEO4J_dbms_security_procedures_unrestricted=${NEO4J_DBMS_SECURITY_PROCEDURES_UNRESTRICTED:-apoc.*}"
+      - "NEO4J_dbms_security_procedures_unrestricted=${NEO4J_DBMS_SECURITY_PROCEDURES_UNRESTRICTED:-}"
+      - apoc.export.file.enabled=${NEO4J_APOC_EXPORT_FILE_ENABLED:-false}
+      - apoc.import.file.enabled=${NEO4J_APOC_IMPORT_FILE_ENABLED:-false}
+      - apoc.import.file.use_neo4j_config=${NEO4J_APOC_IMPORT_FILE_USE_NEO4J_CONFIG:-true}
+      - apoc.trigger.enabled=${NEO4J_APOC_TRIGGER_ENABLED:-false}
       # Networking
       - "dbms.connector.bolt.listen_address=${NEO4J_DBMS_CONNECTOR_BOLT_LISTEN_ADDRESS:-0.0.0.0:7687}"
     # 7474 is the UI port
@@ -138,12 +154,12 @@ services:
       - ./api/docker-entrypoint.sh:/home/prowler/docker-entrypoint.sh
       - outputs:/tmp/prowler_api_output
     depends_on:
-      valkey:
+      api-dev:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "worker"
@@ -160,12 +176,12 @@ services:
       - path: ./.env
         required: false
     depends_on:
-      valkey:
+      api-dev:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     entrypoint:
       - "../docker-entrypoint.sh"
       - "beat"

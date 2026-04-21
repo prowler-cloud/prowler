@@ -143,9 +143,10 @@
 ### Flow Steps:
 1. Log in with valid credentials.
 2. Navigate to a protected route (/scans).
-3. Clear cookies to simulate session expiry.
-4. Navigate to another protected route (/providers).
-5. Verify redirect to sign-in includes callbackUrl parameter.
+3. Navigate to a safe public page (/sign-in).
+4. Clear cookies to simulate session expiry.
+5. Navigate to another protected route (/providers) using fresh navigation.
+6. Verify redirect to sign-in includes callbackUrl parameter.
 
 ### Expected Result:
 - URL contains callbackUrl=/providers parameter.

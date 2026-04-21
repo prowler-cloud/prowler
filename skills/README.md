@@ -53,6 +53,8 @@ Reusable patterns for common technologies:
 | `nextjs-15` | App Router, Server Actions, streaming |
 | `tailwind-4` | cn() utility, Tailwind 4 patterns |
 | `playwright` | Page Object Model, selectors |
+| `vitest` | Unit testing, React Testing Library |
+| `tdd` | Test-Driven Development workflow |
 | `pytest` | Fixtures, mocking, markers |
 | `django-drf` | ViewSets, Serializers, Filters |
 | `zod-4` | Zod 4 API patterns |
@@ -77,6 +79,7 @@ Patterns tailored for Prowler development:
 | `prowler-provider` | Add new cloud providers |
 | `prowler-pr` | Pull request conventions |
 | `prowler-docs` | Documentation style guide |
+| `prowler-attack-paths-query` | Create Attack Paths openCypher queries |
 
 ### Meta Skills
 

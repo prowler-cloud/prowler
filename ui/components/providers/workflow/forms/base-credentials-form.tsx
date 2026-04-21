@@ -1,10 +1,11 @@
 "use client";
 
-import { Divider } from "@heroui/divider";
 import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { Control, UseFormSetValue } from "react-hook-form";
 
 import { Button } from "@/components/shadcn";
+import { Separator } from "@/components/shadcn/separator/separator";
 import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
@@ -17,15 +18,21 @@ import {
   AWSCredentials,
   AWSCredentialsRole,
   AzureCredentials,
+  CloudflareApiKeyCredentials,
+  CloudflareTokenCredentials,
   GCPDefaultCredentials,
   GCPServiceAccountKey,
+  GoogleWorkspaceCredentials,
   IacCredentials,
+  ImageCredentials,
   KubernetesCredentials,
   M365CertificateCredentials,
   M365ClientSecretCredentials,
   MongoDBAtlasCredentials,
   OCICredentials,
+  OpenStackCredentials,
   ProviderType,
+  VercelCredentials,
 } from "@/types";
 
 import { ProviderTitleDocs } from "../provider-title-docs";
@@ -35,6 +42,10 @@ import {
 } from "./select-credentials-type/alibabacloud/credentials-type";
 import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credentials-type";
 import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type/aws-role-credentials-form";
+import {
+  CloudflareApiKeyCredentialsForm,
+  CloudflareApiTokenCredentialsForm,
+} from "./select-credentials-type/cloudflare";
 import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
 import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
 import {
@@ -43,10 +54,14 @@ import {
 } from "./select-credentials-type/m365";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
+import { GoogleWorkspaceCredentialsForm } from "./via-credentials/googleworkspace-credentials-form";
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
+import { ImageCredentialsForm } from "./via-credentials/image-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
+import { OpenStackCredentialsForm } from "./via-credentials/openstack-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
+import { VercelCredentialsForm } from "./via-credentials/vercel-credentials-form";
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;
@@ -54,8 +69,16 @@ type BaseCredentialsFormProps = {
   providerUid?: string;
   onSubmit: (formData: FormData) => Promise<ApiResponse>;
   successNavigationUrl: string;
+  via?: string | null;
+  onSuccess?: () => void;
+  onBack?: () => void;
+  formId?: string;
+  hideActions?: boolean;
+  onLoadingChange?: (isLoading: boolean) => void;
+  onValidityChange?: (isValid: boolean) => void;
   submitButtonText?: string;
   showBackButton?: boolean;
+  validationMode?: "onSubmit" | "onChange";
 };
 
 export const BaseCredentialsForm = ({
@@ -64,15 +87,24 @@ export const BaseCredentialsForm = ({
   providerUid,
   onSubmit,
   successNavigationUrl,
+  via,
+  onSuccess,
+  onBack,
+  formId,
+  hideActions = false,
+  onLoadingChange,
+  onValidityChange,
   submitButtonText = "Next",
   showBackButton = true,
+  validationMode,
 }: BaseCredentialsFormProps) => {
   const {
     form,
     isLoading,
+    isValid,
     handleSubmit,
     handleBackStep,
-    searchParamsObj,
+    effectiveVia,
     externalId,
   } = useCredentialsForm({
     providerType,
@@ -80,13 +112,26 @@ export const BaseCredentialsForm = ({
     providerUid,
     onSubmit,
     successNavigationUrl,
+    via,
+    onSuccess,
+    onBack,
+    validationMode,
   });
+
+  useEffect(() => {
+    onLoadingChange?.(isLoading);
+  }, [isLoading, onLoadingChange]);
+
+  useEffect(() => {
+    onValidityChange?.(isValid);
+  }, [isValid, onValidityChange]);
 
   const templateLinks = getAWSCredentialsTemplateLinks(externalId);
 
   return (
     <Form {...form}>
       <form
+        id={formId}
         onSubmit={form.handleSubmit(handleSubmit)}
         className="flex flex-col gap-4"
       >
@@ -110,9 +155,9 @@ export const BaseCredentialsForm = ({
 
         <ProviderTitleDocs providerType={providerType} />
 
-        <Divider />
+        <Separator />
 
-        {providerType === "aws" && searchParamsObj.get("via") === "role" && (
+        {providerType === "aws" && effectiveVia === "role" && (
           <AWSRoleCredentialsForm
             control={form.control as unknown as Control<AWSCredentialsRole>}
             setValue={
@@ -122,7 +167,7 @@ export const BaseCredentialsForm = ({
             templateLinks={templateLinks}
           />
         )}
-        {providerType === "aws" && searchParamsObj.get("via") !== "role" && (
+        {providerType === "aws" && effectiveVia !== "role" && (
           <AWSStaticCredentialsForm
             control={form.control as unknown as Control<AWSCredentials>}
           />
@@ -132,36 +177,30 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<AzureCredentials>}
           />
         )}
-        {providerType === "m365" &&
-          searchParamsObj.get("via") === "app_client_secret" && (
-            <M365ClientSecretCredentialsForm
-              control={
-                form.control as unknown as Control<M365ClientSecretCredentials>
-              }
-            />
-          )}
-        {providerType === "m365" &&
-          searchParamsObj.get("via") === "app_certificate" && (
-            <M365CertificateCredentialsForm
-              control={
-                form.control as unknown as Control<M365CertificateCredentials>
-              }
-            />
-          )}
-        {providerType === "gcp" &&
-          searchParamsObj.get("via") === "service-account" && (
-            <GCPServiceAccountKeyForm
-              control={form.control as unknown as Control<GCPServiceAccountKey>}
-            />
-          )}
-        {providerType === "gcp" &&
-          searchParamsObj.get("via") !== "service-account" && (
-            <GCPDefaultCredentialsForm
-              control={
-                form.control as unknown as Control<GCPDefaultCredentials>
-              }
-            />
-          )}
+        {providerType === "m365" && effectiveVia === "app_client_secret" && (
+          <M365ClientSecretCredentialsForm
+            control={
+              form.control as unknown as Control<M365ClientSecretCredentials>
+            }
+          />
+        )}
+        {providerType === "m365" && effectiveVia === "app_certificate" && (
+          <M365CertificateCredentialsForm
+            control={
+              form.control as unknown as Control<M365CertificateCredentials>
+            }
+          />
+        )}
+        {providerType === "gcp" && effectiveVia === "service-account" && (
+          <GCPServiceAccountKeyForm
+            control={form.control as unknown as Control<GCPServiceAccountKey>}
+          />
+        )}
+        {providerType === "gcp" && effectiveVia !== "service-account" && (
+          <GCPDefaultCredentialsForm
+            control={form.control as unknown as Control<GCPDefaultCredentials>}
+          />
+        )}
         {providerType === "kubernetes" && (
           <KubernetesCredentialsForm
             control={form.control as unknown as Control<KubernetesCredentials>}
@@ -170,12 +209,17 @@ export const BaseCredentialsForm = ({
         {providerType === "github" && (
           <GitHubCredentialsForm
             control={form.control}
-            credentialsType={searchParamsObj.get("via") || undefined}
+            credentialsType={effectiveVia || undefined}
           />
         )}
         {providerType === "iac" && (
           <IacCredentialsForm
             control={form.control as unknown as Control<IacCredentials>}
+          />
+        )}
+        {providerType === "image" && (
+          <ImageCredentialsForm
+            control={form.control as unknown as Control<ImageCredentials>}
           />
         )}
         {providerType === "oraclecloud" && (
@@ -190,50 +234,81 @@ export const BaseCredentialsForm = ({
             }
           />
         )}
-        {providerType === "alibabacloud" &&
-          searchParamsObj.get("via") === "role" && (
-            <AlibabaCloudRoleCredentialsForm
-              control={
-                form.control as unknown as Control<AlibabaCloudCredentialsRole>
-              }
-            />
-          )}
-        {providerType === "alibabacloud" &&
-          searchParamsObj.get("via") !== "role" && (
-            <AlibabaCloudStaticCredentialsForm
-              control={
-                form.control as unknown as Control<AlibabaCloudCredentials>
-              }
-            />
-          )}
+        {providerType === "alibabacloud" && effectiveVia === "role" && (
+          <AlibabaCloudRoleCredentialsForm
+            control={
+              form.control as unknown as Control<AlibabaCloudCredentialsRole>
+            }
+          />
+        )}
+        {providerType === "alibabacloud" && effectiveVia !== "role" && (
+          <AlibabaCloudStaticCredentialsForm
+            control={
+              form.control as unknown as Control<AlibabaCloudCredentials>
+            }
+          />
+        )}
+        {providerType === "cloudflare" && effectiveVia === "api_token" && (
+          <CloudflareApiTokenCredentialsForm
+            control={
+              form.control as unknown as Control<CloudflareTokenCredentials>
+            }
+          />
+        )}
+        {providerType === "cloudflare" && effectiveVia === "api_key" && (
+          <CloudflareApiKeyCredentialsForm
+            control={
+              form.control as unknown as Control<CloudflareApiKeyCredentials>
+            }
+          />
+        )}
+        {providerType === "openstack" && (
+          <OpenStackCredentialsForm
+            control={form.control as unknown as Control<OpenStackCredentials>}
+          />
+        )}
+        {providerType === "googleworkspace" && (
+          <GoogleWorkspaceCredentialsForm
+            control={
+              form.control as unknown as Control<GoogleWorkspaceCredentials>
+            }
+          />
+        )}
+        {providerType === "vercel" && (
+          <VercelCredentialsForm
+            control={form.control as unknown as Control<VercelCredentials>}
+          />
+        )}
 
-        <div className="flex w-full justify-end gap-4">
-          {showBackButton && requiresBackButton(searchParamsObj.get("via")) && (
+        {!hideActions && (
+          <div className="flex w-full justify-end gap-4">
+            {showBackButton && requiresBackButton(effectiveVia) && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                onClick={handleBackStep}
+                disabled={isLoading}
+              >
+                {!isLoading && <ChevronLeftIcon size={24} />}
+                Back
+              </Button>
+            )}
             <Button
-              type="button"
-              variant="ghost"
+              type="submit"
+              variant="default"
               size="lg"
-              onClick={handleBackStep}
               disabled={isLoading}
             >
-              {!isLoading && <ChevronLeftIcon size={24} />}
-              Back
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <ChevronRightIcon size={24} />
+              )}
+              {isLoading ? "Loading" : submitButtonText}
             </Button>
-          )}
-          <Button
-            type="submit"
-            variant="default"
-            size="lg"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <ChevronRightIcon size={24} />
-            )}
-            {isLoading ? "Loading" : submitButtonText}
-          </Button>
-        </div>
+          </div>
+        )}
       </form>
     </Form>
   );

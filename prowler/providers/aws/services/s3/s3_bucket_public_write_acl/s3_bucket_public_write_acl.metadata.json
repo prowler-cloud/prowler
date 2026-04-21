@@ -20,7 +20,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/S3/s3-bucket-public-write-access.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement-staging/knowledge-base/aws/S3/s3-bucket-public-write-access.html"
   ],
   "Remediation": {
     "Code": {

@@ -1,4 +1,5 @@
 import importlib
+import os
 import pkgutil
 import sys
 from abc import ABC, abstractmethod
@@ -136,6 +137,18 @@ class Provider(ABC):
         return set()
 
     @staticmethod
+    def get_excluded_regions_from_env() -> set:
+        """Parse the PROWLER_AWS_DISALLOWED_REGIONS environment variable.
+
+        The variable is a comma-separated list of region identifiers to skip
+        during scans (e.g. "me-south-1, ap-east-1"). Whitespace around entries
+        is tolerated and empty entries are dropped. Returns an empty set when
+        the variable is unset or contains no usable values.
+        """
+        raw = os.environ.get("PROWLER_AWS_DISALLOWED_REGIONS", "")
+        return {region.strip() for region in raw.split(",") if region.strip()}
+
+    @staticmethod
     def get_global_provider() -> "Provider":
         return Provider._global
 
@@ -160,6 +173,11 @@ class Provider(ABC):
 
             if not isinstance(Provider._global, provider_class):
                 if "aws" in provider_class_name.lower():
+                    excluded_regions = (
+                        set(arguments.excluded_region)
+                        if getattr(arguments, "excluded_region", None)
+                        else None
+                    )
                     provider_class(
                         retries_max_attempts=arguments.aws_retries_max_attempts,
                         role_arn=arguments.role,
@@ -169,6 +187,7 @@ class Provider(ABC):
                         mfa=arguments.mfa,
                         profile=arguments.profile,
                         regions=set(arguments.region) if arguments.region else None,
+                        excluded_regions=excluded_regions,
                         organizations_role_arn=arguments.organizations_role,
                         scan_unused_services=arguments.scan_unused_services,
                         resource_tags=arguments.resource_tag,
@@ -238,6 +257,21 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                     )
                 elif "github" in provider_class_name.lower():
+                    orgs = []
+                    repos = []
+
+                    if getattr(arguments, "organization", None):
+                        orgs.extend(arguments.organization)
+                    if getattr(arguments, "organizations", None):
+                        orgs.extend(arguments.organizations)
+                    if getattr(arguments, "repository", None):
+                        repos.extend(arguments.repository)
+                    if getattr(arguments, "repositories", None):
+                        repos.extend(arguments.repositories)
+
+                    orgs = list(dict.fromkeys(orgs))
+                    repos = list(dict.fromkeys(repos))
+
                     provider_class(
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
@@ -245,8 +279,14 @@ class Provider(ABC):
                         github_app_id=arguments.github_app_id,
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
-                        repositories=arguments.repository,
-                        organizations=arguments.organization,
+                        repositories=repos,
+                        organizations=orgs,
+                    )
+                elif "googleworkspace" in provider_class_name.lower():
+                    provider_class(
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
                     )
                 elif "cloudflare" in provider_class_name.lower():
                     provider_class(
@@ -267,12 +307,31 @@ class Provider(ABC):
                         github_username=arguments.github_username,
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
+                        provider_uid=arguments.provider_uid,
                     )
                 elif "llm" in provider_class_name.lower():
                     provider_class(
                         max_concurrency=arguments.max_concurrency,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
+                    )
+                elif "image" in provider_class_name.lower():
+                    provider_class(
+                        images=arguments.images,
+                        image_list_file=arguments.image_list_file,
+                        scanners=arguments.scanners,
+                        image_config_scanners=arguments.image_config_scanners,
+                        trivy_severity=arguments.trivy_severity,
+                        ignore_unfixed=arguments.ignore_unfixed,
+                        timeout=arguments.timeout,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                        registry=arguments.registry,
+                        image_filter=arguments.image_filter,
+                        tag_filter=arguments.tag_filter,
+                        max_images=arguments.max_images,
+                        registry_insecure=arguments.registry_insecure,
+                        registry_list_images=arguments.registry_list_images,
                     )
                 elif "mongodbatlas" in provider_class_name.lower():
                     provider_class(
@@ -287,7 +346,7 @@ class Provider(ABC):
                     provider_class(
                         oci_config_file=arguments.oci_config_file,
                         profile=arguments.profile,
-                        region=arguments.region,
+                        region=set(arguments.region) if arguments.region else None,
                         compartment_ids=arguments.compartment_id,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
@@ -297,6 +356,9 @@ class Provider(ABC):
                 elif "openstack" in provider_class_name.lower():
                     provider_class(
                         clouds_yaml_file=getattr(arguments, "clouds_yaml_file", None),
+                        clouds_yaml_content=getattr(
+                            arguments, "clouds_yaml_content", None
+                        ),
                         clouds_yaml_cloud=getattr(arguments, "clouds_yaml_cloud", None),
                         auth_url=getattr(arguments, "os_auth_url", None),
                         identity_api_version=getattr(
@@ -324,6 +386,13 @@ class Provider(ABC):
                         oidc_role_arn=arguments.oidc_role_arn,
                         credentials_uri=arguments.credentials_uri,
                         regions=arguments.regions,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "vercel" in provider_class_name.lower():
+                    provider_class(
+                        projects=getattr(arguments, "project", None),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

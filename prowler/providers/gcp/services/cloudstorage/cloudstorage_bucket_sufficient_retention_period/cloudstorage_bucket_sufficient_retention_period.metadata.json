@@ -13,7 +13,7 @@
   "Risk": "Insufficient or missing retention allows premature deletion or modification of objects, weakening data recovery and compliance with retention requirements.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/sufficient-retention-period.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/CloudStorage/sufficient-retention-period.html"
   ],
   "Remediation": {
     "Code": {

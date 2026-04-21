@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 export const getFindings = async ({
   page = 1,
@@ -24,9 +25,7 @@ export const getFindings = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const findings = await fetch(url.toString(), {
@@ -62,9 +61,7 @@ export const getLatestFindings = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const findings = await fetch(url.toString(), {
@@ -90,20 +87,13 @@ export const getMetadataInfo = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    // Define filters to exclude
-    const excludedFilters = [
+  appendSanitizedProviderTypeFilters(url, filters, {
+    excludedKeyIncludes: [
       "region__in",
       "service__in",
       "resource_type__in",
       "resource_groups__in",
-    ];
-    if (
-      key !== "filter[search]" &&
-      !excludedFilters.some((filter) => key.includes(filter))
-    ) {
-      url.searchParams.append(key, String(value));
-    }
+    ],
   });
 
   try {
@@ -130,20 +120,13 @@ export const getLatestMetadataInfo = async ({
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    // Define filters to exclude
-    const excludedFilters = [
+  appendSanitizedProviderTypeFilters(url, filters, {
+    excludedKeyIncludes: [
       "region__in",
       "service__in",
       "resource_type__in",
       "resource_groups__in",
-    ];
-    if (
-      key !== "filter[search]" &&
-      !excludedFilters.some((filter) => key.includes(filter))
-    ) {
-      url.searchParams.append(key, String(value));
-    }
+    ],
   });
 
   try {
@@ -158,7 +141,15 @@ export const getLatestMetadataInfo = async ({
   }
 };
 
-export const getFindingById = async (findingId: string, include = "") => {
+interface GetFindingByIdOptions {
+  source?: "resource-detail-drawer";
+}
+
+export const getFindingById = async (
+  findingId: string,
+  include = "",
+  _options?: GetFindingByIdOptions,
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/findings/${findingId}`);

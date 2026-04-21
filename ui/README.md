@@ -142,12 +142,12 @@ Or remove the variable from your `.env` file.
 
 ### Troubleshooting
 
-If hooks aren't running after commits:
+If hooks aren't running after commits, verify prek is installed and hooks are set up:
 
 ```bash
-# Verify hooks are configured
-git config --get core.hooksPath  # Should output: ui/.husky
+# Check prek is available
+prek --version
 
-# Reconfigure if needed
-git config core.hooksPath "ui/.husky"
+# Re-install hooks if needed
+prek install --overwrite
 ```

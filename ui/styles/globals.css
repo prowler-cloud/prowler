@@ -81,6 +81,9 @@
   /* Progress Bar */
   --shadow-progress-glow:
     0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
+
+  /* Lighthouse AI */
+  --gradient-lighthouse: linear-gradient(96deg, #2EE59B 3.55%, #62DFF0 98.85%);
 }
 
 /* ===== DARK THEME ===== */
@@ -394,5 +397,12 @@
   /* Global base styles */
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Override vaul's injected user-select: none to allow text selection in drawers */
+@media (hover: hover) and (pointer: fine) {
+  [data-vaul-drawer][data-vaul-drawer] {
+    user-select: text;
   }
 }

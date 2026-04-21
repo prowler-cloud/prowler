@@ -38,6 +38,7 @@ class Test_defender_ensure_wdatp_is_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "WDATP": Setting(
                     resource_id=resource_id,
+                    resource_name="WDATP",
                     resource_type="Microsoft.Security/locations/settings",
                     kind="DataExportSettings",
                     enabled=False,
@@ -78,6 +79,7 @@ class Test_defender_ensure_wdatp_is_enabled:
             AZURE_SUBSCRIPTION_ID: {
                 "WDATP": Setting(
                     resource_id=resource_id,
+                    resource_name="WDATP",
                     resource_type="Microsoft.Security/locations/settings",
                     kind="DataExportSettings",
                     enabled=True,
@@ -114,6 +116,7 @@ class Test_defender_ensure_wdatp_is_enabled:
     def test_defender_wdatp_no_settings(self):
         defender_client = mock.MagicMock
         defender_client.settings = {AZURE_SUBSCRIPTION_ID: {}}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
 
         with (
             mock.patch(
@@ -138,5 +141,5 @@ class Test_defender_ensure_wdatp_is_enabled:
                 == f"Microsoft Defender for Endpoint integration not exists for subscription {AZURE_SUBSCRIPTION_ID}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "WDATP"
-            assert result[0].resource_id == "WDATP"
+            assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"

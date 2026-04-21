@@ -14,7 +14,7 @@ ignored:
     - "*.md"
     - "**/*.md"
     - mkdocs.yml
-    
+
     # Config files that don't affect runtime
     - .gitignore
     - .gitattributes
@@ -23,18 +23,21 @@ ignored:
     - .backportrc.json
     - CODEOWNERS
     - LICENSE
-    
+
     # IDE/Editor configs
     - .vscode/**
     - .idea/**
-    
+
     # Examples and contrib (not production code)
     - examples/**
     - contrib/**
-    
+
     # Skills (AI agent configs, not runtime)
     - skills/**
-    
+
+    # E2E setup helpers (not runnable tests)
+    - ui/tests/setups/**
+
     # Permissions docs
     - permissions/**
 
@@ -47,18 +50,20 @@ critical:
     - prowler/config/**
     - prowler/exceptions/**
     - prowler/providers/common/**
-    
+
     # API Core
     - api/src/backend/api/models.py
     - api/src/backend/config/**
     - api/src/backend/conftest.py
-    
+
     # UI Core
     - ui/lib/**
     - ui/types/**
     - ui/config/**
     - ui/middleware.ts
-    
+    - ui/tsconfig.json
+    - ui/playwright.config.ts
+
     # CI/CD changes
     - .github/workflows/**
     - .github/test-impact.yml
@@ -172,6 +177,14 @@ modules:
       - tests/providers/llm/**
     e2e: []
 
+  - name: sdk-vercel
+    match:
+      - prowler/providers/vercel/**
+      - prowler/compliance/vercel/**
+    tests:
+      - tests/providers/vercel/**
+    e2e: []
+
   # ============================================
   # SDK - Lib modules
   # ============================================
@@ -219,8 +232,24 @@ modules:
     tests:
       - api/src/backend/api/tests/test_views.py
     e2e:
-      # API view changes can break UI
-      - ui/tests/**
+      # All E2E test suites (explicit to avoid triggering auth setups in tests/setups/)
+      - ui/tests/auth/**
+      - ui/tests/sign-in/**
+      - ui/tests/sign-up/**
+      - ui/tests/sign-in-base/**
+      - ui/tests/scans/**
+      - ui/tests/providers/**
+      - ui/tests/findings/**
+      - ui/tests/compliance/**
+      - ui/tests/invitations/**
+      - ui/tests/roles/**
+      - ui/tests/users/**
+      - ui/tests/integrations/**
+      - ui/tests/resources/**
+      - ui/tests/profile/**
+      - ui/tests/lighthouse/**
+      - ui/tests/home/**
+      - ui/tests/attack-paths/**
 
   - name: api-serializers
     match:
@@ -229,8 +258,24 @@ modules:
     tests:
       - api/src/backend/api/tests/**
     e2e:
-      # Serializer changes affect API responses → UI
-      - ui/tests/**
+      # All E2E test suites (explicit to avoid triggering auth setups in tests/setups/)
+      - ui/tests/auth/**
+      - ui/tests/sign-in/**
+      - ui/tests/sign-up/**
+      - ui/tests/sign-in-base/**
+      - ui/tests/scans/**
+      - ui/tests/providers/**
+      - ui/tests/findings/**
+      - ui/tests/compliance/**
+      - ui/tests/invitations/**
+      - ui/tests/roles/**
+      - ui/tests/users/**
+      - ui/tests/integrations/**
+      - ui/tests/resources/**
+      - ui/tests/profile/**
+      - ui/tests/lighthouse/**
+      - ui/tests/home/**
+      - ui/tests/attack-paths/**
 
   - name: api-filters
     match:
@@ -269,6 +314,7 @@ modules:
       - ui/components/providers/**
       - ui/actions/providers/**
       - ui/app/**/providers/**
+      - ui/tests/providers/**
     tests: []
     e2e:
       - ui/tests/providers/**
@@ -278,6 +324,7 @@ modules:
       - ui/components/findings/**
       - ui/actions/findings/**
       - ui/app/**/findings/**
+      - ui/tests/findings/**
     tests: []
     e2e:
       - ui/tests/findings/**
@@ -287,6 +334,7 @@ modules:
       - ui/components/scans/**
       - ui/actions/scans/**
       - ui/app/**/scans/**
+      - ui/tests/scans/**
     tests: []
     e2e:
       - ui/tests/scans/**
@@ -296,6 +344,7 @@ modules:
       - ui/components/compliance/**
       - ui/actions/compliances/**
       - ui/app/**/compliance/**
+      - ui/tests/compliance/**
     tests: []
     e2e:
       - ui/tests/compliance/**
@@ -305,8 +354,12 @@ modules:
       - ui/components/auth/**
       - ui/actions/auth/**
       - ui/app/(auth)/**
+      - ui/tests/auth/**
+      - ui/tests/sign-in/**
+      - ui/tests/sign-up/**
     tests: []
     e2e:
+      - ui/tests/auth/**
       - ui/tests/sign-in/**
       - ui/tests/sign-up/**
 
@@ -315,6 +368,7 @@ modules:
       - ui/components/invitations/**
       - ui/actions/invitations/**
       - ui/app/**/invitations/**
+      - ui/tests/invitations/**
     tests: []
     e2e:
       - ui/tests/invitations/**
@@ -324,6 +378,7 @@ modules:
       - ui/components/roles/**
       - ui/actions/roles/**
       - ui/app/**/roles/**
+      - ui/tests/roles/**
     tests: []
     e2e:
       - ui/tests/roles/**
@@ -333,6 +388,7 @@ modules:
       - ui/components/users/**
       - ui/actions/users/**
       - ui/app/**/users/**
+      - ui/tests/users/**
     tests: []
     e2e:
       - ui/tests/users/**
@@ -342,6 +398,7 @@ modules:
       - ui/components/integrations/**
       - ui/actions/integrations/**
       - ui/app/**/integrations/**
+      - ui/tests/integrations/**
     tests: []
     e2e:
       - ui/tests/integrations/**
@@ -351,6 +408,7 @@ modules:
       - ui/components/resources/**
       - ui/actions/resources/**
       - ui/app/**/resources/**
+      - ui/tests/resources/**
     tests: []
     e2e:
       - ui/tests/resources/**
@@ -358,6 +416,7 @@ modules:
   - name: ui-profile
     match:
       - ui/app/**/profile/**
+      - ui/tests/profile/**
     tests: []
     e2e:
       - ui/tests/profile/**
@@ -368,6 +427,7 @@ modules:
       - ui/actions/lighthouse/**
       - ui/app/**/lighthouse/**
       - ui/lib/lighthouse/**
+      - ui/tests/lighthouse/**
     tests: []
     e2e:
       - ui/tests/lighthouse/**
@@ -376,6 +436,7 @@ modules:
     match:
       - ui/components/overview/**
       - ui/actions/overview/**
+      - ui/tests/home/**
     tests: []
     e2e:
       - ui/tests/home/**
@@ -386,14 +447,31 @@ modules:
       - ui/components/ui/**
     tests: []
     e2e:
-      # Shared components can affect any E2E
-      - ui/tests/**
+      # All E2E test suites (explicit to avoid triggering auth setups in tests/setups/)
+      - ui/tests/auth/**
+      - ui/tests/sign-in/**
+      - ui/tests/sign-up/**
+      - ui/tests/sign-in-base/**
+      - ui/tests/scans/**
+      - ui/tests/providers/**
+      - ui/tests/findings/**
+      - ui/tests/compliance/**
+      - ui/tests/invitations/**
+      - ui/tests/roles/**
+      - ui/tests/users/**
+      - ui/tests/integrations/**
+      - ui/tests/resources/**
+      - ui/tests/profile/**
+      - ui/tests/lighthouse/**
+      - ui/tests/home/**
+      - ui/tests/attack-paths/**
 
   - name: ui-attack-paths
     match:
       - ui/components/attack-paths/**
       - ui/actions/attack-paths/**
       - ui/app/**/attack-paths/**
+      - ui/tests/attack-paths/**
     tests: []
     e2e:
       - ui/tests/attack-paths/**

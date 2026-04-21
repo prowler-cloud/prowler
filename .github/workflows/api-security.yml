@@ -1,14 +1,14 @@
-name: 'API: Security'
+name: "API: Security"
 
 on:
   push:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
   pull_request:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,6 +16,8 @@ concurrency:
 
 env:
   API_WORKING_DIR: ./api
+
+permissions: {}
 
 jobs:
   api-security-scans:
@@ -26,18 +28,34 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - '3.12'
+          - "3.12"
     defaults:
       run:
         working-directory: ./api
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            pypi.org:443
+            files.pythonhosted.org:443
+            github.com:443
+            auth.safetycli.com:443
+            pyup.io:443
+            data.safetycli.com:443
+            api.github.com:443
+
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
       - name: Check for API changes
         id: check-changes
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             api/**
@@ -54,6 +72,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
+          update-lock: 'true'
 
       - name: Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -61,8 +80,10 @@ jobs:
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check --ignore 79023,79027
+        run: poetry run safety check --ignore 79023,79027,86217,71600
         # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
+        # TODO: 86217 because `alibabacloud-tea-openapi == 0.4.3` don't let us upgrade `cryptography >= 46.0.0`
+        # TODO: 71600 CVE-2024-1135 false positive - fixed in gunicorn 22.0.0, project uses 23.0.0
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'

@@ -13,6 +13,7 @@ import { Form } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
 import { onDemandScanFormSchema } from "@/types";
 
+import { SCAN_LAUNCHED_EVENT } from "../table/scans/scans-table-with-polling";
 import { SelectScanProvider } from "./select-scan-provider";
 
 type ProviderInfo = {
@@ -85,6 +86,8 @@ export const LaunchScanWorkflow = ({
       });
       // Reset form after successful submission
       form.reset();
+      // Notify the scans table to refresh and pick up the new scan
+      window.dispatchEvent(new Event(SCAN_LAUNCHED_EVENT));
     }
   };
 

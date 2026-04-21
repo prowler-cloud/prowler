@@ -19,7 +19,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/console-sign-in-without-mfa.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudWatchLogs/console-sign-in-without-mfa.html",
     "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v3.0.0_L1.audit:1957056ee174cc38502d5f5f1864333b",
     "https://www.clouddefense.ai/compliance-rules/gdpr/data-protection/log-metric-filter-console-login-mfa",
     "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-alarm-no-mfa",

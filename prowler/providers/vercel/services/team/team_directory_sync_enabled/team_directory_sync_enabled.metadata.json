@@ -1,0 +1,39 @@
+{
+  "Provider": "vercel",
+  "CheckID": "team_directory_sync_enabled",
+  "CheckTitle": "Vercel team has directory sync (SCIM) enabled for automated provisioning",
+  "CheckType": [],
+  "ServiceName": "team",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Vercel team** is assessed for **directory sync (SCIM)** enablement. Directory sync automates user provisioning and deprovisioning by synchronizing team membership with an external identity provider, ensuring timely access revocation when employees leave.",
+  "Risk": "Without **directory sync**, user provisioning and deprovisioning must be managed manually, increasing the risk of **orphaned accounts** remaining active after employees leave or change roles. Manual processes are error-prone and may lead to unauthorized access persisting longer than intended.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/accounts/team-members-and-roles",
+    "https://vercel.com/docs/security/directory-sync"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to your Vercel team settings\n2. Go to the Security section\n3. Configure directory sync (SCIM) with your identity provider\n4. Map identity provider groups to Vercel team roles\n5. Enable automated provisioning and deprovisioning",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable directory sync (SCIM) to automate user lifecycle management. This ensures that team membership stays synchronized with your identity provider, automatically provisioning new members and revoking access when employees leave or change roles.",
+      "Url": "https://hub.prowler.com/check/team_directory_sync_enabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "team_saml_sso_enabled"
+  ],
+  "Notes": ""
+}

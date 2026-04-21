@@ -1,6 +1,8 @@
 # Portions of this file are based on code from the Cartography project
 # (https://github.com/cartography-cncf/cartography), which is licensed under the Apache 2.0 License.
 
+import time
+
 from typing import Any
 
 import aioboto3
@@ -29,11 +31,11 @@ def start_aws_ingestion(
     attack_paths_scan: ProwlerAPIAttackPathsScan,
 ) -> dict[str, dict[str, str]]:
     """
-    Code based on Cartography version 0.122.0, specifically on `cartography.intel.aws.__init__.py`.
+    Code based on Cartography, specifically on `cartography.intel.aws.__init__.py`.
 
     For the scan progress updates:
         - The caller of this function (`tasks.jobs.attack_paths.scan.run`) has set it to 2.
-        - When the control returns to the caller, it will be set to 95.
+        - When the control returns to the caller, it will be set to 93.
     """
 
     # Initialize variables common to all jobs
@@ -43,6 +45,7 @@ def start_aws_ingestion(
         "aws_guardduty_severity_threshold": cartography_config.aws_guardduty_severity_threshold,
         "aws_cloudtrail_management_events_lookback_hours": cartography_config.aws_cloudtrail_management_events_lookback_hours,
         "experimental_aws_inspector_batch": cartography_config.experimental_aws_inspector_batch,
+        "aws_tagging_api_cleanup_batch": cartography_config.aws_tagging_api_cleanup_batch,
     }
 
     boto3_session = get_boto3_session(prowler_api_provider, prowler_sdk_provider)
@@ -88,37 +91,86 @@ def start_aws_ingestion(
         logger.info(
             f"Syncing function permission_relationships for AWS account {prowler_api_provider.uid}"
         )
+        t0 = time.perf_counter()
         cartography_aws.RESOURCE_FUNCTIONS["permission_relationships"](**sync_args)
+        logger.info(
+            f"Synced function permission_relationships for AWS account {prowler_api_provider.uid} in {time.perf_counter() - t0:.3f}s"
+        )
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 88)
 
     if "resourcegroupstaggingapi" in requested_syncs:
         logger.info(
             f"Syncing function resourcegroupstaggingapi for AWS account {prowler_api_provider.uid}"
         )
+        t0 = time.perf_counter()
         cartography_aws.RESOURCE_FUNCTIONS["resourcegroupstaggingapi"](**sync_args)
+        logger.info(
+            f"Synced function resourcegroupstaggingapi for AWS account {prowler_api_provider.uid} in {time.perf_counter() - t0:.3f}s"
+        )
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 89)
 
     logger.info(
         f"Syncing ec2_iaminstanceprofile scoped analysis for AWS account {prowler_api_provider.uid}"
     )
+    t0 = time.perf_counter()
     cartography_aws.run_scoped_analysis_job(
         "aws_ec2_iaminstanceprofile.json",
         neo4j_session,
         common_job_parameters,
+    )
+    logger.info(
+        f"Synced ec2_iaminstanceprofile scoped analysis for AWS account {prowler_api_provider.uid} in {time.perf_counter() - t0:.3f}s"
     )
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 90)
 
     logger.info(
         f"Syncing lambda_ecr analysis for AWS account {prowler_api_provider.uid}"
     )
+    t0 = time.perf_counter()
     cartography_aws.run_analysis_job(
         "aws_lambda_ecr.json",
         neo4j_session,
         common_job_parameters,
     )
+    logger.info(
+        f"Synced lambda_ecr analysis for AWS account {prowler_api_provider.uid} in {time.perf_counter() - t0:.3f}s"
+    )
+
+    if all(
+        s in requested_syncs
+        for s in ["ecs", "ec2:load_balancer_v2", "ec2:load_balancer_v2:expose"]
+    ):
+        logger.info(
+            f"Syncing lb_container_exposure scoped analysis for AWS account {prowler_api_provider.uid}"
+        )
+        t0 = time.perf_counter()
+        cartography_aws.run_scoped_analysis_job(
+            "aws_lb_container_exposure.json",
+            neo4j_session,
+            common_job_parameters,
+        )
+        logger.info(
+            f"Synced lb_container_exposure scoped analysis for AWS account {prowler_api_provider.uid} in {time.perf_counter() - t0:.3f}s"
+        )
+
+    if all(s in requested_syncs for s in ["ec2:network_acls", "ec2:load_balancer_v2"]):
+        logger.info(
+            f"Syncing lb_nacl_direct scoped analysis for AWS account {prowler_api_provider.uid}"
+        )
+        t0 = time.perf_counter()
+        cartography_aws.run_scoped_analysis_job(
+            "aws_lb_nacl_direct.json",
+            neo4j_session,
+            common_job_parameters,
+        )
+        logger.info(
+            f"Synced lb_nacl_direct scoped analysis for AWS account {prowler_api_provider.uid} in {time.perf_counter() - t0:.3f}s"
+        )
+
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 91)
 
     logger.info(f"Syncing metadata for AWS account {prowler_api_provider.uid}")
+    t0 = time.perf_counter()
     cartography_aws.merge_module_sync_metadata(
         neo4j_session,
         group_type="AWSAccount",
@@ -127,24 +179,23 @@ def start_aws_ingestion(
         update_tag=cartography_config.update_tag,
         stat_handler=cartography_aws.stat_handler,
     )
+    logger.info(
+        f"Synced metadata for AWS account {prowler_api_provider.uid} in {time.perf_counter() - t0:.3f}s"
+    )
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 92)
 
     # Removing the added extra field
     del common_job_parameters["AWS_ID"]
 
-    logger.info(f"Syncing cleanup_job for AWS account {prowler_api_provider.uid}")
-    cartography_aws.run_cleanup_job(
-        "aws_post_ingestion_principals_cleanup.json",
-        neo4j_session,
-        common_job_parameters,
-    )
-    db_utils.update_attack_paths_scan_progress(attack_paths_scan, 93)
-
     logger.info(f"Syncing analysis for AWS account {prowler_api_provider.uid}")
+    t0 = time.perf_counter()
     cartography_aws._perform_aws_analysis(
         requested_syncs, neo4j_session, common_job_parameters
     )
-    db_utils.update_attack_paths_scan_progress(attack_paths_scan, 94)
+    logger.info(
+        f"Synced analysis for AWS account {prowler_api_provider.uid} in {time.perf_counter() - t0:.3f}s"
+    )
+    db_utils.update_attack_paths_scan_progress(attack_paths_scan, 93)
 
     return failed_syncs
 
@@ -209,6 +260,8 @@ def sync_aws_account(
             )
 
             try:
+                func_t0 = time.perf_counter()
+
                 # `ecr:image_layers` uses `aioboto3_session` instead of `boto3_session`
                 if func_name == "ecr:image_layers":
                     cartography_aws.RESOURCE_FUNCTIONS[func_name](
@@ -232,15 +285,24 @@ def sync_aws_account(
                 else:
                     cartography_aws.RESOURCE_FUNCTIONS[func_name](**sync_args)
 
+                logger.info(
+                    f"Synced function {func_name} for AWS account {prowler_api_provider.uid} in {time.perf_counter() - func_t0:.3f}s"
+                )
+
             except Exception as e:
+                logger.info(
+                    f"Synced function {func_name} for AWS account {prowler_api_provider.uid} in {time.perf_counter() - func_t0:.3f}s (FAILED)"
+                )
+
                 exception_message = utils.stringify_exception(
                     e, f"Exception for AWS sync function: {func_name}"
                 )
                 failed_syncs[func_name] = exception_message
 
                 logger.warning(
-                    f"Caught exception syncing function {func_name} from AWS account {prowler_api_provider.uid}. We "
-                    "are continuing on to the next AWS sync function.",
+                    f"Caught exception syncing function {func_name} from AWS account {prowler_api_provider.uid}: {e}. "
+                    "Continuing to the next AWS sync function.",
+                    exc_info=True,
                 )
 
                 continue

@@ -19,7 +19,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-sensitive-filters.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Bedrock/guardrails-with-pii-mask-block.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Bedrock/guardrails-with-pii-mask-block.html",
     "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html"
   ],
   "Remediation": {

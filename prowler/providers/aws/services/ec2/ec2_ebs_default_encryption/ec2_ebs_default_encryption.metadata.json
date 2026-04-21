@@ -20,7 +20,7 @@
   "AdditionalURLs": [
     "https://aws.amazon.com/premiumsupport/knowledge-center/ebs-automatic-encryption/",
     "https://docs.aws.amazon.com/ebs/latest/userguide/encryption-by-default.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EBS/configure-default-encryption.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/EBS/configure-default-encryption.html"
   ],
   "Remediation": {
     "Code": {

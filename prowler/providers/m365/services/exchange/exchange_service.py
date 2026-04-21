@@ -1,3 +1,4 @@
+import asyncio
 from enum import Enum
 from typing import Optional
 
@@ -47,6 +48,50 @@ class Exchange(M365Service):
                 self.shared_mailboxes = self._get_shared_mailboxes()
             self.powershell.close()
 
+        # Fetch license count via Graph API
+        created_loop = False
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if not loop.is_running():
+            total_paid_licenses = loop.run_until_complete(
+                self._get_total_paid_licenses()
+            )
+
+            if created_loop:
+                asyncio.set_event_loop(None)
+                loop.close()
+
+            if self.organization_config is not None:
+                self.organization_config.total_paid_licenses = total_paid_licenses
+
+    async def _get_total_paid_licenses(self) -> Optional[int]:
+        """Fetch total paid license count from Microsoft Graph subscribed SKUs."""
+        logger.info("Microsoft365 - Getting total paid license count...")
+        try:
+            subscribed_skus = await self.client.subscribed_skus.get()
+            total = 0
+            for sku in getattr(subscribed_skus, "value", []) or []:
+                prepaid_units = getattr(sku, "prepaid_units", None)
+                if prepaid_units:
+                    enabled = getattr(prepaid_units, "enabled", 0) or 0
+                    total += enabled
+            return total
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
     def _get_organization_config(self):
         logger.info("Microsoft365 - Getting Exchange Organization configuration...")
         organization_config = None
@@ -73,6 +118,9 @@ class Exchange(M365Service):
                     ),
                     mailtips_large_audience_threshold=organization_configuration.get(
                         "MailTipsLargeAudienceThreshold", 25
+                    ),
+                    delayed_delicensing_enabled=organization_configuration.get(
+                        "DelayedDelicensingEnabled", False
                     ),
                 )
         except Exception as error:
@@ -309,6 +357,22 @@ class Exchange(M365Service):
 
 
 class Organization(BaseModel):
+    """
+    Model for Exchange Online organization configuration.
+
+    Attributes:
+        name: Organization display name.
+        guid: Organization unique identifier.
+        audit_disabled: Whether auditing is disabled for the organization.
+        oauth_enabled: Whether OAuth 2.0 (Modern Authentication) is enabled.
+        mailtips_enabled: Whether MailTips are enabled.
+        mailtips_external_recipient_enabled: Whether MailTips for external recipients are enabled.
+        mailtips_group_metrics_enabled: Whether MailTips group metrics are enabled.
+        mailtips_large_audience_threshold: Threshold for large audience MailTips.
+        delayed_delicensing_enabled: Whether Delicensing Resiliency is enabled.
+        total_paid_licenses: Total paid licenses in the tenant, or None if unknown.
+    """
+
     name: str
     guid: str
     audit_disabled: bool
@@ -317,6 +381,8 @@ class Organization(BaseModel):
     mailtips_external_recipient_enabled: bool
     mailtips_group_metrics_enabled: bool
     mailtips_large_audience_threshold: int
+    delayed_delicensing_enabled: bool = False
+    total_paid_licenses: Optional[int] = None
 
 
 class MailboxAuditConfig(BaseModel):

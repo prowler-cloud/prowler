@@ -16,7 +16,7 @@
   "Risk": "Using the default certificate prevents HTTPS on your own hostnames, breaking hostname validation. Clients may face errors or avoid TLS, impacting **authentication** and **availability**. Control over TLS posture and domain-bound security headers is reduced, weakening **confidentiality** and user trust.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-distro-custom-tls.html",
+    "https://trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudFront/cloudfront-distro-custom-tls.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-7",
     "https://support.icompaas.com/support/solutions/articles/62000233491-ensure-cloudfront-distributions-use-custom-ssl-tls-certificates",
     "https://reintech.io/blog/configure-https-ssl-certificates-cloudfront-distributions"

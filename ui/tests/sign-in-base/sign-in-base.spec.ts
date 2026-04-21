@@ -150,9 +150,11 @@ test.describe("Session Persistence", () => {
       await signInPage.loginAndVerify(TEST_CREDENTIALS.VALID);
 
       await homePage.signOut();
-      await signInPage.verifyLogoutSuccess();
 
-      await homePage.goto();
+      // Wait for signOut to redirect to /sign-in (NextAuth signOut flow)
+      await page.waitForURL(/\/sign-in/, { timeout: 15000 });
+
+      // Verify we're on the sign-in page with the form visible
       await signInPage.verifyOnSignInPage();
     },
   );

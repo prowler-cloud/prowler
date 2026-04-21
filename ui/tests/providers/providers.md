@@ -766,3 +766,249 @@
 - Requires PROVIDER-E2E-012 to be run first to create the OCI provider
 - This test validates the fix for OCI update credentials form failing silently due to missing provider UID
 - The provider UID is required for OCI credential validation (tenancy field auto-populated from UID)
+
+---
+
+## Test Case: `PROVIDER-E2E-014` - Add AlibabaCloud Provider with Static Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @alibabacloud
+
+**Description/Objective:** Validates the complete flow of adding a new Alibaba Cloud provider using static credentials (Access Key ID and Access Key Secret)
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_ALIBABACLOUD_ACCOUNT_ID, E2E_ALIBABACLOUD_ACCESS_KEY_ID, E2E_ALIBABACLOUD_ACCESS_KEY_SECRET
+- Remove any existing provider with the same Account ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AlibabaCloud provider type
+4. Fill provider details (account ID and alias)
+5. Verify AlibabaCloud credentials page is loaded
+6. Select static credentials type
+7. Verify static credentials page is loaded
+8. Fill AlibabaCloud credentials (access key ID and access key secret)
+9. Launch initial scan
+10. Verify redirect to Scans page
+11. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- AlibabaCloud provider successfully added with static credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays AlibabaCloud option
+- Provider details form accepts account ID and alias
+- Credentials page loads with credential type selection
+- Static credentials page loads with access key ID and access key secret fields
+- Static credentials are properly filled in the correct fields
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by account ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for AlibabaCloud credentials
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid Alibaba Cloud account with appropriate permissions
+- Static credentials must have sufficient permissions for security scanning
+
+---
+
+## Test Case: `PROVIDER-E2E-015` - Add AlibabaCloud Provider with RAM Role Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @alibabacloud
+
+**Description/Objective:** Validates the complete flow of adding a new Alibaba Cloud provider using RAM Role credentials (Access Key ID, Access Key Secret, and Role ARN)
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_ALIBABACLOUD_ACCOUNT_ID, E2E_ALIBABACLOUD_ACCESS_KEY_ID, E2E_ALIBABACLOUD_ACCESS_KEY_SECRET, E2E_ALIBABACLOUD_ROLE_ARN
+- Remove any existing provider with the same Account ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AlibabaCloud provider type
+4. Fill provider details (account ID and alias)
+5. Verify AlibabaCloud credentials page is loaded
+6. Select RAM Role credentials type
+7. Verify RAM Role credentials page is loaded
+8. Fill AlibabaCloud RAM Role credentials (access key ID, access key secret, and role ARN)
+9. Launch initial scan
+10. Verify redirect to Scans page
+11. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- AlibabaCloud provider successfully added with RAM Role credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays AlibabaCloud option
+- Provider details form accepts account ID and alias
+- Credentials page loads with credential type selection
+- RAM Role credentials page loads with access key ID, access key secret, and role ARN fields
+- RAM Role credentials are properly filled in the correct fields
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by account ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for AlibabaCloud RAM Role credentials
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid Alibaba Cloud account with RAM Role configured
+- RAM Role must have sufficient permissions for security scanning
+- Role ARN must be properly configured and assumable
+
+---
+
+## Test Case: `PROVIDER-E2E-016` - Add AWS Organization Using AWS Organizations Flow
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @aws
+
+**Description/Objective:** Validates the complete flow of adding AWS accounts through AWS Organizations, including organization setup, authentication, account selection, and scan scheduling.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_AWS_ORGANIZATION_ID, E2E_AWS_ORGANIZATION_ROLE_ARN
+- Remove any existing provider with the same Organization ID before starting the test
+- StackSet must be deployed in AWS Organizations and expose a valid IAM Role ARN for Prowler
+- This test must be run serially and never in parallel with other tests, as it requires the Organization ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AWS provider type
+4. Select "Add Multiple Accounts With AWS Organizations"
+5. Fill organization details (organization ID and optional name)
+6. Continue to authentication details and provide role ARN
+7. Confirm StackSet deployment checkbox and authenticate
+8. Confirm organization account selection step and continue
+9. Verify organization launch step, choose single scan schedule, and launch
+10. Verify redirect to Scans page
+
+### Expected Result:
+
+- AWS Organizations flow completes successfully
+- Accounts are connected and launch step is displayed
+- Scan scheduling selection is applied
+- User is redirected to Scans page after launch
+
+### Key verification points:
+
+- Connect account page displays AWS option
+- Organizations method selector is available
+- Authentication details step loads
+- Account selection step loads
+- Accounts connected launch step appears
+- Successful redirect to Scans page after launching
+
+### Notes:
+
+- Organization ID must follow AWS format (e.g., o-abc123def4)
+- Role ARN must belong to the StackSet deployment for Organizations flow
+- Provider cleanup is executed before test run to avoid unique constraint conflicts
+
+---
+
+## Test Case: `PROVIDER-E2E-017` - Add Google Workspace Provider with Service Account Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @googleworkspace
+
+**Description/Objective:** Validates the complete flow of adding a new Google Workspace provider using Service Account authentication with Customer ID, Service Account JSON, and delegated user email.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_GOOGLEWORKSPACE_CUSTOMER_ID, E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON, E2E_GOOGLEWORKSPACE_DELEGATED_USER
+- Remove any existing provider with the same Customer ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Customer ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select Google Workspace provider type
+4. Fill provider details (customer ID and alias)
+5. Verify Google Workspace credentials page is loaded
+6. Fill Google Workspace credentials (customer ID, service account JSON, delegated user email)
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- Google Workspace provider successfully added with Service Account credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays Google Workspace option
+- Provider details form accepts customer ID (format: C[0-9a-zA-Z]+) and alias
+- Credentials page loads with customer ID, service account JSON textarea, and delegated user email fields
+- Customer ID help text is visible with instructions on finding the Customer ID
+- Service account JSON field accepts multi-line formatted JSON
+- Delegated user email field validates email format
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by customer ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for Google Workspace credentials
+- Service Account JSON is provided as multi-line JSON string (not base64 encoded)
+- Customer ID must start with 'C' followed by alphanumeric characters (e.g., C01234abc)
+- Delegated user email must be a super admin in the Google Workspace domain
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid Google Workspace account with Service Account having domain-wide delegation enabled
+- Service Account must have appropriate Google Workspace API scopes for security scanning

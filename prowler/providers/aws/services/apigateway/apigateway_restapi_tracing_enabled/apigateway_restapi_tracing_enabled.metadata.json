@@ -18,7 +18,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/apigateway-controls.html#apigateway-3",
     "https://docs.aws.amazon.com/xray/latest/devguide/xray-services-apigateway.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/APIGateway/tracing.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/APIGateway/tracing.html"
   ],
   "Remediation": {
     "Code": {

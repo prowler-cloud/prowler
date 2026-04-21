@@ -32,9 +32,18 @@ from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
+from prowler.lib.outputs.compliance.cis.cis_googleworkspace import GoogleWorkspaceCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
+from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
+    GoogleWorkspaceCISASCuBA,
+)
+from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
+from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
+from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
+from prowler.lib.outputs.compliance.csa.csa_gcp import GCPCSA
+from prowler.lib.outputs.compliance.csa.csa_oraclecloud import OracleCloudCSA
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -88,17 +97,19 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), AWSISO27001),
         (lambda name: name.startswith("kisa"), AWSKISAISMSP),
         (lambda name: name == "prowler_threatscore_aws", ProwlerThreatScoreAWS),
-        (lambda name: name == "ccc_aws", CCC_AWS),
+        (lambda name: name.startswith("ccc_"), CCC_AWS),
         (lambda name: name.startswith("c5_"), AWSC5),
+        (lambda name: name.startswith("csa_"), AWSCSA),
     ],
     "azure": [
         (lambda name: name.startswith("cis_"), AzureCIS),
         (lambda name: name == "mitre_attack_azure", AzureMitreAttack),
         (lambda name: name.startswith("ens_"), AzureENS),
         (lambda name: name.startswith("iso27001_"), AzureISO27001),
-        (lambda name: name == "ccc_azure", CCC_Azure),
+        (lambda name: name.startswith("ccc_"), CCC_Azure),
         (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
         (lambda name: name == "c5_azure", AzureC5),
+        (lambda name: name.startswith("csa_"), AzureCSA),
     ],
     "gcp": [
         (lambda name: name.startswith("cis_"), GCPCIS),
@@ -106,8 +117,9 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("ens_"), GCPENS),
         (lambda name: name.startswith("iso27001_"), GCPISO27001),
         (lambda name: name == "prowler_threatscore_gcp", ProwlerThreatScoreGCP),
-        (lambda name: name == "ccc_gcp", CCC_GCP),
+        (lambda name: name.startswith("ccc_"), CCC_GCP),
         (lambda name: name == "c5_gcp", GCPC5),
+        (lambda name: name.startswith("csa_"), GCPCSA),
     ],
     "kubernetes": [
         (lambda name: name.startswith("cis_"), KubernetesCIS),
@@ -125,15 +137,22 @@ COMPLIANCE_CLASS_MAP = {
     "github": [
         (lambda name: name.startswith("cis_"), GithubCIS),
     ],
+    "googleworkspace": [
+        (lambda name: name.startswith("cis_"), GoogleWorkspaceCIS),
+        (lambda name: name.startswith("cisa_scuba_"), GoogleWorkspaceCISASCuBA),
+    ],
     "iac": [
         # IaC provider doesn't have specific compliance frameworks yet
         # Trivy handles its own compliance checks
     ],
+    "image": [],
     "oraclecloud": [
         (lambda name: name.startswith("cis_"), OracleCloudCIS),
+        (lambda name: name.startswith("csa_"), OracleCloudCSA),
     ],
     "alibabacloud": [
         (lambda name: name.startswith("cis_"), AlibabaCloudCIS),
+        (lambda name: name.startswith("csa_"), AlibabaCloudCSA),
         (
             lambda name: name == "prowler_threatscore_alibabacloud",
             ProwlerThreatScoreAlibaba,

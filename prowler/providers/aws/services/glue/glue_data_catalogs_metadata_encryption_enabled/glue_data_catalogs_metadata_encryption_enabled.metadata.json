@@ -18,7 +18,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/glue/latest/dg/encrypt-glue-data-catalog.html",
     "https://docs.amazonaws.cn/en_us/athena/latest/ug/encryption.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/data-catalog-encryption-at-rest-with-cmk.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Glue/data-catalog-encryption-at-rest-with-cmk.html",
     "https://support.icompaas.com/support/solutions/articles/62000233381-ensure-glue-data-catalogs-are-not-publicly-accessible-"
   ],
   "Remediation": {

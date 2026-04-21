@@ -1,0 +1,11 @@
+ui:
+  ingress:
+    enabled: true
+    hosts:
+      - host: 127.0.0.1.nip.io
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+
+# or use authUrl if you use prowler behind a proxy
+# authUrl: 127.0.0.1.nip.io

@@ -1,7 +1,7 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
-import { ComponentProps, ReactNode } from "react";
+import { EllipsisVertical } from "lucide-react";
+import { ComponentProps, ReactNode, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -9,16 +9,23 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./dropdown";
 
+const ACTION_TRIGGER_STYLES = {
+  table: "hover:bg-bg-neutral-tertiary rounded-full p-1 transition-colors",
+  bordered:
+    "hover:bg-bg-neutral-tertiary rounded-full border border-text-neutral-secondary p-2 transition-colors",
+} as const;
+
+type ActionDropdownVariant = keyof typeof ACTION_TRIGGER_STYLES;
+
 interface ActionDropdownProps {
   /** The dropdown trigger element. Defaults to a vertical dots icon button */
   trigger?: ReactNode;
-  /** Label shown at the top of the dropdown */
-  label?: string;
+  /** Trigger style variant. "table" = no border, "bordered" = circular border */
+  variant?: ActionDropdownVariant;
   /** Alignment of the dropdown content */
   align?: "start" | "center" | "end";
   /** Additional className for the content */
@@ -30,38 +37,42 @@ interface ActionDropdownProps {
 
 export function ActionDropdown({
   trigger,
-  label = "Actions",
+  variant = "table",
   align = "end",
   className,
   ariaLabel = "Open actions menu",
   children,
 }: ActionDropdownProps) {
+  const [open, setOpen] = useState(false);
+
+  // Close dropdown when any ancestor scrolls (capture phase catches all scroll events)
+  useEffect(() => {
+    if (!open) return;
+    const handleScroll = () => setOpen(false);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
+  }, [open]);
+
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         {trigger ?? (
           <button
             type="button"
             aria-label={ariaLabel}
-            className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
+            className={ACTION_TRIGGER_STYLES[variant]}
           >
-            <MoreHorizontal className="text-text-neutral-secondary size-5" />
+            <EllipsisVertical className="text-text-neutral-secondary size-6" />
           </button>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align={align}
         className={cn(
-          "border-border-neutral-secondary bg-bg-neutral-secondary w-56",
+          "border-border-neutral-secondary bg-bg-neutral-secondary w-56 rounded-xl",
           className,
         )}
       >
-        {label && (
-          <>
-            <DropdownMenuLabel>{label}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-          </>
-        )}
         {children}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -91,8 +102,9 @@ export function ActionDropdownItem({
   return (
     <DropdownMenuItem
       className={cn(
-        "flex cursor-pointer items-center gap-2",
-        destructive && "text-destructive focus:text-destructive",
+        "hover:bg-bg-neutral-tertiary flex cursor-pointer items-start gap-2 rounded-md transition-colors",
+        destructive &&
+          "text-text-error-primary focus:text-text-error-primary hover:bg-destructive/10",
         className,
       )}
       {...props}
@@ -100,8 +112,8 @@ export function ActionDropdownItem({
       {icon && (
         <span
           className={cn(
-            "text-muted-foreground shrink-0 [&>svg]:size-5",
-            destructive && "text-destructive",
+            "text-muted-foreground mt-0.5 shrink-0 [&>svg]:size-4",
+            destructive && "text-text-error-primary",
           )}
         >
           {icon}
@@ -113,7 +125,7 @@ export function ActionDropdownItem({
           <span
             className={cn(
               "text-muted-foreground text-xs",
-              destructive && "text-destructive/70",
+              destructive && "text-text-error-primary/70",
             )}
           >
             {description}
@@ -124,8 +136,18 @@ export function ActionDropdownItem({
   );
 }
 
-// Re-export commonly used components for convenience
-export {
-  DropdownMenuLabel as ActionDropdownLabel,
-  DropdownMenuSeparator as ActionDropdownSeparator,
-} from "./dropdown";
+export function ActionDropdownDangerZone({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  return (
+    <>
+      <DropdownMenuSeparator />
+      <span className="text-text-neutral-tertiary px-2 py-1.5 text-xs">
+        Danger zone
+      </span>
+      {children}
+    </>
+  );
+}

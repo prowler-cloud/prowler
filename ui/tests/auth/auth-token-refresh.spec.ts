@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { getSession, TEST_CREDENTIALS, verifySessionValid } from "../helpers";
+import {
+  getSession,
+  getSessionWithoutCookies,
+  TEST_CREDENTIALS,
+  verifySessionValid,
+} from "../helpers";
 import { HomePage } from "../home/home-page";
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
 
@@ -71,7 +76,7 @@ test.describe("Token Refresh Flow", () => {
 
       await context.clearCookies();
 
-      const expiredSession = await getSession(page);
+      const expiredSession = await getSessionWithoutCookies(page);
       expect(expiredSession).toBeNull();
     },
   );

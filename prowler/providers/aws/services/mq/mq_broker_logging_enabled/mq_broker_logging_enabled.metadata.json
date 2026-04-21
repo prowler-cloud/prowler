@@ -19,7 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/configure-logging-monitoring-activemq.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/mq-controls.html#mq-2",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/log-exports.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/MQ/log-exports.html",
     "https://docs.aws.amazon.com/cli/latest/reference/mq/create-broker.html",
     "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/security-logging-monitoring.html"
   ],

@@ -16,7 +16,7 @@
   "Risk": "An unauthenticated function URL lets anyone invoke code:\n- Confidentiality: data exposure\n- Integrity: unintended changes via over-privileged logic\n- Availability: DoS/denial-of-wallet through high request rates\n\nAttackers can script calls, exfiltrate data, and pivot using the function's permissions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Lambda/iam-auth-function-url.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/Lambda/iam-auth-function-url.html",
     "https://www.roastdev.com/post/aws-lambda-url-invocations-with-iam-authentication-and-throttling-limits",
     "https://docs.aws.amazon.com/secretsmanager/latest/userguide/lambda-functions.html",
     "https://dev.to/aws-builders/hands-on-aws-lambda-function-url-with-aws-iam-authentication-type-180g",
