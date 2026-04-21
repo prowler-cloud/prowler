@@ -473,7 +473,7 @@ class Identity(OCIService):
                                 compartment_id=compartment.id,
                                 lifecycle_state=domain.lifecycle_state,
                                 time_created=domain.time_created,
-                                region=domain.region,
+                                region=regional_client.region,
                                 password_policies=[],
                             )
                         )
