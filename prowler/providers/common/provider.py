@@ -204,6 +204,25 @@ class Provider(ABC):
             f"{self.__class__.__name__} has not implemented get_mutelist_finding_args()"
         )
 
+    def display_compliance_table(
+        self,
+        findings: list,
+        bulk_checks_metadata: dict,
+        compliance_framework: str,
+        output_filename: str,
+        output_directory: str,
+        compliance_overview: bool,
+    ) -> bool:
+        """Render a custom compliance table in the terminal.
+
+        External providers can override this to display a detailed
+        compliance table (e.g., per-section breakdown). Return True
+        if the table was rendered, False to fall back to the generic table.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} has not implemented display_compliance_table()"
+        )
+
     @property
     def is_external_tool_provider(self) -> bool:
         """True for providers that delegate scanning to an external tool."""

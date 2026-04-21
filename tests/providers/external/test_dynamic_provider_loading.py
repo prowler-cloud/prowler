@@ -87,6 +87,17 @@ class FakeExternalProvider(Provider):
     def get_mutelist_finding_args(self):
         return {"host_id": self.identity.host_id}
 
+    def display_compliance_table(
+        self,
+        findings,
+        bulk_checks_metadata,
+        compliance_framework,
+        output_filename,
+        output_directory,
+        compliance_overview,
+    ):
+        return True
+
     def get_html_assessment_summary(self):
         return "<div>Fake Assessment</div>"
 
@@ -1167,6 +1178,12 @@ class TestBaseContractDefaults:
         with pytest.raises(NotImplementedError):
             provider.get_mutelist_finding_args()
 
+    def test_display_compliance_table_raises_not_implemented(self):
+        """Base Provider.display_compliance_table raises NotImplementedError."""
+        provider = FakeProviderNoHelpText()
+        with pytest.raises(NotImplementedError):
+            provider.display_compliance_table([], {}, "fw", "out", "/tmp", False)
+
     def test_is_external_tool_provider_defaults_to_false(self):
         """Base Provider.is_external_tool_provider returns False."""
         provider = FakeProviderNoHelpText()
@@ -1218,3 +1235,70 @@ class TestMutelistDispatch:
         fake_provider.mutelist.is_finding_muted.assert_called_once_with(
             host_id="fake-host-1", finding=finding
         )
+
+
+# ===========================================================================
+# 11. Compliance Table Dispatch for External Providers
+# ===========================================================================
+
+
+class TestComplianceTableDispatch:
+    """Tests for compliance table display with external providers."""
+
+    def test_display_compliance_table_delegates_to_provider(self, fake_provider):
+        """display_compliance_table uses provider method for unknown frameworks."""
+        from prowler.lib.outputs.compliance.compliance import (
+            display_compliance_table,
+        )
+
+        fake_provider.display_compliance_table = MagicMock(return_value=True)
+
+        display_compliance_table(
+            [], {}, "custom_1.0_fakeexternal", "out", "/tmp", False
+        )
+
+        fake_provider.display_compliance_table.assert_called_once_with(
+            [],
+            {},
+            "custom_1.0_fakeexternal",
+            "out",
+            "/tmp",
+            False,
+        )
+
+    def test_display_compliance_table_falls_back_to_generic(self, fake_provider):
+        """display_compliance_table falls back to generic when provider returns False."""
+        from prowler.lib.outputs.compliance.compliance import (
+            display_compliance_table,
+        )
+
+        fake_provider.display_compliance_table = MagicMock(return_value=False)
+
+        with patch(
+            "prowler.lib.outputs.compliance.compliance.get_generic_compliance_table"
+        ) as mock_generic:
+            display_compliance_table(
+                [], {}, "custom_1.0_fakeexternal", "out", "/tmp", False
+            )
+
+        mock_generic.assert_called_once()
+
+    def test_display_compliance_table_falls_back_on_not_implemented(self):
+        """display_compliance_table falls back to generic when NotImplementedError."""
+        # Use a provider that doesn't implement display_compliance_table
+        provider = FakeProviderNoHelpText()
+        Provider.set_global_provider(provider)
+
+        with patch(
+            "prowler.lib.outputs.compliance.compliance.get_generic_compliance_table"
+        ) as mock_generic:
+            from prowler.lib.outputs.compliance.compliance import (
+                display_compliance_table,
+            )
+
+            display_compliance_table(
+                [], {}, "unknown_1.0_nohelptext", "out", "/tmp", False
+            )
+
+        mock_generic.assert_called_once()
+        Provider._global = None
