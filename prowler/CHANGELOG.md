@@ -6,7 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- CloudTrail resource timeline uses resource name as fallback in `LookupEvents` [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- CloudTrail resource timeline uses resource name as fallback in `LookupEvents` [(#10828)](https://github.com/prowler-cloud/prowler/pull/10828)
 
 ---
 
