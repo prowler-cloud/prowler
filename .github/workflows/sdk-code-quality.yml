@@ -37,9 +37,7 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            github.com:443
-            pypi.org:443
-            files.pythonhosted.org:443
+            github.com:443 pypi.org:443 files.pythonhosted.org:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -84,7 +82,8 @@ jobs:
 
       - name: Lint with flake8
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib,ui,api,skills
+        run: poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude
+          contrib,ui,api,skills
 
       - name: Check format with black
         if: steps.check-changes.outputs.any_changed == 'true'
