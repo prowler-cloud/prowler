@@ -113,6 +113,13 @@ export default defineConfig({
       name: "sign-up",
       testMatch: "sign-up.spec.ts",
     },
+    // This project runs the invitation accept smart router test suite
+    // Tests run unauthenticated (no auth setup dependency)
+    {
+      name: "invitation-accept",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /invitation-accept\/.*\.spec\.ts/,
+    },
     // This project runs the scans test suite
     {
       name: "scans",
