@@ -127,7 +127,7 @@ repos:
         entry: pylint --disable=W,C,R,E -j 0 -rn -sn
         language: system
         types: [python]
-        files: { glob: ["prowler/**/*.py"] }
+        files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
 
       - id: trufflehog
         name: TruffleHog
