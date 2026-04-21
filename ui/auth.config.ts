@@ -15,8 +15,8 @@ import { apiBaseUrl } from "./lib";
 import type { RolePermissionAttributes } from "./types/users";
 
 interface CustomJwtPayload extends JwtPayload {
-  user_id?: string;  // Optional - doesn't actually exist in JWT tokens
-  sub: string;       // Standard JWT subject field - contains the actual user ID
+  user_id?: string; // Optional - doesn't actually exist in JWT tokens
+  sub: string; // Standard JWT subject field - contains the actual user ID
   tenant_id: string;
 }
 
