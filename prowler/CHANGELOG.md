@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.25.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Support for external/custom providers, checks, and compliance frameworks without modifying core code [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
+
+---
+
 ## [5.24.1] (Prowler v5.24.1)
 
 ### 🔄 Changed
