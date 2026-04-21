@@ -726,6 +726,20 @@ class TestLookupEventsFallback:
         assert result == []
         assert mock_client.lookup_events.call_count == 1
 
+    def test_no_fallback_when_identifier_is_not_arn(self, mock_session):
+        """A non-ARN identifier with / or : must not trigger the retry."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": []}
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1", resource_id="some-prefix/weird:value"
+        )
+
+        assert result == []
+        assert mock_client.lookup_events.call_count == 1
+
     def test_both_lookups_empty_returns_empty_list(self, mock_session):
         """If both the ARN and short-name lookups return empty, we return []."""
         mock_client = MagicMock()

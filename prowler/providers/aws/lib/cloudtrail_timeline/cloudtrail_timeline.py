@@ -146,7 +146,7 @@ class CloudTrailTimeline(TimelineService):
 
         events = self._lookup_events_by_name(client, resource_identifier, start_time)
 
-        if not events:
+        if not events and resource_identifier.startswith("arn:"):
             short_name = self._extract_short_name(resource_identifier)
             if short_name and short_name != resource_identifier:
                 logger.debug(
