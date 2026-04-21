@@ -84,6 +84,7 @@ continue.json
 .continuerc.json
 
 # AI Coding Assistants - OpenCode
+.opencode/
 opencode.json
 
 # AI Coding Assistants - GitHub Copilot

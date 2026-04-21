@@ -2,17 +2,45 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.24.0] (Prowler UNRELEASED)
+## [1.25.1] (Prowler v5.24.1)
+
+### 🐞 Fixed
+
+- Attack Paths: Missing `tenant_id` filter while getting related findings after scan completes [(#10722)](https://github.com/prowler-cloud/prowler/pull/10722)
+- Finding group counters `pass_count`, `fail_count` and `manual_count` now exclude muted findings [(#10753)](https://github.com/prowler-cloud/prowler/pull/10753)
+
+---
+
+## [1.25.0] (Prowler v5.24.0)
+
+### 🔄 Changed
+
+- Bump Poetry to `2.3.4` in Dockerfile and pre-commit hooks. Regenerate `api/poetry.lock` [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
+- Attack Paths: Remove dead `cleanup_findings` no-op and its supporting `prowler_finding_lastupdated` index [(#10684)](https://github.com/prowler-cloud/prowler/pull/10684)
+
+### 🐞 Fixed
+
+- Worker-beat race condition on cold start: replaced `sleep 15` with API service healthcheck dependency (Docker Compose) and init containers (Helm), aligned Gunicorn default port to `8080` [(#10603)](https://github.com/prowler-cloud/prowler/pull/10603)
+- API container startup crash on Linux due to root-owned bind-mount preventing JWT key generation [(#10646)](https://github.com/prowler-cloud/prowler/pull/10646)
+- Finding group resources endpoints now include findings without associated resources (orphan IaC findings) as simulated resource rows, and return one row per finding when multiple findings share a resource [(#10708)](https://github.com/prowler-cloud/prowler/pull/10708)
+
+### 🔐 Security
+
+- `pytest` from 8.2.2 to 9.0.3 to fix CVE-2025-71176 [(#10678)](https://github.com/prowler-cloud/prowler/pull/10678)
+
+---
+
+## [1.24.0] (Prowler v5.23.0)
 
 ### 🚀 Added
 
-- Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
-- Filter RBAC role lookup by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
+- RBAC role lookup filtered by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
 - `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
 - `Vercel` provider support [(#10190)](https://github.com/prowler-cloud/prowler/pull/10190)
 - Finding groups list and latest endpoints support `sort=delta`, ordering by `new_count` then `changed_count` so groups with the most new findings rank highest [(#10606)](https://github.com/prowler-cloud/prowler/pull/10606)
 - Finding group resources endpoints (`/finding-groups/{check_id}/resources` and `/finding-groups/latest/{check_id}/resources`) now expose `finding_id` per row, pointing to the most recent matching Finding for each resource. UUIDv7 ordering guarantees `Max(finding__id)` resolves to the latest snapshot [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
 - Handle CIS and CISA SCuBA compliance framework from google workspace [(#10629)](https://github.com/prowler-cloud/prowler/pull/10629)
+- Sort support for all finding group counter fields: `pass_muted_count`, `fail_muted_count`, `manual_muted_count`, and all `new_*`/`changed_*` status-mute breakdown counters [(#10655)](https://github.com/prowler-cloud/prowler/pull/10655)
 
 ### 🔄 Changed
 

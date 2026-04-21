@@ -37,13 +37,18 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import {
+  QUERY_EDITOR_LANGUAGE,
+  QueryCodeEditor,
+  type QueryEditorLanguage,
+} from "@/components/shared/query-code-editor";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
@@ -78,6 +83,59 @@ function stripCodeFences(code: string): string {
     .replace(/^```\w*\n?/, "")
     .replace(/\n?```\s*$/, "")
     .trim();
+}
+
+function resolveNativeIacConfig(providerType: string | undefined): {
+  label: string;
+  language: QueryEditorLanguage;
+} {
+  switch (providerType) {
+    case "aws":
+      return {
+        label: "CloudFormation",
+        language: QUERY_EDITOR_LANGUAGE.YAML,
+      };
+    case "azure":
+      return {
+        label: "Bicep",
+        language: QUERY_EDITOR_LANGUAGE.BICEP,
+      };
+    case "kubernetes":
+      return {
+        label: "Kubernetes Manifest",
+        language: QUERY_EDITOR_LANGUAGE.YAML,
+      };
+    default:
+      return {
+        label: "Native IaC",
+        language: QUERY_EDITOR_LANGUAGE.PLAIN_TEXT,
+      };
+  }
+}
+
+function renderRemediationCodeBlock({
+  label,
+  value,
+  copyValue,
+  language = QUERY_EDITOR_LANGUAGE.PLAIN_TEXT,
+}: {
+  label: string;
+  value: string;
+  copyValue?: string;
+  language?: QueryEditorLanguage;
+}) {
+  return (
+    <QueryCodeEditor
+      ariaLabel={label}
+      language={language}
+      value={value}
+      copyValue={copyValue}
+      editable={false}
+      minHeight={96}
+      showCopyButton
+      onChange={() => {}}
+    />
+  );
 }
 
 function normalizeComplianceFrameworkName(framework: string): string {
@@ -218,16 +276,12 @@ function buildComplianceDetailHref({
   version,
   scanId,
   regionFilter,
-  currentFinding,
-  includeScanData,
 }: {
   complianceId: string;
   framework: string;
   version: string;
   scanId: string;
   regionFilter: string | null;
-  currentFinding: ResourceDrawerFinding | null;
-  includeScanData: boolean;
 }): string {
   const params = new URLSearchParams();
   params.set("complianceId", complianceId);
@@ -238,24 +292,6 @@ function buildComplianceDetailHref({
 
   if (regionFilter) {
     params.set("filter[region__in]", regionFilter);
-  }
-
-  if (includeScanData && currentFinding?.scan?.completedAt) {
-    params.set(
-      "scanData",
-      JSON.stringify({
-        id: currentFinding.scan.id,
-        providerInfo: {
-          provider: currentFinding.providerType,
-          alias: currentFinding.providerAlias,
-          uid: currentFinding.providerUid,
-        },
-        attributes: {
-          name: currentFinding.scan.name,
-          completed_at: currentFinding.scan.completedAt,
-        },
-      }),
-    );
   }
 
   return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
@@ -349,6 +385,7 @@ export function ResourceDetailDrawerContent({
         ? (f?.scan?.id ?? null)
         : null;
   const regionFilter = searchParams.get("filter[region__in]");
+  const nativeIacConfig = resolveNativeIacConfig(f?.providerType);
 
   const handleOpenCompliance = async (framework: string) => {
     if (!complianceScanId || resolvingFramework) {
@@ -377,8 +414,6 @@ export function ResourceDetailDrawerContent({
           version: complianceMatch.version,
           scanId: complianceScanId,
           regionFilter,
-          currentFinding: f,
-          includeScanData: f?.scan?.id === complianceScanId,
         }),
         "_blank",
         "noopener,noreferrer",
@@ -739,47 +774,38 @@ export function ResourceDetailDrawerContent({
 
                 {checkMeta.remediation.code.cli && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CLI Command:
-                    </span>
-                    <CodeSnippet
-                      value={`$ ${stripCodeFences(checkMeta.remediation.code.cli)}`}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                    {renderRemediationCodeBlock({
+                      label: "CLI Command",
+                      language: QUERY_EDITOR_LANGUAGE.SHELL,
+                      value: `$ ${stripCodeFences(checkMeta.remediation.code.cli)}`,
+                      copyValue: stripCodeFences(
+                        checkMeta.remediation.code.cli,
+                      ),
+                    })}
                   </div>
                 )}
 
                 {checkMeta.remediation.code.terraform && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      Terraform:
-                    </span>
-                    <CodeSnippet
-                      value={stripCodeFences(
+                    {renderRemediationCodeBlock({
+                      label: "Terraform",
+                      language: QUERY_EDITOR_LANGUAGE.HCL,
+                      value: stripCodeFences(
                         checkMeta.remediation.code.terraform,
-                      )}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                      ),
+                    })}
                   </div>
                 )}
 
-                {checkMeta.remediation.code.nativeiac && (
+                {checkMeta.remediation.code.nativeiac && f && (
                   <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-xs">
-                      CloudFormation:
-                    </span>
-                    <CodeSnippet
-                      value={stripCodeFences(
+                    {renderRemediationCodeBlock({
+                      label: nativeIacConfig.label,
+                      language: nativeIacConfig.language,
+                      value: stripCodeFences(
                         checkMeta.remediation.code.nativeiac,
-                      )}
-                      multiline
-                      transparent
-                      className="max-w-full text-sm"
-                    />
+                      ),
+                    })}
                   </div>
                 )}
 
@@ -847,9 +873,7 @@ export function ResourceDetailDrawerContent({
             className="minimal-scrollbar flex flex-col gap-2 overflow-y-auto"
           >
             {!f || isNavigating ? (
-              <div className="flex items-center justify-center py-8">
-                <Spinner className="size-5" />
-              </div>
+              <LoadingState spinnerClassName="size-5" />
             ) : (
               <>
                 <div className="flex items-center justify-end">

@@ -46,6 +46,7 @@ interface UseResourceDetailDrawerOptions {
   checkId: string;
   totalResourceCount?: number;
   onRequestMoreResources?: () => void;
+  initialIndex?: number | null;
 }
 
 interface UseResourceDetailDrawerReturn {
@@ -77,10 +78,11 @@ export function useResourceDetailDrawer({
   checkId,
   totalResourceCount,
   onRequestMoreResources,
+  initialIndex = null,
 }: UseResourceDetailDrawerOptions): UseResourceDetailDrawerReturn {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(initialIndex !== null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex ?? 0);
   const [findings, setFindings] = useState<ResourceDrawerFinding[]>([]);
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -181,7 +183,7 @@ export function useResourceDetailDrawer({
     } catch (error) {
       if (!controller.signal.aborted) {
         console.error("Error fetching findings for resource:", error);
-        // Don't clear findings — keep previous data as fallback during navigation
+        setFindings([]);
       }
     } finally {
       if (!controller.signal.aborted) {
@@ -189,6 +191,22 @@ export function useResourceDetailDrawer({
       }
     }
   };
+
+  useEffect(() => {
+    if (initialIndex === null) {
+      return;
+    }
+
+    const resource = resources[initialIndex];
+    if (!resource) {
+      return;
+    }
+
+    fetchFindings(resource.resourceUid);
+    // Only initialize once on mount for deep-link/inline entry points.
+    // User-driven navigations use openDrawer/navigateTo afterwards.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openDrawer = (index: number) => {
     const resource = resources[index];
@@ -212,6 +230,7 @@ export function useResourceDetailDrawer({
     if (!resource) return;
     cacheRef.current.delete(resource.resourceUid);
     startNavigation();
+    setFindings([]);
     fetchFindings(resource.resourceUid);
   };
 
@@ -221,6 +240,7 @@ export function useResourceDetailDrawer({
 
     setCurrentIndex(index);
     startNavigation();
+    setFindings([]);
     fetchFindings(resource.resourceUid);
   };
 
@@ -249,10 +269,13 @@ export function useResourceDetailDrawer({
   const currentFinding =
     findings.find((f) => f.checkId === checkId) ?? findings[0] ?? null;
 
-  // All other findings for this resource
-  const otherFindings = currentFinding
-    ? findings.filter((f) => f.id !== currentFinding.id)
-    : findings;
+  // "Other Findings For This Resource" intentionally shows only FAIL entries,
+  // while currentFinding (the drilled-down one) can be any status (FAIL, MANUAL, PASS…).
+  const otherFindings = (
+    currentFinding
+      ? findings.filter((f) => f.id !== currentFinding.id)
+      : findings
+  ).filter((f) => f.status === "FAIL");
 
   return {
     isOpen,

@@ -166,7 +166,7 @@ describe("DataTableFilterCustom — batch vs instant mode", () => {
       render(<DataTableFilterCustom filters={[severityFilter]} />);
 
       // Then — renders without crashing
-      expect(screen.getByText("Severity")).toBeInTheDocument();
+      expect(screen.getByText("All Severity")).toBeInTheDocument();
     });
   });
 

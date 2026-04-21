@@ -47,6 +47,8 @@ env:
   # AWS configuration (for ECR)
   AWS_REGION: us-east-1
 
+permissions: {}
+
 jobs:
   setup:
     if: github.repository == 'prowler-cloud/prowler'
@@ -74,15 +76,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - name: Setup Python with Poetry
+        uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          install-dependencies: 'false'
 
-      - name: Install Poetry
-        run: |
-          pipx install poetry==2.1.1
-          pipx inject poetry poetry-bumpversion
+      - name: Inject poetry-bumpversion plugin
+        run: pipx inject poetry poetry-bumpversion
 
       - name: Get Prowler version and set tags
         id: get-prowler-version
