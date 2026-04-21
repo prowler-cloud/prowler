@@ -4,17 +4,13 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.25.0] (Prowler UNRELEASED)
 
+### 🔄 Changed
+
+- Unify findings filtering and sorting behind shared helpers (`applyDefaultMutedFilter`, `composeSort`, `splitCsvFilterValues`) so the findings SSR page, finding-group resource drill-down, and overview widgets stay aligned on the default muted behaviour and sort composition [(#10803)](https://github.com/prowler-cloud/prowler/pull/10803)
+
 ### ❌ Removed
 
 - Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly
-
----
-
-## [1.24.2] (Prowler UNRELEASED)
-
-### 🐞 Fixed
-
-- Default muted filter now applied consistently across the findings SSR page and the finding-group resource drill-down, keeping muted findings hidden unless the caller opts in [(#10803)](https://github.com/prowler-cloud/prowler/pull/10803)
 
 ---
 
