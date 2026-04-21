@@ -57,6 +57,7 @@ from api.models import (
     ProviderGroupMembership,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -15465,7 +15466,7 @@ class TestFindingGroupViewSet:
         attrs = data[0]["attributes"]
         assert attrs["status"] == "FAIL"
         assert attrs["muted"] is True
-        assert attrs["fail_count"] == 2
+        assert attrs["fail_count"] == 0
         assert attrs["fail_muted_count"] == 2
         assert attrs["pass_muted_count"] == 0
         assert attrs["manual_muted_count"] == 0
@@ -16029,6 +16030,36 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         # s3_bucket_public_access has 2 findings with 2 different resources
         assert len(data) == 2
+
+    def test_resources_id_matches_resource_id_for_mapped_findings(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Findings with a resource expose the resource id as row id (hot path contract)."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "expected resources in response"
+
+        resource_ids = set(
+            ResourceFindingMapping.objects.filter(
+                finding__check_id="s3_bucket_public_access",
+            ).values_list("resource_id", flat=True)
+        )
+        finding_ids = set(
+            Finding.objects.filter(
+                check_id="s3_bucket_public_access",
+            ).values_list("id", flat=True)
+        )
+
+        returned_ids = {item["id"] for item in data}
+        assert returned_ids <= {str(rid) for rid in resource_ids}
+        assert returned_ids.isdisjoint({str(fid) for fid in finding_ids})
 
     def test_resources_fields(self, authenticated_client, finding_groups_fixture):
         """Test resource fields (uid, name, service, region, type) have valid values."""
@@ -17240,3 +17271,111 @@ class TestFindingGroupViewSet:
             attrs = item["attributes"]
             assert "finding_id" in attrs
             assert attrs["finding_id"] in rds_finding_ids
+
+    def test_latest_resources_picks_scan_by_completed_at_when_overlap(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        resources_fixture,
+    ):
+        """Overlapping scans on the same provider must resolve to the scan
+        with the latest completed_at, matching the /latest summary path and
+        the daily-summary upsert (keyed on midnight(completed_at)). Picking
+        by inserted_at here produced /resources and /latest reading from
+        different scans and reporting diverging delta/new counts.
+        """
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        resource = resources_fixture[0]
+        check_id = "overlap_regression_check"
+
+        t0 = datetime.now(timezone.utc) - timedelta(hours=5)
+        t1 = t0 + timedelta(hours=1)
+        t1_end = t1 + timedelta(minutes=30)
+        t2 = t0 + timedelta(hours=4)
+
+        scan_long = Scan.objects.create(
+            name="long overlap scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=t0,
+            completed_at=t2,
+        )
+        scan_short = Scan.objects.create(
+            name="short overlap scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=t1,
+            completed_at=t1_end,
+        )
+        # inserted_at is auto_now_add so override with .update() to recreate
+        # the overlap shape: short scan inserted later but completed earlier.
+        Scan.all_objects.filter(pk=scan_long.pk).update(inserted_at=t0)
+        Scan.all_objects.filter(pk=scan_short.pk).update(inserted_at=t1)
+        scan_long.refresh_from_db()
+        scan_short.refresh_from_db()
+
+        assert scan_short.inserted_at > scan_long.inserted_at
+        assert scan_long.completed_at > scan_short.completed_at
+
+        long_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid=f"{check_id}_long",
+            scan=scan_long,
+            delta=None,
+            status=Status.FAIL,
+            status_extended="long scan finding",
+            impact=Severity.high,
+            impact_extended="high",
+            severity=Severity.high,
+            raw_result={"status": Status.FAIL, "severity": Severity.high},
+            check_id=check_id,
+            check_metadata={
+                "CheckId": check_id,
+                "checktitle": "Overlap regression",
+                "Description": "Overlapping scan regression.",
+            },
+            first_seen_at=t0,
+            muted=False,
+        )
+        long_finding.add_resources([resource])
+
+        short_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid=f"{check_id}_short",
+            scan=scan_short,
+            delta="new",
+            status=Status.FAIL,
+            status_extended="short scan finding",
+            impact=Severity.high,
+            impact_extended="high",
+            severity=Severity.high,
+            raw_result={"status": Status.FAIL, "severity": Severity.high},
+            check_id=check_id,
+            check_metadata={
+                "CheckId": check_id,
+                "checktitle": "Overlap regression",
+                "Description": "Overlapping scan regression.",
+            },
+            first_seen_at=t1,
+            muted=False,
+        )
+        short_finding.add_resources([resource])
+
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": check_id},
+            ),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        assert attrs["finding_id"] == str(long_finding.id)
+        assert attrs["delta"] is None

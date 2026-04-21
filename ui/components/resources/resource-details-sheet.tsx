@@ -36,7 +36,9 @@ export const ResourceDetailsSheet = ({
           <X className="size-4" />
           <span className="sr-only">Close</span>
         </DrawerClose>
-        {open && <ResourceDetailContent resourceDetails={resource} />}
+        {open && (
+          <ResourceDetailContent key={resource.id} resourceDetails={resource} />
+        )}
       </DrawerContent>
     </Drawer>
   );

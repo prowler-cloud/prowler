@@ -70,7 +70,7 @@ describe("getFindingGroups — default sort for muted and non-muted rows", () =>
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
     expect(url.searchParams.get("sort")).toBe(
-      "-status,-new_fail_count,-changed_fail_count,-severity,-fail_count,-last_seen_at",
+      "-status,-severity,-new_fail_count,-changed_fail_count,-fail_count,-last_seen_at",
     );
   });
 
@@ -84,7 +84,7 @@ describe("getFindingGroups — default sort for muted and non-muted rows", () =>
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
     expect(url.searchParams.get("sort")).toBe(
-      "-status,-new_fail_count,-changed_fail_count,-severity,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at",
+      "-status,-severity,-new_fail_count,-changed_fail_count,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at",
     );
   });
 });
@@ -106,7 +106,7 @@ describe("getLatestFindingGroups — default sort for muted and non-muted rows",
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
     expect(url.searchParams.get("sort")).toBe(
-      "-status,-new_fail_count,-changed_fail_count,-severity,-fail_count,-last_seen_at",
+      "-status,-severity,-new_fail_count,-changed_fail_count,-fail_count,-last_seen_at",
     );
   });
 
@@ -120,7 +120,7 @@ describe("getLatestFindingGroups — default sort for muted and non-muted rows",
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
     expect(url.searchParams.get("sort")).toBe(
-      "-status,-new_fail_count,-changed_fail_count,-severity,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at",
+      "-status,-severity,-new_fail_count,-changed_fail_count,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at",
     );
   });
 });
@@ -262,7 +262,7 @@ describe("getFindingGroupResources — Blocker 1: FAIL-first sort", () => {
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
     expect(url.searchParams.get("sort")).toBe(
-      "-status,-delta,-severity,-last_seen_at",
+      "-status,-severity,-delta,-last_seen_at",
     );
   });
 
@@ -300,7 +300,7 @@ describe("getLatestFindingGroupResources — Blocker 1: FAIL-first sort", () => 
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
     expect(url.searchParams.get("sort")).toBe(
-      "-status,-delta,-severity,-last_seen_at",
+      "-status,-severity,-delta,-last_seen_at",
     );
   });
 
@@ -344,7 +344,7 @@ describe("getFindingGroupResources — triangulation: params coexist", () => {
     expect(url.searchParams.get("page[number]")).toBe("2");
     expect(url.searchParams.get("page[size]")).toBe("50");
     expect(url.searchParams.get("sort")).toBe(
-      "-status,-delta,-severity,-last_seen_at",
+      "-status,-severity,-delta,-last_seen_at",
     );
     expect(url.searchParams.get("filter[status]")).toBeNull();
   });
@@ -372,7 +372,7 @@ describe("getLatestFindingGroupResources — triangulation: params coexist", () 
     expect(url.searchParams.get("page[number]")).toBe("3");
     expect(url.searchParams.get("page[size]")).toBe("20");
     expect(url.searchParams.get("sort")).toBe(
-      "-status,-delta,-severity,-last_seen_at",
+      "-status,-severity,-delta,-last_seen_at",
     );
     expect(url.searchParams.get("filter[status]")).toBeNull();
   });
@@ -443,7 +443,7 @@ describe("getFindingGroupResources — caller filters are preserved", () => {
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
     expect(url.searchParams.get("sort")).toBe(
-      "-status,-delta,-severity,-last_seen_at",
+      "-status,-severity,-delta,-last_seen_at",
     );
     expect(url.searchParams.get("filter[name__icontains]")).toBe("bucket-prod");
     expect(url.searchParams.get("filter[severity__in]")).toBe("high");
@@ -533,7 +533,7 @@ describe("getLatestFindingGroupResources — caller filters are preserved", () =
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
     expect(url.searchParams.get("sort")).toBe(
-      "-status,-delta,-severity,-last_seen_at",
+      "-status,-severity,-delta,-last_seen_at",
     );
     expect(url.searchParams.get("filter[name__icontains]")).toBe(
       "instance-prod",

@@ -34,12 +34,6 @@ export default async function Findings({
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
-  // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
-
-  // TODO: Re-implement deep link support (/findings?id=<uuid>) using the grouped view's resource detail drawer
-  // once the legacy FindingDetailsSheet is fully deprecated (still used by /resources and overview dashboard).
-
   const [providersData, scansData] = await Promise.all([
     getProviders({ pageSize: 50 }),
     getScans({ pageSize: 50 }),
@@ -54,8 +48,10 @@ export default async function Findings({
     },
   });
 
+  const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);
+
   const metadataInfoData = await (
-    hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
+    hasHistoricalData ? getMetadataInfo : getLatestMetadataInfo
   )({
     query,
     sort: encodedSort,
@@ -122,10 +118,9 @@ const SSRDataTable = async ({
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
 
   const { encodedSort } = extractSortAndKey(searchParams);
-  // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(searchParams);
+  const hasHistoricalData = hasDateOrScanFilter(filters);
 
-  const fetchFindingGroups = hasDateOrScan
+  const fetchFindingGroups = hasHistoricalData
     ? getFindingGroups
     : getLatestFindingGroups;
 
@@ -154,7 +149,7 @@ const SSRDataTable = async ({
         data={groups}
         metadata={findingGroupsData?.meta}
         resolvedFilters={filters}
-        hasHistoricalData={hasDateOrScan}
+        hasHistoricalData={hasHistoricalData}
       />
     </>
   );
