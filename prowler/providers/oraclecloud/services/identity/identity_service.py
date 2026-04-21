@@ -484,7 +484,7 @@ class Identity(OCIService):
                                 to_remove += [i]
                     for i in sorted(to_remove, reverse=True):
                         logger.info(
-                            "Skipping duplicate domain in non-home region: %s",
+                            "Skipping replicated domain in non-home region: %s",
                             domain.id,
                         )
                         del self.domains[i]
@@ -506,10 +506,6 @@ class Identity(OCIService):
 
             for domain in self.domains:
                 try:
-                    # Check if we're scanning from home region
-                    if regional_client.region != domain.home_region:
-                        continue
-
                     # Create Identity Domains client for this domain
                     if self.session_signer:
                         domain_client = oci.identity_domains.IdentityDomainsClient(
