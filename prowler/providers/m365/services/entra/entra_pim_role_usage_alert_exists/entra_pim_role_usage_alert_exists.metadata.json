@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_pim_role_usage_alert_exists",
+  "CheckTitle": "PIM alert for unused privileged roles monitors stale role assignments",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Privileged Identity Management (PIM) can be configured to alert when **privileged roles are not being used**. This alert detects stale role assignments where administrators have not exercised their assigned privileges, helping identify unnecessary access that should be reviewed or removed.",
+  "Risk": "Without monitoring for unused privileged roles, **stale role assignments** accumulate undetected. Dormant privileged accounts become targets for **credential theft** and **lateral movement**, expanding the attack surface. Attackers who compromise an unused admin account gain elevated access with lower detection risk.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-configure-security-alerts",
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-security-alerts"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the Microsoft Entra admin center, go to Identity governance > Privileged Identity Management > Microsoft Entra roles > Alerts.\n2. Locate the alert **Administrators aren't using their privileged roles**.\n3. Click the alert to review its settings and ensure it is enabled.\n4. Configure the alert threshold and notification settings as needed.\n5. Review any flagged stale role assignments and remove unnecessary access.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable PIM alerts for **unused privileged roles** to detect stale assignments. Apply the **principle of least privilege** by regularly reviewing role assignments and removing access that is no longer needed. Use **time-bound eligible assignments** instead of permanent active roles.",
+      "Url": "https://hub.prowler.com/check/entra_pim_role_usage_alert_exists"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

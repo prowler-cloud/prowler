@@ -1502,7 +1502,9 @@
     {
       "Id": "5.3.1",
       "Description": "Microsoft Entra Privileged Identity Management can be used to audit roles, allow just in time activation of roles and allow for periodic role attestation. Organizations should remove permanent members from privileged Office 365 roles and instead make them eligible, through a JIT activation workflow.",
-      "Checks": [],
+      "Checks": [
+        "entra_pim_role_usage_alert_exists"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
