@@ -7413,6 +7413,25 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         return filterset.qs
 
+    def _resolve_finding_ids(self, filtered_queryset):
+        """
+        Materialize and request-cache the finding_ids list used to anchor
+        RFM lookups.
+
+        Turning `finding_id__in=Subquery(findings_qs)` into `finding_id__in=
+        [uuid, ...]` nudges PostgreSQL out of a Merge Semi Join that ends up
+        reading hundreds of thousands of RFM index entries just to post-
+        filter tenant_id. Caching on the ViewSet instance (one instance per
+        request) avoids duplicating the findings round-trip when several
+        helpers build different RFM querysets from the same filtered set.
+        """
+        cached = getattr(self, "_finding_ids_cache", None)
+        if cached is not None and cached[0] is filtered_queryset:
+            return cached[1]
+        finding_ids = list(filtered_queryset.order_by().values_list("id", flat=True))
+        self._finding_ids_cache = (filtered_queryset, finding_ids)
+        return finding_ids
+
     def _build_resource_mapping_queryset(
         self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
     ):
@@ -7422,10 +7441,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
         Starting from ResourceFindingMapping avoids scanning all mappings
         before applying check_id/date filters on findings.
         """
-        finding_ids = filtered_queryset.order_by().values("id")
+        finding_ids = self._resolve_finding_ids(filtered_queryset)
 
         mapping_queryset = ResourceFindingMapping.objects.filter(
-            finding_id__in=Subquery(finding_ids)
+            finding_id__in=finding_ids
         )
         if tenant_id:
             mapping_queryset = mapping_queryset.filter(tenant_id=tenant_id)
@@ -7845,23 +7864,24 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 request, filtered_queryset, resource_ids, tenant_id, ordering
             )
 
-        has_mappings = self._build_resource_mapping_queryset(
-            filtered_queryset, resource_ids=None, tenant_id=tenant_id
-        ).exists()
+        # Serve the mapping response directly and piggyback on the paginator
+        # count to detect orphan-only groups, instead of paying a separate
+        # has_mappings.exists() semi-join over ResourceFindingMapping on
+        # every non-IaC request. TODO: once the ephemeral resources strategy
+        # is decided, mixed groups should route to _combined_paginated_response.
+        response = self._mapping_paginated_response(
+            request, filtered_queryset, resource_ids, tenant_id, ordering
+        )
 
-        if has_mappings:
-            # Normal or mixed group: serve only resource-mapped rows.
-            # TODO: Orphan findings in mixed groups are intentionally excluded
-            # until the ephemeral resources strategy is decided. When resolved,
-            # route mixed groups to _combined_paginated_response instead.
-            return self._mapping_paginated_response(
-                request, filtered_queryset, resource_ids, tenant_id, ordering
+        page = getattr(self.paginator, "page", None)
+        mapping_total = page.paginator.count if page is not None else None
+        if mapping_total == 0:
+            # Pure orphan group (e.g. IaC): synthesize resource-like rows.
+            return self._combined_paginated_response(
+                request, filtered_queryset, tenant_id, ordering
             )
 
-        # Pure orphan group (e.g. IaC): synthesize resource-like rows.
-        return self._combined_paginated_response(
-            request, filtered_queryset, tenant_id, ordering
-        )
+        return response
 
     def _mapping_paginated_response(
         self, request, filtered_queryset, resource_ids, tenant_id, ordering
