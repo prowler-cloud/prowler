@@ -78,4 +78,14 @@ class TestIdentityService:
                 ),
             ):
                 identity_client.__list_domains__(regional_client)
-            assert len(identity_client.domains) == 2
+            assert (
+                len(identity_client.domains) == 2
+                and any(
+                    domain.home_region == "us-ashburn-1"
+                    for domain in identity_client.domains
+                )
+                and any(
+                    domain.home_region == "us-chicago-1"
+                    for domain in identity_client.domains
+                )
+            )
