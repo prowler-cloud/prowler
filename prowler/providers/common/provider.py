@@ -193,6 +193,17 @@ class Provider(ABC):
             f"{self.__class__.__name__} has not implemented generate_compliance_output()"
         )
 
+    def get_mutelist_finding_args(self) -> dict:
+        """Return extra kwargs for mutelist.is_finding_muted() besides 'finding'.
+
+        External providers must return a dict with the identity key their
+        Mutelist subclass expects, e.g. ``{"account_id": self.identity.account_id}``.
+        The ``finding`` kwarg is added automatically by the caller.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} has not implemented get_mutelist_finding_args()"
+        )
+
     @property
     def is_external_tool_provider(self) -> bool:
         """True for providers that delegate scanning to an external tool."""

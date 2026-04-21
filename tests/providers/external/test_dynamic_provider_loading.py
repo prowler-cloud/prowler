@@ -84,6 +84,9 @@ class FakeExternalProvider(Provider):
             "region": "local",
         }
 
+    def get_mutelist_finding_args(self):
+        return {"host_id": self.identity.host_id}
+
     def get_html_assessment_summary(self):
         return "<div>Fake Assessment</div>"
 
@@ -1158,7 +1161,60 @@ class TestBaseContractDefaults:
         with pytest.raises(NotImplementedError):
             provider.generate_compliance_output([], {}, set(), MagicMock(), {})
 
+    def test_get_mutelist_finding_args_raises_not_implemented(self):
+        """Base Provider.get_mutelist_finding_args raises NotImplementedError."""
+        provider = FakeProviderNoHelpText()
+        with pytest.raises(NotImplementedError):
+            provider.get_mutelist_finding_args()
+
     def test_is_external_tool_provider_defaults_to_false(self):
         """Base Provider.is_external_tool_provider returns False."""
         provider = FakeProviderNoHelpText()
         assert provider.is_external_tool_provider is False
+
+
+# ===========================================================================
+# 10. Mutelist Dispatch for External Providers
+# ===========================================================================
+
+
+class TestMutelistDispatch:
+    """Tests for mutelist integration with external providers."""
+
+    def test_get_mutelist_finding_args_returns_identity(self, fake_provider):
+        """External provider returns identity kwargs for mutelist."""
+        args = fake_provider.get_mutelist_finding_args()
+
+        assert args == {"host_id": "fake-host-1"}
+
+    def test_mutelist_dispatch_calls_external_provider(self, fake_provider):
+        """execute() uses get_mutelist_finding_args for unknown provider types."""
+        from prowler.lib.check.check import execute
+
+        # Create a mock check that returns one finding
+        finding = MagicMock()
+        finding.status = "FAIL"
+        finding.muted = False
+        finding.check_metadata.Provider = "fakeexternal"
+
+        check = MagicMock()
+        check.execute.return_value = [finding]
+        check.CheckID = "fake_check"
+        check.ServiceName = "fake_service"
+        check.Severity.value = "high"
+
+        # Setup mutelist on the provider
+        fake_provider.mutelist = MagicMock()
+        fake_provider.mutelist.mutelist = {"Accounts": {}}
+        fake_provider.mutelist.is_finding_muted.return_value = True
+
+        output_options = MagicMock()
+        output_options.status = []
+        output_options.unix_timestamp = False
+
+        execute(check, fake_provider, None, output_options)
+
+        # is_finding_muted should have been called with host_id + finding
+        fake_provider.mutelist.is_finding_muted.assert_called_once_with(
+            host_id="fake-host-1", finding=finding
+        )
