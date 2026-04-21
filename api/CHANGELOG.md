@@ -4,6 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.25.2] (Prowler v5.24.2)
 
+### 🔄 Changed
+
+- Finding groups `/resources` endpoints now materialize the filtered finding IDs into a Python list before filtering `ResourceFindingMapping`, so PostgreSQL switches from a Merge Semi Join that read hundreds of thousands of RFM index entries to a Nested Loop Index Scan over `finding_id`. The `has_mappings.exists()` pre-check is removed, and a request-scoped cache deduplicates the finding-id round-trip across the helpers that build different RFM querysets [(#10816)](https://github.com/prowler-cloud/prowler/pull/10816)
+
 ### 🐞 Fixed
 
 - `/finding-groups/latest/<check_id>/resources` now selects the latest completed scan per provider by `-completed_at` (then `-inserted_at`) instead of `-inserted_at`, matching the `/finding-groups/latest` summary path and the daily-summary upsert so overlapping scans no longer produce diverging `delta`/`new_count` between the two endpoints [(#10802)](https://github.com/prowler-cloud/prowler/pull/10802)
