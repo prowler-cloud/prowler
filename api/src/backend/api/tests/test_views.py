@@ -52,6 +52,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    InvitationRoleRelationship,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
     LighthouseTenantConfiguration,
@@ -1041,6 +1042,128 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert Membership.objects.filter(id=other_membership.id).exists()
+
+    def test_delete_membership_cleans_up_orphaned_role_grants(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that deleting a membership removes UserRoleRelationship records
+        for that tenant while preserving grants in other tenants."""
+        tenant1, tenant2, _ = tenants_fixture
+
+        # Create a user with memberships in both tenants
+        user = User.objects.create_user(
+            name="Multi-tenant User",
+            password=TEST_PASSWORD,
+            email="multitenant@test.com",
+        )
+
+        # Create memberships in both tenants
+        Membership.objects.create(
+            user=user, tenant=tenant1, role=Membership.RoleChoices.MEMBER
+        )
+        membership2 = Membership.objects.create(
+            user=user, tenant=tenant2, role=Membership.RoleChoices.MEMBER
+        )
+
+        # Create roles in both tenants
+        role1 = Role.objects.create(
+            name="Test Role 1", tenant=tenant1, manage_providers=True
+        )
+        role2 = Role.objects.create(
+            name="Test Role 2", tenant=tenant2, manage_scans=True
+        )
+
+        # Create user role relationships for both tenants
+        UserRoleRelationship.objects.create(user=user, role=role1, tenant=tenant1)
+        UserRoleRelationship.objects.create(user=user, role=role2, tenant=tenant2)
+
+        # Verify initial state
+        assert UserRoleRelationship.objects.filter(user=user, tenant=tenant1).exists()
+        assert UserRoleRelationship.objects.filter(user=user, tenant=tenant2).exists()
+        assert Role.objects.filter(id=role1.id).exists()
+        assert Role.objects.filter(id=role2.id).exists()
+
+        # Delete membership from tenant2 (authenticated user is owner of tenant2)
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership2.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify the membership was deleted
+        assert not Membership.objects.filter(id=membership2.id).exists()
+
+        # Verify UserRoleRelationship for tenant2 was deleted
+        assert not UserRoleRelationship.objects.filter(
+            user=user, tenant=tenant2
+        ).exists()
+
+        # Verify UserRoleRelationship for tenant1 is preserved
+        assert UserRoleRelationship.objects.filter(user=user, tenant=tenant1).exists()
+
+        # Verify orphaned role2 was deleted (no more user or invitation relationships)
+        assert not Role.objects.filter(id=role2.id).exists()
+
+        # Verify role1 is preserved (still has user relationship)
+        assert Role.objects.filter(id=role1.id).exists()
+
+        # Verify the user still exists (has other memberships)
+        assert User.objects.filter(id=user.id).exists()
+
+    def test_delete_membership_preserves_role_with_invitation_relationship(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that roles are not deleted if they have invitation relationships."""
+        _, tenant2, _ = tenants_fixture
+
+        # Create a user with membership
+        user = User.objects.create_user(
+            name="Test User", password=TEST_PASSWORD, email="testuser@test.com"
+        )
+        membership = Membership.objects.create(
+            user=user, tenant=tenant2, role=Membership.RoleChoices.MEMBER
+        )
+
+        # Create a role and user relationship
+        role = Role.objects.create(
+            name="Shared Role", tenant=tenant2, manage_providers=True
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant=tenant2)
+
+        # Create an invitation with the same role
+        invitation = Invitation.objects.create(email="pending@test.com", tenant=tenant2)
+        InvitationRoleRelationship.objects.create(
+            invitation=invitation, role=role, tenant=tenant2
+        )
+
+        # Verify initial state
+        assert UserRoleRelationship.objects.filter(user=user, role=role).exists()
+        assert InvitationRoleRelationship.objects.filter(
+            invitation=invitation, role=role
+        ).exists()
+        assert Role.objects.filter(id=role.id).exists()
+
+        # Delete the membership
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify UserRoleRelationship was deleted
+        assert not UserRoleRelationship.objects.filter(user=user, role=role).exists()
+
+        # Verify role is preserved because invitation relationship exists
+        assert Role.objects.filter(id=role.id).exists()
+        assert InvitationRoleRelationship.objects.filter(
+            invitation=invitation, role=role
+        ).exists()
 
     def test_tenants_list_no_permissions(
         self, authenticated_client_no_permissions_rbac, tenants_fixture
@@ -11962,8 +12085,7 @@ class TestSAMLConfigurationViewSet:
             "data": {
                 "type": "saml-configurations",
                 "id": str(config.id),
-                "attributes": {
-                    "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+                "attributes": {"metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
         <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
         <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
             <md:KeyDescriptor use='signing'>
@@ -11978,8 +12100,7 @@ class TestSAMLConfigurationViewSet:
             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
         </md:IDPSSODescriptor>
         </md:EntityDescriptor>
-        """
-                },
+        """},
             }
         }
         response = authenticated_client.patch(

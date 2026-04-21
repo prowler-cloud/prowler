@@ -12,7 +12,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly
 
-
 ---
 
 ## [1.24.1] (Prowler v5.24.1)

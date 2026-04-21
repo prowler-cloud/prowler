@@ -15,7 +15,8 @@ import { apiBaseUrl } from "./lib";
 import type { RolePermissionAttributes } from "./types/users";
 
 interface CustomJwtPayload extends JwtPayload {
-  user_id: string;
+  user_id?: string;  // Optional - doesn't actually exist in JWT tokens
+  sub: string;       // Standard JWT subject field - contains the actual user ID
   tenant_id: string;
 }
 
@@ -90,8 +91,8 @@ const applyDecodedClaims = (
     target.accessTokenExpires = decodedToken.exp
       ? decodedToken.exp * 1000
       : target.accessTokenExpires;
-    // Map standard JWT "sub" field to user_id if user_id is not present
-    target.user_id = decodedToken.user_id ?? decodedToken.sub ?? target.user_id;
+    // Map standard JWT "sub" field to user_id
+    target.user_id = decodedToken.sub ?? target.user_id;
     target.tenant_id = decodedToken.tenant_id ?? target.tenant_id;
   } catch (decodeError) {
     // eslint-disable-next-line no-console

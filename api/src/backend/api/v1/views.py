@@ -173,6 +173,7 @@ from api.models import (
     FindingGroupDailySummary,
     Integration,
     Invitation,
+    InvitationRoleRelationship,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -1334,9 +1335,11 @@ class MembershipViewSet(BaseTenantViewset):
     ),
     destroy=extend_schema(
         summary="Delete tenant memberships",
-        description="Delete the membership details of users in a tenant. You need to be one of the owners to delete a "
-        "membership that is not yours. If you are the last owner of a tenant, you cannot delete your own "
-        "membership.",
+        description="Delete a user's membership from a tenant. This action: (1) removes the membership, "
+        "(2) revokes all refresh tokens for the expelled user, (3) removes their role grants for this tenant, "
+        "(4) cleans up orphaned roles, and (5) deletes the user account if this was their last membership. "
+        "You must be a tenant owner to delete another user's membership. The last owner of a tenant cannot "
+        "delete their own membership.",
         tags=["Tenant"],
     ),
 )
@@ -1404,6 +1407,7 @@ class TenantMembersViewSet(BaseTenantViewset):
                 )
 
         user_to_check_id = membership_to_delete.user_id
+        tenant_id = membership_to_delete.tenant_id
         # All writes run on the admin connection so that the uncommitted
         # membership delete is visible to the subsequent "other memberships"
         # check. Splitting the delete and the check across the default
@@ -1413,6 +1417,40 @@ class TenantMembersViewSet(BaseTenantViewset):
             Membership.objects.using(MainRouter.admin_db).filter(
                 id=membership_to_delete.id
             ).delete()
+
+            # Remove role grants for this user in this tenant to prevent
+            # orphaned permissions that could allow access after expulsion
+            deleted_role_relationships = UserRoleRelationship.objects.using(
+                MainRouter.admin_db
+            ).filter(user_id=user_to_check_id, tenant_id=tenant_id)
+
+            # Collect role IDs that might become orphaned after deletion
+            role_ids_to_check = list(
+                deleted_role_relationships.values_list("role_id", flat=True)
+            )
+
+            # Delete the user role relationships for this tenant
+            deleted_role_relationships.delete()
+
+            # Clean up orphaned roles that have no remaining user or invitation relationships
+            if role_ids_to_check:
+                for role_id in role_ids_to_check:
+                    has_user_relationships = (
+                        UserRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(role_id=role_id)
+                        .exists()
+                    )
+
+                    has_invitation_relationships = (
+                        InvitationRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(role_id=role_id)
+                        .exists()
+                    )
+
+                    if not has_user_relationships and not has_invitation_relationships:
+                        Role.objects.using(MainRouter.admin_db).filter(
+                            id=role_id
+                        ).delete()
 
             # Revoke any refresh tokens the expelled user still holds so they
             # cannot mint fresh access tokens. This must happen before the
@@ -1429,17 +1467,12 @@ class TenantMembersViewSet(BaseTenantViewset):
                 .values_list("id", flat=True)
             )
             if outstanding_token_ids:
-                already_blacklisted = set(
-                    BlacklistedToken.objects.using(MainRouter.admin_db)
-                    .filter(token_id__in=outstanding_token_ids)
-                    .values_list("token_id", flat=True)
-                )
                 BlacklistedToken.objects.using(MainRouter.admin_db).bulk_create(
                     [
                         BlacklistedToken(token_id=token_id)
                         for token_id in outstanding_token_ids
-                        if token_id not in already_blacklisted
-                    ]
+                    ],
+                    ignore_conflicts=True,
                 )
 
             has_other_memberships = (
