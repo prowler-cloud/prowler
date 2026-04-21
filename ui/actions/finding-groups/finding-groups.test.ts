@@ -16,16 +16,16 @@ const { fetchMock, getAuthHeadersMock, handleApiResponseMock } = vi.hoisted(
 // code, so the mock factory stays free of top-level variable hoisting issues
 // and the vitest runtime doesn't choke on next-auth's `next/server` import.
 import {
+  includesMutedFindings,
+  splitCsvFilterValues,
+} from "@/lib/findings-filters";
+import {
   composeSort,
   FG_FAIL_FIRST,
   FG_RECENT_LAST_SEEN,
   FG_SEVERITY_HIGH_FIRST,
   FINDING_GROUP_RESOURCES_DEFAULT_SORT,
 } from "@/lib/findings-sort";
-import {
-  includesMutedFindings,
-  splitCsvFilterValues,
-} from "@/lib/findings-filters";
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
