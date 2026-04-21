@@ -8,10 +8,10 @@ import { TableLink } from "@/components/ui/custom";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
+import { toLocalDateString } from "@/lib/date-utils";
 import { ProviderType, ScanProps } from "@/types";
 
 import { TriggerIcon } from "../../trigger-icon";
-import { DataTableDownloadDetails } from "./data-table-download-details";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { DataTableRowDetails } from "./data-table-row-details";
 
@@ -98,24 +98,6 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   },
 
   {
-    accessorKey: "started_at",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Started at" />
-    ),
-    cell: ({ row }) => {
-      const {
-        attributes: { started_at },
-      } = getScanData(row);
-
-      return (
-        <div className="w-[100px]">
-          <DateWithTime dateTime={started_at} />
-        </div>
-      );
-    },
-    enableSorting: false,
-  },
-  {
     accessorKey: "status",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Status" />
@@ -141,12 +123,22 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       <DataTableColumnHeader column={column} title="Findings" />
     ),
     cell: ({ row }) => {
-      const { id } = getScanData(row);
+      const {
+        id,
+        attributes: { completed_at },
+      } = getScanData(row);
       const scanState = row.original.attributes?.state;
+      // Source is `completed_at` (scan finish time) because findings are
+      // persisted when the scan ends — that's when their `inserted_at` is
+      // written. The URL key stays `filter[inserted_at]` because the findings
+      // table is partitioned by the finding's `inserted_at` date; this filter
+      // is the partition hint the backend uses to avoid scanning every
+      // partition. Names differ by design: scan.completed_at ≈ finding.inserted_at.
+      const scanDate = toLocalDateString(completed_at);
       return (
         <TableLink
-          href={`/findings?filter[scan__in]=${id}&filter[status__in]=FAIL`}
-          isDisabled={scanState !== "completed"}
+          href={`/findings?filter[scan]=${id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`}
+          isDisabled={scanState !== "completed" || !scanDate}
           label="See Findings"
         />
       );
@@ -172,23 +164,9 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     enableSorting: false,
   },
   {
-    id: "download",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Download" />
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="mx-auto w-fit">
-          <DataTableDownloadDetails row={row} />
-        </div>
-      );
-    },
-    enableSorting: false,
-  },
-  {
     accessorKey: "resources",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Resources" />
+      <DataTableColumnHeader column={column} title="Impacted Resources" />
     ),
     cell: ({ row }) => {
       const {
@@ -197,6 +175,24 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       return (
         <div className="flex w-fit items-center justify-center">
           <span className="text-xs font-medium">{unique_resource_count}</span>
+        </div>
+      );
+    },
+    enableSorting: false,
+  },
+  {
+    accessorKey: "started_at",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Started at" />
+    ),
+    cell: ({ row }) => {
+      const {
+        attributes: { started_at },
+      } = getScanData(row);
+
+      return (
+        <div className="w-[100px]">
+          <DateWithTime dateTime={started_at} />
         </div>
       );
     },

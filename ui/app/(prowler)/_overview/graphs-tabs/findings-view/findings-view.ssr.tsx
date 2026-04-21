@@ -4,6 +4,7 @@ import { getLatestFindings } from "@/actions/findings/findings";
 import { LighthouseBanner } from "@/components/lighthouse/banner";
 import { LinkToFindings } from "@/components/overview";
 import { ColumnLatestFindings } from "@/components/overview/new-findings-table/table";
+import { CardTitle } from "@/components/shadcn";
 import { DataTable } from "@/components/ui/table";
 import { FINDINGS_FILTERED_SORT } from "@/lib";
 import { createDict } from "@/lib/helper";
@@ -58,24 +59,23 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
   };
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full flex-col">
       <LighthouseBanner />
-      <div className="relative w-full flex-col justify-between md:flex-row">
-        <div className="flex w-full flex-col items-start gap-2 md:flex-row md:items-center">
-          <h3 className="text-sm font-bold text-nowrap whitespace-nowrap uppercase">
-            Latest new failing findings
-          </h3>
-          <p className="text-text-neutral-tertiary text-xs whitespace-nowrap">
-            Showing the latest 10 new failing findings by severity.
-          </p>
-          <LinkToFindings />
-        </div>
-      </div>
-
       <DataTable
         key={`dashboard-findings-${Date.now()}`}
         columns={ColumnLatestFindings}
         data={(expandedResponse?.data || []) as FindingProps[]}
+        header={
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="flex flex-col gap-0.5">
+              <CardTitle>Latest New Failed Findings</CardTitle>
+              <p className="text-text-neutral-tertiary text-xs">
+                Showing the latest 10 sorted by severity
+              </p>
+            </div>
+            <LinkToFindings />
+          </div>
+        }
       />
     </div>
   );

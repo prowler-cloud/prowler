@@ -25,8 +25,10 @@ describe("findings page", () => {
     expect(source).toContain("resolveFindingScanDateFilters");
   });
 
-  it("uses getLatestFindingGroups for non-date/scan queries and getFindingGroups for historical", () => {
-    expect(source).toContain("hasDateOrScan");
+  it("uses resolved filters to choose getFindingGroups for historical queries and getLatestFindingGroups otherwise", () => {
+    expect(source).toContain("hasHistoricalData");
+    expect(source).toContain("hasDateOrScanFilter(filtersWithScanDates)");
+    expect(source).toContain("hasDateOrScanFilter(filters)");
     expect(source).toContain("getFindingGroups");
     expect(source).toContain("getLatestFindingGroups");
   });

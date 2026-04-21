@@ -176,12 +176,12 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
   });
 
-  it("should load other findings from the current resource uid and exclude only the current finding (status filter is server-side)", async () => {
+  it("should load other findings from the current resource uid and exclude only the current finding (status is filtered server-side)", async () => {
     const resources = [makeResource()];
 
-    // Given — the API call already applies filter[status]=FAIL, so the
-    // mock here returns ONLY FAIL rows. The hook's only client-side
-    // responsibility is to drop the row already shown above the table.
+    // Given — the API call applies filter[status]=FAIL server-side, so the
+    // mock returns only FAIL rows. The hook's only client-side job is to
+    // drop the row already shown above the table.
     getFindingByIdMock.mockResolvedValue({ data: ["detail"] });
     getLatestFindingsByResourceUidMock.mockResolvedValue({
       data: ["resource"],

@@ -278,7 +278,7 @@ describe("getLatestFindingsByResourceUid", () => {
     handleApiResponseMock.mockResolvedValue({ data: [] });
   });
 
-  it("should exclude muted findings, restrict to FAIL, and apply severity/time sorting by default", async () => {
+  it("should restrict to FAIL, exclude muted findings, and apply severity/time sorting by default", async () => {
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
 
     await getLatestFindingsByResourceUid({
@@ -290,8 +290,9 @@ describe("getLatestFindingsByResourceUid", () => {
     expect(calledUrl.searchParams.get("filter[resource_uid]")).toBe(
       "resource-1",
     );
-    // Status filter is applied server-side so the page[size] window holds
-    // FAIL-only candidates — guards against PASS rows starving FAILs out.
+    // Status filter is applied server-side so the page[size]=50 window
+    // always holds FAIL rows — guards against PASS-heavy resources
+    // starving FAILs out of the result.
     expect(calledUrl.searchParams.get("filter[status]")).toBe("FAIL");
     expect(calledUrl.searchParams.get("filter[muted]")).toBe("false");
     expect(calledUrl.searchParams.get("sort")).toBe("severity,-updated_at");
