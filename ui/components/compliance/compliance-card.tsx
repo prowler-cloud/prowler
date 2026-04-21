@@ -1,11 +1,20 @@
 "use client";
 
-import { Progress } from "@heroui/progress";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Card, CardContent } from "@/components/shadcn/card/card";
+import { Progress } from "@/components/shadcn/progress";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { getReportTypeForCompliance } from "@/lib/compliance/compliance-report-types";
+import {
+  getScoreIndicatorClass,
+  type ScoreColorVariant,
+} from "@/lib/compliance/score-utils";
 import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
@@ -53,13 +62,9 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     (passingRequirements / totalRequirements) * 100,
   );
 
-  const getRatingColor = (ratingPercentage: number) => {
-    if (ratingPercentage <= 10) {
-      return "danger";
-    }
-    if (ratingPercentage <= 40) {
-      return "warning";
-    }
+  const getRatingVariant = (value: number): ScoreColorVariant => {
+    if (value <= 10) return "danger";
+    if (value <= 40) return "warning";
     return "success";
   };
 
@@ -88,62 +93,80 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
       onClick={navigateToDetail}
     >
       <CardContent className="p-0">
-        <div className="flex w-full items-center gap-4">
-          {getComplianceIcon(title) && (
-            <Image
-              src={getComplianceIcon(title)}
-              alt={`${title} logo`}
-              className="h-10 w-10 min-w-10 rounded-md border border-gray-300 bg-white object-contain p-1"
-            />
-          )}
-          <div className="flex w-full flex-col">
-            <h4 className="text-small mb-1 leading-5 font-bold">
-              {formatTitle(title)}
-              {version ? ` - ${version}` : ""}
-            </h4>
-            <Progress
-              label="Score:"
-              size="sm"
-              aria-label="Compliance score"
-              value={ratingPercentage}
-              showValueLabel={true}
-              classNames={{
-                track: "drop-shadow-sm border border-default",
-                label: "tracking-wider font-medium text-default-600 text-xs",
-                value: "text-foreground/60 -mb-2",
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-start">
+          <div className="flex shrink-0 items-center justify-between sm:flex-col sm:items-start sm:gap-2">
+            {getComplianceIcon(title) && (
+              <Image
+                src={getComplianceIcon(title)}
+                alt={`${title} logo`}
+                className="h-10 w-10 min-w-10 self-start rounded-md border border-gray-300 bg-white object-contain p-1"
+              />
+            )}
+            <div
+              className="shrink-0"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.stopPropagation();
+                }
               }}
-              color={getRatingColor(ratingPercentage)}
-            />
-            <div className="mt-2 flex items-center justify-between">
-              <small>
+              role="group"
+              tabIndex={0}
+            >
+              <ComplianceDownloadContainer
+                compact
+                orientation="column"
+                buttonWidth="icon"
+                presentation="dropdown"
+                scanId={scanId}
+                complianceId={complianceId}
+                reportType={getReportTypeForCompliance(
+                  title,
+                  complianceId,
+                  isLatestCisForProvider,
+                )}
+                disabled={hasRegionFilter}
+              />
+            </div>
+          </div>
+          <div className="flex w-full min-w-0 flex-col gap-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <h4 className="text-small truncate leading-5 font-bold">
+                  {formatTitle(title)}
+                  {version ? ` - ${version}` : ""}
+                </h4>
+              </TooltipTrigger>
+              <TooltipContent>
+                {formatTitle(title)}
+                {version ? ` - ${version}` : ""}
+              </TooltipContent>
+            </Tooltip>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span className="text-text-neutral-secondary font-medium tracking-wider">
+                  Score:
+                </span>
+                <span className="text-text-neutral-secondary">
+                  {ratingPercentage}%
+                </span>
+              </div>
+              <Progress
+                aria-label="Compliance score"
+                value={ratingPercentage}
+                className="border-border-neutral-secondary h-2.5 border drop-shadow-sm"
+                indicatorClassName={getScoreIndicatorClass(
+                  getRatingVariant(ratingPercentage),
+                )}
+              />
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <small className="min-w-0">
                 <span className="mr-1 text-xs font-semibold">
                   {passingRequirements} / {totalRequirements}
                 </span>
                 Passing Requirements
               </small>
-
-              <div
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.stopPropagation();
-                  }
-                }}
-                role="group"
-                tabIndex={0}
-              >
-                <ComplianceDownloadContainer
-                  compact
-                  scanId={scanId}
-                  complianceId={complianceId}
-                  reportType={getReportTypeForCompliance(
-                    title,
-                    complianceId,
-                    isLatestCisForProvider,
-                  )}
-                  disabled={hasRegionFilter}
-                />
-              </div>
             </div>
           </div>
         </div>

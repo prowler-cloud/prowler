@@ -82,7 +82,7 @@ export default async function ComplianceDetail({
     await Promise.all([
       getComplianceOverviewMetadataInfo({
         filters: {
-          "filter[scan_id]": selectedScanId,
+          "filter[scan_id]": selectedScanId ?? undefined,
         },
       }),
       getComplianceAttributes(complianceId),
