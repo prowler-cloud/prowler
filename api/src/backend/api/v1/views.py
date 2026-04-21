@@ -7281,14 +7281,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
             # finding-level aggregation path.
             row.pop("nonmuted_count", None)
 
-            # Compute aggregated status from non-muted counts first, then
-            # fall back to muted counts so fully-muted groups still reflect
-            # the underlying check outcome.
-            total_fail = row.get("fail_count", 0) + row.get("fail_muted_count", 0)
-            total_pass = row.get("pass_count", 0) + row.get("pass_muted_count", 0)
-            if total_fail > 0:
+            # Muted findings are treated as resolved/accepted, so they do not
+            # contribute to a failing status. A group is FAIL only when there
+            # is at least one non-muted FAIL; otherwise any pass (muted or
+            # not) or any muted fail makes the group PASS. Only groups whose
+            # findings are exclusively MANUAL fall through to MANUAL.
+            if row.get("fail_count", 0) > 0:
                 row["status"] = "FAIL"
-            elif total_pass > 0:
+            elif (
+                row.get("pass_count", 0) > 0
+                or row.get("pass_muted_count", 0) > 0
+                or row.get("fail_muted_count", 0) > 0
+            ):
                 row["status"] = "PASS"
             else:
                 row["status"] = "MANUAL"
@@ -7388,12 +7392,11 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         if computed_params.get("status") or computed_params.getlist("status__in"):
             queryset = queryset.annotate(
-                total_fail=F("fail_count") + F("fail_muted_count"),
-                total_pass=F("pass_count") + F("pass_muted_count"),
-            ).annotate(
                 aggregated_status=Case(
-                    When(total_fail__gt=0, then=Value("FAIL")),
-                    When(total_pass__gt=0, then=Value("PASS")),
+                    When(fail_count__gt=0, then=Value("FAIL")),
+                    When(pass_count__gt=0, then=Value("PASS")),
+                    When(pass_muted_count__gt=0, then=Value("PASS")),
+                    When(fail_muted_count__gt=0, then=Value("PASS")),
                     default=Value("MANUAL"),
                     output_field=CharField(),
                 )
@@ -7798,12 +7801,11 @@ class FindingGroupViewSet(BaseRLSViewSet):
             if ordering:
                 if any(field.lstrip("-") == "status_order" for field in ordering):
                     aggregated_queryset = aggregated_queryset.annotate(
-                        total_fail_for_sort=F("fail_count") + F("fail_muted_count"),
-                        total_pass_for_sort=F("pass_count") + F("pass_muted_count"),
-                    ).annotate(
                         status_order=Case(
-                            When(total_fail_for_sort__gt=0, then=Value(3)),
-                            When(total_pass_for_sort__gt=0, then=Value(2)),
+                            When(fail_count__gt=0, then=Value(3)),
+                            When(pass_count__gt=0, then=Value(2)),
+                            When(pass_muted_count__gt=0, then=Value(2)),
+                            When(fail_muted_count__gt=0, then=Value(2)),
                             default=Value(1),
                             output_field=IntegerField(),
                         )
