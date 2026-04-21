@@ -483,7 +483,7 @@ class Identity(OCIService):
                             if domain.home_region != regional_client.region:
                                 to_remove += [i]
                     for i in sorted(to_remove, reverse=True):
-                        logger.info(
+                        logger.warn(
                             "Skipping duplicate domain in non-home region: %s",
                             domain.id,
                         )
