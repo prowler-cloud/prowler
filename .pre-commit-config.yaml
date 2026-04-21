@@ -1,12 +1,11 @@
 repos:
-  ## GENERAL
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+  ## GENERAL (prek built-in — no external repo needed)
+  - repo: builtin
     hooks:
       - id: check-merge-conflict
       - id: check-yaml
-        args: ["--unsafe"]
-        exclude: prowler/config/llm_config.yaml
+        args: ["--allow-multiple-documents"]
+        exclude: (prowler/config/llm_config.yaml|contrib/)
       - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
