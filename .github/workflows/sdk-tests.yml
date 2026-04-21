@@ -516,6 +516,32 @@ jobs:
           flags: prowler-py${{ matrix.python-version }}-vercel
           files: ./vercel_coverage.xml
 
+      # External Provider (dynamic loading)
+      - name: Check if External Provider files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-external
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        with:
+          files: |
+            ./prowler/providers/common/**
+            ./prowler/config/**
+            ./prowler/lib/**
+            ./tests/providers/external/**
+            ./poetry.lock
+
+      - name: Run External Provider tests
+        if: steps.changed-external.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/common --cov=./prowler/config --cov=./prowler/lib --cov-report=xml:external_coverage.xml tests/providers/external
+
+      - name: Upload External Provider coverage to Codecov
+        if: steps.changed-external.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-external
+          files: ./external_coverage.xml
+
       # Lib
       - name: Check if Lib files changed
         if: steps.check-changes.outputs.any_changed == 'true'
