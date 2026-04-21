@@ -487,7 +487,7 @@ class Identity(OCIService):
                             "Skipping duplicate domain in non-home region: %s",
                             domain.id,
                         )
-                        del domains[i]
+                        del self.domains[i]
 
             except Exception as error:
                 logger.error(
