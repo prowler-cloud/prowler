@@ -5,6 +5,8 @@ from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID
 
+from kiota_abstractions.method import Method
+from kiota_abstractions.request_information import RequestInformation
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
@@ -23,7 +25,7 @@ class Entra(M365Service):
     This class provides methods to retrieve and manage Microsoft Entra ID
     security policies and configurations, including authorization policies,
     conditional access policies, admin consent policies, groups, organizations,
-    users, and OAuth application data from Defender XDR.
+    users, OAuth application data from Defender XDR, and PIM alerts.
 
     Attributes:
         tenant_domain (str): The tenant domain.
@@ -36,6 +38,7 @@ class Entra(M365Service):
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
         authentication_method_configurations (dict): Dictionary of authentication method configurations.
+        pim_alerts (dict): Dictionary of PIM alerts keyed by alert definition ID.
     """
 
     def __init__(self, provider: M365Provider):
@@ -83,6 +86,7 @@ class Entra(M365Service):
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
+                self._get_pim_alerts(),
             )
         )
 
@@ -98,6 +102,7 @@ class Entra(M365Service):
         self.authentication_method_configurations: Dict[
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
+        self.pim_alerts: Dict[str, PimAlert] = attributes[10]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -1054,6 +1059,78 @@ OAuthAppInfo
             )
         return authentication_method_configurations
 
+    async def _get_pim_alerts(self):
+        """Retrieve Privileged Identity Management (PIM) role management alerts.
+
+        Fetches unified role management alerts from the Microsoft Graph API to
+        identify security issues such as stale accounts in privileged roles.
+        Uses a raw HTTP request since the SDK does not expose this endpoint natively.
+
+        Returns:
+            Dict[str, PimAlert]: Dictionary of PIM alerts keyed by alert definition ID.
+        """
+        logger.info("Entra - Getting PIM alerts...")
+        pim_alerts = {}
+        try:
+            request_info = RequestInformation()
+            request_info.http_method = Method.GET
+            request_info.url = "https://graph.microsoft.com/v1.0/identityGovernance/roleManagement/alerts/alerts?$expand=alertIncidents"
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                for alert in data.get("value", []):
+                    alert_definition_id = alert.get("alertDefinitionId", "")
+                    incidents = alert.get("alertIncidents", [])
+                    affected_items = []
+                    for incident in incidents:
+                        assignee_display_name = incident.get(
+                            "assigneeDisplayName", ""
+                        ) or incident.get("subject", "")
+                        assignee_id = incident.get("assigneeId", "") or incident.get(
+                            "id", ""
+                        )
+                        role_display_name = incident.get("roleDisplayName", "")
+                        last_sign_in = incident.get(
+                            "lastSignInDateTime", ""
+                        ) or incident.get("createdDateTime", "")
+                        affected_items.append(
+                            PimAlertIncident(
+                                assignee_display_name=assignee_display_name,
+                                assignee_id=assignee_id,
+                                role_display_name=role_display_name,
+                                last_sign_in_date_time=last_sign_in,
+                            )
+                        )
+                    pim_alerts[alert_definition_id] = PimAlert(
+                        id=alert.get("id", ""),
+                        alert_definition_id=alert_definition_id,
+                        scope_id=alert.get("scopeId", "/"),
+                        scope_type=alert.get("scopeType", ""),
+                        is_active=alert.get("isActive", False),
+                        number_of_affected_items=alert.get("numberOfAffectedItems", 0),
+                        incident_count=alert.get("incidentCount", 0),
+                        affected_items=affected_items,
+                    )
+        except ODataError as error:
+            error_code = getattr(error.error, "code", None) if error.error else None
+            if error_code == "Authorization_RequestDenied":
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: "
+                    "Insufficient privileges to read PIM alerts. "
+                    "Required permission: RoleManagement.Read.All or RoleManagement.ReadWrite.Directory"
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return pim_alerts
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -1481,3 +1558,43 @@ class OAuthApp(BaseModel):
     is_admin_consented: bool = False
     last_used_time: Optional[str] = None
     app_origin: str = ""
+
+
+class PimAlertIncident(BaseModel):
+    """Model representing an incident (affected resource) within a PIM alert.
+
+    Attributes:
+        assignee_display_name: The display name of the user with a stale sign-in.
+        assignee_id: The unique identifier of the affected user.
+        role_display_name: The privileged role assigned to the user.
+        last_sign_in_date_time: The last sign-in date for the user (ISO 8601 format).
+    """
+
+    assignee_display_name: str = ""
+    assignee_id: str = ""
+    role_display_name: str = ""
+    last_sign_in_date_time: str = ""
+
+
+class PimAlert(BaseModel):
+    """Model representing a Privileged Identity Management (PIM) alert.
+
+    Attributes:
+        id: The unique identifier of the alert.
+        alert_definition_id: The alert type identifier (e.g., 'DirectoryRole_StaleSignInAlert').
+        scope_id: The scope of the alert (typically '/' for tenant-wide).
+        scope_type: The scope type (e.g., 'DirectoryRole').
+        is_active: Whether the alert is currently active.
+        number_of_affected_items: Count of resources affected by the alert.
+        incident_count: Number of incidents reported for the alert.
+        affected_items: List of affected resources (incidents).
+    """
+
+    id: str
+    alert_definition_id: str
+    scope_id: str = "/"
+    scope_type: str = ""
+    is_active: bool = False
+    number_of_affected_items: int = 0
+    incident_count: int = 0
+    affected_items: List[PimAlertIncident] = []
