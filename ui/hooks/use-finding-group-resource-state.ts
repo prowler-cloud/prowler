@@ -47,7 +47,6 @@ export function useFindingGroupResourceState({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [resources, setResources] = useState<FindingResourceRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const effectiveFilters = applyDefaultMutedFilter(filters);
 
   const handleSetResources = (
     newResources: FindingResourceRow[],
@@ -68,6 +67,8 @@ export function useFindingGroupResourceState({
   const handleSetLoading = (loading: boolean) => {
     setIsLoading(loading);
   };
+
+  const effectiveFilters = applyDefaultMutedFilter(filters);
 
   const { sentinelRef, refresh, loadMore, totalCount } =
     useFindingGroupResources({

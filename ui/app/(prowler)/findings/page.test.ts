@@ -40,4 +40,8 @@ describe("findings page", () => {
   it("guards errors array access with a length check", () => {
     expect(source).toContain("errors?.length > 0");
   });
+
+  it("applies the shared default muted filter so muted findings are hidden unless the caller opts in", () => {
+    expect(source).toContain("applyDefaultMutedFilter");
+  });
 });
