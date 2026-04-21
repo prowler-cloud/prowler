@@ -363,6 +363,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
                         repositories=repos,
+                        repo_list_file=getattr(arguments, "repo_list_file", None),
                         organizations=orgs,
                     )
                 elif "googleworkspace" in provider_class_name.lower():
