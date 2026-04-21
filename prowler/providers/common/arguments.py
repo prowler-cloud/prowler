@@ -31,7 +31,7 @@ def init_providers_parser(self):
                     cls.init_parser(self)
                 except Exception as error:
                     logger.warning(
-                        f"Failed to init parser for external provider '{provider}': {error}"
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
             logger.critical(

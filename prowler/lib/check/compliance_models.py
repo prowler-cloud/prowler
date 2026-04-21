@@ -435,9 +435,9 @@ class Compliance(BaseModel):
                                         bulk_compliance_frameworks[
                                             compliance_framework_name
                                         ] = load_compliance_framework(file_path)
-                    except Exception as e:
+                    except Exception as error:
                         logger.warning(
-                            f"Failed to load external compliance for '{ep.name}': {e}"
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
 
         except Exception as e:

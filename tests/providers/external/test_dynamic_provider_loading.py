@@ -250,6 +250,49 @@ class TestProviderDiscovery:
 
         assert help_text["nohelptext"] == ""
 
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    def test_load_ep_provider_handles_load_exception(self, mock_ep):
+        """_load_ep_provider returns None when ep.load() raises."""
+        ep = _make_entry_point("broken", "pkg:Cls", "prowler.providers")
+        ep.load.side_effect = Exception("Import failed")
+        mock_ep.return_value = [ep]
+
+        cls = Provider._load_ep_provider("broken")
+
+        assert cls is None
+
+    @patch("prowler.providers.common.provider.import_module")
+    @patch("prowler.providers.common.provider.Provider.get_available_providers")
+    def test_get_providers_help_text_builtin_path(self, mock_providers, mock_import):
+        """get_providers_help_text reads _cli_help_text from a built-in provider module."""
+        import types
+
+        mock_providers.return_value = ["fakebuiltin"]
+
+        mock_cls = type(
+            "FakeBuiltinProvider", (Provider,), {"_cli_help_text": "Built-in Help"}
+        )
+        mock_module = types.ModuleType("fake_module")
+        mock_module.FakeBuiltinProvider = mock_cls
+        mock_import.return_value = mock_module
+
+        help_text = Provider.get_providers_help_text()
+
+        assert help_text["fakebuiltin"] == "Built-in Help"
+
+    @patch("prowler.providers.common.provider.import_module")
+    @patch("prowler.providers.common.provider.Provider.get_available_providers")
+    def test_get_providers_help_text_generic_exception(
+        self, mock_providers, mock_import
+    ):
+        """get_providers_help_text handles generic exceptions with empty string."""
+        mock_providers.return_value = ["broken"]
+        mock_import.side_effect = RuntimeError("Unexpected error")
+
+        help_text = Provider.get_providers_help_text()
+
+        assert help_text["broken"] == ""
+
 
 # ===========================================================================
 # 2. Provider Initialization
@@ -497,6 +540,27 @@ class TestCLIArguments:
         # Should not raise
         init_providers_parser(parser_instance)
 
+    @patch("prowler.providers.common.arguments.Provider._load_ep_provider")
+    @patch("prowler.providers.common.arguments.Provider.get_available_providers")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_init_providers_parser_handles_init_parser_exception(
+        self, mock_import, mock_providers, mock_load_ep
+    ):
+        """init_providers_parser handles exception when init_parser raises."""
+        from prowler.providers.common.arguments import init_providers_parser
+
+        mock_providers.return_value = ["fakeexternal"]
+        mock_import.side_effect = ImportError("No built-in")
+
+        broken_cls = MagicMock()
+        broken_cls.init_parser.side_effect = RuntimeError("Parser init failed")
+        mock_load_ep.return_value = broken_cls
+
+        parser_instance = MagicMock()
+
+        # Should not raise
+        init_providers_parser(parser_instance)
+
 
 # ===========================================================================
 # 6. Compliance
@@ -520,6 +584,35 @@ class TestCompliance:
         dirs = _get_ep_compliance_dirs()
 
         assert dirs["fakeexternal"] == "/path/to/compliance"
+
+    @patch("prowler.config.config.importlib.metadata.entry_points")
+    def test_get_ep_compliance_dirs_file_fallback(self, mock_ep):
+        """_get_ep_compliance_dirs uses __file__ when module has no __path__."""
+        from prowler.config.config import _get_ep_compliance_dirs
+
+        mock_module = MagicMock(spec=[])
+        mock_module.__file__ = "/path/to/compliance/__init__.py"
+        del mock_module.__path__
+        ep = _make_entry_point("ext", "pkg.compliance", "prowler.compliance")
+        ep.load.return_value = mock_module
+        mock_ep.return_value = [ep]
+
+        dirs = _get_ep_compliance_dirs()
+
+        assert dirs["ext"] == "/path/to/compliance"
+
+    @patch("prowler.config.config.importlib.metadata.entry_points")
+    def test_get_ep_compliance_dirs_handles_load_exception(self, mock_ep):
+        """_get_ep_compliance_dirs handles ep.load() exception gracefully."""
+        from prowler.config.config import _get_ep_compliance_dirs
+
+        ep = _make_entry_point("broken", "pkg.compliance", "prowler.compliance")
+        ep.load.side_effect = Exception("Load failed")
+        mock_ep.return_value = [ep]
+
+        dirs = _get_ep_compliance_dirs()
+
+        assert dirs == {}
 
     @patch("prowler.config.config._get_ep_compliance_dirs")
     def test_get_available_compliance_includes_external(self, mock_dirs):
@@ -580,6 +673,62 @@ class TestCompliance:
 
             assert "custom_1.0_fakeexternal" in bulk
             assert bulk["custom_1.0_fakeexternal"].Framework == "Custom"
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_compliance_get_bulk_file_fallback(self, mock_list_modules, mock_ep):
+        """Compliance.get_bulk uses __file__ when external module has no __path__."""
+        import json
+        import os
+        import tempfile
+
+        from prowler.lib.check.compliance_models import Compliance
+
+        mock_list_modules.return_value = []
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            json_data = {
+                "Framework": "Custom",
+                "Name": "Custom File Fallback",
+                "Version": "1.0",
+                "Provider": "fakeexternal",
+                "Description": "Test",
+                "Requirements": [],
+            }
+            json_path = os.path.join(tmpdir, "custom_file_fakeexternal.json")
+            with open(json_path, "w") as f:
+                json.dump(json_data, f)
+
+            mock_module = MagicMock(spec=[])
+            mock_module.__file__ = os.path.join(tmpdir, "__init__.py")
+            del mock_module.__path__
+            ep = _make_entry_point(
+                "fakeexternal", "pkg.compliance", "prowler.compliance"
+            )
+            ep.load.return_value = mock_module
+            mock_ep.return_value = [ep]
+
+            bulk = Compliance.get_bulk("fakeexternal")
+
+            assert "custom_file_fakeexternal" in bulk
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_compliance_get_bulk_handles_external_exception(
+        self, mock_list_modules, mock_ep
+    ):
+        """Compliance.get_bulk handles exception when loading external compliance."""
+        from prowler.lib.check.compliance_models import Compliance
+
+        mock_list_modules.return_value = []
+
+        ep = _make_entry_point("fakeexternal", "pkg.compliance", "prowler.compliance")
+        ep.load.side_effect = Exception("Load failed")
+        mock_ep.return_value = [ep]
+
+        bulk = Compliance.get_bulk("fakeexternal")
+
+        assert bulk == {}
 
     @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
     @patch("prowler.lib.check.compliance_models.list_compliance_modules")
@@ -800,6 +949,23 @@ class TestDispatchFallbacks:
         printed = mock_print.call_args[0][0]
         assert "fake-detail" in printed
 
+    def test_stdout_report_resolves_provider_when_none(self, fake_provider):
+        """stdout_report resolves provider via get_global_provider when not passed."""
+        from prowler.lib.outputs.outputs import stdout_report
+
+        finding = MagicMock()
+        finding.check_metadata.Provider = "fakeexternal"
+        finding.status = "FAIL"
+        finding.muted = False
+        finding.status_extended = "test"
+
+        with patch("builtins.print") as mock_print:
+            stdout_report(finding, "\033[31m", True, ["FAIL"], False)
+
+        mock_print.assert_called_once()
+        printed = mock_print.call_args[0][0]
+        assert "fake-detail" in printed
+
     def test_report_sort_calls_get_finding_sort_key(self, fake_provider):
         """Test 29: report else clause calls provider.get_finding_sort_key."""
         from prowler.lib.outputs.outputs import report
@@ -936,3 +1102,63 @@ class TestDispatchFallbacks:
         )
 
         assert "fake-compliance-output" in generated_outputs["compliance"]
+
+
+# ===========================================================================
+# 9. Base Contract Defaults
+# ===========================================================================
+
+
+class TestBaseContractDefaults:
+    """Tests for Provider base class default implementations."""
+
+    def test_from_cli_args_raises_not_implemented(self):
+        """Base Provider.from_cli_args raises NotImplementedError."""
+        with pytest.raises(NotImplementedError):
+            FakeProviderNoHelpText.from_cli_args(MagicMock(), {})
+
+    def test_get_output_options_raises_not_implemented(self):
+        """Base Provider.get_output_options raises NotImplementedError."""
+        provider = FakeProviderNoHelpText()
+        with pytest.raises(NotImplementedError):
+            provider.get_output_options(MagicMock(), {})
+
+    def test_get_stdout_detail_raises_not_implemented(self):
+        """Base Provider.get_stdout_detail raises NotImplementedError."""
+        provider = FakeProviderNoHelpText()
+        with pytest.raises(NotImplementedError):
+            provider.get_stdout_detail(MagicMock())
+
+    def test_get_finding_sort_key_returns_none(self):
+        """Base Provider.get_finding_sort_key returns None."""
+        provider = FakeProviderNoHelpText()
+        assert provider.get_finding_sort_key() is None
+
+    def test_get_summary_entity_raises_not_implemented(self):
+        """Base Provider.get_summary_entity raises NotImplementedError."""
+        provider = FakeProviderNoHelpText()
+        with pytest.raises(NotImplementedError):
+            provider.get_summary_entity()
+
+    def test_get_finding_output_data_raises_not_implemented(self):
+        """Base Provider.get_finding_output_data raises NotImplementedError."""
+        provider = FakeProviderNoHelpText()
+        with pytest.raises(NotImplementedError):
+            provider.get_finding_output_data(MagicMock())
+
+    def test_get_html_assessment_summary_raises_not_implemented(self):
+        """Base Provider.get_html_assessment_summary raises NotImplementedError."""
+        provider = FakeProviderNoHelpText()
+        with pytest.raises(NotImplementedError):
+            provider.get_html_assessment_summary()
+
+    def test_generate_compliance_output_raises_not_implemented(self):
+        """Base Provider.generate_compliance_output raises NotImplementedError."""
+        provider = FakeProviderNoHelpText()
+        with pytest.raises(NotImplementedError):
+            provider.generate_compliance_output([], {}, set(), MagicMock(), {})
+
+    def test_is_external_tool_provider_defaults_to_false(self):
+        """Base Provider.is_external_tool_provider returns False."""
+        provider = FakeProviderNoHelpText()
+        assert provider.is_external_tool_provider is False

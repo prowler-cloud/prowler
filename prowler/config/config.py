@@ -87,8 +87,10 @@ def _get_ep_compliance_dirs() -> dict:
                 dirs[ep.name] = module.__path__[0]
             elif hasattr(module, "__file__"):
                 dirs[ep.name] = os.path.dirname(module.__file__)
-        except Exception:
-            pass
+        except Exception as error:
+            logger.warning(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
     return dirs
 
 

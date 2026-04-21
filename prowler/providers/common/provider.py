@@ -493,8 +493,10 @@ class Provider(ABC):
                     cls = ep.load()
                     Provider._ep_providers[name] = cls
                     return cls
-                except Exception:
-                    pass
+                except Exception as error:
+                    logger.warning(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
         return None
 
     @staticmethod
@@ -521,7 +523,10 @@ class Provider(ABC):
                 # External provider — load via entry point
                 cls = Provider._load_ep_provider(name)
                 help_text[name] = getattr(cls, "_cli_help_text", "") if cls else ""
-            except Exception:
+            except Exception as error:
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
                 help_text[name] = ""
         return help_text
 

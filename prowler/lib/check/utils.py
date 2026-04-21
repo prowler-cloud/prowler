@@ -20,8 +20,10 @@ def _recover_ep_checks(provider: str) -> list[tuple]:
             if spec and spec.origin:
                 check_path = os.path.dirname(spec.origin)
                 checks.append((ep.name, check_path))
-        except Exception as e:
-            logger.warning(f"Failed to discover external check '{ep.name}': {e}")
+        except Exception as error:
+            logger.warning(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
     return checks
 
 
