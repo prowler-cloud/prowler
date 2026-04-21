@@ -67,7 +67,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Periodic cleanup of stale scans with dead-worker detection via Celery inspect, marking orphaned `EXECUTING` scans as `FAILED` and recovering `graph_data_ready` [(#10387)](https://github.com/prowler-cloud/prowler/pull/10387)
 - Attack Paths: Replace `_provider_id` property with `_Provider_{uuid}` label for provider isolation, add regex-based label injection for custom queries [(#10402)](https://github.com/prowler-cloud/prowler/pull/10402)
 
-
 ### 🐞 Fixed
 
 - `reaggregate_all_finding_group_summaries_task` now refreshes finding group daily summaries for every `(provider, day)` combination instead of only the latest scan per provider, matching the unbounded scope of `mute_historical_findings_task`. Mute rule operations no longer leave older daily summaries drifting from the underlying muted findings [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
