@@ -10,6 +10,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
+## [1.24.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Default muted filter now applied consistently across the findings SSR page and the finding-group resource drill-down, keeping muted findings hidden unless the caller opts in [(#10803)](https://github.com/prowler-cloud/prowler/pull/10803)
+
+---
+
 ## [1.24.1] (Prowler v5.24.1)
 
 ### 🐞 Fixed
