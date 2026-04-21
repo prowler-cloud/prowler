@@ -2,14 +2,18 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.26.0] (Prowler UNRELEASED)
+## [1.25.0] (Prowler UNRELEASED)
 
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 
----
+### ❌ Removed
 
+- Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly
+
+
+---
 
 ## [1.24.1] (Prowler v5.24.1)
 
