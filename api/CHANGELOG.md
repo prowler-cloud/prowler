@@ -8,6 +8,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 
+---
+
 ## [1.25.2] (Prowler v5.24.2)
 
 ### 🐞 Fixed
@@ -66,7 +68,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Finding groups list/latest/resources now expose `status` ∈ `{FAIL, PASS, MANUAL}` and `muted: bool` as orthogonal fields. The aggregated `status` reflects the underlying check outcome regardless of mute state, and `muted=true` signals that every finding in the group/resource is muted. New `manual_count` is exposed alongside `pass_count`/`fail_count`, plus `pass_muted_count`/`fail_muted_count`/`manual_muted_count` siblings so clients can isolate the muted half of each status. The `new_*`/`changed_*` deltas are now broken down by status and mute state via 12 new counters (`new_fail_count`, `new_fail_muted_count`, `new_pass_count`, `new_pass_muted_count`, `new_manual_count`, `new_manual_muted_count` and the matching `changed_*` set). New `filter[muted]=true|false` and `sort=status` (FAIL > PASS > MANUAL) / `sort=muted` are supported. `filter[status]=MUTED` is no longer accepted [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
 - Attack Paths: Periodic cleanup of stale scans with dead-worker detection via Celery inspect, marking orphaned `EXECUTING` scans as `FAILED` and recovering `graph_data_ready` [(#10387)](https://github.com/prowler-cloud/prowler/pull/10387)
 - Attack Paths: Replace `_provider_id` property with `_Provider_{uuid}` label for provider isolation, add regex-based label injection for custom queries [(#10402)](https://github.com/prowler-cloud/prowler/pull/10402)
-
 
 ### 🐞 Fixed
 
