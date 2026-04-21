@@ -16,6 +16,7 @@ import {
 import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
+  applyDefaultMutedFilter,
   createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
@@ -50,13 +51,13 @@ export default async function Findings({
       return response?.data;
     },
   });
-
+  const resolvedFilters = applyDefaultMutedFilter(filtersWithScanDates);
   const metadataInfoData = await (
     hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
   )({
     query,
     sort: encodedSort,
-    filters: filtersWithScanDates,
+    filters: resolvedFilters,
   });
 
   // Extract unique regions, services, categories, groups from the new endpoint
@@ -100,7 +101,7 @@ export default async function Findings({
         <Suspense fallback={<SkeletonTableFindings />}>
           <SSRDataTable
             searchParams={resolvedSearchParams}
-            filters={filtersWithScanDates}
+            filters={resolvedFilters}
           />
         </Suspense>
       </FilterTransitionWrapper>

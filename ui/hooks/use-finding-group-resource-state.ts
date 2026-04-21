@@ -6,6 +6,7 @@ import { useState } from "react";
 import { canMuteFindingResource } from "@/components/findings/table/finding-resource-selection";
 import { useResourceDetailDrawer } from "@/components/findings/table/resource-detail-drawer";
 import { useFindingGroupResources } from "@/hooks/use-finding-group-resources";
+import { applyDefaultMutedFilter } from "@/lib";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
 
 interface UseFindingGroupResourceStateOptions {
@@ -46,6 +47,7 @@ export function useFindingGroupResourceState({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [resources, setResources] = useState<FindingResourceRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const effectiveFilters = applyDefaultMutedFilter(filters);
 
   const handleSetResources = (
     newResources: FindingResourceRow[],
@@ -71,7 +73,7 @@ export function useFindingGroupResourceState({
     useFindingGroupResources({
       checkId: group.checkId,
       hasDateOrScanFilter: hasHistoricalData,
-      filters,
+      filters: effectiveFilters,
       onSetResources: handleSetResources,
       onAppendResources: handleAppendResources,
       onSetLoading: handleSetLoading,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyDefaultMutedFilter,
   applyFailNonMutedFilters,
   FAIL_FILTER_VALUE,
   includesMutedFindings,
@@ -48,6 +49,27 @@ describe("applyFailNonMutedFilters", () => {
 
     expect(params.get("filter[provider_id__in]")).toBe("abc");
     expect(params.get("sort")).toBe("-severity");
+  });
+});
+
+describe("applyDefaultMutedFilter", () => {
+  it("adds filter[muted]=false when the filter is absent", () => {
+    expect(applyDefaultMutedFilter({ "filter[status__in]": "FAIL" })).toEqual({
+      "filter[muted]": "false",
+      "filter[status__in]": "FAIL",
+    });
+  });
+
+  it("preserves an explicit include value from the caller", () => {
+    expect(
+      applyDefaultMutedFilter({
+        "filter[muted]": "include",
+        "filter[status__in]": "FAIL",
+      }),
+    ).toEqual({
+      "filter[muted]": "include",
+      "filter[status__in]": "FAIL",
+    });
   });
 });
 

@@ -9,6 +9,10 @@ describe("useFindingGroupResourceState", () => {
   const filePath = path.join(currentDir, "use-finding-group-resource-state.ts");
   const source = readFileSync(filePath, "utf8");
 
+  it("defaults drill-down resource loading through the shared muted filter helper", () => {
+    expect(source).toContain("applyDefaultMutedFilter(filters)");
+  });
+
   it("enables muted findings only for the finding-group resource drawer", () => {
     expect(source).toContain("includeMutedInOtherFindings: true");
   });

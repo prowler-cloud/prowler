@@ -56,6 +56,22 @@ export function applyFailNonMutedFilters(params: URLSearchParams): void {
   params.set("filter[muted]", MUTED_FILTER.EXCLUDE);
 }
 
+/**
+ * Returns a new filter object with the default findings behaviour applied:
+ * hide muted findings unless the caller already set `filter[muted]`.
+ *
+ * Used by both the grouped findings SSR path and the resource drill-down so
+ * they stay aligned with the checkbox default on `/findings`.
+ */
+export function applyDefaultMutedFilter<
+  T extends Record<string, string | string[] | undefined>,
+>(filters: T): T {
+  return {
+    "filter[muted]": MUTED_FILTER.EXCLUDE,
+    ...filters,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Filter parsing
 // ---------------------------------------------------------------------------
