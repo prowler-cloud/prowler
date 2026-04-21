@@ -16,6 +16,7 @@ import {
 import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
+  applyDefaultMutedFilter,
   createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
@@ -39,14 +40,16 @@ export default async function Findings({
     getScans({ pageSize: 50 }),
   ]);
 
-  const filtersWithScanDates = await resolveFindingScanDateFilters({
-    filters,
-    scans: scansData?.data || [],
-    loadScan: async (scanId: string) => {
-      const response = await getScan(scanId);
-      return response?.data;
-    },
-  });
+  const filtersWithScanDates = applyDefaultMutedFilter(
+    await resolveFindingScanDateFilters({
+      filters,
+      scans: scansData?.data || [],
+      loadScan: async (scanId: string) => {
+        const response = await getScan(scanId);
+        return response?.data;
+      },
+    }),
+  );
 
   const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);
 

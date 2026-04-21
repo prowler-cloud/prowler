@@ -9,6 +9,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Redesign compliance page with a horizontal ThreatScore card (always-visible pillar breakdown + ActionDropdown), client-side search for compliance frameworks, compact scan selector trigger, responsive mobile filters, download-started toasts for CSV/PDF exports, enhanced compliance cards with truncated titles, and Alert-based empty/error states; migrate Progress component from HeroUI to shadcn [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
 - Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
 
+### 🐞 Fixed
+
+- Default muted filter now applied consistently on the findings SSR page and the finding-group resource drill-down, keeping muted findings hidden unless the "include muted findings" checkbox is opted in
+
 ---
 
 ## [1.24.1] (Prowler v5.24.1)

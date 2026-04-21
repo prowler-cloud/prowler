@@ -12,4 +12,9 @@ describe("useFindingGroupResourceState", () => {
   it("enables muted findings only for the finding-group resource drawer", () => {
     expect(source).toContain("includeMutedInOtherFindings: true");
   });
+
+  it("applies the shared default muted filter before fetching group resources", () => {
+    expect(source).toContain("applyDefaultMutedFilter(filters)");
+    expect(source).toContain("filters: effectiveFilters");
+  });
 });
