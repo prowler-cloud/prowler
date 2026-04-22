@@ -79,16 +79,6 @@ export function MuteRuleEditForm({
       <input type="hidden" name="id" value={muteRule.id} />
 
       <div className="space-y-4">
-        <div className="border-border-neutral-secondary bg-bg-neutral-tertiary rounded-xl border p-4">
-          <p className="text-text-neutral-tertiary text-xs font-medium tracking-[0.08em] uppercase">
-            Rule details
-          </p>
-          <p className="text-text-neutral-secondary mt-2 text-sm">
-            Update the rule name or reason. The muted findings linked to this
-            rule remain unchanged.
-          </p>
-        </div>
-
         <div className="space-y-4">
           <div className="space-y-2">
             <Label
