@@ -6,8 +6,8 @@ import { updateMuteRule } from "@/actions/mute-rules";
 import { MuteRuleActionState, MuteRuleData } from "@/actions/mute-rules/types";
 import { Input, Textarea } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { Label } from "@/components/ui/form/Label";
 import { FormButtons } from "@/components/ui/form";
+import { Label } from "@/components/ui/form/Label";
 import {
   enforceMuteRuleReasonLimit,
   getMuteRuleReasonCounterText,

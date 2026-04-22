@@ -20,11 +20,25 @@ vi.mock("./mute-rule-row-actions", () => ({
   MuteRuleRowActions: () => null,
 }));
 
+vi.mock("@/components/shadcn", async () => {
+  const actual = await vi.importActual<Record<string, unknown>>(
+    "@/components/shadcn",
+  );
+  return {
+    ...actual,
+    Checkbox: () => null,
+  };
+});
+
 describe("createMuteRulesColumns", () => {
   it("renders a compact actionable summary that opens the full list via callback", async () => {
     const onViewTargets = vi.fn();
     const columns = createMuteRulesColumns(vi.fn(), vi.fn(), onViewTargets);
-    const findingsColumn = columns[2];
+    const findingsColumn = columns.find(
+      (column) =>
+        "accessorKey" in column && column.accessorKey === "finding_count",
+    );
+    if (!findingsColumn) throw new Error("finding_count column not found");
 
     const row = {
       original: {

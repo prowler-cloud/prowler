@@ -1,6 +1,7 @@
 "use client";
 
 import { useDisclosure } from "@heroui/use-disclosure";
+import { RowSelectionState } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
@@ -13,10 +14,11 @@ import { FormButtons } from "@/components/ui/form";
 import { DataTable } from "@/components/ui/table";
 import { MetaDataProps } from "@/types";
 
+import { FloatingBulkDeleteButton } from "./floating-bulk-delete-button";
 import { MuteRuleEditForm } from "./mute-rule-edit-form";
 import { MuteRuleTableData } from "./mute-rule-target-previews";
-import { createMuteRulesColumns } from "./mute-rules-columns";
 import { MuteRuleTargetsModal } from "./mute-rule-targets-modal";
+import { createMuteRulesColumns } from "./mute-rules-columns";
 
 interface MuteRulesTableClientProps {
   muteRules: MuteRuleTableData[];
@@ -34,11 +36,19 @@ export function MuteRulesTableClient({
   );
   const [selectedTargetsRule, setSelectedTargetsRule] =
     useState<MuteRuleTableData | null>(null);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [isDeleting, startDeleteTransition] = useTransition();
 
   const editModal = useDisclosure();
   const deleteModal = useDisclosure();
   const targetsModal = useDisclosure();
+
+  const selectedIds = Object.entries(rowSelection)
+    .filter(([, selected]) => selected)
+    .map(([id]) => id);
+  const selectedRules = muteRules.filter((rule) =>
+    selectedIds.includes(rule.id),
+  );
 
   const handleEditClick = (muteRule: MuteRuleData) => {
     setSelectedMuteRule(muteRule);
@@ -98,7 +108,28 @@ export function MuteRulesTableClient({
 
   return (
     <>
-      <DataTable columns={columns} data={muteRules} metadata={metadata} />
+      <DataTable
+        columns={columns}
+        data={muteRules}
+        metadata={metadata}
+        enableRowSelection
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        getRowId={(rule) => rule.id}
+        showSearch
+        searchPlaceholder="Search rules by name or reason..."
+      />
+
+      {selectedRules.length > 0 ? (
+        <FloatingBulkDeleteButton
+          selectedCount={selectedRules.length}
+          selectedRules={selectedRules}
+          onComplete={() => {
+            setRowSelection({});
+            router.refresh();
+          }}
+        />
+      ) : null}
 
       <MuteRuleTargetsModal
         muteRule={selectedTargetsRule}
@@ -147,8 +178,8 @@ export function MuteRulesTableClient({
                 Deleting this rule removes it from Mutelist immediately.
               </p>
               <p className="text-text-neutral-tertiary mt-1 text-xs">
-                This action will not unmute the findings that were already
-                muted by the rule.
+                This action will not unmute the findings that were already muted
+                by the rule.
               </p>
             </div>
 
@@ -157,9 +188,7 @@ export function MuteRulesTableClient({
               submitText={isDeleting ? "Deleting..." : "Delete"}
               isDisabled={isDeleting}
               submitColor="danger"
-              rightIcon={
-                isDeleting ? undefined : <Trash2 className="size-4" />
-              }
+              rightIcon={isDeleting ? undefined : <Trash2 className="size-4" />}
             />
           </form>
         </Modal>

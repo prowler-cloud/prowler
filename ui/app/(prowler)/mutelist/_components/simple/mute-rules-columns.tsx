@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { List } from "lucide-react";
 
 import { MuteRuleData } from "@/actions/mute-rules/types";
-import { Button } from "@/components/shadcn";
+import { Button, Checkbox } from "@/components/shadcn";
 import { DateWithTime } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
 
@@ -17,6 +17,38 @@ export const createMuteRulesColumns = (
   onDelete: (muteRule: MuteRuleData) => void,
   onViewTargets: (muteRule: MuteRuleTableData) => void,
 ): ColumnDef<MuteRuleTableData>[] => [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        size="sm"
+        checked={
+          table.getIsAllPageRowsSelected()
+            ? true
+            : table.getIsSomePageRowsSelected()
+              ? "indeterminate"
+              : false
+        }
+        onCheckedChange={(checked) =>
+          table.toggleAllPageRowsSelected(checked === true)
+        }
+        onClick={(event) => event.stopPropagation()}
+        aria-label="Select all rules on this page"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        size="sm"
+        checked={row.getIsSelected()}
+        onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+        onClick={(event) => event.stopPropagation()}
+        aria-label={`Select ${row.original.attributes.name}`}
+      />
+    ),
+    size: 40,
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "name",
     header: ({ column }) => (

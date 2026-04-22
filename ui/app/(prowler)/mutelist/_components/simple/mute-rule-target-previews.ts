@@ -1,7 +1,7 @@
 import {
   adaptFindingsByResourceResponse,
-  type ResourceDrawerFinding,
   getLatestFindings,
+  type ResourceDrawerFinding,
 } from "@/actions/findings";
 import { MuteRuleData } from "@/actions/mute-rules/types";
 

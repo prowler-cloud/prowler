@@ -24,7 +24,7 @@ vi.mock("@/components/findings/table/resource-detail-drawer", () => ({
   useResourceDetailDrawer: useResourceDetailDrawerMock,
 }));
 
-import { FINDINGS_ROW_TYPE, type FindingGroupRow } from "@/types";
+import { type FindingGroupRow, FINDINGS_ROW_TYPE } from "@/types";
 
 import { useFindingGroupResourceState } from "./use-finding-group-resource-state";
 

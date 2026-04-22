@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 const { getLatestFindingsMock, adaptFindingsByResourceResponseMock } =
   vi.hoisted(() => ({
-  getLatestFindingsMock: vi.fn(),
-  adaptFindingsByResourceResponseMock: vi.fn(),
-}));
+    getLatestFindingsMock: vi.fn(),
+    adaptFindingsByResourceResponseMock: vi.fn(),
+  }));
 
 vi.mock("@/actions/findings", () => ({
   getLatestFindings: getLatestFindingsMock,
@@ -48,7 +48,9 @@ describe("mute rule target previews", () => {
     );
 
     expect(preview).toBe("S3 Bucket Public Access • bucket-a");
-    expect(fallbackPreview).toBe("ec2_public_ip • arn:aws:ec2:::instance/i-123");
+    expect(fallbackPreview).toBe(
+      "ec2_public_ip • arn:aws:ec2:::instance/i-123",
+    );
   });
 
   it("hydrates all target labels for a rule and derives a compact summary", async () => {

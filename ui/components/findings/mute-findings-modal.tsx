@@ -8,8 +8,8 @@ import { Button, Input, Textarea } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useToast } from "@/components/ui";
-import { Label } from "@/components/ui/form/Label";
 import { FormButtons } from "@/components/ui/form";
+import { Label } from "@/components/ui/form/Label";
 import {
   enforceMuteRuleReasonLimit,
   getMuteRuleReasonCounterText,

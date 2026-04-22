@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 const { updateMuteRuleMock, toastMock } = vi.hoisted(() => ({

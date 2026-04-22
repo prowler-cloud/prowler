@@ -29,8 +29,8 @@ describe("MuteRulesTableSkeleton", () => {
     );
     expect(intro.querySelectorAll("[data-slot='skeleton']").length).toBe(4);
     expect(skeleton.querySelector("table")).toBeInTheDocument();
-    expect(
-      skeleton.querySelectorAll("tbody tr").length,
-    ).toBeGreaterThanOrEqual(8);
+    expect(skeleton.querySelectorAll("tbody tr").length).toBeGreaterThanOrEqual(
+      8,
+    );
   });
 });

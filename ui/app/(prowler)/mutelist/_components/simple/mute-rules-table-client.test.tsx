@@ -51,23 +51,28 @@ vi.mock("@/components/shadcn/modal", () => ({
     ) : null,
 }));
 
+const dataTableMock = vi.fn();
+
 vi.mock("@/components/ui/table", () => ({
-  DataTable: ({
-    columns,
-    data,
-  }: {
+  DataTable: (props: {
     columns: Array<{
       id?: string;
       cell?: (args: { row: { original: unknown } }) => ReactNode;
     }>;
     data: unknown[];
+    enableRowSelection?: boolean;
+    showSearch?: boolean;
+    getRowId?: (row: unknown) => string;
   }) => {
-    const actionsColumn = columns.find((column) => column.id === "actions");
-    const findingsColumn = columns[2];
+    dataTableMock(props);
+    const actionsColumn = props.columns.find(
+      (column) => column.id === "actions",
+    );
+    const findingsColumn = props.columns[3];
 
     return (
       <div>
-        {data.map((row, index) => (
+        {props.data.map((row, index) => (
           <div key={index}>
             {findingsColumn?.cell?.({ row: { original: row } })}
             {actionsColumn?.cell?.({ row: { original: row } })}
@@ -78,8 +83,16 @@ vi.mock("@/components/ui/table", () => ({
   },
 }));
 
+vi.mock("./floating-bulk-delete-button", () => ({
+  FloatingBulkDeleteButton: () => (
+    <div data-testid="floating-bulk-delete-button" />
+  ),
+}));
+
 vi.mock("@/components/shadcn/dropdown", () => ({
-  ActionDropdown: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  ActionDropdown: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
   ActionDropdownDangerZone: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
   ),
@@ -110,7 +123,9 @@ vi.mock("./mute-rule-targets-modal", () => ({
   }) =>
     open ? (
       <div role="dialog" aria-label="Muted Findings">
-        {muteRule?.targetLabels?.map((label) => <span key={label}>{label}</span>)}
+        {muteRule?.targetLabels?.map((label) => (
+          <span key={label}>{label}</span>
+        ))}
       </div>
     ) : null,
 }));
@@ -128,11 +143,7 @@ const muteRule = {
     enabled: true,
     finding_uids: ["uid-1", "uid-2", "uid-3"],
   },
-  targetLabels: [
-    "Check title • bucket-a",
-    "Other check • bucket-b",
-    "uid-3",
-  ],
+  targetLabels: ["Check title • bucket-a", "Other check • bucket-b", "uid-3"],
   targetSummaryLabel: "Check title • bucket-a",
   hiddenTargetCount: 2,
 };
@@ -178,5 +189,21 @@ describe("MuteRulesTableClient", () => {
     expect(screen.getByText("Check title • bucket-a")).toBeInTheDocument();
     expect(screen.getByText("Other check • bucket-b")).toBeInTheDocument();
     expect(screen.getByText("uid-3")).toBeInTheDocument();
+  });
+
+  it("wires the DataTable for selection and search, and hides the floating button with no selection", () => {
+    dataTableMock.mockClear();
+
+    render(<MuteRulesTableClient muteRules={[muteRule]} />);
+
+    expect(dataTableMock).toHaveBeenCalled();
+    const props = dataTableMock.mock.calls[0][0];
+    expect(props.enableRowSelection).toBe(true);
+    expect(props.showSearch).toBe(true);
+    expect(props.getRowId?.(muteRule)).toBe("mute-rule-1");
+
+    expect(
+      screen.queryByTestId("floating-bulk-delete-button"),
+    ).not.toBeInTheDocument();
   });
 });
