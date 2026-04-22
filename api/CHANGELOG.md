@@ -2,11 +2,25 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.26.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+
+---
+
 ## [1.25.3] (Prowler v5.24.3)
+
+### 🚀 Added
+
+- `/overviews/findings`, `/overviews/findings-severity` and `/overviews/services` now reflect newly-muted findings without waiting for the next scan. The post-mute `reaggregate-all-finding-group-summaries` task was extended to re-run the same per-scan pipeline that scan completion runs (`ScanSummary`, `DailySeveritySummary`, `FindingGroupDailySummary`) on the latest scan of every `(provider, day)` pair, keeping the pre-aggregated tables in sync with `Finding.muted` updates [(#10827)](https://github.com/prowler-cloud/prowler/pull/10827)
 
 ### 🐞 Fixed
 
 - Finding groups aggregated `status` now treats muted findings as resolved: a group is `FAIL` only while at least one non-muted FAIL remains, otherwise it is `PASS` (including fully-muted groups). The `filter[status]` filter and the `sort=status` ordering share the same semantics, keeping `status` consistent with `fail_count` and the orthogonal `muted` flag [(#10825)](https://github.com/prowler-cloud/prowler/pull/10825)
+- `aggregate_findings` is now idempotent: it deletes the scan's existing `ScanSummary` rows before `bulk_create`, so re-runs (such as the post-mute reaggregation pipeline) no longer violate the `unique_scan_summary` constraint and no longer abort the downstream `DailySeveritySummary` / `FindingGroupDailySummary` recomputation for the affected scan [(#10827)](https://github.com/prowler-cloud/prowler/pull/10827)
+- Attack Paths: Findings on AWS were silently dropped during the Neo4j merge for resources whose Cartography node is keyed by a short identifier (e.g. EC2 instances) rather than the full ARN [(#10839)](https://github.com/prowler-cloud/prowler/pull/10839)
 
 ---
 
@@ -20,7 +34,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - `/finding-groups/latest/<check_id>/resources` now selects the latest completed scan per provider by `-completed_at` (then `-inserted_at`) instead of `-inserted_at`, matching the `/finding-groups/latest` summary path and the daily-summary upsert so overlapping scans no longer produce diverging `delta`/`new_count` between the two endpoints [(#10802)](https://github.com/prowler-cloud/prowler/pull/10802)
 
----
 
 ## [1.25.1] (Prowler v5.24.1)
 
@@ -34,6 +47,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Missing `tenant_id` filter while getting related findings after scan completes [(#10722)](https://github.com/prowler-cloud/prowler/pull/10722)
 - Finding group counters `pass_count`, `fail_count` and `manual_count` now exclude muted findings [(#10753)](https://github.com/prowler-cloud/prowler/pull/10753)
 - Silent data loss in `ResourceFindingMapping` bulk insert that left findings orphaned when `INSERT ... ON CONFLICT DO NOTHING` dropped rows without raising; added explicit `unique_fields` [(#10724)](https://github.com/prowler-cloud/prowler/pull/10724)
+- `DELETE /tenants/{tenant_pk}/memberships/{id}` now deletes the expelled user's account when the removed membership was their last one, and blacklists every outstanding refresh token for that user so their existing sessions can no longer mint new access tokens [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 
 ---
 

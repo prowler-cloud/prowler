@@ -110,6 +110,7 @@ json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 json_ocsf_file_suffix = ".ocsf.json"
 html_file_suffix = ".html"
+sarif_file_suffix = ".sarif"
 default_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
 )
@@ -120,7 +121,7 @@ default_redteam_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/llm_config.yaml"
 )
 encoding_format_utf_8 = "utf-8"
-available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
+available_output_formats = ["csv", "json-asff", "json-ocsf", "html", "sarif"]
 
 # Prowler Cloud API settings
 cloud_api_base_url = os.getenv("PROWLER_CLOUD_API_BASE_URL", "https://api.prowler.com")

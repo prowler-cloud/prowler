@@ -40,25 +40,22 @@ export default async function Findings({
     getScans({ pageSize: 50 }),
   ]);
 
-  const filtersWithScanDates = applyDefaultMutedFilter(
-    await resolveFindingScanDateFilters({
-      filters,
-      scans: scansData?.data || [],
-      loadScan: async (scanId: string) => {
-        const response = await getScan(scanId);
-        return response?.data;
-      },
-    }),
-  );
-
+  const filtersWithScanDates = await resolveFindingScanDateFilters({
+    filters,
+    scans: scansData?.data || [],
+    loadScan: async (scanId: string) => {
+      const response = await getScan(scanId);
+      return response?.data;
+    },
+  });
+  const resolvedFilters = applyDefaultMutedFilter(filtersWithScanDates);
   const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);
-
   const metadataInfoData = await (
     hasHistoricalData ? getMetadataInfo : getLatestMetadataInfo
   )({
     query,
     sort: encodedSort,
-    filters: filtersWithScanDates,
+    filters: resolvedFilters,
   });
 
   // Extract unique regions, services, categories, groups from the new endpoint
@@ -102,7 +99,7 @@ export default async function Findings({
         <Suspense fallback={<SkeletonTableFindings />}>
           <SSRDataTable
             searchParams={resolvedSearchParams}
-            filters={filtersWithScanDates}
+            filters={resolvedFilters}
           />
         </Suspense>
       </FilterTransitionWrapper>

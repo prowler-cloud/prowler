@@ -9,6 +9,7 @@ from prowler.config.config import (
     json_asff_file_suffix,
     json_ocsf_file_suffix,
     orange_color,
+    sarif_file_suffix,
 )
 from prowler.lib.logger import logger
 from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
@@ -206,6 +207,10 @@ def display_summary_table(
             if "html" in output_options.output_modes:
                 print(
                     f" - HTML: {output_directory}/{output_filename}{html_file_suffix}"
+                )
+            if "sarif" in output_options.output_modes:
+                print(
+                    f" - SARIF: {output_directory}/{output_filename}{sarif_file_suffix}"
                 )
 
         else:
