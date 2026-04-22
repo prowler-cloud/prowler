@@ -48,7 +48,7 @@ export function MuteRuleTargetsModal({
           </div>
         </div>
 
-        <div className="border-border-neutral-secondary bg-bg-neutral-tertiary max-h-[60vh] overflow-y-auto rounded-xl border">
+        <div className="minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-tertiary max-h-[60vh] overflow-y-auto rounded-xl border">
           <ul className="divide-border-neutral-secondary divide-y">
             {muteRule.targetLabels.map((label, index) => {
               const [title, ...metaParts] = label.split(" • ");
@@ -57,13 +57,13 @@ export function MuteRuleTargetsModal({
               return (
                 <li
                   key={`${muteRule.id}-${label}-${index}`}
-                  className="px-4 py-3"
+                  className="min-w-0 px-4 py-3"
                 >
-                  <p className="text-text-neutral-primary text-sm font-medium">
+                  <p className="text-text-neutral-primary text-sm font-medium break-all">
                     {title}
                   </p>
                   {meta ? (
-                    <p className="text-text-neutral-tertiary mt-1 text-xs">
+                    <p className="text-text-neutral-tertiary mt-1 text-xs break-all">
                       {meta}
                     </p>
                   ) : null}
