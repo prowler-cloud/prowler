@@ -303,6 +303,9 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
 
     Aggregates category counts from all findings in the scan and creates
     one ScanCategorySummary row per (category, severity) combination.
+    Idempotent: re-runs replace the scan's existing rows so counts stay in
+    sync with `Finding.muted` updates triggered outside scan completion
+    (e.g. mute rules).
 
     Args:
         tenant_id: Target tenant UUID
@@ -312,11 +315,6 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
         dict: Status indicating whether backfill was performed
     """
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        if ScanCategorySummary.objects.filter(
-            tenant_id=tenant_id, scan_id=scan_id
-        ).exists():
-            return {"status": "already backfilled"}
-
         if not Scan.objects.filter(
             tenant_id=tenant_id,
             id=scan_id,
@@ -337,9 +335,6 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
                 cache=category_counts,
             )
 
-        if not category_counts:
-            return {"status": "no categories to backfill"}
-
     category_summaries = [
         ScanCategorySummary(
             tenant_id=tenant_id,
@@ -354,9 +349,18 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
     ]
 
     with rls_transaction(tenant_id):
-        ScanCategorySummary.objects.bulk_create(
-            category_summaries, batch_size=500, ignore_conflicts=True
-        )
+        # Replace the scan's rows so re-runs (post-mute reaggregation) keep
+        # counts in sync and drop combinations that no longer exist.
+        ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).delete()
+        if category_summaries:
+            ScanCategorySummary.objects.bulk_create(
+                category_summaries, batch_size=500
+            )
+
+    if not category_counts:
+        return {"status": "no categories to backfill"}
 
     return {"status": "backfilled", "categories_count": len(category_counts)}
 
@@ -367,6 +371,10 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
 
     Aggregates resource group counts from all findings in the scan and creates
     one ScanGroupSummary row per (resource_group, severity) combination.
+    Idempotent: re-runs replace the scan's existing rows so counts stay in
+    sync with `Finding.muted` updates triggered outside scan completion
+    (e.g. mute rules) and with resource-inventory views reading from this
+    table.
 
     Args:
         tenant_id: Target tenant UUID
@@ -376,11 +384,6 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
         dict: Status indicating whether backfill was performed
     """
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        if ScanGroupSummary.objects.filter(
-            tenant_id=tenant_id, scan_id=scan_id
-        ).exists():
-            return {"status": "already backfilled"}
-
         if not Scan.objects.filter(
             tenant_id=tenant_id,
             id=scan_id,
@@ -418,9 +421,6 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
                 group_resources_cache=group_resources_cache,
             )
 
-        if not resource_group_counts:
-            return {"status": "no resource groups to backfill"}
-
     # Compute group-level resource counts (same value for all severity rows in a group)
     group_resource_counts = {
         grp: len(uids) for grp, uids in group_resources_cache.items()
@@ -440,9 +440,18 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
     ]
 
     with rls_transaction(tenant_id):
-        ScanGroupSummary.objects.bulk_create(
-            resource_group_summaries, batch_size=500, ignore_conflicts=True
-        )
+        # Replace the scan's rows so re-runs (post-mute reaggregation) keep
+        # counts in sync and drop combinations that no longer exist.
+        ScanGroupSummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).delete()
+        if resource_group_summaries:
+            ScanGroupSummary.objects.bulk_create(
+                resource_group_summaries, batch_size=500
+            )
+
+    if not resource_group_counts:
+        return {"status": "no resource groups to backfill"}
 
     return {"status": "backfilled", "resource_groups_count": len(resource_group_counts)}
 

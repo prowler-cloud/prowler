@@ -1546,15 +1546,23 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
             )
         )
 
-    # Bulk create overview records
-    if overview_objects:
-        with rls_transaction(tenant_id):
-            AttackSurfaceOverview.objects.bulk_create(overview_objects, batch_size=500)
+    with rls_transaction(tenant_id):
+        # Delete first so re-runs (e.g. post-mute reaggregation) don't hit
+        # the `unique_attack_surface_per_scan` constraint.
+        AttackSurfaceOverview.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).delete()
+        if overview_objects:
+            AttackSurfaceOverview.objects.bulk_create(
+                overview_objects, batch_size=500
+            )
             logger.info(
                 f"Created {len(overview_objects)} attack surface overview records for scan {scan_id}"
             )
-    else:
-        logger.info(f"No attack surface overview records created for scan {scan_id}")
+        else:
+            logger.info(
+                f"No attack surface overview records created for scan {scan_id}"
+            )
 
 
 def aggregate_daily_severity(tenant_id: str, scan_id: str):

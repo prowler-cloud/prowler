@@ -227,13 +227,19 @@ class TestBackfillComplianceSummaries:
 
 @pytest.mark.django_db
 class TestBackfillScanCategorySummaries:
-    def test_already_backfilled(self, scan_category_summary_fixture):
+    def test_rerun_replaces_existing_rows(self, scan_category_summary_fixture):
+        """The function is idempotent: re-runs drop prior rows and write the
+        current state (empty here since the scan has no findings), so the
+        post-mute reaggregation pipeline can safely re-dispatch it."""
         tenant_id = scan_category_summary_fixture.tenant_id
         scan_id = scan_category_summary_fixture.scan_id
 
         result = backfill_scan_category_summaries(str(tenant_id), str(scan_id))
 
-        assert result == {"status": "already backfilled"}
+        assert result == {"status": "no categories to backfill"}
+        assert not ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).exists()
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:
@@ -311,13 +317,19 @@ def scan_resource_group_summary_fixture(scans_fixture):
 
 @pytest.mark.django_db
 class TestBackfillScanGroupSummaries:
-    def test_already_backfilled(self, scan_resource_group_summary_fixture):
+    def test_rerun_replaces_existing_rows(self, scan_resource_group_summary_fixture):
+        """The function is idempotent: re-runs drop prior rows and write the
+        current state (empty here since the scan has no findings), so the
+        post-mute reaggregation pipeline can safely re-dispatch it."""
         tenant_id = scan_resource_group_summary_fixture.tenant_id
         scan_id = scan_resource_group_summary_fixture.scan_id
 
         result = backfill_scan_resource_group_summaries(str(tenant_id), str(scan_id))
 
-        assert result == {"status": "already backfilled"}
+        assert result == {"status": "no resource groups to backfill"}
+        assert not ScanGroupSummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).exists()
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:
