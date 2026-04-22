@@ -3391,9 +3391,9 @@ class TestAggregateFindings:
             ).values_list("id", flat=True)
         )
         first_run_rows = list(
-            ScanSummary.all_objects.filter(
-                tenant_id=tenant.id, scan_id=scan.id
-            ).values(*value_columns)
+            ScanSummary.all_objects.filter(tenant_id=tenant.id, scan_id=scan.id).values(
+                *value_columns
+            )
         )
 
         # Second invocation must not raise and must not duplicate rows.
@@ -3404,9 +3404,9 @@ class TestAggregateFindings:
             ).values_list("id", flat=True)
         )
         second_run_rows = list(
-            ScanSummary.all_objects.filter(
-                tenant_id=tenant.id, scan_id=scan.id
-            ).values(*value_columns)
+            ScanSummary.all_objects.filter(tenant_id=tenant.id, scan_id=scan.id).values(
+                *value_columns
+            )
         )
 
         # Upsert preserves the original row identities; values stay stable

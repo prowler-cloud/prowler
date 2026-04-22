@@ -243,9 +243,7 @@ class TestBackfillScanCategorySummaries:
             tenant_id=tenant_id, scan_id=scan_id, category="existing-category"
         ).exists()
 
-    def test_rerun_upserts_without_duplicating(
-        self, findings_with_categories_fixture
-    ):
+    def test_rerun_upserts_without_duplicating(self, findings_with_categories_fixture):
         """Calling the backfill twice upserts rather than raising on
         `unique_category_severity_per_scan`; rows are updated in place
         (same primary keys)."""
@@ -272,7 +270,9 @@ class TestBackfillScanCategorySummaries:
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:
-            result = aggregate_scan_category_summaries(str(scan.tenant_id), str(scan.id))
+            result = aggregate_scan_category_summaries(
+                str(scan.tenant_id), str(scan.id)
+            )
             assert result == {"status": "scan is not completed"}
 
     def test_no_categories_to_backfill(self, scans_fixture):
@@ -362,9 +362,7 @@ class TestBackfillScanGroupSummaries:
             tenant_id=tenant_id, scan_id=scan_id, resource_group="existing-group"
         ).exists()
 
-    def test_rerun_upserts_without_duplicating(
-        self, findings_with_group_fixture
-    ):
+    def test_rerun_upserts_without_duplicating(self, findings_with_group_fixture):
         """Calling the backfill twice upserts rather than raising on
         `unique_resource_group_severity_per_scan`; rows are updated in
         place (same primary keys)."""
