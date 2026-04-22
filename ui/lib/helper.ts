@@ -256,13 +256,21 @@ export const downloadCompliancePdf = async (
   options: { complianceId?: string } = {},
 ): Promise<void> => {
   const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
+  const isCis = reportType === COMPLIANCE_REPORT_TYPES.CIS;
+  if (isCis && !options.complianceId) {
+    toast({
+      variant: "destructive",
+      title: "Download Failed",
+      description: "CIS compliance ID is required for PDF download.",
+    });
+    return;
+  }
   toast({
     title: "Download Started",
     description: `Preparing the ${reportName} PDF report. This may take a moment.`,
   });
-  const isCis = reportType === COMPLIANCE_REPORT_TYPES.CIS;
   const result = isCis
-    ? await getCisPdfReport(scanId, options.complianceId ?? "")
+    ? await getCisPdfReport(scanId, options.complianceId!)
     : await getCompliancePdfReport(scanId, reportType);
   await downloadFile(
     result,
