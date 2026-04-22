@@ -4,9 +4,18 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.26.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- `/overviews/resource-groups` (resource inventory), `/overviews/categories` and `/overviews/attack-surfaces` now reflect newly-muted findings without waiting for the next scan. The post-mute `reaggregate-all-finding-group-summaries` task now also dispatches `backfill_scan_resource_group_summaries_task`, `backfill_scan_category_summaries_task` and `aggregate_attack_surface_task` per latest scan of every `(provider, day)` pair, rebuilding `ScanGroupSummary`, `ScanCategorySummary` and `AttackSurfaceOverview` alongside the tables already covered in #10827 [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
+
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+
+### 🐞 Fixed
+
+- `backfill_scan_resource_group_summaries` and `backfill_scan_category_summaries` are now idempotent: they drop the scan's existing rows before `bulk_create` (removing the `already backfilled` short-circuit and the silent `ignore_conflicts=True` upsert), so re-runs triggered by the post-mute reaggregation pipeline actually update the counts powering the resource inventory and categories overviews [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
+- `aggregate_attack_surface` is now idempotent: it deletes the scan's existing `AttackSurfaceOverview` rows before `bulk_create`, so re-runs triggered by the post-mute reaggregation pipeline no longer violate the `unique_attack_surface_per_scan` constraint [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
 
 ---
 
@@ -20,6 +29,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Finding groups aggregated `status` now treats muted findings as resolved: a group is `FAIL` only while at least one non-muted FAIL remains, otherwise it is `PASS` (including fully-muted groups). The `filter[status]` filter and the `sort=status` ordering share the same semantics, keeping `status` consistent with `fail_count` and the orthogonal `muted` flag [(#10825)](https://github.com/prowler-cloud/prowler/pull/10825)
 - `aggregate_findings` is now idempotent: it deletes the scan's existing `ScanSummary` rows before `bulk_create`, so re-runs (such as the post-mute reaggregation pipeline) no longer violate the `unique_scan_summary` constraint and no longer abort the downstream `DailySeveritySummary` / `FindingGroupDailySummary` recomputation for the affected scan [(#10827)](https://github.com/prowler-cloud/prowler/pull/10827)
+- Attack Paths: Findings on AWS were silently dropped during the Neo4j merge for resources whose Cartography node is keyed by a short identifier (e.g. EC2 instances) rather than the full ARN [(#10839)](https://github.com/prowler-cloud/prowler/pull/10839)
 
 ---
 
