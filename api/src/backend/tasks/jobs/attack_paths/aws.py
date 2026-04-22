@@ -313,3 +313,14 @@ def sync_aws_account(
             )
 
     return failed_syncs
+
+
+def extract_short_uid(uid: str) -> str:
+    """Return the short identifier from an AWS ARN.
+
+    AWS ARNs end in one of:
+      - `<type>/<id>`        (e.g. `instance/i-xxx`)
+      - `<type>:<id>`        (e.g. `function:name`)
+      - `<id>`               (e.g. `bucket-name`)
+    """
+    return uid.rsplit("/", 1)[-1].rsplit(":", 1)[-1]
