@@ -12085,8 +12085,7 @@ class TestSAMLConfigurationViewSet:
             "data": {
                 "type": "saml-configurations",
                 "id": str(config.id),
-                "attributes": {
-                    "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+                "attributes": {"metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
         <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
         <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
             <md:KeyDescriptor use='signing'>
@@ -12101,8 +12100,7 @@ class TestSAMLConfigurationViewSet:
             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
         </md:IDPSSODescriptor>
         </md:EntityDescriptor>
-        """
-                },
+        """},
             }
         }
         response = authenticated_client.patch(
@@ -15729,15 +15727,15 @@ class TestFindingGroupViewSet:
         # iam_password_policy has only PASS findings
         assert data[0]["attributes"]["status"] == "PASS"
 
-    def test_finding_groups_fully_muted_group_reflects_underlying_status(
+    def test_finding_groups_fully_muted_group_is_pass(
         self, authenticated_client, finding_groups_fixture
     ):
-        """A fully-muted group still surfaces its underlying status (no MUTED).
+        """A fully-muted group reports status=PASS and muted=True.
 
-        rds_encryption has 2 muted FAIL findings, so the group must report
-        status=FAIL (the orthogonal `muted` boolean signals it isn't actionable).
-        The status×muted breakdown lets clients answer 'how many failing
-        findings are muted in this group'.
+        rds_encryption has 2 muted FAIL findings. Muted findings are treated
+        as resolved/accepted, so the group is no longer actionable and its
+        status must be PASS. The `muted` flag is True because every finding
+        in the group is muted.
         """
         response = authenticated_client.get(
             reverse("finding-group-list"),
@@ -15747,7 +15745,7 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         assert len(data) == 1
         attrs = data[0]["attributes"]
-        assert attrs["status"] == "FAIL"
+        assert attrs["status"] == "PASS"
         assert attrs["muted"] is True
         assert attrs["fail_count"] == 0
         assert attrs["fail_muted_count"] == 2
@@ -15761,6 +15759,83 @@ class TestFindingGroupViewSet:
             + attrs["manual_muted_count"]
             == attrs["muted_count"]
         )
+
+    def test_finding_groups_status_ignores_muted_failures(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        scans_fixture,
+        resources_fixture,
+    ):
+        """Muted FAIL findings must not drive the aggregated status.
+
+        When a group mixes one non-muted PASS with one muted FAIL, the
+        actionable outcome is PASS: there are no unmuted failures left. The
+        aggregated `status` must reflect that (not FAIL), while `muted`
+        stays False because the group still has a non-muted finding.
+        """
+        tenant = tenants_fixture[0]
+        scan1, *_ = scans_fixture
+        resource1, *_ = resources_fixture
+
+        pass_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid="fg_mixed_muted_pass",
+            scan=scan1,
+            delta=None,
+            status=Status.PASS,
+            severity=Severity.low,
+            impact=Severity.low,
+            check_id="mixed_muted_check",
+            check_metadata={
+                "CheckId": "mixed_muted_check",
+                "checktitle": "Mixed muted check",
+                "Description": "Fixture for muted status aggregation.",
+            },
+            first_seen_at="2024-01-11T00:00:00Z",
+            muted=False,
+        )
+        pass_finding.add_resources([resource1])
+
+        fail_muted_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid="fg_mixed_muted_fail",
+            scan=scan1,
+            delta=None,
+            status=Status.FAIL,
+            severity=Severity.high,
+            impact=Severity.high,
+            check_id="mixed_muted_check",
+            check_metadata={
+                "CheckId": "mixed_muted_check",
+                "checktitle": "Mixed muted check",
+                "Description": "Fixture for muted status aggregation.",
+            },
+            first_seen_at="2024-01-12T00:00:00Z",
+            muted=True,
+        )
+        fail_muted_finding.add_resources([resource1])
+
+        # filter[region] forces finding-level aggregation so we exercise the
+        # raw-findings path without touching the daily summary fixture.
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "mixed_muted_check",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "PASS"
+        assert attrs["muted"] is False
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 0
+        assert attrs["fail_muted_count"] == 1
+        assert attrs["muted_count"] == 1
 
     def test_finding_groups_status_filter(
         self, authenticated_client, finding_groups_fixture
