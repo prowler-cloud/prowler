@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.25.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
+
+---
+
 ## [5.24.1] (Prowler v5.24.1)
 
 ### 🚀 Added
@@ -38,7 +46,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced` check for M365 provider [(#10618)](https://github.com/prowler-cloud/prowler/pull/10618)
 - `entra_conditional_access_policy_block_unknown_device_platforms` check for M365 provider [(#10615)](https://github.com/prowler-cloud/prowler/pull/10615)
 - `--excluded-region` CLI flag, `PROWLER_AWS_DISALLOWED_REGIONS` environment variable, and `aws.disallowed_regions` config entry to skip specific AWS regions during scans [(#10688)](https://github.com/prowler-cloud/prowler/pull/10688)
-- SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
 
 ### 🔄 Changed
 
