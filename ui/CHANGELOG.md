@@ -10,6 +10,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
+- Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+
+### ❌ Removed
+
 - Redesign compliance page with a horizontal ThreatScore card (always-visible pillar breakdown + ActionDropdown), client-side search for compliance frameworks, compact scan selector trigger, responsive mobile filters, download-started toasts for CSV/PDF exports, enhanced compliance cards with truncated titles, and Alert-based empty/error states; migrate Progress component from HeroUI to shadcn [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
 - Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
 
