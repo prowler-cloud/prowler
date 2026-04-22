@@ -3,5 +3,7 @@ export {
   getLatestResources,
   getMetadataInfo,
   getResourceById,
+  getResourceDrawerData,
+  getResourceEvents,
   getResources,
 } from "./resources";

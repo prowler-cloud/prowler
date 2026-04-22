@@ -11,6 +11,7 @@ from py_ocsf_models.objects.compliance_status import StatusID as ComplianceStatu
 from prowler.lib.check.compliance_models import (
     AttributeMetadata,
     ComplianceFramework,
+    OutputFormats,
     OutputsConfig,
     TableConfig,
     UniversalComplianceRequirement,
@@ -70,23 +71,29 @@ def _make_finding(check_id, status="PASS", provider="aws"):
 
 def _make_framework(requirements, attrs_metadata=None):
     return ComplianceFramework(
-        Framework="TestFW",
-        Name="Test Framework",
-        Provider="AWS",
-        Version="1.0",
-        Description="Test framework",
-        Requirements=requirements,
-        AttributesMetadata=attrs_metadata,
-        Outputs=OutputsConfig(Table_Config=TableConfig(GroupBy="Section")),
+        framework="TestFW",
+        name="Test Framework",
+        provider="AWS",
+        version="1.0",
+        description="Test framework",
+        requirements=requirements,
+        attributes_metadata=attrs_metadata,
+        outputs=OutputsConfig(table_config=TableConfig(group_by="Section")),
     )
 
 
 def _simple_requirement(req_id="REQ-1", checks=None):
+    if checks is None:
+        checks_dict = {"aws": ["check_a"]}
+    elif isinstance(checks, dict):
+        checks_dict = checks
+    else:
+        checks_dict = {"aws": list(checks)} if checks else {}
     return UniversalComplianceRequirement(
-        Id=req_id,
-        Description=f"Description for {req_id}",
-        Attributes={},
-        Checks=checks if checks is not None else ["check_a"],
+        id=req_id,
+        description=f"Description for {req_id}",
+        attributes={},
+        checks=checks_dict,
     )
 
 
@@ -195,10 +202,10 @@ class TestOCSFComplianceOutput:
 
     def test_multi_provider_checks_dict(self):
         req = UniversalComplianceRequirement(
-            Id="REQ-1",
-            Description="Multi-provider req",
-            Attributes={},
-            Checks={"aws": ["check_a"], "azure": ["check_b"]},
+            id="REQ-1",
+            description="Multi-provider req",
+            attributes={},
+            checks={"aws": ["check_a"], "azure": ["check_b"]},
         )
         fw = _make_framework([req])
         findings = [_make_finding("check_a", "PASS", provider="aws")]
@@ -274,10 +281,10 @@ class TestOCSFComplianceOutput:
 
     def test_requirement_attributes_in_unmapped(self):
         req = UniversalComplianceRequirement(
-            Id="REQ-1",
-            Description="Test requirement",
-            Attributes={"Section": "IAM", "Profile": "Level 1"},
-            Checks=["check_a"],
+            id="REQ-1",
+            description="Test requirement",
+            attributes={"Section": "IAM", "Profile": "Level 1"},
+            checks={"aws": ["check_a"]},
         )
         fw = _make_framework([req])
         findings = [_make_finding("check_a", "PASS")]
@@ -292,10 +299,10 @@ class TestOCSFComplianceOutput:
 
     def test_requirement_attributes_keys_are_snake_case(self):
         req = UniversalComplianceRequirement(
-            Id="REQ-1",
-            Description="Test requirement",
-            Attributes={"Section": "IAM", "CCMLite": "Yes", "SubSection": "1.1"},
-            Checks=["check_a"],
+            id="REQ-1",
+            description="Test requirement",
+            attributes={"Section": "IAM", "CCMLite": "Yes", "SubSection": "1.1"},
+            checks={"aws": ["check_a"]},
         )
         fw = _make_framework([req])
         findings = [_make_finding("check_a", "PASS")]
@@ -322,10 +329,10 @@ class TestOCSFComplianceOutput:
 
     def test_manual_requirement_has_attributes_in_unmapped(self):
         req = UniversalComplianceRequirement(
-            Id="MANUAL-1",
-            Description="Manual check",
-            Attributes={"Section": "Logging", "Type": "manual"},
-            Checks=[],
+            id="MANUAL-1",
+            description="Manual check",
+            attributes={"Section": "Logging", "Type": "manual"},
+            checks={},
         )
         fw = _make_framework([req])
         findings = [_make_finding("check_a")]
@@ -341,21 +348,33 @@ class TestOCSFComplianceOutput:
         assert "cloud" not in cf.unmapped
 
     def test_ocsf_metadata_filters_attributes(self):
-        """Attributes with OCSF=False in metadata should be excluded from unmapped."""
+        """Attributes with output_formats.ocsf=False should be excluded from unmapped."""
         metadata = [
-            AttributeMetadata(Key="Section", Type="str", OCSF=True),
-            AttributeMetadata(Key="InternalNote", Type="str", OCSF=False),
-            AttributeMetadata(Key="Profile", Type="str", OCSF=True),
+            AttributeMetadata(
+                key="Section",
+                type="str",
+                output_formats=OutputFormats(ocsf=True),
+            ),
+            AttributeMetadata(
+                key="InternalNote",
+                type="str",
+                output_formats=OutputFormats(ocsf=False),
+            ),
+            AttributeMetadata(
+                key="Profile",
+                type="str",
+                output_formats=OutputFormats(ocsf=True),
+            ),
         ]
         req = UniversalComplianceRequirement(
-            Id="REQ-1",
-            Description="Test",
-            Attributes={
+            id="REQ-1",
+            description="Test",
+            attributes={
                 "Section": "IAM",
                 "InternalNote": "skip me",
                 "Profile": "Level 1",
             },
-            Checks=["check_a"],
+            checks={"aws": ["check_a"]},
         )
         fw = _make_framework([req], attrs_metadata=metadata)
         findings = [_make_finding("check_a", "PASS")]
@@ -368,15 +387,17 @@ class TestOCSFComplianceOutput:
         assert "internal_note" not in attrs
 
     def test_ocsf_metadata_all_false_excludes_all(self):
-        """When all attributes have OCSF=False, requirement_attributes should be empty."""
+        """When all attributes have output_formats.ocsf=False, requirement_attributes should be empty."""
         metadata = [
-            AttributeMetadata(Key="Section", Type="str", OCSF=False),
+            AttributeMetadata(
+                key="Section", type="str", output_formats=OutputFormats(ocsf=False)
+            ),
         ]
         req = UniversalComplianceRequirement(
-            Id="REQ-1",
-            Description="Test",
-            Attributes={"Section": "IAM"},
-            Checks=["check_a"],
+            id="REQ-1",
+            description="Test",
+            attributes={"Section": "IAM"},
+            checks={"aws": ["check_a"]},
         )
         fw = _make_framework([req], attrs_metadata=metadata)
         findings = [_make_finding("check_a", "PASS")]
@@ -389,12 +410,12 @@ class TestOCSFComplianceOutput:
         assert "requirement_attributes" not in cf.unmapped
 
     def test_ocsf_no_metadata_includes_all(self):
-        """Without AttributesMetadata, all attributes should be included (backward compat)."""
+        """Without attributes_metadata, all attributes should be included (backward compat)."""
         req = UniversalComplianceRequirement(
-            Id="REQ-1",
-            Description="Test",
-            Attributes={"Section": "IAM", "Custom": "value"},
-            Checks=["check_a"],
+            id="REQ-1",
+            description="Test",
+            attributes={"Section": "IAM", "Custom": "value"},
+            checks={"aws": ["check_a"]},
         )
         fw = _make_framework([req], attrs_metadata=None)
         findings = [_make_finding("check_a", "PASS")]
@@ -406,16 +427,16 @@ class TestOCSFComplianceOutput:
         assert "custom" in attrs
 
     def test_ocsf_default_is_true(self):
-        """OCSF defaults to True — attributes are included unless explicitly excluded."""
+        """output_formats.ocsf defaults to True — attributes are included unless explicitly excluded."""
         metadata = [
-            AttributeMetadata(Key="Section", Type="str"),
-            AttributeMetadata(Key="Profile", Type="str"),
+            AttributeMetadata(key="Section", type="str"),
+            AttributeMetadata(key="Profile", type="str"),
         ]
         req = UniversalComplianceRequirement(
-            Id="REQ-1",
-            Description="Test",
-            Attributes={"Section": "IAM", "Profile": "Level 1"},
-            Checks=["check_a"],
+            id="REQ-1",
+            description="Test",
+            attributes={"Section": "IAM", "Profile": "Level 1"},
+            checks={"aws": ["check_a"]},
         )
         fw = _make_framework([req], attrs_metadata=metadata)
         findings = [_make_finding("check_a", "PASS")]
@@ -429,14 +450,20 @@ class TestOCSFComplianceOutput:
     def test_ocsf_filter_on_manual_requirements(self):
         """OCSF filtering should also apply to manual requirements."""
         metadata = [
-            AttributeMetadata(Key="Section", Type="str", OCSF=True),
-            AttributeMetadata(Key="InternalNote", Type="str", OCSF=False),
+            AttributeMetadata(
+                key="Section", type="str", output_formats=OutputFormats(ocsf=True)
+            ),
+            AttributeMetadata(
+                key="InternalNote",
+                type="str",
+                output_formats=OutputFormats(ocsf=False),
+            ),
         ]
         req = UniversalComplianceRequirement(
-            Id="MANUAL-1",
-            Description="Manual",
-            Attributes={"Section": "Logging", "InternalNote": "hidden"},
-            Checks=[],
+            id="MANUAL-1",
+            description="Manual",
+            attributes={"Section": "Logging", "InternalNote": "hidden"},
+            checks={},
         )
         fw = _make_framework([req], attrs_metadata=metadata)
         findings = [_make_finding("check_a")]

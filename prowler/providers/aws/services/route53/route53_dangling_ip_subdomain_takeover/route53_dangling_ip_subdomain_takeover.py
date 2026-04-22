@@ -12,19 +12,21 @@ class route53_dangling_ip_subdomain_takeover(Check):
     def execute(self) -> Check_Report_AWS:
         findings = []
 
+        # When --region is used, Route53 service gathers EIPs from all regions
+        # to avoid false positives. Otherwise, use ec2_client data directly.
+        if route53_client.all_account_elastic_ips:
+            public_ips = list(route53_client.all_account_elastic_ips)
+        else:
+            public_ips = [eip.public_ip for eip in ec2_client.elastic_ips]
+
+        # Add Network Interface public IPs from audited regions
+        for ni in ec2_client.network_interfaces.values():
+            if ni.association and ni.association.get("PublicIp"):
+                public_ips.append(ni.association.get("PublicIp"))
+
         for record_set in route53_client.record_sets:
             # Check only A records and avoid aliases (only need to check IPs not AWS Resources)
             if record_set.type == "A" and not record_set.is_alias:
-                # Gather Elastic IPs and Network Interfaces Public IPs inside the AWS Account
-                public_ips = []
-                public_ips.extend([eip.public_ip for eip in ec2_client.elastic_ips])
-                # Add public IPs from Network Interfaces
-                for network_interface in ec2_client.network_interfaces.values():
-                    if (
-                        network_interface.association
-                        and network_interface.association.get("PublicIp")
-                    ):
-                        public_ips.append(network_interface.association.get("PublicIp"))
                 for record in record_set.records:
                     # Check if record is an IP Address
                     if validate_ip_address(record):

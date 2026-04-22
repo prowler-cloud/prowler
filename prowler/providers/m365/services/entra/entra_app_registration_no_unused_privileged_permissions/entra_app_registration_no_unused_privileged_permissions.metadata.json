@@ -7,9 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "App Registration",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "OAuth app registrations with privileged API permissions (High privilege level) that are not being actively used. Usage status is determined by Microsoft Defender for Cloud Apps App Governance.",
+  "Description": "Microsoft Entra **OAuth app registrations** with privileged API permissions (High privilege level) that are not being actively used. Usage status is determined by Microsoft Defender for Cloud Apps App Governance.",
   "Risk": "Unused privileged permissions expand the attack surface. If a compromised app has dormant privileged permissions, attackers can exploit them for **privilege escalation**, **unauthorized access** to sensitive data, or **lateral movement** within the environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -29,7 +29,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

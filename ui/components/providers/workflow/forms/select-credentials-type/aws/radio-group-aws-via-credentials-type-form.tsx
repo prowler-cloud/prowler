@@ -1,10 +1,9 @@
 "use client";
 
-import { RadioGroup } from "@heroui/radio";
-import React from "react";
 import { Control, Controller } from "react-hook-form";
 
-import { CustomRadio } from "@/components/ui/custom";
+import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupAWSViaCredentialsFormProps = {
@@ -27,39 +26,24 @@ export const RadioGroupAWSViaCredentialsTypeForm = ({
       render={({ field }) => (
         <>
           <RadioGroup
-            className="flex flex-wrap"
-            isInvalid={isInvalid}
-            {...field}
+            name={field.name}
             value={field.value || ""}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               field.onChange(value);
-              if (onChange) {
-                onChange(value);
-              }
+              onChange?.(value);
             }}
           >
-            <div className="flex flex-col gap-4">
-              <span className="text-default-500 text-sm">Using IAM Role</span>
-              <CustomRadio description="Connect assuming IAM Role" value="role">
-                <div className="flex items-center">
-                  <span className="ml-2">Connect assuming IAM Role</span>
-                </div>
-              </CustomRadio>
-              <span className="text-default-500 text-sm">
-                Using Credentials
-              </span>
-              <CustomRadio
-                description="Connect via Credentials"
-                value="credentials"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">Connect via Credentials</span>
-                </div>
-              </CustomRadio>
-            </div>
+            <span className="text-default-500 text-sm">Using IAM Role</span>
+            <WizardRadioCard value="role" isInvalid={isInvalid}>
+              Connect assuming IAM Role
+            </WizardRadioCard>
+            <span className="text-default-500 text-sm">Using Credentials</span>
+            <WizardRadioCard value="credentials" isInvalid={isInvalid}>
+              Connect via Credentials
+            </WizardRadioCard>
           </RadioGroup>
           {errorMessage && (
-            <FormMessage className="text-text-error">
+            <FormMessage className="text-text-error-primary">
               {errorMessage}
             </FormMessage>
           )}

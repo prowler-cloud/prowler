@@ -1,3 +1,6 @@
+SENSITIVE_ARGUMENTS = frozenset({"--personal-access-token", "--oauth-app-token"})
+
+
 def init_parser(self):
     """Init the Github Provider CLI parser"""
     github_parser = self.subparsers.add_parser(
@@ -46,6 +49,12 @@ def init_parser(self):
         help="Repository name(s) to scan in 'owner/repo-name' format",
         default=None,
         metavar="REPOSITORY",
+    )
+    github_scoping_subparser.add_argument(
+        "--repo-list-file",
+        dest="repo_list_file",
+        default=None,
+        help="Path to a file containing a list of repositories to scan (one per line in 'owner/repo-name' format). Lines starting with # are treated as comments.",
     )
     github_scoping_subparser.add_argument(
         "--organization",

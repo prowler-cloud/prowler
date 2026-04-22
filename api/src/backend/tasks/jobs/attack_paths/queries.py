@@ -2,6 +2,7 @@
 from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
     PROWLER_FINDING_LABEL,
+    PROVIDER_ELEMENT_ID_PROPERTY,
     PROVIDER_RESOURCE_LABEL,
 )
 
@@ -26,22 +27,19 @@ ADD_RESOURCE_LABEL_TEMPLATE = """
     MATCH (account:__ROOT_LABEL__ {id: $provider_uid})-->(r)
     WHERE NOT r:__ROOT_LABEL__ AND NOT r:__RESOURCE_LABEL__
     WITH r LIMIT $batch_size
-    SET r:__RESOURCE_LABEL__:__DEPRECATED_RESOURCE_LABEL__
+    SET r:__RESOURCE_LABEL__
     RETURN COUNT(r) AS labeled_count
 """
 
 INSERT_FINDING_TEMPLATE = f"""
-    MATCH (account:__ROOT_NODE_LABEL__ {{id: $provider_uid}})
     UNWIND $findings_data AS finding_data
 
-    OPTIONAL MATCH (account)-->(resource_by_uid:__RESOURCE_LABEL__)
-        WHERE resource_by_uid.__NODE_UID_FIELD__ = finding_data.resource_uid
-    WITH account, finding_data, resource_by_uid
+    OPTIONAL MATCH (resource_by_uid:__RESOURCE_LABEL__ {{__NODE_UID_FIELD__: finding_data.resource_uid}})
+    WITH finding_data, resource_by_uid
 
-    OPTIONAL MATCH (account)-->(resource_by_id:__RESOURCE_LABEL__)
+    OPTIONAL MATCH (resource_by_id:__RESOURCE_LABEL__ {{id: finding_data.resource_uid}})
         WHERE resource_by_uid IS NULL
-            AND resource_by_id.id = finding_data.resource_uid
-    WITH account, finding_data, COALESCE(resource_by_uid, resource_by_id) AS resource
+    WITH finding_data, COALESCE(resource_by_uid, resource_by_id) AS resource
         WHERE resource IS NOT NULL
 
     MERGE (finding:{PROWLER_FINDING_LABEL} {{id: finding_data.id}})
@@ -60,7 +58,6 @@ INSERT_FINDING_TEMPLATE = f"""
             finding.check_title = finding_data.check_title,
             finding.muted = finding_data.muted,
             finding.muted_reason = finding_data.muted_reason,
-            finding.provider_uid = $provider_uid,
             finding.firstseen = timestamp(),
             finding.lastupdated = $last_updated,
             finding._module_name = 'cartography:prowler',
@@ -72,24 +69,12 @@ INSERT_FINDING_TEMPLATE = f"""
 
     MERGE (resource)-[rel:HAS_FINDING]->(finding)
         ON CREATE SET
-            rel.provider_uid = $provider_uid,
             rel.firstseen = timestamp(),
             rel.lastupdated = $last_updated,
             rel._module_name = 'cartography:prowler',
             rel._module_version = $prowler_version
         ON MATCH SET
             rel.lastupdated = $last_updated
-"""
-
-CLEANUP_FINDINGS_TEMPLATE = f"""
-    MATCH (finding:{PROWLER_FINDING_LABEL} {{provider_uid: $provider_uid}})
-        WHERE finding.lastupdated < $last_updated
-
-    WITH finding LIMIT $batch_size
-
-    DETACH DELETE finding
-
-    RETURN COUNT(finding) AS deleted_findings_count
 """
 
 # Internet queries (used by internet.py)
@@ -149,22 +134,16 @@ RELATIONSHIPS_FETCH_QUERY = """
     LIMIT $batch_size
 """
 
-NODE_SYNC_TEMPLATE = """
+NODE_SYNC_TEMPLATE = f"""
     UNWIND $rows AS row
-    MERGE (n:__NODE_LABELS__ {_provider_element_id: row.provider_element_id})
+    MERGE (n:__NODE_LABELS__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}})
     SET n += row.props
-    SET n._provider_id = $provider_id
-    SET n.provider_element_id = row.provider_element_id
-    SET n.provider_id = $provider_id
-"""  # The last two lines are deprecated properties
+"""
 
 RELATIONSHIP_SYNC_TEMPLATE = f"""
     UNWIND $rows AS row
-    MATCH (s:{PROVIDER_RESOURCE_LABEL} {{_provider_element_id: row.start_element_id}})
-    MATCH (t:{PROVIDER_RESOURCE_LABEL} {{_provider_element_id: row.end_element_id}})
-    MERGE (s)-[r:__REL_TYPE__ {{_provider_element_id: row.provider_element_id}}]->(t)
+    MATCH (s:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.start_element_id}})
+    MATCH (t:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.end_element_id}})
+    MERGE (s)-[r:__REL_TYPE__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}}]->(t)
     SET r += row.props
-    SET r._provider_id = $provider_id
-    SET r.provider_element_id = row.provider_element_id
-    SET r.provider_id = $provider_id
-"""  # The last two lines are deprecated properties
+"""

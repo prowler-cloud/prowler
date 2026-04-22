@@ -1,15 +1,21 @@
 "use client";
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
-import { Check, Copy, ExternalLink, Link, Loader2 } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-
-import { getFindingById, getLatestFindings } from "@/actions/findings";
-import { getResourceById } from "@/actions/resources";
-import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
-import { FindingDetail } from "@/components/findings/table/finding-detail";
 import {
+  Check,
+  Container,
+  Copy,
+  CornerDownRight,
+  ExternalLink,
+  Link,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
+import { FindingDetailDrawer } from "@/components/findings/table";
+import {
+  Card,
   Tabs,
   TabsContent,
   TabsList,
@@ -18,28 +24,27 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
-import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import {
-  DateWithTime,
-  getProviderLogo,
   InfoField,
-} from "@/components/ui/entities";
+  InfoTooltip,
+} from "@/components/shadcn/info-field/info-field";
+import { LoadingState } from "@/components/shadcn/spinner/loading-state";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
+import { DateWithTime } from "@/components/ui/entities/date-with-time";
+import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable } from "@/components/ui/table";
-import { createDict } from "@/lib";
 import { getGroupLabel } from "@/lib/categories";
 import { buildGitFileUrl } from "@/lib/iac-utils";
-import {
-  FindingProps,
-  MetaDataProps,
-  ProviderType,
-  ResourceProps,
-} from "@/types";
+import { getRegionFlag } from "@/lib/region-flags";
+import { ProviderType, ResourceProps } from "@/types";
 
 import {
   getResourceFindingsColumns,
   ResourceFinding,
 } from "./resource-findings-columns";
+import { useFindingDetails } from "./use-finding-details";
+import { useResourceDrawerBootstrap } from "./use-resource-drawer-bootstrap";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -104,47 +109,49 @@ interface ResourceDetailContentProps {
 export const ResourceDetailContent = ({
   resourceDetails,
 }: ResourceDetailContentProps) => {
-  const [findingsData, setFindingsData] = useState<ResourceFinding[]>([]);
-  const [findingsMetadata, setFindingsMetadata] =
-    useState<MetaDataProps | null>(null);
-  const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
-  const [findingsLoading, setFindingsLoading] = useState(true);
-  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [findingsReloadNonce, setFindingsReloadNonce] = useState(0);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
     null,
   );
-  const [findingDetails, setFindingDetails] = useState<FindingProps | null>(
-    null,
-  );
-  const [findingDetailLoading, setFindingDetailLoading] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("findings");
   const [metadataCopied, setMetadataCopied] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
-  const findingFetchRef = useRef<AbortController | null>(null);
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   const resource = resourceDetails;
   const resourceId = resource.id;
   const attributes = resource.attributes;
   const providerData = resource.relationships.provider.data.attributes;
-
-  // Cleanup abort controller on unmount
-  useEffect(() => {
-    return () => {
-      findingFetchRef.current?.abort();
-    };
-  }, []);
+  const providerId = resource.relationships.provider.data.id;
+  const {
+    findingsData,
+    findingsMetadata,
+    findingsLoading,
+    hasInitiallyLoaded,
+    providerOrg,
+    resourceTags,
+  } = useResourceDrawerBootstrap({
+    resourceId,
+    resourceUid: attributes.uid,
+    providerId,
+    providerType: providerData.provider,
+    currentPage,
+    pageSize,
+    searchQuery,
+    findingsReloadNonce,
+  });
+  const {
+    findingDetails,
+    findingDetailLoading,
+    navigateToFinding: loadFindingDetails,
+    resetFindingDetails,
+  } = useFindingDetails();
 
   const copyResourceUrl = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("resourceId", resourceId);
-    const url = `${window.location.origin}${pathname}?${params.toString()}`;
+    const url = `${window.location.origin}/resources?resourceId=${resourceId}`;
     navigator.clipboard.writeText(url);
   };
 
@@ -154,119 +161,14 @@ export const ResourceDetailContent = ({
     setTimeout(() => setMetadataCopied(false), 2000);
   };
 
-  // Load resource tags on mount
-  useEffect(() => {
-    const loadResourceTags = async () => {
-      try {
-        const resourceData = await getResourceById(resourceId, {
-          fields: ["tags"],
-        });
-        if (resourceData?.data) {
-          setResourceTags(resourceData.data.attributes.tags || {});
-        }
-      } catch (err) {
-        console.error("Error loading resource tags:", err);
-        setResourceTags({});
-      }
-    };
-
-    if (resourceId) {
-      loadResourceTags();
-    }
-  }, [resourceId]);
-
-  // Load findings with server-side pagination and search
-  useEffect(() => {
-    const loadFindings = async () => {
-      setFindingsLoading(true);
-
-      try {
-        const findingsResponse = await getLatestFindings({
-          page: currentPage,
-          pageSize,
-          query: searchQuery,
-          sort: "severity,-inserted_at",
-          filters: {
-            "filter[resource_uid]": attributes.uid,
-            "filter[status]": "FAIL",
-          },
-        });
-
-        if (findingsResponse?.data) {
-          setFindingsMetadata(findingsResponse.meta || null);
-          setFindingsData(findingsResponse.data as ResourceFinding[]);
-        } else {
-          setFindingsData([]);
-          setFindingsMetadata(null);
-        }
-      } catch (err) {
-        console.error("Error loading findings:", err);
-        setFindingsData([]);
-        setFindingsMetadata(null);
-      } finally {
-        setFindingsLoading(false);
-        setHasInitiallyLoaded(true);
-      }
-    };
-
-    if (attributes.uid) {
-      loadFindings();
-    }
-  }, [attributes.uid, currentPage, pageSize, searchQuery, findingsReloadNonce]);
-
   const navigateToFinding = async (findingId: string) => {
-    if (findingFetchRef.current) {
-      findingFetchRef.current.abort();
-    }
-    findingFetchRef.current = new AbortController();
-
     setSelectedFindingId(findingId);
-    setFindingDetailLoading(true);
-
-    try {
-      const findingData = await getFindingById(
-        findingId,
-        "resources,scan.provider",
-      );
-
-      if (findingFetchRef.current?.signal.aborted) {
-        return;
-      }
-
-      if (findingData?.data) {
-        const resourceDict = createDict("resources", findingData);
-        const scanDict = createDict("scans", findingData);
-        const providerDict = createDict("providers", findingData);
-
-        const finding = findingData.data;
-        const scan = scanDict[finding.relationships?.scan?.data?.id];
-        const foundResource =
-          resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        const provider = providerDict[scan?.relationships?.provider?.data?.id];
-
-        const expandedFinding = {
-          ...finding,
-          relationships: { scan, resource: foundResource, provider },
-        };
-
-        setFindingDetails(expandedFinding);
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        return;
-      }
-      console.error("Error fetching finding:", error);
-    } finally {
-      if (!findingFetchRef.current?.signal.aborted) {
-        setFindingDetailLoading(false);
-      }
-    }
+    await loadFindingDetails(findingId);
   };
 
   const handleBackToResource = () => {
     setSelectedFindingId(null);
-    setFindingDetails(null);
-    setFindingDetailLoading(false);
+    resetFindingDetails();
   };
 
   const handleMuteComplete = (_findingIds?: string[]) => {
@@ -283,11 +185,6 @@ export const ResourceDetailContent = ({
   const selectableRowCount = failedFindings.filter(
     (f) => !f.attributes.muted,
   ).length;
-
-  // Reset selection when page changes
-  useEffect(() => {
-    setRowSelection({});
-  }, [currentPage, pageSize]);
 
   const totalFindings = findingsMetadata?.pagination?.count || 0;
 
@@ -318,6 +215,21 @@ export const ResourceDetailContent = ({
 
   const findingTitle =
     findingDetails?.attributes?.check_metadata?.checktitle || "Finding Detail";
+  const resourceName =
+    typeof attributes.name === "string" && attributes.name.trim().length > 0
+      ? attributes.name
+      : "Unnamed resource";
+  const resourceRegion = renderValue(attributes.region);
+  const regionFlag = getRegionFlag(resourceRegion);
+  const groupValue =
+    attributes.groups && attributes.groups.length > 0
+      ? attributes.groups.map(getGroupLabel).join(", ")
+      : "-";
+  const parsedMetadata = parseMetadata(attributes.metadata);
+  const hasMetadata =
+    parsedMetadata !== null && Object.entries(parsedMetadata).length > 0;
+  const tagEntries = Object.entries(resourceTags);
+  const hasTags = tagEntries.length > 0;
 
   // Content when viewing a finding detail (breadcrumb navigation)
   if (selectedFindingId) {
@@ -333,14 +245,16 @@ export const ResourceDetailContent = ({
         />
 
         {findingDetailLoading ? (
-          <div className="flex items-center justify-center gap-2 py-8">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <p className="text-text-neutral-secondary text-sm">
-              Loading finding details...
-            </p>
-          </div>
+          <LoadingState label="Loading finding details..." />
         ) : (
-          findingDetails && <FindingDetail findingDetails={findingDetails} />
+          findingDetails && (
+            <FindingDetailDrawer
+              key={findingDetails.id}
+              finding={findingDetails}
+              inline
+              onMuteComplete={handleMuteComplete}
+            />
+          )
         )}
       </div>
     );
@@ -348,17 +262,12 @@ export const ResourceDetailContent = ({
 
   // Main resource content
   return (
-    <div className="flex min-w-0 flex-col gap-4 rounded-lg">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="shrink-0">
-          {getProviderLogo(providerData.provider as ProviderType)}
-        </div>
-
+    <div className="flex h-full min-w-0 flex-col gap-4 overflow-hidden">
+      <div className="flex flex-col gap-2">
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-text-neutral-primary line-clamp-2 text-lg leading-tight font-medium">
-              {renderValue(attributes.name)}
+              {resourceName}
             </h2>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -392,150 +301,224 @@ export const ResourceDetailContent = ({
               </Tooltip>
             )}
           </div>
-
-          <div className="text-text-neutral-tertiary text-sm">
-            <span className="text-text-neutral-secondary mr-1">
-              Last Updated:
-            </span>
-            <DateWithTime inline dateTime={attributes.updated_at || "-"} />
-          </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="findings">
-            Findings {totalFindings > 0 && `(${totalFindings})`}
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="flex flex-col gap-4">
-          <InfoField label="Resource UID" variant="simple">
-            <CodeSnippet value={attributes.uid} className="max-w-full" />
-          </InfoField>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Name">{renderValue(attributes.name)}</InfoField>
-            <InfoField label="Type">{renderValue(attributes.type)}</InfoField>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Group">
-              {attributes.groups && attributes.groups.length > 0
-                ? attributes.groups.map(getGroupLabel).join(", ")
-                : "-"}
-            </InfoField>
-            <InfoField label="Service">
-              {renderValue(attributes.service)}
-            </InfoField>
-          </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Region">
-              {renderValue(attributes.region)}
-            </InfoField>
-            <InfoField label="Partition">
-              {renderValue(attributes.partition)}
-            </InfoField>
-          </div>
-          <InfoField label="Details" variant="simple">
-            {renderValue(attributes.details)}
-          </InfoField>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InfoField label="Created At">
-              <DateWithTime inline dateTime={attributes.inserted_at} />
-            </InfoField>
-            <InfoField label="Last Updated">
-              <DateWithTime inline dateTime={attributes.updated_at} />
-            </InfoField>
-          </div>
-
-          {(() => {
-            const parsedMetadata = parseMetadata(attributes.metadata);
-            return parsedMetadata &&
-              Object.entries(parsedMetadata).length > 0 ? (
-              <InfoField label="Metadata" variant="simple">
-                <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary relative w-full rounded-lg border">
-                  <button
-                    type="button"
-                    onClick={() => copyMetadata(parsedMetadata)}
-                    className="text-text-neutral-secondary hover:text-text-neutral-primary absolute top-2 right-2 z-10 cursor-pointer transition-colors"
-                    aria-label="Copy metadata to clipboard"
-                  >
-                    {metadataCopied ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </button>
-                  <pre className="minimal-scrollbar mr-10 max-h-[200px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
-                    {JSON.stringify(parsedMetadata, null, 2)}
-                  </pre>
-                </div>
-              </InfoField>
-            ) : null;
-          })()}
-
-          {resourceTags && Object.entries(resourceTags).length > 0 ? (
-            <div className="flex flex-col gap-4">
-              <h4 className="text-text-neutral-secondary text-sm font-bold">
-                Tags
-              </h4>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {Object.entries(resourceTags).map(([key, value]) => (
-                  <InfoField key={key} label={key}>
-                    {renderValue(value)}
-                  </InfoField>
-                ))}
+      <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
+          {providerOrg ? (
+            <div className="col-span-2 flex flex-col gap-1">
+              <EntityInfo
+                cloudProvider="aws"
+                entityAlias={providerOrg.attributes.name}
+                entityId={providerOrg.attributes.external_id}
+              />
+              <div className="flex items-start pl-6">
+                <CornerDownRight className="text-text-neutral-tertiary mt-1 mr-2 size-4 shrink-0" />
+                <EntityInfo
+                  cloudProvider="aws"
+                  entityAlias={providerData.alias ?? undefined}
+                  entityId={providerData.uid}
+                />
               </div>
             </div>
-          ) : null}
-        </TabsContent>
-
-        {/* Findings Tab */}
-        <TabsContent value="findings" className="flex flex-col gap-4">
-          {findingsLoading && !hasInitiallyLoaded ? (
-            <div className="flex items-center justify-center gap-2 py-8">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <p className="text-text-neutral-secondary text-sm">
-                Loading findings...
-              </p>
-            </div>
           ) : (
-            <>
-              <DataTable
-                columns={columns}
-                data={failedFindings}
-                metadata={findingsMetadata ?? undefined}
-                showSearch
-                disableScroll
-                enableRowSelection
-                rowSelection={rowSelection}
-                onRowSelectionChange={setRowSelection}
-                getRowCanSelect={getRowCanSelect}
-                controlledSearch={searchQuery}
-                onSearchChange={(value) => {
-                  setSearchQuery(value);
-                  setCurrentPage(1);
-                }}
-                controlledPage={currentPage}
-                controlledPageSize={pageSize}
-                onPageChange={setCurrentPage}
-                onPageSizeChange={setPageSize}
-                isLoading={findingsLoading}
-              />
-              {selectedFindingIds.length > 0 && (
-                <FloatingMuteButton
-                  selectedCount={selectedFindingIds.length}
-                  selectedFindingIds={selectedFindingIds}
-                  onComplete={handleMuteComplete}
+            <EntityInfo
+              cloudProvider={providerData.provider as ProviderType}
+              entityAlias={providerData.alias ?? undefined}
+              entityId={providerData.uid}
+            />
+          )}
+          <div className={providerOrg ? "self-end" : undefined}>
+            <EntityInfo
+              nameIcon={<Container className="size-4" />}
+              entityAlias={resourceName}
+              entityId={attributes.uid}
+            />
+          </div>
+          <InfoField
+            label="Service"
+            variant="compact"
+            className={providerOrg ? "self-end" : undefined}
+          >
+            {renderValue(attributes.service)}
+          </InfoField>
+          <InfoField label="Region" variant="compact">
+            <span className="flex items-center gap-1.5">
+              {regionFlag && (
+                <span className="translate-y-px text-base leading-none">
+                  {regionFlag}
+                </span>
+              )}
+              {resourceRegion}
+            </span>
+          </InfoField>
+
+          <InfoField label="Type" variant="compact">
+            {renderValue(attributes.type)}
+          </InfoField>
+          <InfoField label="Group" variant="compact">
+            {groupValue}
+          </InfoField>
+          <InfoField label="Partition" variant="compact">
+            {renderValue(attributes.partition)}
+          </InfoField>
+
+          <InfoField label="Created At" variant="compact">
+            <DateWithTime inline dateTime={attributes.inserted_at || "-"} />
+          </InfoField>
+          <InfoField label="Last Updated" variant="compact">
+            <DateWithTime inline dateTime={attributes.updated_at || "-"} />
+          </InfoField>
+        </div>
+
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="mt-2 flex min-h-0 w-full flex-1 flex-col"
+        >
+          <div className="mb-4 flex shrink-0 items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="findings">
+                <span className="flex items-center gap-1">
+                  Findings {totalFindings > 0 && `(${totalFindings})`}
+                  <InfoTooltip content="This table also includes muted findings" />
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="metadata">Metadata</TabsTrigger>
+              <TabsTrigger value="tags">Tags</TabsTrigger>
+              <TabsTrigger value="events">Events</TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="minimal-scrollbar min-h-0 flex-1 overflow-y-auto">
+            <TabsContent value="findings" className="flex flex-col gap-4">
+              {findingsLoading && !hasInitiallyLoaded ? (
+                <LoadingState label="Loading findings..." />
+              ) : (
+                <>
+                  <DataTable
+                    columns={columns}
+                    data={failedFindings}
+                    metadata={findingsMetadata ?? undefined}
+                    showSearch
+                    disableScroll
+                    enableRowSelection
+                    rowSelection={rowSelection}
+                    onRowSelectionChange={setRowSelection}
+                    getRowCanSelect={getRowCanSelect}
+                    controlledSearch={searchQuery}
+                    onSearchChange={(value) => {
+                      setRowSelection({});
+                      setSearchQuery(value);
+                      setCurrentPage(1);
+                    }}
+                    controlledPage={currentPage}
+                    controlledPageSize={pageSize}
+                    onPageChange={(page) => {
+                      setRowSelection({});
+                      setCurrentPage(page);
+                    }}
+                    onPageSizeChange={(size) => {
+                      setRowSelection({});
+                      setCurrentPage(1);
+                      setPageSize(size);
+                    }}
+                    isLoading={findingsLoading}
+                  />
+                  {selectedFindingIds.length > 0 && (
+                    <FloatingMuteButton
+                      selectedCount={selectedFindingIds.length}
+                      selectedFindingIds={selectedFindingIds}
+                      onComplete={handleMuteComplete}
+                    />
+                  )}
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="metadata" className="flex flex-col gap-4">
+              {attributes.details && attributes.details.trim() !== "" && (
+                <Card variant="inner">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
+                      Details:
+                    </span>
+                    <p className="text-text-neutral-primary text-sm break-words whitespace-pre-wrap">
+                      {attributes.details}
+                    </p>
+                  </div>
+                </Card>
+              )}
+
+              {hasMetadata && parsedMetadata && (
+                <Card variant="inner">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
+                      Metadata:
+                    </span>
+                    <div className="border-border-neutral-secondary bg-bg-neutral-secondary relative w-full rounded-lg border">
+                      <button
+                        type="button"
+                        onClick={() => copyMetadata(parsedMetadata)}
+                        className="text-text-neutral-secondary hover:text-text-neutral-primary absolute top-2 right-2 z-10 cursor-pointer transition-colors"
+                        aria-label="Copy metadata to clipboard"
+                      >
+                        {metadataCopied ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </button>
+                      <pre className="minimal-scrollbar mr-10 max-h-[200px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
+                        {JSON.stringify(parsedMetadata, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              {!attributes.details?.trim() && !hasMetadata && (
+                <p className="text-text-neutral-tertiary py-8 text-center text-sm">
+                  No metadata available for this resource.
+                </p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="tags" className="flex flex-col gap-4">
+              {hasTags ? (
+                <Card variant="inner">
+                  <div className="flex flex-col gap-3">
+                    <span className="text-text-neutral-secondary text-sm font-semibold">
+                      Tags:
+                    </span>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {tagEntries.map(([key, value]) => (
+                        <InfoField key={key} label={key} variant="compact">
+                          {renderValue(value)}
+                        </InfoField>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              ) : (
+                <p className="text-text-neutral-tertiary py-8 text-center text-sm">
+                  No tags available for this resource.
+                </p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="events" className="flex flex-col gap-4">
+              {activeTab === "events" && (
+                <EventsTimeline
+                  resourceId={resourceId}
+                  isAwsProvider={providerData.provider === "aws"}
                 />
               )}
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 };

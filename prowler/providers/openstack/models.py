@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import List, Optional
 
 from pydantic.v1 import BaseModel, Field
 
@@ -35,27 +35,42 @@ class OpenStackSession(BaseModel):
     username: str
     password: str
     project_id: str
-    region_name: str
+    region_name: Optional[str] = None
+    regions: Optional[List[str]] = None
     user_domain_name: str = Field(default="Default")
     project_domain_name: str = Field(default="Default")
 
-    def as_sdk_config(self) -> dict:
+    def as_sdk_config(self, region_override: Optional[str] = None) -> dict:
         """Return a dict compatible with openstacksdk.connect().
 
         Note: The OpenStack SDK distinguishes between project_id (must be UUID)
         and project_name (any string identifier). We accept project_id from users
         but internally pass it as project_name to the SDK if it's not a UUID.
         This allows compatibility with providers like OVH that use numeric IDs.
+
+        When ``regions`` is set (multi-region), we pass the first region as
+        ``region_name`` for the default connection.  The SDK does **not**
+        iterate over a ``regions`` list automatically — callers must create
+        one connection per region via ``regional_connections``.
+
+        Args:
+            region_override: If provided, use this region instead of the
+                session's ``region_name`` / first entry in ``regions``.
         """
         config = {
             "auth_url": self.auth_url,
             "username": self.username,
             "password": self.password,
-            "region_name": self.region_name,
             "project_domain_name": self.project_domain_name,
             "user_domain_name": self.user_domain_name,
             "identity_api_version": self.identity_api_version,
         }
+        # Determine region: explicit override > session region_name > first in regions list
+        region = region_override or self.region_name
+        if region:
+            config["region_name"] = region
+        elif self.regions:
+            config["region_name"] = self.regions[0]
         # If project_id is a UUID, pass it as project_id to SDK
         # Otherwise, pass it as project_name (e.g., OVH numeric IDs)
         if _is_uuid(self.project_id):

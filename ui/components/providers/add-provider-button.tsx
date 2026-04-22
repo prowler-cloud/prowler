@@ -1,18 +1,32 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 
+import { ProviderWizardModal } from "@/components/providers/wizard";
 import { Button } from "@/components/shadcn";
 
-import { AddIcon } from "../icons";
+interface AddProviderButtonProps {
+  onOpenWizard?: () => void;
+}
 
-export const AddProviderButton = () => {
+export const AddProviderButton = ({ onOpenWizard }: AddProviderButtonProps) => {
+  const [open, setOpen] = useState(false);
+
+  const handleOpen = () => {
+    if (onOpenWizard) {
+      onOpenWizard();
+      return;
+    }
+
+    setOpen(true);
+  };
+
   return (
-    <Button asChild>
-      <Link href="/providers/connect-account">
-        Add Cloud Provider
-        <AddIcon size={20} />
-      </Link>
-    </Button>
+    <>
+      <Button onClick={handleOpen}>Add Provider</Button>
+      {!onOpenWizard && (
+        <ProviderWizardModal open={open} onOpenChange={setOpen} />
+      )}
+    </>
   );
 };

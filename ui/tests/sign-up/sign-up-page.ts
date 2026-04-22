@@ -54,7 +54,6 @@ export class SignUpPage extends BasePage {
   }
 
   async verifyPageLoaded(): Promise<void> {
-    await expect(this.page).toHaveURL("/sign-up");
     await expect(this.emailInput).toBeVisible();
     await expect(this.submitButton).toBeVisible();
   }
@@ -133,9 +132,7 @@ export class SignUpPage extends BasePage {
   }
 
   async verifyRedirectToLogin(): Promise<void> {
-    // Verify redirect to login page
-
-    await expect(this.page).toHaveURL("/sign-in");
+    await expect(this.page).toHaveURL(/\/sign-in/);
   }
 
   async verifyRedirectToEmailVerification(): Promise<void> {

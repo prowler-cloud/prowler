@@ -1,0 +1,38 @@
+{
+  "Provider": "vercel",
+  "CheckID": "authentication_no_stale_tokens",
+  "CheckTitle": "Vercel API tokens are not stale or unused for over 90 days",
+  "CheckType": [],
+  "ServiceName": "authentication",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "**Vercel API tokens** are assessed for **staleness** by checking whether each token has been active within the last 90 days. Stale tokens that remain unused for extended periods represent unnecessary access credentials that increase the attack surface. Tokens with no recorded activity are also flagged.",
+  "Risk": "Stale tokens that have not been used for over **90 days** may belong to decommissioned integrations, former team members, or forgotten automation. These tokens remain **valid** and could be compromised or misused without detection, as their inactivity makes suspicious usage harder to notice in access logs.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/rest-api#authentication"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to Account Settings > Tokens\n3. Review the last active date for each token\n4. Revoke or delete tokens that have not been used in over 90 days\n5. Contact token owners to confirm whether the token is still needed\n6. Implement a regular token review process (e.g., quarterly)",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly audit API tokens and revoke any that have not been used within 90 days. Implement a token lifecycle management process that includes periodic reviews, automatic expiration dates, and documentation of each token's purpose and owner.",
+      "Url": "https://hub.prowler.com/check/authentication_no_stale_tokens"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "authentication_token_not_expired"
+  ],
+  "Notes": "The stale threshold is configurable via ``stale_token_threshold_days`` in audit_config (default: 90 days). Tokens with no recorded activity (active_at is None) are considered stale."
+}

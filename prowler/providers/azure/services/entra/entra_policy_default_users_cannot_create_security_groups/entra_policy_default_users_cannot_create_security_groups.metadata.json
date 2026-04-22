@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra authorization policy** setting for default user role permissions governing creation of **security groups** by non-privileged users.\n\nThe value of `allowed_to_create_security_groups` is examined to ensure group creation is limited to administrators across portals, API, and PowerShell.",
   "Risk": "Allowing standard users to create security groups drives **entitlement sprawl** and can grant **unauthorized access** when those groups are tied to apps, sites, or roles. This weakens **least privilege**, complicates audits, and enables **lateral movement** or data exfiltration via misassigned group-based permissions.",
@@ -29,7 +29,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

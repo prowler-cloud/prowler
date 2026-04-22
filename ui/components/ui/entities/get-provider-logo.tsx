@@ -5,12 +5,15 @@ import {
   CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  GoogleWorkspaceProviderBadge,
   IacProviderBadge,
+  ImageProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
+  VercelProviderBadge,
 } from "@/components/icons/providers-badge";
 import { ProviderType } from "@/types";
 
@@ -28,8 +31,12 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <M365ProviderBadge width={35} height={35} />;
     case "github":
       return <GitHubProviderBadge width={35} height={35} />;
+    case "googleworkspace":
+      return <GoogleWorkspaceProviderBadge width={35} height={35} />;
     case "iac":
       return <IacProviderBadge width={35} height={35} />;
+    case "image":
+      return <ImageProviderBadge width={35} height={35} />;
     case "oraclecloud":
       return <OracleCloudProviderBadge width={35} height={35} />;
     case "mongodbatlas":
@@ -40,6 +47,8 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <CloudflareProviderBadge width={35} height={35} />;
     case "openstack":
       return <OpenStackProviderBadge width={35} height={35} />;
+    case "vercel":
+      return <VercelProviderBadge width={35} height={35} />;
     default:
       return null;
   }
@@ -59,8 +68,12 @@ export const getProviderName = (provider: ProviderType): string => {
       return "Microsoft 365";
     case "github":
       return "GitHub";
+    case "googleworkspace":
+      return "Google Workspace";
     case "iac":
       return "Infrastructure as Code";
+    case "image":
+      return "Container Registry";
     case "oraclecloud":
       return "Oracle Cloud Infrastructure";
     case "mongodbatlas":
@@ -71,6 +84,8 @@ export const getProviderName = (provider: ProviderType): string => {
       return "Cloudflare";
     case "openstack":
       return "OpenStack";
+    case "vercel":
+      return "Vercel";
     default:
       return "Unknown Provider";
   }

@@ -13,10 +13,20 @@ class Route53(AWSService):
         super().__init__(__class__.__name__, provider, global_service=True)
         self.hosted_zones = {}
         self.record_sets = []
+        self.all_account_elastic_ips = []
         self._list_hosted_zones()
         self._list_query_logging_configs()
         self._list_tags_for_resource()
         self._list_resource_record_sets()
+        # Gather Elastic IPs from all regions only when the --region flag is used,
+        # since EC2 service will only have EIPs from the specified region(s) but
+        # Route53 is global and can reference EIPs from any region.
+        if (
+            "route53_dangling_ip_subdomain_takeover"
+            in provider.audit_metadata.expected_checks
+            and provider._identity.audited_regions
+        ):
+            self._get_all_region_elastic_ips()
 
     def _list_hosted_zones(self):
         logger.info("Route53 - Listing Hosting Zones...")
@@ -76,6 +86,33 @@ class Route53(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _get_all_region_elastic_ips(self):
+        """Gather Elastic IPs from all enabled regions since Route53 is a global service.
+
+        When running Prowler with --region, ec2_client.elastic_ips is scoped
+        to the specified region(s). Route53 records can reference EIPs from any
+        region, so we need to query all enabled regions to avoid false positives.
+        """
+        logger.info("Route53 - Gathering Elastic IPs from all regions...")
+        all_regions = (
+            self.provider._enabled_regions
+            if self.provider._enabled_regions is not None
+            else set(self.provider._identity.audited_regions)
+        )
+
+        for region in all_regions:
+            try:
+                regional_ec2_client = self.session.client("ec2", region_name=region)
+                for addr in regional_ec2_client.describe_addresses().get(
+                    "Addresses", []
+                ):
+                    if "PublicIp" in addr:
+                        self.all_account_elastic_ips.append(addr["PublicIp"])
+            except Exception as error:
+                logger.warning(
+                    f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     def _list_query_logging_configs(self):
         logger.info("Route53 - Listing Query Logging Configs...")

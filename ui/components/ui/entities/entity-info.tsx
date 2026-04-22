@@ -1,5 +1,7 @@
 "use client";
 
+import { ReactNode } from "react";
+
 import {
   Tooltip,
   TooltipContent,
@@ -11,73 +13,78 @@ import type { ProviderType } from "@/types";
 import { getProviderLogo } from "./get-provider-logo";
 
 interface EntityInfoProps {
-  cloudProvider: ProviderType;
+  cloudProvider?: ProviderType;
+  icon?: ReactNode;
+  /** Small icon rendered inline before the entity alias text */
+  nameIcon?: ReactNode;
   entityAlias?: string;
   entityId?: string;
-  snippetWidth?: string;
-  showConnectionStatus?: boolean;
-  maxWidth?: string;
+  badge?: string;
+  /** Label before the ID value. Defaults to "UID" */
+  idLabel?: string;
   showCopyAction?: boolean;
+  /** @deprecated No longer used — layout handles overflow naturally */
+  maxWidth?: string;
+  /** @deprecated No longer used */
+  showConnectionStatus?: boolean;
+  /** @deprecated No longer used */
+  snippetWidth?: string;
 }
 
 export const EntityInfo = ({
   cloudProvider,
+  icon,
+  nameIcon,
   entityAlias,
   entityId,
-  showConnectionStatus = false,
-  maxWidth = "w-[120px]",
+  badge,
+  idLabel = "UID",
   showCopyAction = true,
 }: EntityInfoProps) => {
   const canCopy = Boolean(entityId && showCopyAction);
+  const renderedIcon =
+    icon ?? (cloudProvider ? getProviderLogo(cloudProvider) : null);
 
   return (
-    <div className="flex items-center gap-2">
-      <div className="relative shrink-0">
-        {getProviderLogo(cloudProvider)}
-        {showConnectionStatus && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="absolute top-[-0.1rem] right-[-0.2rem] h-2 w-2 cursor-pointer rounded-full bg-green-500" />
-            </TooltipTrigger>
-            <TooltipContent>Connected</TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-      <div className={`flex ${maxWidth} flex-col gap-1`}>
-        {entityAlias ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <p className="text-text-neutral-primary truncate text-left text-xs font-medium">
-                {entityAlias}
-              </p>
-            </TooltipTrigger>
-            <TooltipContent side="top">{entityAlias}</TooltipContent>
-          </Tooltip>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <p className="text-text-neutral-secondary truncate text-left text-xs">
-                -
-              </p>
-            </TooltipTrigger>
-            <TooltipContent side="top">No alias</TooltipContent>
-          </Tooltip>
-        )}
-        {entityId && (
-          <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary flex w-full min-w-0 items-center gap-1 rounded-xl border px-1.5">
+    <div className="flex min-w-0 items-center text-sm">
+      <div className="flex min-w-0 items-center gap-4">
+        {renderedIcon && <div className="shrink-0">{renderedIcon}</div>}
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <div className="flex min-w-0 items-center gap-1.5">
+            {nameIcon && (
+              <span className="text-text-neutral-tertiary shrink-0">
+                {nameIcon}
+              </span>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
-                <p className="text-text-neutral-secondary min-w-0 flex-1 truncate text-left text-xs">
-                  {entityId}
-                </p>
+                <span className="truncate font-medium">
+                  {entityAlias || entityId || "-"}
+                </span>
               </TooltipTrigger>
-              <TooltipContent side="top">{entityId}</TooltipContent>
+              <TooltipContent side="top">
+                {entityAlias || entityId || "No alias"}
+              </TooltipContent>
             </Tooltip>
-            {canCopy && (
-              <CodeSnippet value={entityId} hideCode className="shrink-0" />
+            {badge && (
+              <span className="text-text-neutral-tertiary shrink-0 text-xs">
+                ({badge})
+              </span>
             )}
           </div>
-        )}
+          {entityId && (
+            <div className="flex min-w-0 items-center gap-1">
+              <span className="text-text-neutral-tertiary shrink-0 text-xs font-medium">
+                {idLabel}:
+              </span>
+              <CodeSnippet
+                value={entityId}
+                className="max-w-[160px]"
+                hideCopyButton={!canCopy}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -73,6 +73,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `ssm_documents_set_as_public`                                 | `trusted_account_ids`                            | List of Strings |
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
 | `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
+| `opensearch_service_domains_not_publicly_accessible`          | `trusted_ips`                                    | List of Strings |
 
 
 ## Azure
@@ -139,6 +140,22 @@ The following list includes all the GitHub checks with configurable variables th
 | Check Name                                 | Value                                       | Type    |
 |--------------------------------------------|---------------------------------------------|---------|
 | `repository_inactive_not_archived`         | `inactive_not_archived_days_threshold`        | Integer |
+
+## Vercel
+
+### Configurable Checks
+The following list includes all the Vercel checks with configurable variables that can be changed in the configuration YAML file:
+
+| Check Name                                          | Value                              | Type            |
+|-----------------------------------------------------|------------------------------------|-----------------|
+| `authentication_no_stale_tokens`                    | `stale_token_threshold_days`       | Integer         |
+| `authentication_token_not_expired`                  | `days_to_expire_threshold`         | Integer         |
+| `deployment_production_uses_stable_target`          | `stable_branches`                  | List of Strings |
+| `domain_ssl_certificate_valid`                      | `days_to_expire_threshold`         | Integer         |
+| `project_environment_no_secrets_in_plain_type`      | `secret_suffixes`                  | List of Strings |
+| `team_member_role_least_privilege`                   | `max_owner_percentage`             | Integer         |
+| `team_member_role_least_privilege`                   | `max_owners`                       | Integer         |
+| `team_no_stale_invitations`                         | `stale_invitation_threshold_days`  | Integer         |
 
 ## Config YAML File Structure
 
@@ -622,6 +639,30 @@ m365:
 github:
   # github.repository_inactive_not_archived
   inactive_not_archived_days_threshold: 180
+
+# Vercel Configuration
+vercel:
+  # vercel.deployment_production_uses_stable_target
+  stable_branches:
+    - "main"
+    - "master"
+  # vercel.authentication_token_not_expired & vercel.domain_ssl_certificate_valid
+  days_to_expire_threshold: 7
+  # vercel.authentication_no_stale_tokens
+  stale_token_threshold_days: 90
+  # vercel.team_no_stale_invitations
+  stale_invitation_threshold_days: 30
+  # vercel.team_member_role_least_privilege
+  max_owner_percentage: 20
+  max_owners: 3
+  # vercel.project_environment_no_secrets_in_plain_type
+  secret_suffixes:
+    - "_KEY"
+    - "_SECRET"
+    - "_TOKEN"
+    - "_PASSWORD"
+    - "_API_KEY"
+    - "_PRIVATE_KEY"
 
 
 ```

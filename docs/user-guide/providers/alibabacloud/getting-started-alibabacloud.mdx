@@ -37,7 +37,7 @@ Before you begin, make sure you have:
 
 ![Get Account ID](/images/providers/alibaba-account-id.png)
 
-### Step 2: Access Prowler Cloud or Prowler App
+### Step 2: Access Prowler Cloud
 
 1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
 2. Go to "Configuration" > "Cloud Providers"
@@ -117,6 +117,12 @@ prowler alibabacloud
 #### RAM Role Assumption
 
 ```bash
+# Using --role-arn CLI flag
+export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
+export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
+prowler alibabacloud --role-arn acs:ram::123456789012:role/ProwlerAuditRole
+
+# Or using environment variables
 export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
 export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
 export ALIBABA_CLOUD_ROLE_ARN="acs:ram::123456789012:role/ProwlerAuditRole"

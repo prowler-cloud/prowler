@@ -47,17 +47,17 @@ def _build_requirement_attrs(requirement, framework) -> dict:
     """Build a dict with requirement attributes for the unmapped section.
 
     Keys are normalized to snake_case for OCSF consistency.
-    Only includes attributes whose AttributeMetadata has OCSF=True.
+    Only includes attributes whose AttributeMetadata has output_formats.ocsf=True.
     When no metadata is declared, all attributes are included.
     """
-    attrs = requirement.Attributes
+    attrs = requirement.attributes
     if not attrs:
         return {}
 
     # Build set of keys allowed for OCSF output
-    metadata = framework.AttributesMetadata
+    metadata = framework.attributes_metadata
     if metadata:
-        ocsf_keys = {m.Key for m in metadata if m.OCSF}
+        ocsf_keys = {m.key for m in metadata if m.output_formats.ocsf}
     else:
         ocsf_keys = None  # No metadata → include all
 
@@ -94,9 +94,9 @@ class OCSFComplianceOutput:
 
         if findings:
             compliance_name = (
-                framework.Framework + "-" + framework.Version
-                if framework.Version
-                else framework.Framework
+                framework.framework + "-" + framework.version
+                if framework.version
+                else framework.framework
             )
             self._transform(findings, framework, compliance_name)
             if not self._file_descriptor and file_path:
@@ -112,19 +112,16 @@ class OCSFComplianceOutput:
         framework: ComplianceFramework,
         compliance_name: str,
     ) -> None:
-        # Build check -> requirements map (same logic as UniversalComplianceOutput)
+        # Build check -> requirements map
         check_req_map = {}
-        for req in framework.Requirements:
-            checks = req.Checks
-            if isinstance(checks, dict):
-                if self._provider:
-                    all_checks = checks.get(self._provider.lower(), [])
-                else:
-                    all_checks = []
-                    for check_list in checks.values():
-                        all_checks.extend(check_list)
+        for req in framework.requirements:
+            checks = req.checks
+            if self._provider:
+                all_checks = checks.get(self._provider.lower(), [])
             else:
-                all_checks = checks
+                all_checks = []
+                for check_list in checks.values():
+                    all_checks.extend(check_list)
             for check_id in all_checks:
                 check_req_map.setdefault(check_id, []).append(req)
 
@@ -138,15 +135,12 @@ class OCSFComplianceOutput:
                         self._data.append(cf)
 
         # Manual requirements (no checks or empty for current provider)
-        for req in framework.Requirements:
-            checks = req.Checks
-            if isinstance(checks, dict):
-                if self._provider:
-                    has_checks = bool(checks.get(self._provider.lower(), []))
-                else:
-                    has_checks = any(checks.values())
+        for req in framework.requirements:
+            checks = req.checks
+            if self._provider:
+                has_checks = bool(checks.get(self._provider.lower(), []))
             else:
-                has_checks = bool(checks)
+                has_checks = any(checks.values())
 
             if not has_checks:
                 cf = self._build_manual_compliance_finding(
@@ -214,8 +208,8 @@ class OCSFComplianceOutput:
                 activity_name=ActivityID.Create.name,
                 compliance=Compliance(
                     standards=[compliance_name],
-                    requirements=[requirement.Id],
-                    control=requirement.Description,
+                    requirements=[requirement.id],
+                    control=requirement.description,
                     status_id=compliance_status,
                     checks=[
                         Check(
@@ -228,9 +222,9 @@ class OCSFComplianceOutput:
                     ],
                 ),
                 finding_info=FindingInformation(
-                    uid=f"{finding.uid}-{requirement.Id}",
-                    title=requirement.Id,
-                    desc=requirement.Description,
+                    uid=f"{finding.uid}-{requirement.id}",
+                    title=requirement.id,
+                    desc=requirement.description,
                     created_time=time_value,
                     created_time_dt=(
                         finding.timestamp
@@ -299,7 +293,7 @@ class OCSFComplianceOutput:
 
             return cf
         except Exception as e:
-            logger.debug(f"Skipping OCSF compliance finding for {requirement.Id}: {e}")
+            logger.debug(f"Skipping OCSF compliance finding for {requirement.id}: {e}")
             return None
 
     def _build_manual_compliance_finding(
@@ -318,14 +312,14 @@ class OCSFComplianceOutput:
                 activity_name=ActivityID.Create.name,
                 compliance=Compliance(
                     standards=[compliance_name],
-                    requirements=[requirement.Id],
-                    control=requirement.Description,
+                    requirements=[requirement.id],
+                    control=requirement.description,
                     status_id=ComplianceStatusID.Unknown,
                 ),
                 finding_info=FindingInformation(
-                    uid=f"manual-{requirement.Id}",
-                    title=requirement.Id,
-                    desc=requirement.Description,
+                    uid=f"manual-{requirement.id}",
+                    title=requirement.id,
+                    desc=requirement.description,
                     created_time=time_value,
                 ),
                 message="Manual check",
@@ -351,7 +345,7 @@ class OCSFComplianceOutput:
             )
         except Exception as e:
             logger.debug(
-                f"Skipping manual OCSF compliance finding for {requirement.Id}: {e}"
+                f"Skipping manual OCSF compliance finding for {requirement.id}: {e}"
             )
             return None
 

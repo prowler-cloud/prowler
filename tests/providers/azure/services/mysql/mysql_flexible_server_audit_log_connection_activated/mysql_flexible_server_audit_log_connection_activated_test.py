@@ -56,6 +56,57 @@ class Test_mysql_flexible_server_audit_log_connection_activated:
             result = check.execute()
             assert len(result) == 0
 
+    def test_mysql_audit_log_connection_activated_lowercase(self):
+        server_name = str(uuid4())
+        mysql_client = mock.MagicMock
+        mysql_client.flexible_servers = {
+            AZURE_SUBSCRIPTION_ID: {
+                "/subscriptions/resource_id": FlexibleServer(
+                    resource_id="/subscriptions/resource_id",
+                    name=server_name,
+                    location="location",
+                    version="version",
+                    configurations={
+                        "audit_log_events": Configuration(
+                            resource_id=f"/subscriptions/{server_name}/configurations/audit_log_events",
+                            description="description",
+                            value="connection",
+                        )
+                    },
+                )
+            }
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.mysql.mysql_flexible_server_audit_log_connection_activated.mysql_flexible_server_audit_log_connection_activated.mysql_client",
+                new=mysql_client,
+            ),
+        ):
+            from prowler.providers.azure.services.mysql.mysql_flexible_server_audit_log_connection_activated.mysql_flexible_server_audit_log_connection_activated import (
+                mysql_flexible_server_audit_log_connection_activated,
+            )
+
+            check = mysql_flexible_server_audit_log_connection_activated()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_name == server_name
+            assert result[0].location == "location"
+            assert (
+                result[0].resource_id
+                == f"/subscriptions/{server_name}/configurations/audit_log_events"
+            )
+            assert (
+                result[0].status_extended
+                == f"Audit log is enabled for server {server_name} in subscription {AZURE_SUBSCRIPTION_ID}."
+            )
+
     def test_mysql_audit_log_connection_not_connection(self):
         server_name = str(uuid4())
         mysql_client = mock.MagicMock

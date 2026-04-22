@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 from io import StringIO
 from typing import Optional
+from uuid import UUID
 
 import requests
 from freezegun import freeze_time
@@ -64,7 +65,9 @@ class TestOCSF:
         assert output_data.finding_info.desc == findings[0].metadata.Description
         assert output_data.finding_info.title == findings[0].metadata.CheckTitle
         assert output_data.finding_info.uid == findings[0].uid
-        assert output_data.finding_info.types == ["test-type"]
+        assert output_data.finding_info.types == [
+            "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+        ]
         assert output_data.time == int(findings[0].timestamp.timestamp())
         assert output_data.time_dt == findings[0].timestamp
         assert (
@@ -101,7 +104,10 @@ class TestOCSF:
             output_data.type_name
             == f"Detection Finding: {DetectionFindingTypeID.Create.name}"
         )
-        assert output_data.unmapped == {
+        unmapped = output_data.unmapped
+        scan_id = unmapped.pop("scan_id")
+        assert UUID(scan_id)  # Valid UUID
+        assert unmapped == {
             "related_url": findings[0].metadata.RelatedUrl,
             "categories": findings[0].metadata.Categories,
             "depends_on": findings[0].metadata.DependsOn,
@@ -109,6 +115,8 @@ class TestOCSF:
             "additional_urls": findings[0].metadata.AdditionalURLs,
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
+            "provider_uid": findings[0].account_uid,
+            "provider": findings[0].provider,
         }
 
         # Test with int timestamp (UNIX timestamp)
@@ -118,6 +126,23 @@ class TestOCSF:
         assert output_data.time_dt == datetime.fromtimestamp(
             1619600000, tz=timezone.utc
         )
+
+    def test_scan_id_is_unique_per_provider_and_account(self):
+        findings = [
+            generate_finding_output(provider="aws", account_uid="111111111111"),
+            generate_finding_output(provider="aws", account_uid="222222222222"),
+            generate_finding_output(provider="aws", account_uid="111111111111"),
+        ]
+
+        ocsf = OCSF(findings)
+
+        scan_ids = [finding.unmapped["scan_id"] for finding in ocsf.data]
+
+        assert UUID(scan_ids[0])
+        assert UUID(scan_ids[1])
+        assert UUID(scan_ids[2])
+        assert scan_ids[0] == scan_ids[2]
+        assert scan_ids[0] != scan_ids[1]
 
     def test_validate_ocsf(self):
         mock_file = StringIO()
@@ -188,8 +213,8 @@ class TestOCSF:
                 "status_detail": "status extended",
                 "status_id": 1,
                 "unmapped": {
-                    "related_url": "test-url",
-                    "categories": ["test-category"],
+                    "related_url": "",
+                    "categories": ["encryption"],
                     "depends_on": ["test-dependency"],
                     "related_to": ["test-related-to"],
                     "additional_urls": [
@@ -198,6 +223,8 @@ class TestOCSF:
                     ],
                     "notes": "test-notes",
                     "compliance": {"test-compliance": "test-compliance"},
+                    "provider_uid": "123456789012",
+                    "provider": "aws",
                 },
                 "activity_name": "Create",
                 "activity_id": 1,
@@ -207,7 +234,9 @@ class TestOCSF:
                     "desc": "check description",
                     "title": "service_test_check_id",
                     "uid": "test-unique-finding",
-                    "types": ["test-type"],
+                    "types": [
+                        "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+                    ],
                 },
                 "resources": [
                     {
@@ -239,6 +268,8 @@ class TestOCSF:
                     "org": {
                         "name": "test-organization",
                         "uid": "test-organization-id",
+                        "ou_uid": "ou-abc1-12345678",
+                        "ou_name": "Production/WebServices",
                     },
                     "provider": "aws",
                     "region": "eu-west-1",
@@ -260,7 +291,11 @@ class TestOCSF:
 
         mock_file.seek(0)
         content = mock_file.read()
-        assert json.loads(content) == expected_json_output
+        actual_output = json.loads(content)
+        # scan_id is non-deterministic (UUID7), validate and remove before comparison
+        actual_scan_id = actual_output[0]["unmapped"].pop("scan_id")
+        assert UUID(actual_scan_id)
+        assert actual_output == expected_json_output
 
     def test_batch_write_data_to_file_without_findings(self):
         assert not OCSF([])._file_descriptor
@@ -318,7 +353,10 @@ class TestOCSF:
         assert finding_ocsf.risk_details == finding_output.metadata.Risk
 
         # Unmapped Data
-        assert finding_ocsf.unmapped == {
+        unmapped = finding_ocsf.unmapped
+        scan_id = unmapped.pop("scan_id")
+        assert UUID(scan_id)  # Valid UUID
+        assert unmapped == {
             "related_url": finding_output.metadata.RelatedUrl,
             "categories": finding_output.metadata.Categories,
             "depends_on": finding_output.metadata.DependsOn,
@@ -326,6 +364,8 @@ class TestOCSF:
             "additional_urls": finding_output.metadata.AdditionalURLs,
             "notes": finding_output.metadata.Notes,
             "compliance": finding_output.compliance,
+            "provider_uid": finding_output.account_uid,
+            "provider": finding_output.provider,
         }
 
         # ResourceDetails
@@ -388,6 +428,8 @@ class TestOCSF:
         assert isinstance(cloud_organization, Organization)
         assert cloud_organization.uid == finding_output.account_organization_uid
         assert cloud_organization.name == finding_output.account_organization_name
+        assert cloud_organization.ou_uid == finding_output.account_ou_uid
+        assert cloud_organization.ou_name == finding_output.account_ou_name
 
     def test_finding_output_kubernetes(self):
         finding_output = generate_finding_output(
@@ -396,6 +438,7 @@ class TestOCSF:
             muted=True,
             region=AWS_REGION_EU_WEST_1,
             provider="kubernetes",
+            provider_uid="test-k8s-context",
         )
 
         finding_ocsf = OCSF([finding_output])
@@ -405,6 +448,8 @@ class TestOCSF:
         assert finding_ocsf.resources[0].namespace == finding_output.region.replace(
             "namespace: ", ""
         )
+        assert finding_ocsf.unmapped["provider_uid"] == "test-k8s-context"
+        assert finding_ocsf.unmapped["provider"] == "kubernetes"
 
     def test_finding_output_cloud_fail_low_not_muted(self):
         finding_output = generate_finding_output(

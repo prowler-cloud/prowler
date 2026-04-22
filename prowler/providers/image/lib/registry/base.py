@@ -9,11 +9,13 @@ from urllib.parse import urlparse
 
 import requests
 
+from prowler.config.config import prowler_version
 from prowler.lib.logger import logger
 from prowler.providers.image.exceptions.exceptions import ImageRegistryNetworkError
 
 _MAX_RETRIES = 3
 _BACKOFF_BASE = 1
+_USER_AGENT = f"Prowler/{prowler_version} (registry-adapter)"
 
 
 class RegistryAdapter(ABC):
@@ -70,8 +72,12 @@ class RegistryAdapter(ABC):
         context_label = kwargs.pop("context_label", None) or self.registry_url
         kwargs.setdefault("timeout", 30)
         kwargs.setdefault("verify", self.verify_ssl)
+        headers = kwargs.get("headers", {})
+        headers.setdefault("User-Agent", _USER_AGENT)
+        kwargs["headers"] = headers
         last_exception = None
         last_status = None
+        last_body = None
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
                 resp = requests.request(method, url, **kwargs)
@@ -80,6 +86,16 @@ class RegistryAdapter(ABC):
                     wait = _BACKOFF_BASE * (2 ** (attempt - 1))
                     logger.warning(
                         f"Rate limited by {context_label}, retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES})"
+                    )
+                    time.sleep(wait)
+                    continue
+                if resp.status_code >= 500:
+                    last_status = resp.status_code
+                    last_body = (resp.text or "")[:500]
+                    wait = _BACKOFF_BASE * (2 ** (attempt - 1))
+                    logger.warning(
+                        f"Server error from {context_label} (HTTP {resp.status_code}), "
+                        f"retrying in {wait}s (attempt {attempt}/{_MAX_RETRIES}): {last_body}"
                     )
                     time.sleep(wait)
                     continue
@@ -104,21 +120,27 @@ class RegistryAdapter(ABC):
                 file=__file__,
                 message=f"Rate limited by {context_label} after {_MAX_RETRIES} attempts.",
             )
+        if last_status is not None and last_status >= 500:
+            raise ImageRegistryNetworkError(
+                file=__file__,
+                message=f"Server error from {context_label} (HTTP {last_status}) after {_MAX_RETRIES} attempts: {last_body}",
+            )
         raise ImageRegistryNetworkError(
             file=__file__,
             message=f"Failed to connect to {context_label} after {_MAX_RETRIES} attempts.",
             original_exception=last_exception,
         )
 
-    def _next_page_url(self, resp: requests.Response) -> str | None:
+    @staticmethod
+    def _next_page_url(resp: requests.Response) -> str | None:
         link_header = resp.headers.get("Link", "")
         if not link_header:
             return None
         match = re.search(r'<([^>]+)>;\s*rel="next"', link_header)
-        if not match:
-            return None
-        url = match.group(1)
-        if url.startswith("/"):
-            parsed = urlparse(resp.url)
-            return f"{parsed.scheme}://{parsed.netloc}{url}"
-        return url
+        if match:
+            url = match.group(1)
+            if url.startswith("/"):
+                parsed = urlparse(resp.url)
+                return f"{parsed.scheme}://{parsed.netloc}{url}"
+            return url
+        return None
