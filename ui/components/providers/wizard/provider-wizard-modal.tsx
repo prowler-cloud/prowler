@@ -28,7 +28,10 @@ import { TestConnectionStep } from "./steps/test-connection-step";
 import type { OrgWizardInitialData, ProviderWizardInitialData } from "./types";
 import { PROVIDER_WIZARD_STEPS, WizardStepper } from "./wizard-stepper";
 
-const UPDATE_MODE_WIZARD_STEPS = PROVIDER_WIZARD_STEPS.slice(0, 3);
+const UPDATE_MODE_WIZARD_STEPS = PROVIDER_WIZARD_STEPS.slice(
+  0,
+  PROVIDER_WIZARD_STEP.LAUNCH,
+);
 
 interface ProviderWizardModalProps {
   open: boolean;
