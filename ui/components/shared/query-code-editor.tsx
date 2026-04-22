@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 export const QUERY_EDITOR_LANGUAGE = {
   OPEN_CYPHER: "openCypher",
   PLAIN_TEXT: "plainText",
+  JSON: "json",
   SHELL: "shell",
   HCL: "hcl",
   BICEP: "bicep",
@@ -204,6 +205,74 @@ const HCL_FUNCTIONS = new Set([
   "cidrsubnet",
   "cidrhost",
 ]);
+
+interface JsonParserState {
+  inString: boolean;
+  stringIsProperty: boolean;
+  escapeNext: boolean;
+}
+
+const jsonLanguage = StreamLanguage.define<JsonParserState>({
+  startState() {
+    return {
+      inString: false,
+      stringIsProperty: false,
+      escapeNext: false,
+    };
+  },
+  token(stream, state) {
+    if (state.inString) {
+      while (!stream.eol()) {
+        const next = stream.next();
+
+        if (state.escapeNext) {
+          state.escapeNext = false;
+          continue;
+        }
+
+        if (next === "\\") {
+          state.escapeNext = true;
+          continue;
+        }
+
+        if (next === '"') {
+          state.inString = false;
+          return state.stringIsProperty ? "propertyName" : "string";
+        }
+      }
+
+      return state.stringIsProperty ? "propertyName" : "string";
+    }
+
+    if (stream.eatSpace()) {
+      return null;
+    }
+
+    if (stream.peek() === '"') {
+      const restOfLine = stream.string.slice(stream.pos);
+      state.inString = true;
+      state.escapeNext = false;
+      state.stringIsProperty = /^\s*"([^"\\]|\\.)*"\s*:/.test(restOfLine);
+      stream.next();
+      return state.stringIsProperty ? "propertyName" : "string";
+    }
+
+    if (stream.match(/[{}\[\],:]/)) {
+      return "punctuation";
+    }
+
+    if (stream.match(/-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/)) {
+      return "number";
+    }
+
+    if (stream.match(/\b(?:true|false|null)\b/)) {
+      return "keyword";
+    }
+
+    stream.next();
+    return null;
+  },
+});
 
 const BICEP_KEYWORDS = new Set([
   "resource",
@@ -1171,6 +1240,8 @@ export const QueryCodeEditor = ({
     extensions.push(shellLanguage, syntaxHighlighting(editorHighlightStyle));
   } else if (language === QUERY_EDITOR_LANGUAGE.HCL) {
     extensions.push(hclLanguage, syntaxHighlighting(editorHighlightStyle));
+  } else if (language === QUERY_EDITOR_LANGUAGE.JSON) {
+    extensions.push(jsonLanguage, syntaxHighlighting(editorHighlightStyle));
   } else if (language === QUERY_EDITOR_LANGUAGE.BICEP) {
     extensions.push(bicepLanguage, syntaxHighlighting(editorHighlightStyle));
   } else if (language === QUERY_EDITOR_LANGUAGE.YAML) {

@@ -5,12 +5,24 @@ import { useState } from "react";
 
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
+import { ApplyFiltersButton } from "@/components/filters/apply-filters-button";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
+import {
+  FilterChip,
+  FilterSummaryStrip,
+} from "@/components/filters/filter-summary-strip";
 import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table";
+import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getGroupLabel } from "@/lib/categories";
+import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
 import { ProviderProps } from "@/types/providers";
+
+import {
+  buildResourcesFilterChips,
+  getResourcesFilterDisplayValue,
+} from "./resources-filters.utils";
 
 interface ResourcesFiltersProps {
   providers: ProviderProps[];
@@ -28,6 +40,16 @@ export const ResourcesFilters = ({
   uniqueGroups,
 }: ResourcesFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const {
+    pendingFilters,
+    setPending,
+    applyAll,
+    discardAll,
+    clearAndApply,
+    hasChanges,
+    changeCount,
+    getFilterValue,
+  } = useFilterBatch();
 
   // Custom filters for the expandable section
   const customFilters = [
@@ -59,16 +81,35 @@ export const ResourcesFilters = ({
   ];
 
   const hasCustomFilters = customFilters.length > 0;
+  const filterChips: FilterChip[] = buildResourcesFilterChips(
+    pendingFilters,
+    providers,
+  );
+
+  const handleChipRemove = (filterKey: string, value: string) => {
+    const currentValues = pendingFilters[filterKey] ?? [];
+    const nextValues = currentValues.filter((item) => item !== value);
+    setPending(filterKey, nextValues);
+  };
 
   return (
     <div className="flex flex-col">
-      {/* First row: Provider selectors + More Filters button + Clear Filters */}
+      {/* First row: Provider selectors + More Filters button + Apply/Clear */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="min-w-[200px] flex-1 md:max-w-[280px]">
-          <ProviderTypeSelector providers={providers} />
+          <ProviderTypeSelector
+            providers={providers}
+            onBatchChange={setPending}
+            selectedValues={getFilterValue("filter[provider_type__in]")}
+          />
         </div>
         <div className="min-w-[200px] flex-1 md:max-w-[280px]">
-          <AccountsSelector providers={providers} />
+          <AccountsSelector
+            providers={providers}
+            onBatchChange={setPending}
+            selectedValues={getFilterValue("filter[provider_id__in]")}
+            selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
+          />
         </div>
         {hasCustomFilters && (
           <Button
@@ -82,13 +123,42 @@ export const ResourcesFilters = ({
             />
           </Button>
         )}
-        <ClearFiltersButton showCount />
+        <ClearFiltersButton
+          showCount
+          onClear={clearAndApply}
+          pendingCount={
+            Object.values(pendingFilters).filter((values) => values.length > 0)
+              .length
+          }
+        />
+        <ApplyFiltersButton
+          hasChanges={hasChanges}
+          changeCount={changeCount}
+          onApply={applyAll}
+          onDiscard={discardAll}
+        />
       </div>
+
+      <FilterSummaryStrip chips={filterChips} onRemove={handleChipRemove} />
 
       {/* Expandable filters section */}
       {hasCustomFilters && (
         <ExpandableSection isExpanded={isExpanded}>
-          <DataTableFilterCustom filters={customFilters} hideClearButton />
+          <DataTableFilterCustom
+            filters={customFilters.map((filter) => ({
+              ...filter,
+              labelFormatter: (value: string) =>
+                getResourcesFilterDisplayValue(
+                  `filter[${filter.key}]`,
+                  value,
+                  providers,
+                ),
+            }))}
+            hideClearButton
+            mode={DATA_TABLE_FILTER_MODE.BATCH}
+            onBatchChange={setPending}
+            getFilterValue={getFilterValue}
+          />
         </ExpandableSection>
       )}
     </div>
