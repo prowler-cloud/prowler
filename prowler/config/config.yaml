@@ -6,7 +6,9 @@ aws:
   # aws.disallowed_regions --> List of AWS regions to exclude from the scan.
   # Also settable via the PROWLER_AWS_DISALLOWED_REGIONS environment variable or
   # the --excluded-region CLI flag. Precedence: CLI > env var > config file.
-  # disallowed_regions: []
+  disallowed_regions:
+    - me-south-1
+    - me-central-1
   # If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
   # Mutelist:
   #  Accounts:
