@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AttackSurfaceItem } from "@/actions/overview";
 import { Card, CardContent } from "@/components/shadcn";
+import { applyFailNonMutedFilters } from "@/lib";
 
 interface AttackSurfaceCardItemProps {
   item: AttackSurfaceItem;
@@ -18,8 +19,7 @@ export function AttackSurfaceCardItem({
 
     // Add attack surface category filter
     params.set("filter[category__in]", item.id);
-    params.set("filter[status__in]", "FAIL");
-    params.set("filter[muted]", "false");
+    applyFailNonMutedFilters(params);
 
     // Add current page filters (provider, account, etc.)
     Object.entries(filters).forEach(([key, value]) => {

@@ -1198,6 +1198,9 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             )
             for agg in aggregation
         }
+        # Delete first so re-runs (e.g. post-mute reaggregation) don't hit
+        # the `unique_scan_summary` constraint.
+        ScanSummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id).delete()
         ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
 
 
