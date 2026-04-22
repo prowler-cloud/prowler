@@ -104,8 +104,12 @@ export const createMuteRulesColumns = (
           </span>
           <span className="text-text-neutral-primary min-w-0 flex-1 truncate text-left text-sm font-medium">
             {summaryLabel}
-            {extraCount > 0 ? ` +${extraCount} more` : ""}
           </span>
+          {extraCount > 0 ? (
+            <span className="text-text-neutral-tertiary shrink-0 text-xs font-medium">
+              +{extraCount} more
+            </span>
+          ) : null}
           <List className="text-button-tertiary size-4 shrink-0" />
         </Button>
       );

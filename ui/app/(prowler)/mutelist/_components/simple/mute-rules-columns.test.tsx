@@ -74,8 +74,9 @@ describe("createMuteRulesColumns", () => {
 
     expect(screen.getByText("3")).toBeInTheDocument();
     expect(
-      screen.getByText("S3 Bucket Public Access • bucket-a +2 more"),
+      screen.getByText("S3 Bucket Public Access • bucket-a"),
     ).toBeInTheDocument();
+    expect(screen.getByText("+2 more")).toBeInTheDocument();
 
     button.click();
     expect(onViewTargets).toHaveBeenCalledWith(row.original);
