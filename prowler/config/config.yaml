@@ -386,6 +386,18 @@ aws:
   # Minimum retention period in hours for Kinesis streams
   min_kinesis_stream_retention_hours: 168 # 7 days
 
+  # AWS S3 Configuration
+  # aws.s3_bucket_object_public
+  # This check performs a spot-check by sampling object ACLs within a bucket, so
+  # it is disabled by default. For complete coverage, rely on s3_bucket_acl_prohibited
+  # which enforces BucketOwnerEnforced Object Ownership (AWS's recommended approach).
+  # Set s3_bucket_object_public_enabled to True to opt in.
+  s3_bucket_object_public_enabled: False
+  # Maximum number of objects to list per bucket (upper bound for the sampling pool)
+  s3_bucket_object_public_max_objects: 100
+  # Number of objects to randomly sample from the listed pool and inspect ACLs for
+  s3_bucket_object_public_sample_size: 3
+
   # Detect Secrets plugin configuration
   detect_secrets_plugins: [
     {"name": "ArtifactoryDetector"},

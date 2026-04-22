@@ -1,17 +1,17 @@
 {
   "Provider": "aws",
   "CheckID": "s3_bucket_object_public",
-  "CheckTitle": "Ensure that S3 buckets do not have public objects",
+  "CheckTitle": "Spot-check S3 bucket objects for public ACLs",
   "CheckType": [
     "Data Protection"
   ],
   "ServiceName": "s3",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:s3:::resource",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "AwsS3Bucket",
-  "Description": "This check verifies if S3 buckets have public objects by random sampling.",
-  "Risk": "Public objects can be accessed by anyone on the internet, potentially leaking sensitive data.",
+  "Description": "Spot-checks a configurable random sample of objects in each S3 bucket and flags any whose ACL grants read access to the AllUsers group. This is a sampling-based check, not a comprehensive audit: ListObjectsV2 returns keys in lexicographical order and only a small sample is inspected, so public objects outside the sample can be missed. The check is disabled by default and must be opted into via the s3_bucket_object_public_enabled configuration flag.",
+  "Risk": "Public objects can be accessed by anyone on the internet, potentially leaking sensitive data. A bucket can appear private at the bucket-policy level while still containing individual objects with public ACL grants.",
   "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
   "Remediation": {
     "Code": {
@@ -21,14 +21,16 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that your S3 objects are not public. You can block public access at the bucket or account level to prevent this.",
-      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html"
+      "Text": "For complete coverage, enable the s3_bucket_acl_prohibited check, which enforces the BucketOwnerEnforced Object Ownership setting (AWS's recommended approach since April 2023) and prevents public object ACLs entirely. Use this spot-check as a supplementary tool for manual assessments.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/about-object-ownership.html"
     }
   },
   "Categories": [
     "public-access"
   ],
   "DependsOn": [],
-  "RelatedTo": [],
-  "Notes": "This check samples 3 objects per bucket to verify public access."
+  "RelatedTo": [
+    "s3_bucket_acl_prohibited"
+  ],
+  "Notes": "Disabled by default. Configure s3_bucket_object_public_enabled, s3_bucket_object_public_max_objects, and s3_bucket_object_public_sample_size in the Prowler configuration. Because ListObjectsV2 returns keys lexicographically and only a sample is inspected, a PASS does not guarantee the bucket is free of public objects; use s3_bucket_acl_prohibited for full assurance."
 }
