@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
+- `repository_default_branch_dismisses_stale_reviews` check for GitHub provider to ensure stale pull request approvals are dismissed when new commits are pushed [(#10569)](https://github.com/prowler-cloud/prowler/pull/10569)
 
 ---
 
@@ -24,8 +25,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - `--repo-list-file` CLI flag for GitHub provider to load repositories from a file [(#10501)](https://github.com/prowler-cloud/prowler/pull/10501)
-
-- `repository_default_branch_dismisses_stale_reviews` check for GitHub provider to ensure stale pull request approvals are dismissed when new commits are pushed [(#10569)](https://github.com/prowler-cloud/prowler/pull/10569)
 
 ### 🔄 Changed
 
