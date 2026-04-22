@@ -2183,3 +2183,172 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                 assert (
                     result[0].status == "PASS"
                 ), f"Policy with mixed-case condition keys should PASS but got: {result[0].status_extended}"
+
+    def test_mixed_principal_allow_must_validate_service(self, secretsmanager_client):
+        """Allow with both AWS and Service principals must validate the service principal."""
+        with mock_aws():
+            client_instance, secret_arn = secretsmanager_client
+
+            # The Allow statement has a mixed Principal with both AWS and Service.
+            # The service principal must still be validated for aws:SourceAccount.
+            # Without the fix, extract_field() only returned the AWS branch,
+            # silently skipping service validation.
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "DenyUnauthorizedPrincipals",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEqualsIfExists": {
+                                "aws:PrincipalArn": "arn:aws:iam::123456789012:role/MyRole",
+                                "aws:PrincipalServiceName": "appflow.amazonaws.com",
+                            },
+                            "Null": {
+                                "aws:PrincipalArn": "true",
+                                "aws:PrincipalServiceName": "true",
+                            },
+                        },
+                    },
+                    {
+                        "Sid": "DenyOutsideOrganization",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "secretsmanager:*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEquals": {
+                                "aws:PrincipalOrgID": "o-1234567890",
+                                "aws:PrincipalServiceName": "appflow.amazonaws.com",
+                            }
+                        },
+                    },
+                    {
+                        "Sid": "AllowMixedPrincipalWithoutSourceAccount",
+                        "Effect": "Allow",
+                        "Principal": {
+                            "AWS": "arn:aws:iam::123456789012:role/MyRole",
+                            "Service": "appflow.amazonaws.com",
+                        },
+                        "Action": ["secretsmanager:GetSecretValue"],
+                        "Resource": "*",
+                    },
+                ],
+            }
+
+            client_instance.put_resource_policy(
+                SecretId=secret_arn, ResourcePolicy=json.dumps(policy)
+            )
+
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
+                    {"organizations_trusted_ids": "o-1234567890"},
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    "missing Condition block" in result[0].status_extended
+                ), f"Mixed-principal Allow without SourceAccount should FAIL but got: {result[0].status_extended}"
+
+    def test_source_account_as_list_passes(self, secretsmanager_client):
+        """aws:SourceAccount as a single-value list must be accepted."""
+        with mock_aws():
+            client_instance, secret_arn = secretsmanager_client
+
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "DenyUnauthorizedPrincipals",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEqualsIfExists": {
+                                "aws:PrincipalArn": "arn:aws:iam::123456789012:role/MyRole",
+                                "aws:PrincipalServiceName": "appflow.amazonaws.com",
+                            },
+                            "Null": {
+                                "aws:PrincipalArn": "true",
+                                "aws:PrincipalServiceName": "true",
+                            },
+                        },
+                    },
+                    {
+                        "Sid": "DenyOutsideOrganization",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "secretsmanager:*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEquals": {
+                                "aws:PrincipalOrgID": "o-1234567890",
+                                "aws:PrincipalServiceName": "appflow.amazonaws.com",
+                            }
+                        },
+                    },
+                    {
+                        "Sid": "AllowAppFlowAccess",
+                        "Effect": "Allow",
+                        "Principal": {"Service": "appflow.amazonaws.com"},
+                        "Action": ["secretsmanager:GetSecretValue"],
+                        "Resource": "*",
+                        "Condition": {
+                            "StringEquals": {"aws:SourceAccount": ["123456789012"]}
+                        },
+                    },
+                ],
+            }
+
+            client_instance.put_resource_policy(
+                SecretId=secret_arn, ResourcePolicy=json.dumps(policy)
+            )
+
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
+                    {"organizations_trusted_ids": "o-1234567890"},
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert (
+                    result[0].status == "PASS"
+                ), f"SourceAccount as list should PASS but got: {result[0].status_extended}"

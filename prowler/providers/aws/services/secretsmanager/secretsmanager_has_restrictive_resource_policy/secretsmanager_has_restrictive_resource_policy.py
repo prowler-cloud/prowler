@@ -525,11 +525,13 @@ class secretsmanager_has_restrictive_resource_policy(Check):
 
         # Validate condition: require at least StringEquals with aws:SourceAccount
         # Additional restrictive conditions (e.g. ArnLike on aws:SourceArn) are acceptable.
+        # AWS allows condition values as scalar string or single-value list.
         condition = statement.get("Condition", {})
+        source_account_values = self.extract_field(
+            condition.get("StringEquals", {}).get("aws:sourceaccount", [])
+        )
         has_correct_condition = (
-            "StringEquals" in condition
-            and condition.get("StringEquals", {}).get("aws:sourceaccount")
-            == audited_account
+            "StringEquals" in condition and audited_account in source_account_values
         )
 
         if not has_correct_condition:
@@ -551,9 +553,15 @@ class secretsmanager_has_restrictive_resource_policy(Check):
         elif isinstance(field, list):
             return field
         elif isinstance(field, dict):
+            # Flatten all values from both AWS and Service keys
+            result = []
             for key in ("AWS", "Service"):
                 if key in field:
-                    return [field[key]] if isinstance(field[key], str) else field[key]
+                    if isinstance(field[key], str):
+                        result.append(field[key])
+                    else:
+                        result.extend(field[key])
+            return result if result else [default_value]
         return [default_value]
 
     def is_valid_resource(self, secret, resource):
