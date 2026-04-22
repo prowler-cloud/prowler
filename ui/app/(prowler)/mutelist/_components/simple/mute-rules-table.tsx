@@ -1,9 +1,17 @@
 import { Info } from "lucide-react";
 
 import { getMuteRules } from "@/actions/mute-rules";
-import { Card, Skeleton } from "@/components/shadcn";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+} from "@/components/shadcn";
 import { SearchParamsProps } from "@/types/components";
 
+import { hydrateMuteRuleTargetPreviews } from "./mute-rule-target-previews";
 import { MuteRulesTableClient } from "./mute-rules-table-client";
 
 interface MuteRulesTableProps {
@@ -21,20 +29,22 @@ export async function MuteRulesTable({ searchParams }: MuteRulesTableProps) {
     sort,
   });
 
-  const muteRules = muteRulesData?.data || [];
+  const muteRules = await hydrateMuteRuleTargetPreviews(
+    muteRulesData?.data || [],
+  );
 
   if (muteRules.length === 0) {
     return (
-      <Card variant="base" className="p-8">
+      <Card variant="base" className="gap-0">
         <div className="flex flex-col items-center justify-center gap-4 text-center">
-          <div className="rounded-full bg-slate-100 p-4 dark:bg-slate-800">
-            <Info className="size-8 text-slate-500" />
+          <div className="border-border-neutral-secondary bg-bg-neutral-tertiary rounded-full border p-4">
+            <Info className="text-text-neutral-tertiary size-8" />
           </div>
           <div>
-            <h3 className="text-lg font-medium text-slate-900 dark:text-white">
+            <h3 className="text-text-neutral-primary text-lg font-medium">
               No mute rules yet
             </h3>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-text-neutral-secondary mt-1 text-sm">
               Mute rules are created when you mute findings from the Findings
               page. Select findings and click &quot;Mute&quot; to create your
               first rule.
@@ -46,63 +56,127 @@ export async function MuteRulesTable({ searchParams }: MuteRulesTableProps) {
   }
 
   return (
-    <Card variant="base" className="p-6">
-      <div className="mb-6">
-        <h3 className="text-default-700 mb-2 text-lg font-semibold">
+    <Card variant="base" className="gap-0">
+      <CardHeader className="mb-0 gap-3 border-b border-border-neutral-secondary px-0 pb-5">
+        <CardTitle className="text-text-neutral-primary mt-0 font-semibold">
           Simple Mutelist Rules
-        </h3>
-        <ul className="text-default-600 list-disc pl-5 text-sm">
-          <li>
-            <strong>
-              These rules take effect immediately on existing findings.
-            </strong>
-          </li>
-          <li>
-            Create rules by selecting findings from the Findings page and
-            clicking &quot;Mute&quot;.
-          </li>
-          <li>Toggle rules on/off to enable or disable muting.</li>
-        </ul>
-      </div>
-      <MuteRulesTableClient
-        muteRules={muteRules}
-        metadata={
-          muteRulesData?.meta
-            ? { ...muteRulesData.meta, version: "" }
-            : undefined
-        }
-      />
+        </CardTitle>
+        <CardDescription className="text-text-neutral-secondary">
+          Rules created from the Findings page apply immediately to the matching
+          findings and can be toggled on or off at any time.
+        </CardDescription>
+        <div className="grid gap-2 text-sm text-text-neutral-secondary">
+          <p>Create rules by selecting findings and choosing mute.</p>
+          <p>Review affected findings from the table without leaving Mutelist.</p>
+        </div>
+      </CardHeader>
+      <CardContent className="px-0 pt-5">
+        <MuteRulesTableClient
+          muteRules={muteRules}
+          metadata={
+            muteRulesData?.meta
+              ? { ...muteRulesData.meta, version: "" }
+              : undefined
+          }
+        />
+      </CardContent>
     </Card>
+  );
+}
+
+function MuteRulesSkeletonRow() {
+  return (
+    <tr className="border-border-neutral-secondary border-b last:border-b-0">
+      <td className="px-3 py-4">
+        <Skeleton className="h-4 w-28 rounded" />
+      </td>
+      <td className="px-3 py-4">
+        <div className="flex flex-col gap-1.5">
+          <Skeleton className="h-4 w-40 rounded" />
+          <Skeleton className="h-3 w-32 rounded" />
+        </div>
+      </td>
+      <td className="px-3 py-4">
+        <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex w-64 items-center gap-3 rounded-md border px-3 py-2">
+          <Skeleton className="bg-bg-neutral-secondary size-8 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Skeleton className="h-4 w-44 rounded" />
+            <Skeleton className="h-3 w-28 rounded" />
+          </div>
+          <Skeleton className="size-4 rounded" />
+        </div>
+      </td>
+      <td className="px-3 py-4">
+        <Skeleton className="h-4 w-28 rounded" />
+      </td>
+      <td className="px-3 py-4">
+        <Skeleton className="h-6 w-12 rounded-full" />
+      </td>
+      <td className="px-2 py-4">
+        <Skeleton className="size-8 rounded-md" />
+      </td>
+    </tr>
   );
 }
 
 export function MuteRulesTableSkeleton() {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="rounded-lg border border-slate-200 dark:border-slate-800">
-        <div className="border-b border-slate-200 p-4 dark:border-slate-800">
-          <div className="flex gap-8">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-16" />
+    <div
+      data-testid="mute-rules-table-skeleton"
+      className="rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden border p-4"
+    >
+      <div
+        data-testid="mute-rules-table-skeleton-intro"
+        className="border-border-neutral-secondary space-y-3 border-b pb-5"
+      >
+        <Skeleton className="h-6 w-44 rounded" />
+        <Skeleton className="h-4 w-[36rem] max-w-full rounded" />
+        <Skeleton className="h-4 w-[22rem] max-w-full rounded" />
+        <Skeleton className="h-4 w-[24rem] max-w-full rounded" />
+      </div>
+
+      <table className="w-full" aria-hidden="true">
+        <thead>
+          <tr className="border-border-neutral-secondary border-b">
+            <th className="px-3 py-3 text-left">
+              <Skeleton className="h-4 w-12 rounded" />
+            </th>
+            <th className="px-3 py-3 text-left">
+              <Skeleton className="h-4 w-14 rounded" />
+            </th>
+            <th className="px-3 py-3 text-left">
+              <Skeleton className="h-4 w-16 rounded" />
+            </th>
+            <th className="px-3 py-3 text-left">
+              <Skeleton className="h-4 w-16 rounded" />
+            </th>
+            <th className="px-3 py-3 text-left">
+              <Skeleton className="h-4 w-16 rounded" />
+            </th>
+            <th className="w-10 py-3" />
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 8 }).map((_, index) => (
+            <MuteRulesSkeletonRow key={index} />
+          ))}
+        </tbody>
+      </table>
+
+      <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-24 rounded" />
+          <Skeleton className="h-9 w-16 rounded-md" />
+        </div>
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-4 w-24 rounded" />
+          <div className="flex gap-1">
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
+            <Skeleton className="size-9 rounded-md" />
           </div>
         </div>
-        {[...Array(5)].map((_, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-8 border-b border-slate-200 p-4 last:border-0 dark:border-slate-800"
-          >
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-4 w-12" />
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-5 w-10" />
-            <Skeleton className="size-8 rounded-full" />
-          </div>
-        ))}
       </div>
     </div>
   );
