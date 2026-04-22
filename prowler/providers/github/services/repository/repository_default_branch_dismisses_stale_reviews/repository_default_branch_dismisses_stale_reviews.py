@@ -23,12 +23,10 @@ class repository_default_branch_dismisses_stale_reviews(Check):
 
         for repo in repository_client.repositories.values():
 
-            # On ignore les cas où on n'a pas pu déterminer la valeur (erreur API)
             if repo.default_branch.dismiss_stale_reviews is not None:
 
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
 
-                # Par défaut : FAIL
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repo.name} does not dismiss stale pull request approvals when new commits are pushed."
 
