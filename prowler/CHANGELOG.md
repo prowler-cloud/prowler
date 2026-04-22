@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.25.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
+
+---
+
 ## [5.24.3] (Prowler v5.24.3)
 
 ### 🐞 Fixed
