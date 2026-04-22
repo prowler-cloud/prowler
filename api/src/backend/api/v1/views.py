@@ -7366,14 +7366,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
             # finding-level aggregation path.
             row.pop("nonmuted_count", None)
 
-            # Compute aggregated status from non-muted counts first, then
-            # fall back to muted counts so fully-muted groups still reflect
-            # the underlying check outcome.
-            total_fail = row.get("fail_count", 0) + row.get("fail_muted_count", 0)
-            total_pass = row.get("pass_count", 0) + row.get("pass_muted_count", 0)
-            if total_fail > 0:
+            # Muted findings are treated as resolved/accepted, so they do not
+            # contribute to a failing status. A group is FAIL only when there
+            # is at least one non-muted FAIL; otherwise any pass (muted or
+            # not) or any muted fail makes the group PASS. Only groups whose
+            # findings are exclusively MANUAL fall through to MANUAL.
+            if row.get("fail_count", 0) > 0:
                 row["status"] = "FAIL"
-            elif total_pass > 0:
+            elif (
+                row.get("pass_count", 0) > 0
+                or row.get("pass_muted_count", 0) > 0
+                or row.get("fail_muted_count", 0) > 0
+            ):
                 row["status"] = "PASS"
             else:
                 row["status"] = "MANUAL"
@@ -7473,12 +7477,11 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         if computed_params.get("status") or computed_params.getlist("status__in"):
             queryset = queryset.annotate(
-                total_fail=F("fail_count") + F("fail_muted_count"),
-                total_pass=F("pass_count") + F("pass_muted_count"),
-            ).annotate(
                 aggregated_status=Case(
-                    When(total_fail__gt=0, then=Value("FAIL")),
-                    When(total_pass__gt=0, then=Value("PASS")),
+                    When(fail_count__gt=0, then=Value("FAIL")),
+                    When(pass_count__gt=0, then=Value("PASS")),
+                    When(pass_muted_count__gt=0, then=Value("PASS")),
+                    When(fail_muted_count__gt=0, then=Value("PASS")),
                     default=Value("MANUAL"),
                     output_field=CharField(),
                 )
@@ -7498,6 +7501,25 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         return filterset.qs
 
+    def _resolve_finding_ids(self, filtered_queryset):
+        """
+        Materialize and request-cache the finding_ids list used to anchor
+        RFM lookups.
+
+        Turning `finding_id__in=Subquery(findings_qs)` into `finding_id__in=
+        [uuid, ...]` nudges PostgreSQL out of a Merge Semi Join that ends up
+        reading hundreds of thousands of RFM index entries just to post-
+        filter tenant_id. Caching on the ViewSet instance (one instance per
+        request) avoids duplicating the findings round-trip when several
+        helpers build different RFM querysets from the same filtered set.
+        """
+        cached = getattr(self, "_finding_ids_cache", None)
+        if cached is not None and cached[0] is filtered_queryset:
+            return cached[1]
+        finding_ids = list(filtered_queryset.order_by().values_list("id", flat=True))
+        self._finding_ids_cache = (filtered_queryset, finding_ids)
+        return finding_ids
+
     def _build_resource_mapping_queryset(
         self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
     ):
@@ -7507,10 +7529,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
         Starting from ResourceFindingMapping avoids scanning all mappings
         before applying check_id/date filters on findings.
         """
-        finding_ids = filtered_queryset.order_by().values("id")
+        finding_ids = self._resolve_finding_ids(filtered_queryset)
 
         mapping_queryset = ResourceFindingMapping.objects.filter(
-            finding_id__in=Subquery(finding_ids)
+            finding_id__in=finding_ids
         )
         if tenant_id:
             mapping_queryset = mapping_queryset.filter(tenant_id=tenant_id)
@@ -7864,12 +7886,11 @@ class FindingGroupViewSet(BaseRLSViewSet):
             if ordering:
                 if any(field.lstrip("-") == "status_order" for field in ordering):
                     aggregated_queryset = aggregated_queryset.annotate(
-                        total_fail_for_sort=F("fail_count") + F("fail_muted_count"),
-                        total_pass_for_sort=F("pass_count") + F("pass_muted_count"),
-                    ).annotate(
                         status_order=Case(
-                            When(total_fail_for_sort__gt=0, then=Value(3)),
-                            When(total_pass_for_sort__gt=0, then=Value(2)),
+                            When(fail_count__gt=0, then=Value(3)),
+                            When(pass_count__gt=0, then=Value(2)),
+                            When(pass_muted_count__gt=0, then=Value(2)),
+                            When(fail_muted_count__gt=0, then=Value(2)),
                             default=Value(1),
                             output_field=IntegerField(),
                         )
@@ -7930,23 +7951,24 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 request, filtered_queryset, resource_ids, tenant_id, ordering
             )
 
-        has_mappings = self._build_resource_mapping_queryset(
-            filtered_queryset, resource_ids=None, tenant_id=tenant_id
-        ).exists()
+        # Serve the mapping response directly and piggyback on the paginator
+        # count to detect orphan-only groups, instead of paying a separate
+        # has_mappings.exists() semi-join over ResourceFindingMapping on
+        # every non-IaC request. TODO: once the ephemeral resources strategy
+        # is decided, mixed groups should route to _combined_paginated_response.
+        response = self._mapping_paginated_response(
+            request, filtered_queryset, resource_ids, tenant_id, ordering
+        )
 
-        if has_mappings:
-            # Normal or mixed group: serve only resource-mapped rows.
-            # TODO: Orphan findings in mixed groups are intentionally excluded
-            # until the ephemeral resources strategy is decided. When resolved,
-            # route mixed groups to _combined_paginated_response instead.
-            return self._mapping_paginated_response(
-                request, filtered_queryset, resource_ids, tenant_id, ordering
+        page = getattr(self.paginator, "page", None)
+        mapping_total = page.paginator.count if page is not None else None
+        if mapping_total == 0:
+            # Pure orphan group (e.g. IaC): synthesize resource-like rows.
+            return self._combined_paginated_response(
+                request, filtered_queryset, tenant_id, ordering
             )
 
-        # Pure orphan group (e.g. IaC): synthesize resource-like rows.
-        return self._combined_paginated_response(
-            request, filtered_queryset, tenant_id, ordering
-        )
+        return response
 
     def _mapping_paginated_response(
         self, request, filtered_queryset, resource_ids, tenant_id, ordering

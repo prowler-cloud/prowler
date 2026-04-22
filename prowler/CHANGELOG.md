@@ -2,7 +2,19 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.24.3] (Prowler v5.24.3)
+
+### 🐞 Fixed
+
+- CloudTrail resource timeline uses resource name as fallback in `LookupEvents` [(#10828)](https://github.com/prowler-cloud/prowler/pull/10828)
+
+---
+
 ## [5.24.1] (Prowler v5.24.1)
+
+### 🚀 Added
+
+- `--repo-list-file` CLI flag for GitHub provider to load repositories from a file [(#10501)](https://github.com/prowler-cloud/prowler/pull/10501)
 
 ### 🔄 Changed
 
