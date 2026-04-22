@@ -15603,6 +15603,115 @@ class TestMuteRuleViewSet:
         for rule_data in data:
             assert rule_data["id"] != str(other_rule.id)
 
+    def test_mute_rules_bulk_delete_success(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test deleting multiple mute rules in a single request."""
+        from api.models import MuteRule
+
+        ids = [str(rule.id) for rule in mute_rules_fixture]
+        data = {
+            "data": {
+                "type": "mute-rules-bulk-delete",
+                "attributes": {"ids": ids},
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-bulk-delete"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not MuteRule.objects.filter(id__in=ids).exists()
+
+    def test_mute_rules_bulk_delete_empty_list(self, authenticated_client):
+        """Test that an empty IDs list is rejected with 400."""
+        data = {
+            "data": {
+                "type": "mute-rules-bulk-delete",
+                "attributes": {"ids": []},
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-bulk-delete"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_mute_rules_bulk_delete_invalid_uuid(self, authenticated_client):
+        """Test that a malformed UUID in the list is rejected with 400."""
+        data = {
+            "data": {
+                "type": "mute-rules-bulk-delete",
+                "attributes": {"ids": ["not-a-uuid"]},
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-bulk-delete"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_mute_rules_bulk_delete_tenant_isolation(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test that bulk delete silently ignores IDs from other tenants."""
+        from api.models import MuteRule, Tenant
+
+        # Create a rule in another tenant
+        other_tenant = Tenant.objects.create(name="Other Tenant")
+        other_rule = MuteRule.objects.create(
+            tenant=other_tenant,
+            name="Other Tenant Rule",
+            reason="Should not be deleted",
+            finding_uids=["test-uid"],
+        )
+
+        own_rule = mute_rules_fixture[0]
+        data = {
+            "data": {
+                "type": "mute-rules-bulk-delete",
+                "attributes": {"ids": [str(own_rule.id), str(other_rule.id)]},
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-bulk-delete"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Own tenant's rule is deleted
+        assert not MuteRule.objects.filter(id=own_rule.id).exists()
+        # Other tenant's rule is preserved
+        assert MuteRule.all_objects.filter(id=other_rule.id).exists()
+
+    def test_mute_rules_bulk_delete_partial_missing(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test that unknown IDs are silently ignored; existing ones are deleted."""
+        from api.models import MuteRule
+
+        existing_id = str(mute_rules_fixture[0].id)
+        unknown_id = "f498b103-c760-4785-9a3e-e23fafbb7b02"
+        data = {
+            "data": {
+                "type": "mute-rules-bulk-delete",
+                "attributes": {"ids": [existing_id, unknown_id]},
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-bulk-delete"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not MuteRule.objects.filter(id=existing_id).exists()
+        # The second (non-existing) rule remains in the fixture
+        assert MuteRule.objects.filter(id=mute_rules_fixture[1].id).exists()
+
 
 @pytest.mark.django_db
 class TestFindingGroupViewSet:
