@@ -16,16 +16,7 @@ export function ResourcesInventoryCardItem({
 }: ResourcesInventoryCardItemProps) {
   const hasFailedFindings = item.failedFindings > 0;
   const hasResources = item.totalResources > 0;
-  const resourceCardClassName = cn(
-    "relative flex-1 overflow-hidden border-border-neutral-secondary bg-bg-neutral-secondary shadow-sm transition-[transform,border-color,background-color,box-shadow] duration-200",
-    hasResources &&
-      "hover:-translate-y-0.5 hover:shadow-md focus-visible:border-border-neutral-primary",
-    hasFailedFindings
-      ? "before:bg-bg-fail-primary hover:border-border-error-primary before:absolute before:inset-x-0 before:top-0 before:h-1"
-      : hasResources
-        ? "before:bg-bg-pass-primary hover:border-border-neutral-primary before:absolute before:inset-x-0 before:top-0 before:h-1"
-        : "",
-  );
+  const accent = hasFailedFindings ? CardVariant.fail : CardVariant.pass;
 
   // Build URL with current filters + resource group specific filters
   const buildResourcesUrl = () => {
@@ -60,33 +51,25 @@ export function ResourcesInventoryCardItem({
     });
   }
 
-  // Empty state when no resources
+  const header = {
+    icon: item.icon,
+    title: item.label,
+    resourceCount: `${item.totalResources.toLocaleString()} Resources`,
+  };
+
   if (!hasResources) {
-    const cardContent = (
+    return (
       <ResourceStatsCard
-        header={{
-          icon: item.icon,
-          title: item.label,
-          resourceCount: `${item.totalResources.toLocaleString()} Resources`,
-        }}
-        emptyState={{
-          message: "No Findings to display",
-        }}
-        className={resourceCardClassName}
+        header={header}
+        emptyState={{ message: "No Findings to display" }}
+        className="flex-1"
       />
     );
-
-    return cardContent;
   }
 
-  // Card with findings data
   const cardContent = (
     <ResourceStatsCard
-      header={{
-        icon: item.icon,
-        title: item.label,
-        resourceCount: `${item.totalResources.toLocaleString()} Resources`,
-      }}
+      header={header}
       badge={{
         icon: hasFailedFindings ? TriangleAlert : ShieldCheck,
         count: item.failedFindings,
@@ -94,8 +77,14 @@ export function ResourcesInventoryCardItem({
       }}
       label="Fail Findings"
       stats={stats}
-      variant={CardVariant.default}
-      className={cn(resourceCardClassName, hasResources && "cursor-pointer")}
+      accent={accent}
+      className={cn(
+        "flex-1 cursor-pointer shadow-sm transition-[transform,border-color,box-shadow] duration-200",
+        "hover:-translate-y-0.5 hover:shadow-md",
+        hasFailedFindings
+          ? "hover:border-border-error-primary"
+          : "hover:border-border-neutral-primary",
+      )}
     />
   );
 
@@ -103,7 +92,7 @@ export function ResourcesInventoryCardItem({
     return (
       <Link
         href={resourcesUrl}
-        className="focus-visible:ring-border-neutral-primary/40 flex flex-1 rounded-[12px] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+        className="focus-visible:ring-border-neutral-primary/40 flex flex-1 rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
       >
         {cardContent}
       </Link>

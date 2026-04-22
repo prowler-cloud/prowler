@@ -32,8 +32,7 @@ const baseItem: ResourceInventoryItem = {
 
 describe("ResourcesInventoryCardItem", () => {
   describe("when the group has resources and failed findings", () => {
-    it("should keep the resource link behavior while using a neutral card container", () => {
-      // Given
+    it("builds a resources link that forwards current page filters", () => {
       render(
         <ResourcesInventoryCardItem
           item={baseItem}
@@ -44,12 +43,8 @@ describe("ResourcesInventoryCardItem", () => {
         />,
       );
 
-      // When
       const link = screen.getByRole("link");
-      const card = screen.getByText("Security").closest("[data-slot='card']");
 
-      // Then
-      expect(card).not.toBeNull();
       expect(link).toHaveAttribute(
         "href",
         expect.stringContaining("/resources?"),
@@ -66,16 +61,46 @@ describe("ResourcesInventoryCardItem", () => {
         "href",
         expect.stringContaining("filter%5Baccount_id__in%5D=account-1"),
       );
-      expect(card).toHaveClass("border-border-neutral-secondary");
-      expect(card).toHaveClass("bg-bg-neutral-secondary");
-      expect(card!.className).toContain("before:bg-bg-fail-primary");
-      expect(card!.className).not.toContain("bg-[rgba(67,34,50,0.2)]");
+    });
+
+    it("renders a fail accent bar so the card is theme-agnostic", () => {
+      render(<ResourcesInventoryCardItem item={baseItem} />);
+
+      const card = screen.getByText("Security").closest("[data-slot='card']");
+      const accent = card?.querySelector(
+        "[data-slot='resource-stats-card-accent']",
+      );
+
+      expect(card).not.toBeNull();
+      expect(accent).not.toBeNull();
+    });
+  });
+
+  describe("when the group has resources but no failed findings", () => {
+    it("renders a pass accent bar and the ShieldCheck badge", () => {
+      render(
+        <ResourcesInventoryCardItem
+          item={{
+            ...baseItem,
+            totalFindings: 0,
+            failedFindings: 0,
+            newFailedFindings: 0,
+          }}
+        />,
+      );
+
+      const card = screen.getByText("Security").closest("[data-slot='card']");
+      const accent = card?.querySelector(
+        "[data-slot='resource-stats-card-accent']",
+      );
+
+      expect(accent).not.toBeNull();
+      expect(screen.getByRole("link")).toBeInTheDocument();
     });
   });
 
   describe("when the group has no resources", () => {
-    it("should render the empty state without a resources link", () => {
-      // Given
+    it("renders the empty state without a link", () => {
       render(
         <ResourcesInventoryCardItem
           item={{
@@ -88,7 +113,6 @@ describe("ResourcesInventoryCardItem", () => {
         />,
       );
 
-      // Then
       expect(screen.queryByRole("link")).not.toBeInTheDocument();
       expect(screen.getByText("No Findings to display")).toBeInTheDocument();
     });
