@@ -8,6 +8,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 
+### 🛠️ Maintenance
+
+- Added knip for dead code detection with `lint:knip` and `lint:knip:fix` scripts [(#10654)](https://github.com/prowler-cloud/prowler/pull/10654)
+
 ### ❌ Removed
 
 - Redesign compliance page with a horizontal ThreatScore card (always-visible pillar breakdown + ActionDropdown), client-side search for compliance frameworks, compact scan selector trigger, responsive mobile filters, download-started toasts for CSV/PDF exports, enhanced compliance cards with truncated titles, and Alert-based empty/error states; migrate Progress component from HeroUI to shadcn [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
@@ -73,10 +77,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Findings grouped view with drill-down table showing resources per check, resource detail drawer, infinite scroll pagination, and bulk mute support [(#10425)](https://github.com/prowler-cloud/prowler/pull/10425)
 - Resource events tool to Lighthouse AI [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
 - Vercel provider: connect Vercel teams via API token, scan deployments, domains, projects, and team settings [(#10191)](https://github.com/prowler-cloud/prowler/pull/10191)
-
-### 🛠️ Maintenance
-
-- Added knip for dead code detection with `lint:knip` and `lint:knip:fix` scripts [(#10654)](https://github.com/prowler-cloud/prowler/pull/10654)
 
 ### 🔄 Changed
 
