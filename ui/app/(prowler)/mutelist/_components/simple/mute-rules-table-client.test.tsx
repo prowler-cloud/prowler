@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -184,12 +184,11 @@ describe("MuteRulesTableClient", () => {
       }),
     );
 
-    expect(
-      screen.getByRole("dialog", { name: "Muted Findings" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Check title • bucket-a")).toBeInTheDocument();
-    expect(screen.getByText("Other check • bucket-b")).toBeInTheDocument();
-    expect(screen.getByText("uid-3")).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: "Muted Findings" });
+    expect(dialog).toBeInTheDocument();
+    expect(within(dialog).getByText("Check title • bucket-a")).toBeInTheDocument();
+    expect(within(dialog).getByText("Other check • bucket-b")).toBeInTheDocument();
+    expect(within(dialog).getByText("uid-3")).toBeInTheDocument();
   });
 
   it("wires the DataTable for selection and search, and hides the floating button with no selection", () => {

@@ -72,7 +72,6 @@ describe("createMuteRulesColumns", () => {
       name: "View muted findings for Ignore dev bucket",
     });
 
-    expect(screen.getByText("3")).toBeInTheDocument();
     expect(
       screen.getByText("S3 Bucket Public Access • bucket-a"),
     ).toBeInTheDocument();

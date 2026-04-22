@@ -66,21 +66,17 @@ function MuteRulesSkeletonRow() {
   return (
     <tr className="border-border-neutral-secondary border-b last:border-b-0">
       <td className="px-3 py-4">
-        <Skeleton className="h-4 w-28 rounded" />
+        <Skeleton className="size-4 rounded" />
       </td>
       <td className="px-3 py-4">
-        <div className="flex flex-col gap-1.5">
-          <Skeleton className="h-4 w-40 rounded" />
-          <Skeleton className="h-3 w-32 rounded" />
-        </div>
+        <Skeleton className="h-4 w-32 rounded" />
       </td>
       <td className="px-3 py-4">
-        <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex w-64 items-center gap-3 rounded-md border px-3 py-2">
-          <Skeleton className="bg-bg-neutral-secondary size-8 rounded-full" />
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <Skeleton className="h-4 w-44 rounded" />
-            <Skeleton className="h-3 w-28 rounded" />
-          </div>
+        <Skeleton className="h-4 w-56 rounded" />
+      </td>
+      <td className="px-3 py-4">
+        <div className="border-border-neutral-secondary flex w-[240px] items-center gap-2 rounded-md border px-3 py-2">
+          <Skeleton className="h-4 flex-1 rounded" />
           <Skeleton className="size-4 rounded" />
         </div>
       </td>
@@ -105,17 +101,23 @@ export function MuteRulesTableSkeleton() {
     >
       <div
         data-testid="mute-rules-table-skeleton-intro"
-        className="border-border-neutral-secondary space-y-3 border-b pb-5"
+        className="flex flex-col gap-1.5"
       >
-        <Skeleton className="h-6 w-44 rounded" />
-        <Skeleton className="h-4 w-[36rem] max-w-full rounded" />
-        <Skeleton className="h-4 w-[22rem] max-w-full rounded" />
-        <Skeleton className="h-4 w-[24rem] max-w-full rounded" />
+        <Skeleton className="h-5 w-40 rounded" />
+        <Skeleton className="h-3 w-[28rem] max-w-full rounded" />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-9 w-64 rounded-md" />
+        <Skeleton className="h-4 w-24 rounded" />
       </div>
 
       <table className="w-full" aria-hidden="true">
         <thead>
           <tr className="border-border-neutral-secondary border-b">
+            <th className="w-10 px-3 py-3 text-left">
+              <Skeleton className="size-4 rounded" />
+            </th>
             <th className="px-3 py-3 text-left">
               <Skeleton className="h-4 w-12 rounded" />
             </th>

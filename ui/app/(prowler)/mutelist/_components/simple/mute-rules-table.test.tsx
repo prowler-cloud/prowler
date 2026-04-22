@@ -16,7 +16,7 @@ vi.mock("./mute-rules-table-client", () => ({
 import { MuteRulesTableSkeleton } from "./mute-rules-table";
 
 describe("MuteRulesTableSkeleton", () => {
-  it("renders a card-like table skeleton with toolbar, rows and pagination", () => {
+  it("renders the table skeleton with the new header, toolbar, rows, and 7 columns", () => {
     render(<MuteRulesTableSkeleton />);
 
     const skeleton = screen.getByTestId("mute-rules-table-skeleton");
@@ -27,8 +27,11 @@ describe("MuteRulesTableSkeleton", () => {
       "border-border-neutral-secondary",
       "rounded-large",
     );
-    expect(intro.querySelectorAll("[data-slot='skeleton']").length).toBe(4);
+    // Intro: title + 1 description line
+    expect(intro.querySelectorAll("[data-slot='skeleton']").length).toBe(2);
     expect(skeleton.querySelector("table")).toBeInTheDocument();
+    // 7 columns: select + name + reason + findings + created + enabled + actions
+    expect(skeleton.querySelectorAll("thead th").length).toBe(7);
     expect(skeleton.querySelectorAll("tbody tr").length).toBeGreaterThanOrEqual(
       8,
     );
