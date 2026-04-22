@@ -61,15 +61,13 @@ vi.mock("@/components/ui/table", () => ({
       cell?: (args: { row: { original: unknown } }) => ReactNode;
     }>;
     data: unknown[];
-    enableRowSelection?: boolean;
     showSearch?: boolean;
-    getRowId?: (row: unknown) => string;
   }) => {
     dataTableMock(props);
     const actionsColumn = props.columns.find(
       (column) => column.id === "actions",
     );
-    const findingsColumn = props.columns[3];
+    const findingsColumn = props.columns[2];
 
     return (
       <div>
@@ -82,12 +80,6 @@ vi.mock("@/components/ui/table", () => ({
       </div>
     );
   },
-}));
-
-vi.mock("./floating-bulk-delete-button", () => ({
-  FloatingBulkDeleteButton: () => (
-    <div data-testid="floating-bulk-delete-button" />
-  ),
 }));
 
 vi.mock("@/components/shadcn/dropdown", () => ({
@@ -186,24 +178,22 @@ describe("MuteRulesTableClient", () => {
 
     const dialog = screen.getByRole("dialog", { name: "Muted Findings" });
     expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByText("Check title • bucket-a")).toBeInTheDocument();
-    expect(within(dialog).getByText("Other check • bucket-b")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("Check title • bucket-a"),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("Other check • bucket-b"),
+    ).toBeInTheDocument();
     expect(within(dialog).getByText("uid-3")).toBeInTheDocument();
   });
 
-  it("wires the DataTable for selection and search, and hides the floating button with no selection", () => {
+  it("enables search on the DataTable", () => {
     dataTableMock.mockClear();
 
     render(<MuteRulesTableClient muteRules={[muteRule]} />);
 
     expect(dataTableMock).toHaveBeenCalled();
     const props = dataTableMock.mock.calls[0][0];
-    expect(props.enableRowSelection).toBe(true);
     expect(props.showSearch).toBe(true);
-    expect(props.getRowId?.(muteRule)).toBe("mute-rule-1");
-
-    expect(
-      screen.queryByTestId("floating-bulk-delete-button"),
-    ).not.toBeInTheDocument();
   });
 });

@@ -66,9 +66,6 @@ function MuteRulesSkeletonRow() {
   return (
     <tr className="border-border-neutral-secondary border-b last:border-b-0">
       <td className="px-3 py-4">
-        <Skeleton className="size-4 rounded" />
-      </td>
-      <td className="px-3 py-4">
         <Skeleton className="h-4 w-32 rounded" />
       </td>
       <td className="px-3 py-4">
@@ -115,9 +112,6 @@ export function MuteRulesTableSkeleton() {
       <table className="w-full" aria-hidden="true">
         <thead>
           <tr className="border-border-neutral-secondary border-b">
-            <th className="w-10 px-3 py-3 text-left">
-              <Skeleton className="size-4 rounded" />
-            </th>
             <th className="px-3 py-3 text-left">
               <Skeleton className="h-4 w-12 rounded" />
             </th>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useDisclosure } from "@heroui/use-disclosure";
-import { RowSelectionState } from "@tanstack/react-table";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState, useTransition } from "react";
@@ -15,7 +14,6 @@ import { FormButtons } from "@/components/ui/form";
 import { DataTable } from "@/components/ui/table";
 import { MetaDataProps } from "@/types";
 
-import { FloatingBulkDeleteButton } from "./floating-bulk-delete-button";
 import { MuteRuleEditForm } from "./mute-rule-edit-form";
 import { MuteRuleTableData } from "./mute-rule-target-previews";
 import { MuteRuleTargetsModal } from "./mute-rule-targets-modal";
@@ -37,19 +35,11 @@ export function MuteRulesTableClient({
   );
   const [selectedTargetsRule, setSelectedTargetsRule] =
     useState<MuteRuleTableData | null>(null);
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [isDeleting, startDeleteTransition] = useTransition();
 
   const editModal = useDisclosure();
   const deleteModal = useDisclosure();
   const targetsModal = useDisclosure();
-
-  const selectedIds = Object.entries(rowSelection)
-    .filter(([, selected]) => selected)
-    .map(([id]) => id);
-  const selectedRules = muteRules.filter((rule) =>
-    selectedIds.includes(rule.id),
-  );
 
   const handleEditClick = (muteRule: MuteRuleData) => {
     setSelectedMuteRule(muteRule);
@@ -113,16 +103,11 @@ export function MuteRulesTableClient({
         columns={columns}
         data={muteRules}
         metadata={metadata}
-        enableRowSelection
-        rowSelection={rowSelection}
-        onRowSelectionChange={setRowSelection}
-        getRowId={(rule) => rule.id}
         showSearch
-        searchPlaceholder="Search rules by name or reason..."
         header={
           <div className="flex w-full items-center justify-between gap-4">
             <div className="flex flex-col gap-0.5">
-              <CardTitle>Simple Mutelist Rules</CardTitle>
+              <CardTitle>Mutelist Rules</CardTitle>
               <p className="text-text-neutral-tertiary text-xs">
                 Rules created from the Findings page apply immediately and can
                 be toggled on or off at any time.
@@ -131,17 +116,6 @@ export function MuteRulesTableClient({
           </div>
         }
       />
-
-      {selectedRules.length > 0 ? (
-        <FloatingBulkDeleteButton
-          selectedCount={selectedRules.length}
-          selectedRules={selectedRules}
-          onComplete={() => {
-            setRowSelection({});
-            router.refresh();
-          }}
-        />
-      ) : null}
 
       <MuteRuleTargetsModal
         muteRule={selectedTargetsRule}

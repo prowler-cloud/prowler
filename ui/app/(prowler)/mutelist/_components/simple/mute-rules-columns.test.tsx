@@ -20,16 +20,6 @@ vi.mock("./mute-rule-row-actions", () => ({
   MuteRuleRowActions: () => null,
 }));
 
-vi.mock("@/components/shadcn", async () => {
-  const actual = await vi.importActual<Record<string, unknown>>(
-    "@/components/shadcn",
-  );
-  return {
-    ...actual,
-    Checkbox: () => null,
-  };
-});
-
 describe("createMuteRulesColumns", () => {
   it("renders a compact actionable summary that opens the full list via callback", async () => {
     const onViewTargets = vi.fn();

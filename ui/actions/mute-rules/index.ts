@@ -1,5 +1,4 @@
 export {
-  bulkDeleteMuteRules,
   createMuteRule,
   deleteMuteRule,
   getMuteRule,

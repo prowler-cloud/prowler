@@ -4079,26 +4079,6 @@ class MuteRuleUpdateSerializer(BaseWriteSerializer):
         return value
 
 
-class MuteRuleBulkDeleteSerializer(serializers.Serializer):
-    """
-    Serializer for bulk deleting MuteRule instances.
-
-    Accepts a list of mute rule IDs. Row-Level Security automatically scopes
-    the delete to the current tenant, so IDs belonging to other tenants are
-    silently ignored.
-    """
-
-    ids = serializers.ListField(
-        child=serializers.UUIDField(),
-        allow_empty=False,
-        min_length=1,
-        help_text="List of Mute Rule IDs to delete.",
-    )
-
-    class JSONAPIMeta:
-        resource_name = "mute-rules-bulk-delete"
-
-
 # ThreatScore Snapshots
 
 

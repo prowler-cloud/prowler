@@ -112,8 +112,6 @@ interface DataTableProviderProps<TData, TValue> {
   onRowClick?: (row: Row<TData>) => void;
   /** Optional header rendered inside the table container, above the toolbar. */
   header?: ReactNode;
-  /** Extract a stable row ID so selection persists across sort/pagination. */
-  getRowId?: (row: TData, index: number) => string;
 }
 
 export function DataTable<TData, TValue>({
@@ -145,7 +143,6 @@ export function DataTable<TData, TValue>({
   searchBadge,
   onRowClick,
   header,
-  getRowId,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -166,7 +163,6 @@ export function DataTable<TData, TValue>({
     columns,
     enableSorting: true,
     enableRowSelection: getRowCanSelect ?? enableRowSelection,
-    getRowId,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),

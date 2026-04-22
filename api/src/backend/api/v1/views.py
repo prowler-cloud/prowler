@@ -116,7 +116,7 @@ from api.compliance import (
 )
 from api.constants import SEVERITY_ORDER
 from api.db_router import MainRouter
-from api.db_utils import batch_delete, rls_transaction
+from api.db_utils import rls_transaction
 from api.exceptions import (
     TaskFailedException,
     UpstreamAccessDeniedError,
@@ -261,7 +261,6 @@ from api.v1.serializers import (
     LighthouseTenantConfigSerializer,
     LighthouseTenantConfigUpdateSerializer,
     MembershipSerializer,
-    MuteRuleBulkDeleteSerializer,
     MuteRuleCreateSerializer,
     MuteRuleSerializer,
     MuteRuleUpdateSerializer,
@@ -6920,8 +6919,6 @@ class MuteRuleViewSet(BaseRLSViewSet):
             return MuteRuleCreateSerializer
         elif self.action == "partial_update":
             return MuteRuleUpdateSerializer
-        elif self.action == "bulk_delete":
-            return MuteRuleBulkDeleteSerializer
         return super().get_serializer_class()
 
     def create(self, request, *args, **kwargs):
@@ -6962,31 +6959,6 @@ class MuteRuleViewSet(BaseRLSViewSet):
             data=serializer.data,
             status=status.HTTP_201_CREATED,
         )
-
-    @extend_schema(
-        tags=["Mute Rules"],
-        summary="Bulk delete mute rules",
-        description=(
-            "Delete multiple mute rules in a single atomic request. "
-            "IDs that do not belong to the current tenant are silently ignored. "
-            "Previously muted findings remain muted."
-        ),
-        request=MuteRuleBulkDeleteSerializer,
-        responses={204: None},
-    )
-    @action(detail=False, methods=["post"], url_path="bulk-delete")
-    def bulk_delete(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        ids = serializer.validated_data["ids"]
-
-        with transaction.atomic():
-            queryset = MuteRule.objects.filter(
-                tenant_id=self.request.tenant_id, id__in=ids
-            )
-            batch_delete(self.request.tenant_id, queryset)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 SEVERITY_ORDER_REVERSE = {v: k for k, v in SEVERITY_ORDER.items()}
