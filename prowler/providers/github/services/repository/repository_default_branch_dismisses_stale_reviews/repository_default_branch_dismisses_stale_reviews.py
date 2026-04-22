@@ -29,6 +29,11 @@ class repository_default_branch_dismisses_stale_reviews(Check):
 
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repo.name} does not dismiss stale pull request approvals when new commits are pushed."
+                if (
+                    repo.default_branch.dismiss_stale_reviews_source
+                    == "ruleset_not_active"
+                ):
+                    report.status_extended = f"Repository {repo.name} has dismiss stale pull request approvals configured in a ruleset, but the ruleset is not active."
 
                 if repo.default_branch.dismiss_stale_reviews:
                     report.status = "PASS"
