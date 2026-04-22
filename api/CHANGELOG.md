@@ -12,6 +12,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Finding groups aggregated `status` now treats muted findings as resolved: a group is `FAIL` only while at least one non-muted FAIL remains, otherwise it is `PASS` (including fully-muted groups). The `filter[status]` filter and the `sort=status` ordering share the same semantics, keeping `status` consistent with `fail_count` and the orthogonal `muted` flag [(#10825)](https://github.com/prowler-cloud/prowler/pull/10825)
 - `aggregate_findings` is now idempotent: it deletes the scan's existing `ScanSummary` rows before `bulk_create`, so re-runs (such as the post-mute reaggregation pipeline) no longer violate the `unique_scan_summary` constraint and no longer abort the downstream `DailySeveritySummary` / `FindingGroupDailySummary` recomputation for the affected scan [(#10827)](https://github.com/prowler-cloud/prowler/pull/10827)
+- Attack Paths: Findings on AWS were silently dropped during the Neo4j merge for resources whose Cartography node is keyed by a short identifier (e.g. EC2 instances) rather than the full ARN [(#10839)](https://github.com/prowler-cloud/prowler/pull/10839)
 
 ---
 
