@@ -9,6 +9,10 @@ import {
   ShieldOff,
 } from "lucide-react";
 
+import type {
+  OrgWizardInitialData,
+  ProviderWizardInitialData,
+} from "@/components/providers/wizard/types";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
@@ -108,6 +112,8 @@ export function getColumnProviders(
   rowSelection: RowSelectionState,
   testableProviderIds: string[],
   onClearSelection: () => void,
+  onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void,
+  onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void,
 ): ColumnDef<ProvidersTableRow>[] {
   return [
     {
@@ -320,6 +326,8 @@ export function getColumnProviders(
             isRowSelected={row.getIsSelected()}
             testableProviderIds={testableProviderIds}
             onClearSelection={onClearSelection}
+            onOpenProviderWizard={onOpenProviderWizard}
+            onOpenOrganizationWizard={onOpenOrganizationWizard}
           />
         );
       },

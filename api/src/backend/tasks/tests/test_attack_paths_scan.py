@@ -38,11 +38,14 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
-    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
+    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph", return_value=0)
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -188,7 +191,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -287,7 +290,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -390,7 +393,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -489,14 +492,17 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph",
         side_effect=RuntimeError("drop failed"),
     )
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -609,7 +615,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -718,11 +724,14 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -833,14 +842,17 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph",
         side_effect=RuntimeError("drop failed"),
     )
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -1275,10 +1287,6 @@ class TestAttackPathsFindingsHelpers:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.findings.get_root_node_label",
-                return_value="AWSAccount",
-            ),
-            patch(
                 "tasks.jobs.attack_paths.findings.get_node_uid_field",
                 return_value="arn",
             ),
@@ -1294,7 +1302,6 @@ class TestAttackPathsFindingsHelpers:
         assert mock_session.run.call_count == 2
         for call_args in mock_session.run.call_args_list:
             params = call_args.args[1]
-            assert params["provider_uid"] == str(provider.uid)
             assert params["last_updated"] == config.update_tag
             assert "findings_data" in params
 
@@ -1673,10 +1680,6 @@ class TestAttackPathsFindingsHelpers:
             yield  # Make it a generator
 
         with (
-            patch(
-                "tasks.jobs.attack_paths.findings.get_root_node_label",
-                return_value="AWSAccount",
-            ),
             patch(
                 "tasks.jobs.attack_paths.findings.get_node_uid_field",
                 return_value="arn",

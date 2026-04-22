@@ -83,13 +83,13 @@ function normalizeFindingGroupResourceFilters(
 }
 
 const DEFAULT_FINDING_GROUPS_SORT =
-  "-status,-new_fail_count,-changed_fail_count,-severity,-fail_count,-last_seen_at";
+  "-status,-severity,-new_fail_count,-changed_fail_count,-fail_count,-last_seen_at";
 
 const DEFAULT_FINDING_GROUPS_SORT_WITH_MUTED =
-  "-status,-new_fail_count,-changed_fail_count,-severity,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at";
+  "-status,-severity,-new_fail_count,-changed_fail_count,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at";
 
 const DEFAULT_FINDING_GROUP_RESOURCES_SORT =
-  "-status,-delta,-severity,-last_seen_at";
+  "-status,-severity,-delta,-last_seen_at";
 
 interface FetchFindingGroupsParams {
   page?: number;

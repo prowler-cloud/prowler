@@ -3,6 +3,7 @@
 import {
   HighlightStyle,
   StreamLanguage,
+  type StringStream,
   syntaxHighlighting,
 } from "@codemirror/language";
 import { EditorState } from "@codemirror/state";
@@ -20,12 +21,16 @@ import { type HTMLAttributes, useState } from "react";
 import { Badge } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
 
-const QUERY_EDITOR_LANGUAGE = {
+export const QUERY_EDITOR_LANGUAGE = {
   OPEN_CYPHER: "openCypher",
   PLAIN_TEXT: "plainText",
+  SHELL: "shell",
+  HCL: "hcl",
+  BICEP: "bicep",
+  YAML: "yaml",
 } as const;
 
-type QueryEditorLanguage =
+export type QueryEditorLanguage =
   (typeof QUERY_EDITOR_LANGUAGE)[keyof typeof QUERY_EDITOR_LANGUAGE];
 
 const OPEN_CYPHER_KEYWORDS = new Set([
@@ -98,9 +103,202 @@ const OPEN_CYPHER_FUNCTIONS = new Set([
   "type",
 ]);
 
+const SHELL_KEYWORDS = new Set([
+  "if",
+  "then",
+  "else",
+  "elif",
+  "fi",
+  "for",
+  "in",
+  "do",
+  "done",
+  "while",
+  "until",
+  "case",
+  "esac",
+  "function",
+  "return",
+  "export",
+  "local",
+  "readonly",
+  "declare",
+  "typeset",
+  "unset",
+  "shift",
+  "break",
+  "continue",
+  "select",
+  "time",
+  "trap",
+]);
+
+const SHELL_COMMANDS = new Set([
+  "aws",
+  "az",
+  "gcloud",
+  "kubectl",
+  "terraform",
+  "echo",
+  "grep",
+  "sed",
+  "awk",
+  "curl",
+  "wget",
+  "chmod",
+  "chown",
+  "mkdir",
+  "rm",
+  "cp",
+  "mv",
+  "cat",
+  "ls",
+]);
+
+const HCL_KEYWORDS = new Set([
+  "resource",
+  "data",
+  "variable",
+  "output",
+  "locals",
+  "module",
+  "provider",
+  "terraform",
+  "backend",
+  "required_providers",
+  "dynamic",
+  "for_each",
+  "count",
+  "depends_on",
+  "lifecycle",
+  "provisioner",
+  "connection",
+]);
+
+const HCL_FUNCTIONS = new Set([
+  "lookup",
+  "merge",
+  "join",
+  "split",
+  "length",
+  "element",
+  "concat",
+  "format",
+  "replace",
+  "regex",
+  "tolist",
+  "tomap",
+  "toset",
+  "try",
+  "can",
+  "file",
+  "templatefile",
+  "jsonencode",
+  "jsondecode",
+  "yamlencode",
+  "yamldecode",
+  "base64encode",
+  "base64decode",
+  "md5",
+  "sha256",
+  "cidrsubnet",
+  "cidrhost",
+]);
+
+const BICEP_KEYWORDS = new Set([
+  "resource",
+  "module",
+  "param",
+  "var",
+  "output",
+  "type",
+  "metadata",
+  "import",
+  "using",
+  "extension",
+  "targetScope",
+  "existing",
+  "if",
+  "for",
+  "in",
+  "true",
+  "false",
+  "null",
+]);
+
+const BICEP_DECORATORS = new Set([
+  "description",
+  "secure",
+  "minLength",
+  "maxLength",
+  "minValue",
+  "maxValue",
+  "allowed",
+  "metadata",
+  "batchSize",
+  "sys",
+]);
+
+const BICEP_FUNCTIONS = new Set([
+  "concat",
+  "format",
+  "toLower",
+  "toUpper",
+  "substring",
+  "replace",
+  "split",
+  "join",
+  "length",
+  "contains",
+  "empty",
+  "first",
+  "last",
+  "indexOf",
+  "array",
+  "union",
+  "intersection",
+  "resourceId",
+  "subscriptionResourceId",
+  "tenantResourceId",
+  "reference",
+  "listKeys",
+  "listAccountSas",
+  "uniqueString",
+  "guid",
+  "base64",
+  "uri",
+  "environment",
+  "subscription",
+  "resourceGroup",
+  "tenant",
+]);
+
 interface OpenCypherParserState {
   inBlockComment: boolean;
   inString: "'" | '"' | null;
+}
+
+interface ShellParserState {
+  inString: "'" | '"' | null;
+}
+
+interface HclParserState {
+  inBlockComment: boolean;
+  inString: '"' | null;
+  expectBlockType: boolean;
+  heredocTerminator: string | null;
+}
+
+interface BicepParserState {
+  inBlockComment: boolean;
+  inString: "'" | null;
+  expectResourceType: boolean;
+}
+
+interface YamlParserState {
+  inString: "'" | '"' | null;
+  inBlockScalar: boolean;
+  blockScalarIndent: number;
 }
 
 const openCypherLanguage = StreamLanguage.define<OpenCypherParserState>({
@@ -203,6 +401,595 @@ const openCypherLanguage = StreamLanguage.define<OpenCypherParserState>({
 
       if (
         OPEN_CYPHER_FUNCTIONS.has(normalizedValue) &&
+        stream.match(/\s*(?=\()/, false)
+      ) {
+        return "function";
+      }
+
+      return "variableName";
+    }
+
+    stream.next();
+    return null;
+  },
+});
+
+const shellLanguage = StreamLanguage.define<ShellParserState>({
+  startState() {
+    return {
+      inString: null,
+    };
+  },
+  token(stream, state) {
+    if (state.inString) {
+      let escaped = false;
+
+      while (!stream.eol()) {
+        const next = stream.next();
+
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+
+        if (next === "\\" && state.inString === '"') {
+          escaped = true;
+          continue;
+        }
+
+        if (next === state.inString) {
+          state.inString = null;
+          break;
+        }
+      }
+
+      if (stream.eol()) {
+        state.inString = null;
+      }
+
+      return "string";
+    }
+
+    if (stream.eatSpace()) {
+      return null;
+    }
+
+    if (stream.peek() === "#") {
+      stream.skipToEnd();
+      return "comment";
+    }
+
+    if (stream.match(/\$\([^)]+\)/)) {
+      return "variableName";
+    }
+
+    if (stream.match(/\$\{[A-Za-z_][\w]*\}/)) {
+      return "variableName";
+    }
+
+    if (stream.match(/\$[A-Za-z_][\w]*/)) {
+      return "variableName";
+    }
+
+    const quote = stream.peek();
+    if (quote === "'" || quote === '"') {
+      state.inString = quote;
+      stream.next();
+      return "string";
+    }
+
+    if (stream.match(/--[A-Za-z0-9][\w-]*/)) {
+      return "operator";
+    }
+
+    if (stream.match(/-[A-Za-z0-9]+/)) {
+      return "operator";
+    }
+
+    if (stream.match(/\|\||&&|>>|[|><;]/)) {
+      return "operator";
+    }
+
+    if (stream.match(/\d+(?:\.\d+)?/)) {
+      return "number";
+    }
+
+    if (stream.match(/[A-Za-z_][\w-]*/)) {
+      const currentValue = stream.current();
+      const normalizedValue = currentValue.toLowerCase();
+
+      if (SHELL_KEYWORDS.has(normalizedValue)) {
+        return "keyword";
+      }
+
+      if (SHELL_COMMANDS.has(normalizedValue)) {
+        return "function";
+      }
+
+      return "variableName";
+    }
+
+    stream.next();
+    return null;
+  },
+});
+
+const hclLanguage = StreamLanguage.define<HclParserState>({
+  startState() {
+    return {
+      inBlockComment: false,
+      inString: null,
+      expectBlockType: false,
+      heredocTerminator: null,
+    };
+  },
+  token(stream, state) {
+    if (state.heredocTerminator) {
+      // Match the closing terminator on its own line, including indented <<-EOF forms.
+      if (
+        stream.sol() &&
+        stream.match(new RegExp(`^\\s*${state.heredocTerminator}\\s*$`))
+      ) {
+        state.heredocTerminator = null;
+        return "keyword";
+      }
+
+      stream.skipToEnd();
+      return "string";
+    }
+
+    if (state.inBlockComment) {
+      while (!stream.eol()) {
+        if (stream.match("*/")) {
+          state.inBlockComment = false;
+          break;
+        }
+
+        stream.next();
+      }
+
+      return "comment";
+    }
+
+    if (state.inString) {
+      let escaped = false;
+
+      while (!stream.eol()) {
+        const next = stream.next();
+
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+
+        if (next === "\\") {
+          escaped = true;
+          continue;
+        }
+
+        if (next === state.inString) {
+          state.inString = null;
+          break;
+        }
+      }
+
+      if (stream.eol()) {
+        state.inString = null;
+      }
+
+      return "string";
+    }
+
+    if (stream.eatSpace()) {
+      return null;
+    }
+
+    if (stream.match("#") || stream.match("//")) {
+      stream.skipToEnd();
+      return "comment";
+    }
+
+    if (stream.match("/*")) {
+      state.inBlockComment = true;
+      return "comment";
+    }
+
+    if (stream.match(/\$\{[^}]+\}/)) {
+      return "variableName";
+    }
+
+    if (stream.peek() === '"') {
+      if (state.expectBlockType) {
+        state.expectBlockType = false;
+        stream.next(); // opening "
+        while (!stream.eol()) {
+          const ch = stream.next();
+          if (ch === "\\") {
+            stream.next(); // skip escaped char
+          } else if (ch === '"') {
+            break;
+          }
+        }
+        return "typeName";
+      }
+
+      state.inString = '"';
+      stream.next();
+      return "string";
+    }
+
+    if (stream.match(/[{}\[\]()]/)) {
+      return "punctuation";
+    }
+
+    // Heredoc (<<EOF, <<-EOF) — must be before generic operator matcher
+    if (stream.match(/<<-?([A-Za-z_][\w]*)/)) {
+      state.heredocTerminator = stream.current().replace(/^<<-?/, "");
+      return "keyword";
+    }
+
+    if (stream.match(/=>|\.\.\.|==|!=|>=|<=|[=><?:]/)) {
+      return "operator";
+    }
+
+    if (stream.match(/\b(?:true|false)\b/)) {
+      return "keyword";
+    }
+
+    if (stream.match(/\d+(?:\.\d+)?/)) {
+      return "number";
+    }
+
+    if (stream.match(/[A-Za-z_][\w-]*/)) {
+      const currentValue = stream.current();
+      const normalizedValue = currentValue.toLowerCase();
+
+      if (HCL_KEYWORDS.has(normalizedValue)) {
+        state.expectBlockType =
+          normalizedValue === "resource" || normalizedValue === "data";
+        return "keyword";
+      }
+
+      if (
+        HCL_FUNCTIONS.has(normalizedValue) &&
+        stream.match(/\s*(?=\()/, false)
+      ) {
+        return "function";
+      }
+
+      if (state.expectBlockType) {
+        state.expectBlockType = false;
+        return "typeName";
+      }
+
+      if (stream.match(/\s*(?==)/, false)) {
+        return "propertyName";
+      }
+
+      return "variableName";
+    }
+
+    stream.next();
+    return null;
+  },
+});
+
+const yamlLanguage = StreamLanguage.define<YamlParserState>({
+  startState() {
+    return {
+      inString: null,
+      inBlockScalar: false,
+      blockScalarIndent: 0,
+    };
+  },
+  token(stream, state) {
+    // Block scalar continuation (| or > multiline strings)
+    if (state.inBlockScalar) {
+      // Blank lines are always part of a block scalar.
+      if (stream.match(/^\s*$/)) {
+        stream.skipToEnd();
+        return "string";
+      }
+
+      const indent = stream.indentation();
+
+      if (indent > state.blockScalarIndent) {
+        stream.skipToEnd();
+        return "string";
+      }
+
+      state.inBlockScalar = false;
+      state.blockScalarIndent = 0;
+    }
+
+    // Continue quoted strings across tokens
+    if (state.inString) {
+      let escaped = false;
+
+      while (!stream.eol()) {
+        const next = stream.next();
+
+        if (escaped) {
+          escaped = false;
+          continue;
+        }
+
+        if (next === "\\" && state.inString === '"') {
+          escaped = true;
+          continue;
+        }
+
+        if (next === state.inString) {
+          state.inString = null;
+          break;
+        }
+      }
+
+      return "string";
+    }
+
+    if (stream.eatSpace()) {
+      return null;
+    }
+
+    // Comments
+    if (stream.peek() === "#") {
+      stream.skipToEnd();
+      return "comment";
+    }
+
+    // Document markers
+    if (stream.sol() && (stream.match("---") || stream.match("..."))) {
+      return "keyword";
+    }
+
+    // Anchors & aliases
+    if (stream.match(/[&*][A-Za-z_][\w]*/)) {
+      return "variableName";
+    }
+
+    // CloudFormation intrinsic tags (!Ref, !Sub, !GetAtt, etc.)
+    if (stream.match(/![A-Za-z][A-Za-z0-9]*/)) {
+      return "typeName";
+    }
+
+    // Tags (!!str, !!map, etc.)
+    if (stream.match(/!![A-Za-z]+/)) {
+      return "typeName";
+    }
+
+    // Quoted strings
+    const quote = stream.peek();
+    if (quote === "'" || quote === '"') {
+      state.inString = quote;
+      stream.next();
+      return "string";
+    }
+
+    // Block scalar indicators (| or >)
+    if (
+      stream.sol() === false &&
+      (stream.peek() === "|" || stream.peek() === ">")
+    ) {
+      const prevChar = stream.string.charAt(stream.pos - 1);
+
+      if (prevChar === " " || prevChar === ":") {
+        stream.next();
+        // Eat optional modifiers like |-, |+, |2
+        stream.match(/[-+]?\d?/);
+        state.inBlockScalar = true;
+        state.blockScalarIndent = stream.indentation();
+        return "operator";
+      }
+    }
+
+    // List item marker
+    if (stream.match(/^-(?=\s)/)) {
+      return "punctuation";
+    }
+
+    // Key: value pattern — supports CloudFormation long-form intrinsics (Fn::Sub:)
+    if (stream.match(/[A-Za-z_][\w./-]*(?:::[A-Za-z_][\w]*)*(?=\s*:(?!:))/)) {
+      return "propertyName";
+    }
+
+    // Booleans & null (YAML spec values)
+    if (stream.match(/\b(?:true|false|yes|no|on|off|null)\b/i)) {
+      return "keyword";
+    }
+
+    // Numbers (integers, floats, hex, octal)
+    if (
+      stream.match(
+        /^[-+]?(?:0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)/,
+      )
+    ) {
+      return "number";
+    }
+
+    // Colon separator
+    if (stream.match(":")) {
+      return "punctuation";
+    }
+
+    // Braces/brackets (flow style)
+    if (stream.match(/[{}\[\],]/)) {
+      return "punctuation";
+    }
+
+    // Tilde (null alias)
+    if (stream.match("~")) {
+      return "keyword";
+    }
+
+    // Unquoted strings / values — consume word
+    if (stream.match(/[^\s#:,\[\]{}]+/)) {
+      return "string";
+    }
+
+    stream.next();
+    return null;
+  },
+});
+
+function readBicepStringSegment(
+  stream: StringStream,
+  includeOpeningQuote = false,
+) {
+  if (includeOpeningQuote) {
+    stream.next();
+  }
+
+  while (!stream.eol()) {
+    if (stream.match("${")) {
+      stream.backUp(2);
+      break;
+    }
+
+    const next = stream.next();
+
+    if (next === "'" && stream.peek() === "'") {
+      stream.next();
+      continue;
+    }
+
+    if (next === "'") {
+      stream.backUp(1);
+      break;
+    }
+  }
+}
+
+const bicepLanguage = StreamLanguage.define<BicepParserState>({
+  startState() {
+    return {
+      inBlockComment: false,
+      inString: null,
+      expectResourceType: false,
+    };
+  },
+  token(stream, state) {
+    if (state.inBlockComment) {
+      while (!stream.eol()) {
+        if (stream.match("*/")) {
+          state.inBlockComment = false;
+          break;
+        }
+
+        stream.next();
+      }
+
+      return "comment";
+    }
+
+    if (state.inString) {
+      if (stream.match("${")) {
+        let depth = 1;
+
+        while (!stream.eol() && depth > 0) {
+          const next = stream.next();
+
+          if (next === "{") {
+            depth += 1;
+            continue;
+          }
+
+          if (next === "}") {
+            depth -= 1;
+          }
+        }
+
+        return "variableName";
+      }
+
+      readBicepStringSegment(stream);
+
+      if (stream.peek() !== "'") {
+        return "string";
+      }
+
+      if (stream.peek() === "'") {
+        state.inString = null;
+        stream.next();
+      }
+
+      return "string";
+    }
+
+    if (stream.eatSpace()) {
+      return null;
+    }
+
+    if (stream.match("//")) {
+      stream.skipToEnd();
+      return "comment";
+    }
+
+    if (stream.match("/*")) {
+      state.inBlockComment = true;
+      return "comment";
+    }
+
+    if (stream.match(/@[A-Za-z_][\w]*/)) {
+      const decorator = stream.current().slice(1);
+
+      if (BICEP_DECORATORS.has(decorator)) {
+        return "keyword";
+      }
+
+      return "keyword";
+    }
+
+    if (stream.peek() === "'") {
+      if (state.expectResourceType) {
+        state.expectResourceType = false;
+        // Consume the full quoted resource type including both quotes
+        stream.next(); // opening '
+        while (!stream.eol()) {
+          const ch = stream.next();
+          if (ch === "'" && stream.peek() === "'") {
+            stream.next(); // escaped ''
+            continue;
+          }
+          if (ch === "'") {
+            break; // closing '
+          }
+        }
+        return "typeName";
+      }
+
+      stream.next(); // consume opening '
+      state.inString = "'";
+      return "string";
+    }
+
+    if (stream.match(/[A-Za-z_][\w-]*(?=\s*:)/)) {
+      return "propertyName";
+    }
+
+    if (stream.match(/\?\?|==|!=|>=|<=|=|>|<|\?|:|!/)) {
+      return "operator";
+    }
+
+    if (stream.match(/[{}\[\]()]/)) {
+      return "punctuation";
+    }
+
+    if (stream.match(/-?\d+(?:\.\d+)?/)) {
+      return "number";
+    }
+
+    if (stream.match(/[A-Za-z_][\w]*/)) {
+      const currentValue = stream.current();
+
+      if (BICEP_KEYWORDS.has(currentValue)) {
+        state.expectResourceType =
+          currentValue === "resource" || currentValue === "module";
+        return "keyword";
+      }
+
+      if (
+        BICEP_FUNCTIONS.has(currentValue) &&
         stream.match(/\s*(?=\()/, false)
       ) {
         return "function";
@@ -380,6 +1167,14 @@ export const QueryCodeEditor = ({
       openCypherLanguage,
       syntaxHighlighting(editorHighlightStyle),
     );
+  } else if (language === QUERY_EDITOR_LANGUAGE.SHELL) {
+    extensions.push(shellLanguage, syntaxHighlighting(editorHighlightStyle));
+  } else if (language === QUERY_EDITOR_LANGUAGE.HCL) {
+    extensions.push(hclLanguage, syntaxHighlighting(editorHighlightStyle));
+  } else if (language === QUERY_EDITOR_LANGUAGE.BICEP) {
+    extensions.push(bicepLanguage, syntaxHighlighting(editorHighlightStyle));
+  } else if (language === QUERY_EDITOR_LANGUAGE.YAML) {
+    extensions.push(yamlLanguage, syntaxHighlighting(editorHighlightStyle));
   }
 
   const handleCopy = async () => {
