@@ -316,7 +316,8 @@ def generate_compliance_reports(
     available CIS version for the scan's provider (picked dynamically from
     ``Compliance.get_bulk`` via :func:`_pick_latest_cis_variant`). The
     returned ``results["cis"]`` entry has the same flat shape as the other
-    frameworks, plus a ``compliance_id`` field identifying the chosen variant.
+    single-version frameworks — the picked variant is an internal detail,
+    not surfaced in the result.
 
     Args:
         tenant_id: The tenant ID for Row-Level Security context.
@@ -341,9 +342,6 @@ def generate_compliance_reports(
     Returns:
         Dictionary with results for each report type. Every value has the
         same flat shape: ``{"upload": bool, "path": str, "error"?: str}``.
-        The CIS entry additionally carries ``"compliance_id"`` with the
-        specific variant that was picked, or is absent when CIS was not
-        requested / no variant is available for the provider.
     """
     logger.info(
         "Generating compliance reports for scan %s with provider %s"
@@ -725,7 +723,7 @@ def generate_compliance_reports(
                     provider_type,
                     latest_cis,
                 )
-                pdf_path_cis = f"{cis_path}_{latest_cis}_report.pdf"
+                pdf_path_cis = f"{cis_path}_cis_report.pdf"
                 try:
                     generate_cis_report(
                         tenant_id=tenant_id,
@@ -751,7 +749,6 @@ def generate_compliance_reports(
                         results["cis"] = {
                             "upload": True,
                             "path": upload_uri_cis,
-                            "compliance_id": latest_cis,
                         }
                         logger.info(
                             "CIS report %s uploaded to %s",
@@ -759,11 +756,7 @@ def generate_compliance_reports(
                             upload_uri_cis,
                         )
                     else:
-                        results["cis"] = {
-                            "upload": False,
-                            "path": out_dir,
-                            "compliance_id": latest_cis,
-                        }
+                        results["cis"] = {"upload": False, "path": out_dir}
                         logger.warning(
                             "CIS report %s saved locally at %s",
                             latest_cis,
@@ -776,7 +769,6 @@ def generate_compliance_reports(
                         "upload": False,
                         "path": "",
                         "error": str(e),
-                        "compliance_id": latest_cis,
                     }
                 finally:
                     # Free ReportLab/matplotlib memory before moving on.
@@ -829,9 +821,7 @@ def generate_compliance_reports_job(
 
     Returns:
         Dictionary with results for each report type. Every entry shares the
-        same flat ``{"upload", "path", "error"?}`` shape; the CIS entry
-        additionally carries ``"compliance_id"`` identifying the picked
-        variant when one was available.
+        same flat ``{"upload", "path", "error"?}`` shape.
     """
     return generate_compliance_reports(
         tenant_id=tenant_id,

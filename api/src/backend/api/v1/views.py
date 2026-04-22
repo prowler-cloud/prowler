@@ -1841,6 +1841,27 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             ),
         },
     ),
+    cis=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve CIS Benchmark compliance report",
+        description="Download the CIS Benchmark compliance report as a PDF file. "
+        "When a provider ships multiple CIS versions, the report is generated "
+        "for the highest available version.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the CIS compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no CIS reports, or the CIS report generation task has not started yet"
+            ),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -2157,27 +2178,10 @@ class ScanViewSet(BaseRLSViewSet):
     @action(
         detail=True,
         methods=["get"],
-        url_path="cis/(?P<name>[^/]+)",
         url_name="cis",
     )
-    def cis(self, request, pk=None, name=None):
+    def cis(self, request, pk=None):
         scan = self.get_object()
-
-        # Reject unknown or non-CIS framework names before touching the
-        # filesystem/S3. This prevents path-traversal / glob abuse via the
-        # `name` path segment (which accepts any non-slash character) and
-        # matches the validation performed by the sibling `compliance()`
-        # action at the top of its body.
-        if (
-            not name
-            or not name.startswith("cis_")
-            or name not in get_compliance_frameworks(scan.provider.provider)
-        ):
-            return Response(
-                {"detail": f"CIS compliance '{name}' not found."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
         running_resp = self._get_task_status(scan)
         if running_resp:
             return running_resp
@@ -2196,12 +2200,12 @@ class ScanViewSet(BaseRLSViewSet):
             prefix = os.path.join(
                 os.path.dirname(key_prefix),
                 "cis",
-                f"*_{name}_report.pdf",
+                "*_cis_report.pdf",
             )
             loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
         else:
             base = os.path.dirname(scan.output_location)
-            pattern = os.path.join(base, "cis", f"*_{name}_report.pdf")
+            pattern = os.path.join(base, "cis", "*_cis_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
         if isinstance(loader, Response):

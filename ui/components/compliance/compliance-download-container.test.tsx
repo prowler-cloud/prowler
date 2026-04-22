@@ -129,7 +129,6 @@ describe("ComplianceDownloadContainer", () => {
       "scan-1",
       "threatscore",
       {},
-      { complianceId: "compliance-1" },
     );
   });
 });

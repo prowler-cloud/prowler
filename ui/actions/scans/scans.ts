@@ -319,14 +319,25 @@ export const getExportsZip = async (scanId: string) => {
 };
 
 /**
+ * Discriminated union returned by {@link _fetchScanBinary}.
+ *
+ * Exported so `ui/lib/helper.ts::downloadFile` can type-narrow on the
+ * `success` / `pending` / `error` tags without resorting to `any`.
+ */
+export type ScanBinaryResult =
+  | { success: true; data: string; filename: string }
+  | { pending: true; state: string | undefined; taskId: string | undefined }
+  | { error: string };
+
+/**
  * Shared binary-report fetcher used by CSV and PDF report downloads.
  *
  * All report endpoints (`/scans/{id}/compliance/{name}`,
- * `/scans/{id}/{reportType}`, `/scans/{id}/cis/{complianceId}`) speak the
- * same protocol: Bearer auth, 202 ACCEPTED while the generation task is
- * still running, 2xx with a binary body when the artifact is ready, JSON
- * error body otherwise. This helper encapsulates all of that so the public
- * wrappers only have to build the URL and pick a filename.
+ * `/scans/{id}/{reportType}`) speak the same protocol: Bearer auth, 202
+ * ACCEPTED while the generation task is still running, 2xx with a binary
+ * body when the artifact is ready, JSON error body otherwise. This helper
+ * encapsulates all of that so the public wrappers only have to build the
+ * URL and pick a filename.
  *
  * @param urlPath    Path segment under `{apiBaseUrl}/scans/{scanId}/`.
  * @param filename   Download filename to surface to the user.
@@ -340,7 +351,7 @@ const _fetchScanBinary = async (
   urlPath: string,
   filename: string,
   errorLabel: string,
-) => {
+): Promise<ScanBinaryResult> => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/scans/${scanId}/${urlPath}`);
 
@@ -382,9 +393,11 @@ export const getComplianceCsv = async (scanId: string, complianceId: string) =>
   );
 
 /**
- * Get a compliance PDF report for a single-version framework (ThreatScore,
- * ENS, NIS2, CSA CCM). For CIS — which ships multiple variants per provider
- * — use {@link getCisPdfReport} instead.
+ * Get a compliance PDF report for any supported framework.
+ *
+ * For frameworks with multiple variants per provider (currently CIS) the
+ * backend generates a single PDF for the highest available version, so
+ * callers only need to pass the generic report type.
  *
  * @param scanId - The scan ID
  * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
@@ -402,24 +415,3 @@ export const getCompliancePdfReport = async (
     `${reportName} PDF report`,
   );
 };
-
-/**
- * Get a CIS Benchmark PDF report for the specific CIS variant of a scan.
- *
- * Unlike {@link getCompliancePdfReport} (which targets single-variant
- * frameworks via `/scans/{id}/{reportType}`), CIS exposes multiple versions
- * per provider (e.g. cis_1.4_aws, cis_5.0_aws, cis_6.0_aws) and the backend
- * only generates the PDF for the latest one. The endpoint shape is
- * `/scans/{id}/cis/{complianceId}`.
- *
- * @param scanId - The scan ID
- * @param complianceId - The CIS variant identifier (e.g. "cis_5.0_aws")
- * @returns Promise with the PDF data or error
- */
-export const getCisPdfReport = async (scanId: string, complianceId: string) =>
-  _fetchScanBinary(
-    scanId,
-    `cis/${complianceId}`,
-    `scan-${scanId}-${complianceId}.pdf`,
-    "CIS PDF report",
-  );

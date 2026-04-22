@@ -3,8 +3,36 @@ import { describe, expect, it } from "vitest";
 import {
   COMPLIANCE_REPORT_TYPES,
   getReportTypeForCompliance,
+  getReportTypeForFramework,
   pickLatestCisPerProvider,
 } from "./compliance-report-types";
+
+describe("getReportTypeForFramework", () => {
+  it("returns the framework-mapped type for single-version frameworks", () => {
+    expect(getReportTypeForFramework("ENS")).toBe(COMPLIANCE_REPORT_TYPES.ENS);
+    expect(getReportTypeForFramework("NIS2")).toBe(
+      COMPLIANCE_REPORT_TYPES.NIS2,
+    );
+    expect(getReportTypeForFramework("CSA-CCM")).toBe(
+      COMPLIANCE_REPORT_TYPES.CSA_CCM,
+    );
+    expect(getReportTypeForFramework("ProwlerThreatScore")).toBe(
+      COMPLIANCE_REPORT_TYPES.THREATSCORE,
+    );
+  });
+
+  it("returns undefined for CIS — callers must go through getReportTypeForCompliance", () => {
+    expect(getReportTypeForFramework("CIS")).toBeUndefined();
+  });
+
+  it("returns undefined for unknown frameworks", () => {
+    expect(getReportTypeForFramework("SomethingElse")).toBeUndefined();
+  });
+
+  it("returns undefined when framework is missing", () => {
+    expect(getReportTypeForFramework(undefined)).toBeUndefined();
+  });
+});
 
 describe("pickLatestCisPerProvider", () => {
   it("returns an empty set for an empty input", () => {
@@ -76,12 +104,12 @@ describe("pickLatestCisPerProvider", () => {
 
   it("skips malformed names silently", () => {
     const latest = pickLatestCisPerProvider([
-      "cis_abc_aws", // version not numeric
-      "cis_._aws", // lone dot
-      "cis_5._aws", // trailing dot
-      "cis_5_aws", // missing minor component → rejected by regex
+      "cis_abc_aws",
+      "cis_._aws",
+      "cis_5._aws",
+      "cis_5_aws",
       "notcis_1.0_aws",
-      "cis_5.0_aws", // only well-formed entry
+      "cis_5.0_aws",
     ]);
     expect(Array.from(latest)).toEqual(["cis_5.0_aws"]);
   });
@@ -89,16 +117,6 @@ describe("pickLatestCisPerProvider", () => {
   it("returns an empty set when every input is malformed", () => {
     const latest = pickLatestCisPerProvider(["cis_abc_aws", "notcis_1.0_aws"]);
     expect(latest.size).toBe(0);
-  });
-
-  it("handles provider names that contain no uppercase/underscore weirdness", () => {
-    const latest = pickLatestCisPerProvider([
-      "cis_1.3_googleworkspace",
-      "cis_2.0_alibabacloud",
-    ]);
-    expect(new Set(latest)).toEqual(
-      new Set(["cis_1.3_googleworkspace", "cis_2.0_alibabacloud"]),
-    );
   });
 });
 
@@ -120,7 +138,7 @@ describe("getReportTypeForCompliance", () => {
 
   it("hides CIS when isLatestCisForProvider is false (fail-closed default)", () => {
     // An older CIS variant must NOT surface a PDF button because the
-    // backend does not generate a PDF for it.
+    // backend only generates the PDF for the latest version.
     expect(
       getReportTypeForCompliance("CIS", "cis_1.4_aws", false),
     ).toBeUndefined();

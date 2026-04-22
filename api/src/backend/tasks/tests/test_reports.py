@@ -493,8 +493,8 @@ class TestGenerateComplianceReportsCIS:
         """CIS branch should generate a single PDF for the highest version.
 
         The returned ``results["cis"]`` must have the same flat shape as the
-        other frameworks (``{"upload", "path", "compliance_id"}``) with the
-        picked variant identified by ``compliance_id``.
+        other single-version frameworks (``{"upload", "path"}``) — the picked
+        variant is an internal detail and is not exposed in the result.
         """
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
@@ -531,8 +531,8 @@ class TestGenerateComplianceReportsCIS:
         assert mock_cis.call_args.kwargs["compliance_id"] == "cis_5.0_aws"
 
         assert result["cis"]["upload"] is True
-        assert result["cis"]["compliance_id"] == "cis_5.0_aws"
         assert result["cis"]["path"] == "s3://bucket/path"
+        assert "compliance_id" not in result["cis"]
 
     @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
     @patch("tasks.jobs.report._upload_to_s3")
@@ -579,7 +579,7 @@ class TestGenerateComplianceReportsCIS:
         assert mock_cis.call_count == 1
         assert result["cis"]["upload"] is False
         assert result["cis"]["error"] == "boom"
-        assert result["cis"]["compliance_id"] == "cis_5.0_aws"
+        assert "compliance_id" not in result["cis"]
 
     @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
     @patch("tasks.jobs.report._upload_to_s3")

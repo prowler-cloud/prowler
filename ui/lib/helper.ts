@@ -1,15 +1,14 @@
 import {
-  getCisPdfReport,
   getComplianceCsv,
   getCompliancePdfReport,
   getExportsZip,
+  type ScanBinaryResult,
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
-  COMPLIANCE_REPORT_TYPES,
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
@@ -151,12 +150,12 @@ export const downloadScanZip = async (
  * Generic function to download a file from base64 data
  */
 const downloadFile = async (
-  result: any,
+  result: ScanBinaryResult,
   outputType: string,
   successMessage: string,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
-  if (result?.pending) {
+  if ("pending" in result && result.pending) {
     toast({
       title: "The report is still being generated",
       description: "Please try again in a few minutes.",
@@ -164,7 +163,7 @@ const downloadFile = async (
     return;
   }
 
-  if (result?.success && result.data) {
+  if ("success" in result && result.success) {
     try {
       const binaryString = window.atob(result.data);
       const bytes = new Uint8Array(binaryString.length);
@@ -196,7 +195,7 @@ const downloadFile = async (
     return;
   }
 
-  if (result?.error) {
+  if ("error" in result) {
     toast({
       variant: "destructive",
       title: "Download Failed",
@@ -232,46 +231,28 @@ export const downloadComplianceCsv = async (
 };
 
 /**
- * Download a compliance PDF report, transparently handling both
- * single-version frameworks (ThreatScore, ENS, NIS2, CSA) and multi-variant
- * CIS.
+ * Download a compliance PDF report.
  *
- * For single-version frameworks the call hits ``/scans/{id}/{reportType}``
- * via {@link getCompliancePdfReport}. For CIS the call hits
- * ``/scans/{id}/cis/{complianceId}`` via {@link getCisPdfReport}, since CIS
- * ships many variants per provider and the backend only generates the PDF
- * for the latest one.
+ * The call hits ``/scans/{id}/{reportType}`` for every supported framework.
+ * For CIS — which ships multiple versions per provider — the backend only
+ * generates the PDF for the highest available version, so the call site
+ * does not need to resolve a specific variant.
  *
  * @param scanId - The scan ID
  * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
  * @param toast - Toast notification function
- * @param options.complianceId - Required for ``reportType === CIS``: the
- *   specific CIS variant identifier (e.g. ``cis_5.0_aws``). Ignored for
- *   every other report type.
  */
 export const downloadCompliancePdf = async (
   scanId: string,
   reportType: ComplianceReportType,
   toast: ReturnType<typeof useToast>["toast"],
-  options: { complianceId?: string } = {},
 ): Promise<void> => {
   const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
-  const isCis = reportType === COMPLIANCE_REPORT_TYPES.CIS;
-  if (isCis && !options.complianceId) {
-    toast({
-      variant: "destructive",
-      title: "Download Failed",
-      description: "CIS compliance ID is required for PDF download.",
-    });
-    return;
-  }
   toast({
     title: "Download Started",
     description: `Preparing the ${reportName} PDF report. This may take a moment.`,
   });
-  const result = isCis
-    ? await getCisPdfReport(scanId, options.complianceId!)
-    : await getCompliancePdfReport(scanId, reportType);
+  const result = await getCompliancePdfReport(scanId, reportType);
   await downloadFile(
     result,
     "application/pdf",

@@ -58,12 +58,7 @@ export const ComplianceDownloadContainer = ({
     if (!reportType || isDownloadingPdf) return;
     setIsDownloadingPdf(true);
     try {
-      // The helper picks the right endpoint internally: single-version
-      // frameworks hit `/scans/{id}/{reportType}`, CIS variants hit
-      // `/scans/{id}/cis/{complianceId}`. The container stays
-      // framework-agnostic so future multi-variant frameworks only need a
-      // new ``reportType`` constant, not a new branch here.
-      await downloadCompliancePdf(scanId, reportType, toast, { complianceId });
+      await downloadCompliancePdf(scanId, reportType, toast);
     } finally {
       setIsDownloadingPdf(false);
     }

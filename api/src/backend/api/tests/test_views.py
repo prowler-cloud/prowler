@@ -3837,7 +3837,7 @@ class TestScanViewSet:
         scan.output_location = ""
         scan.save()
 
-        url = reverse("scan-cis", kwargs={"pk": scan.id, "name": "cis_1.4_aws"})
+        url = reverse("scan-cis", kwargs={"pk": scan.id})
         resp = authenticated_client.get(url)
         assert resp.status_code == status.HTTP_404_NOT_FOUND
         assert (
@@ -3845,39 +3845,8 @@ class TestScanViewSet:
             == "The scan has no reports, or the CIS report generation task has not started yet."
         )
 
-    def test_cis_rejects_non_cis_name(self, authenticated_client, scans_fixture):
-        """A non-CIS framework name on the /cis/{name}/ endpoint must 404."""
-        scan = scans_fixture[0]
-        scan.state = StateChoices.COMPLETED
-        scan.output_location = "dummy"
-        scan.save()
-
-        url = reverse("scan-cis", kwargs={"pk": scan.id, "name": "ens_rd2022_aws"})
-        resp = authenticated_client.get(url)
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
-        assert (
-            resp.json()["errors"]["detail"]
-            == "CIS compliance 'ens_rd2022_aws' not found."
-        )
-
-    def test_cis_rejects_glob_chars_in_name(self, authenticated_client, scans_fixture):
-        """Glob metacharacters in the `name` path segment must be rejected.
-
-        Regression for the path-traversal gap flagged by the API jury: the
-        ``name`` segment is validated against ``get_compliance_frameworks``
-        before ever touching the filesystem/S3 glob.
-        """
-        scan = scans_fixture[0]
-        scan.state = StateChoices.COMPLETED
-        scan.output_location = "dummy"
-        scan.save()
-
-        url = reverse("scan-cis", kwargs={"pk": scan.id, "name": "cis_*"})
-        resp = authenticated_client.get(url)
-        assert resp.status_code == status.HTTP_404_NOT_FOUND
-
     def test_cis_local_file(self, authenticated_client, scans_fixture, monkeypatch):
-        """CIS PDF endpoint must serve the local PDF for the given variant."""
+        """CIS PDF endpoint must serve the latest generated PDF."""
         scan = scans_fixture[0]
         scan.state = StateChoices.COMPLETED
 
@@ -3886,7 +3855,7 @@ class TestScanViewSet:
             base = tmp_path / "reports"
             cis_dir = base / "cis"
             cis_dir.mkdir(parents=True, exist_ok=True)
-            fname = cis_dir / "prowler-output-aws-20260101000000_cis_1.4_aws_report.pdf"
+            fname = cis_dir / "prowler-output-aws-20260101000000_cis_report.pdf"
             fname.write_bytes(b"%PDF-1.4 fake pdf")
 
             scan.output_location = str(base / "scan.zip")
@@ -3895,12 +3864,10 @@ class TestScanViewSet:
             monkeypatch.setattr(
                 glob,
                 "glob",
-                lambda p: (
-                    [str(fname)] if p.endswith("*_cis_1.4_aws_report.pdf") else []
-                ),
+                lambda p: [str(fname)] if p.endswith("*_cis_report.pdf") else [],
             )
 
-            url = reverse("scan-cis", kwargs={"pk": scan.id, "name": "cis_1.4_aws"})
+            url = reverse("scan-cis", kwargs={"pk": scan.id})
             resp = authenticated_client.get(url)
             assert resp.status_code == status.HTTP_200_OK
             assert resp["Content-Type"] == "application/pdf"
@@ -11880,8 +11847,7 @@ class TestSAMLConfigurationViewSet:
             "data": {
                 "type": "saml-configurations",
                 "id": str(config.id),
-                "attributes": {
-                    "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+                "attributes": {"metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
         <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
         <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
             <md:KeyDescriptor use='signing'>
@@ -11896,8 +11862,7 @@ class TestSAMLConfigurationViewSet:
             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
         </md:IDPSSODescriptor>
         </md:EntityDescriptor>
-        """
-                },
+        """},
             }
         }
         response = authenticated_client.patch(

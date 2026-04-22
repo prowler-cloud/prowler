@@ -13,7 +13,7 @@ interface ComplianceOverviewGridProps {
   selectedScan?: ScanEntity;
   /**
    * Subset of compliance_ids that represent the latest CIS variant per
-   * provider. Only those cards should expose a PDF download button, matching
+   * provider. Only those cards expose the PDF download button, matching
    * the backend's latest-only CIS PDF generation.
    */
   latestCisIds?: ReadonlySet<string>;

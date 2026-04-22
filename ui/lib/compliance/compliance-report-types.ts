@@ -56,13 +56,16 @@ export const COMPLIANCE_REPORT_BUTTON_LABELS: Record<
 };
 
 /**
- * Maps compliance framework names (from API) to their report types
+ * Maps compliance framework names (from API) to their report types.
  * This mapping determines which frameworks support PDF reporting.
  *
  * NOTE: CIS is intentionally NOT listed here. CIS has multiple variants per
- * provider (e.g. cis_1.4_aws, cis_5.0_aws, cis_6.0_aws) — see
- * `getReportTypeForComplianceId` below which resolves the CIS report type
- * from the unique compliance_id instead of a shared framework name.
+ * provider (e.g. cis_1.4_aws, cis_5.0_aws, cis_6.0_aws) and the backend only
+ * generates the PDF for the latest version per provider. The UI must gate
+ * the PDF button to the "latest" card only, otherwise every CIS version would
+ * expose a button pointing to the same latest-only artifact. The gating lives
+ * in `getReportTypeForCompliance` below, which callers should use instead of
+ * `getReportTypeForFramework` whenever CIS may be in play.
  */
 const FRAMEWORK_TO_REPORT_TYPE: Record<string, ComplianceReportType> = {
   ProwlerThreatScore: COMPLIANCE_REPORT_TYPES.THREATSCORE,
@@ -74,36 +77,18 @@ const FRAMEWORK_TO_REPORT_TYPE: Record<string, ComplianceReportType> = {
 };
 
 /**
- * Helper function to get report type from framework name
- * Returns undefined if framework doesn't support PDF reporting
+ * Helper function to get report type from framework name.
+ * Returns undefined if framework doesn't support PDF reporting.
+ *
+ * For CIS this will always return undefined — use
+ * `getReportTypeForCompliance` instead, which additionally checks whether
+ * the specific compliance_id is the latest variant for its provider.
  */
 export const getReportTypeForFramework = (
   framework: string | undefined,
 ): ComplianceReportType | undefined => {
   if (!framework) return undefined;
   return FRAMEWORK_TO_REPORT_TYPE[framework];
-};
-
-/**
- * Helper function to get report type from a specific compliance_id.
- *
- * Used for frameworks that ship multiple variants and cannot be identified
- * by a single framework name (currently: CIS). For every
- * compliance_id that starts with `cis_` (e.g. `cis_5.0_aws`) this returns
- * the CIS report type so the PDF download button is rendered.
- *
- * Returns undefined if the compliance_id does not match any per-variant
- * report type. Non-variant frameworks (ENS, NIS2, etc.) should keep relying
- * on `getReportTypeForFramework` instead.
- */
-export const getReportTypeForComplianceId = (
-  complianceId: string | undefined,
-): ComplianceReportType | undefined => {
-  if (!complianceId) return undefined;
-  if (complianceId.startsWith("cis_")) {
-    return COMPLIANCE_REPORT_TYPES.CIS;
-  }
-  return undefined;
 };
 
 /**
@@ -125,8 +110,8 @@ const CIS_VARIANT_RE = /^cis_(\d+(?:\.\d+)+)_(.+)$/;
  * overview endpoint), return the subset of CIS variants that correspond to
  * the highest semantic version per provider.
  *
- * Why: the backend now only generates the CIS PDF for the latest version
- * per provider (see `_pick_latest_cis_variant` in report.py). This helper
+ * Why: the backend only generates the CIS PDF for the latest version per
+ * provider (see `_pick_latest_cis_variant` in report.py). This helper
  * mirrors that selection in the UI so only the "latest" CIS card exposes
  * the PDF download button; older variants keep the CSV option.
  *
@@ -177,19 +162,16 @@ export const pickLatestCisPerProvider = (
 };
 
 /**
- * Resolve the report type for a compliance card, preferring the framework
- * name match and falling back to per-variant compliance_id detection.
+ * Resolve the report type for a compliance card.
  *
- * This is the entry point that call sites (ComplianceCard, compliance detail
- * page) should use so that both single-version frameworks (ENS/NIS2/CSA/
- * ThreatScore) and multi-variant frameworks (CIS) light up their PDF button
- * without duplicating the fallback logic.
- *
- * CIS is gated by `isLatestCisForProvider`: only the card representing the
- * highest CIS version per provider gets a PDF button, since the backend only
- * generates a single PDF per provider. Callers must compute the "latest" set
- * ahead of time via `pickLatestCisPerProvider` — this defaults to `false` so
- * forgetting to pass it fails closed (no phantom PDF button).
+ * Single-version frameworks (ENS/NIS2/CSA/ThreatScore) resolve via the
+ * framework-name mapping. CIS is gated by `isLatestCisForProvider`: only
+ * the card representing the highest CIS version per provider gets a PDF
+ * button, because the backend only generates a single PDF per provider
+ * (the latest variant). Callers must compute the "latest" set ahead of
+ * time via `pickLatestCisPerProvider` — this defaults to `false` so
+ * forgetting to pass it fails closed (no phantom PDF button on older CIS
+ * versions).
  */
 export const getReportTypeForCompliance = (
   framework: string | undefined,
@@ -198,8 +180,12 @@ export const getReportTypeForCompliance = (
 ): ComplianceReportType | undefined => {
   const fromFramework = getReportTypeForFramework(framework);
   if (fromFramework) return fromFramework;
-  if (isLatestCisForProvider) {
-    return getReportTypeForComplianceId(complianceId);
+  if (
+    isLatestCisForProvider &&
+    typeof complianceId === "string" &&
+    complianceId.startsWith("cis_")
+  ) {
+    return COMPLIANCE_REPORT_TYPES.CIS;
   }
   return undefined;
 };
