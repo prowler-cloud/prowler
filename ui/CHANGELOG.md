@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.25.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Sign-in and sign-up redesigned with an animated background and a live release highlights panel from GitHub, with adaptive summaries for patch releases [(#10774)](https://github.com/prowler-cloud/prowler/pull/10774)
+
+---
+
 ## [1.24.1] (Prowler v5.24.1)
 
 ### 🔒 Security

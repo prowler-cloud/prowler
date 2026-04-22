@@ -3,6 +3,7 @@
 import { Checkbox } from "@heroui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { createNewUser } from "@/actions/auth";
@@ -37,12 +38,14 @@ export const SignUpForm = ({
   githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  releaseHighlights,
 }: {
   invitationToken?: string | null;
   googleAuthUrl?: string;
   githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  releaseHighlights?: ReactNode;
 }) => {
   const router = useRouter();
   const { toast } = useToast();
@@ -126,7 +129,7 @@ export const SignUpForm = ({
   };
 
   return (
-    <AuthLayout title="Sign up">
+    <AuthLayout title="Sign up" releaseHighlights={releaseHighlights}>
       <Form {...form}>
         <form
           noValidate
