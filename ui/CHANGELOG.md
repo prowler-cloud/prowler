@@ -10,7 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- View Resource button in the findings resource detail drawer to open the related resource page
+- View Resource button in the findings resource detail drawer to open the related resource page [(#10847)](https://github.com/prowler-cloud/prowler/pull/10847)
 
 ### 🐞 Fixed
 
