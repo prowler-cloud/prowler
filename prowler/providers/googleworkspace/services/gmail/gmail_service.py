@@ -32,17 +32,29 @@ class Gmail(GoogleWorkspaceService):
 
             request = service.policies().list(pageSize=100)
             fetch_succeeded = True
+            customer_level_settings = set()
 
             while request is not None:
                 try:
                     response = request.execute()
 
                     for policy in response.get("policies", []):
-                        if not self._is_customer_level_policy(policy):
+                        if policy.get("policyQuery", {}).get("group"):
                             continue
 
                         setting = policy.get("setting", {})
                         setting_type = setting.get("type", "").removeprefix("settings/")
+                        logger.debug(f"Processing setting type: {setting_type}")
+
+                        is_customer_level = self._is_customer_level_policy(policy)
+                        if (
+                            not is_customer_level
+                            and setting_type in customer_level_settings
+                        ):
+                            continue
+                        if is_customer_level:
+                            customer_level_settings.add(setting_type)
+
                         value = setting.get("value", {})
 
                         if setting_type == "gmail.mail_delegation":
@@ -153,8 +165,7 @@ class Gmail(GoogleWorkspaceService):
                     fetch_succeeded = False
                     break
 
-            self.policies_fetched = fetch_succeeded
-
+            self.policies_fetched = fetch_succeeded or self.policies != GmailPolicies()
             logger.info("Gmail policies fetched successfully.")
 
         except Exception as error:
