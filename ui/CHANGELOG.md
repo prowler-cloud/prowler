@@ -15,7 +15,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Finding detail drawer now links `fix available` versions to the external CVE advisory when the recommendation URL is not a Prowler Hub check
+- Finding detail drawer now links `fix available` versions to the external CVE advisory when the recommendation URL is not a Prowler Hub check [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
 
 ---
 
