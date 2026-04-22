@@ -1313,12 +1313,12 @@ class TestAttackPathsFindingsHelpers:
             assert "findings_data" in params
 
         summary_log = next(
-            msg
-            for (msg,), _ in mock_logger.info.call_args_list
-            if "Finished loading" in msg
+            call_args.args[0]
+            for call_args in mock_logger.info.call_args_list
+            if call_args.args and "Finished loading" in call_args.args[0]
         )
-        assert "merged=1" in summary_log
-        assert "dropped=1" in summary_log
+        assert "edges_merged=1" in summary_log
+        assert "edges_dropped=1" in summary_log
 
     def test_stream_findings_with_resources_returns_latest_scan_data(
         self,
@@ -1760,6 +1760,7 @@ class TestAttackPathsFindingsHelpers:
             "resource_by_short:_AWSResource {id: finding_data.resource_short_uid}"
             in rendered
         )
+        assert "head(collect(resource_by_short)) AS resource_by_short" in rendered
         assert (
             "COALESCE(resource_by_uid, resource_by_id, resource_by_short)" in rendered
         )

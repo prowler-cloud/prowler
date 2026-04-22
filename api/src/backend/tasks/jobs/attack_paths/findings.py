@@ -174,8 +174,8 @@ def load_findings(
 
     batch_num = 0
     total_records = 0
-    total_merged = 0
-    total_dropped = 0
+    edges_merged = 0
+    edges_dropped = 0
     for batch in findings_batches:
         batch_num += 1
         batch_size = len(batch)
@@ -186,12 +186,12 @@ def load_findings(
         logger.info(f"Loading findings batch {batch_num} ({batch_size} records)")
         summary = neo4j_session.run(query, parameters).single()
         if summary is not None:
-            total_merged += summary.get("merged_count", 0) or 0
-            total_dropped += summary.get("dropped_count", 0) or 0
+            edges_merged += summary.get("merged_count", 0)
+            edges_dropped += summary.get("dropped_count", 0)
 
     logger.info(
         f"Finished loading {total_records} records in {batch_num} batches "
-        f"(merged={total_merged}, dropped={total_dropped})"
+        f"(edges_merged={edges_merged}, edges_dropped={edges_dropped})"
     )
     return total_records
 

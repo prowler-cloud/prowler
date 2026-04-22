@@ -40,6 +40,10 @@ INSERT_FINDING_TEMPLATE = f"""
     OPTIONAL MATCH (resource_by_short:__RESOURCE_LABEL__ {{id: finding_data.resource_short_uid}})
         WHERE resource_by_uid IS NULL AND resource_by_id IS NULL
     WITH finding_data,
+         resource_by_uid,
+         resource_by_id,
+         head(collect(resource_by_short)) AS resource_by_short
+    WITH finding_data,
          COALESCE(resource_by_uid, resource_by_id, resource_by_short) AS resource
 
     FOREACH (_ IN CASE WHEN resource IS NOT NULL THEN [1] ELSE [] END |

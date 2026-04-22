@@ -119,6 +119,11 @@ def get_provider_resource_label(provider_type: str) -> str:
     return config.resource_label if config else "_UnknownProviderResource"
 
 
+def _identity_short_uid(uid: str) -> str:
+    """Fallback short-uid extractor for providers without a custom mapping."""
+    return uid
+
+
 def get_short_uid_extractor(provider_type: str) -> Callable[[str], str]:
     """Get the short-uid extractor for a provider type.
 
@@ -126,7 +131,7 @@ def get_short_uid_extractor(provider_type: str) -> Callable[[str], str]:
     rely on a callable always being returned.
     """
     config = PROVIDER_CONFIGS.get(provider_type)
-    return config.short_uid_extractor if config else (lambda uid: uid)
+    return config.short_uid_extractor if config else _identity_short_uid
 
 
 # Dynamic Isolation Label Helpers
