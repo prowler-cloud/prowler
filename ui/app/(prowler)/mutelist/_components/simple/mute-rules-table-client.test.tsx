@@ -32,6 +32,7 @@ vi.mock("@/components/shadcn", () => ({
   }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
+  CardTitle: ({ children }: { children: ReactNode }) => <h3>{children}</h3>,
 }));
 
 vi.mock("@/components/shadcn/modal", () => ({

@@ -1,14 +1,7 @@
 import { Info } from "lucide-react";
 
 import { getMuteRules } from "@/actions/mute-rules";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Skeleton,
-} from "@/components/shadcn";
+import { Card, Skeleton } from "@/components/shadcn";
 import { SearchParamsProps } from "@/types/components";
 
 import { hydrateMuteRuleTargetPreviews } from "./mute-rule-target-previews";
@@ -60,33 +53,12 @@ export async function MuteRulesTable({ searchParams }: MuteRulesTableProps) {
   }
 
   return (
-    <Card variant="base" className="gap-0">
-      <CardHeader className="border-border-neutral-secondary mb-0 gap-3 border-b px-0 pb-5">
-        <CardTitle className="text-text-neutral-primary mt-0 font-semibold">
-          Simple Mutelist Rules
-        </CardTitle>
-        <CardDescription className="text-text-neutral-secondary">
-          Rules created from the Findings page apply immediately to the matching
-          findings and can be toggled on or off at any time.
-        </CardDescription>
-        <div className="text-text-neutral-secondary grid gap-2 text-sm">
-          <p>Create rules by selecting findings and choosing mute.</p>
-          <p>
-            Review affected findings from the table without leaving Mutelist.
-          </p>
-        </div>
-      </CardHeader>
-      <CardContent className="px-0 pt-5">
-        <MuteRulesTableClient
-          muteRules={muteRules}
-          metadata={
-            muteRulesData?.meta
-              ? { ...muteRulesData.meta, version: "" }
-              : undefined
-          }
-        />
-      </CardContent>
-    </Card>
+    <MuteRulesTableClient
+      muteRules={muteRules}
+      metadata={
+        muteRulesData?.meta ? { ...muteRulesData.meta, version: "" } : undefined
+      }
+    />
   );
 }
 

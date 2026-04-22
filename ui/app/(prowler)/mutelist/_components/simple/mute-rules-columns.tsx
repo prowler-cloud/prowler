@@ -90,28 +90,21 @@ export const createMuteRulesColumns = (
     cell: ({ row }) => {
       const count = row.original.attributes.finding_uids?.length || 0;
       const summaryLabel = row.original.targetSummaryLabel;
-      const hiddenTargetCount = row.original.hiddenTargetCount;
+      const extraCount = Math.max(count - 1, 0);
 
       return (
         <Button
-          type="button"
           variant="outline"
           onClick={() => onViewTargets(row.original)}
-          className="group h-auto max-w-[290px] justify-start gap-3 px-3 py-2.5 text-left shadow-none"
+          className="h-auto max-w-[290px] justify-start gap-2 px-3 py-2"
           aria-label={`View muted findings for ${row.original.attributes.name}`}
-          title={summaryLabel}
         >
-          <span className="border-border-neutral-secondary bg-bg-neutral-tertiary text-text-neutral-primary flex size-8 shrink-0 items-center justify-center rounded-full border text-xs font-medium">
+          <span className="border-border-neutral-secondary bg-bg-neutral-tertiary text-text-neutral-primary inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full border px-1.5 text-xs font-semibold">
             {count}
           </span>
-          <span className="min-w-0 flex-1 overflow-hidden">
-            <span className="text-text-neutral-primary block truncate text-sm font-medium">
-              {summaryLabel}
-              {hiddenTargetCount > 0 ? ` +${hiddenTargetCount} more` : ""}
-            </span>
-            <span className="text-button-tertiary group-hover:text-button-tertiary-hover mt-0.5 block text-xs font-medium">
-              Open muted findings list
-            </span>
+          <span className="text-text-neutral-primary min-w-0 flex-1 truncate text-left text-sm font-medium">
+            {summaryLabel}
+            {extraCount > 0 ? ` +${extraCount} more` : ""}
           </span>
           <List className="text-button-tertiary size-4 shrink-0" />
         </Button>

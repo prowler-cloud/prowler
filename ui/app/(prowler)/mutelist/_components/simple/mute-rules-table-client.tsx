@@ -8,6 +8,7 @@ import { FormEvent, useState, useTransition } from "react";
 
 import { deleteMuteRule } from "@/actions/mute-rules";
 import { MuteRuleData } from "@/actions/mute-rules/types";
+import { CardTitle } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { FormButtons } from "@/components/ui/form";
@@ -118,6 +119,17 @@ export function MuteRulesTableClient({
         getRowId={(rule) => rule.id}
         showSearch
         searchPlaceholder="Search rules by name or reason..."
+        header={
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="flex flex-col gap-0.5">
+              <CardTitle>Simple Mutelist Rules</CardTitle>
+              <p className="text-text-neutral-tertiary text-xs">
+                Rules created from the Findings page apply immediately and can
+                be toggled on or off at any time.
+              </p>
+            </div>
+          </div>
+        }
       />
 
       {selectedRules.length > 0 ? (
