@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
+- `entra_emergency_access_users_not_blocked` check for m365 provider [(#10849)](https://github.com/prowler-cloud/prowler/pull/10849)
 
 ---
 
