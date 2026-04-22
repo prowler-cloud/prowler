@@ -1,6 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
+import {
+  cloneElement,
+  isValidElement,
+  type AnchorHTMLAttributes,
+  type ButtonHTMLAttributes,
+  type HTMLAttributes,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -34,8 +41,17 @@ vi.mock("next/image", () => ({
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    children: ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -62,7 +78,12 @@ vi.mock("@/components/shadcn", () => {
       variant?: string;
       size?: string;
       asChild?: boolean;
-    }) => <button {...props}>{children}</button>,
+    }) =>
+      _asChild && isValidElement(children) ? (
+        cloneElement(children, props)
+      ) : (
+        <button {...props}>{children}</button>
+      ),
     InfoField: ({
       children,
       label,
@@ -373,6 +394,39 @@ const mockFinding: ResourceDrawerFinding = {
   additionalUrls: [],
   scan: null,
 };
+
+describe("ResourceDetailDrawerContent — resource navigation", () => {
+  it("should render a View Resource link to the resource details page", () => {
+    // Given
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const viewResourceLink = screen.getByRole("link", {
+      name: "View Resource",
+    });
+
+    // Then
+    expect(viewResourceLink).toHaveAttribute(
+      "href",
+      "/resources?resourceId=res-1",
+    );
+    expect(viewResourceLink).toHaveAttribute("target", "_blank");
+    expect(viewResourceLink).toHaveAttribute("rel", "noopener noreferrer");
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Fix 1: Lighthouse AI button text change

@@ -8,6 +8,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Upgrade React to 19.2.5 and Next.js to 16.2.3 to mitigate CVE-2026-23869 (React2DoS), a high-severity unauthenticated remote DoS vulnerability in the React Flight Protocol's Server Function deserialization [(#10754)](https://github.com/prowler-cloud/prowler/pull/10754)
 
+### 🚀 Added
+
+- View Resource button in the findings resource detail drawer to open the related resource page
+
 ### 🐞 Fixed
 
 - Findings and filter UX fixes: exclude muted findings by default in the resource detail drawer and finding group resource views, show category context label (for example `Status: FAIL`) on MultiSelect triggers instead of hiding the placeholder, and add a `wide` width option for filter dropdowns applied to the findings Scan filter to prevent label truncation [(#10734)](https://github.com/prowler-cloud/prowler/pull/10734)
