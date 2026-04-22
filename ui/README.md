@@ -85,10 +85,10 @@ git clone git@github.com:prowler-cloud/ui.git
 pnpm install
 ```
 
-**Note:** The `pnpm install` command will automatically configure Git hooks for code quality checks. If you experience issues, you can manually configure them:
+**Note:** The `pnpm install` command will automatically configure prek Git hooks for code quality checks. If hooks are not installed, run from the repo root:
 
 ```bash
-git config core.hooksPath "ui/.husky"
+prek install
 ```
 
 #### Run the development server

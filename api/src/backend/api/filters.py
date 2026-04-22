@@ -330,6 +330,7 @@ class MembershipFilter(FilterSet):
         model = Membership
         fields = {
             "tenant": ["exact"],
+            "user": ["exact"],
             "role": ["exact"],
             "date_joined": ["date", "gte", "lte"],
         }
