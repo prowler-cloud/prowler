@@ -11,11 +11,8 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
-
-### 🐞 Fixed
-
-- `backfill_scan_resource_group_summaries` and `backfill_scan_category_summaries` are now idempotent: they drop the scan's existing rows before `bulk_create` (removing the `already backfilled` short-circuit and the silent `ignore_conflicts=True` upsert), so re-runs triggered by the post-mute reaggregation pipeline actually update the counts powering the resource inventory and categories overviews [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
-- `aggregate_attack_surface` is now idempotent: it deletes the scan's existing `AttackSurfaceOverview` rows before `bulk_create`, so re-runs triggered by the post-mute reaggregation pipeline no longer violate the `unique_attack_surface_per_scan` constraint [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
+- `aggregate_findings`, `aggregate_attack_surface`, `backfill_scan_resource_group_summaries` and `backfill_scan_category_summaries` now upsert via `bulk_create(update_conflicts=True, ...)` instead of the prior `ignore_conflicts=True` / plain INSERT / `already backfilled` short-circuit. Re-runs triggered by the post-mute reaggregation pipeline no longer trip the `unique_*_per_scan` constraints nor silently drop updates, and are race-safe under concurrent writers (e.g. scan completion overlapping with a fresh mute rule) [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
+- `backfill_scan_resource_group_summaries_task` and `backfill_scan_category_summaries_task` now default to the `overview` Celery queue (previously `backfill`), matching the sibling per-scan aggregators (`perform_scan_summary_task`, `aggregate_daily_severity_task`, `aggregate_finding_group_summaries_task`, `aggregate_attack_surface_task`) and ensuring the post-mute refresh surfaces on the queue Cloud workers consume [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
 
 ---
 

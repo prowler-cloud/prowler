@@ -227,19 +227,48 @@ class TestBackfillComplianceSummaries:
 
 @pytest.mark.django_db
 class TestBackfillScanCategorySummaries:
-    def test_rerun_replaces_existing_rows(self, scan_category_summary_fixture):
-        """The function is idempotent: re-runs drop prior rows and write the
-        current state (empty here since the scan has no findings), so the
-        post-mute reaggregation pipeline can safely re-dispatch it."""
+    def test_rerun_with_no_findings_is_noop(self, scan_category_summary_fixture):
+        """When the scan has no findings, the backfill is a no-op: it
+        reports `no categories to backfill` and leaves the table
+        untouched. The upsert path cannot drop rows it does not produce,
+        so any pre-existing row survives (matching the scan-completion
+        writer that used `ignore_conflicts=True`)."""
         tenant_id = scan_category_summary_fixture.tenant_id
         scan_id = scan_category_summary_fixture.scan_id
 
         result = backfill_scan_category_summaries(str(tenant_id), str(scan_id))
 
         assert result == {"status": "no categories to backfill"}
-        assert not ScanCategorySummary.objects.filter(
-            tenant_id=tenant_id, scan_id=scan_id
+        assert ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id, category="existing-category"
         ).exists()
+
+    def test_rerun_upserts_without_duplicating(
+        self, findings_with_categories_fixture
+    ):
+        """Calling the backfill twice upserts rather than raising on
+        `unique_category_severity_per_scan`; rows are updated in place
+        (same primary keys)."""
+        finding = findings_with_categories_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        backfill_scan_category_summaries(tenant_id, scan_id)
+        first_ids = set(
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        backfill_scan_category_summaries(tenant_id, scan_id)
+        second_ids = set(
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        assert first_ids == second_ids
+        assert len(first_ids) == 2  # 2 categories x 1 severity
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:
@@ -317,19 +346,48 @@ def scan_resource_group_summary_fixture(scans_fixture):
 
 @pytest.mark.django_db
 class TestBackfillScanGroupSummaries:
-    def test_rerun_replaces_existing_rows(self, scan_resource_group_summary_fixture):
-        """The function is idempotent: re-runs drop prior rows and write the
-        current state (empty here since the scan has no findings), so the
-        post-mute reaggregation pipeline can safely re-dispatch it."""
+    def test_rerun_with_no_findings_is_noop(self, scan_resource_group_summary_fixture):
+        """When the scan has no findings, the backfill is a no-op: it
+        reports `no resource groups to backfill` and leaves the table
+        untouched. The upsert path cannot drop rows it does not produce,
+        so any pre-existing row survives (matching the scan-completion
+        writer that used `ignore_conflicts=True`)."""
         tenant_id = scan_resource_group_summary_fixture.tenant_id
         scan_id = scan_resource_group_summary_fixture.scan_id
 
         result = backfill_scan_resource_group_summaries(str(tenant_id), str(scan_id))
 
         assert result == {"status": "no resource groups to backfill"}
-        assert not ScanGroupSummary.objects.filter(
-            tenant_id=tenant_id, scan_id=scan_id
+        assert ScanGroupSummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id, resource_group="existing-group"
         ).exists()
+
+    def test_rerun_upserts_without_duplicating(
+        self, findings_with_group_fixture
+    ):
+        """Calling the backfill twice upserts rather than raising on
+        `unique_resource_group_severity_per_scan`; rows are updated in
+        place (same primary keys)."""
+        finding = findings_with_group_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        backfill_scan_resource_group_summaries(tenant_id, scan_id)
+        first_ids = set(
+            ScanGroupSummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        backfill_scan_resource_group_summaries(tenant_id, scan_id)
+        second_ids = set(
+            ScanGroupSummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        assert first_ids == second_ids
+        assert len(first_ids) == 1  # 1 resource group x 1 severity
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:

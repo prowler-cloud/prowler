@@ -348,15 +348,20 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
         for (category, severity), counts in category_counts.items()
     ]
 
-    with rls_transaction(tenant_id):
-        # Replace the scan's rows so re-runs (post-mute reaggregation) keep
-        # counts in sync and drop combinations that no longer exist.
-        ScanCategorySummary.objects.filter(
-            tenant_id=tenant_id, scan_id=scan_id
-        ).delete()
-        if category_summaries:
+    if category_summaries:
+        with rls_transaction(tenant_id):
+            # Upsert so re-runs (post-mute reaggregation) don't trip
+            # `unique_category_severity_per_scan`; race-safe under concurrent writers.
             ScanCategorySummary.objects.bulk_create(
-                category_summaries, batch_size=500
+                category_summaries,
+                batch_size=500,
+                update_conflicts=True,
+                unique_fields=["tenant_id", "scan_id", "category", "severity"],
+                update_fields=[
+                    "total_findings",
+                    "failed_findings",
+                    "new_failed_findings",
+                ],
             )
 
     if not category_counts:
@@ -439,15 +444,21 @@ def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
         for (grp, severity), counts in resource_group_counts.items()
     ]
 
-    with rls_transaction(tenant_id):
-        # Replace the scan's rows so re-runs (post-mute reaggregation) keep
-        # counts in sync and drop combinations that no longer exist.
-        ScanGroupSummary.objects.filter(
-            tenant_id=tenant_id, scan_id=scan_id
-        ).delete()
-        if resource_group_summaries:
+    if resource_group_summaries:
+        with rls_transaction(tenant_id):
+            # Upsert so re-runs (post-mute reaggregation) don't trip
+            # `unique_resource_group_severity_per_scan`; race-safe under concurrent writers.
             ScanGroupSummary.objects.bulk_create(
-                resource_group_summaries, batch_size=500
+                resource_group_summaries,
+                batch_size=500,
+                update_conflicts=True,
+                unique_fields=["tenant_id", "scan_id", "resource_group", "severity"],
+                update_fields=[
+                    "total_findings",
+                    "failed_findings",
+                    "new_failed_findings",
+                    "resources_count",
+                ],
             )
 
     if not resource_group_counts:

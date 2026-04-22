@@ -3366,13 +3366,23 @@ class TestAggregateFindings:
         findings_fixture,
     ):
         """Re-running `aggregate_findings` for the same scan must not violate
-        the `unique_scan_summary` constraint, and the resulting row set for
-        the scan must match the single-run output. This is exercised by the
-        post-mute reaggregation pipeline, which re-dispatches
-        `perform_scan_summary_task` against scans whose summaries already
-        exist."""
+        the `unique_scan_summary` constraint. The post-mute reaggregation
+        pipeline re-dispatches `perform_scan_summary_task` against scans
+        whose summaries already exist; upsert must update existing rows in
+        place (same primary keys) rather than inserting duplicates."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
+
+        value_columns = (
+            "check_id",
+            "service",
+            "severity",
+            "region",
+            "fail",
+            "_pass",
+            "muted",
+            "total",
+        )
 
         aggregate_findings(str(tenant.id), str(scan.id))
         first_run_ids = set(
@@ -3381,20 +3391,12 @@ class TestAggregateFindings:
             ).values_list("id", flat=True)
         )
         first_run_rows = list(
-            ScanSummary.all_objects.filter(tenant_id=tenant.id, scan_id=scan.id).values(
-                "check_id",
-                "service",
-                "severity",
-                "region",
-                "fail",
-                "_pass",
-                "muted",
-                "total",
-            )
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant.id, scan_id=scan.id
+            ).values(*value_columns)
         )
 
-        # Second invocation must not raise and must replace the rows without
-        # leaving duplicates behind.
+        # Second invocation must not raise and must not duplicate rows.
         aggregate_findings(str(tenant.id), str(scan.id))
         second_run_ids = set(
             ScanSummary.all_objects.filter(
@@ -3402,20 +3404,15 @@ class TestAggregateFindings:
             ).values_list("id", flat=True)
         )
         second_run_rows = list(
-            ScanSummary.all_objects.filter(tenant_id=tenant.id, scan_id=scan.id).values(
-                "check_id",
-                "service",
-                "severity",
-                "region",
-                "fail",
-                "_pass",
-                "muted",
-                "total",
-            )
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant.id, scan_id=scan.id
+            ).values(*value_columns)
         )
 
+        # Upsert preserves the original row identities; values stay stable
+        # because the underlying Finding set is unchanged between runs.
         assert second_run_rows == first_run_rows
-        assert first_run_ids.isdisjoint(second_run_ids)
+        assert first_run_ids == second_run_ids
 
 
 @pytest.mark.django_db

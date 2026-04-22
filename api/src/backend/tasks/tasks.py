@@ -659,7 +659,7 @@ def backfill_finding_group_summaries_task(tenant_id: str, days: int = None):
     return backfill_finding_group_summaries(tenant_id=tenant_id, days=days)
 
 
-@shared_task(name="backfill-scan-category-summaries", queue="backfill")
+@shared_task(name="backfill-scan-category-summaries", queue="overview")
 @handle_provider_deletion
 def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
     """
@@ -674,7 +674,7 @@ def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
     return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(name="backfill-scan-resource-group-summaries", queue="backfill")
+@shared_task(name="backfill-scan-resource-group-summaries", queue="overview")
 @handle_provider_deletion
 def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
     """
