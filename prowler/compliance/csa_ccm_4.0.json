@@ -1,89 +1,101 @@
 {
-  "Framework": "CSA-CCM",
-  "Name": "CSA Cloud Controls Matrix (CCM) v4.0.13",
-  "Version": "4.0",
-  "Description": "The Cloud Security Alliance (CSA) Cloud Controls Matrix (CCM) is a cybersecurity control framework for cloud computing, composed of 197 control objectives structured in 17 domains covering all key aspects of cloud technology. The CCM can be used as a tool for the systematic assessment of a cloud implementation, and provides guidance on which security controls should be implemented by which actor within the cloud supply chain.",
-  "Icon": "csa",
-  "AttributesMetadata": [
+  "framework": "CSA-CCM",
+  "name": "CSA Cloud Controls Matrix (CCM) v4.0.13",
+  "version": "4.0",
+  "description": "The Cloud Security Alliance (CSA) Cloud Controls Matrix (CCM) is a cybersecurity control framework for cloud computing, composed of 197 control objectives structured in 17 domains covering all key aspects of cloud technology. The CCM can be used as a tool for the systematic assessment of a cloud implementation, and provides guidance on which security controls should be implemented by which actor within the cloud supply chain.",
+  "icon": "csa",
+  "attributes_metadata": [
     {
-      "Key": "Section",
-      "Label": "Section",
-      "Type": "str",
-      "CSV": true,
-      "OCSF": true,
-      "Required": true
+      "key": "Section",
+      "label": "Section",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
     },
     {
-      "Key": "CCMLite",
-      "Label": "CCM Lite",
-      "Type": "str",
-      "Enum": [
+      "key": "CCMLite",
+      "label": "CCM Lite",
+      "type": "str",
+      "enum": [
         "Yes",
         "No"
       ],
-      "CSV": true,
-      "OCSF": true,
-      "Required": false
+      "required": false,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
     },
     {
-      "Key": "IaaS",
-      "Label": "IaaS",
-      "Type": "str",
-      "Enum": [
+      "key": "IaaS",
+      "label": "IaaS",
+      "type": "str",
+      "enum": [
         "Shared",
         "CSP-Owned",
         "Customer-Owned"
       ],
-      "CSV": true,
-      "OCSF": true,
-      "Required": false
+      "required": false,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
     },
     {
-      "Key": "PaaS",
-      "Label": "PaaS",
-      "Type": "str",
-      "Enum": [
+      "key": "PaaS",
+      "label": "PaaS",
+      "type": "str",
+      "enum": [
         "Shared",
         "CSP-Owned",
         "Customer-Owned"
       ],
-      "CSV": true,
-      "OCSF": true,
-      "Required": false
+      "required": false,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
     },
     {
-      "Key": "SaaS",
-      "Label": "SaaS",
-      "Type": "str",
-      "Enum": [
+      "key": "SaaS",
+      "label": "SaaS",
+      "type": "str",
+      "enum": [
         "Shared",
         "CSP-Owned",
         "Customer-Owned"
       ],
-      "CSV": true,
-      "OCSF": true,
-      "Required": false
+      "required": false,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
     },
     {
-      "Key": "ScopeApplicability",
-      "Label": "Scope Applicability",
-      "Type": "list_dict",
-      "CSV": true,
-      "OCSF": false,
-      "Required": false
+      "key": "ScopeApplicability",
+      "label": "Scope Applicability",
+      "type": "list_dict",
+      "required": false,
+      "output_formats": {
+        "csv": true,
+        "ocsf": false
+      }
     }
   ],
-  "Outputs": {
-    "TableConfig": {
-      "GroupBy": "Section"
+  "outputs": {
+    "table_config": {
+      "group_by": "Section"
     },
-    "PDFConfig": {
-      "Language": "en",
-      "PrimaryColor": "#336699",
-      "SecondaryColor": "#4D80B3",
-      "BgColor": "#F2F8FF",
-      "GroupByField": "Section",
-      "Sections": [
+    "pdf_config": {
+      "language": "en",
+      "primary_color": "#336699",
+      "secondary_color": "#4D80B3",
+      "bg_color": "#F2F8FF",
+      "group_by_field": "Section",
+      "sections": [
         "Application & Interface Security",
         "Audit & Assurance",
         "Business Continuity Management and Operational Resilience",
@@ -100,7 +112,7 @@
         "Threat & Vulnerability Management",
         "Universal Endpoint Management"
       ],
-      "SectionShortNames": {
+      "section_short_names": {
         "Application & Interface Security": "App & Interface Security",
         "Business Continuity Management and Operational Resilience": "Business Continuity",
         "Change Control and Configuration Management": "Change Control & Config",
@@ -109,30 +121,30 @@
         "Security Incident Management, E-Discovery, & Cloud Forensics": "Incident Mgmt & Forensics",
         "Infrastructure & Virtualization Security": "Infrastructure & Virtualization"
       },
-      "Charts": [
+      "charts": [
         {
-          "Id": "section_compliance",
-          "Type": "horizontal_bar",
-          "GroupBy": "Section",
-          "Title": "Compliance Score by Domain",
-          "YLabel": "Domain",
-          "XLabel": "Compliance %",
-          "ValueSource": "compliance_percent",
-          "ColorMode": "by_value"
+          "id": "section_compliance",
+          "type": "horizontal_bar",
+          "group_by": "Section",
+          "title": "Compliance Score by Domain",
+          "y_label": "Domain",
+          "x_label": "Compliance %",
+          "value_source": "compliance_percent",
+          "color_mode": "by_value"
         }
       ],
-      "Filter": {
-        "OnlyFailed": true,
-        "IncludeManual": false
+      "filter": {
+        "only_failed": true,
+        "include_manual": false
       }
     }
   },
-  "Requirements": [
+  "requirements": [
     {
-      "Id": "A&A-02",
-      "Description": "Conduct independent audit and assurance assessments according to relevant standards at least annually.",
-      "Name": "Independent Assessments",
-      "Attributes": {
+      "id": "A&A-02",
+      "description": "Conduct independent audit and assurance assessments according to relevant standards at least annually.",
+      "name": "Independent Assessments",
+      "attributes": {
         "Section": "Audit & Assurance",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -197,7 +209,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "securityhub_enabled"
         ],
@@ -220,10 +232,10 @@
       }
     },
     {
-      "Id": "A&A-04",
-      "Description": "Verify compliance with all relevant standards, regulations, legal/contractual, and statutory requirements applicable to the audit.",
-      "Name": "Requirements Compliance",
-      "Attributes": {
+      "id": "A&A-04",
+      "description": "Verify compliance with all relevant standards, regulations, legal/contractual, and statutory requirements applicable to the audit.",
+      "name": "Requirements Compliance",
+      "attributes": {
         "Section": "Audit & Assurance",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -298,7 +310,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "securityhub_enabled",
           "config_recorder_all_regions_enabled"
@@ -325,10 +337,10 @@
       }
     },
     {
-      "Id": "AIS-04",
-      "Description": "Define and implement a SDLC process for application design, development, deployment, and operation in accordance with security requirements defined by the organization.",
-      "Name": "Secure Application Design and Development",
-      "Attributes": {
+      "id": "AIS-04",
+      "description": "Define and implement a SDLC process for application design, development, deployment, and operation in accordance with security requirements defined by the organization.",
+      "name": "Secure Application Design and Development",
+      "attributes": {
         "Section": "Application & Interface Security",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -450,7 +462,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "codebuild_project_source_repo_url_no_sensitive_credentials",
           "codebuild_project_no_secrets_in_variables"
@@ -465,10 +477,10 @@
       }
     },
     {
-      "Id": "AIS-05",
-      "Description": "Implement a testing strategy, including criteria for acceptance of new information systems, upgrades and new versions, which provides application security assurance and maintains compliance while enabling organizational speed of delivery goals. Automate when applicable and possible.",
-      "Name": "Automated Application Security Testing",
-      "Attributes": {
+      "id": "AIS-05",
+      "description": "Implement a testing strategy, including criteria for acceptance of new information systems, upgrades and new versions, which provides application security assurance and maintains compliance while enabling organizational speed of delivery goals. Automate when applicable and possible.",
+      "name": "Automated Application Security Testing",
+      "attributes": {
         "Section": "Application & Interface Security",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -575,7 +587,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "inspector2_is_enabled",
           "ecr_repositories_scan_vulnerabilities_in_latest_image",
@@ -599,10 +611,10 @@
       }
     },
     {
-      "Id": "AIS-07",
-      "Description": "Define and implement a process to remediate application security vulnerabilities, automating remediation when possible.",
-      "Name": "Application Vulnerability Remediation",
-      "Attributes": {
+      "id": "AIS-07",
+      "description": "Define and implement a process to remediate application security vulnerabilities, automating remediation when possible.",
+      "name": "Application Vulnerability Remediation",
+      "attributes": {
         "Section": "Application & Interface Security",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -709,7 +721,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "inspector2_is_enabled",
           "inspector2_active_findings_exist"
@@ -731,10 +743,10 @@
       }
     },
     {
-      "Id": "BCR-08",
-      "Description": "Periodically backup data stored in the cloud. Ensure the confidentiality, integrity and availability of the backup, and verify data restoration from backup for resiliency.",
-      "Name": "Backup",
-      "Attributes": {
+      "id": "BCR-08",
+      "description": "Periodically backup data stored in the cloud. Ensure the confidentiality, integrity and availability of the backup, and verify data restoration from backup for resiliency.",
+      "name": "Backup",
+      "attributes": {
         "Section": "Business Continuity Management and Operational Resilience",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -841,7 +853,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "backup_plans_exist",
           "backup_vaults_exist",
@@ -880,10 +892,10 @@
       }
     },
     {
-      "Id": "BCR-09",
-      "Description": "Establish, document, approve, communicate, apply, evaluate and maintain a disaster response plan to recover from natural and man-made disasters. Update the plan at least annually or upon significant changes.",
-      "Name": "Disaster Response Plan",
-      "Attributes": {
+      "id": "BCR-09",
+      "description": "Establish, document, approve, communicate, apply, evaluate and maintain a disaster response plan to recover from natural and man-made disasters. Update the plan at least annually or upon significant changes.",
+      "name": "Disaster Response Plan",
+      "attributes": {
         "Section": "Business Continuity Management and Operational Resilience",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -957,7 +969,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "drs_job_exist",
           "ssmincidents_enabled_with_plans"
@@ -969,10 +981,10 @@
       }
     },
     {
-      "Id": "BCR-11",
-      "Description": "Supplement business-critical equipment with redundant equipment independently located at a reasonable minimum distance in accordance with applicable industry standards.",
-      "Name": "Equipment Redundancy",
-      "Attributes": {
+      "id": "BCR-11",
+      "description": "Supplement business-critical equipment with redundant equipment independently located at a reasonable minimum distance in accordance with applicable industry standards.",
+      "name": "Equipment Redundancy",
+      "attributes": {
         "Section": "Business Continuity Management and Operational Resilience",
         "CCMLite": "No",
         "IaaS": "CSP-Owned",
@@ -1046,7 +1058,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "rds_instance_multi_az",
           "rds_cluster_multi_az",
@@ -1087,10 +1099,10 @@
       }
     },
     {
-      "Id": "CCC-04",
-      "Description": "Restrict the unauthorized addition, removal, update, and management of organization assets.",
-      "Name": "Unauthorized Change Protection",
-      "Attributes": {
+      "id": "CCC-04",
+      "description": "Restrict the unauthorized addition, removal, update, and management of organization assets.",
+      "name": "Unauthorized Change Protection",
+      "attributes": {
         "Section": "Change Control and Configuration Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -1208,7 +1220,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "cloudtrail_multi_region_enabled",
           "cloudtrail_log_file_validation_enabled",
@@ -1242,10 +1254,10 @@
       }
     },
     {
-      "Id": "CCC-07",
-      "Description": "Implement detection measures with proactive notification in case of changes deviating from the established baseline.",
-      "Name": "Detection of Baseline Deviation",
-      "Attributes": {
+      "id": "CCC-07",
+      "description": "Implement detection measures with proactive notification in case of changes deviating from the established baseline.",
+      "name": "Detection of Baseline Deviation",
+      "attributes": {
         "Section": "Change Control and Configuration Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -1340,7 +1352,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "config_recorder_all_regions_enabled",
           "guardduty_is_enabled",
@@ -1405,10 +1417,10 @@
       }
     },
     {
-      "Id": "CEK-03",
-      "Description": "Provide cryptographic protection to data at-rest and in-transit, using cryptographic libraries certified to approved standards.",
-      "Name": "Data Encryption",
-      "Attributes": {
+      "id": "CEK-03",
+      "description": "Provide cryptographic protection to data at-rest and in-transit, using cryptographic libraries certified to approved standards.",
+      "name": "Data Encryption",
+      "attributes": {
         "Section": "Cryptography, Encryption & Key Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -1543,7 +1555,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "ec2_ebs_volume_encryption",
           "ec2_ebs_default_encryption",
@@ -1647,10 +1659,10 @@
       }
     },
     {
-      "Id": "CEK-04",
-      "Description": "Use encryption algorithms that are appropriate for data protection, considering the classification of data, associated risks, and usability of the encryption technology.",
-      "Name": "Encryption Algorithm",
-      "Attributes": {
+      "id": "CEK-04",
+      "description": "Use encryption algorithms that are appropriate for data protection, considering the classification of data, associated risks, and usability of the encryption technology.",
+      "name": "Encryption Algorithm",
+      "attributes": {
         "Section": "Cryptography, Encryption & Key Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -1766,7 +1778,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "acm_certificates_with_secure_key_algorithms",
           "elb_insecure_ssl_ciphers",
@@ -1789,10 +1801,10 @@
       }
     },
     {
-      "Id": "CEK-08",
-      "Description": "CSPs must provide the capability for CSCs to manage their own data encryption keys.",
-      "Name": "CSC Key Management Capability",
-      "Attributes": {
+      "id": "CEK-08",
+      "description": "CSPs must provide the capability for CSCs to manage their own data encryption keys.",
+      "name": "CSC Key Management Capability",
+      "attributes": {
         "Section": "Cryptography, Encryption & Key Management",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -1851,7 +1863,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "kms_cmk_are_used",
           "s3_bucket_kms_encryption",
@@ -1886,10 +1898,10 @@
       }
     },
     {
-      "Id": "CEK-10",
-      "Description": "Generate Cryptographic keys using industry accepted cryptographic libraries specifying the algorithm strength and the random number generator used.",
-      "Name": "Key Generation",
-      "Attributes": {
+      "id": "CEK-10",
+      "description": "Generate Cryptographic keys using industry accepted cryptographic libraries specifying the algorithm strength and the random number generator used.",
+      "name": "Key Generation",
+      "attributes": {
         "Section": "Cryptography, Encryption & Key Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -1981,7 +1993,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "kms_cmk_are_used"
         ],
@@ -2000,10 +2012,10 @@
       }
     },
     {
-      "Id": "CEK-12",
-      "Description": "Rotate cryptographic keys in accordance with the calculated cryptoperiod, which includes provisions for considering the risk of information disclosure and legal and regulatory requirements.",
-      "Name": "Key Rotation",
-      "Attributes": {
+      "id": "CEK-12",
+      "description": "Rotate cryptographic keys in accordance with the calculated cryptoperiod, which includes provisions for considering the risk of information disclosure and legal and regulatory requirements.",
+      "name": "Key Rotation",
+      "attributes": {
         "Section": "Cryptography, Encryption & Key Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -2074,7 +2086,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "kms_cmk_rotation_enabled",
           "iam_rotate_access_key_90_days",
@@ -2107,10 +2119,10 @@
       }
     },
     {
-      "Id": "CEK-14",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures to destroy keys stored outside a secure environment and revoke keys stored in Hardware Security Modules (HSMs) when they are no longer needed, which include provisions for legal and regulatory requirements.",
-      "Name": "Key Destruction",
-      "Attributes": {
+      "id": "CEK-14",
+      "description": "Define, implement and evaluate processes, procedures and technical measures to destroy keys stored outside a secure environment and revoke keys stored in Hardware Security Modules (HSMs) when they are no longer needed, which include provisions for legal and regulatory requirements.",
+      "name": "Key Destruction",
+      "attributes": {
         "Section": "Cryptography, Encryption & Key Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -2192,7 +2204,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "kms_cmk_not_deleted_unintentionally"
         ],
@@ -2205,10 +2217,10 @@
       }
     },
     {
-      "Id": "DCS-06",
-      "Description": "Catalogue and track all relevant physical and logical assets located at all of the CSP's sites within a secured system.",
-      "Name": "Assets Cataloguing and Tracking",
-      "Attributes": {
+      "id": "DCS-06",
+      "description": "Catalogue and track all relevant physical and logical assets located at all of the CSP's sites within a secured system.",
+      "name": "Assets Cataloguing and Tracking",
+      "attributes": {
         "Section": "Datacenter Security",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -2313,7 +2325,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "config_recorder_all_regions_enabled",
           "resourceexplorer2_indexes_found"
@@ -2332,10 +2344,10 @@
       }
     },
     {
-      "Id": "DSP-02",
-      "Description": "Apply industry accepted methods for the secure disposal of data from storage media such that data is not recoverable by any forensic means.",
-      "Name": "Secure Disposal",
-      "Attributes": {
+      "id": "DSP-02",
+      "description": "Apply industry accepted methods for the secure disposal of data from storage media such that data is not recoverable by any forensic means.",
+      "name": "Secure Disposal",
+      "attributes": {
         "Section": "Data Security and Privacy Lifecycle Management",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -2445,7 +2457,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "s3_bucket_lifecycle_enabled",
           "dlm_ebs_snapshot_lifecycle_policy_exists",
@@ -2462,10 +2474,10 @@
       }
     },
     {
-      "Id": "DSP-03",
-      "Description": "Create and maintain a data inventory, at least for any sensitive data and personal data.",
-      "Name": "Data Inventory",
-      "Attributes": {
+      "id": "DSP-03",
+      "description": "Create and maintain a data inventory, at least for any sensitive data and personal data.",
+      "name": "Data Inventory",
+      "attributes": {
         "Section": "Data Security and Privacy Lifecycle Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -2548,7 +2560,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "macie_is_enabled",
           "macie_automated_sensitive_data_discovery_enabled",
@@ -2570,10 +2582,10 @@
       }
     },
     {
-      "Id": "DSP-04",
-      "Description": "Classify data according to its type and sensitivity level.",
-      "Name": "Data Classification",
-      "Attributes": {
+      "id": "DSP-04",
+      "description": "Classify data according to its type and sensitivity level.",
+      "name": "Data Classification",
+      "attributes": {
         "Section": "Data Security and Privacy Lifecycle Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -2668,7 +2680,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "macie_is_enabled",
           "macie_automated_sensitive_data_discovery_enabled"
@@ -2679,10 +2691,10 @@
       }
     },
     {
-      "Id": "DSP-07",
-      "Description": "Develop systems, products, and business practices based upon a principle of security by design and industry best practices.",
-      "Name": "Data Protection by Design and Default",
-      "Attributes": {
+      "id": "DSP-07",
+      "description": "Develop systems, products, and business practices based upon a principle of security by design and industry best practices.",
+      "name": "Data Protection by Design and Default",
+      "attributes": {
         "Section": "Data Security and Privacy Lifecycle Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -2792,7 +2804,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "ec2_ebs_default_encryption",
           "s3_account_level_public_access_blocks",
@@ -2835,10 +2847,10 @@
       }
     },
     {
-      "Id": "DSP-10",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures that ensure any transfer of personal or sensitive data is protected from unauthorized access and only processed within scope as permitted by the respective laws and regulations.",
-      "Name": "Sensitive Data Transfer",
-      "Attributes": {
+      "id": "DSP-10",
+      "description": "Define, implement and evaluate processes, procedures and technical measures that ensure any transfer of personal or sensitive data is protected from unauthorized access and only processed within scope as permitted by the respective laws and regulations.",
+      "name": "Sensitive Data Transfer",
+      "attributes": {
         "Section": "Data Security and Privacy Lifecycle Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -2955,7 +2967,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "s3_bucket_secure_transport_policy",
           "opensearch_service_domains_https_communications_enforced",
@@ -2984,10 +2996,10 @@
       }
     },
     {
-      "Id": "DSP-16",
-      "Description": "Data retention, archiving and deletion is managed in accordance with business requirements, applicable laws and regulations.",
-      "Name": "Data Retention and Deletion",
-      "Attributes": {
+      "id": "DSP-16",
+      "description": "Data retention, archiving and deletion is managed in accordance with business requirements, applicable laws and regulations.",
+      "name": "Data Retention and Deletion",
+      "attributes": {
         "Section": "Data Security and Privacy Lifecycle Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -3090,7 +3102,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "s3_bucket_lifecycle_enabled",
           "cloudwatch_log_group_retention_policy_specific_days_enabled",
@@ -3119,10 +3131,10 @@
       }
     },
     {
-      "Id": "DSP-17",
-      "Description": "Define and implement, processes, procedures and technical measures to protect sensitive data throughout it's lifecycle.",
-      "Name": "Sensitive Data Protection",
-      "Attributes": {
+      "id": "DSP-17",
+      "description": "Define and implement, processes, procedures and technical measures to protect sensitive data throughout it's lifecycle.",
+      "name": "Sensitive Data Protection",
+      "attributes": {
         "Section": "Data Security and Privacy Lifecycle Management",
         "CCMLite": "Yes",
         "IaaS": "CSP-Owned",
@@ -3232,7 +3244,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "s3_account_level_public_access_blocks",
           "s3_bucket_public_access",
@@ -3287,10 +3299,10 @@
       }
     },
     {
-      "Id": "GRC-05",
-      "Description": "Develop and implement an Information Security Program, which includes programs for all the relevant domains of the CCM.",
-      "Name": "Information Security Program",
-      "Attributes": {
+      "id": "GRC-05",
+      "description": "Develop and implement an Information Security Program, which includes programs for all the relevant domains of the CCM.",
+      "name": "Information Security Program",
+      "attributes": {
         "Section": "Governance, Risk and Compliance",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -3360,7 +3372,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "securityhub_enabled",
           "guardduty_is_enabled"
@@ -3390,10 +3402,10 @@
       }
     },
     {
-      "Id": "IAM-02",
-      "Description": "Establish, document, approve, communicate, implement, apply, evaluate and maintain strong password policies and procedures. Review and update the policies and procedures at least annually.",
-      "Name": "Strong Password Policy and Procedures",
-      "Attributes": {
+      "id": "IAM-02",
+      "description": "Establish, document, approve, communicate, implement, apply, evaluate and maintain strong password policies and procedures. Review and update the policies and procedures at least annually.",
+      "name": "Strong Password Policy and Procedures",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -3528,7 +3540,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_password_policy_minimum_length_14",
           "iam_password_policy_lowercase",
@@ -3565,10 +3577,10 @@
       }
     },
     {
-      "Id": "IAM-03",
-      "Description": "Manage, store, and review the information of system identities, and level of access.",
-      "Name": "Identity Inventory",
-      "Attributes": {
+      "id": "IAM-03",
+      "description": "Manage, store, and review the information of system identities, and level of access.",
+      "name": "Identity Inventory",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -3685,7 +3697,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_user_accesskey_unused",
           "iam_user_console_access_unused",
@@ -3710,10 +3722,10 @@
       }
     },
     {
-      "Id": "IAM-04",
-      "Description": "Employ the separation of duties principle when implementing information system access.",
-      "Name": "Separation of Duties",
-      "Attributes": {
+      "id": "IAM-04",
+      "description": "Employ the separation of duties principle when implementing information system access.",
+      "name": "Separation of Duties",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -3809,7 +3821,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_policy_attached_only_to_group_or_roles",
           "iam_securityaudit_role_created",
@@ -3837,10 +3849,10 @@
       }
     },
     {
-      "Id": "IAM-05",
-      "Description": "Employ the least privilege principle when implementing information system access.",
-      "Name": "Least Privilege",
-      "Attributes": {
+      "id": "IAM-05",
+      "description": "Employ the least privilege principle when implementing information system access.",
+      "name": "Least Privilege",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -3939,7 +3951,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_aws_attached_policy_no_administrative_privileges",
           "iam_customer_attached_policy_no_administrative_privileges",
@@ -3981,10 +3993,10 @@
       }
     },
     {
-      "Id": "IAM-07",
-      "Description": "De-provision or respectively modify access of movers / leavers or system identity changes in a timely manner in order to effectively adopt and communicate identity and access management policies.",
-      "Name": "User Access Changes and Revocation",
-      "Attributes": {
+      "id": "IAM-07",
+      "description": "De-provision or respectively modify access of movers / leavers or system identity changes in a timely manner in order to effectively adopt and communicate identity and access management policies.",
+      "name": "User Access Changes and Revocation",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -4083,7 +4095,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_user_accesskey_unused",
           "iam_user_console_access_unused",
@@ -4107,10 +4119,10 @@
       }
     },
     {
-      "Id": "IAM-08",
-      "Description": "Review and revalidate user access for least privilege and separation of duties with a frequency that is commensurate with organizational risk tolerance.",
-      "Name": "User Access Review",
-      "Attributes": {
+      "id": "IAM-08",
+      "description": "Review and revalidate user access for least privilege and separation of duties with a frequency that is commensurate with organizational risk tolerance.",
+      "name": "User Access Review",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -4205,7 +4217,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_user_accesskey_unused",
           "iam_user_console_access_unused",
@@ -4236,10 +4248,10 @@
       }
     },
     {
-      "Id": "IAM-09",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures for the segregation of privileged access roles such that administrative access to data, encryption and key management capabilities and logging capabilities are distinct and separated.",
-      "Name": "Segregation of Privileged Access Roles",
-      "Attributes": {
+      "id": "IAM-09",
+      "description": "Define, implement and evaluate processes, procedures and technical measures for the segregation of privileged access roles such that administrative access to data, encryption and key management capabilities and logging capabilities are distinct and separated.",
+      "name": "Segregation of Privileged Access Roles",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -4333,7 +4345,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_policy_attached_only_to_group_or_roles",
           "iam_role_administratoraccess_policy",
@@ -4364,10 +4376,10 @@
       }
     },
     {
-      "Id": "IAM-10",
-      "Description": "Define and implement an access process to ensure privileged access roles and rights are granted for a time limited period, and implement procedures to prevent the culmination of segregated privileged access.",
-      "Name": "Management of Privileged Access Roles",
-      "Attributes": {
+      "id": "IAM-10",
+      "description": "Define and implement an access process to ensure privileged access roles and rights are granted for a time limited period, and implement procedures to prevent the culmination of segregated privileged access.",
+      "name": "Management of Privileged Access Roles",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -4464,7 +4476,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_avoid_root_usage",
           "iam_no_root_access_key",
@@ -4499,10 +4511,10 @@
       }
     },
     {
-      "Id": "IAM-12",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures to ensure the logging infrastructure is read-only for all with write access, including privileged access roles, and that the ability to disable it is controlled through a procedure that ensures the segregation of duties and break glass procedures.",
-      "Name": "Safeguard Logs Integrity",
-      "Attributes": {
+      "id": "IAM-12",
+      "description": "Define, implement and evaluate processes, procedures and technical measures to ensure the logging infrastructure is read-only for all with write access, including privileged access roles, and that the ability to disable it is controlled through a procedure that ensures the segregation of duties and break glass procedures.",
+      "name": "Safeguard Logs Integrity",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -4600,7 +4612,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "cloudtrail_log_file_validation_enabled",
           "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
@@ -4628,10 +4640,10 @@
       }
     },
     {
-      "Id": "IAM-13",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures that ensure users are identifiable through unique IDs or which can associate individuals to the usage of user IDs.",
-      "Name": "Uniquely Identifiable Users",
-      "Attributes": {
+      "id": "IAM-13",
+      "description": "Define, implement and evaluate processes, procedures and technical measures that ensure users are identifiable through unique IDs or which can associate individuals to the usage of user IDs.",
+      "name": "Uniquely Identifiable Users",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -4723,7 +4735,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_user_mfa_enabled_console_access",
           "iam_check_saml_providers_sts"
@@ -4749,10 +4761,10 @@
       }
     },
     {
-      "Id": "IAM-14",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures for authenticating access to systems, application and data assets, including multifactor authentication for at least privileged user and sensitive data access. Adopt digital certificates or alternatives which achieve an equivalent level of security for system identities.",
-      "Name": "Strong Authentication",
-      "Attributes": {
+      "id": "IAM-14",
+      "description": "Define, implement and evaluate processes, procedures and technical measures for authenticating access to systems, application and data assets, including multifactor authentication for at least privileged user and sensitive data access. Adopt digital certificates or alternatives which achieve an equivalent level of security for system identities.",
+      "name": "Strong Authentication",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -4893,7 +4905,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_root_mfa_enabled",
           "iam_root_hardware_mfa_enabled",
@@ -4920,10 +4932,10 @@
       }
     },
     {
-      "Id": "IAM-15",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures for the secure management of passwords.",
-      "Name": "Passwords Management",
-      "Attributes": {
+      "id": "IAM-15",
+      "description": "Define, implement and evaluate processes, procedures and technical measures for the secure management of passwords.",
+      "name": "Passwords Management",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -5019,7 +5031,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_password_policy_minimum_length_14",
           "iam_password_policy_reuse_24",
@@ -5044,10 +5056,10 @@
       }
     },
     {
-      "Id": "IAM-16",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures to verify access to data and system functions is authorized.",
-      "Name": "Authorization Mechanisms",
-      "Attributes": {
+      "id": "IAM-16",
+      "description": "Define, implement and evaluate processes, procedures and technical measures to verify access to data and system functions is authorized.",
+      "name": "Authorization Mechanisms",
+      "attributes": {
         "Section": "Identity & Access Management",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -5176,7 +5188,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "iam_aws_attached_policy_no_administrative_privileges",
           "iam_customer_attached_policy_no_administrative_privileges",
@@ -5215,10 +5227,10 @@
       }
     },
     {
-      "Id": "IPY-03",
-      "Description": "Implement cryptographically secure and standardized network protocols for the management, import and export of data.",
-      "Name": "Secure Interoperability and Portability Management",
-      "Attributes": {
+      "id": "IPY-03",
+      "description": "Implement cryptographically secure and standardized network protocols for the management, import and export of data.",
+      "name": "Secure Interoperability and Portability Management",
+      "attributes": {
         "Section": "Interoperability & Portability",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -5308,7 +5320,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "s3_bucket_secure_transport_policy"
         ],
@@ -5328,10 +5340,10 @@
       }
     },
     {
-      "Id": "IVS-02",
-      "Description": "Plan and monitor the availability, quality, and adequate capacity of resources in order to deliver the required system performance as determined by the business.",
-      "Name": "Capacity and Resource Planning",
-      "Attributes": {
+      "id": "IVS-02",
+      "description": "Plan and monitor the availability, quality, and adequate capacity of resources in order to deliver the required system performance as determined by the business.",
+      "name": "Capacity and Resource Planning",
+      "attributes": {
         "Section": "Infrastructure & Virtualization Security",
         "CCMLite": "No",
         "IaaS": "CSP-Owned",
@@ -5403,7 +5415,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "autoscaling_group_multiple_az",
           "autoscaling_group_multiple_instance_types"
@@ -5420,10 +5432,10 @@
       }
     },
     {
-      "Id": "IVS-03",
-      "Description": "Monitor, encrypt and restrict communications between environments to only authenticated and authorized connections, as justified by the business. Review these configurations at least annually, and support them by a documented justification of all allowed services, protocols, ports, and compensating controls.",
-      "Name": "Network Security",
-      "Attributes": {
+      "id": "IVS-03",
+      "description": "Monitor, encrypt and restrict communications between environments to only authenticated and authorized connections, as justified by the business. Review these configurations at least annually, and support them by a documented justification of all allowed services, protocols, ports, and compensating controls.",
+      "name": "Network Security",
+      "attributes": {
         "Section": "Infrastructure & Virtualization Security",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -5570,7 +5582,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "vpc_flow_logs_enabled",
           "ec2_securitygroup_default_restrict_traffic",
@@ -5624,10 +5636,10 @@
       }
     },
     {
-      "Id": "IVS-04",
-      "Description": "Harden host and guest OS, hypervisor or infrastructure control plane according to their respective best practices, and supported by technical controls, as part of a security baseline.",
-      "Name": "OS Hardening and Base Controls",
-      "Attributes": {
+      "id": "IVS-04",
+      "description": "Harden host and guest OS, hypervisor or infrastructure control plane according to their respective best practices, and supported by technical controls, as part of a security baseline.",
+      "name": "OS Hardening and Base Controls",
+      "attributes": {
         "Section": "Infrastructure & Virtualization Security",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -5744,7 +5756,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "ec2_instance_imdsv2_enabled",
           "ec2_instance_account_imdsv2_enabled",
@@ -5776,10 +5788,10 @@
       }
     },
     {
-      "Id": "IVS-06",
-      "Description": "Design, develop, deploy and configure applications and infrastructures such that CSP and CSC (tenant) user access and intra-tenant access is appropriately segmented and segregated, monitored and restricted from other tenants.",
-      "Name": "Segmentation and Segregation",
-      "Attributes": {
+      "id": "IVS-06",
+      "description": "Design, develop, deploy and configure applications and infrastructures such that CSP and CSC (tenant) user access and intra-tenant access is appropriately segmented and segregated, monitored and restricted from other tenants.",
+      "name": "Segmentation and Segregation",
+      "attributes": {
         "Section": "Infrastructure & Virtualization Security",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -5876,7 +5888,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "ec2_securitygroup_default_restrict_traffic",
           "vpc_subnet_separate_private_public",
@@ -5916,10 +5928,10 @@
       }
     },
     {
-      "Id": "IVS-07",
-      "Description": "Use secure and encrypted communication channels when migrating servers, services, applications, or data to cloud environments. Such channels must include only up-to-date and approved protocols.",
-      "Name": "Migration to Cloud Environments",
-      "Attributes": {
+      "id": "IVS-07",
+      "description": "Use secure and encrypted communication channels when migrating servers, services, applications, or data to cloud environments. Such channels must include only up-to-date and approved protocols.",
+      "name": "Migration to Cloud Environments",
+      "attributes": {
         "Section": "Infrastructure & Virtualization Security",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -6036,7 +6048,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "dms_endpoint_ssl_enabled"
         ],
@@ -6056,10 +6068,10 @@
       }
     },
     {
-      "Id": "IVS-09",
-      "Description": "Define, implement and evaluate processes, procedures and defense-in-depth techniques for protection, detection, and timely response to network-based attacks.",
-      "Name": "Network Defense",
-      "Attributes": {
+      "id": "IVS-09",
+      "description": "Define, implement and evaluate processes, procedures and defense-in-depth techniques for protection, detection, and timely response to network-based attacks.",
+      "name": "Network Defense",
+      "attributes": {
         "Section": "Infrastructure & Virtualization Security",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -6200,7 +6212,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "networkfirewall_in_all_vpc",
           "networkfirewall_logging_enabled",
@@ -6242,10 +6254,10 @@
       }
     },
     {
-      "Id": "LOG-02",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures to ensure the security and retention of audit logs.",
-      "Name": "Audit Logs Protection",
-      "Attributes": {
+      "id": "LOG-02",
+      "description": "Define, implement and evaluate processes, procedures and technical measures to ensure the security and retention of audit logs.",
+      "name": "Audit Logs Protection",
+      "attributes": {
         "Section": "Logging and Monitoring",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -6342,7 +6354,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "cloudtrail_log_file_validation_enabled",
           "cloudtrail_kms_encryption_enabled",
@@ -6376,10 +6388,10 @@
       }
     },
     {
-      "Id": "LOG-03",
-      "Description": "Identify and monitor security-related events within applications and the underlying infrastructure. Define and implement a system to generate alerts to responsible stakeholders based on such events and corresponding metrics.",
-      "Name": "Security Monitoring and Alerting",
-      "Attributes": {
+      "id": "LOG-03",
+      "description": "Identify and monitor security-related events within applications and the underlying infrastructure. Define and implement a system to generate alerts to responsible stakeholders based on such events and corresponding metrics.",
+      "name": "Security Monitoring and Alerting",
+      "attributes": {
         "Section": "Logging and Monitoring",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -6497,7 +6509,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "guardduty_is_enabled",
           "securityhub_enabled",
@@ -6545,10 +6557,10 @@
       }
     },
     {
-      "Id": "LOG-04",
-      "Description": "Restrict audit logs access to authorized personnel and maintain records that provide unique access accountability.",
-      "Name": "Audit Logs Access and Accountability",
-      "Attributes": {
+      "id": "LOG-04",
+      "description": "Restrict audit logs access to authorized personnel and maintain records that provide unique access accountability.",
+      "name": "Audit Logs Access and Accountability",
+      "attributes": {
         "Section": "Logging and Monitoring",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -6640,7 +6652,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
           "cloudwatch_log_group_not_publicly_accessible"
@@ -6660,10 +6672,10 @@
       }
     },
     {
-      "Id": "LOG-05",
-      "Description": "Monitor security audit logs to detect activity outside of typical or expected patterns. Establish and follow a defined process to review and take appropriate and timely actions on detected anomalies.",
-      "Name": "Audit Logs Monitoring and Response",
-      "Attributes": {
+      "id": "LOG-05",
+      "description": "Monitor security audit logs to detect activity outside of typical or expected patterns. Establish and follow a defined process to review and take appropriate and timely actions on detected anomalies.",
+      "name": "Audit Logs Monitoring and Response",
+      "attributes": {
         "Section": "Logging and Monitoring",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -6764,7 +6776,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "cloudwatch_log_metric_filter_unauthorized_api_calls",
           "cloudwatch_log_metric_filter_root_usage",
@@ -6837,10 +6849,10 @@
       }
     },
     {
-      "Id": "LOG-07",
-      "Description": "Establish, document and implement which information meta/data system events should be logged. Review and update the scope at least annually or whenever there is a change in the threat environment.",
-      "Name": "Logging Scope",
-      "Attributes": {
+      "id": "LOG-07",
+      "description": "Establish, document and implement which information meta/data system events should be logged. Review and update the scope at least annually or whenever there is a change in the threat environment.",
+      "name": "Logging Scope",
+      "attributes": {
         "Section": "Logging and Monitoring",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -6925,7 +6937,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "cloudtrail_multi_region_enabled",
           "cloudtrail_multi_region_enabled_logging_management_events",
@@ -6961,10 +6973,10 @@
       }
     },
     {
-      "Id": "LOG-08",
-      "Description": "Generate audit records containing relevant security information.",
-      "Name": "Log Records",
-      "Attributes": {
+      "id": "LOG-08",
+      "description": "Generate audit records containing relevant security information.",
+      "name": "Log Records",
+      "attributes": {
         "Section": "Logging and Monitoring",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -7060,7 +7072,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "cloudtrail_multi_region_enabled",
           "cloudtrail_cloudwatch_logging_enabled",
@@ -7138,10 +7150,10 @@
       }
     },
     {
-      "Id": "LOG-09",
-      "Description": "The information system protects audit records from unauthorized access, modification, and deletion.",
-      "Name": "Log Protection",
-      "Attributes": {
+      "id": "LOG-09",
+      "description": "The information system protects audit records from unauthorized access, modification, and deletion.",
+      "name": "Log Protection",
+      "attributes": {
         "Section": "Logging and Monitoring",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -7231,7 +7243,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "cloudtrail_log_file_validation_enabled",
           "cloudtrail_kms_encryption_enabled",
@@ -7259,10 +7271,10 @@
       }
     },
     {
-      "Id": "LOG-10",
-      "Description": "Establish and maintain a monitoring and internal reporting capability over the operations of cryptographic, encryption and key management policies, processes, procedures, and controls.",
-      "Name": "Encryption Monitoring and Reporting",
-      "Attributes": {
+      "id": "LOG-10",
+      "description": "Establish and maintain a monitoring and internal reporting capability over the operations of cryptographic, encryption and key management policies, processes, procedures, and controls.",
+      "name": "Encryption Monitoring and Reporting",
+      "attributes": {
         "Section": "Logging and Monitoring",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -7344,7 +7356,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "kms_cmk_rotation_enabled",
           "acm_certificates_expiration_check"
@@ -7366,10 +7378,10 @@
       }
     },
     {
-      "Id": "LOG-11",
-      "Description": "Log and monitor key lifecycle management events to enable auditing and reporting on usage of cryptographic keys.",
-      "Name": "Transaction/Activity Logging",
-      "Attributes": {
+      "id": "LOG-11",
+      "description": "Log and monitor key lifecycle management events to enable auditing and reporting on usage of cryptographic keys.",
+      "name": "Transaction/Activity Logging",
+      "attributes": {
         "Section": "Logging and Monitoring",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -7437,7 +7449,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "cloudtrail_s3_dataevents_read_enabled",
           "cloudtrail_s3_dataevents_write_enabled",
@@ -7461,10 +7473,10 @@
       }
     },
     {
-      "Id": "LOG-13",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures for the reporting of anomalies and failures of the monitoring system and provide immediate notification to the accountable party.",
-      "Name": "Failures and Anomalies Reporting",
-      "Attributes": {
+      "id": "LOG-13",
+      "description": "Define, implement and evaluate processes, procedures and technical measures for the reporting of anomalies and failures of the monitoring system and provide immediate notification to the accountable party.",
+      "name": "Failures and Anomalies Reporting",
+      "attributes": {
         "Section": "Logging and Monitoring",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -7557,7 +7569,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "guardduty_is_enabled",
           "guardduty_no_high_severity_findings",
@@ -7589,10 +7601,10 @@
       }
     },
     {
-      "Id": "SEF-03",
-      "Description": "'Establish, document, approve, communicate, apply, evaluate and maintain a security incident response plan, which includes but is not limited to: relevant internal departments, impacted CSCs, and other business critical relationships (such as supply-chain) that may be impacted.'",
-      "Name": "Incident Response Plans",
-      "Attributes": {
+      "id": "SEF-03",
+      "description": "'Establish, document, approve, communicate, apply, evaluate and maintain a security incident response plan, which includes but is not limited to: relevant internal departments, impacted CSCs, and other business critical relationships (such as supply-chain) that may be impacted.'",
+      "name": "Incident Response Plans",
+      "attributes": {
         "Section": "Security Incident Management, E-Discovery, & Cloud Forensics",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -7722,7 +7734,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "ssmincidents_enabled_with_plans"
         ],
@@ -7734,10 +7746,10 @@
       }
     },
     {
-      "Id": "SEF-06",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures supporting business processes to triage security-related events.",
-      "Name": "Event Triage Processes",
-      "Attributes": {
+      "id": "SEF-06",
+      "description": "Define, implement and evaluate processes, procedures and technical measures supporting business processes to triage security-related events.",
+      "name": "Event Triage Processes",
+      "attributes": {
         "Section": "Security Incident Management, E-Discovery, & Cloud Forensics",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -7840,7 +7852,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "guardduty_is_enabled",
           "securityhub_enabled"
@@ -7867,10 +7879,10 @@
       }
     },
     {
-      "Id": "SEF-08",
-      "Description": "Maintain points of contact for applicable regulation authorities, national and local law enforcement, and other legal jurisdictional authorities.",
-      "Name": "Points of Contact Maintenance",
-      "Attributes": {
+      "id": "SEF-08",
+      "description": "Maintain points of contact for applicable regulation authorities, national and local law enforcement, and other legal jurisdictional authorities.",
+      "name": "Points of Contact Maintenance",
+      "attributes": {
         "Section": "Security Incident Management, E-Discovery, & Cloud Forensics",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -7970,7 +7982,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "account_maintain_current_contact_details",
           "account_security_contact_information_is_registered",
@@ -7986,10 +7998,10 @@
       }
     },
     {
-      "Id": "TVM-02",
-      "Description": "Establish, document, approve, communicate, apply, evaluate and maintain policies and procedures to protect against malware on managed assets. Review and update the policies and procedures at least annually.",
-      "Name": "Malware Protection Policy and Procedures",
-      "Attributes": {
+      "id": "TVM-02",
+      "description": "Establish, document, approve, communicate, apply, evaluate and maintain policies and procedures to protect against malware on managed assets. Review and update the policies and procedures at least annually.",
+      "name": "Malware Protection Policy and Procedures",
+      "attributes": {
         "Section": "Threat & Vulnerability Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -8134,7 +8146,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "guardduty_ec2_malware_protection_enabled"
         ],
@@ -8150,10 +8162,10 @@
       }
     },
     {
-      "Id": "TVM-03",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures to enable both scheduled and emergency responses to vulnerability identifications, based on the identified risk.",
-      "Name": "Vulnerability Remediation Schedule",
-      "Attributes": {
+      "id": "TVM-03",
+      "description": "Define, implement and evaluate processes, procedures and technical measures to enable both scheduled and emergency responses to vulnerability identifications, based on the identified risk.",
+      "name": "Vulnerability Remediation Schedule",
+      "attributes": {
         "Section": "Threat & Vulnerability Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -8267,7 +8279,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "ssm_managed_compliant_patching",
           "rds_instance_minor_version_upgrade_enabled",
@@ -8294,10 +8306,10 @@
       }
     },
     {
-      "Id": "TVM-04",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures to update detection tools, threat signatures, and indicators of compromise on a weekly, or more frequent basis.",
-      "Name": "Detection Updates",
-      "Attributes": {
+      "id": "TVM-04",
+      "description": "Define, implement and evaluate processes, procedures and technical measures to update detection tools, threat signatures, and indicators of compromise on a weekly, or more frequent basis.",
+      "name": "Detection Updates",
+      "attributes": {
         "Section": "Threat & Vulnerability Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -8419,7 +8431,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "guardduty_is_enabled",
           "inspector2_is_enabled"
@@ -8448,10 +8460,10 @@
       }
     },
     {
-      "Id": "TVM-05",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures to identify updates for applications which use third party or open source libraries according to the organization's vulnerability management policy.",
-      "Name": "External Library Vulnerabilities",
-      "Attributes": {
+      "id": "TVM-05",
+      "description": "Define, implement and evaluate processes, procedures and technical measures to identify updates for applications which use third party or open source libraries according to the organization's vulnerability management policy.",
+      "name": "External Library Vulnerabilities",
+      "attributes": {
         "Section": "Threat & Vulnerability Management",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -8550,7 +8562,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "inspector2_is_enabled",
           "ecr_repositories_scan_vulnerabilities_in_latest_image",
@@ -8575,10 +8587,10 @@
       }
     },
     {
-      "Id": "TVM-07",
-      "Description": "Define, implement and evaluate processes, procedures and technical measures for the detection of vulnerabilities on organizationally managed assets at least monthly.",
-      "Name": "Vulnerability Identification",
-      "Attributes": {
+      "id": "TVM-07",
+      "description": "Define, implement and evaluate processes, procedures and technical measures for the detection of vulnerabilities on organizationally managed assets at least monthly.",
+      "name": "Vulnerability Identification",
+      "attributes": {
         "Section": "Threat & Vulnerability Management",
         "CCMLite": "Yes",
         "IaaS": "Shared",
@@ -8684,7 +8696,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "inspector2_is_enabled",
           "inspector2_active_findings_exist",
@@ -8716,10 +8728,10 @@
       }
     },
     {
-      "Id": "UEM-08",
-      "Description": "Protect information from unauthorized disclosure on managed endpoint devices with storage encryption.",
-      "Name": "Storage Encryption",
-      "Attributes": {
+      "id": "UEM-08",
+      "description": "Protect information from unauthorized disclosure on managed endpoint devices with storage encryption.",
+      "name": "Storage Encryption",
+      "attributes": {
         "Section": "Universal Endpoint Management",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -8818,7 +8830,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "ec2_ebs_volume_encryption",
           "ec2_ebs_default_encryption",
@@ -8849,10 +8861,10 @@
       }
     },
     {
-      "Id": "UEM-11",
-      "Description": "Configure managed endpoints with Data Loss Prevention (DLP) technologies and rules in accordance with a risk assessment.",
-      "Name": "Data Loss Prevention",
-      "Attributes": {
+      "id": "UEM-11",
+      "description": "Configure managed endpoints with Data Loss Prevention (DLP) technologies and rules in accordance with a risk assessment.",
+      "name": "Data Loss Prevention",
+      "attributes": {
         "Section": "Universal Endpoint Management",
         "CCMLite": "No",
         "IaaS": "Shared",
@@ -8945,7 +8957,7 @@
           }
         ]
       },
-      "Checks": {
+      "checks": {
         "aws": [
           "macie_is_enabled",
           "macie_automated_sensitive_data_discovery_enabled"
