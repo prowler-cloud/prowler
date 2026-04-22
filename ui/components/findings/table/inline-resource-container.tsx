@@ -230,6 +230,11 @@ export function InlineResourceContainer({
               className="overflow-hidden"
             >
               <div className="relative">
+                <div className="px-6 pb-2">
+                  <p className="text-text-neutral-secondary text-xs font-medium">
+                    Resources
+                  </p>
+                </div>
                 <div
                   ref={combinedScrollRef}
                   className="max-h-[440px] overflow-y-auto pl-6"

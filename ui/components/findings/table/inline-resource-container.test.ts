@@ -13,4 +13,9 @@ describe("inline resource container", () => {
     expect(source).toContain("useFindingGroupResourceState");
     expect(source).not.toContain("useInfiniteResources");
   });
+
+  it("renders a resources heading above the expanded group rows", () => {
+    expect(source).toContain("Resources");
+    expect(source).toContain("text-xs font-medium");
+  });
 });

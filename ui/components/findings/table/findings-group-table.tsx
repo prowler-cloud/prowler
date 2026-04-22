@@ -1,9 +1,14 @@
 "use client";
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 
+import {
+  adaptFindingGroupsResponse,
+  getFindingGroups,
+  getLatestFindingGroups,
+} from "@/actions/finding-groups";
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { DataTable } from "@/components/ui/table";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
@@ -44,8 +49,12 @@ export function FindingsGroupTable({
   resolvedFilters,
   hasHistoricalData,
 }: FindingsGroupTableProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const [tableData, setTableData] = useState<FindingGroupRow[]>(data ?? []);
+  const [tableMetadata, setTableMetadata] = useState<MetaDataProps | undefined>(
+    metadata,
+  );
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [expandedCheckId, setExpandedCheckId] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<FindingGroupRow | null>(
@@ -61,7 +70,7 @@ export function FindingsGroupTable({
   // State resets (selection, drill-down) are handled by the parent via
   // key={groupKey} — when data changes, the component remounts with fresh state.
 
-  const safeData = data ?? [];
+  const safeData = tableData ?? [];
   const hasResourceSelection = resourceSelection.length > 0;
   const filters = resolvedFilters;
 
@@ -131,12 +140,49 @@ export function FindingsGroupTable({
   const resolveMuteIds = async (checkIds: string[]) =>
     resolveGroupMuteIds(checkIds);
 
-  const handleMuteComplete = () => {
+  const refreshFindingGroups = async () => {
+    setIsRefreshing(true);
+
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const pageSize = parseInt(searchParams.get("pageSize") || "10", 10);
+    const sort = searchParams.get("sort") || undefined;
+    const fetchFindingGroups = hasHistoricalData
+      ? getFindingGroups
+      : getLatestFindingGroups;
+
+    try {
+      const findingGroupsData = await fetchFindingGroups({
+        page,
+        ...(sort && { sort }),
+        filters,
+        pageSize,
+      });
+
+      const nextGroups = adaptFindingGroupsResponse(findingGroupsData);
+      setTableData(nextGroups);
+      setTableMetadata(findingGroupsData?.meta);
+
+      if (expandedCheckId) {
+        const refreshedExpandedGroup =
+          nextGroups.find((group) => group.checkId === expandedCheckId) ?? null;
+
+        if (refreshedExpandedGroup) {
+          setExpandedGroup(refreshedExpandedGroup);
+        } else {
+          handleCollapse();
+        }
+      }
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleMuteComplete = async () => {
     clearSelection();
     setResourceSelection([]);
     inlineRef.current?.clearSelection();
+    await refreshFindingGroups();
     inlineRef.current?.refresh();
-    router.refresh();
   };
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
@@ -203,12 +249,13 @@ export function FindingsGroupTable({
       <DataTable
         columns={columns}
         data={safeData}
-        metadata={metadata}
+        metadata={tableMetadata}
         enableRowSelection
         rowSelection={rowSelection}
         onRowSelectionChange={setRowSelection}
         getRowCanSelect={getRowCanSelect}
         showSearch
+        isLoading={isRefreshing}
         searchPlaceholder={
           expandedCheckId ? "Search resources..." : "Search by name"
         }
