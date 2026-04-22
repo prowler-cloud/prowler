@@ -15,6 +15,7 @@ from prowler.config.config import (
     csv_file_suffix,
     get_available_compliance_frameworks,
     html_file_suffix,
+    inventory_graph_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
     orange_color,
@@ -551,6 +552,14 @@ def prowler():
                 generated_outputs["regular"].append(html_output)
                 html_output.batch_write_data_to_file(
                     provider=global_provider, stats=stats
+                )
+            if mode == "inventory-graph":
+                from prowler.lib.outputs.inventory.inventory_output import (
+                    generate_inventory_outputs,
+                )
+
+                generate_inventory_outputs(
+                    f"{filename}{inventory_graph_file_suffix}"
                 )
 
     if getattr(args, "push_to_cloud", False):
