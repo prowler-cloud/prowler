@@ -3460,6 +3460,7 @@
         }
       ],
       "Checks": [
+        "cloudtrail_bedrock_logging_enabled",
         "kinesis_stream_data_retention_period",
         "cloudtrail_multi_region_enabled_logging_management_events"
       ]
@@ -3669,6 +3670,7 @@
         "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
         "bedrock_model_invocation_logging_enabled",
         "cloudfront_distributions_logging_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_logs_s3_bucket_access_logging_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events",

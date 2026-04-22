@@ -2539,6 +2539,7 @@
         "bedrock_model_invocation_logging_enabled",
         "bedrock_model_invocation_logs_encryption_enabled",
         "cloudfront_distributions_logging_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_bucket_requires_mfa_delete",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_insights_exist",

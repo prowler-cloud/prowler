@@ -90,6 +90,7 @@
       ],
       "Checks": [
         "apigateway_restapi_logging_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -119,6 +120,7 @@
       ],
       "Checks": [
         "apigateway_restapi_logging_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",

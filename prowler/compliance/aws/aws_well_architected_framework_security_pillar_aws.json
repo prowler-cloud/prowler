@@ -550,6 +550,7 @@
         "apigatewayv2_api_access_logging_enabled",
         "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
         "cloudfront_distributions_logging_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_logs_s3_bucket_access_logging_enabled",
         "directoryservice_directory_log_forwarding_enabled",

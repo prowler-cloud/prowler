@@ -39,6 +39,7 @@
         }
       ],
       "Checks": [
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
@@ -346,6 +347,7 @@
         }
       ],
       "Checks": [
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
