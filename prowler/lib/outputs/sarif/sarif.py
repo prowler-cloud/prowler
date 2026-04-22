@@ -145,14 +145,12 @@ class SARIF(Output):
         )
         lines = [
             f"**{finding.metadata.CheckTitle}**\n",
-            f"| Severity | Remediation |",
-            f"| --- | --- |",
+            "| Severity | Remediation |",
+            "| --- | --- |",
             f"| {severity.upper()} | {remediation} |",
         ]
         if finding.metadata.RelatedUrl:
-            lines.append(
-                f"\n[More info]({finding.metadata.RelatedUrl})"
-            )
+            lines.append(f"\n[More info]({finding.metadata.RelatedUrl})")
         return "\n".join(lines)
 
     @staticmethod
