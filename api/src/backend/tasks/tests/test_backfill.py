@@ -7,8 +7,8 @@ from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
-    backfill_scan_category_summaries,
-    backfill_scan_resource_group_summaries,
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
 )
 
 from api.models import (
@@ -236,7 +236,7 @@ class TestBackfillScanCategorySummaries:
         tenant_id = scan_category_summary_fixture.tenant_id
         scan_id = scan_category_summary_fixture.scan_id
 
-        result = backfill_scan_category_summaries(str(tenant_id), str(scan_id))
+        result = aggregate_scan_category_summaries(str(tenant_id), str(scan_id))
 
         assert result == {"status": "no categories to backfill"}
         assert ScanCategorySummary.objects.filter(
@@ -253,14 +253,14 @@ class TestBackfillScanCategorySummaries:
         tenant_id = str(finding.tenant_id)
         scan_id = str(finding.scan_id)
 
-        backfill_scan_category_summaries(tenant_id, scan_id)
+        aggregate_scan_category_summaries(tenant_id, scan_id)
         first_ids = set(
             ScanCategorySummary.objects.filter(
                 tenant_id=tenant_id, scan_id=scan_id
             ).values_list("id", flat=True)
         )
 
-        backfill_scan_category_summaries(tenant_id, scan_id)
+        aggregate_scan_category_summaries(tenant_id, scan_id)
         second_ids = set(
             ScanCategorySummary.objects.filter(
                 tenant_id=tenant_id, scan_id=scan_id
@@ -272,12 +272,12 @@ class TestBackfillScanCategorySummaries:
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:
-            result = backfill_scan_category_summaries(str(scan.tenant_id), str(scan.id))
+            result = aggregate_scan_category_summaries(str(scan.tenant_id), str(scan.id))
             assert result == {"status": "scan is not completed"}
 
     def test_no_categories_to_backfill(self, scans_fixture):
         scan = scans_fixture[1]  # Failed scan with no findings
-        result = backfill_scan_category_summaries(str(scan.tenant_id), str(scan.id))
+        result = aggregate_scan_category_summaries(str(scan.tenant_id), str(scan.id))
         assert result == {"status": "no categories to backfill"}
 
     def test_successful_backfill(self, findings_with_categories_fixture):
@@ -285,7 +285,7 @@ class TestBackfillScanCategorySummaries:
         tenant_id = str(finding.tenant_id)
         scan_id = str(finding.scan_id)
 
-        result = backfill_scan_category_summaries(tenant_id, scan_id)
+        result = aggregate_scan_category_summaries(tenant_id, scan_id)
 
         # 2 categories × 1 severity = 2 rows
         assert result == {"status": "backfilled", "categories_count": 2}
@@ -355,7 +355,7 @@ class TestBackfillScanGroupSummaries:
         tenant_id = scan_resource_group_summary_fixture.tenant_id
         scan_id = scan_resource_group_summary_fixture.scan_id
 
-        result = backfill_scan_resource_group_summaries(str(tenant_id), str(scan_id))
+        result = aggregate_scan_resource_group_summaries(str(tenant_id), str(scan_id))
 
         assert result == {"status": "no resource groups to backfill"}
         assert ScanGroupSummary.objects.filter(
@@ -372,14 +372,14 @@ class TestBackfillScanGroupSummaries:
         tenant_id = str(finding.tenant_id)
         scan_id = str(finding.scan_id)
 
-        backfill_scan_resource_group_summaries(tenant_id, scan_id)
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
         first_ids = set(
             ScanGroupSummary.objects.filter(
                 tenant_id=tenant_id, scan_id=scan_id
             ).values_list("id", flat=True)
         )
 
-        backfill_scan_resource_group_summaries(tenant_id, scan_id)
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
         second_ids = set(
             ScanGroupSummary.objects.filter(
                 tenant_id=tenant_id, scan_id=scan_id
@@ -391,14 +391,14 @@ class TestBackfillScanGroupSummaries:
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:
-            result = backfill_scan_resource_group_summaries(
+            result = aggregate_scan_resource_group_summaries(
                 str(scan.tenant_id), str(scan.id)
             )
             assert result == {"status": "scan is not completed"}
 
     def test_no_resource_groups_to_backfill(self, scans_fixture):
         scan = scans_fixture[1]  # Failed scan with no findings
-        result = backfill_scan_resource_group_summaries(
+        result = aggregate_scan_resource_group_summaries(
             str(scan.tenant_id), str(scan.id)
         )
         assert result == {"status": "no resource groups to backfill"}
@@ -408,7 +408,7 @@ class TestBackfillScanGroupSummaries:
         tenant_id = str(finding.tenant_id)
         scan_id = str(finding.scan_id)
 
-        result = backfill_scan_resource_group_summaries(tenant_id, scan_id)
+        result = aggregate_scan_resource_group_summaries(tenant_id, scan_id)
 
         # 1 resource group × 1 severity = 1 row
         assert result == {"status": "backfilled", "resource_groups_count": 1}

@@ -297,7 +297,7 @@ def backfill_daily_severity_summaries(tenant_id: str, days: int = None):
     }
 
 
-def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
+def aggregate_scan_category_summaries(tenant_id: str, scan_id: str):
     """
     Backfill ScanCategorySummary for a completed scan.
 
@@ -370,7 +370,7 @@ def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
     return {"status": "backfilled", "categories_count": len(category_counts)}
 
 
-def backfill_scan_resource_group_summaries(tenant_id: str, scan_id: str):
+def aggregate_scan_resource_group_summaries(tenant_id: str, scan_id: str):
     """
     Backfill ScanGroupSummary for a completed scan.
 

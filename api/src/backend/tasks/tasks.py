@@ -20,8 +20,8 @@ from tasks.jobs.backfill import (
     backfill_finding_group_summaries,
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
-    backfill_scan_category_summaries,
-    backfill_scan_resource_group_summaries,
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
 )
 from tasks.jobs.connection import (
     check_integration_connection,
@@ -659,9 +659,9 @@ def backfill_finding_group_summaries_task(tenant_id: str, days: int = None):
     return backfill_finding_group_summaries(tenant_id=tenant_id, days=days)
 
 
-@shared_task(name="backfill-scan-category-summaries", queue="overview")
+@shared_task(name="scan-category-summaries", queue="overview")
 @handle_provider_deletion
-def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
+def aggregate_scan_category_summaries_task(tenant_id: str, scan_id: str):
     """
     Backfill ScanCategorySummary for a completed scan.
 
@@ -671,12 +671,12 @@ def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
         tenant_id (str): The tenant identifier.
         scan_id (str): The scan identifier.
     """
-    return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
+    return aggregate_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(name="backfill-scan-resource-group-summaries", queue="overview")
+@shared_task(name="scan-resource-group-summaries", queue="overview")
 @handle_provider_deletion
-def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
+def aggregate_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
     """
     Backfill ScanGroupSummary for a completed scan.
 
@@ -686,7 +686,7 @@ def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
         tenant_id (str): The tenant identifier.
         scan_id (str): The scan identifier.
     """
-    return backfill_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
+    return aggregate_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(name="backfill-provider-compliance-scores", queue="backfill")
@@ -831,10 +831,10 @@ def reaggregate_all_finding_group_summaries_task(tenant_id: str):
                     aggregate_finding_group_summaries_task.si(
                         tenant_id=tenant_id, scan_id=scan_id
                     ),
-                    backfill_scan_resource_group_summaries_task.si(
+                    aggregate_scan_resource_group_summaries_task.si(
                         tenant_id=tenant_id, scan_id=scan_id
                     ),
-                    backfill_scan_category_summaries_task.si(
+                    aggregate_scan_category_summaries_task.si(
                         tenant_id=tenant_id, scan_id=scan_id
                     ),
                     aggregate_attack_surface_task.si(
