@@ -4,9 +4,17 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.25.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- Redesign Mutelist simple rules page with target previews, a dedicated targets modal to inspect the muted findings per rule, and a refreshed create/edit mute modal aligned with the design system and sharing a 500-character reason counter [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
+
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+
+### 🐞 Fixed
+
+- Finding group resource drawer no longer forces muted findings into the "Other findings" list; muted items are only included when the `filter[muted]=include` filter is active [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
 
 ### ❌ Removed
 
