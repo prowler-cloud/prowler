@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
-import { getFindingsFilterDisplayValue } from "./findings-filters.utils";
+import {
+  buildFindingsFilterChips,
+  getFindingsFilterDisplayValue,
+} from "./findings-filters.utils";
 
 function makeProvider(
   overrides: Partial<ProviderProps> & { id: string },
@@ -98,7 +101,7 @@ describe("getFindingsFilterDisplayValue", () => {
   it("shows the resolved scan badge label for scan filters instead of formatting the raw scan id", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-1", { scans }),
-    ).toBe("Scan Account");
+    ).toBe("AWS - Nightly scan");
   });
 
   it("normalizes finding statuses for display", () => {
@@ -119,7 +122,17 @@ describe("getFindingsFilterDisplayValue", () => {
     );
   });
 
-  it("falls back to the scan provider uid when the alias is missing", () => {
+  it("formats the singular delta filter the same as delta__in", () => {
+    // The API registers the filter as `filter[delta]` (exact), not `delta__in`.
+    // Both shapes must resolve to the same human label so chips don't show
+    // the raw "new" going through formatLabel ("NEW" via the 3-letter acronym heuristic).
+    expect(getFindingsFilterDisplayValue("filter[delta]", "new")).toBe("New");
+    expect(getFindingsFilterDisplayValue("filter[delta]", "changed")).toBe(
+      "Changed",
+    );
+  });
+
+  it("uses the provider display name regardless of account alias/uid", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-2", {
         scans: [
@@ -133,7 +146,28 @@ describe("getFindingsFilterDisplayValue", () => {
           }),
         ],
       }),
-    ).toBe("210987654321");
+    ).toBe("AWS - Weekly scan");
+  });
+
+  it("returns only the provider name when the scan name is missing", () => {
+    expect(
+      getFindingsFilterDisplayValue("filter[scan__in]", "scan-3", {
+        scans: [
+          ...scans,
+          makeScanMap("scan-3", {
+            providerInfo: {
+              provider: "gcp",
+              alias: "Fallback Account",
+              uid: "333333333333",
+            },
+            attributes: {
+              name: "",
+              completed_at: "2026-04-08T10:00:00Z",
+            },
+          }),
+        ],
+      }),
+    ).toBe("Google Cloud");
   });
 
   it("keeps the raw scan value when the scan cannot be resolved", () => {
@@ -162,5 +196,87 @@ describe("getFindingsFilterDisplayValue", () => {
         {},
       ),
     ).toBe("2026-04-07");
+  });
+});
+
+describe("buildFindingsFilterChips", () => {
+  it("creates one chip per value with normalized labels", () => {
+    // Given — this is the exact pending state derived from the LinkToFindings URL:
+    // /findings?sort=...&filter[status__in]=FAIL&filter[delta]=new
+    const pendingFilters = {
+      "filter[status__in]": ["FAIL"],
+      "filter[delta]": ["new"],
+    };
+
+    // When
+    const chips = buildFindingsFilterChips(pendingFilters);
+
+    // Then — both chips must appear; the delta chip must use "Delta" as label
+    // (not the raw "filter[delta]") and "New" as displayValue (not "NEW" via
+    // the short-word acronym heuristic in formatLabel).
+    expect(chips).toEqual([
+      {
+        key: "filter[status__in]",
+        label: "Status",
+        value: "FAIL",
+        displayValue: "Fail",
+      },
+      {
+        key: "filter[delta]",
+        label: "Delta",
+        value: "new",
+        displayValue: "New",
+      },
+    ]);
+  });
+
+  it("treats filter[delta] and filter[delta__in] identically", () => {
+    // Given
+    const chipsSingular = buildFindingsFilterChips({
+      "filter[delta]": ["new", "changed"],
+    });
+    const chipsPlural = buildFindingsFilterChips({
+      "filter[delta__in]": ["new", "changed"],
+    });
+
+    // Then — both shapes produce the same human labels and display values
+    expect(
+      chipsSingular.map((c) => ({ label: c.label, v: c.displayValue })),
+    ).toEqual([
+      { label: "Delta", v: "New" },
+      { label: "Delta", v: "Changed" },
+    ]);
+    expect(
+      chipsPlural.map((c) => ({ label: c.label, v: c.displayValue })),
+    ).toEqual([
+      { label: "Delta", v: "New" },
+      { label: "Delta", v: "Changed" },
+    ]);
+  });
+
+  it("skips the silent default filter[muted]=false", () => {
+    const chips = buildFindingsFilterChips({
+      "filter[muted]": ["false"],
+      "filter[delta]": ["new"],
+    });
+
+    // Only the delta chip — the default muted=false should not surface
+    expect(chips).toHaveLength(1);
+    expect(chips[0].key).toBe("filter[delta]");
+  });
+
+  it("surfaces unmapped keys using the raw key as label (fallback)", () => {
+    const chips = buildFindingsFilterChips({
+      "filter[unknown_future_key]": ["value"],
+    });
+
+    expect(chips).toEqual([
+      {
+        key: "filter[unknown_future_key]",
+        label: "filter[unknown_future_key]",
+        value: "value",
+        displayValue: "Value",
+      },
+    ]);
   });
 });

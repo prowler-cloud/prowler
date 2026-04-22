@@ -6,7 +6,6 @@ import { useState } from "react";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
-import { CustomDatePicker } from "@/components/filters/custom-date-picker";
 import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { DataTableFilterCustom } from "@/components/ui/table";
@@ -17,6 +16,7 @@ interface ResourcesFiltersProps {
   providers: ProviderProps[];
   uniqueRegions: string[];
   uniqueServices: string[];
+  uniqueResourceTypes: string[];
   uniqueGroups: string[];
 }
 
@@ -24,6 +24,7 @@ export const ResourcesFilters = ({
   providers,
   uniqueRegions,
   uniqueServices,
+  uniqueResourceTypes,
   uniqueGroups,
 }: ResourcesFiltersProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -32,22 +33,28 @@ export const ResourcesFilters = ({
   const customFilters = [
     {
       key: "region__in",
-      labelCheckboxGroup: "Region",
+      labelCheckboxGroup: "Regions",
       values: uniqueRegions,
       index: 1,
     },
     {
       key: "service__in",
-      labelCheckboxGroup: "Service",
+      labelCheckboxGroup: "Services",
       values: uniqueServices,
       index: 2,
     },
     {
+      key: "type__in",
+      labelCheckboxGroup: "Types",
+      values: uniqueResourceTypes,
+      index: 3,
+    },
+    {
       key: "groups__in",
-      labelCheckboxGroup: "Group",
+      labelCheckboxGroup: "Groups",
       values: uniqueGroups,
       labelFormatter: getGroupLabel,
-      index: 3,
+      index: 4,
     },
   ];
 
@@ -81,11 +88,7 @@ export const ResourcesFilters = ({
       {/* Expandable filters section */}
       {hasCustomFilters && (
         <ExpandableSection isExpanded={isExpanded}>
-          <DataTableFilterCustom
-            filters={customFilters}
-            prependElement={<CustomDatePicker />}
-            hideClearButton
-          />
+          <DataTableFilterCustom filters={customFilters} hideClearButton />
         </ExpandableSection>
       )}
     </div>

@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { DataTable } from "@/components/ui/table";
-import { hasDateOrScanFilter } from "@/lib";
+import { canDrillDownFindingGroup } from "@/lib/findings-groups";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
@@ -34,11 +34,15 @@ function buildMuteLabel(groupCount: number, resourceCount: number): string {
 interface FindingsGroupTableProps {
   data: FindingGroupRow[];
   metadata?: MetaDataProps;
+  resolvedFilters: Record<string, string>;
+  hasHistoricalData: boolean;
 }
 
 export function FindingsGroupTable({
   data,
   metadata,
+  resolvedFilters,
+  hasHistoricalData,
 }: FindingsGroupTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -59,15 +63,7 @@ export function FindingsGroupTable({
 
   const safeData = data ?? [];
   const hasResourceSelection = resourceSelection.length > 0;
-  const currentParams = Object.fromEntries(searchParams.entries());
-  const hasDateOrScan = hasDateOrScanFilter(currentParams);
-
-  const filters: Record<string, string> = {};
-  searchParams.forEach((value, key) => {
-    if (key.startsWith("filter[")) {
-      filters[key] = value;
-    }
-  });
+  const filters = resolvedFilters;
 
   // Get selected group check IDs. When the expanded group has individual resource
   // selections, exclude it from group-level mute targets — the resource-level
@@ -119,7 +115,7 @@ export function FindingsGroupTable({
         resolveFindingIdsByVisibleGroupResources({
           checkId,
           filters,
-          hasDateOrScanFilter: hasDateOrScan,
+          hasDateOrScanFilter: hasHistoricalData,
           resourceSearch:
             checkId === expandedCheckId && resourceSearch
               ? resourceSearch
@@ -145,7 +141,7 @@ export function FindingsGroupTable({
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
     // No resources in the group → nothing to show, skip drill-down
-    if (group.resourcesTotal === 0) return;
+    if (!canDrillDownFindingGroup(group)) return;
 
     // Toggle: same group = collapse, different = switch
     if (expandedCheckId === checkId) {
@@ -185,6 +181,8 @@ export function FindingsGroupTable({
         ref={inlineRef}
         key={`${group.checkId}|${searchParams.toString()}|${resourceSearch}`}
         group={expandedGroup}
+        resolvedFilters={resolvedFilters}
+        hasHistoricalData={hasHistoricalData}
         resourceSearch={resourceSearch}
         columnCount={columns.length}
         onResourceSelectionChange={setResourceSelection}

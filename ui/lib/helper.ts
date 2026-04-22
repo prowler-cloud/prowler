@@ -216,6 +216,10 @@ export const downloadComplianceCsv = async (
   complianceId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
+  toast({
+    title: "Download Started",
+    description: "Preparing the CSV report. This may take a moment.",
+  });
   const result = await getComplianceCsv(scanId, complianceId);
   await downloadFile(
     result,
@@ -236,8 +240,12 @@ export const downloadComplianceReportPdf = async (
   reportType: ComplianceReportType,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
-  const result = await getCompliancePdfReport(scanId, reportType);
   const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
+  toast({
+    title: "Download Started",
+    description: `Preparing the ${reportName} PDF report. This may take a moment.`,
+  });
+  const result = await getCompliancePdfReport(scanId, reportType);
   await downloadFile(
     result,
     "application/pdf",
