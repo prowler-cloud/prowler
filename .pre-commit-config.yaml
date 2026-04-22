@@ -159,7 +159,12 @@ repos:
         files:
           {
             glob:
-              ["**/pyproject.toml", "**/poetry.lock", "**/requirements*.txt"],
+              [
+                "**/pyproject.toml",
+                "**/poetry.lock",
+                "**/requirements*.txt",
+                ".safety-policy.yml",
+              ],
           }
 
       - id: vulture

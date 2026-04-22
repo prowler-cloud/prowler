@@ -60,6 +60,7 @@ jobs:
           files: |
             api/**
             .github/workflows/api-security.yml
+            .safety-policy.yml
           files_ignore: |
             api/docs/**
             api/README.md
