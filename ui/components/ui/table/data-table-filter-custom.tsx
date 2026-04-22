@@ -15,7 +15,11 @@ import {
 } from "@/components/shadcn/select/multiselect";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { isConnectionStatus, isScanEntity } from "@/lib/helper-filters";
+import {
+  getScanEntityLabel,
+  isConnectionStatus,
+  isScanEntity,
+} from "@/lib/helper-filters";
 import { cn } from "@/lib/utils";
 import {
   FilterEntity,
@@ -84,10 +88,11 @@ export const DataTableFilterCustom = ({
     if (!entity) return value;
 
     if (isScanEntity(entity as ScanEntity)) {
-      const scanEntity = entity as ScanEntity;
-      return (
-        scanEntity.providerInfo?.alias || scanEntity.providerInfo?.uid || value
-      );
+      // Match the summary-strip chip: "Scan: {provider} - {name}". Without the
+      // "Scan:" prefix, the trigger badge would just say "AWS Prod - Nightly",
+      // which reads as a generic account tag and hides that it's a scan filter.
+      const label = getScanEntityLabel(entity as ScanEntity);
+      return label ? `Scan: ${label}` : value;
     }
     if (isConnectionStatus(entity)) {
       const connectionStatus = entity as ProviderConnectionStatus;

@@ -120,7 +120,7 @@ class TestCloudTrailTimeline:
         assert result[0]["event_name"] == "RunInstances"
 
     def test_get_resource_timeline_prefers_uid_over_id(self, mock_session):
-        """When both resource_id and resource_uid are provided, UID should be used."""
+        """When both resource_id and resource_uid are provided, UID is tried first."""
         mock_client = MagicMock()
         mock_client.lookup_events.return_value = {"Events": []}
         mock_session.client.return_value = mock_client
@@ -132,9 +132,9 @@ class TestCloudTrailTimeline:
             resource_uid="arn:aws:ec2:us-east-1:123:instance/i-1234",
         )
 
-        # Verify UID was used in the lookup
-        call_args = mock_client.lookup_events.call_args
-        lookup_attrs = call_args.kwargs["LookupAttributes"]
+        # Verify UID was used on the first lookup call
+        first_call = mock_client.lookup_events.call_args_list[0]
+        lookup_attrs = first_call.kwargs["LookupAttributes"]
         assert (
             lookup_attrs[0]["AttributeValue"]
             == "arn:aws:ec2:us-east-1:123:instance/i-1234"
@@ -606,3 +606,159 @@ class TestIsReadOnlyEvent:
         """Verify write events are not marked as read-only."""
         timeline = CloudTrailTimeline(session=mock_session)
         assert timeline._is_read_only_event(event_name) is False
+
+
+class TestExtractShortName:
+    """Tests for _extract_short_name static method."""
+
+    @pytest.mark.parametrize(
+        "identifier,expected",
+        [
+            ("arn:aws:s3:::my-bucket", "my-bucket"),
+            ("arn:aws:iam::123456789012:user/alice", "alice"),
+            ("arn:aws:iam::123456789012:role/MyRole", "MyRole"),
+            (
+                "arn:aws:ec2:us-east-1:123456789012:instance/i-0abc1234",
+                "i-0abc1234",
+            ),
+            (
+                "arn:aws:lambda:us-east-1:123456789012:function:my-func",
+                "my-func",
+            ),
+            ("arn:aws:rds:us-east-1:123456789012:db:mydb", "mydb"),
+            ("arn:aws:dynamodb:us-east-1:123456789012:table/MyTable", "MyTable"),
+            (
+                "arn:aws:kms:us-east-1:123456789012:key/abcd-efgh",
+                "abcd-efgh",
+            ),
+            ("i-0abc1234", "i-0abc1234"),
+            ("my-bucket", "my-bucket"),
+            ("", ""),
+        ],
+    )
+    def test_extract_short_name(self, identifier, expected):
+        assert CloudTrailTimeline._extract_short_name(identifier) == expected
+
+
+class TestLookupEventsFallback:
+    """Tests for the ARN-to-short-name fallback in _lookup_events."""
+
+    @pytest.fixture
+    def mock_session(self):
+        return MagicMock()
+
+    @pytest.fixture
+    def sample_event(self):
+        return {
+            "EventId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
+            "EventName": "CreateBucket",
+            "EventSource": "s3.amazonaws.com",
+            "CloudTrailEvent": json.dumps(
+                {
+                    "userIdentity": {
+                        "type": "IAMUser",
+                        "arn": "arn:aws:iam::123456789012:user/admin",
+                        "userName": "admin",
+                    }
+                }
+            ),
+        }
+
+    def test_no_fallback_when_arn_returns_events(self, mock_session, sample_event):
+        """When the ARN lookup returns events, we do not retry with the short name."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": [sample_event]}
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1",
+            resource_uid="arn:aws:kms:us-east-1:123456789012:key/abcd-efgh",
+        )
+
+        assert len(result) == 1
+        assert mock_client.lookup_events.call_count == 1
+        call = mock_client.lookup_events.call_args
+        assert (
+            call.kwargs["LookupAttributes"][0]["AttributeValue"]
+            == "arn:aws:kms:us-east-1:123456789012:key/abcd-efgh"
+        )
+
+    def test_fallback_to_short_name_when_arn_returns_empty(
+        self, mock_session, sample_event
+    ):
+        """When the ARN lookup returns nothing, we retry with the short name."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.side_effect = [
+            {"Events": []},
+            {"Events": [sample_event]},
+        ]
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1", resource_uid="arn:aws:s3:::my-bucket"
+        )
+
+        assert len(result) == 1
+        assert mock_client.lookup_events.call_count == 2
+        first_call, second_call = mock_client.lookup_events.call_args_list
+        assert (
+            first_call.kwargs["LookupAttributes"][0]["AttributeValue"]
+            == "arn:aws:s3:::my-bucket"
+        )
+        assert (
+            second_call.kwargs["LookupAttributes"][0]["AttributeValue"] == "my-bucket"
+        )
+
+    def test_no_fallback_when_identifier_has_no_short_name(self, mock_session):
+        """A non-ARN identifier collapses to itself; no retry should fire."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": []}
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1", resource_id="i-0abc1234"
+        )
+
+        assert result == []
+        assert mock_client.lookup_events.call_count == 1
+
+    def test_no_fallback_when_identifier_is_not_arn(self, mock_session):
+        """A non-ARN identifier with / or : must not trigger the retry."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": []}
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1", resource_id="some-prefix/weird:value"
+        )
+
+        assert result == []
+        assert mock_client.lookup_events.call_count == 1
+
+    def test_both_lookups_empty_returns_empty_list(self, mock_session):
+        """If both the ARN and short-name lookups return empty, we return []."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": []}
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1",
+            resource_uid="arn:aws:ec2:us-east-1:123456789012:instance/i-0abc1234",
+        )
+
+        assert result == []
+        assert mock_client.lookup_events.call_count == 2
+        first_call, second_call = mock_client.lookup_events.call_args_list
+        assert (
+            first_call.kwargs["LookupAttributes"][0]["AttributeValue"]
+            == "arn:aws:ec2:us-east-1:123456789012:instance/i-0abc1234"
+        )
+        assert (
+            second_call.kwargs["LookupAttributes"][0]["AttributeValue"] == "i-0abc1234"
+        )

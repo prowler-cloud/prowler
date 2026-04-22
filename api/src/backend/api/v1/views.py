@@ -83,6 +83,10 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api import filters as jsonapi_filters
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
@@ -169,6 +173,7 @@ from api.models import (
     FindingGroupDailySummary,
     Integration,
     Invitation,
+    InvitationRoleRelationship,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -1330,9 +1335,11 @@ class MembershipViewSet(BaseTenantViewset):
     ),
     destroy=extend_schema(
         summary="Delete tenant memberships",
-        description="Delete the membership details of users in a tenant. You need to be one of the owners to delete a "
-        "membership that is not yours. If you are the last owner of a tenant, you cannot delete your own "
-        "membership.",
+        description="Delete a user's membership from a tenant. This action: (1) removes the membership, "
+        "(2) revokes all refresh tokens for the expelled user, (3) removes their role grants for this tenant, "
+        "(4) cleans up orphaned roles, and (5) deletes the user account if this was their last membership. "
+        "You must be a tenant owner to delete another user's membership. The last owner of a tenant cannot "
+        "delete their own membership.",
         tags=["Tenant"],
     ),
 )
@@ -1341,6 +1348,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     http_method_names = ["get", "delete"]
     serializer_class = MembershipSerializer
     queryset = Membership.objects.none()
+    filterset_class = MembershipFilter
     # Authorization is handled by get_requesting_membership (owner/member checks),
     # not by RBAC, since the target tenant differs from the JWT tenant.
     required_permissions = []
@@ -1398,7 +1406,84 @@ class TenantMembersViewSet(BaseTenantViewset):
                     "You do not have permission to delete this membership."
                 )
 
-        membership_to_delete.delete()
+        user_to_check_id = membership_to_delete.user_id
+        tenant_id = membership_to_delete.tenant_id
+        # All writes run on the admin connection so that the uncommitted
+        # membership delete is visible to the subsequent "other memberships"
+        # check. Splitting the delete and the check across the default
+        # (prowler_user, RLS) and admin connections caused the admin side to
+        # miss the just-deleted row and leave the User row orphaned.
+        with transaction.atomic(using=MainRouter.admin_db):
+            Membership.objects.using(MainRouter.admin_db).filter(
+                id=membership_to_delete.id
+            ).delete()
+
+            # Remove role grants for this user in this tenant to prevent
+            # orphaned permissions that could allow access after expulsion
+            deleted_role_relationships = UserRoleRelationship.objects.using(
+                MainRouter.admin_db
+            ).filter(user_id=user_to_check_id, tenant_id=tenant_id)
+
+            # Collect role IDs that might become orphaned after deletion
+            role_ids_to_check = list(
+                deleted_role_relationships.values_list("role_id", flat=True)
+            )
+
+            # Delete the user role relationships for this tenant
+            deleted_role_relationships.delete()
+
+            # Clean up orphaned roles that have no remaining user or invitation relationships
+            if role_ids_to_check:
+                for role_id in role_ids_to_check:
+                    has_user_relationships = (
+                        UserRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(role_id=role_id)
+                        .exists()
+                    )
+
+                    has_invitation_relationships = (
+                        InvitationRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(role_id=role_id)
+                        .exists()
+                    )
+
+                    if not has_user_relationships and not has_invitation_relationships:
+                        Role.objects.using(MainRouter.admin_db).filter(
+                            id=role_id
+                        ).delete()
+
+            # Revoke any refresh tokens the expelled user still holds so they
+            # cannot mint fresh access tokens. This must happen before the
+            # User row is deleted, because OutstandingToken.user is
+            # on_delete=SET_NULL in djangorestframework-simplejwt 5.5.1
+            # (see rest_framework_simplejwt/token_blacklist/models.py): once
+            # the user row is gone, user_id becomes NULL and we can no longer
+            # look up that user's outstanding tokens. Access tokens already
+            # issued remain valid until SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]
+            # expires.
+            outstanding_token_ids = list(
+                OutstandingToken.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_to_check_id)
+                .values_list("id", flat=True)
+            )
+            if outstanding_token_ids:
+                BlacklistedToken.objects.using(MainRouter.admin_db).bulk_create(
+                    [
+                        BlacklistedToken(token_id=token_id)
+                        for token_id in outstanding_token_ids
+                    ],
+                    ignore_conflicts=True,
+                )
+
+            has_other_memberships = (
+                Membership.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_to_check_id)
+                .exists()
+            )
+            if not has_other_memberships:
+                User.objects.using(MainRouter.admin_db).filter(
+                    id=user_to_check_id
+                ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -7281,14 +7366,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
             # finding-level aggregation path.
             row.pop("nonmuted_count", None)
 
-            # Compute aggregated status from non-muted counts first, then
-            # fall back to muted counts so fully-muted groups still reflect
-            # the underlying check outcome.
-            total_fail = row.get("fail_count", 0) + row.get("fail_muted_count", 0)
-            total_pass = row.get("pass_count", 0) + row.get("pass_muted_count", 0)
-            if total_fail > 0:
+            # Muted findings are treated as resolved/accepted, so they do not
+            # contribute to a failing status. A group is FAIL only when there
+            # is at least one non-muted FAIL; otherwise any pass (muted or
+            # not) or any muted fail makes the group PASS. Only groups whose
+            # findings are exclusively MANUAL fall through to MANUAL.
+            if row.get("fail_count", 0) > 0:
                 row["status"] = "FAIL"
-            elif total_pass > 0:
+            elif (
+                row.get("pass_count", 0) > 0
+                or row.get("pass_muted_count", 0) > 0
+                or row.get("fail_muted_count", 0) > 0
+            ):
                 row["status"] = "PASS"
             else:
                 row["status"] = "MANUAL"
@@ -7388,12 +7477,11 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         if computed_params.get("status") or computed_params.getlist("status__in"):
             queryset = queryset.annotate(
-                total_fail=F("fail_count") + F("fail_muted_count"),
-                total_pass=F("pass_count") + F("pass_muted_count"),
-            ).annotate(
                 aggregated_status=Case(
-                    When(total_fail__gt=0, then=Value("FAIL")),
-                    When(total_pass__gt=0, then=Value("PASS")),
+                    When(fail_count__gt=0, then=Value("FAIL")),
+                    When(pass_count__gt=0, then=Value("PASS")),
+                    When(pass_muted_count__gt=0, then=Value("PASS")),
+                    When(fail_muted_count__gt=0, then=Value("PASS")),
                     default=Value("MANUAL"),
                     output_field=CharField(),
                 )
@@ -7413,6 +7501,25 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         return filterset.qs
 
+    def _resolve_finding_ids(self, filtered_queryset):
+        """
+        Materialize and request-cache the finding_ids list used to anchor
+        RFM lookups.
+
+        Turning `finding_id__in=Subquery(findings_qs)` into `finding_id__in=
+        [uuid, ...]` nudges PostgreSQL out of a Merge Semi Join that ends up
+        reading hundreds of thousands of RFM index entries just to post-
+        filter tenant_id. Caching on the ViewSet instance (one instance per
+        request) avoids duplicating the findings round-trip when several
+        helpers build different RFM querysets from the same filtered set.
+        """
+        cached = getattr(self, "_finding_ids_cache", None)
+        if cached is not None and cached[0] is filtered_queryset:
+            return cached[1]
+        finding_ids = list(filtered_queryset.order_by().values_list("id", flat=True))
+        self._finding_ids_cache = (filtered_queryset, finding_ids)
+        return finding_ids
+
     def _build_resource_mapping_queryset(
         self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
     ):
@@ -7422,10 +7529,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
         Starting from ResourceFindingMapping avoids scanning all mappings
         before applying check_id/date filters on findings.
         """
-        finding_ids = filtered_queryset.order_by().values("id")
+        finding_ids = self._resolve_finding_ids(filtered_queryset)
 
         mapping_queryset = ResourceFindingMapping.objects.filter(
-            finding_id__in=Subquery(finding_ids)
+            finding_id__in=finding_ids
         )
         if tenant_id:
             mapping_queryset = mapping_queryset.filter(tenant_id=tenant_id)
@@ -7779,12 +7886,11 @@ class FindingGroupViewSet(BaseRLSViewSet):
             if ordering:
                 if any(field.lstrip("-") == "status_order" for field in ordering):
                     aggregated_queryset = aggregated_queryset.annotate(
-                        total_fail_for_sort=F("fail_count") + F("fail_muted_count"),
-                        total_pass_for_sort=F("pass_count") + F("pass_muted_count"),
-                    ).annotate(
                         status_order=Case(
-                            When(total_fail_for_sort__gt=0, then=Value(3)),
-                            When(total_pass_for_sort__gt=0, then=Value(2)),
+                            When(fail_count__gt=0, then=Value(3)),
+                            When(pass_count__gt=0, then=Value(2)),
+                            When(pass_muted_count__gt=0, then=Value(2)),
+                            When(fail_muted_count__gt=0, then=Value(2)),
                             default=Value(1),
                             output_field=IntegerField(),
                         )
@@ -7845,23 +7951,24 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 request, filtered_queryset, resource_ids, tenant_id, ordering
             )
 
-        has_mappings = self._build_resource_mapping_queryset(
-            filtered_queryset, resource_ids=None, tenant_id=tenant_id
-        ).exists()
+        # Serve the mapping response directly and piggyback on the paginator
+        # count to detect orphan-only groups, instead of paying a separate
+        # has_mappings.exists() semi-join over ResourceFindingMapping on
+        # every non-IaC request. TODO: once the ephemeral resources strategy
+        # is decided, mixed groups should route to _combined_paginated_response.
+        response = self._mapping_paginated_response(
+            request, filtered_queryset, resource_ids, tenant_id, ordering
+        )
 
-        if has_mappings:
-            # Normal or mixed group: serve only resource-mapped rows.
-            # TODO: Orphan findings in mixed groups are intentionally excluded
-            # until the ephemeral resources strategy is decided. When resolved,
-            # route mixed groups to _combined_paginated_response instead.
-            return self._mapping_paginated_response(
-                request, filtered_queryset, resource_ids, tenant_id, ordering
+        page = getattr(self.paginator, "page", None)
+        mapping_total = page.paginator.count if page is not None else None
+        if mapping_total == 0:
+            # Pure orphan group (e.g. IaC): synthesize resource-like rows.
+            return self._combined_paginated_response(
+                request, filtered_queryset, tenant_id, ordering
             )
 
-        # Pure orphan group (e.g. IaC): synthesize resource-like rows.
-        return self._combined_paginated_response(
-            request, filtered_queryset, tenant_id, ordering
-        )
+        return response
 
     def _mapping_paginated_response(
         self, request, filtered_queryset, resource_ids, tenant_id, ordering
@@ -8145,10 +8252,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
         tenant_id = request.tenant_id
         queryset = self._get_finding_queryset()
 
-        # Get latest completed scan for each provider
+        # Order by -completed_at (matching the /latest summary path and the
+        # daily summary upsert keyed on midnight(completed_at)) so that
+        # overlapping scans do not make /resources and /latest read from
+        # different scans and report diverging counts.
         latest_scan_ids = (
             Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
+            .order_by("provider_id", "-completed_at", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
