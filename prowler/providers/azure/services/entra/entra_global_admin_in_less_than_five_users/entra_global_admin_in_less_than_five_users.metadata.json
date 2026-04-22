@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "microsoft.aadiam/tenants",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "**Microsoft Entra Global Administrator** assignments are evaluated by counting current role members per tenant and identifying when the number of assignees is `5` or more.",
   "Risk": "Having **5+ Global Administrators** expands the privileged attack surface. Compromised credentials or tokens can enable tenant-wide changes, disable security controls, exfiltrate data, and create persistence, impacting **confidentiality**, **integrity**, and **availability** across Entra, Microsoft 365, and Azure.",
@@ -29,7 +29,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "e3"
   ],
   "DependsOn": [],
   "RelatedTo": [],

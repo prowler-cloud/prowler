@@ -45,8 +45,16 @@ SAMPLE_UNKNOWN_SEVERITY_FINDING = {
     "Description": "An issue with unknown severity.",
 }
 
+# Sample image SHA for testing (first 12 chars of a sha256 digest)
+SAMPLE_IMAGE_SHA = "c1aabb73d233"
+SAMPLE_IMAGE_ID = f"sha256:{SAMPLE_IMAGE_SHA}abcdef1234567890"
+
 # Full Trivy JSON output structure with a single vulnerability
 SAMPLE_TRIVY_IMAGE_OUTPUT = {
+    "Metadata": {
+        "ImageID": SAMPLE_IMAGE_ID,
+        "RepoDigests": [f"alpine@sha256:{SAMPLE_IMAGE_SHA}abcdef1234567890"],
+    },
     "Results": [
         {
             "Target": "alpine:3.18 (alpine 3.18.0)",
@@ -55,11 +63,15 @@ SAMPLE_TRIVY_IMAGE_OUTPUT = {
             "Secrets": [],
             "Misconfigurations": [],
         }
-    ]
+    ],
 }
 
 # Full Trivy JSON output with mixed finding types
 SAMPLE_TRIVY_MULTI_TYPE_OUTPUT = {
+    "Metadata": {
+        "ImageID": SAMPLE_IMAGE_ID,
+        "RepoDigests": [f"myimage@sha256:{SAMPLE_IMAGE_SHA}abcdef1234567890"],
+    },
     "Results": [
         {
             "Target": "myimage:latest (debian 12)",
@@ -68,7 +80,36 @@ SAMPLE_TRIVY_MULTI_TYPE_OUTPUT = {
             "Secrets": [SAMPLE_SECRET_FINDING],
             "Misconfigurations": [SAMPLE_MISCONFIGURATION_FINDING],
         }
-    ]
+    ],
+}
+
+# Trivy output with only RepoDigests (no ImageID) for fallback testing
+SAMPLE_TRIVY_REPO_DIGEST_ONLY_OUTPUT = {
+    "Metadata": {
+        "RepoDigests": ["alpine@sha256:e5f6g7h8i9j0abcdef1234567890"],
+    },
+    "Results": [
+        {
+            "Target": "alpine:3.18 (alpine 3.18.0)",
+            "Type": "alpine",
+            "Vulnerabilities": [SAMPLE_VULNERABILITY_FINDING],
+            "Secrets": [],
+            "Misconfigurations": [],
+        }
+    ],
+}
+
+# Trivy output with no Metadata at all
+SAMPLE_TRIVY_NO_METADATA_OUTPUT = {
+    "Results": [
+        {
+            "Target": "alpine:3.18 (alpine 3.18.0)",
+            "Type": "alpine",
+            "Vulnerabilities": [SAMPLE_VULNERABILITY_FINDING],
+            "Secrets": [],
+            "Misconfigurations": [],
+        }
+    ],
 }
 
 
@@ -90,3 +131,13 @@ def get_invalid_trivy_output():
 def get_multi_type_trivy_output():
     """Return Trivy output with multiple finding types as string."""
     return json.dumps(SAMPLE_TRIVY_MULTI_TYPE_OUTPUT)
+
+
+def get_repo_digest_only_trivy_output():
+    """Return Trivy output with only RepoDigests (no ImageID) as string."""
+    return json.dumps(SAMPLE_TRIVY_REPO_DIGEST_ONLY_OUTPUT)
+
+
+def get_no_metadata_trivy_output():
+    """Return Trivy output with no Metadata as string."""
+    return json.dumps(SAMPLE_TRIVY_NO_METADATA_OUTPUT)

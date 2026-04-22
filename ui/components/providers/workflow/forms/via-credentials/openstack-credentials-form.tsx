@@ -1,6 +1,9 @@
 import { Control } from "react-hook-form";
 
-import { CustomInput, CustomTextarea } from "@/components/ui/custom";
+import {
+  WizardInputField,
+  WizardTextareaField,
+} from "@/components/providers/workflow/forms/fields";
 import { OpenStackCredentials } from "@/types";
 
 export const OpenStackCredentialsForm = ({
@@ -18,7 +21,7 @@ export const OpenStackCredentialsForm = ({
           Please provide your OpenStack clouds.yaml content and the cloud name.
         </div>
       </div>
-      <CustomTextarea
+      <WizardTextareaField
         control={control}
         name="clouds_yaml_content"
         label="Clouds YAML Content"
@@ -28,7 +31,7 @@ export const OpenStackCredentialsForm = ({
         minRows={10}
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="clouds_yaml_cloud"
         type="text"

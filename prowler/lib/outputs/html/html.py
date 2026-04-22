@@ -9,6 +9,7 @@ from prowler.config.config import (
     square_logo_img,
     timestamp,
 )
+from prowler.lib.cli.redact import redact_argv
 from prowler.lib.logger import logger
 from prowler.lib.outputs.output import Finding, Output
 from prowler.lib.outputs.utils import parse_html_string, unroll_dict
@@ -196,7 +197,7 @@ class HTML(Output):
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(sys.argv[1:]) if from_cli else ""}
+                <b>Parameters used:</b> {redact_argv(sys.argv[1:]) if from_cli else ""}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}
@@ -931,6 +932,56 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_image_assessment_summary(provider: Provider) -> str:
+        """
+        get_image_assessment_summary gets the HTML assessment summary for the Image provider
+
+        Args:
+            provider (Provider): the Image provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            if provider.registry:
+                target_info = f"<b>Registry URL:</b> {provider.registry}"
+            else:
+                target_info = f'<b>Images:</b> {", ".join(provider.images)}'
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                {target_info}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Image authentication method:</b> {provider.auth_method}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_llm_assessment_summary(provider: Provider) -> str:
         """
         get_llm_assessment_summary gets the HTML assessment summary for the LLM provider
@@ -1223,6 +1274,120 @@ class HTML(Output):
                                 <b>Username:</b> {username}
                             </li>
                             {user_id_item}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_googleworkspace_assessment_summary(provider: Provider) -> str:
+        """
+        get_googleworkspace_assessment_summary gets the HTML assessment summary for the Google Workspace provider
+
+        Args:
+            provider (Provider): the Google Workspace provider object
+
+        Returns:
+            str: HTML assessment summary for the Google Workspace provider
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Google Workspace Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Domain:</b> {provider.identity.domain}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Customer ID:</b> {provider.identity.customer_id}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Google Workspace Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Delegated User:</b> {provider.identity.delegated_user}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Authentication Method:</b> Service Account with Domain-Wide Delegation
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_vercel_assessment_summary(provider: Provider) -> str:
+        """
+        get_vercel_assessment_summary gets the HTML assessment summary for the Vercel provider
+
+        Args:
+            provider (Provider): the Vercel provider object
+
+        Returns:
+            str: HTML assessment summary for the Vercel provider
+        """
+        try:
+            assessment_items = ""
+
+            team = getattr(provider.identity, "team", None)
+            if team:
+                assessment_items += f"""
+                            <li class="list-group-item">
+                                <b>Team:</b> {team.name} ({team.id})
+                            </li>"""
+
+            credentials_items = """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+
+            email = getattr(provider.identity, "email", None)
+            if email:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>"""
+
+            username = getattr(provider.identity, "username", None)
+            if username:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Username:</b> {username}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Vercel Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Vercel Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
                         </ul>
                     </div>
                 </div>"""

@@ -134,6 +134,18 @@ Track the progress of your scan in the `Scans` section:
 <img src="/images/scan-progress.png" alt="Scan Progress" width="700" />
 
 
+<Note>
+**How Dashboards Display Scan Data**
+
+Each dashboard handles scan data differently:
+
+* **Overview** displays aggregated metrics from the **latest completed scan per provider** only.
+* **Findings** displays results from the **latest completed scan per provider** by default. To access historical findings, apply a date or scan filter.
+* **Resources** lists **all discovered resources across all scans**. However, when selecting a resource, the Findings tab within the resource detail shows only findings from the **latest completed scan**. If the latest scan did not evaluate a particular resource, its Findings tab may appear empty.
+
+When a new scan completes or a new data ingestion is processed, the dashboards automatically reflect the updated results.
+</Note>
+
 ## **Step 8: Analyze the Findings**
 
 While the scan is running, start exploring the findings in these sections:

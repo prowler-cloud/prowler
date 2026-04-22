@@ -12,6 +12,24 @@
     "dark": "/images/prowler-logo-white.png",
     "light": "/images/prowler-logo-black.png"
   },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      {
+        "title": "Request a feature",
+        "description": "Open a feature request on GitHub",
+        "icon": "plus",
+        "href": "https://github.com/prowler-cloud/prowler/issues/new?template=feature-request.yml"
+      },
+      {
+        "title": "Report an issue",
+        "description": "Open a bug report on GitHub",
+        "icon": "bug",
+        "href": "https://github.com/prowler-cloud/prowler/issues/new?template=bug_report.yml"
+      }
+    ]
+  },
   "navigation": {
     "tabs": [
       {
@@ -98,7 +116,9 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
+              "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-import-findings",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -117,17 +137,27 @@
                 ]
               },
               {
+                "group": "AWS Organizations",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-cloud-aws-organizations"
+                ]
+              },
+              {
                 "group": "Lighthouse AI",
                 "pages": [
                   "user-guide/tutorials/prowler-app-lighthouse",
                   "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
                 ]
               },
+              "user-guide/tutorials/prowler-app-attack-paths",
+              "user-guide/tutorials/prowler-app-finding-groups",
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
+                  "user-guide/tutorials/prowler-app-sso-google-workspace",
                   "user-guide/tutorials/bulk-provider-provisioning",
                   "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
@@ -228,6 +258,13 @@
                 ]
               },
               {
+                "group": "Google Workspace",
+                "pages": [
+                  "user-guide/providers/googleworkspace/getting-started-googleworkspace",
+                  "user-guide/providers/googleworkspace/authentication"
+                ]
+              },
+              {
                 "group": "GitHub",
                 "pages": [
                   "user-guide/providers/github/getting-started-github",
@@ -258,7 +295,8 @@
               {
                 "group": "Image",
                 "pages": [
-                  "user-guide/providers/image/getting-started-image"
+                  "user-guide/providers/image/getting-started-image",
+                  "user-guide/providers/image/authentication"
                 ]
               },
               {
@@ -280,6 +318,13 @@
                   "user-guide/providers/openstack/getting-started-openstack",
                   "user-guide/providers/openstack/authentication"
                 ]
+              },
+              {
+                "group": "Vercel",
+                "pages": [
+                  "user-guide/providers/vercel/getting-started-vercel",
+                  "user-guide/providers/vercel/authentication"
+                ]
               }
             ]
           },
@@ -287,6 +332,13 @@
             "group": "Compliance",
             "pages": [
               "user-guide/compliance/tutorials/threatscore"
+            ]
+          },
+          {
+            "group": "Cookbooks",
+            "pages": [
+              "user-guide/cookbooks/kubernetes-in-cluster",
+              "user-guide/cookbooks/cicd-pipeline"
             ]
           }
         ]

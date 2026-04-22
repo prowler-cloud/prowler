@@ -2,7 +2,7 @@
 title: 'Getting Started With GCP on Prowler'
 ---
 
-## Prowler App
+## Prowler Cloud
 
 ### Step 1: Get the GCP Project ID
 
@@ -11,7 +11,7 @@ title: 'Getting Started With GCP on Prowler'
 
 ![Get the Project ID](/images/providers/project-id-console.png)
 
-### Step 2: Access Prowler Cloud or Prowler App
+### Step 2: Access Prowler Cloud
 
 1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
 2. Go to "Configuration" > "Cloud Providers"
@@ -135,3 +135,16 @@ prowler gcp --impersonate-service-account <service-account-email>
 ```
 
 More details on authentication methods in the [Authentication](/user-guide/providers/gcp/authentication) page.
+
+### Skip API Check
+
+By default, Prowler verifies which Google Cloud APIs are enabled before running checks for each service. To skip this verification and assume all APIs are active, use the `--skip-api-check` flag:
+
+```console
+prowler gcp --skip-api-check
+```
+
+<Note>
+This is useful when the authenticated principal lacks the `serviceusage.services.list` permission but has access to individual service APIs.
+
+</Note>

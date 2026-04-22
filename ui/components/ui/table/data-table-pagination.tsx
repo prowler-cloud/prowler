@@ -191,7 +191,7 @@ export function DataTablePagination({
 
           {/* Page info and navigation */}
           <div className="flex items-center gap-3">
-            <span className="text-text-neutral-secondary text-xs font-medium">
+            <span className="text-text-neutral-secondary hidden text-xs font-medium sm:inline">
               Page {currentPage} of {totalPages}
             </span>
             <div className="flex items-center gap-3">

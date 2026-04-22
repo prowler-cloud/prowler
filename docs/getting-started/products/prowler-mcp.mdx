@@ -24,6 +24,7 @@ Full access to Prowler Cloud platform and self-managed Prowler App for:
 - **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments
 - **Resource Inventory**: Search and view detailed information about your audited resources
 - **Muting Management**: Create and manage muting lists/rules to suppress non-relevant findings
+- **Attack Paths Analysis**: Analyze privilege escalation chains and security misconfigurations through graph-based analysis of cloud resource relationships
 
 ### 2. Prowler Hub
 
@@ -45,8 +46,7 @@ Search and retrieve official Prowler documentation:
 
 The following diagram illustrates the Prowler MCP Server architecture and its integration points:
 
-<img className="block dark:hidden" src="/images/prowler_mcp_schema_light.png" alt="Prowler MCP Server Schema" />
-<img className="hidden dark:block" src="/images/prowler_mcp_schema_dark.png" alt="Prowler MCP Server Schema" />
+![Prowler MCP Server Schema](/images/prowler_mcp_schema.png)
 
 The architecture shows how AI assistants connect through the MCP protocol to access Prowler's three main components:
 - Prowler Cloud/App for security operations
@@ -61,6 +61,7 @@ The Prowler MCP Server enables powerful workflows through AI assistants:
 - "Show me all critical findings from my AWS production accounts"
 - "Register my new AWS account in Prowler and run a scheduled scan every day"
 - "List all muted findings and detect what findgings are muted by a not enough good reason in relation to their severity"
+- "Run an attack paths query to find EC2 instances exposed to the Internet with access to sensitive S3 buckets"
 
 **Security Research**
 - "Explain what the S3 bucket public access Prowler check does"

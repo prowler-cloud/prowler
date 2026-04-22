@@ -10,7 +10,7 @@
   "ResourceType": "MetricFilter",
   "ResourceGroup": "monitoring",
   "Description": "Log metric filters and alerts for **Compute Engine configuration changes** provide visibility into modifications to instances, disks, networks, firewalls, and routes. These monitoring controls enable security teams to detect unauthorized changes and investigate suspicious infrastructure modifications.",
-  "Risk": "Without monitoring for Compute Engine configuration changes, **unauthorized modifications** to compute resources may go undetected. Attackers can establish **persistence** through instance modifications, escalate privileges via IAM policy changes, disable security controls, or pivot to other resources. This compromises **confidentiality**, **integrity**, and **availability** of workloads and may enable **data exfiltration** or **lateral movement**.",
+  "Risk": "Without monitoring for Compute Engine configuration changes, **unauthorized modifications** may go undetected. Attackers can establish **persistence**, escalate privileges, disable security controls, or pivot to other resources, compromising **confidentiality**, **integrity**, and **availability** of workloads.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/ComputeEngine/gcp-compute-engine-configuration-changes.html",

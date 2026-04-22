@@ -9,10 +9,12 @@ import { RadioGroupAlibabaCloudViaCredentialsTypeForm } from "./radio-group-alib
 
 interface SelectViaAlibabaCloudProps {
   initialVia?: string;
+  onViaChange?: (via: string) => void;
 }
 
 export const SelectViaAlibabaCloud = ({
   initialVia,
+  onViaChange,
 }: SelectViaAlibabaCloudProps) => {
   const router = useRouter();
   const form = useForm({
@@ -22,6 +24,11 @@ export const SelectViaAlibabaCloud = ({
   });
 
   const handleSelectionChange = (value: string) => {
+    if (onViaChange) {
+      onViaChange(value);
+      return;
+    }
+
     const url = new URL(window.location.href);
     url.searchParams.set("via", value);
     router.push(url.toString());

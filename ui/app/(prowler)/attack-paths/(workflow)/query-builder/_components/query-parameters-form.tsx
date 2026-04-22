@@ -1,8 +1,22 @@
 "use client";
 
-import { Controller, useFormContext } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 
-import type { AttackPathQuery } from "@/types/attack-paths";
+import { Input, Textarea } from "@/components/shadcn";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { cn } from "@/lib/utils";
+import {
+  type AttackPathQuery,
+  QUERY_PARAMETER_INPUT_TYPES,
+} from "@/types/attack-paths";
+
+import { QueryCodeEditor } from "./query-code-editor";
 
 interface QueryParametersFormProps {
   selectedQuery: AttackPathQuery | null | undefined;
@@ -15,20 +29,10 @@ interface QueryParametersFormProps {
 export const QueryParametersForm = ({
   selectedQuery,
 }: QueryParametersFormProps) => {
-  const {
-    control,
-    formState: { errors },
-  } = useFormContext();
+  const { control } = useFormContext();
 
   if (!selectedQuery || !selectedQuery.attributes.parameters.length) {
-    return (
-      <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-950/20">
-        <p className="text-sm text-blue-700 dark:text-blue-300">
-          This query requires no parameters. Click &quot;Execute Query&quot; to
-          proceed.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -37,86 +41,114 @@ export const QueryParametersForm = ({
         Query Parameters
       </h3>
 
-      {selectedQuery.attributes.parameters.map((param) => (
-        <Controller
-          key={param.name}
-          name={param.name}
-          control={control}
-          render={({ field }) => {
-            if (param.data_type === "boolean") {
-              return (
-                <div className="flex flex-col gap-2">
-                  <label className="flex cursor-pointer items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id={param.name}
-                      checked={field.value === true || field.value === "true"}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      aria-label={param.label}
-                      className="border-border-neutral-secondary bg-bg-neutral-primary text-text-primary focus:ring-primary dark:border-border-neutral-secondary dark:bg-bg-neutral-primary dark:text-text-primary h-4 w-4 rounded border focus:ring-2"
-                    />
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {param.label}
-                      </span>
-                      {param.description && (
-                        <span className="text-xs text-gray-600 dark:text-gray-400">
-                          {param.description}
+      <div
+        data-testid="query-parameters-grid"
+        className="grid grid-cols-1 gap-4 md:grid-cols-2"
+      >
+        {selectedQuery.attributes.parameters.map((param) => (
+          <FormField
+            key={param.name}
+            name={param.name}
+            control={control}
+            render={({ field, fieldState }) => {
+              if (param.data_type === "boolean") {
+                return (
+                  <FormItem className="flex flex-col gap-2">
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={
+                            field.value === true || field.value === "true"
+                          }
+                          onChange={(e) => field.onChange(e.target.checked)}
+                          aria-label={param.label}
+                          className="border-border-neutral-secondary bg-bg-neutral-primary text-text-primary focus:ring-primary dark:border-border-neutral-secondary dark:bg-bg-neutral-primary dark:text-text-primary h-4 w-4 rounded border focus:ring-2"
+                        />
+                      </FormControl>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {param.label}
                         </span>
-                      )}
-                    </div>
-                  </label>
-                </div>
-              );
-            }
-
-            const errorMessage = (() => {
-              const error = errors[param.name];
-              if (error && typeof error.message === "string") {
-                return error.message;
+                        {param.description && (
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {param.description}
+                          </span>
+                        )}
+                      </div>
+                    </label>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                );
               }
-              return undefined;
-            })();
 
-            const descriptionId = `${param.name}-description`;
-            return (
-              <div className="flex flex-col gap-2">
-                <label
-                  htmlFor={param.name}
-                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
+              const placeholder =
+                param.description ||
+                param.placeholder ||
+                `Enter ${param.label.toLowerCase()}`;
+
+              const isTextarea =
+                param.input_type === QUERY_PARAMETER_INPUT_TYPES.TEXTAREA;
+              const isCodeEditor =
+                param.input_type === QUERY_PARAMETER_INPUT_TYPES.CODE_EDITOR;
+
+              return (
+                <FormItem
+                  className={cn(
+                    "flex flex-col gap-1.5",
+                    (isTextarea || isCodeEditor) && "md:col-span-2",
+                  )}
                 >
-                  {param.label}
-                  {param.required && <span className="text-red-500"> *</span>}
-                </label>
-                <input
-                  {...field}
-                  id={param.name}
-                  type={param.data_type === "number" ? "number" : "text"}
-                  placeholder={
-                    param.placeholder || `Enter ${param.label.toLowerCase()}`
-                  }
-                  value={field.value ?? ""}
-                  aria-describedby={
-                    param.description ? descriptionId : undefined
-                  }
-                  className="border-border-neutral-secondary bg-bg-neutral-primary text-text-neutral-primary placeholder-text-neutral-secondary focus:border-border-primary focus:ring-primary dark:border-border-neutral-secondary dark:bg-bg-neutral-primary dark:text-text-neutral-primary dark:placeholder-text-neutral-secondary dark:focus:border-border-primary rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
-                />
-                {param.description && (
-                  <span
-                    id={descriptionId}
-                    className="text-xs text-gray-600 dark:text-gray-400"
-                  >
-                    {param.description}
-                  </span>
-                )}
-                {errorMessage && (
-                  <span className="text-xs text-red-500">{errorMessage}</span>
-                )}
-              </div>
-            );
-          }}
-        />
-      ))}
+                  {!isCodeEditor && (
+                    <FormLabel className="text-text-neutral-tertiary text-xs font-medium">
+                      {param.label}
+                      {param.required && (
+                        <span className="text-text-error-primary">*</span>
+                      )}
+                    </FormLabel>
+                  )}
+                  {isCodeEditor ? (
+                    <FormControl>
+                      <QueryCodeEditor
+                        ariaLabel={param.label}
+                        language={param.editor_language}
+                        value={String(field.value ?? "")}
+                        placeholder={placeholder}
+                        invalid={fieldState.invalid}
+                        requirementBadge={param.requirement_badge}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                      />
+                    </FormControl>
+                  ) : (
+                    <FormControl>
+                      {isTextarea ? (
+                        <Textarea
+                          {...field}
+                          textareaSize="lg"
+                          placeholder={placeholder}
+                          value={field.value ?? ""}
+                          className="min-h-40 font-mono text-xs"
+                        />
+                      ) : (
+                        <Input
+                          {...field}
+                          type={
+                            param.data_type === "number" ? "number" : "text"
+                          }
+                          placeholder={placeholder}
+                          value={field.value ?? ""}
+                        />
+                      )}
+                    </FormControl>
+                  )}
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              );
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 };

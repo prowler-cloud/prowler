@@ -118,6 +118,15 @@ Fine-Grained Personal Access Tokens are ideal for:
 
 **Create a Fine-Grained Token:**
 
+<Tip>
+**Quick Setup:** Use these pre-configured links to create a token with the required permissions already selected:
+
+- [Create token for user repositories](https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read) — scans personal repositories
+- [Create token for organization scanning](https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+organization+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read&organization_administration=read&members=read) — scans organization repositories and settings
+
+For organization scanning, change the **Resource Owner** to the target organization after the page loads. Organization permissions only appear when an organization is selected.
+</Tip>
+
 1. Navigate to **GitHub Settings** > **Developer settings**.
 
 2. Click **Personal access tokens** > **Fine-grained tokens** > **Generate new token**.

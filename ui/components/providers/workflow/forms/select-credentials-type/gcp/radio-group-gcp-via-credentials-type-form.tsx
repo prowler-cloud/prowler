@@ -1,13 +1,12 @@
 "use client";
 
-import { RadioGroup } from "@heroui/radio";
-import React from "react";
 import { Control, Controller } from "react-hook-form";
 
-import { CustomRadio } from "@/components/ui/custom";
+import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 import { FormMessage } from "@/components/ui/form";
 
-type RadioGroupAWSViaCredentialsFormProps = {
+type RadioGroupGCPViaCredentialsFormProps = {
   control: Control<any>;
   isInvalid: boolean;
   errorMessage?: string;
@@ -19,7 +18,7 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
   isInvalid,
   errorMessage,
   onChange,
-}: RadioGroupAWSViaCredentialsFormProps) => {
+}: RadioGroupGCPViaCredentialsFormProps) => {
   return (
     <Controller
       name="gcpCredentialsType"
@@ -27,46 +26,28 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
       render={({ field }) => (
         <>
           <RadioGroup
-            className="flex flex-wrap"
-            isInvalid={isInvalid}
-            {...field}
+            name={field.name}
             value={field.value || ""}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               field.onChange(value);
-              if (onChange) {
-                onChange(value);
-              }
+              onChange?.(value);
             }}
           >
-            <div className="flex flex-col gap-4">
-              <span className="text-default-500 text-sm">
-                Using Service Account
-              </span>
-              <CustomRadio
-                description="Connect using Service Account"
-                value="service-account"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">Connect via Service Account Key</span>
-                </div>
-              </CustomRadio>
-              <span className="text-default-500 text-sm">
-                Using Application Default Credentials
-              </span>
-              <CustomRadio
-                description="Connect via Credentials"
-                value="credentials"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">
-                    Connect via Application Default Credentials
-                  </span>
-                </div>
-              </CustomRadio>
-            </div>
+            <span className="text-default-500 text-sm">
+              Using Service Account
+            </span>
+            <WizardRadioCard value="service-account" isInvalid={isInvalid}>
+              Connect via Service Account Key
+            </WizardRadioCard>
+            <span className="text-default-500 text-sm">
+              Using Application Default Credentials
+            </span>
+            <WizardRadioCard value="credentials" isInvalid={isInvalid}>
+              Connect via Application Default Credentials
+            </WizardRadioCard>
           </RadioGroup>
           {errorMessage && (
-            <FormMessage className="text-text-error">
+            <FormMessage className="text-text-error-primary">
               {errorMessage}
             </FormMessage>
           )}

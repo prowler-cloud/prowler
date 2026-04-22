@@ -19,22 +19,22 @@ def get_universal_table(
     """Render a compliance console table driven by TableConfig.
 
     Supports 3 modes:
-    - Grouped: GroupBy only (generic, C5, CSA, ISO, KISA)
-    - Split: GroupBy + SplitBy (CIS Level 1/2, ENS alto/medio/bajo/opcional)
-    - Scored: GroupBy + Scoring (ThreatScore weighted risk %)
+    - Grouped: group_by only (generic, C5, CSA, ISO, KISA)
+    - Split: group_by + split_by (CIS Level 1/2, ENS alto/medio/bajo/opcional)
+    - Scored: group_by + scoring (ThreatScore weighted risk %)
 
-    When ``provider`` is given and ``Checks`` is a multi-provider dict,
+    When ``provider`` is given and ``checks`` is a multi-provider dict,
     only the checks for that provider are matched against findings.
     """
-    if framework is None or not framework.Outputs or not framework.Outputs.Table_Config:
+    if framework is None or not framework.outputs or not framework.outputs.table_config:
         return
 
-    tc = framework.Outputs.Table_Config
-    labels = tc.Labels or _default_labels()
+    tc = framework.outputs.table_config
+    labels = tc.labels or _default_labels()
 
-    group_by = tc.GroupBy
-    split_by = tc.SplitBy
-    scoring = tc.Scoring
+    group_by = tc.group_by
+    split_by = tc.split_by
+    scoring = tc.scoring
 
     if scoring:
         _render_scored(
@@ -92,21 +92,17 @@ def _default_labels():
 def _build_requirement_check_map(framework, provider=None):
     """Build a map of check_id -> list of requirements for fast lookup.
 
-    When *provider* is given and a requirement's ``Checks`` is a dict keyed
-    by provider, only the checks for that provider are included.
+    When *provider* is given, only the checks for that provider are included.
     """
     check_map = {}
-    for req in framework.Requirements:
-        checks = req.Checks
-        if isinstance(checks, dict):
-            if provider:
-                all_checks = checks.get(provider.lower(), [])
-            else:
-                all_checks = []
-                for check_list in checks.values():
-                    all_checks.extend(check_list)
+    for req in framework.requirements:
+        checks = req.checks
+        if provider:
+            all_checks = checks.get(provider.lower(), [])
         else:
-            all_checks = checks
+            all_checks = []
+            for check_list in checks.values():
+                all_checks.extend(check_list)
         for check_id in all_checks:
             if check_id not in check_map:
                 check_map[check_id] = []
@@ -117,8 +113,8 @@ def _build_requirement_check_map(framework, provider=None):
 def _get_group_key(req, group_by):
     """Extract the group key from a requirement."""
     if group_by == "_Tactics":
-        return req.Tactics or []
-    return [req.Attributes.get(group_by, "Unknown")]
+        return req.tactics or []
+    return [req.attributes.get(group_by, "Unknown")]
 
 
 def _print_overview(pass_count, fail_count, muted_count, framework_name, labels):
@@ -128,7 +124,7 @@ def _print_overview(pass_count, fail_count, muted_count, framework_name, labels)
         return False
 
     title = (
-        labels.Title
+        labels.title
         or f"Compliance Status of {Fore.YELLOW}{framework_name.upper()}{Style.RESET_ALL} Framework:"
     )
     print(f"\n{title}")
@@ -137,8 +133,8 @@ def _print_overview(pass_count, fail_count, muted_count, framework_name, labels)
     pass_pct = round(len(pass_count) / total * 100, 2)
     muted_pct = round(len(muted_count) / total * 100, 2)
 
-    fail_label = labels.FailLabel
-    pass_label = labels.PassLabel
+    fail_label = labels.fail_label
+    pass_label = labels.pass_label
 
     overview_table = [
         [
@@ -199,38 +195,38 @@ def _render_grouped(
         return
 
     if not compliance_overview:
-        provider_header = labels.ProviderHeader
-        group_header = labels.GroupHeader or group_by
+        provider_header = labels.provider_header
+        group_header = labels.group_header or group_by
         table = {
             provider_header: [],
             group_header: [],
-            labels.StatusHeader: [],
+            labels.status_header: [],
             "Muted": [],
         }
         for group_key in sorted(groups):
             table[provider_header].append(
-                framework.Provider or (provider.upper() if provider else "")
+                framework.provider or (provider.upper() if provider else "")
             )
             table[group_header].append(group_key)
             if groups[group_key]["FAIL"] > 0:
-                table[labels.StatusHeader].append(
-                    f"{Fore.RED}{labels.FailLabel}({groups[group_key]['FAIL']}){Style.RESET_ALL}"
+                table[labels.status_header].append(
+                    f"{Fore.RED}{labels.fail_label}({groups[group_key]['FAIL']}){Style.RESET_ALL}"
                 )
             else:
-                table[labels.StatusHeader].append(
-                    f"{Fore.GREEN}{labels.PassLabel}({groups[group_key]['PASS']}){Style.RESET_ALL}"
+                table[labels.status_header].append(
+                    f"{Fore.GREEN}{labels.pass_label}({groups[group_key]['PASS']}){Style.RESET_ALL}"
                 )
             table["Muted"].append(
                 f"{orange_color}{groups[group_key]['Muted']}{Style.RESET_ALL}"
             )
 
         results_title = (
-            labels.ResultsTitle
+            labels.results_title
             or f"Framework {Fore.YELLOW}{compliance_framework_name.upper()}{Style.RESET_ALL} Results:"
         )
         print(f"\n{results_title}")
         print(tabulate(table, headers="keys", tablefmt="rounded_grid"))
-        footer = labels.FooterNote or "* Only sections containing results appear."
+        footer = labels.footer_note or "* Only sections containing results appear."
         print(f"{Style.BRIGHT}{footer}{Style.RESET_ALL}")
         print(f"\nDetailed results of {compliance_framework_name.upper()} are in:")
         print(
@@ -259,8 +255,8 @@ def _render_split(
 ):
     """Split mode: one row per group with columns for each split value (e.g. Level 1/Level 2)."""
     check_map = _build_requirement_check_map(framework, provider)
-    split_field = split_by.Field
-    split_values = split_by.Values
+    split_field = split_by.field
+    split_values = split_by.values
     groups = {}
     pass_count = []
     fail_count = []
@@ -279,7 +275,7 @@ def _render_split(
                     }
                     groups[group_key]["Muted"] = 0
 
-                split_val = req.Attributes.get(split_field, "")
+                split_val = req.attributes.get(split_field, "")
 
                 if finding.muted:
                     if index not in muted_count:
@@ -305,8 +301,8 @@ def _render_split(
         return
 
     if not compliance_overview:
-        provider_header = labels.ProviderHeader
-        group_header = labels.GroupHeader or group_by
+        provider_header = labels.provider_header
+        group_header = labels.group_header or group_by
         table = {provider_header: [], group_header: []}
         for sv in split_values:
             table[sv] = []
@@ -314,29 +310,29 @@ def _render_split(
 
         for group_key in sorted(groups):
             table[provider_header].append(
-                framework.Provider or (provider.upper() if provider else "")
+                framework.provider or (provider.upper() if provider else "")
             )
             table[group_header].append(group_key)
             for sv in split_values:
                 if groups[group_key][sv]["FAIL"] > 0:
                     table[sv].append(
-                        f"{Fore.RED}{labels.FailLabel}({groups[group_key][sv]['FAIL']}){Style.RESET_ALL}"
+                        f"{Fore.RED}{labels.fail_label}({groups[group_key][sv]['FAIL']}){Style.RESET_ALL}"
                     )
                 else:
                     table[sv].append(
-                        f"{Fore.GREEN}{labels.PassLabel}({groups[group_key][sv]['PASS']}){Style.RESET_ALL}"
+                        f"{Fore.GREEN}{labels.pass_label}({groups[group_key][sv]['PASS']}){Style.RESET_ALL}"
                     )
             table["Muted"].append(
                 f"{orange_color}{groups[group_key]['Muted']}{Style.RESET_ALL}"
             )
 
         results_title = (
-            labels.ResultsTitle
+            labels.results_title
             or f"Framework {Fore.YELLOW}{compliance_framework_name.upper()}{Style.RESET_ALL} Results:"
         )
         print(f"\n{results_title}")
         print(tabulate(table, headers="keys", tablefmt="rounded_grid"))
-        footer = labels.FooterNote or "* Only sections containing results appear."
+        footer = labels.footer_note or "* Only sections containing results appear."
         print(f"{Style.BRIGHT}{footer}{Style.RESET_ALL}")
         print(f"\nDetailed results of {compliance_framework_name.upper()} are in:")
         print(
@@ -365,8 +361,8 @@ def _render_scored(
 ):
     """Scored mode: weighted risk scoring per group (e.g. ThreatScore)."""
     check_map = _build_requirement_check_map(framework, provider)
-    risk_field = scoring.RiskField
-    weight_field = scoring.WeightField
+    risk_field = scoring.risk_field
+    weight_field = scoring.weight_field
     groups = {}
     pass_count = []
     fail_count = []
@@ -386,7 +382,7 @@ def _render_scored(
 
         for req in check_map[check_id]:
             for group_key in _get_group_key(req, group_by):
-                attrs = req.Attributes
+                attrs = req.attributes
                 risk = attrs.get(risk_field, 0)
                 weight = attrs.get(weight_field, 0)
 
@@ -426,19 +422,19 @@ def _render_scored(
         return
 
     if not compliance_overview:
-        provider_header = labels.ProviderHeader
-        group_header = labels.GroupHeader or group_by
+        provider_header = labels.provider_header
+        group_header = labels.group_header or group_by
         table = {
             provider_header: [],
             group_header: [],
-            labels.StatusHeader: [],
+            labels.status_header: [],
             "Score": [],
             "Muted": [],
         }
 
         for group_key in sorted(groups):
             table[provider_header].append(
-                framework.Provider or (provider.upper() if provider else "")
+                framework.provider or (provider.upper() if provider else "")
             )
             table[group_header].append(group_key)
             if max_score_per_group[group_key] == 0:
@@ -453,12 +449,12 @@ def _render_scored(
                 f"{Style.BRIGHT}{score_color}{group_score:.2f}%{Style.RESET_ALL}"
             )
             if groups[group_key]["FAIL"] > 0:
-                table[labels.StatusHeader].append(
-                    f"{Fore.RED}{labels.FailLabel}({groups[group_key]['FAIL']}){Style.RESET_ALL}"
+                table[labels.status_header].append(
+                    f"{Fore.RED}{labels.fail_label}({groups[group_key]['FAIL']}){Style.RESET_ALL}"
                 )
             else:
-                table[labels.StatusHeader].append(
-                    f"{Fore.GREEN}{labels.PassLabel}({groups[group_key]['PASS']}){Style.RESET_ALL}"
+                table[labels.status_header].append(
+                    f"{Fore.GREEN}{labels.pass_label}({groups[group_key]['PASS']}){Style.RESET_ALL}"
                 )
             table["Muted"].append(
                 f"{orange_color}{groups[group_key]['Muted']}{Style.RESET_ALL}"
@@ -470,13 +466,13 @@ def _render_scored(
             generic_threat_score = generic_score / max_generic_score * 100
 
         results_title = (
-            labels.ResultsTitle
+            labels.results_title
             or f"Framework {Fore.YELLOW}{compliance_framework_name.upper()}{Style.RESET_ALL} Results:"
         )
         print(f"\n{results_title}")
         print(f"\nGeneric Threat Score: {generic_threat_score:.2f}%")
         print(tabulate(table, headers="keys", tablefmt="rounded_grid"))
-        footer = labels.FooterNote or (
+        footer = labels.footer_note or (
             f"{Style.BRIGHT}\n=== Threat Score Guide ===\n"
             f"The lower the score, the higher the risk.{Style.RESET_ALL}\n"
             f"{Style.BRIGHT}(Only sections containing results appear, the score is calculated as the sum of the "

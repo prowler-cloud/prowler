@@ -1,7 +1,7 @@
 repos:
   ## GENERAL
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: check-merge-conflict
       - id: check-yaml
@@ -16,22 +16,29 @@ repos:
 
   ## TOML
   - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
-    rev: v2.13.0
+    rev: v2.16.0
     hooks:
       - id: pretty-format-toml
         args: [--autofix]
         files: pyproject.toml
 
+  ## GITHUB ACTIONS
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.24.1
+    hooks:
+      - id: zizmor
+        files: ^\.github/
+
   ## BASH
   - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.10.0
+    rev: v0.11.0
     hooks:
       - id: shellcheck
         exclude: contrib
 
   ## PYTHON
   - repo: https://github.com/myint/autoflake
-    rev: v2.3.1
+    rev: v2.3.3
     hooks:
       - id: autoflake
         exclude: ^skills/
@@ -43,27 +50,27 @@ repos:
           ]
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+    rev: 8.0.1
     hooks:
       - id: isort
         exclude: ^skills/
         args: ["--profile", "black"]
 
   - repo: https://github.com/psf/black
-    rev: 24.4.2
+    rev: 26.3.1
     hooks:
       - id: black
         exclude: ^skills/
 
   - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
+    rev: 7.3.0
     hooks:
       - id: flake8
         exclude: (contrib|^skills/)
         args: ["--ignore=E266,W503,E203,E501,W605"]
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 2.1.1
+    rev: 2.3.4
     hooks:
       - id: poetry-check
         name: API - poetry-check
@@ -86,7 +93,7 @@ repos:
         pass_filenames: false
 
   - repo: https://github.com/hadolint/hadolint
-    rev: v2.13.0-beta
+    rev: v2.14.0
     hooks:
       - id: hadolint
         args: ["--ignore=DL3013"]
@@ -120,7 +127,9 @@ repos:
         description: "Safety is a tool that checks your installed dependencies for known security vulnerabilities"
         # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
         # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
-        entry: bash -c 'safety check --ignore 70612,66963,74429,76352,76353,77744,77745,79023,79027'
+        # TODO: 86217 because `alibabacloud-tea-openapi == 0.4.3` don't let us upgrade `cryptography >= 46.0.0`
+        # TODO: 71600 CVE-2024-1135 false positive - fixed in gunicorn 22.0.0, project uses 23.0.0
+        entry: bash -c 'safety check --ignore 70612,66963,74429,76352,76353,77744,77745,79023,79027,86217,71600'
         language: system
 
       - id: vulture

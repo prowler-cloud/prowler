@@ -30,14 +30,32 @@ start_prod_server() {
   poetry run gunicorn -c config/guniconf.py config.wsgi:application
 }
 
+resolve_worker_hostname() {
+  TASK_ID=""
+
+  if [ -n "$ECS_CONTAINER_METADATA_URI_V4" ]; then
+    TASK_ID=$(wget -qO- --timeout=2 "${ECS_CONTAINER_METADATA_URI_V4}/task" | \
+      python3 -c "import sys,json; print(json.load(sys.stdin)['TaskARN'].split('/')[-1])" 2>/dev/null)
+  fi
+
+  if [ -z "$TASK_ID" ]; then
+    TASK_ID=$(python3 -c "import uuid; print(uuid.uuid4().hex)")
+  fi
+
+  echo "${TASK_ID}@$(hostname)"
+}
+
 start_worker() {
   echo "Starting the worker..."
-  poetry run python -m celery -A config.celery worker -l "${DJANGO_LOGGING_LEVEL:-info}" -Q celery,scans,scan-reports,deletion,backfill,overview,integrations,compliance,attack-paths-scans -E --max-tasks-per-child 1
+  poetry run python -m celery -A config.celery worker \
+    -n "$(resolve_worker_hostname)" \
+    -l "${DJANGO_LOGGING_LEVEL:-info}" \
+    -Q celery,scans,scan-reports,deletion,backfill,overview,integrations,compliance,attack-paths-scans \
+    -E --max-tasks-per-child 1
 }
 
 start_worker_beat() {
   echo "Starting the worker-beat..."
-  sleep 15
   poetry run python -m celery -A config.celery beat -l "${DJANGO_LOGGING_LEVEL:-info}" --scheduler django_celery_beat.schedulers:DatabaseScheduler
 }
 

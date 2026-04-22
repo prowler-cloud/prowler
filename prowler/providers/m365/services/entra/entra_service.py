@@ -9,7 +9,7 @@ from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
 )
-from pydantic.v1 import BaseModel
+from pydantic.v1 import BaseModel, validator
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -35,6 +35,7 @@ class Entra(M365Service):
         users (dict): Dictionary of users.
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
+        authentication_method_configurations (dict): Dictionary of authentication method configurations.
     """
 
     def __init__(self, provider: M365Provider):
@@ -78,8 +79,10 @@ class Entra(M365Service):
                 self._get_groups(),
                 self._get_organization(),
                 self._get_users(),
+                self._get_default_app_management_policy(),
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
+                self._get_authentication_method_configurations(),
             )
         )
 
@@ -89,8 +92,12 @@ class Entra(M365Service):
         self.groups = attributes[3]
         self.organizations = attributes[4]
         self.users = attributes[5]
-        self.oauth_apps: Optional[Dict[str, OAuthApp]] = attributes[6]
-        self.directory_sync_settings, self.directory_sync_error = attributes[7]
+        self.default_app_management_policy = attributes[6]
+        self.oauth_apps: Optional[Dict[str, OAuthApp]] = attributes[7]
+        self.directory_sync_settings, self.directory_sync_error = attributes[8]
+        self.authentication_method_configurations: Dict[
+            str, AuthenticationMethodConfiguration
+        ] = attributes[9]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -165,6 +172,18 @@ class Entra(M365Service):
             conditional_access_policies_list = (
                 await self.client.identity.conditional_access.policies.get()
             )
+
+            # TODO: Remove this workaround once microsoft/kiota-python#515 is
+            # fixed and a new version of microsoft-kiota-serialization-json is
+            # released (see PR microsoft/kiota-python#516). At that point, use
+            # the SDK's native deserialization for authentication_flows instead.
+            #
+            # The SDK deserializer uses get_collection_of_enum_values for
+            # transferMethods, but the Graph API returns it as a single string
+            # (e.g., "deviceCodeFlow"), causing the SDK to return an empty list.
+            # We fetch the raw JSON to correctly parse transferMethods.
+            raw_auth_flows_map = await self._get_raw_authentication_flows()
+
             for policy in conditional_access_policies_list.value:
                 conditional_access_policies[policy.id] = ConditionalAccessPolicy(
                     id=policy.id,
@@ -245,6 +264,20 @@ class Entra(M365Service):
                                     [],
                                 )
                             ],
+                            included_guests_or_external_users=self._parse_guests_or_external_users(
+                                getattr(
+                                    policy.conditions.users,
+                                    "include_guests_or_external_users",
+                                    None,
+                                )
+                            ),
+                            excluded_guests_or_external_users=self._parse_guests_or_external_users(
+                                getattr(
+                                    policy.conditions.users,
+                                    "exclude_guests_or_external_users",
+                                    None,
+                                )
+                            ),
                         ),
                         client_app_types=[
                             ClientAppType(client_app_type)
@@ -270,6 +303,99 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
+                        # The MS Graph SDK deserializes insiderRiskLevels
+                        # as a list via get_collection_of_enum_values, so
+                        # we take the first element when present.
+                        insider_risk_levels=(
+                            InsiderRiskLevel(raw_insider_risk[0].value)
+                            if (
+                                raw_insider_risk := getattr(
+                                    policy.conditions,
+                                    "insider_risk_levels",
+                                    None,
+                                )
+                            )
+                            and raw_insider_risk
+                            else None
+                        ),
+                        platform_conditions=PlatformConditions(
+                            include_platforms=[
+                                platform
+                                for platform in (
+                                    getattr(
+                                        getattr(policy.conditions, "platforms", None),
+                                        "include_platforms",
+                                        [],
+                                    )
+                                    or []
+                                )
+                            ],
+                            exclude_platforms=[
+                                platform
+                                for platform in (
+                                    getattr(
+                                        getattr(policy.conditions, "platforms", None),
+                                        "exclude_platforms",
+                                        [],
+                                    )
+                                    or []
+                                )
+                            ],
+                        ),
+                        authentication_flows=self._parse_authentication_flows(
+                            raw_auth_flows_map.get(policy.id)
+                        ),
+                        device_conditions=DeviceConditions(
+                            device_filter_mode=(
+                                DeviceFilterMode(
+                                    getattr(
+                                        getattr(
+                                            getattr(
+                                                policy.conditions,
+                                                "devices",
+                                                None,
+                                            ),
+                                            "device_filter",
+                                            None,
+                                        ),
+                                        "mode",
+                                        None,
+                                    )
+                                )
+                                if getattr(
+                                    getattr(policy.conditions, "devices", None),
+                                    "device_filter",
+                                    None,
+                                )
+                                and getattr(
+                                    getattr(
+                                        getattr(policy.conditions, "devices", None),
+                                        "device_filter",
+                                        None,
+                                    ),
+                                    "mode",
+                                    None,
+                                )
+                                else None
+                            ),
+                            device_filter_rule=(
+                                getattr(
+                                    getattr(
+                                        getattr(policy.conditions, "devices", None),
+                                        "device_filter",
+                                        None,
+                                    ),
+                                    "rule",
+                                    None,
+                                )
+                                if getattr(
+                                    getattr(policy.conditions, "devices", None),
+                                    "device_filter",
+                                    None,
+                                )
+                                else None
+                            ),
+                        ),
                     ),
                     grant_controls=GrantControls(
                         built_in_controls=(
@@ -341,6 +467,14 @@ class Entra(M365Service):
                                 else None
                             ),
                         ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=(
+                                policy.session_controls.application_enforced_restrictions.is_enabled
+                                if policy.session_controls
+                                and policy.session_controls.application_enforced_restrictions
+                                else False
+                            ),
+                        ),
                     ),
                     state=ConditionalAccessPolicyState(
                         getattr(policy, "state", "disabled")
@@ -353,7 +487,13 @@ class Entra(M365Service):
         return conditional_access_policies
 
     async def _get_admin_consent_policy(self):
-        logger.info("Entra - Getting group settings...")
+        """
+        Retrieve the admin consent policy settings from Microsoft Entra.
+
+        Returns:
+            AdminConsentPolicy: The admin consent policy configuration or None if unavailable.
+        """
+        logger.info("Entra - Getting admin consent policy...")
         admin_consent_policy = None
         try:
             policy = await self.client.policies.admin_consent_request_policy.get()
@@ -368,6 +508,203 @@ class Entra(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return admin_consent_policy
+
+    async def _get_default_app_management_policy(self):
+        """
+        Retrieve the default app management policy settings from Microsoft Entra.
+
+        This policy enforces credential configurations on applications and service principals,
+        including restrictions on password credentials and key credentials.
+
+        Returns:
+            DefaultAppManagementPolicy: The default app management policy or None if unavailable.
+        """
+        logger.info("Entra - Getting default app management policy...")
+        default_app_management_policy = None
+        try:
+            policy = await self.client.policies.default_app_management_policy.get()
+            default_app_management_policy = DefaultAppManagementPolicy(
+                id=getattr(policy, "id", ""),
+                name=getattr(policy, "display_name", "Default app management policy"),
+                description=getattr(policy, "description", None),
+                is_enabled=getattr(policy, "is_enabled", False),
+                application_restrictions=self._parse_app_management_restrictions(
+                    getattr(policy, "application_restrictions", None)
+                ),
+                service_principal_restrictions=self._parse_app_management_restrictions(
+                    getattr(policy, "service_principal_restrictions", None)
+                ),
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return default_app_management_policy
+
+    async def _get_raw_authentication_flows(self) -> dict:
+        """Fetch authentication flows from the Graph API using a raw JSON request.
+
+        TODO: Remove this method once microsoft/kiota-python#515 is fixed and
+        a new version of microsoft-kiota-serialization-json is released
+        (see PR microsoft/kiota-python#516). At that point, revert to using
+        the SDK's native deserialization via policy.conditions.authentication_flows.
+
+        The SDK deserializer incorrectly handles the transferMethods field
+        (uses get_collection_of_enum_values for a single string value),
+        so we fetch the raw JSON to correctly parse it.
+
+        Returns:
+            A dict mapping policy ID to the raw authenticationFlows dict.
+        """
+        auth_flows_map = {}
+        try:
+            request_info = (
+                self.client.identity.conditional_access.policies.to_get_request_information()
+            )
+            request_info.headers.try_add("Prefer", "include-unknown-enum-members")
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                for policy in data.get("value", []):
+                    policy_id = policy.get("id")
+                    auth_flows = policy.get("conditions", {}).get("authenticationFlows")
+                    if policy_id and auth_flows:
+                        auth_flows_map[policy_id] = auth_flows
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return auth_flows_map
+
+    @staticmethod
+    def _parse_authentication_flows(auth_flows) -> "AuthenticationFlows | None":
+        """Parse authentication flows from a raw JSON dict.
+
+        TODO: Remove this method once microsoft/kiota-python#515 is fixed and
+        revert to parsing the SDK's ConditionalAccessAuthenticationFlows object
+        directly (see PR microsoft/kiota-python#516).
+
+        Args:
+            auth_flows: A dict from the raw JSON response (e.g., {"transferMethods": "deviceCodeFlow"}).
+
+        Returns:
+            AuthenticationFlows object or None if not present.
+        """
+        if not auth_flows:
+            return None
+
+        transfer_methods = []
+        raw_value = auth_flows.get("transferMethods")
+        if raw_value:
+            # The API may return a single string or a comma-separated value
+            methods = raw_value.split(",") if isinstance(raw_value, str) else raw_value
+            for method_str in methods:
+                method_str = method_str.strip()
+                try:
+                    transfer_methods.append(TransferMethod(method_str))
+                except ValueError:
+                    logger.warning(
+                        f"Unknown authentication flow transfer method: {method_str}"
+                    )
+
+        return AuthenticationFlows(transfer_methods=transfer_methods)
+
+    @staticmethod
+    def _parse_guests_or_external_users(
+        sdk_obj,
+    ) -> "GuestsOrExternalUsers | None":
+        """Parse guest or external user conditions from the MS Graph SDK object.
+
+        The SDK deserializes ``guestOrExternalUserTypes`` via
+        ``get_collection_of_enum_values``, returning a list of SDK enum members.
+
+        Args:
+            sdk_obj: A ``ConditionalAccessGuestsOrExternalUsers`` SDK object, or ``None``.
+
+        Returns:
+            A ``GuestsOrExternalUsers`` model instance, or ``None`` if the input is absent.
+        """
+        if sdk_obj is None:
+            return None
+
+        raw_types = getattr(sdk_obj, "guest_or_external_user_types", None) or []
+        raw_membership_kind = getattr(
+            getattr(sdk_obj, "external_tenants", None),
+            "membership_kind",
+            None,
+        )
+        membership_kind = None
+        if raw_membership_kind is not None:
+            raw_membership_kind = getattr(
+                raw_membership_kind,
+                "value",
+                raw_membership_kind,
+            )
+            try:
+                membership_kind = ExternalTenantsMembershipKind(raw_membership_kind)
+            except ValueError:
+                logger.warning(
+                    f"Unknown external tenants membership kind: {raw_membership_kind}"
+                )
+
+        guest_types: list[GuestOrExternalUserType] = []
+        for raw_type in raw_types:
+            try:
+                guest_types.append(GuestOrExternalUserType(raw_type.value))
+            except (ValueError, AttributeError):
+                logger.warning(f"Unknown guest or external user type: {raw_type}")
+
+        return GuestsOrExternalUsers(
+            guest_or_external_user_types=guest_types,
+            external_tenants_membership_kind=membership_kind,
+        )
+
+    @staticmethod
+    def _parse_app_management_restrictions(restrictions):
+        """Parse credential restrictions from the Graph API response into AppManagementRestrictions."""
+        if not restrictions:
+            return AppManagementRestrictions()
+
+        password_credentials = []
+        for cred in getattr(restrictions, "password_credentials", []) or []:
+            restriction_type = getattr(cred, "restriction_type", None)
+            if restriction_type and hasattr(restriction_type, "value"):
+                restriction_type = restriction_type.value
+            state = getattr(cred, "state", None)
+            if state and hasattr(state, "value"):
+                state = state.value
+            max_lifetime = getattr(cred, "max_lifetime", None)
+            password_credentials.append(
+                CredentialRestriction(
+                    restriction_type=str(restriction_type) if restriction_type else "",
+                    state=str(state) if state else None,
+                    max_lifetime=str(max_lifetime) if max_lifetime else None,
+                )
+            )
+
+        key_credentials = []
+        for cred in getattr(restrictions, "key_credentials", []) or []:
+            restriction_type = getattr(cred, "restriction_type", None)
+            if restriction_type and hasattr(restriction_type, "value"):
+                restriction_type = restriction_type.value
+            state = getattr(cred, "state", None)
+            if state and hasattr(state, "value"):
+                state = state.value
+            max_lifetime = getattr(cred, "max_lifetime", None)
+            key_credentials.append(
+                CredentialRestriction(
+                    restriction_type=str(restriction_type) if restriction_type else "",
+                    state=str(state) if state else None,
+                    max_lifetime=str(max_lifetime) if max_lifetime else None,
+                )
+            )
+
+        return AppManagementRestrictions(
+            password_credentials=password_credentials,
+            key_credentials=key_credentials,
+        )
 
     async def _get_groups(self):
         logger.info("Entra - Getting groups...")
@@ -492,6 +829,7 @@ class Entra(M365Service):
 
             while users_response:
                 for user in getattr(users_response, "value", []) or []:
+                    reg_info = registration_details.get(user.id, {})
                     users[user.id] = User(
                         id=user.id,
                         name=user.display_name,
@@ -499,10 +837,13 @@ class Entra(M365Service):
                             True if (user.on_premises_sync_enabled) else False
                         ),
                         directory_roles_ids=user_roles_map.get(user.id, []),
-                        is_mfa_capable=(registration_details.get(user.id, False)),
+                        is_mfa_capable=reg_info.get("is_mfa_capable", False),
                         account_enabled=not self.user_accounts_status.get(
                             user.id, {}
                         ).get("AccountDisabled", False),
+                        authentication_methods=reg_info.get(
+                            "authentication_methods", []
+                        ),
                     )
 
                 next_link = getattr(users_response, "odata_next_link", None)
@@ -516,6 +857,16 @@ class Entra(M365Service):
         return users
 
     async def _get_user_registration_details(self):
+        """Retrieve user authentication method registration details.
+
+        Fetches registration details from the Microsoft Graph API, including
+        MFA capability and the specific authentication methods each user has registered.
+
+        Returns:
+            dict: A dictionary mapping user IDs to their registration details,
+                where each value is a dict with 'is_mfa_capable' (bool) and
+                'authentication_methods' (list of str).
+        """
         registration_details = {}
         try:
             registration_builder = (
@@ -525,9 +876,14 @@ class Entra(M365Service):
 
             while registration_response:
                 for detail in getattr(registration_response, "value", []) or []:
-                    registration_details.update(
-                        {detail.id: getattr(detail, "is_mfa_capable", False)}
-                    )
+                    registration_details[detail.id] = {
+                        "is_mfa_capable": getattr(detail, "is_mfa_capable", False),
+                        "authentication_methods": [
+                            str(method)
+                            for method in getattr(detail, "methods_registered", [])
+                            or []
+                        ],
+                    }
 
                 next_link = getattr(registration_response, "odata_next_link", None)
                 if not next_link:
@@ -663,6 +1019,41 @@ OAuthAppInfo
 
         return oauth_apps
 
+    async def _get_authentication_method_configurations(self):
+        """Retrieve authentication method configurations from Microsoft Entra.
+
+        Fetches the authentication methods policy and extracts the configuration
+        state for each authentication method (e.g., SMS, Voice, FIDO2, etc.).
+
+        Returns:
+            Dict[str, AuthenticationMethodConfiguration]: Dictionary of authentication
+                method configurations keyed by method ID (e.g., 'sms', 'voice').
+        """
+        logger.info("Entra - Getting authentication method configurations...")
+        authentication_method_configurations = {}
+        try:
+            policy = await self.client.policies.authentication_methods_policy.get()
+            for config in (
+                getattr(policy, "authentication_method_configurations", []) or []
+            ):
+                method_id = getattr(config, "id", "")
+                if method_id:
+                    authentication_method_configurations[method_id] = (
+                        AuthenticationMethodConfiguration(
+                            id=method_id,
+                            state=(
+                                getattr(config, "state", None).value
+                                if getattr(config, "state", None)
+                                else "disabled"
+                            ),
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return authentication_method_configurations
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -681,13 +1072,58 @@ class ApplicationsConditions(BaseModel):
     included_user_actions: List[UserAction]
 
 
+class GuestOrExternalUserType(Enum):
+    """Guest or external user types for Conditional Access policies.
+
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessguestsorexternalusers
+    """
+
+    NONE = "none"
+    INTERNAL_GUEST = "internalGuest"
+    B2B_COLLABORATION_GUEST = "b2bCollaborationGuest"
+    B2B_COLLABORATION_MEMBER = "b2bCollaborationMember"
+    B2B_DIRECT_CONNECT_USER = "b2bDirectConnectUser"
+    OTHER_EXTERNAL_USER = "otherExternalUser"
+    SERVICE_PROVIDER = "serviceProvider"
+
+
+class ExternalTenantsMembershipKind(Enum):
+    """External tenant scope for guest or external user conditions."""
+
+    ALL = "all"
+    ENUMERATED = "enumerated"
+    UNKNOWN_FUTURE_VALUE = "unknownFutureValue"
+
+
+# All guest/external user types that represent actual guest or external users.
+ALL_GUEST_USER_TYPES = {
+    GuestOrExternalUserType.INTERNAL_GUEST,
+    GuestOrExternalUserType.B2B_COLLABORATION_GUEST,
+    GuestOrExternalUserType.B2B_COLLABORATION_MEMBER,
+    GuestOrExternalUserType.B2B_DIRECT_CONNECT_USER,
+    GuestOrExternalUserType.OTHER_EXTERNAL_USER,
+    GuestOrExternalUserType.SERVICE_PROVIDER,
+}
+
+
+class GuestsOrExternalUsers(BaseModel):
+    """Model representing guest or external user conditions in Conditional Access policies."""
+
+    guest_or_external_user_types: List[GuestOrExternalUserType] = []
+    external_tenants_membership_kind: Optional[ExternalTenantsMembershipKind] = None
+
+
 class UsersConditions(BaseModel):
+    """Model representing user conditions for Conditional Access policies."""
+
     included_groups: List[str]
     excluded_groups: List[str]
     included_users: List[str]
     excluded_users: List[str]
     included_roles: List[str]
     excluded_roles: List[str]
+    included_guests_or_external_users: Optional[GuestsOrExternalUsers] = None
+    excluded_guests_or_external_users: Optional[GuestsOrExternalUsers] = None
 
 
 class RiskLevel(Enum):
@@ -705,12 +1141,77 @@ class ClientAppType(Enum):
     OTHER_CLIENTS = "other"
 
 
+class InsiderRiskLevel(Enum):
+    """Insider risk levels for Conditional Access policies.
+
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessconditionset#conditionalaccessinsiderrisklevels-values
+    """
+
+    MINOR = "minor"
+    MODERATE = "moderate"
+    ELEVATED = "elevated"
+
+
+class DeviceFilterMode(Enum):
+    """Mode for device filter in Conditional Access policies."""
+
+    INCLUDE = "include"
+    EXCLUDE = "exclude"
+
+
+class DeviceConditions(BaseModel):
+    """Model representing device conditions for Conditional Access policies."""
+
+    device_filter_mode: Optional[DeviceFilterMode] = None
+    device_filter_rule: Optional[str] = None
+
+
+class PlatformConditions(BaseModel):
+    """Model representing platform conditions for Conditional Access policies."""
+
+    include_platforms: List[str] = []
+    exclude_platforms: List[str] = []
+
+    @validator("include_platforms", "exclude_platforms", pre=True)
+    @classmethod
+    def normalize_platforms(cls, values):
+        if not values:
+            return []
+
+        normalized = []
+        for platform in values:
+            value = getattr(platform, "value", platform)
+            if isinstance(value, str) and value:
+                normalized.append(value.lower())
+
+        return normalized
+
+
+class TransferMethod(Enum):
+    """Transfer methods for authentication flows in Conditional Access policies."""
+
+    DEVICE_CODE_FLOW = "deviceCodeFlow"
+    AUTHENTICATION_TRANSFER = "authenticationTransfer"
+
+
+class AuthenticationFlows(BaseModel):
+    """Model representing authentication flows conditions in Conditional Access policies."""
+
+    transfer_methods: List[TransferMethod] = []
+
+
 class Conditions(BaseModel):
+    """Model representing conditions for Conditional Access policies."""
+
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
+    insider_risk_levels: Optional[InsiderRiskLevel] = None
+    platform_conditions: Optional[PlatformConditions] = None
+    authentication_flows: Optional[AuthenticationFlows] = None
+    device_conditions: Optional[DeviceConditions] = None
 
 
 class PersistentBrowser(BaseModel):
@@ -735,9 +1236,18 @@ class SignInFrequency(BaseModel):
     interval: Optional[SignInFrequencyInterval]
 
 
+class ApplicationEnforcedRestrictions(BaseModel):
+    """Model representing application enforced restrictions session control."""
+
+    is_enabled: bool = False
+
+
 class SessionControls(BaseModel):
+    """Model representing session controls for Conditional Access policies."""
+
     persistent_browser: PersistentBrowser
     sign_in_frequency: SignInFrequency
+    application_enforced_restrictions: Optional[ApplicationEnforcedRestrictions] = None
 
 
 class ConditionalAccessGrantControl(Enum):
@@ -814,6 +1324,21 @@ class DirectorySyncSettings(BaseModel):
     seamless_sso_enabled: bool = False
 
 
+class AuthenticationMethodConfiguration(BaseModel):
+    """Authentication method configuration from the authentication methods policy.
+
+    Represents the state of a specific authentication method (e.g., SMS, Voice,
+    FIDO2) within the tenant's authentication methods policy.
+
+    Attributes:
+        id: The authentication method identifier (e.g., 'sms', 'voice').
+        state: The state of the authentication method ('enabled' or 'disabled').
+    """
+
+    id: str
+    state: str = "disabled"
+
+
 class Group(BaseModel):
     id: str
     name: str
@@ -826,6 +1351,32 @@ class AdminConsentPolicy(BaseModel):
     notify_reviewers: bool
     email_reminders_to_reviewers: bool
     duration_in_days: int
+
+
+class CredentialRestriction(BaseModel):
+    """Model representing a single credential restriction configuration."""
+
+    restriction_type: str
+    state: Optional[str] = None
+    max_lifetime: Optional[str] = None
+
+
+class AppManagementRestrictions(BaseModel):
+    """Model representing the credential restrictions for applications or service principals."""
+
+    password_credentials: List[CredentialRestriction] = []
+    key_credentials: List[CredentialRestriction] = []
+
+
+class DefaultAppManagementPolicy(BaseModel):
+    """Model representing the default app management policy for the tenant."""
+
+    id: str
+    name: str
+    description: Optional[str]
+    is_enabled: bool
+    application_restrictions: Optional[AppManagementRestrictions] = None
+    service_principal_restrictions: Optional[AppManagementRestrictions] = None
 
 
 class AdminRoles(Enum):
@@ -847,12 +1398,26 @@ class AdminRoles(Enum):
 
 
 class User(BaseModel):
+    """Model representing a Microsoft Entra ID user.
+
+    Attributes:
+        id: The user's unique identifier.
+        name: The user's display name.
+        on_premises_sync_enabled: Whether the user is synced from on-premises directory.
+        directory_roles_ids: List of directory role template IDs assigned to the user.
+        is_mfa_capable: Whether the user has registered a strong authentication method for MFA.
+        account_enabled: Whether the user account is enabled.
+        authentication_methods: List of authentication method types registered by the user
+            (e.g., 'fido2SecurityKey', 'microsoftAuthenticatorPush', 'mobilePhone').
+    """
+
     id: str
     name: str
     on_premises_sync_enabled: bool
     directory_roles_ids: List[str] = []
     is_mfa_capable: bool = False
     account_enabled: bool = True
+    authentication_methods: List[str] = []
 
 
 class InvitationsFrom(Enum):

@@ -42,6 +42,18 @@ class OpenStackBaseException(ProwlerException):
             "message": "Invalid or malformed clouds.yaml configuration file",
             "remediation": "Check that the clouds.yaml file is valid YAML and follows the OpenStack configuration format.",
         },
+        (10009, "OpenStackInvalidProviderIdError"): {
+            "message": "Provider ID does not match the project_id in clouds.yaml",
+            "remediation": "Ensure the provider_id matches the project_id configured in your clouds.yaml file.",
+        },
+        (10010, "OpenStackNoRegionError"): {
+            "message": "No region configuration found in clouds.yaml",
+            "remediation": "Add either 'region_name' (single region) or 'regions' (list of regions) to your cloud configuration in clouds.yaml.",
+        },
+        (10011, "OpenStackAmbiguousRegionError"): {
+            "message": "Ambiguous region configuration in clouds.yaml",
+            "remediation": "Use either 'region_name' or 'regions' in your cloud configuration, not both.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -160,6 +172,42 @@ class OpenStackInvalidConfigError(OpenStackBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             code=10008,
+            file=file,
+            original_exception=original_exception,
+            message=message,
+        )
+
+
+class OpenStackInvalidProviderIdError(OpenStackBaseException):
+    """Exception for provider_id not matching project_id in clouds.yaml"""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            code=10009,
+            file=file,
+            original_exception=original_exception,
+            message=message,
+        )
+
+
+class OpenStackNoRegionError(OpenStackBaseException):
+    """Exception for missing region configuration in clouds.yaml"""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            code=10010,
+            file=file,
+            original_exception=original_exception,
+            message=message,
+        )
+
+
+class OpenStackAmbiguousRegionError(OpenStackBaseException):
+    """Exception for ambiguous region configuration in clouds.yaml"""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            code=10011,
             file=file,
             original_exception=original_exception,
             message=message,

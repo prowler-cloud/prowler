@@ -1,29 +1,26 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "sls_root_account_usage_alert_enabled",
-  "CheckTitle": "A log monitoring and alerts are set up for usage of root account",
-  "CheckType": [
-    "Unusual logon",
-    "Cloud threat detection"
-  ],
+  "CheckTitle": "A log monitoring and alert is set up for usage of root account",
+  "CheckType": [],
   "ServiceName": "sls",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "Real-time monitoring of API calls can be achieved by directing **ActionTrail Logs** to Log Service and establishing corresponding query and alarms.\n\nIt is recommended that a query and alarm be established for **root account login** attempts.",
-  "Risk": "Monitoring for **root account logins** will provide visibility into the use of a fully privileged account and an opportunity to reduce its use.\n\nRoot account usage should be minimized and closely monitored.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **root account login** attempts. By directing **ActionTrail** logs to SLS with alert rules, usage of the fully privileged root account is detected promptly, supporting least privilege and enabling timely review of root-level operations.",
+  "Risk": "Without monitoring for **root account usage**, activities by the most privileged account may go unnoticed. The root account has unrestricted access to all resources, making it a high-value target. Failure to detect unauthorized usage increases risk of **account takeover**, **data destruction**, and **irreversible changes** compromising **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/root-account-login-frequent-alert.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/root-account-login-frequent-alert.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun sls create-alert --project <project-name> --alert-name root-account-usage --alert-displayname 'Root Account Usage Alert' --condition 'event.userIdentity.type: root-account' --dashboard <dashboard-name> --schedule '{\"type\":\"FixedRate\",\"interval\":\"1m\"}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **SLS Console**.\n2. Ensure **ActionTrail** is enabled and delivering logs to a **Log Service** project.\n3. Navigate to the project receiving ActionTrail logs.\n4. Select **Alerts** and click **Create Alert Rule**.\n5. Configure the query to filter for root account usage: `event.userIdentity.type: root-account`.\n6. Set the alert **schedule**, **notification method**, and **severity**.\n7. Save and enable the alert rule.",
       "Terraform": ""
     },
     "Recommendation": {

@@ -13,11 +13,15 @@ inputs:
   poetry-version:
     description: 'Poetry version to install'
     required: false
-    default: '2.1.1'
+    default: '2.3.4'
   install-dependencies:
     description: 'Install Python dependencies with Poetry'
     required: false
     default: 'true'
+  update-lock:
+    description: 'Run `poetry lock` during setup. Only enable when a prior step mutates pyproject.toml (e.g. API `@master` VCS rewrite). Default: false.'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -26,16 +30,26 @@ runs:
       if: github.event_name == 'pull_request' && github.base_ref == 'master' && github.repository == 'prowler-cloud/prowler'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
       run: |
         BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-        echo "Using branch: $BRANCH_NAME"
-        sed -i "s|\(git+https://github.com/prowler-cloud/prowler[^@]*\)@master|\1@$BRANCH_NAME|g" pyproject.toml
+        UPSTREAM="prowler-cloud/prowler"
+        if [ "$HEAD_REPO" != "$UPSTREAM" ]; then
+          echo "Fork PR detected (${HEAD_REPO}), rewriting VCS URL to fork"
+          sed -i "s|git+https://github.com/prowler-cloud/prowler\([^@]*\)@master|git+https://github.com/${HEAD_REPO}\1@$BRANCH_NAME|g" pyproject.toml
+        else
+          echo "Same-repo PR, using branch: $BRANCH_NAME"
+          sed -i "s|\(git+https://github.com/prowler-cloud/prowler[^@]*\)@master|\1@$BRANCH_NAME|g" pyproject.toml
+        fi
 
     - name: Install poetry
       shell: bash
       run: |
         python -m pip install --upgrade pip
-        pipx install poetry==${{ inputs.poetry-version }}
+        pipx install poetry==${INPUTS_POETRY_VERSION}
+      env:
+        INPUTS_POETRY_VERSION: ${{ inputs.poetry-version }}
 
     - name: Update poetry.lock with latest Prowler commit
       if: github.repository_owner == 'prowler-cloud' && github.repository != 'prowler-cloud/prowler'
@@ -50,21 +64,8 @@ runs:
         echo "Updated resolved_reference:"
         grep -A2 -B2 "resolved_reference" poetry.lock
 
-    - name: Update SDK resolved_reference to latest commit (prowler repo on push)
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'prowler-cloud/prowler'
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: |
-        LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
-        echo "Latest commit hash: $LATEST_COMMIT"
-        sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
-          s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
-        }' poetry.lock
-        echo "Updated resolved_reference:"
-        grep -A2 -B2 "resolved_reference" poetry.lock
-
     - name: Update poetry.lock (prowler repo only)
-      if: github.repository == 'prowler-cloud/prowler'
+      if: github.repository == 'prowler-cloud/prowler' && inputs.update-lock == 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: poetry lock

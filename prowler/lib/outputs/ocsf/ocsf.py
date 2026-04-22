@@ -1,6 +1,7 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
+from random import getrandbits
 from typing import List
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
@@ -17,6 +18,7 @@ from py_ocsf_models.objects.organization import Organization
 from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.remediation import Remediation
 from py_ocsf_models.objects.resource_details import ResourceDetails
+from uuid6 import UUID
 
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
@@ -52,7 +54,19 @@ class OCSF(Output):
             findings (List[Finding]): a list of Finding objects
         """
         try:
+            if not findings:
+                return
+
+            scan_ids_by_provider_account = {}
             for finding in findings:
+                provider = finding.metadata.Provider
+                account_uid = finding.account_uid
+                scan_key = (provider, account_uid)
+                if scan_key not in scan_ids_by_provider_account:
+                    scan_ids_by_provider_account[scan_key] = _uuid7_from_timestamp(
+                        finding.timestamp
+                    )
+                scan_id = scan_ids_by_provider_account[scan_key]
                 finding_activity = ActivityID.Create
                 cloud_account_type = self.get_account_type_id_by_provider(
                     finding.metadata.Provider
@@ -163,6 +177,9 @@ class OCSF(Output):
                         "additional_urls": finding.metadata.AdditionalURLs,
                         "notes": finding.metadata.Notes,
                         "compliance": finding.compliance,
+                        "scan_id": str(scan_id),
+                        "provider_uid": finding.provider_uid or finding.account_uid,
+                        "provider": finding.provider,
                     },
                 )
                 if finding.provider != "kubernetes":
@@ -177,7 +194,8 @@ class OCSF(Output):
                         org=Organization(
                             uid=finding.account_organization_uid,
                             name=finding.account_organization_name,
-                            # TODO: add the org unit id and name
+                            ou_uid=finding.account_ou_uid,
+                            ou_name=finding.account_ou_name,
                         ),
                         provider=finding.provider,
                         region=finding.region,
@@ -295,3 +313,26 @@ class OCSF(Output):
         if muted:
             status_id = StatusID.Suppressed
         return status_id
+
+
+# NOTE: Copied from api/src/backend/api/uuid_utils.py (datetime_to_uuid7)
+# Adapted to accept datetime/epoch inputs.
+def _uuid7_from_timestamp(value) -> UUID:
+    if isinstance(value, datetime):
+        dt = value
+    else:
+        dt = datetime.fromtimestamp(int(value), tz=timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+
+    timestamp_ms = int(dt.timestamp() * 1000) & 0xFFFFFFFFFFFF
+    rand_seq = getrandbits(12)
+    rand_node = getrandbits(62)
+
+    uuid_int = timestamp_ms << 80
+    uuid_int |= 0x7 << 76
+    uuid_int |= rand_seq << 64
+    uuid_int |= 0x2 << 62
+    uuid_int |= rand_node
+
+    return UUID(int=uuid_int)

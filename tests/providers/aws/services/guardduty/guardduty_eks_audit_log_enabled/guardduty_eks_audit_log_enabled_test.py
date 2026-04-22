@@ -12,7 +12,7 @@ from tests.providers.aws.utils import (
 
 class Test_guardduty_eks_audit_log_enabled:
     def test_no_detectors(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -42,7 +42,7 @@ class Test_guardduty_eks_audit_log_enabled:
 
         guardduty_client.create_detector(Enable=False)
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -74,7 +74,7 @@ class Test_guardduty_eks_audit_log_enabled:
             Enable=True, DataSources={"Kubernetes": {"AuditLogs": {"Enable": True}}}
         )["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -118,7 +118,7 @@ class Test_guardduty_eks_audit_log_enabled:
             Enable=True, DataSources={"Kubernetes": {"AuditLogs": {"Enable": False}}}
         )["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 

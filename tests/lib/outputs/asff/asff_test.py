@@ -55,6 +55,8 @@ class TestASFF:
             ProductFields=ProductFields(
                 ProviderVersion=prowler_version,
                 ProwlerResourceName=finding.resource_uid,
+                ProwlerAccountOrganizationalUnitId=finding.account_ou_uid,
+                ProwlerAccountOrganizationalUnitName=finding.account_ou_name,
             ),
             GeneratorId="prowler-" + finding.metadata.CheckID,
             AwsAccountId=AWS_ACCOUNT_NUMBER,
@@ -123,6 +125,8 @@ class TestASFF:
             ProductFields=ProductFields(
                 ProviderVersion=prowler_version,
                 ProwlerResourceName=finding.resource_uid,
+                ProwlerAccountOrganizationalUnitId=finding.account_ou_uid,
+                ProwlerAccountOrganizationalUnitName=finding.account_ou_name,
             ),
             GeneratorId="prowler-" + finding.metadata.CheckID,
             AwsAccountId=AWS_ACCOUNT_NUMBER,
@@ -190,6 +194,8 @@ class TestASFF:
             ProductFields=ProductFields(
                 ProviderVersion=prowler_version,
                 ProwlerResourceName=finding.resource_uid,
+                ProwlerAccountOrganizationalUnitId=finding.account_ou_uid,
+                ProwlerAccountOrganizationalUnitName=finding.account_ou_name,
             ),
             GeneratorId="prowler-" + finding.metadata.CheckID,
             AwsAccountId=AWS_ACCOUNT_NUMBER,
@@ -261,6 +267,8 @@ class TestASFF:
             ProductFields=ProductFields(
                 ProviderVersion=prowler_version,
                 ProwlerResourceName=finding.resource_uid,
+                ProwlerAccountOrganizationalUnitId=finding.account_ou_uid,
+                ProwlerAccountOrganizationalUnitName=finding.account_ou_name,
             ),
             GeneratorId="prowler-" + finding.metadata.CheckID,
             AwsAccountId=AWS_ACCOUNT_NUMBER,
@@ -470,6 +478,8 @@ class TestASFF:
             ProductFields=ProductFields(
                 ProviderVersion=prowler_version,
                 ProwlerResourceName=finding.resource_uid,
+                ProwlerAccountOrganizationalUnitId=finding.account_ou_uid,
+                ProwlerAccountOrganizationalUnitName=finding.account_ou_name,
             ),
             GeneratorId="prowler-" + finding.metadata.CheckID,
             AwsAccountId=AWS_ACCOUNT_NUMBER,
@@ -539,10 +549,14 @@ class TestASFF:
                     "ProviderName": "Prowler",
                     "ProviderVersion": prowler_version,
                     "ProwlerResourceName": "test-arn",
+                    "ProwlerAccountOrganizationalUnitId": "ou-abc1-12345678",
+                    "ProwlerAccountOrganizationalUnitName": "Production/WebServices",
                 },
                 "GeneratorId": "prowler-service_test_check_id",
                 "AwsAccountId": "123456789012",
-                "Types": ["test-type"],
+                "Types": [
+                    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+                ],
                 "FirstObservedAt": timestamp,
                 "UpdatedAt": timestamp,
                 "CreatedAt": timestamp,
