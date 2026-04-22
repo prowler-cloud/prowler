@@ -4,6 +4,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.26.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- `POST /api/v1/mute-rules/bulk-delete/` endpoint to delete multiple mute rules in a single atomic request. The endpoint accepts a JSON:API payload (`{ "data": { "type": "mute-rules-bulk-delete", "attributes": { "ids": [...] } } }`) and silently ignores IDs that do not belong to the current tenant (enforced by Row-Level Security) [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
+
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
