@@ -2359,11 +2359,20 @@ class TestReaggregateAllFindingGroupSummaries:
     def setup_method(self):
         self.tenant_id = str(uuid.uuid4())
 
+    @patch("tasks.tasks.chain")
     @patch("tasks.tasks.group")
     @patch("tasks.tasks.aggregate_finding_group_summaries_task")
+    @patch("tasks.tasks.aggregate_daily_severity_task")
+    @patch("tasks.tasks.perform_scan_summary_task")
     @patch("tasks.tasks.Scan.objects.filter")
     def test_dispatches_subtasks_for_each_provider_per_day(
-        self, mock_scan_filter, mock_agg_task, mock_group
+        self,
+        mock_scan_filter,
+        mock_scan_summary_task,
+        mock_daily_severity_task,
+        mock_finding_group_task,
+        mock_group,
+        mock_chain,
     ):
         provider_id_1 = uuid.uuid4()
         provider_id_2 = uuid.uuid4()
@@ -2373,8 +2382,13 @@ class TestReaggregateAllFindingGroupSummaries:
         today = datetime.now(tz=timezone.utc)
         yesterday = today - timedelta(days=1)
 
-        mock_group_result = MagicMock()
-        mock_group.side_effect = lambda gen: (list(gen), mock_group_result)[1]
+        mock_outer_group_result = MagicMock()
+        # The first `group()` call wraps the inner (severity, finding-group)
+        # parallel step; subsequent calls wrap the outer per-scan generator.
+        mock_group.side_effect = lambda *args, **kwargs: (
+            list(args[0]) if args and hasattr(args[0], "__iter__") else None,
+            mock_outer_group_result,
+        )[1]
 
         mock_scan_filter.return_value.order_by.return_value.values.return_value = [
             {
@@ -2397,23 +2411,40 @@ class TestReaggregateAllFindingGroupSummaries:
         result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
 
         assert result == {"scans_reaggregated": 3}
-        assert mock_agg_task.si.call_count == 3
-        mock_agg_task.si.assert_any_call(
-            tenant_id=self.tenant_id, scan_id=str(scan_id_today_p1)
-        )
-        mock_agg_task.si.assert_any_call(
-            tenant_id=self.tenant_id, scan_id=str(scan_id_today_p2)
-        )
-        mock_agg_task.si.assert_any_call(
-            tenant_id=self.tenant_id, scan_id=str(scan_id_yesterday_p1)
-        )
-        mock_group_result.apply_async.assert_called_once()
+        expected_scan_ids = {
+            str(scan_id_today_p1),
+            str(scan_id_today_p2),
+            str(scan_id_yesterday_p1),
+        }
+        for task_mock in (
+            mock_scan_summary_task,
+            mock_daily_severity_task,
+            mock_finding_group_task,
+        ):
+            assert task_mock.si.call_count == 3
+            dispatched = {
+                call.kwargs["scan_id"] for call in task_mock.si.call_args_list
+            }
+            assert dispatched == expected_scan_ids
+            for call in task_mock.si.call_args_list:
+                assert call.kwargs["tenant_id"] == self.tenant_id
+        assert mock_chain.call_count == 3
+        mock_outer_group_result.apply_async.assert_called_once()
 
+    @patch("tasks.tasks.chain")
     @patch("tasks.tasks.group")
     @patch("tasks.tasks.aggregate_finding_group_summaries_task")
+    @patch("tasks.tasks.aggregate_daily_severity_task")
+    @patch("tasks.tasks.perform_scan_summary_task")
     @patch("tasks.tasks.Scan.objects.filter")
     def test_dedupes_scans_to_latest_per_provider_per_day(
-        self, mock_scan_filter, mock_agg_task, mock_group
+        self,
+        mock_scan_filter,
+        mock_scan_summary_task,
+        mock_daily_severity_task,
+        mock_finding_group_task,
+        mock_group,
+        mock_chain,
     ):
         """When several scans run on the same day for the same provider, only
         the latest one is dispatched (matching the daily summary unique key)."""
@@ -2423,8 +2454,11 @@ class TestReaggregateAllFindingGroupSummaries:
         today_late = datetime.now(tz=timezone.utc)
         today_early = today_late - timedelta(hours=4)
 
-        mock_group_result = MagicMock()
-        mock_group.side_effect = lambda gen: (list(gen), mock_group_result)[1]
+        mock_outer_group_result = MagicMock()
+        mock_group.side_effect = lambda *args, **kwargs: (
+            list(args[0]) if args and hasattr(args[0], "__iter__") else None,
+            mock_outer_group_result,
+        )[1]
 
         # Returned ordered by `-completed_at`, so the most recent comes first.
         mock_scan_filter.return_value.order_by.return_value.values.return_value = [
@@ -2443,17 +2477,27 @@ class TestReaggregateAllFindingGroupSummaries:
         result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
 
         assert result == {"scans_reaggregated": 1}
-        mock_agg_task.si.assert_called_once_with(
-            tenant_id=self.tenant_id, scan_id=str(latest_scan_today)
-        )
-        mock_group_result.apply_async.assert_called_once()
+        for task_mock in (
+            mock_scan_summary_task,
+            mock_daily_severity_task,
+            mock_finding_group_task,
+        ):
+            task_mock.si.assert_called_once_with(
+                tenant_id=self.tenant_id, scan_id=str(latest_scan_today)
+            )
+        mock_chain.assert_called_once()
+        mock_outer_group_result.apply_async.assert_called_once()
 
+    @patch("tasks.tasks.chain")
     @patch("tasks.tasks.group")
     @patch("tasks.tasks.Scan.objects.filter")
-    def test_no_completed_scans_skips_dispatch(self, mock_scan_filter, mock_group):
+    def test_no_completed_scans_skips_dispatch(
+        self, mock_scan_filter, mock_group, mock_chain
+    ):
         mock_scan_filter.return_value.order_by.return_value.values.return_value = []
 
         result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
 
         assert result == {"scans_reaggregated": 0}
         mock_group.assert_not_called()
+        mock_chain.assert_not_called()
