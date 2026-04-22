@@ -6426,9 +6426,10 @@
         }
       ],
       "Checks": [
+        "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_prompt_attack_filter_enabled",
         "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_guardrails_configured_and_used"
       ]
     },
     {
@@ -6485,9 +6486,10 @@
         }
       ],
       "Checks": [
+        "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_prompt_attack_filter_enabled",
         "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_guardrails_configured_and_used"
       ]
     },
     {
@@ -6546,8 +6548,9 @@
         }
       ],
       "Checks": [
+        "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_guardrails_configured_and_used"
       ]
     },
     {
@@ -6606,8 +6609,9 @@
         }
       ],
       "Checks": [
+        "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_guardrails_configured_and_used"
       ]
     },
     {

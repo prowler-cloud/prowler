@@ -2894,6 +2894,7 @@
         "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_prompt_attack_filter_enabled",
         "bedrock_guardrail_sensitive_information_filter_enabled",
+        "bedrock_guardrails_configured_and_used",
         "bedrock_model_invocation_logging_enabled",
         "bedrock_model_invocation_logs_encryption_enabled",
         "cloudformation_stack_outputs_find_secrets",
