@@ -12,6 +12,7 @@ from typing import Any, Generator
 from uuid import UUID
 
 import neo4j
+
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
 from tasks.jobs.attack_paths.config import (
@@ -86,17 +87,21 @@ def analysis(
     prowler_api_provider: Provider,
     scan_id: str,
     config: CartographyConfig,
-) -> None:
+) -> tuple[int, int]:
     """
     Main entry point for Prowler findings analysis.
 
     Adds resource labels and loads findings.
+    Returns (labeled_nodes, findings_loaded).
     """
-    add_resource_label(
+    total_labeled = add_resource_label(
         neo4j_session, prowler_api_provider.provider, str(prowler_api_provider.uid)
     )
     findings_data = stream_findings_with_resources(prowler_api_provider, scan_id)
-    load_findings(neo4j_session, findings_data, prowler_api_provider, config)
+    total_loaded = load_findings(
+        neo4j_session, findings_data, prowler_api_provider, config
+    )
+    return total_labeled, total_loaded
 
 
 def add_resource_label(
@@ -146,12 +151,11 @@ def load_findings(
     findings_batches: Generator[list[dict[str, Any]], None, None],
     prowler_api_provider: Provider,
     config: CartographyConfig,
-) -> None:
+) -> int:
     """Load Prowler findings into the graph, linking them to resources."""
     query = render_cypher_template(
         INSERT_FINDING_TEMPLATE,
         {
-            "__ROOT_NODE_LABEL__": get_root_node_label(prowler_api_provider.provider),
             "__NODE_UID_FIELD__": get_node_uid_field(prowler_api_provider.provider),
             "__RESOURCE_LABEL__": get_provider_resource_label(
                 prowler_api_provider.provider
@@ -160,7 +164,6 @@ def load_findings(
     )
 
     parameters = {
-        "provider_uid": str(prowler_api_provider.uid),
         "last_updated": config.update_tag,
         "prowler_version": ProwlerConfig.prowler_version,
     }
@@ -178,6 +181,7 @@ def load_findings(
         neo4j_session.run(query, parameters)
 
     logger.info(f"Finished loading {total_records} records in {batch_num} batches")
+    return total_records
 
 
 # Findings Streaming (Generator-based)
@@ -248,7 +252,9 @@ def _fetch_findings_batch(
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         # Use `all_objects` to get `Findings` even on soft-deleted `Providers`
         # But even the provider is already validated as active in this context
-        qs = FindingModel.all_objects.filter(scan_id=scan_id).order_by("id")
+        qs = FindingModel.all_objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).order_by("id")
 
         if after_id is not None:
             qs = qs.filter(id__gt=after_id)

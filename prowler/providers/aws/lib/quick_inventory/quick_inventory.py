@@ -30,10 +30,12 @@ def quick_inventory(provider: AwsProvider, args):
             ec2_client = provider.session.current_session.client(
                 "ec2", region_name=provider.identity.profile_region
             )
+            excluded_regions = getattr(provider, "_excluded_regions", set())
             # Get all the available regions
             provider.identity.audited_regions = [
                 region["RegionName"]
                 for region in ec2_client.describe_regions()["Regions"]
+                if region["RegionName"] not in excluded_regions
             ]
 
         with alive_bar(

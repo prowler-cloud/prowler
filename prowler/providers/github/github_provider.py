@@ -22,6 +22,8 @@ from prowler.providers.github.exceptions.exceptions import (
     GithubInvalidCredentialsError,
     GithubInvalidProviderIdError,
     GithubInvalidTokenError,
+    GithubRepoListFileNotFoundError,
+    GithubRepoListFileReadError,
     GithubSetUpIdentityError,
     GithubSetUpSessionError,
 )
@@ -90,6 +92,8 @@ class GithubProvider(Provider):
 
     _type: str = "github"
     _auth_method: str = None
+    MAX_REPO_LIST_LINES: int = 10_000
+    MAX_REPO_NAME_LENGTH: int = 500
     _session: GithubSession
     _identity: GithubIdentityInfo
     _audit_config: dict
@@ -113,6 +117,7 @@ class GithubProvider(Provider):
         mutelist_path: str = None,
         mutelist_content: dict = None,
         repositories: list = None,
+        repo_list_file: str = None,
         organizations: list = None,
         # GitHub Actions scanning
         github_actions_enabled: bool = True,
@@ -133,6 +138,7 @@ class GithubProvider(Provider):
             mutelist_path (str): Path to the mutelist file.
             mutelist_content (dict): Mutelist content.
             repositories (list): List of repository names to scan in 'owner/repo-name' format.
+            repo_list_file (str): Path to a file containing repository names (one per line).
             organizations (list): List of organization or user names to scan repositories for.
         """
         logger.info("Instantiating GitHub Provider...")
@@ -149,6 +155,10 @@ class GithubProvider(Provider):
             self._repositories = [repositories]
         else:
             self._repositories = list(repositories)
+
+        # Load repos from file if provided
+        if repo_list_file:
+            self._load_repos_from_file(repo_list_file)
 
         if organizations is None:
             self._organizations = []
@@ -270,6 +280,46 @@ class GithubProvider(Provider):
         organizations method returns the provider's organization list for scoping.
         """
         return self._organizations
+
+    def _load_repos_from_file(self, file_path: str) -> None:
+        """Load repository names from a file (one per line)."""
+        try:
+            repo_count = 0
+            before = len(self._repositories)
+            with open(file_path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    repo_count += 1
+                    if repo_count > self.MAX_REPO_LIST_LINES:
+                        raise GithubRepoListFileReadError(
+                            file=file_path,
+                            message=f"Repo list file exceeds maximum of {self.MAX_REPO_LIST_LINES} lines.",
+                        )
+                    if len(line) > self.MAX_REPO_NAME_LENGTH:
+                        logger.warning(
+                            f"Skipping repo name exceeding {self.MAX_REPO_NAME_LENGTH} chars at line {repo_count} in {file_path}"
+                        )
+                        continue
+                    self._repositories.append(line)
+            self._repositories = list(dict.fromkeys(self._repositories))
+            logger.info(
+                f"Loaded {len(self._repositories) - before} repositories from {file_path}"
+            )
+        except FileNotFoundError:
+            raise GithubRepoListFileNotFoundError(
+                file=file_path,
+                message=f"Repo list file not found: {file_path}",
+            )
+        except (GithubRepoListFileReadError, GithubRepoListFileNotFoundError):
+            raise
+        except Exception as error:
+            raise GithubRepoListFileReadError(
+                file=file_path,
+                original_exception=error,
+                message=f"Error reading repo list file: {error}",
+            )
 
     @staticmethod
     def setup_session(

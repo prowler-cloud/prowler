@@ -5,6 +5,8 @@ This module handles syncing graph data from temporary scan databases
 to the tenant database, adding provider isolation labels and properties.
 """
 
+import time
+
 from collections import defaultdict
 from typing import Any
 
@@ -81,6 +83,7 @@ def sync_nodes(
     Source and target sessions are opened sequentially per batch to avoid
     holding two Bolt connections simultaneously for the entire sync duration.
     """
+    t0 = time.perf_counter()
     last_id = -1
     total_synced = 0
 
@@ -117,7 +120,7 @@ def sync_nodes(
 
         total_synced += batch_count
         logger.info(
-            f"Synced {total_synced} nodes from {source_database} to {target_database}"
+            f"Synced {total_synced} nodes from {source_database} to {target_database} in {time.perf_counter() - t0:.3f}s"
         )
 
     return total_synced
@@ -136,6 +139,7 @@ def sync_relationships(
     Source and target sessions are opened sequentially per batch to avoid
     holding two Bolt connections simultaneously for the entire sync duration.
     """
+    t0 = time.perf_counter()
     last_id = -1
     total_synced = 0
 
@@ -166,7 +170,7 @@ def sync_relationships(
 
         total_synced += batch_count
         logger.info(
-            f"Synced {total_synced} relationships from {source_database} to {target_database}"
+            f"Synced {total_synced} relationships from {source_database} to {target_database} in {time.perf_counter() - t0:.3f}s"
         )
 
     return total_synced

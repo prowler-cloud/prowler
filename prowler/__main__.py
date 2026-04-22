@@ -294,6 +294,10 @@ def prowler():
     if not args.only_logs:
         global_provider.print_credentials()
 
+    # --registry-list: listing already printed during provider init, exit
+    if getattr(global_provider, "_listing_only", False):
+        sys.exit()
+
     # Skip service and check loading for external-tool providers
     if provider not in EXTERNAL_TOOL_PROVIDERS:
         # Import custom checks from folder
@@ -1313,8 +1317,12 @@ def prowler():
                     global_provider.identity.audited_regions,
                 )
                 if not global_provider.identity.audited_regions
-                else global_provider.identity.audited_regions
+                else set(global_provider.identity.audited_regions)
             )
+            if global_provider._enabled_regions is not None:
+                security_hub_regions = security_hub_regions.intersection(
+                    global_provider._enabled_regions
+                )
 
             security_hub = SecurityHub(
                 aws_account_id=global_provider.identity.account,

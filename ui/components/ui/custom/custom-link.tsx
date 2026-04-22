@@ -1,20 +1,27 @@
 import Link from "next/link";
-import React from "react";
+import { type AnchorHTMLAttributes, forwardRef, type ReactNode } from "react";
 
 import { cn } from "@/lib";
 
-interface CustomLinkProps
-  extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+interface CustomLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   href: string;
   target?: "_self" | "_blank" | string;
   ariaLabel?: string;
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   scroll?: boolean;
   size?: string;
 }
 
-export const CustomLink = React.forwardRef<HTMLAnchorElement, CustomLinkProps>(
+function isExternalHref(href: string) {
+  return /^https?:\/\//.test(href) || href.startsWith("mailto:");
+}
+
+function hasDynamicHrefPlaceholder(href: string) {
+  return href.includes("[") && href.includes("]");
+}
+
+export const CustomLink = forwardRef<HTMLAnchorElement, CustomLinkProps>(
   (
     {
       href,
@@ -28,6 +35,29 @@ export const CustomLink = React.forwardRef<HTMLAnchorElement, CustomLinkProps>(
     },
     ref,
   ) => {
+    const linkClassName = cn(
+      `text-${size} text-button-tertiary p-0`,
+      className,
+    );
+    const shouldUseAnchor =
+      isExternalHref(href) || hasDynamicHrefPlaceholder(href);
+
+    if (shouldUseAnchor) {
+      return (
+        <a
+          ref={ref}
+          href={href}
+          aria-label={ariaLabel}
+          target={target}
+          rel={target === "_blank" ? "noopener noreferrer" : undefined}
+          className={linkClassName}
+          {...props}
+        >
+          {children}
+        </a>
+      );
+    }
+
     return (
       <Link
         ref={ref}
@@ -36,7 +66,7 @@ export const CustomLink = React.forwardRef<HTMLAnchorElement, CustomLinkProps>(
         aria-label={ariaLabel}
         target={target}
         rel={target === "_blank" ? "noopener noreferrer" : undefined}
-        className={cn(`text-${size} text-button-tertiary p-0`, className)}
+        className={linkClassName}
         {...props}
       >
         {children}
