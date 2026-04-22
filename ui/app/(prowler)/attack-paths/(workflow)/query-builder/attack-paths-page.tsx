@@ -55,10 +55,21 @@ import {
   QuerySelector,
   ScanListTable,
 } from "./_components";
-import type { AttackPathGraphRef } from "./_components/graph/attack-path-graph";
+import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsSVG, formatNodeLabel } from "./_lib";
+import { formatNodeLabel } from "./_lib";
+
+const getNodeDisplayTitle = (node: GraphNode): string => {
+  const isFinding = node.labels.some((l) =>
+    l.toLowerCase().includes("finding"),
+  );
+  return String(
+    isFinding
+      ? node.properties?.check_title || node.properties?.id || "Unknown Finding"
+      : node.properties?.name || node.properties?.id || "Unknown Resource",
+  );
+};
 
 /**
  * Attack Paths
@@ -76,8 +87,8 @@ export default function AttackPathsPage() {
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-  const graphRef = useRef<AttackPathGraphRef>(null);
-  const fullscreenGraphRef = useRef<AttackPathGraphRef>(null);
+  const graphRef = useRef<GraphHandle>(null);
+  const fullscreenGraphRef = useRef<GraphHandle>(null);
   const hasResetRef = useRef(false);
   const nodeDetailsRef = useRef<HTMLDivElement>(null);
   const graphContainerRef = useRef<HTMLDivElement>(null);
@@ -323,27 +334,6 @@ export default function AttackPathsPage() {
     void finding.navigateToFinding(findingId);
   };
 
-  const handleGraphExport = (svgElement: SVGSVGElement | null) => {
-    try {
-      if (svgElement) {
-        exportGraphAsSVG(svgElement, "attack-path-graph.svg");
-        toast({
-          title: "Success",
-          description: "Graph exported as SVG",
-          variant: "default",
-        });
-      } else {
-        throw new Error("Could not find graph element");
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to export graph",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -524,11 +514,6 @@ export default function AttackPathsPage() {
                         onZoomIn={() => graphRef.current?.zoomIn()}
                         onZoomOut={() => graphRef.current?.zoomOut()}
                         onFitToScreen={() => graphRef.current?.resetZoom()}
-                        onExport={() =>
-                          handleGraphExport(
-                            graphRef.current?.getSVGElement() || null,
-                          )
-                        }
                       />
 
                       {/* Fullscreen button */}
@@ -562,28 +547,21 @@ export default function AttackPathsPage() {
                                 onFitToScreen={() =>
                                   fullscreenGraphRef.current?.resetZoom()
                                 }
-                                onExport={() =>
-                                  handleGraphExport(
-                                    fullscreenGraphRef.current?.getSVGElement() ||
-                                      null,
-                                  )
-                                }
                               />
                             </div>
-                            <div className="flex flex-1 gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6">
+                            <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6 lg:flex-row">
                               <div className="flex flex-1 items-center justify-center">
                                 <AttackPathGraph
                                   ref={fullscreenGraphRef}
                                   data={graphState.data}
                                   onNodeClick={handleNodeClick}
                                   selectedNodeId={graphState.selectedNodeId}
-                                  isFilteredView={graphState.isFilteredView}
                                 />
                               </div>
                               {/* Node Detail Panel - Side by side */}
                               {graphState.selectedNode && (
                                 <section aria-labelledby="node-details-heading">
-                                  <Card className="w-96 overflow-y-auto">
+                                  <Card className="w-full overflow-y-auto lg:w-96">
                                     <CardContent className="p-4">
                                       <div className="mb-4 flex items-center justify-between">
                                         <h3
@@ -603,22 +581,9 @@ export default function AttackPathsPage() {
                                         </Button>
                                       </div>
                                       <p className="text-text-neutral-secondary mb-4 text-xs">
-                                        {graphState.selectedNode?.labels.some(
-                                          (label) =>
-                                            label
-                                              .toLowerCase()
-                                              .includes("finding"),
-                                        )
-                                          ? graphState.selectedNode?.properties
-                                              ?.check_title ||
-                                            graphState.selectedNode?.properties
-                                              ?.id ||
-                                            "Unknown Finding"
-                                          : graphState.selectedNode?.properties
-                                              ?.name ||
-                                            graphState.selectedNode?.properties
-                                              ?.id ||
-                                            "Unknown Resource"}
+                                        {getNodeDisplayTitle(
+                                          graphState.selectedNode,
+                                        )}
                                       </p>
                                       <div className="flex flex-col gap-4">
                                         <div>
@@ -653,12 +618,11 @@ export default function AttackPathsPage() {
                       data={graphState.data}
                       onNodeClick={handleNodeClick}
                       selectedNodeId={graphState.selectedNodeId}
-                      isFilteredView={graphState.isFilteredView}
                     />
                   </div>
 
                   {/* Legend below */}
-                  <div className="hidden justify-center lg:flex">
+                  <div className="flex justify-center overflow-x-auto">
                     <GraphLegend data={graphState.data} />
                   </div>
                 </>
@@ -676,17 +640,7 @@ export default function AttackPathsPage() {
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold">Node Details</h3>
                   <p className="text-text-neutral-secondary mt-1 text-sm">
-                    {String(
-                      graphState.selectedNode.labels.some((label) =>
-                        label.toLowerCase().includes("finding"),
-                      )
-                        ? graphState.selectedNode.properties?.check_title ||
-                            graphState.selectedNode.properties?.id ||
-                            "Unknown Finding"
-                        : graphState.selectedNode.properties?.name ||
-                            graphState.selectedNode.properties?.id ||
-                            "Unknown Resource",
-                    )}
+                    {getNodeDisplayTitle(graphState.selectedNode)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
