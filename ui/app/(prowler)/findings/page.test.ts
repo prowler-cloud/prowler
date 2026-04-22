@@ -25,13 +25,19 @@ describe("findings page", () => {
     expect(source).toContain("resolveFindingScanDateFilters");
   });
 
-  it("uses getLatestFindingGroups for non-date/scan queries and getFindingGroups for historical", () => {
-    expect(source).toContain("hasDateOrScan");
+  it("uses resolved filters to choose getFindingGroups for historical queries and getLatestFindingGroups otherwise", () => {
+    expect(source).toContain("hasHistoricalData");
+    expect(source).toContain("hasDateOrScanFilter(filtersWithScanDates)");
+    expect(source).toContain("hasDateOrScanFilter(filters)");
     expect(source).toContain("getFindingGroups");
     expect(source).toContain("getLatestFindingGroups");
   });
 
   it("guards errors array access with a length check", () => {
     expect(source).toContain("errors?.length > 0");
+  });
+
+  it("applies the shared default muted filter so muted findings are hidden unless the caller opts in", () => {
+    expect(source).toContain("applyDefaultMutedFilter");
   });
 });

@@ -8,9 +8,31 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Sign-in and sign-up redesigned with an animated background and a live release highlights panel from GitHub, with adaptive summaries for patch releases [(#10774)](https://github.com/prowler-cloud/prowler/pull/10774)
 
+### 🔄 Changed
+
+- Redesign compliance page with a horizontal ThreatScore card (always-visible pillar breakdown + ActionDropdown), client-side search for compliance frameworks, compact scan selector trigger, responsive mobile filters, download-started toasts for CSV/PDF exports, enhanced compliance cards with truncated titles, and Alert-based empty/error states; migrate Progress component from HeroUI to shadcn [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
+- Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
+
+---
+
+## [1.24.2] (Prowler v5.24.2)
+
+### 🐞 Fixed
+
+- Default muted filter now applied consistently on the findings page and the finding-group resource drill-down, keeping muted findings hidden unless the "include muted findings" checkbox is opted in [(#10818)](https://github.com/prowler-cloud/prowler/pull/10818)
+
 ---
 
 ## [1.24.1] (Prowler v5.24.1)
+
+### 🐞 Fixed
+
+- Findings and filter UX fixes: exclude muted findings by default in the resource detail drawer and finding group resource views, show category context label (for example `Status: FAIL`) on MultiSelect triggers instead of hiding the placeholder, and add a `wide` width option for filter dropdowns applied to the findings Scan filter to prevent label truncation [(#10734)](https://github.com/prowler-cloud/prowler/pull/10734)
+- Findings grouped view now handles zero-resource IaC counters, refines drawer loading states, and adds provider indicators to finding groups [(#10736)](https://github.com/prowler-cloud/prowler/pull/10736)
+- Other Findings for this resource: ordering by `severity` [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
+- Other Findings for this resource: show `delta` indicator [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
+- Compliance: requirement findings do not show muted findings [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
+- Latest new findings: link to finding groups order by `-severity,-last_seen_at` [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
 
 ### 🔒 Security
 

@@ -163,6 +163,10 @@ export function MultiSelectValue({
   const shouldWrap =
     overflowBehavior === "wrap" ||
     (overflowBehavior === "wrap-when-open" && open);
+  const selectedContextLabel =
+    placeholder && /^All\s+/i.test(placeholder) && selectedValues.size > 0
+      ? placeholder.replace(/^All\s+/i, "").trim()
+      : "";
 
   const checkOverflow = useCallback(() => {
     if (valueRef.current === null) return;
@@ -222,9 +226,14 @@ export function MultiSelectValue({
         className,
       )}
     >
-      {placeholder && (
+      {placeholder && selectedValues.size === 0 && (
         <span className="text-bg-button-secondary shrink-0 font-normal">
           {placeholder}
+        </span>
+      )}
+      {selectedContextLabel && (
+        <span className="text-bg-button-secondary shrink-0 font-normal">
+          {selectedContextLabel}
         </span>
       )}
       {Array.from(selectedValues)
