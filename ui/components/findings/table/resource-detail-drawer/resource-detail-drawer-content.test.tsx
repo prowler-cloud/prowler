@@ -21,12 +21,14 @@ const {
   mockWindowOpen,
   mockClipboardWriteText,
   mockSearchParamsState,
+  mockNotificationIndicator,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
   mockGetCompliancesOverview: vi.fn(),
   mockWindowOpen: vi.fn(),
   mockClipboardWriteText: vi.fn(),
   mockSearchParamsState: { value: "" },
+  mockNotificationIndicator: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -155,7 +157,12 @@ vi.mock("@/components/shadcn/dropdown", () => ({
 }));
 
 vi.mock("@/components/shadcn/skeleton/skeleton", () => ({
-  Skeleton: () => <div />,
+  Skeleton: ({
+    className,
+    ...props
+  }: HTMLAttributes<HTMLDivElement> & { className?: string }) => (
+    <div data-testid="inline-skeleton" className={className} {...props} />
+  ),
 }));
 
 vi.mock("@/components/shadcn/spinner/spinner", () => ({
@@ -314,7 +321,11 @@ vi.mock("../delta-indicator", () => ({
 }));
 
 vi.mock("../notification-indicator", () => ({
-  NotificationIndicator: () => null,
+  NotificationIndicator: (props: Record<string, unknown>) => {
+    mockNotificationIndicator(props);
+    return null;
+  },
+  DeltaValues: { NEW: "new", CHANGED: "changed", NONE: "none" } as const,
 }));
 
 vi.mock("./resource-detail-skeleton", () => ({
@@ -330,6 +341,7 @@ vi.mock("../../muted", () => ({
 // ---------------------------------------------------------------------------
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
+import type { FindingResourceRow } from "@/types";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -434,6 +446,28 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
     ).not.toBe(0);
   });
 });
+const mockResourceRow: FindingResourceRow = {
+  id: "row-1",
+  rowType: "resource",
+  findingId: "finding-1",
+  checkId: "s3_check",
+  providerType: "aws",
+  providerAlias: "prod",
+  providerUid: "123456789",
+  resourceName: "my-bucket",
+  resourceType: "Bucket",
+  resourceGroup: "default",
+  resourceUid: "arn:aws:s3:::bucket",
+  service: "s3",
+  region: "us-east-1",
+  severity: "critical",
+  status: "FAIL",
+  delta: null,
+  isMuted: false,
+  mutedReason: undefined,
+  firstSeenAt: null,
+  lastSeenAt: null,
+};
 
 // ---------------------------------------------------------------------------
 // Fix 1: Lighthouse AI button text change
@@ -996,5 +1030,463 @@ describe("ResourceDetailDrawerContent — other findings mute refresh", () => {
       within(row as HTMLElement).getByRole("button", { name: "Muted" }),
     ).toBeDisabled();
     expect(onMuteComplete).not.toHaveBeenCalled();
+  });
+});
+
+describe("ResourceDetailDrawerContent — synthetic resource empty state", () => {
+  it("should explain that simulated IaC resources never have other findings", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        showSyntheticResourceHint
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByText(
+        "No other findings are available for this IaC resource.",
+      ),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — current resource row display", () => {
+  it("should render resource card fields from the current resource row instead of the fetched finding", () => {
+    // Given
+    const currentResource: FindingResourceRow = {
+      ...mockResourceRow,
+      providerAlias: "row-account",
+      providerUid: "row-provider-uid",
+      resourceName: "row-resource-name",
+      resourceUid: "row-resource-uid",
+      service: "row-service",
+      region: "eu-west-1",
+      resourceType: "row-type",
+      resourceGroup: "row-group",
+      severity: "low",
+      status: "PASS",
+    };
+    const fetchedFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      providerAlias: "finding-account",
+      providerUid: "finding-provider-uid",
+      resourceName: "finding-resource-name",
+      resourceUid: "finding-resource-uid",
+      resourceService: "finding-service",
+      resourceRegion: "ap-south-1",
+      resourceType: "finding-type",
+      resourceGroup: "finding-group",
+      severity: "critical",
+      status: "FAIL",
+    };
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentResource={currentResource}
+        currentFinding={fetchedFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("row-service")).toBeInTheDocument();
+    expect(screen.getByText("eu-west-1")).toBeInTheDocument();
+    expect(screen.getByText("row-group")).toBeInTheDocument();
+    expect(screen.getByText("row-type")).toBeInTheDocument();
+    expect(screen.getByText("FAIL")).toBeInTheDocument();
+    expect(screen.getByText("critical")).toBeInTheDocument();
+    expect(screen.queryByText("finding-service")).not.toBeInTheDocument();
+    expect(screen.queryByText("ap-south-1")).not.toBeInTheDocument();
+    expect(screen.queryByText("finding-group")).not.toBeInTheDocument();
+    expect(screen.queryByText("finding-type")).not.toBeInTheDocument();
+  });
+
+  it("should prefer the fetched finding status and severity in the header when the current row is stale", () => {
+    // Given
+    const currentResource: FindingResourceRow = {
+      ...mockResourceRow,
+      severity: "critical",
+      status: "FAIL",
+      isMuted: false,
+    };
+    const fetchedFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      severity: "low",
+      status: "PASS",
+      isMuted: true,
+      mutedReason: "Muted after refresh",
+    };
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentResource={currentResource}
+        currentFinding={fetchedFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("PASS")).toBeInTheDocument();
+    expect(screen.getByText("low")).toBeInTheDocument();
+    expect(screen.queryByText("FAIL")).not.toBeInTheDocument();
+    expect(screen.queryByText("critical")).not.toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — header skeleton while navigating", () => {
+  it("should keep row-backed navigation chrome visible while hiding stale finding details during carousel navigation", () => {
+    // Given
+    const currentResource: FindingResourceRow = {
+      ...mockResourceRow,
+      checkId: mockCheckMeta.checkId,
+      resourceName: "next-bucket",
+      resourceUid: "next-resource-uid",
+      service: "ec2",
+      region: "eu-west-1",
+      resourceType: "Instance",
+      resourceGroup: "row-group",
+      severity: "low",
+      status: "PASS",
+      findingId: "finding-2",
+    };
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={currentResource}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("PASS")).toBeInTheDocument();
+    expect(screen.getByText("low")).toBeInTheDocument();
+    expect(screen.getByText("ec2")).toBeInTheDocument();
+    expect(screen.getByText("eu-west-1")).toBeInTheDocument();
+    expect(screen.getByText("row-group")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Finding Overview" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Other Findings For This Resource" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Status extended")).not.toBeInTheDocument();
+    expect(screen.queryByText("FAIL")).not.toBeInTheDocument();
+    expect(screen.queryByText("critical")).not.toBeInTheDocument();
+  });
+
+  it("should skeletonize stale check-level header content when navigating to a different check", () => {
+    // Given
+    const currentResource: FindingResourceRow = {
+      ...mockResourceRow,
+      checkId: "ec2_check",
+      findingId: "finding-2",
+      severity: "low",
+      status: "PASS",
+    };
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={currentResource}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByTestId("drawer-header-skeleton")).toBeInTheDocument();
+    expect(screen.queryByText("S3 Check")).not.toBeInTheDocument();
+    expect(screen.queryByText("PCI-DSS")).not.toBeInTheDocument();
+    expect(screen.getByText("PASS")).toBeInTheDocument();
+    expect(screen.getByText("low")).toBeInTheDocument();
+  });
+
+  it("should keep same-check overview sections visible while hiding stale finding-specific details during navigation", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("Risk:")).toBeInTheDocument();
+    expect(screen.getByText("Description:")).toBeInTheDocument();
+    expect(screen.getByText("Remediation:")).toBeInTheDocument();
+    expect(screen.getByText("security")).toBeInTheDocument();
+    expect(screen.queryByText("Status Extended:")).not.toBeInTheDocument();
+    expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", {
+        name: "Analyze This Finding With Lighthouse AI",
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should keep the overview tab shell visible with section skeletons when navigating to a different check", () => {
+    // Given
+    const currentResource: FindingResourceRow = {
+      ...mockResourceRow,
+      checkId: "ec2_check",
+      findingId: "finding-2",
+      severity: "low",
+      status: "PASS",
+    };
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={currentResource}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByTestId("overview-navigation-skeleton"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Risk:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Description:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Remediation:")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Finding Overview" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Other Findings For This Resource" }),
+    ).toBeInTheDocument();
+  });
+
+  it("should keep other findings table headers visible while skeletonizing only the rows during navigation", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Finding")).toBeInTheDocument();
+    expect(screen.getByText("Severity")).toBeInTheDocument();
+    expect(screen.getByText("Time")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("other-findings-total-entries-skeleton"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId("other-findings-navigation-skeleton"),
+    ).toBeInTheDocument();
+  });
+
+  it("should keep scans labels visible while skeletonizing only the scan values during navigation", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByText("Showing the latest scan that evaluated this finding"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Scan Name")).toBeInTheDocument();
+    expect(screen.getByText("Resources Scanned")).toBeInTheDocument();
+    expect(screen.getByText("Progress")).toBeInTheDocument();
+    expect(screen.getByText("Trigger")).toBeInTheDocument();
+    expect(screen.getByText("State")).toBeInTheDocument();
+    expect(screen.getByText("Duration")).toBeInTheDocument();
+    expect(screen.getByText("Started At")).toBeInTheDocument();
+    expect(screen.getByText("Completed At")).toBeInTheDocument();
+    expect(screen.getByText("Launched At")).toBeInTheDocument();
+    expect(screen.getByText("Scheduled At")).toBeInTheDocument();
+    expect(screen.getByTestId("scans-navigation-skeleton")).toBeInTheDocument();
+  });
+
+  it("should keep the events tab shell visible while showing timeline row skeletons during navigation", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByRole("button", { name: "Events" })).toBeInTheDocument();
+    expect(
+      screen.getByTestId("events-navigation-skeleton"),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — other findings delta/muted indicator", () => {
+  const renderWithOtherFinding = (
+    overrides: Partial<ResourceDrawerFinding>,
+  ) => {
+    const otherFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      id: "finding-2",
+      uid: "uid-2",
+      checkId: "ec2_check",
+      checkTitle: "EC2 Check",
+      ...overrides,
+    };
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[otherFinding]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+  };
+
+  const lastNotificationIndicatorPropsForOtherRow = () => {
+    const calls = mockNotificationIndicator.mock.calls;
+    // Last call corresponds to the other-finding row (current finding row renders first).
+    return calls[calls.length - 1][0];
+  };
+
+  it("should forward delta='new' to the NotificationIndicator for a new other finding", () => {
+    renderWithOtherFinding({ delta: "new" });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: "new",
+      isMuted: false,
+      showDeltaWhenMuted: true,
+    });
+  });
+
+  it("should forward delta='changed' to the NotificationIndicator for a changed other finding", () => {
+    renderWithOtherFinding({ delta: "changed" });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: "changed",
+    });
+  });
+
+  it("should pass delta=undefined when the finding has delta='none'", () => {
+    renderWithOtherFinding({ delta: "none" });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: undefined,
+    });
+  });
+
+  it("should forward mutedReason and keep delta when a muted other finding is also new", () => {
+    renderWithOtherFinding({
+      delta: "new",
+      isMuted: true,
+      mutedReason: "False positive",
+    });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: "new",
+      isMuted: true,
+      mutedReason: "False positive",
+      showDeltaWhenMuted: true,
+    });
   });
 });

@@ -22,6 +22,7 @@ import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource
 import { cn, hasHistoricalFindingFilter } from "@/lib";
 import {
   getFilteredFindingGroupDelta,
+  getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
 import { FindingGroupRow } from "@/types";
@@ -30,7 +31,8 @@ import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
-import { DeltaValues, NotificationIndicator } from "./notification-indicator";
+import { getFindingGroupEmptyStateMessage } from "./inline-resource-container.utils";
+import { NotificationIndicator } from "./notification-indicator";
 import { ResourceDetailDrawer } from "./resource-detail-drawer";
 
 interface FindingsGroupDrillDownProps {
@@ -96,14 +98,8 @@ export function FindingsGroupDrillDown({
 
   // Delta for the sticky header
   const deltaKey = getFilteredFindingGroupDelta(group, filters);
-  const delta =
-    deltaKey === "new"
-      ? DeltaValues.NEW
-      : deltaKey === "changed"
-        ? DeltaValues.CHANGED
-        : DeltaValues.NONE;
-
   const allMuted = isFindingGroupMuted(group);
+  const impactedCounts = getFindingGroupImpactedCounts(group);
 
   const rows = table.getRowModel().rows;
 
@@ -139,7 +135,7 @@ export function FindingsGroupDrillDown({
 
             {/* Notification indicator */}
             <NotificationIndicator
-              delta={delta}
+              delta={deltaKey}
               isMuted={allMuted}
               showDeltaWhenMuted
             />
@@ -159,8 +155,8 @@ export function FindingsGroupDrillDown({
 
             {/* Impacted resources count */}
             <ImpactedResourcesCell
-              impacted={group.resourcesFail}
-              total={group.resourcesTotal}
+              impacted={impactedCounts.impacted}
+              total={impactedCounts.total}
             />
           </div>
         </div>
@@ -209,9 +205,7 @@ export function FindingsGroupDrillDown({
                     colSpan={columns.length}
                     className="h-24 text-center"
                   >
-                    {Object.keys(filters).length > 0
-                      ? "No resources found for the selected filters."
-                      : "No resources found."}
+                    {getFindingGroupEmptyStateMessage(group, filters)}
                   </TableCell>
                 </TableRow>
               ) : null}
@@ -248,8 +242,10 @@ export function FindingsGroupDrillDown({
         checkMeta={drawer.checkMeta}
         currentIndex={drawer.currentIndex}
         totalResources={drawer.totalResources}
+        currentResource={drawer.currentResource}
         currentFinding={drawer.currentFinding}
         otherFindings={drawer.otherFindings}
+        showSyntheticResourceHint={group.resourcesTotal === 0}
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleDrawerMuteComplete}
