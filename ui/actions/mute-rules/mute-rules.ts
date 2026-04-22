@@ -391,6 +391,68 @@ export const deleteMuteRule = async (
   }
 };
 
+export const bulkDeleteMuteRules = async (
+  _prevState: DeleteMuteRuleActionState,
+  formData: FormData,
+): Promise<DeleteMuteRuleActionState> => {
+  const idsRaw = formData.get("ids") as string | null;
+
+  let ids: string[];
+  try {
+    ids = JSON.parse(idsRaw ?? "[]");
+    if (!Array.isArray(ids) || ids.length === 0) {
+      throw new Error("No mute rule IDs provided");
+    }
+  } catch {
+    return {
+      errors: {
+        general: "At least one mute rule must be selected to delete",
+      },
+    };
+  }
+
+  try {
+    const headers = await getAuthHeaders({ contentType: true });
+    const url = new URL(`${apiBaseUrl}/mute-rules/bulk-delete`);
+    const body = {
+      data: {
+        type: "mute-rules-bulk-delete",
+        attributes: { ids },
+      },
+    };
+
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.errors?.[0]?.detail ||
+          `Failed to delete mute rules: ${response.statusText}`,
+      );
+    }
+
+    revalidatePath("/mutelist");
+
+    return {
+      success: `Deleted ${ids.length} mute rule${ids.length === 1 ? "" : "s"} successfully!`,
+    };
+  } catch (error) {
+    console.error("Error bulk deleting mute rules:", error);
+    return {
+      errors: {
+        general:
+          error instanceof Error
+            ? error.message
+            : "Error deleting mute rules. Please try again.",
+      },
+    };
+  }
+};
+
 // Note: Unmute functionality is not currently supported by the API.
 // The FindingViewSet only allows GET operations, and deleting a mute rule
 // does not unmute the findings ("Previously muted findings remain muted").
