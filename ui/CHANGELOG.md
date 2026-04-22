@@ -28,6 +28,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ---
 
 ## [1.24.1] (Prowler v5.24.1)
+
 ### 🐞 Fixed
 
 - Findings and filter UX fixes: exclude muted findings by default in the resource detail drawer and finding group resource views, show category context label (for example `Status: FAIL`) on MultiSelect triggers instead of hiding the placeholder, and add a `wide` width option for filter dropdowns applied to the findings Scan filter to prevent label truncation [(#10734)](https://github.com/prowler-cloud/prowler/pull/10734)
