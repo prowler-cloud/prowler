@@ -131,27 +131,16 @@ export function adaptQueryResultToGraphData(
   // Populate findings and resources based on HAS_FINDING edges
   edges.forEach((edge) => {
     if (edge.type === "HAS_FINDING") {
-      const sourceId =
-        typeof edge.source === "string"
-          ? edge.source
-          : (edge.source as { id?: string })?.id;
-      const targetId =
-        typeof edge.target === "string"
-          ? edge.target
-          : (edge.target as { id?: string })?.id;
+      // Add finding to source node (resource -> finding)
+      const sourceNode = normalizedNodes.find((n) => n.id === edge.source);
+      if (sourceNode) {
+        sourceNode.findings.push(edge.target);
+      }
 
-      if (sourceId && targetId) {
-        // Add finding to source node (resource -> finding)
-        const sourceNode = normalizedNodes.find((n) => n.id === sourceId);
-        if (sourceNode) {
-          sourceNode.findings.push(targetId);
-        }
-
-        // Add resource to target node (finding <- resource)
-        const targetNode = normalizedNodes.find((n) => n.id === targetId);
-        if (targetNode) {
-          targetNode.resources.push(sourceId);
-        }
+      // Add resource to target node (finding <- resource)
+      const targetNode = normalizedNodes.find((n) => n.id === edge.target);
+      if (targetNode) {
+        targetNode.resources.push(edge.source);
       }
     }
   });
