@@ -7,6 +7,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - Support for external/custom providers, checks, and compliance frameworks without modifying core code [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
+- SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
+
+---
+
 ## [5.24.3] (Prowler v5.24.3)
 
 ### 🐞 Fixed

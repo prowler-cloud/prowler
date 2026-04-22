@@ -1095,15 +1095,10 @@ class CheckReportIAC(Check_Report):
 
         self.resource = finding
         self.resource_name = file_path
-        self.resource_line_range = (
-            (
-                str(finding.get("CauseMetadata", {}).get("StartLine", ""))
-                + ":"
-                + str(finding.get("CauseMetadata", {}).get("EndLine", ""))
-            )
-            if finding.get("CauseMetadata", {}).get("StartLine", "")
-            else ""
-        )
+        cause = finding.get("CauseMetadata", {})
+        start = cause.get("StartLine") or finding.get("StartLine")
+        end = cause.get("EndLine") or finding.get("EndLine")
+        self.resource_line_range = f"{start}:{end}" if start else ""
 
 
 @dataclass
