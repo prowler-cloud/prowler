@@ -811,7 +811,7 @@ def reaggregate_all_finding_group_summaries_task(tenant_id: str):
     scan_ids = list(latest_scans.values())
     if scan_ids:
         logger.info(
-            "Reaggregating overview summaries for %d scans (provider x day)",
+            "Reaggregating overview/finding summaries for %d scans (provider x day)",
             len(scan_ids),
         )
         # DailySeveritySummary reads from ScanSummary, so ScanSummary must be
