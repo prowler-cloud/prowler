@@ -7,7 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Redesign Mutelist simple rules page with target previews, a dedicated targets modal to inspect the muted findings per rule, and a refreshed create/edit mute modal aligned with the design system and sharing a 500-character reason counter [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
-- Mutelist table now supports name/reason search and column sorting [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
+- Mutelist table improvements: now supports name/reason search and visual count badges for finding targets [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
 
 ### 🔄 Changed
 
