@@ -70,3 +70,19 @@ def validate_asff_usage(
         False,
         f"json-asff output format is only available for the aws provider, but {provider} was selected",
     )
+
+
+def validate_sarif_usage(
+    provider: Optional[str], output_formats: Optional[Sequence[str]]
+) -> tuple[bool, str]:
+    """Ensure sarif output is only requested for the IaC provider."""
+    if not output_formats or "sarif" not in output_formats:
+        return (True, "")
+
+    if provider == "iac":
+        return (True, "")
+
+    return (
+        False,
+        f"sarif output format is only available for the iac provider, but {provider} was selected",
+    )

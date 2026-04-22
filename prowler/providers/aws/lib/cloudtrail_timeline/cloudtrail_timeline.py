@@ -135,24 +135,53 @@ class CloudTrailTimeline(TimelineService):
     ) -> List[Dict[str, Any]]:
         """Query CloudTrail for events related to a specific resource.
 
-        Uses MaxResults to limit the number of events returned, preparing
-        for API-level pagination. Currently returns up to max_results events
-        from the first page only.
+        CloudTrail's ResourceName attribute is populated per-service by AWS
+        and is not consistent: KMS and SNS store full ARNs, while S3, IAM,
+        EC2, Lambda, RDS and others store only the resource name or ID. We
+        first look up using the identifier as-is, and if no events come back
+        we retry with the last segment extracted from the ARN.
         """
         client = self._get_client(region)
         start_time = datetime.now(timezone.utc) - timedelta(days=self._lookback_days)
 
-        # Use direct API call with MaxResults instead of paginator
-        # This limits CloudTrail to return only max_results events
+        events = self._lookup_events_by_name(client, resource_identifier, start_time)
+
+        if not events and resource_identifier.startswith("arn:"):
+            short_name = self._extract_short_name(resource_identifier)
+            if short_name and short_name != resource_identifier:
+                logger.debug(
+                    f"CloudTrail timeline: no events for '{resource_identifier}', "
+                    f"retrying lookup with short name '{short_name}'"
+                )
+                events = self._lookup_events_by_name(client, short_name, start_time)
+
+        return events
+
+    def _lookup_events_by_name(
+        self, client, resource_name: str, start_time: datetime
+    ) -> List[Dict[str, Any]]:
         response = client.lookup_events(
             LookupAttributes=[
-                {"AttributeKey": "ResourceName", "AttributeValue": resource_identifier}
+                {"AttributeKey": "ResourceName", "AttributeValue": resource_name}
             ],
             StartTime=start_time,
             MaxResults=self._max_results,
         )
-
         return response.get("Events", [])
+
+    @staticmethod
+    def _extract_short_name(identifier: str) -> str:
+        """Return the last segment of an ARN or identifier.
+
+        ARNs take the form `arn:partition:service:region:account:resource-info`
+        where resource-info is one of `name`, `type/name`, or `type:name`.
+        Splitting on the final `/` and then the final `:` yields the value
+        CloudTrail stores for most services: S3 bucket name, IAM user/role
+        name, EC2 resource ID, Lambda function name, RDS DB identifier, etc.
+        """
+        if not identifier:
+            return identifier
+        return identifier.rsplit("/", 1)[-1].rsplit(":", 1)[-1]
 
     def _parse_event(self, raw_event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Parse a raw CloudTrail event into a TimelineEvent dictionary."""
