@@ -33,7 +33,8 @@
       "Description": "Emergency access or 'break glass' accounts are limited for emergency scenarios where normal administrative accounts are unavailable. They are not assigned to a specific user and will have a combination of physical and technical controls to prevent them from being accessed outside a true emergency. Ensure two Emergency Access accounts have been defined.",
       "Checks": [
         "entra_break_glass_account_fido2_security_key_registered",
-        "entra_emergency_access_exclusion"
+        "entra_emergency_access_exclusion",
+        "entra_emergency_access_users_not_blocked"
       ],
       "Attributes": [
         {

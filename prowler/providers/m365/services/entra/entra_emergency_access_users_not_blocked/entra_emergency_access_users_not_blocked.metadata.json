@@ -1,0 +1,42 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_emergency_access_users_not_blocked",
+  "CheckTitle": "Conditional Access policies ensure emergency access users are not blocked from tenant access",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** policies are verified to ensure that emergency access (break glass) accounts are not blocked. Emergency access accounts must remain accessible to prevent tenant lockout during misconfiguration or outage scenarios.",
+  "Risk": "If emergency access accounts are blocked by Conditional Access policies, a **tenant lockout** could occur where no administrator can sign in to perform recovery. This creates a critical availability risk that may require Microsoft support intervention to resolve.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/security-emergency-access",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-block-access",
+    "https://maester.dev/docs/tests/MT.1034"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center > Protection > Conditional Access > Policies.\n2. For each policy that has a Block grant control, add the emergency access accounts to the exclusion list under Users > Exclude.\n3. Verify that no policy with Block access applies to emergency access accounts.\n4. Test that emergency access accounts can successfully sign in.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Exclude all emergency access (break glass) accounts from every Conditional Access policy, especially those that block access. Regularly test that these accounts can sign in successfully and monitor their usage for anomalies.",
+      "Url": "https://hub.prowler.com/check/entra_emergency_access_users_not_blocked"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_emergency_access_exclusion",
+    "entra_break_glass_account_fido2_security_key_registered"
+  ],
+  "Notes": "Emergency access users are identified as users excluded from all enabled Conditional Access policies. This check is the Prowler equivalent of Maester test MT.1034."
+}
