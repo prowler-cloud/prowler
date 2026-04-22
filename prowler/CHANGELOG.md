@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - GitHub Actions service for scanning workflow security issues using zizmor [(#10607)](https://github.com/prowler-cloud/prowler/pull/10607)
+- SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
 
 ---
 

@@ -18,6 +18,7 @@ from prowler.providers.common.arguments import (
     init_providers_parser,
     validate_asff_usage,
     validate_provider_arguments,
+    validate_sarif_usage,
 )
 
 
@@ -152,6 +153,12 @@ Detailed documentation at https://docs.prowler.com
         )
         if not asff_is_valid:
             self.parser.error(asff_error)
+
+        sarif_is_valid, sarif_error = validate_sarif_usage(
+            args.provider, getattr(args, "output_formats", None)
+        )
+        if not sarif_is_valid:
+            self.parser.error(sarif_error)
 
         return args
 
