@@ -672,45 +672,42 @@ export function ResourceDetailDrawerContent({
 
               {/* Actions button — fixed size, aligned with row 1 */}
               <div className="shrink-0">
-                <div className="flex flex-col items-end gap-2">
-                  {resourceDetailHref && (
-                    <Button variant="link" size="link-sm" asChild>
-                      <Link
-                        href={resourceDetailHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        View Resource
-                        <ExternalLink className="size-3" />
-                      </Link>
-                    </Button>
-                  )}
-
-                  <ActionDropdown
-                    variant="bordered"
-                    ariaLabel="Resource actions"
-                  >
-                    <ActionDropdownItem
-                      icon={
-                        f.isMuted ? (
-                          <VolumeOff className="size-5" />
-                        ) : (
-                          <VolumeX className="size-5" />
-                        )
-                      }
-                      label={f.isMuted ? "Muted" : "Mute"}
-                      disabled={f.isMuted}
-                      onSelect={() => setIsMuteModalOpen(true)}
-                    />
-                    <ActionDropdownItem
-                      icon={<JiraIcon size={20} />}
-                      label="Send to Jira"
-                      onSelect={() => setIsJiraModalOpen(true)}
-                    />
-                  </ActionDropdown>
-                </div>
+                <ActionDropdown variant="bordered" ariaLabel="Resource actions">
+                  <ActionDropdownItem
+                    icon={
+                      f.isMuted ? (
+                        <VolumeOff className="size-5" />
+                      ) : (
+                        <VolumeX className="size-5" />
+                      )
+                    }
+                    label={f.isMuted ? "Muted" : "Mute"}
+                    disabled={f.isMuted}
+                    onSelect={() => setIsMuteModalOpen(true)}
+                  />
+                  <ActionDropdownItem
+                    icon={<JiraIcon size={20} />}
+                    label="Send to Jira"
+                    onSelect={() => setIsJiraModalOpen(true)}
+                  />
+                </ActionDropdown>
               </div>
             </div>
+
+            {resourceDetailHref && (
+              <div className="border-border-neutral-secondary flex justify-end border-t pt-3">
+                <Button variant="link" size="link-sm" asChild>
+                  <Link
+                    href={resourceDetailHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Resource
+                    <ExternalLink className="size-3" />
+                  </Link>
+                </Button>
+              </div>
+            )}
           </>
         )}
 
