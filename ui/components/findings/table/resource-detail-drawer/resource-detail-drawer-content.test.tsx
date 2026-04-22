@@ -591,6 +591,117 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
   });
 });
 
+describe("ResourceDetailDrawerContent — fix available version links", () => {
+  const statusExtendedWithFixVersions =
+    "framework.security.spring-security-web@5.8.7 (fix available: 5.7.13, 5.8.15, 6.2.7, 6.0.13, 6.1.11, 6.3.4)";
+  const externalCveUrl = "https://nvd.nist.gov/vuln/detail/CVE-2026-12345";
+
+  it("should render fix available versions as links when the recommendation URL points to an external CVE advisory", () => {
+    const cveCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: externalCveUrl,
+        },
+      },
+    };
+    const cveFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      statusExtended: statusExtendedWithFixVersions,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: externalCveUrl,
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={cveCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={cveFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "5.7.13" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
+    expect(screen.getByRole("link", { name: "6.3.4" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
+    expect(
+      screen.getByText((_, element) => {
+        return element?.textContent === statusExtendedWithFixVersions;
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "View in Prowler Hub" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should keep fix available versions as plain text when the recommendation URL points to Prowler Hub", () => {
+    const hubCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Open the check in Hub",
+          url: "https://hub.prowler.com/check/image_vulnerability",
+        },
+      },
+    };
+    const hubFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      statusExtended: statusExtendedWithFixVersions,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Open the check in Hub",
+          url: "https://hub.prowler.com/check/image_vulnerability",
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={hubCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={hubFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("link", { name: "5.7.13" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "View in Prowler Hub" }),
+    ).toHaveAttribute(
+      "href",
+      "https://hub.prowler.com/check/image_vulnerability",
+    );
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Fix 5 & 6: Risk section has danger styling, sections have separators and bigger headings
 // ---------------------------------------------------------------------------

@@ -86,6 +86,56 @@ function stripCodeFences(code: string): string {
     .trim();
 }
 
+function isProwlerHubUrl(url: string): boolean {
+  return url.startsWith("https://hub.prowler.com/");
+}
+
+function isExternalCveRecommendationUrl(url: string): boolean {
+  return Boolean(url) && !isProwlerHubUrl(url) && /CVE-\d{4}-\d+/i.test(url);
+}
+
+function renderStatusExtended({
+  statusExtended,
+  recommendationUrl,
+}: {
+  statusExtended: string;
+  recommendationUrl: string;
+}) {
+  if (!isExternalCveRecommendationUrl(recommendationUrl)) {
+    return statusExtended;
+  }
+
+  const fixAvailableMatch = statusExtended.match(
+    /^(.*?\(fix available:\s*)([^)]+)(\).*)$/,
+  );
+  if (!fixAvailableMatch) {
+    return statusExtended;
+  }
+
+  const [, prefix, rawVersions, suffix] = fixAvailableMatch;
+  const versions = rawVersions
+    .split(",")
+    .map((version) => version.trim())
+    .filter(Boolean);
+
+  if (versions.length === 0) {
+    return statusExtended;
+  }
+
+  return (
+    <>
+      {prefix}
+      {versions.map((version, index) => (
+        <span key={`${version}-${index}`}>
+          {index > 0 ? ", " : null}
+          <CustomLink href={recommendationUrl}>{version}</CustomLink>
+        </span>
+      ))}
+      {suffix}
+    </>
+  );
+}
+
 function resolveNativeIacConfig(providerType: string | undefined): {
   label: string;
   language: QueryEditorLanguage;
@@ -415,6 +465,12 @@ export function ResourceDetailDrawerContent({
   const nativeIacConfig = resolveNativeIacConfig(providerType);
   const showOverviewCheckMetaContent = showCheckMetaContent;
   const showOverviewFindingContent = Boolean(f);
+  const recommendationUrl =
+    f?.remediation.recommendation.url ||
+    checkMeta.remediation.recommendation.url;
+  const showProwlerHubRecommendationLink =
+    Boolean(checkMeta.remediation.recommendation.url) &&
+    isProwlerHubUrl(checkMeta.remediation.recommendation.url);
 
   const handleOpenCompliance = async (framework: string) => {
     if (!complianceScanId || resolvingFramework) {
@@ -809,7 +865,10 @@ export function ResourceDetailDrawerContent({
                           Status Extended:
                         </span>
                         <p className="text-text-neutral-primary text-sm">
-                          {f.statusExtended}
+                          {renderStatusExtended({
+                            statusExtended: f.statusExtended,
+                            recommendationUrl,
+                          })}
                         </p>
                       </div>
                     )}
@@ -833,7 +892,7 @@ export function ResourceDetailDrawerContent({
                               {checkMeta.remediation.recommendation.text}
                             </MarkdownContainer>
                           </div>
-                          {checkMeta.remediation.recommendation.url && (
+                          {showProwlerHubRecommendationLink && (
                             <CustomLink
                               href={checkMeta.remediation.recommendation.url}
                               size="sm"
