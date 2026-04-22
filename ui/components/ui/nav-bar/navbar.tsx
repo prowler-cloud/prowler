@@ -15,7 +15,7 @@ export function Navbar({ title, icon }: NavbarProps) {
       title={title}
       icon={icon}
       feedsSlot={
-        <Suspense key="feeds" fallback={<FeedsLoadingFallback />}>
+        <Suspense fallback={<FeedsLoadingFallback />}>
           <FeedsServer limit={15} />
         </Suspense>
       }
