@@ -1,7 +1,6 @@
 import warnings
 
 from celery import Celery, Task
-
 from config.env import env
 
 # Suppress specific warnings from django-rest-auth: https://github.com/iMerica/dj-rest-auth/issues/684
@@ -59,7 +58,11 @@ class RLSTask(Task):
         from api.db_utils import rls_transaction
 
         tenant_id = kwargs.get("tenant_id")
-        with rls_transaction(tenant_id):
+        # Tasks metadata rows are writes and must always run on primary DB.
+        # If the request thread is currently pinned to a read-replica alias,
+        # rls_transaction would otherwise set tenant context on that replica
+        # connection while the write is routed to default, breaking RLS.
+        with rls_transaction(tenant_id, using="default"):
             APITask.objects.update_or_create(
                 id=task_result_instance.task_id,
                 tenant_id=tenant_id,

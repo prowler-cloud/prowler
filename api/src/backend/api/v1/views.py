@@ -1,5 +1,6 @@
 import fnmatch
 import glob
+import hashlib
 import json
 import logging
 import os
@@ -28,6 +29,7 @@ from dj_rest_auth.registration.views import SocialLoginView
 from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
 from django.contrib.postgres.search import SearchQuery
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import (
     BooleanField,
@@ -99,6 +101,7 @@ from tasks.tasks import (
     mute_historical_findings_task,
     perform_scan_task,
     reaggregate_all_finding_group_summaries_task,
+    reaggregate_finding_group_summaries_for_scans_task,
     refresh_lighthouse_provider_models_task,
 )
 
@@ -7357,6 +7360,15 @@ class FindingGroupViewSet(BaseRLSViewSet):
         "provider.alias": "provider_alias",
     }
 
+    # Self-heal throttling for /finding-groups/latest:
+    # - Probe TTL (60s): run drift detection at most once per minute per tenant to
+    #   avoid extra DB checks on every request.
+    # - Trigger TTL (300s): enqueue at most one reaggregation every 5 minutes per
+    #   tenant *for the same drifted scan set* to prevent task storms while still
+    #   healing stale summaries quickly.
+    _LATEST_SELF_HEAL_PROBE_CACHE_TTL_SECONDS = 60
+    _LATEST_SELF_HEAL_TRIGGER_CACHE_TTL_SECONDS = 300
+
     def _validate_sort_fields(self, sort_param, sort_field_map=None):
         """Validate and map JSON:API sort fields using the given field map."""
         if sort_field_map is None:
@@ -7787,6 +7799,144 @@ class FindingGroupViewSet(BaseRLSViewSet):
         )
         return self._aggregate_daily_summaries(clean_queryset)
 
+    def _should_self_heal_latest(self, finding_params: QueryDict) -> bool:
+        """Run drift detection for /latest summary-path queries."""
+        if self._requires_finding_level_aggregation(finding_params, latest=True):
+            return False
+        return True
+
+    def _latest_self_heal_probe_cache_key(self) -> str:
+        return f"finding_groups:self_heal:probe:tenant:{self.request.tenant_id}"
+
+    def _latest_self_heal_trigger_cache_key(self, scan_ids: list[str]) -> str:
+        scan_key = ",".join(sorted(scan_ids))
+        digest = hashlib.sha256(scan_key.encode("utf-8")).hexdigest()[:16]
+        return (
+            f"finding_groups:self_heal:trigger:tenant:{self.request.tenant_id}:{digest}"
+        )
+
+    def _should_probe_latest_self_heal(self) -> bool:
+        """Throttle drift-detection probes to keep /latest lightweight under load."""
+        return cache.add(
+            self._latest_self_heal_probe_cache_key(),
+            "1",
+            timeout=self._LATEST_SELF_HEAL_PROBE_CACHE_TTL_SECONDS,
+        )
+
+    def _latest_scans_for_visible_providers(self, finding_params: QueryDict):
+        """Return latest completed scans (1 per provider), scoped to RBAC and provider filters."""
+        tenant_id = self.request.tenant_id
+        role = get_role(self.request.user, tenant_id)
+        queryset = Scan.objects.filter(
+            tenant_id=tenant_id, state=StateChoices.COMPLETED
+        )
+
+        if not role.unlimited_visibility:
+            queryset = queryset.filter(provider_id__in=get_providers(role))
+
+        provider_id = finding_params.get("provider_id")
+        if provider_id:
+            queryset = queryset.filter(provider_id=provider_id)
+
+        provider_ids_in = finding_params.get("provider_id__in")
+        if provider_ids_in:
+            provider_ids = [
+                pid.strip() for pid in provider_ids_in.split(",") if pid.strip()
+            ]
+            queryset = queryset.filter(provider_id__in=provider_ids)
+
+        provider_type = finding_params.get("provider_type")
+        if provider_type:
+            queryset = queryset.filter(provider__provider=provider_type)
+
+        provider_type_in = finding_params.get("provider_type__in")
+        if provider_type_in:
+            provider_types = [
+                provider.strip()
+                for provider in provider_type_in.split(",")
+                if provider.strip()
+            ]
+            queryset = queryset.filter(provider__provider__in=provider_types)
+
+        return list(
+            queryset.order_by("provider_id", "-completed_at", "-inserted_at")
+            .distinct("provider_id")
+            .values("id", "provider_id", "completed_at")
+        )
+
+    def _latest_scan_ids_missing_summary(self, finding_params: QueryDict) -> list[str]:
+        """Return latest scan ids whose provider/day has findings but no summary rows."""
+        latest_scans = self._latest_scans_for_visible_providers(finding_params)
+        if not latest_scans:
+            return []
+
+        latest_scan_ids = [row["id"] for row in latest_scans]
+        scans_with_findings = set(
+            Finding.all_objects.filter(
+                tenant_id=self.request.tenant_id,
+                scan_id__in=latest_scan_ids,
+            )
+            .values_list("scan_id", flat=True)
+            .distinct()
+        )
+
+        expected_scan_by_provider_day = {}
+        for row in latest_scans:
+            if row["id"] not in scans_with_findings or not row.get("completed_at"):
+                continue
+            key = (row["provider_id"], row["completed_at"].date())
+            expected_scan_by_provider_day[key] = str(row["id"])
+
+        if not expected_scan_by_provider_day:
+            return []
+
+        provider_ids = {
+            provider_id for provider_id, _ in expected_scan_by_provider_day.keys()
+        }
+        dates = [date_value for _, date_value in expected_scan_by_provider_day.keys()]
+        start = datetime.combine(min(dates), datetime.min.time(), tzinfo=timezone.utc)
+        end = datetime.combine(
+            max(dates) + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc
+        )
+
+        summary_rows = FindingGroupDailySummary.objects.filter(
+            tenant_id=self.request.tenant_id,
+            provider_id__in=provider_ids,
+            inserted_at__gte=start,
+            inserted_at__lt=end,
+        ).values_list("provider_id", "inserted_at")
+
+        summary_keys = {
+            (provider_id, inserted_at.date())
+            for provider_id, inserted_at in summary_rows
+        }
+        missing_keys = [
+            key
+            for key in expected_scan_by_provider_day.keys()
+            if key not in summary_keys
+        ]
+        return [expected_scan_by_provider_day[key] for key in missing_keys]
+
+    def _trigger_latest_self_heal_reaggregation(self, scan_ids: list[str]):
+        """Enqueue targeted reaggregation at-most-once-per-window per drifted scan set."""
+        deduped_scan_ids = sorted(set(scan_ids))
+        if not deduped_scan_ids:
+            return
+        tenant_id = str(self.request.tenant_id)
+        cache_key = self._latest_self_heal_trigger_cache_key(deduped_scan_ids)
+        if cache.add(
+            cache_key, "1", timeout=self._LATEST_SELF_HEAL_TRIGGER_CACHE_TTL_SECONDS
+        ):
+            reaggregate_finding_group_summaries_for_scans_task.delay(
+                tenant_id=tenant_id,
+                scan_ids=deduped_scan_ids,
+            )
+            logger.info(
+                "Triggered finding-group summaries self-heal reaggregation for tenant %s (%d scans)",
+                tenant_id,
+                len(deduped_scan_ids),
+            )
+
     def _sorted_paginated_response(
         self,
         request,
@@ -8083,11 +8233,20 @@ class FindingGroupViewSet(BaseRLSViewSet):
         finding_params, computed_params = self._split_computed_aggregate_filters(
             normalized_params
         )
-        aggregated_qs = self._build_aggregated_queryset(finding_params, latest=True)
-        aggregated_qs = self._apply_aggregated_computed_filters(
-            aggregated_qs, computed_params
+        summary_qs = self._build_aggregated_queryset(finding_params, latest=True)
+        summary_qs = self._apply_aggregated_computed_filters(
+            summary_qs, computed_params
         )
-        return self._sorted_paginated_response(request, aggregated_qs)
+
+        if (
+            self._should_self_heal_latest(finding_params)
+            and self._should_probe_latest_self_heal()
+        ):
+            drifted_scan_ids = self._latest_scan_ids_missing_summary(finding_params)
+            if drifted_scan_ids:
+                self._trigger_latest_self_heal_reaggregation(drifted_scan_ids)
+
+        return self._sorted_paginated_response(request, summary_qs)
 
     @extend_schema(
         summary="List resources for a finding group",

@@ -767,6 +767,31 @@ def aggregate_finding_group_summaries_task(tenant_id: str, scan_id: str):
 
 
 @shared_task(
+    base=RLSTask,
+    name="reaggregate-finding-group-summaries-for-scans",
+    queue="overview",
+)
+@set_tenant(keep_tenant=True)
+def reaggregate_finding_group_summaries_for_scans_task(
+    tenant_id: str, scan_ids: list[str]
+):
+    """Reaggregate finding group summaries for a targeted list of scans."""
+    deduped_scan_ids = list(dict.fromkeys(scan_id for scan_id in scan_ids if scan_id))
+    if not deduped_scan_ids:
+        return {"scans_reaggregated": 0}
+
+    logger.info(
+        "Reaggregating finding group summaries for %d targeted scans",
+        len(deduped_scan_ids),
+    )
+    group(
+        aggregate_finding_group_summaries_task.si(tenant_id=tenant_id, scan_id=scan_id)
+        for scan_id in deduped_scan_ids
+    ).apply_async()
+    return {"scans_reaggregated": len(deduped_scan_ids)}
+
+
+@shared_task(
     base=RLSTask, name="reaggregate-all-finding-group-summaries", queue="overview"
 )
 @set_tenant(keep_tenant=True)

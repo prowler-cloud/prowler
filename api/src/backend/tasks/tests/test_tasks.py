@@ -21,6 +21,7 @@ from tasks.tasks import (
     perform_attack_paths_scan_task,
     perform_scheduled_scan_task,
     reaggregate_all_finding_group_summaries_task,
+    reaggregate_finding_group_summaries_for_scans_task,
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
     security_hub_integration_task,
@@ -2454,6 +2455,60 @@ class TestReaggregateAllFindingGroupSummaries:
         mock_scan_filter.return_value.order_by.return_value.values.return_value = []
 
         result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
+
+        assert result == {"scans_reaggregated": 0}
+        mock_group.assert_not_called()
+
+
+@pytest.mark.django_db
+class TestReaggregateFindingGroupSummariesForScans:
+    def setup_method(self):
+        self.tenant_id = str(uuid.uuid4())
+
+    @patch("tasks.tasks.group")
+    @patch("tasks.tasks.aggregate_finding_group_summaries_task")
+    def test_dispatches_requested_scan_ids(self, mock_agg_task, mock_group):
+        scan_id_1 = str(uuid.uuid4())
+        scan_id_2 = str(uuid.uuid4())
+
+        mock_group_result = MagicMock()
+        mock_group.side_effect = lambda gen: (list(gen), mock_group_result)[1]
+
+        result = reaggregate_finding_group_summaries_for_scans_task(
+            tenant_id=self.tenant_id,
+            scan_ids=[scan_id_1, scan_id_2],
+        )
+
+        assert result == {"scans_reaggregated": 2}
+        mock_agg_task.si.assert_any_call(tenant_id=self.tenant_id, scan_id=scan_id_1)
+        mock_agg_task.si.assert_any_call(tenant_id=self.tenant_id, scan_id=scan_id_2)
+        assert mock_agg_task.si.call_count == 2
+        mock_group_result.apply_async.assert_called_once()
+
+    @patch("tasks.tasks.group")
+    @patch("tasks.tasks.aggregate_finding_group_summaries_task")
+    def test_dedupes_scan_ids_before_dispatch(self, mock_agg_task, mock_group):
+        scan_id_1 = str(uuid.uuid4())
+        scan_id_2 = str(uuid.uuid4())
+
+        mock_group_result = MagicMock()
+        mock_group.side_effect = lambda gen: (list(gen), mock_group_result)[1]
+
+        result = reaggregate_finding_group_summaries_for_scans_task(
+            tenant_id=self.tenant_id,
+            scan_ids=[scan_id_1, scan_id_2, scan_id_1, ""],
+        )
+
+        assert result == {"scans_reaggregated": 2}
+        assert mock_agg_task.si.call_count == 2
+        mock_group_result.apply_async.assert_called_once()
+
+    @patch("tasks.tasks.group")
+    def test_empty_scan_ids_skips_dispatch(self, mock_group):
+        result = reaggregate_finding_group_summaries_for_scans_task(
+            tenant_id=self.tenant_id,
+            scan_ids=[],
+        )
 
         assert result == {"scans_reaggregated": 0}
         mock_group.assert_not_called()

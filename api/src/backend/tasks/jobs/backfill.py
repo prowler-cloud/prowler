@@ -591,21 +591,21 @@ def backfill_finding_group_summaries(tenant_id: str, days: int = None):
         completed_scans = (
             Scan.objects.filter(**scan_filter)
             .order_by("-completed_at")
-            .values("id", "completed_at")
+            .values("id", "provider_id", "completed_at")
         )
 
         if not completed_scans:
             return {"status": "no scans to backfill"}
 
-        # Keep only latest scan per day
-        latest_scans_by_day = {}
+        # Keep only latest scan per provider/day
+        latest_scans_by_provider_day = {}
         for scan in completed_scans:
-            key = scan["completed_at"].date()
-            if key not in latest_scans_by_day:
-                latest_scans_by_day[key] = scan
+            key = (scan["provider_id"], scan["completed_at"].date())
+            if key not in latest_scans_by_provider_day:
+                latest_scans_by_provider_day[key] = scan
 
-    # Process each day's scan
-    for scan_date, scan in latest_scans_by_day.items():
+    # Process each provider/day scan
+    for _, scan in latest_scans_by_provider_day.items():
         scan_id = str(scan["id"])
 
         try:

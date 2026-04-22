@@ -49,6 +49,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Worker-beat race condition on cold start: replaced `sleep 15` with API service healthcheck dependency (Docker Compose) and init containers (Helm), aligned Gunicorn default port to `8080` [(#10603)](https://github.com/prowler-cloud/prowler/pull/10603)
 - API container startup crash on Linux due to root-owned bind-mount preventing JWT key generation [(#10646)](https://github.com/prowler-cloud/prowler/pull/10646)
 
+### 🐞 Fixed
+
+- `/finding-groups/latest` now self-heals drifted `FindingGroupDailySummary` rows by detecting missing provider/day summaries and enqueuing a targeted reaggregation task, with per-tenant throttling to keep request latency unaffected [(#10693)](https://github.com/prowler-cloud/prowler/pull/10693)
+
 ### 🔐 Security
 
 - `pytest` from 8.2.2 to 9.0.3 to fix CVE-2025-71176 [(#10678)](https://github.com/prowler-cloud/prowler/pull/10678)
