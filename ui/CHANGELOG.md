@@ -9,7 +9,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 - Shared filter dropdowns now support local option search and auto-scroll to the first visible match across table and provider filters
 - Resources now use batch-applied filters, render metadata JSON with syntax highlighting, simplify metadata/tags tabs, and keep finding-row Learn more links interactive inside the drawer
-- Findings grouped view now refreshes the groups table after mute without a page reload and labels the expanded resources section explicitly
+- Findings grouped view now refreshes the groups table after mute without a page reload and labels the expanded resources section explicitly [(#10860)](https://github.com/prowler-cloud/prowler/pull/10860)
 
 ### ❌ Removed
 
