@@ -257,13 +257,9 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
     pushWithParams({ scanId });
   };
 
-  const handlePageChange = (page: number) => {
-    pushWithParams({ scanPage: page.toString() });
-  };
-
-  const handlePageSizeChange = (nextPageSize: number) => {
+  const handlePaginationChange = (nextPage: number, nextPageSize: number) => {
     pushWithParams({
-      scanPage: "1",
+      scanPage: nextPage.toString(),
       scanPageSize: nextPageSize.toString(),
     });
   };
@@ -280,8 +276,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
         metadata={buildMetadata(scans.length, currentPage, totalPages)}
         controlledPage={currentPage}
         controlledPageSize={pageSize}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
+        onPaginationChange={handlePaginationChange}
         onRowClick={(row) => {
           if (row.original.attributes.graph_data_ready) {
             handleSelectScan(row.original.id);

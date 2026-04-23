@@ -75,17 +75,19 @@ interface DataTableProviderProps<TData, TValue> {
    *
    * For tables inside drawers/modals, use controlled mode instead:
    * - Pass controlledPage, controlledPageSize, controlledSearch as state values
-   * - Pass onPageChange, onPageSizeChange, onSearchChange as state setters
+   * - Pass onPaginationChange, onSearchChange as state setters
    * - This keeps state local, avoiding URL changes and unnecessary page re-renders
    *
    * Example:
    *   const [page, setPage] = useState(1);
-   *   const [search, setSearch] = useState("");
+   *   const [pageSize, setPageSize] = useState(10);
    *   <DataTable
    *     controlledPage={page}
-   *     onPageChange={setPage}
-   *     controlledSearch={search}
-   *     onSearchChange={setSearch}
+   *     controlledPageSize={pageSize}
+   *     onPaginationChange={(nextPage, nextPageSize) => {
+   *       setPage(nextPage);
+   *       setPageSize(nextPageSize);
+   *     }}
    *     isLoading={isLoading}
    *   />
    */
@@ -98,8 +100,12 @@ interface DataTableProviderProps<TData, TValue> {
   onSearchCommit?: (value: string) => void;
   controlledPage?: number;
   controlledPageSize?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
+  /**
+   * Single atomic pagination callback. Emits the full post-event state
+   * (`page`, `pageSize`). Fold both into one URL/state update so they
+   * cannot race.
+   */
+  onPaginationChange?: (page: number, pageSize: number) => void;
   /** Show loading state with opacity overlay (for controlled mode) */
   isLoading?: boolean;
   /** Custom placeholder text for the search input */
@@ -135,8 +141,7 @@ export function DataTable<TData, TValue>({
   onSearchCommit,
   controlledPage,
   controlledPageSize,
-  onPageChange,
-  onPageSizeChange,
+  onPaginationChange,
   isLoading = false,
   searchPlaceholder,
   renderAfterRow,
@@ -341,8 +346,7 @@ export function DataTable<TData, TValue>({
           paramPrefix={paramPrefix}
           controlledPage={controlledPage}
           controlledPageSize={controlledPageSize}
-          onPageChange={onPageChange}
-          onPageSizeChange={onPageSizeChange}
+          onPaginationChange={onPaginationChange}
         />
       )}
     </div>

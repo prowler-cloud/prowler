@@ -34,8 +34,18 @@ interface DataTablePaginationProps {
    */
   controlledPage?: number;
   controlledPageSize?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
+  /**
+   * Single atomic callback fired whenever the user navigates or changes
+   * the page size. Emits the full post-event state (`page`, `pageSize`)
+   * so the consumer can apply both in one update and never desync.
+   *
+   * Replaces the previous `onPageChange` + `onPageSizeChange` pair, which
+   * could race when the parent drove state through `router.push`: the
+   * pagination component emitted both callbacks in the same tick and the
+   * second push read a stale `useSearchParams` snapshot, silently
+   * reverting the size change.
+   */
+  onPaginationChange?: (page: number, pageSize: number) => void;
 }
 
 const NAV_BUTTON_STYLES = {
@@ -50,15 +60,15 @@ export function DataTablePagination({
   paramPrefix = "",
   controlledPage,
   controlledPageSize,
-  onPageChange,
-  onPageSizeChange,
+  onPaginationChange,
 }: DataTablePaginationProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   // Determine if we're in controlled mode
-  const isControlled = controlledPage !== undefined && onPageChange;
+  const isControlled =
+    controlledPage !== undefined && onPaginationChange !== undefined;
 
   // Determine param names based on prefix
   const pageParam = paramPrefix ? `${paramPrefix}Page` : "page";
@@ -111,7 +121,7 @@ export function DataTablePagination({
   // Handle page navigation for controlled mode
   const handlePageChange = (pageNumber: number) => {
     if (isControlled) {
-      onPageChange(pageNumber);
+      onPaginationChange(pageNumber, controlledPageSize ?? 10);
     } else {
       const url = createPageUrl(pageNumber);
       if (disableScroll) {
@@ -140,8 +150,9 @@ export function DataTablePagination({
                 setSelectedPageSize(value);
 
                 if (isControlled) {
-                  onPageSizeChange?.(parseInt(value, 10));
-                  onPageChange(1); // Reset to first page
+                  // Atomic update: page resets to 1 AND size changes in one call
+                  // so consumers using router.push cannot race on stale params.
+                  onPaginationChange(1, parseInt(value, 10));
                   return;
                 }
 
