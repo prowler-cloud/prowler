@@ -22,7 +22,7 @@ from tasks.jobs.reports import (
 from tasks.jobs.threatscore import compute_threatscore_metrics
 from tasks.jobs.threatscore_utils import _aggregate_requirement_statistics_from_database
 
-from api.db_router import READ_REPLICA_ALIAS
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import rls_transaction
 from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
 from prowler.lib.check.compliance_models import Compliance
@@ -162,7 +162,8 @@ def _is_scan_directory_protected(
 
     try:
         scan = (
-            Scan.all_objects.filter(tenant_id=tenant_id, id=scan_uuid)
+            Scan.all_objects.using(MainRouter.admin_db)
+            .filter(tenant_id=tenant_id, id=scan_uuid)
             .only("state", "output_location")
             .first()
         )
@@ -314,10 +315,14 @@ def _cleanup_stale_tmp_output_directories(
             ]
             if candidate_scan_ids:
                 try:
-                    scan_rows = Scan.all_objects.filter(
-                        tenant_id=tenant_dir.name,
-                        id__in=candidate_scan_ids,
-                    ).values_list("id", "state", "output_location")
+                    scan_rows = (
+                        Scan.all_objects.using(MainRouter.admin_db)
+                        .filter(
+                            tenant_id=tenant_dir.name,
+                            id__in=candidate_scan_ids,
+                        )
+                        .values_list("id", "state", "output_location")
+                    )
                     scan_metadata_by_id = {
                         scan_id: (scan_state, output_location)
                         for scan_id, scan_state, output_location in scan_rows
