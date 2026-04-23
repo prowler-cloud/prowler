@@ -19,7 +19,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Attack Paths scan selector now lists every provider's latest scan, shows the correct total, and exposes pagination controls for tenants with more than ten providers; the UI previously fetched only the first backend page (10 items), paginated those partial results locally in pages of 5, and hid the page navigation whenever the total was ≤ 10, stranding users on a "5 of 6" view [(#10852)](https://github.com/prowler-cloud/prowler/issues/10852)
+- Attack Paths scan selector now lists scans from every provider with working pagination, instead of capping the list at the first ten [(#10864)](https://github.com/prowler-cloud/prowler/pull/10864)
 
 ---
 
