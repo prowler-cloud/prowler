@@ -1,15 +1,15 @@
 "use client";
 
-import { Dispatch, SetStateAction, useState, useTransition } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 import { createMuteRule } from "@/actions/mute-rules";
 import { MuteRuleActionState } from "@/actions/mute-rules/types";
 import { Button, Input, Textarea } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { useToast } from "@/components/ui";
 import { FormButtons } from "@/components/ui/form";
 import { Label } from "@/components/ui/form/Label";
+import { useMuteRuleAction } from "@/hooks/use-mute-rule-action";
 import {
   enforceMuteRuleReasonLimit,
   getMuteRuleReasonCounterText,
@@ -34,11 +34,10 @@ export function MuteFindingsModal({
   isPreparing = false,
   preparationError = null,
 }: MuteFindingsModalProps) {
-  const { toast } = useToast();
   const [state, setState] = useState<MuteRuleActionState | null>(null);
   const [reason, setReason] = useState("");
   const [reasonLengthError, setReasonLengthError] = useState<string>();
-  const [isPending, startTransition] = useTransition();
+  const { isPending, runAction } = useMuteRuleAction();
 
   const handleCancel = () => {
     onOpenChange(false);
@@ -86,29 +85,15 @@ export function MuteFindingsModal({
             return;
           }
 
-          startTransition(() => {
-            void (async () => {
-              const result = await createMuteRule(null, formData);
-              if (!result) return;
-
-              if (result.success) {
-                toast({
-                  title: "Success",
-                  description: isBulkOperation
-                    ? "Mute rule created. It may take a few minutes for all findings to update."
-                    : result.success,
-                });
-                onComplete?.();
-                onOpenChange(false);
-              } else if (result.errors?.general) {
-                toast({
-                  variant: "destructive",
-                  title: "Error",
-                  description: result.errors.general,
-                });
-              }
-              setState(result);
-            })();
+          runAction(() => createMuteRule(null, formData), {
+            setState,
+            successMessage: isBulkOperation
+              ? "Mute rule created. It may take a few minutes for all findings to update."
+              : undefined,
+            onSuccess: () => {
+              onComplete?.();
+              onOpenChange(false);
+            },
           });
         }}
       >

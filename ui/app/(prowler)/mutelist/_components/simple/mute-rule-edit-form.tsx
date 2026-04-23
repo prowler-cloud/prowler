@@ -1,13 +1,13 @@
 "use client";
 
-import { FormEvent, useState, useTransition } from "react";
+import { FormEvent, useState } from "react";
 
 import { updateMuteRule } from "@/actions/mute-rules";
 import { MuteRuleActionState, MuteRuleData } from "@/actions/mute-rules/types";
 import { Input, Textarea } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
 import { FormButtons } from "@/components/ui/form";
 import { Label } from "@/components/ui/form/Label";
+import { useMuteRuleAction } from "@/hooks/use-mute-rule-action";
 import {
   enforceMuteRuleReasonLimit,
   getMuteRuleReasonCounterText,
@@ -24,11 +24,10 @@ export function MuteRuleEditForm({
   onSuccess,
   onCancel,
 }: MuteRuleEditFormProps) {
-  const { toast } = useToast();
   const [state, setState] = useState<MuteRuleActionState>(null);
   const [reason, setReason] = useState(muteRule.attributes.reason);
   const [reasonLengthError, setReasonLengthError] = useState<string>();
-  const [isPending, startTransition] = useTransition();
+  const { isPending, runAction } = useMuteRuleAction();
 
   const handleReasonChange = (value: string) => {
     const nextReason = enforceMuteRuleReasonLimit(value);
@@ -49,28 +48,9 @@ export function MuteRuleEditForm({
       return;
     }
 
-    startTransition(() => {
-      void (async () => {
-        const result = await updateMuteRule(null, formData);
-        setState(result);
-
-        if (result?.success) {
-          toast({
-            title: "Success",
-            description: result.success,
-          });
-          onSuccess();
-          return;
-        }
-
-        if (result?.errors?.general) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: result.errors.general,
-          });
-        }
-      })();
+    runAction(() => updateMuteRule(null, formData), {
+      setState,
+      onSuccess,
     });
   };
 

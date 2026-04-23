@@ -3,15 +3,15 @@
 import { useDisclosure } from "@heroui/use-disclosure";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState, useTransition } from "react";
+import { FormEvent, useState } from "react";
 
 import { deleteMuteRule } from "@/actions/mute-rules";
 import { MuteRuleData } from "@/actions/mute-rules/types";
 import { CardTitle } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
 import { FormButtons } from "@/components/ui/form";
 import { DataTable } from "@/components/ui/table";
+import { useMuteRuleAction } from "@/hooks/use-mute-rule-action";
 import { MetaDataProps } from "@/types";
 
 import { MuteRuleEditForm } from "./mute-rule-edit-form";
@@ -29,13 +29,13 @@ export function MuteRulesTableClient({
   metadata,
 }: MuteRulesTableClientProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const [selectedMuteRule, setSelectedMuteRule] = useState<MuteRuleData | null>(
     null,
   );
   const [selectedTargetsRule, setSelectedTargetsRule] =
     useState<MuteRuleTableData | null>(null);
-  const [isDeleting, startDeleteTransition] = useTransition();
+  const { isPending: isDeleting, runAction: runDeleteAction } =
+    useMuteRuleAction();
 
   const editModal = useDisclosure();
   const deleteModal = useDisclosure();
@@ -66,28 +66,11 @@ export function MuteRulesTableClient({
 
     const formData = new FormData(event.currentTarget);
 
-    startDeleteTransition(() => {
-      void (async () => {
-        const result = await deleteMuteRule(null, formData);
-
-        if (result?.success) {
-          toast({
-            title: "Success",
-            description: result.success,
-          });
-          deleteModal.onClose();
-          router.refresh();
-          return;
-        }
-
-        if (result?.errors?.general) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: result.errors.general,
-          });
-        }
-      })();
+    runDeleteAction(() => deleteMuteRule(null, formData), {
+      onSuccess: () => {
+        deleteModal.onClose();
+        router.refresh();
+      },
     });
   };
 
