@@ -283,32 +283,12 @@ export function MultiSelectContent({
   children: ReactNode;
   width?: "default" | "wide";
 } & Omit<ComponentPropsWithoutRef<typeof Command>, "children">) {
-  const { open } = useMultiSelectContext();
   const canSearch = typeof search === "object" ? true : search;
-  const [searchValue, setSearchValue] = useState("");
-  const listRef = useRef<HTMLDivElement>(null);
 
   const widthClasses =
     width === "wide"
       ? "w-[min(max(var(--radix-popover-trigger-width),24rem),calc(100vw-2rem))] max-w-[32rem]"
       : "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))] max-w-[24rem]";
-
-  useEffect(() => {
-    if (open) return;
-    setSearchValue("");
-  }, [open]);
-
-  useEffect(() => {
-    if (!canSearch || !searchValue.trim()) return;
-
-    const firstVisibleItem = listRef.current?.querySelector<HTMLElement>(
-      '[data-slot="multiselect-item"]:not([hidden])',
-    );
-
-    firstVisibleItem?.scrollIntoView({
-      block: "nearest",
-    });
-  }, [canSearch, searchValue, children]);
 
   return (
     <>
@@ -332,16 +312,11 @@ export function MultiSelectContent({
                 typeof search === "object" ? search.placeholder : undefined
               }
               className="text-bg-button-secondary placeholder:text-bg-button-secondary"
-              value={searchValue}
-              onValueChange={setSearchValue}
             />
           ) : (
             <button className="sr-only" />
           )}
-          <CommandList
-            ref={listRef}
-            className="minimal-scrollbar max-h-[300px] overflow-x-hidden overflow-y-auto p-3"
-          >
+          <CommandList className="minimal-scrollbar max-h-[300px] overflow-x-hidden overflow-y-auto p-3">
             {canSearch && (
               <CommandEmpty className="text-bg-button-secondary py-6 text-center text-sm">
                 {typeof search === "object" ? search.emptyMessage : undefined}
