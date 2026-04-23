@@ -7,10 +7,12 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - CIS Benchmark PDF report generation for scans, exposing the latest CIS version per provider via `GET /scans/{id}/cis/{name}/` and picking the variant dynamically via `_pick_latest_cis_variant` (no hard-coded provider → version mapping) [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
+- `DJANGO_SENTRY_TRACES_SAMPLE_RATE` env var (default `0.02`) enables Sentry performance tracing for the API [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
 
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+- Attack Paths: Neo4j driver `connection_acquisition_timeout` is now configurable via `NEO4J_CONN_ACQUISITION_TIMEOUT` (default lowered from 120 s to 15 s) [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
 
 ---
 

@@ -118,6 +118,48 @@ class TestLazyInitialization:
         mock_driver_factory.assert_called_once()
 
 
+class TestConnectionAcquisitionTimeout:
+    """Test that the connection acquisition timeout is configurable."""
+
+    @pytest.fixture(autouse=True)
+    def reset_module_state(self):
+        import api.attack_paths.database as db_module
+
+        original_driver = db_module._driver
+        original_timeout = db_module.CONN_ACQUISITION_TIMEOUT
+
+        db_module._driver = None
+
+        yield
+
+        db_module._driver = original_driver
+        db_module.CONN_ACQUISITION_TIMEOUT = original_timeout
+
+    @patch("api.attack_paths.database.settings")
+    @patch("api.attack_paths.database.neo4j.GraphDatabase.driver")
+    def test_driver_receives_configured_timeout(
+        self, mock_driver_factory, mock_settings
+    ):
+        """init_driver() should pass CONN_ACQUISITION_TIMEOUT to the neo4j driver."""
+        import api.attack_paths.database as db_module
+
+        mock_driver_factory.return_value = MagicMock()
+        mock_settings.DATABASES = {
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": 7687,
+                "USER": "neo4j",
+                "PASSWORD": "password",
+            }
+        }
+        db_module.CONN_ACQUISITION_TIMEOUT = 42
+
+        db_module.init_driver()
+
+        _, kwargs = mock_driver_factory.call_args
+        assert kwargs["connection_acquisition_timeout"] == 42
+
+
 class TestAtexitRegistration:
     """Test that atexit cleanup handler is registered correctly."""
 
