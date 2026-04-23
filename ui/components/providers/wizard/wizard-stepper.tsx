@@ -7,15 +7,16 @@ import { ProwlerShort } from "@/components/icons/prowler/ProwlerIcons";
 import { cn } from "@/lib/utils";
 import { IconComponent, IconSvgProps } from "@/types/components";
 
-interface WizardStepperProps {
-  currentStep: number;
-  stepOffset?: number;
-}
-
 interface StepConfig {
   label: string;
   description: string;
   icon: IconComponent;
+}
+
+interface WizardStepperProps {
+  currentStep: number;
+  stepOffset?: number;
+  steps?: StepConfig[];
 }
 
 const STEPS: StepConfig[] = [
@@ -43,18 +44,21 @@ const STEPS: StepConfig[] = [
   },
 ];
 
+export const PROVIDER_WIZARD_STEPS = STEPS;
+
 export function WizardStepper({
   currentStep,
   stepOffset = 0,
+  steps = STEPS,
 }: WizardStepperProps) {
   const activeVisualStep = Math.max(
     0,
-    Math.min(currentStep + stepOffset, STEPS.length - 1),
+    Math.min(currentStep + stepOffset, steps.length - 1),
   );
 
   return (
     <nav aria-label="Wizard progress" className="flex flex-col gap-0">
-      {STEPS.map((step, index) => {
+      {steps.map((step, index) => {
         const isComplete = index < activeVisualStep;
         const isActive = index === activeVisualStep;
         const isInactive = index > activeVisualStep;
@@ -67,7 +71,7 @@ export function WizardStepper({
                 isActive={isActive}
                 icon={step.icon}
               />
-              {index < STEPS.length - 1 && (
+              {index < steps.length - 1 && (
                 <StepConnector isComplete={isComplete} />
               )}
             </div>
