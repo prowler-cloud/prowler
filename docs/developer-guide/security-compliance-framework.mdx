@@ -6,9 +6,15 @@ This guide explains how to add a new security compliance framework to Prowler, e
 
 ## Introduction
 
-A compliance framework in Prowler maps a public or custom control catalog (for example CIS, NIST 800-53, PCI DSS, HIPAA, ENS, CCC) to the security checks that Prowler already runs. Each requirement links to one or more Prowler checks. When a scan executes, findings are aggregated per requirement to produce the compliance report rendered by Prowler CLI and Prowler App.
+A compliance framework in Prowler maps a public or custom control catalog (for example CIS, NIST 800-53, PCI DSS, HIPAA, ENS, CCC) to the security checks that Prowler already runs. Each requirement links to one or more Prowler checks. When a scan executes, findings are aggregated per requirement to produce the compliance report rendered by Prowler CLI and Prowler Cloud.
 
-Prowler ships with 85+ compliance frameworks across AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub, and more. The catalog lives under `prowler/compliance/<provider>/`.
+Prowler ships with 85+ compliance frameworks across All Providers. The catalog lives under `prowler/compliance/<provider>/`.
+
+<Warning>
+A compliance framework must represent the **complete state** of the source catalog. Every requirement defined by the framework has to be present in the JSON file, even when none of the existing Prowler checks can automate it. In that case, leave `Checks` as an empty array, but do not omit the requirement.
+
+Requirement coverage feeds the compliance percentage calculations and the metadata surfaces (dashboards, widgets, exports). Missing requirements skew those metrics and break the report as a faithful snapshot of the framework.
+</Warning>
 
 ### Prerequisites
 
@@ -212,9 +218,10 @@ The following snippet is a complete, valid framework file named `my_framework_1.
 
 Each requirement links to the Prowler checks that, together, produce a PASS or FAIL verdict for that control.
 
+- **Include every requirement from the source catalog.** The framework file must mirror the full control list, one-to-one. Compliance percentages, dashboards, and exported metadata are computed against the total requirement count, so omitting an unmappable control inflates coverage and misrepresents the framework.
 - List every check by its canonical identifier, the value of `CheckID` inside the check's `.metadata.json` file.
 - One requirement can reference multiple checks. The requirement is evaluated as FAIL when any referenced check produces a FAIL finding for a resource in scope.
-- Leave `Checks` as an empty array when the requirement cannot be automated. Manual requirements still appear in the report but always resolve to `MANUAL`.
+- Leave `Checks` as an empty array when the requirement cannot be automated. The requirement still appears in the report, contributes to the total, and resolves to `MANUAL`. An empty mapping is valid; a missing requirement is not.
 - Reuse checks across requirements when the same control applies in multiple places. Do not duplicate check logic to match framework structure.
 - Avoid referencing checks from a different provider. A compliance file is bound to one provider, and cross-provider checks will never match findings in the scan.
 
