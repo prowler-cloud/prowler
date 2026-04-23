@@ -9,7 +9,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Redesign compliance page, client-side search for compliance frameworks, compact scan selector trigger, enhanced compliance cards [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 - Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
-- `DataTable` controlled-mode pagination now emits a single `onPaginationChange(page, pageSize)` callback instead of the separate `onPageChange` and `onPageSizeChange` pair, so consumers that drive state through `router.push` cannot race on a stale `useSearchParams` snapshot and silently revert the page-size change
+- Fix rows-per-page selector silently ignoring changes in URL-driven tables by unifying `DataTable` pagination into a single `onPaginationChange` callback [(#10863)](https://github.com/prowler-cloud/prowler/pull/10863)
 
 ---
 
