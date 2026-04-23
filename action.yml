@@ -182,8 +182,30 @@ runs:
         RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         BRANCH: ${{ github.head_ref || github.ref_name }}
+        GH_TOKEN: ${{ github.token }}
       run: |
         set +e
+
+        # Build a link to the scan step in the workflow logs. Requires `actions: read`
+        # on the caller's GITHUB_TOKEN; silently skips the link if unavailable.
+        scan_step_url=""
+        if [ -n "${GH_TOKEN:-}" ] && command -v gh >/dev/null 2>&1; then
+          job_info=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/attempts/${GITHUB_RUN_ATTEMPT:-1}/jobs" \
+            --jq ".jobs[] | select(.runner_name == \"${RUNNER_NAME:-}\")" 2>/dev/null)
+          if [ -n "$job_info" ]; then
+            job_id=$(jq -r '.id // empty' <<<"$job_info")
+            step_number=$(jq -r '[.steps[]? | select((.name // "") | test("Run Prowler scan"; "i")) | .number] | first // empty' <<<"$job_info")
+            if [ -z "$step_number" ]; then
+              step_number=$(jq -r '[.steps[]? | select(.status == "in_progress") | .number] | first // empty' <<<"$job_info")
+            fi
+            if [ -n "$job_id" ] && [ -n "$step_number" ]; then
+              scan_step_url="${REPO_URL}/actions/runs/${GITHUB_RUN_ID}/job/${job_id}#step:${step_number}:1"
+            elif [ -n "$job_id" ]; then
+              scan_step_url="${REPO_URL}/actions/runs/${GITHUB_RUN_ID}/job/${job_id}"
+            fi
+          fi
+        fi
 
         # Map provider code to a properly-cased display name.
         case "$INPUT_PROVIDER" in
@@ -237,30 +259,35 @@ runs:
             echo ""
             echo "| Severity | Failing |"
             echo "|----------|---------|"
-            echo "| Critical | ${critical:-0} |"
-            echo "| High | ${high:-0} |"
-            echo "| Medium | ${medium:-0} |"
-            echo "| Low | ${low:-0} |"
-            echo "| Informational | ${info:-0} |"
+            echo "| ‼️ Critical | ${critical:-0} |"
+            echo "| 🔴 High | ${high:-0} |"
+            echo "| 🟠 Medium | ${medium:-0} |"
+            echo "| 🔵 Low | ${low:-0} |"
+            echo "| ⚪ Informational | ${info:-0} |"
             echo ""
           else
             echo "_No findings report was produced. Check the scan logs above._"
             echo ""
           fi
 
-          echo "**Full report:** [\`prowler-${INPUT_PROVIDER}\` artifact](${RUN_URL}#artifacts)"
+          if [ -n "$scan_step_url" ]; then
+            echo "**Scan logs:** [view in workflow run](${scan_step_url})"
+            echo ""
+          fi
+
+          echo "**Get the full report:** [\`prowler-${INPUT_PROVIDER}\` artifact](${RUN_URL}#artifacts)"
 
           if [ "$INPUT_UPLOAD_SARIF" = "true" ] && [ -n "$BRANCH" ]; then
             encoded_branch=$(jq -nr --arg b "$BRANCH" '$b|@uri')
             echo ""
-            echo "**Code Scanning:** [open alerts on \`${BRANCH}\`](${REPO_URL}/security/code-scanning?query=is%3Aopen+branch%3A${encoded_branch})"
+            echo "**See results in GitHub Code Security:** [open alerts on \`${BRANCH}\`](${REPO_URL}/security/code-scanning?query=is%3Aopen+branch%3A${encoded_branch})"
           fi
 
           if [ "$INPUT_PUSH_TO_CLOUD" != "true" ]; then
             echo ""
             echo "---"
             echo ""
-            echo "### Scale ${provider_name} security with Prowler Cloud"
+            echo "### Scale ${provider_name} security with Prowler Cloud ☁️"
             echo ""
             echo "Send this scan's findings to **[Prowler Cloud](https://cloud.prowler.com)** and get:"
             echo ""
@@ -271,7 +298,7 @@ runs:
             echo "- **Enterprise-ready platform**: SOC 2 Type 2, SSO/SAML, AWS Security Hub, S3 and Jira integrations"
             echo ""
             echo "**Get started in 3 steps:**"
-            echo "1. Create a workspace at [cloud.prowler.com](https://cloud.prowler.com)"
+            echo "1. Create an account at [cloud.prowler.com](https://cloud.prowler.com)"
             echo "2. Generate a Prowler Cloud API key ([docs](https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings#using-the-cli))"
             echo "3. Add \`PROWLER_CLOUD_API_KEY\` to your GitHub secrets and set \`push-to-cloud: true\` on this action"
             echo ""
