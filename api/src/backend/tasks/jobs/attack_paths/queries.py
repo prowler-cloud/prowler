@@ -152,8 +152,8 @@ NODE_SYNC_TEMPLATE = f"""
 
 RELATIONSHIP_SYNC_TEMPLATE = f"""
     UNWIND $rows AS row
-    MATCH (s:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.start_element_id}})
-    MATCH (t:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.end_element_id}})
+    MATCH (s:{PROVIDER_RESOURCE_LABEL}:`__PROVIDER_LABEL__` {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.start_element_id}})
+    MATCH (t:{PROVIDER_RESOURCE_LABEL}:`__PROVIDER_LABEL__` {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.end_element_id}})
     MERGE (s)-[r:__REL_TYPE__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}}]->(t)
     SET r += row.props
 """

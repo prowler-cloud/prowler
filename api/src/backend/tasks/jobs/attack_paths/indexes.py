@@ -2,6 +2,7 @@ import neo4j
 
 from cartography.client.core.tx import run_write_query
 from celery.utils.log import get_task_logger
+from django.conf import settings
 
 from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
@@ -11,6 +12,10 @@ from tasks.jobs.attack_paths.config import (
 )
 
 logger = get_task_logger(__name__)
+
+
+def _sink_is_neptune() -> bool:
+    return getattr(settings, "ATTACK_PATHS_SINK_DATABASE", "neo4j") == "neptune"
 
 
 # Indexes for Prowler Findings and resource lookups
@@ -32,14 +37,29 @@ SYNC_INDEX_STATEMENTS = [
 
 
 def create_findings_indexes(neo4j_session: neo4j.Session) -> None:
-    """Create indexes for Prowler findings and resource lookups."""
+    """Create indexes for Prowler findings and resource lookups.
+
+    Neptune auto-manages indexes and does not support ``CREATE INDEX``, so
+    this is a no-op when the sink is Neptune. The ``neo4j_session`` argument
+    is only honored on Neo4j sinks.
+    """
+    if _sink_is_neptune():
+        logger.info("Skipping findings indexes — Neptune auto-manages indexes")
+        return
     logger.info("Creating indexes for Prowler Findings node types")
     for statement in FINDINGS_INDEX_STATEMENTS:
         run_write_query(neo4j_session, statement)
 
 
 def create_sync_indexes(neo4j_session: neo4j.Session) -> None:
-    """Create indexes for provider resource sync operations."""
+    """Create indexes for provider resource sync operations.
+
+    Neptune auto-manages indexes and does not support ``CREATE INDEX``, so
+    this is a no-op when the sink is Neptune.
+    """
+    if _sink_is_neptune():
+        logger.info("Skipping sync indexes — Neptune auto-manages indexes")
+        return
     logger.info("Ensuring ProviderResource indexes exist")
     for statement in SYNC_INDEX_STATEMENTS:
         neo4j_session.run(statement)

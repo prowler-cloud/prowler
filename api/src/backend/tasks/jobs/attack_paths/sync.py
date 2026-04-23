@@ -161,10 +161,15 @@ def sync_relationships(
         if batch_count == 0:
             break
 
+        provider_label = get_provider_label(provider_id)
         with graph_database.get_session(target_database) as target_session:
             for rel_type, batch in grouped.items():
                 query = render_cypher_template(
-                    RELATIONSHIP_SYNC_TEMPLATE, {"__REL_TYPE__": rel_type}
+                    RELATIONSHIP_SYNC_TEMPLATE,
+                    {
+                        "__REL_TYPE__": rel_type,
+                        "__PROVIDER_LABEL__": provider_label,
+                    },
                 )
                 target_session.run(query, {"rows": batch})
 
