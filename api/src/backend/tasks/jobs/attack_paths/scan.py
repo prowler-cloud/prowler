@@ -63,7 +63,16 @@ from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
 from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
-from tasks.jobs.attack_paths import db_utils, findings, indexes, internet, sync, utils
+from django.conf import settings
+from tasks.jobs.attack_paths import (
+    db_utils,
+    findings,
+    indexes,
+    internet,
+    legacy_drain,
+    sync,
+    utils,
+)
 from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
 
 from api.attack_paths import database as graph_database
@@ -275,6 +284,13 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         sync_completed = True
         db_utils.set_graph_data_ready(attack_paths_scan, True)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
+
+        # TODO: Drop after Neptune migration is finished
+        if getattr(settings, "ATTACK_PATHS_SINK_DATABASE", "neo4j") == "neptune":
+            legacy_drain.drain_legacy_neo4j_for_provider(
+                tenant_id=str(prowler_api_provider.tenant_id),
+                provider_id=str(prowler_api_provider.id),
+            )
 
         logger.info(f"Clearing Neo4j cache for database {tenant_database_name}")
         graph_database.clear_cache(tenant_database_name)
