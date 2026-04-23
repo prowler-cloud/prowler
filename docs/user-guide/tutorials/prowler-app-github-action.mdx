@@ -31,7 +31,7 @@ Source: [`prowler-cloud/prowler`](https://github.com/prowler-cloud/prowler) · M
 ### AWS scan
 
 ```yaml
-- uses: prowler-cloud/prowler@v1
+- uses: prowler-cloud/prowler@5.24.3
   with:
     provider: aws
     extra-env: AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
@@ -46,7 +46,7 @@ Source: [`prowler-cloud/prowler`](https://github.com/prowler-cloud/prowler) · M
 Send scan results directly to [Prowler Cloud](/user-guide/tutorials/prowler-app-import-findings) for centralized visibility, compliance tracking, and team collaboration.
 
 ```yaml
-- uses: prowler-cloud/prowler@v1
+- uses: prowler-cloud/prowler@5.24.3
   with:
     provider: aws
     push-to-cloud: true
@@ -82,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: prowler-cloud/prowler@v1
+      - uses: prowler-cloud/prowler@5.24.3
         with:
           provider: iac
           output-formats: sarif json-ocsf
@@ -100,7 +100,7 @@ jobs:
 ### Combine push-to-cloud with SARIF upload
 
 ```yaml
-- uses: prowler-cloud/prowler@v1
+- uses: prowler-cloud/prowler@5.24.3
   with:
     provider: aws
     output-formats: sarif json-ocsf
@@ -129,7 +129,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: prowler-cloud/prowler@v1
+      - uses: prowler-cloud/prowler@5.24.3
         with:
           provider: github
           flags: --repository ${{ github.repository }}
@@ -147,7 +147,7 @@ jobs:
 By default the action tolerates findings (exit code 3) and succeeds. Set `fail-on-findings: true` to fail the workflow step when Prowler detects findings. Combine with `--severity` to control which severity levels trigger the failure:
 
 ```yaml
-- uses: prowler-cloud/prowler@v1
+- uses: prowler-cloud/prowler@5.24.3
   with:
     provider: iac
     output-formats: sarif
@@ -192,7 +192,7 @@ steps:
       role-to-assume: arn:aws:iam::123456789012:role/ProwlerRole
       aws-region: eu-west-1
 
-  - uses: prowler-cloud/prowler@v1
+  - uses: prowler-cloud/prowler@5.24.3
     with:
       provider: aws
       extra-env: AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_DEFAULT_REGION
@@ -208,7 +208,7 @@ steps:
     with:
       creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-  - uses: prowler-cloud/prowler@v1
+  - uses: prowler-cloud/prowler@5.24.3
     with:
       provider: azure
       extra-env: AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_TENANT_ID
@@ -233,7 +233,7 @@ steps:
       workload_identity_provider: projects/123456/locations/global/workloadIdentityPools/my-pool/providers/my-provider
       service_account: prowler@my-project.iam.gserviceaccount.com
 
-  - uses: prowler-cloud/prowler@v1
+  - uses: prowler-cloud/prowler@5.24.3
     with:
       provider: gcp
       extra-env: GOOGLE_APPLICATION_CREDENTIALS CLOUDSDK_AUTH_ACCESS_TOKEN GOOGLE_CLOUD_PROJECT
@@ -244,7 +244,7 @@ steps:
 Create a Cloudflare API Token with `Zone:Read`, `Zone Settings:Read`, and `DNS:Read` permissions ([provider auth docs](/user-guide/providers/cloudflare/authentication)). Then:
 
 ```yaml
-- uses: prowler-cloud/prowler@v1
+- uses: prowler-cloud/prowler@5.24.3
   with:
     provider: cloudflare
     extra-env: CLOUDFLARE_API_TOKEN

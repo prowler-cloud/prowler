@@ -320,7 +320,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: prowler-cloud/prowler@v1
+      - uses: prowler-cloud/prowler@5.24.3
         with:
           provider: iac
           output-formats: sarif json-ocsf
