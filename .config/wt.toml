@@ -1,0 +1,13 @@
+# Prowler worktree automation for worktrunk (wt CLI).
+# Runs automatically on `wt switch --create`.
+
+# Fast, blocking setup — AI skill symlinks + Python version must be ready
+# before dependency install.
+[[pre-start]]
+skills = "./skills/setup.sh --claude"
+python = "poetry env use python3.12"
+
+# Slow step runs in background so `wt switch` returns quickly.
+# Tail logs via `wt config state logs`.
+[post-start]
+deps = "poetry install --with dev"
