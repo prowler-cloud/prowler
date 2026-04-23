@@ -1,6 +1,7 @@
 from unittest import mock
 
 import botocore
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
@@ -43,7 +44,33 @@ def mock_make_api_call_with_guardrail(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_bedrock_guardrails_configured_and_used:
+def mock_make_api_call_without_guardrails(self, operation_name, kwarg):
+    """Mock API call returning no guardrails."""
+    if operation_name == "ListGuardrails":
+        return {"guardrails": []}
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_guardrail_validation_exception(self, operation_name, kwarg):
+    """Mock API call raising ValidationException for ListGuardrails."""
+    if operation_name == "ListGuardrails":
+        raise ClientError(
+            {
+                "Error": {
+                    "Code": "ValidationException",
+                    "Message": "Guardrails are not supported in this region.",
+                }
+            },
+            operation_name,
+        )
+    return make_api_call(self, operation_name, kwarg)
+
+
+class Test_bedrock_guardrails_configured:
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_without_guardrails,
+    )
     @mock_aws
     def test_no_guardrails_single_region(self):
         """Test FAIL when no guardrails are configured in a single region."""
@@ -57,15 +84,15 @@ class Test_bedrock_guardrails_configured_and_used:
                 return_value=aws_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_guardrails_configured_and_used.bedrock_guardrails_configured_and_used.bedrock_client",
+                "prowler.providers.aws.services.bedrock.bedrock_guardrails_configured.bedrock_guardrails_configured.bedrock_client",
                 new=Bedrock(aws_provider),
             ),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_guardrails_configured_and_used.bedrock_guardrails_configured_and_used import (
-                bedrock_guardrails_configured_and_used,
+            from prowler.providers.aws.services.bedrock.bedrock_guardrails_configured.bedrock_guardrails_configured import (
+                bedrock_guardrails_configured,
             )
 
-            check = bedrock_guardrails_configured_and_used()
+            check = bedrock_guardrails_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -77,12 +104,16 @@ class Test_bedrock_guardrails_configured_and_used:
             assert result[0].resource_id == "bedrock-guardrails"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:guardrail"
+                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:guardrail/summary"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
     @mock_aws
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_without_guardrails,
+    )
     def test_no_guardrails_multi_region(self):
         """Test FAIL in both regions when no guardrails are configured."""
         from prowler.providers.aws.services.bedrock.bedrock_service import Bedrock
@@ -97,15 +128,15 @@ class Test_bedrock_guardrails_configured_and_used:
                 return_value=aws_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_guardrails_configured_and_used.bedrock_guardrails_configured_and_used.bedrock_client",
+                "prowler.providers.aws.services.bedrock.bedrock_guardrails_configured.bedrock_guardrails_configured.bedrock_client",
                 new=Bedrock(aws_provider),
             ),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_guardrails_configured_and_used.bedrock_guardrails_configured_and_used import (
-                bedrock_guardrails_configured_and_used,
+            from prowler.providers.aws.services.bedrock.bedrock_guardrails_configured.bedrock_guardrails_configured import (
+                bedrock_guardrails_configured,
             )
 
-            check = bedrock_guardrails_configured_and_used()
+            check = bedrock_guardrails_configured()
             result = check.execute()
 
             assert len(result) == 2
@@ -133,15 +164,15 @@ class Test_bedrock_guardrails_configured_and_used:
                 return_value=aws_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_guardrails_configured_and_used.bedrock_guardrails_configured_and_used.bedrock_client",
+                "prowler.providers.aws.services.bedrock.bedrock_guardrails_configured.bedrock_guardrails_configured.bedrock_client",
                 new=Bedrock(aws_provider),
             ),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_guardrails_configured_and_used.bedrock_guardrails_configured_and_used import (
-                bedrock_guardrails_configured_and_used,
+            from prowler.providers.aws.services.bedrock.bedrock_guardrails_configured.bedrock_guardrails_configured import (
+                bedrock_guardrails_configured,
             )
 
-            check = bedrock_guardrails_configured_and_used()
+            check = bedrock_guardrails_configured()
             result = check.execute()
 
             assert len(result) == 1
@@ -153,7 +184,37 @@ class Test_bedrock_guardrails_configured_and_used:
             assert result[0].resource_id == "bedrock-guardrails"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:guardrail"
+                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:guardrail/summary"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_guardrail_validation_exception,
+    )
+    @mock_aws
+    def test_guardrails_unsupported_region_is_skipped(self):
+        """Test unsupported regions are skipped instead of failing."""
+        from prowler.providers.aws.services.bedrock.bedrock_service import Bedrock
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_guardrails_configured.bedrock_guardrails_configured.bedrock_client",
+                new=Bedrock(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.bedrock.bedrock_guardrails_configured.bedrock_guardrails_configured import (
+                bedrock_guardrails_configured,
+            )
+
+            check = bedrock_guardrails_configured()
+            result = check.execute()
+
+            assert len(result) == 0

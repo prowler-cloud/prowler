@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "bedrock_guardrails_configured_and_used",
-  "CheckTitle": "Bedrock guardrails prevent harmful content in model invocations",
+  "CheckID": "bedrock_guardrails_configured",
+  "CheckTitle": "Amazon Bedrock has at least one guardrail configured in the audited region",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
@@ -12,8 +12,8 @@
   "Severity": "medium",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
-  "Description": "**Bedrock guardrails** provide configurable safeguards that filter harmful or unwanted content in model inputs and outputs.\n\nThis evaluation checks whether at least one guardrail is configured in each region to enforce content policies during model invocations.",
-  "Risk": "Without guardrails, model invocations have **no content filtering**, exposing the application to:\n- **Harmful outputs** including toxic, biased, or inappropriate content\n- **Prompt injection** and jailbreak attacks that bypass intended behavior\n- **Data leakage** of sensitive information through unfiltered responses",
+  "Description": "**Bedrock guardrails** provide reusable safety policies for filtering harmful or unwanted content in model inputs and outputs.\n\nThis evaluation checks whether at least one guardrail exists in each successfully scanned region. It does **not** verify that guardrails are attached to agents or passed on individual model invocation API calls.",
+  "Risk": "Without any configured Bedrock guardrails in a region, teams lack a native reusable policy object for content filtering and safety controls. Applications may invoke models without standardized protections against harmful content, prompt injection, or sensitive-data exposure unless equivalent controls are enforced elsewhere.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
@@ -27,8 +27,8 @@
       "Terraform": "```hcl\nresource \"aws_bedrock_guardrail\" \"example_resource\" {\n  name                      = \"example_resource\"\n  blocked_input_messaging   = \"Blocked\"\n  blocked_outputs_messaging = \"Blocked\"\n\n  content_policy_config {\n    filters_config {\n      type            = \"HATE\"          # Critical: configures content filtering\n      input_strength  = \"HIGH\"\n      output_strength = \"HIGH\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create and attach **Bedrock guardrails** to all model invocations as a core **defense-in-depth** layer.\n- Configure **content filters** for harmful categories (hate, violence, sexual, misconduct)\n- Add **sensitive information filters** and **denied topic policies**\n- Apply guardrails at the API call level using `guardrailIdentifier`",
-      "Url": "https://hub.prowler.com/check/bedrock_guardrails_configured_and_used"
+      "Text": "Create at least one **Bedrock guardrail** in each region where Bedrock is used, then separately ensure those guardrails are attached to relevant agents and invocation paths.\n- Configure **content filters** for harmful categories (hate, violence, sexual, misconduct)\n- Add **sensitive information filters** and **denied topic policies**\n- Apply guardrails at the API call level using `guardrailIdentifier` where supported",
+      "Url": "https://hub.prowler.com/check/bedrock_guardrails_configured"
     }
   },
   "Categories": [
@@ -40,5 +40,5 @@
     "bedrock_guardrail_sensitive_information_filter_enabled",
     "bedrock_agent_guardrail_enabled"
   ],
-  "Notes": ""
+  "Notes": "This check validates guardrail existence per successfully scanned region. It does not verify attachment to agents or the use of guardrails on model invocations. Regions where Bedrock guardrails cannot be enumerated are skipped to avoid false failures."
 }
