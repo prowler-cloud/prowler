@@ -28,6 +28,7 @@ interface NotificationIndicatorProps {
   isMuted?: boolean;
   mutedReason?: string;
   showDeltaWhenMuted?: boolean;
+  reserveMutedSlot?: boolean;
 }
 
 export const NotificationIndicator = ({
@@ -35,8 +36,31 @@ export const NotificationIndicator = ({
   isMuted = false,
   mutedReason,
   showDeltaWhenMuted = false,
+  reserveMutedSlot = false,
 }: NotificationIndicatorProps) => {
   const hasDelta = delta === DeltaValues.NEW || delta === DeltaValues.CHANGED;
+
+  if (showDeltaWhenMuted && reserveMutedSlot) {
+    return (
+      <div
+        data-slot="notification-indicator"
+        className="flex shrink-0 items-center gap-1"
+      >
+        <div
+          data-slot="notification-muted-slot"
+          className="flex w-5 shrink-0 items-center justify-center"
+        >
+          {isMuted ? <MutedIndicator mutedReason={mutedReason} /> : null}
+        </div>
+        <div
+          data-slot="notification-delta-slot"
+          className="flex w-2 shrink-0 items-center justify-center"
+        >
+          {hasDelta ? <DeltaIndicator delta={delta} /> : null}
+        </div>
+      </div>
+    );
+  }
 
   if (isMuted && hasDelta && showDeltaWhenMuted) {
     return (

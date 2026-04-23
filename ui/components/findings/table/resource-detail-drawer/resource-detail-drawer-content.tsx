@@ -970,7 +970,7 @@ export function ResourceDetailDrawerContent({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10" />
+                      <TableHead className="w-14" />
                       <TableHead>
                         <span className="text-text-neutral-secondary text-sm font-medium">
                           Status
@@ -1312,18 +1312,21 @@ function OtherFindingRow({
         className="cursor-pointer"
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
       >
-        <TableCell className="w-10">
-          <NotificationIndicator
-            isMuted={isMuted}
-            delta={
-              finding.delta === DeltaValues.NEW ||
-              finding.delta === DeltaValues.CHANGED
-                ? finding.delta
-                : undefined
-            }
-            mutedReason={finding.mutedReason ?? undefined}
-            showDeltaWhenMuted
-          />
+        <TableCell className="w-14">
+          <div className="flex items-center justify-center">
+            <NotificationIndicator
+              isMuted={isMuted}
+              delta={
+                finding.delta === DeltaValues.NEW ||
+                finding.delta === DeltaValues.CHANGED
+                  ? finding.delta
+                  : undefined
+              }
+              mutedReason={finding.mutedReason ?? undefined}
+              showDeltaWhenMuted
+              reserveMutedSlot
+            />
+          </div>
         </TableCell>
         <TableCell>
           <StatusFindingBadge status={finding.status as FindingStatus} />
