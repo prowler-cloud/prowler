@@ -181,10 +181,15 @@ def recover_graph_data_ready(
     next successful scan) is a worse outcome for the user.
     """
     try:
+        from api.attack_paths import sink as sink_module
+
         tenant_db = graph_database.get_database_name(attack_paths_scan.tenant_id)
-        if graph_database.has_provider_data(
-            tenant_db, str(attack_paths_scan.provider_id)
-        ):
+        # TODO: Drop after Neptune migration is finished
+        # Check the backend that actually holds this scan's data, not the
+        # currently configured sink — a stale EXECUTING scan from before a
+        # backend switch must still be recoverable.
+        backend = sink_module.get_backend_for_scan(attack_paths_scan)
+        if backend.has_provider_data(tenant_db, str(attack_paths_scan.provider_id)):
             set_provider_graph_data_ready(attack_paths_scan, True)
             logger.info(
                 f"Recovered `graph_data_ready` for provider {attack_paths_scan.provider_id}"
