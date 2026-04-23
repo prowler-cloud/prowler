@@ -12,17 +12,24 @@ class secretsmanager_has_restrictive_resource_policy(Check):
         organizations_trusted_ids = secretsmanager_client.audit_config.get(
             "organizations_trusted_ids", []
         )
+        # Build partition-aware patterns (supports aws, aws-cn, aws-us-gov, etc.)
+        partition = re.escape(secretsmanager_client.audited_partition)
+        dns_suffix = re.escape(
+            ".amazonaws.com.cn"
+            if secretsmanager_client.audited_partition == "aws-cn"
+            else ".amazonaws.com"
+        )
         # Regular expression to match IAM roles or users without wildcard * in their name
-        arn_pattern = r"arn:aws:iam::\d{12}:(role|user)/([^*]+)$"
+        arn_pattern = rf"arn:{partition}:iam::\d{{12}}:(role|user)/([^*]+)$"
         # Regular expression to match AWS service names, including regionalized
         # and multi-label principals (e.g. logs.eu-central-1.amazonaws.com)
-        service_pattern = r"^[a-z0-9-]+(\.[a-z0-9-]+)*\.amazonaws\.com$"
+        service_pattern = rf"^[a-z0-9-]+(\.[a-z0-9-]+)*{dns_suffix}$"
         # Regular expression to match any IAM ARN with account number
-        iam_arn_with_account_pattern = r"arn:aws:iam::(\d{12}):"
+        iam_arn_with_account_pattern = rf"arn:{partition}:iam::(\d{{12}}):"
         # Regular expression to match IAM root account ARN
-        iam_root_arn_pattern = r"arn:aws:iam::(\d{12}):root"
+        iam_root_arn_pattern = rf"arn:{partition}:iam::(\d{{12}}):root"
         # Regular expression to match IAM role ARN with wildcard (at least 12 chars prefix before *)
-        arn_wildcard_pattern = r"arn:aws:iam::\d{12}:role/.{12,}\*$"
+        arn_wildcard_pattern = rf"arn:{partition}:iam::\d{{12}}:role/.{{12,}}\*$"
         # Maximum number of cross-account principals to display in error messages
         max_principals_to_display = 3
 
@@ -48,12 +55,17 @@ class secretsmanager_has_restrictive_resource_policy(Check):
                 identity_arn = secretsmanager_client.provider.identity.identity_arn
                 if identity_arn:
                     # If the identity ARN is a sts assumed-role ARN, transform it
+                    sts_partition = re.escape(secretsmanager_client.audited_partition)
                     match = re.match(
-                        r"arn:aws:sts::(\d+):assumed-role/([^/]+)/", identity_arn
+                        rf"arn:{sts_partition}:sts::(\d+):assumed-role/([^/]+)/",
+                        identity_arn,
                     )
                     if match:
                         account_id, role_name = match.groups()
-                        final_role_arn = f"arn:aws:iam::{account_id}:role/{role_name}"
+                        final_role_arn = (
+                            f"arn:{secretsmanager_client.audited_partition}"
+                            f":iam::{account_id}:role/{role_name}"
+                        )
                     else:
                         final_role_arn = identity_arn
                 else:

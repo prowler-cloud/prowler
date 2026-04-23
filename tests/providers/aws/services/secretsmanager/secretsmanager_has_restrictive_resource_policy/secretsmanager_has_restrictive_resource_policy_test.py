@@ -8,6 +8,7 @@ from prowler.providers.aws.services.secretsmanager.secretsmanager_service import
     SecretsManager,
 )
 from tests.providers.aws.utils import (
+    AWS_CHINA_PARTITION,
     AWS_REGION_EU_WEST_1,
     set_mocked_aws_provider,
 )
@@ -2352,3 +2353,148 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
                 assert (
                     result[0].status == "PASS"
                 ), f"SourceAccount as list should PASS but got: {result[0].status_extended}"
+
+    def test_china_partition_principals_and_services(self, secretsmanager_client):
+        """Principals and services in aws-cn partition must be accepted."""
+        with mock_aws():
+            client_instance, secret_arn = secretsmanager_client
+
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "DenyUnauthorizedPrincipals",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEqualsIfExists": {
+                                "aws:PrincipalArn": "arn:aws-cn:iam::123456789012:role/MyRole",
+                                "aws:PrincipalServiceName": "logs.cn-north-1.amazonaws.com.cn",
+                            },
+                            "Null": {
+                                "aws:PrincipalArn": "true",
+                                "aws:PrincipalServiceName": "true",
+                            },
+                        },
+                    },
+                    {
+                        "Sid": "DenyOutsideOrganization",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "secretsmanager:*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEquals": {
+                                "aws:PrincipalOrgID": "o-1234567890",
+                                "aws:PrincipalServiceName": "logs.cn-north-1.amazonaws.com.cn",
+                            }
+                        },
+                    },
+                    {
+                        "Sid": "AllowLogsAccess",
+                        "Effect": "Allow",
+                        "Principal": {"Service": "logs.cn-north-1.amazonaws.com.cn"},
+                        "Action": ["secretsmanager:GetSecretValue"],
+                        "Resource": "*",
+                        "Condition": {
+                            "StringEquals": {"aws:SourceAccount": "123456789012"}
+                        },
+                    },
+                ],
+            }
+
+            client_instance.put_resource_policy(
+                SecretId=secret_arn, ResourcePolicy=json.dumps(policy)
+            )
+
+            # Use commercial-partition provider so moto finds the secret,
+            # then override audited_partition to simulate aws-cn.
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audited_partition",
+                    AWS_CHINA_PARTITION,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audit_config",
+                    {"organizations_trusted_ids": "o-1234567890"},
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert (
+                    result[0].status == "PASS"
+                ), f"China partition policy should PASS but got: {result[0].status_extended}"
+
+    def test_china_partition_rejects_commercial_arns(self, secretsmanager_client):
+        """In aws-cn partition, commercial arn:aws: principals must be rejected."""
+        with mock_aws():
+            client_instance, secret_arn = secretsmanager_client
+
+            # Policy uses commercial-partition ARNs in a China-partition account
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "DenyUnauthorizedPrincipals",
+                        "Effect": "Deny",
+                        "Principal": "*",
+                        "Action": "*",
+                        "Resource": "*",
+                        "Condition": {
+                            "StringNotEquals": {
+                                "aws:PrincipalArn": "arn:aws:iam::123456789012:role/MyRole"
+                            }
+                        },
+                    },
+                ],
+            }
+
+            client_instance.put_resource_policy(
+                SecretId=secret_arn, ResourcePolicy=json.dumps(policy)
+            )
+
+            # Use commercial-partition provider so moto finds the secret,
+            # then override audited_partition to simulate aws-cn.
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client",
+                    new=SecretsManager(aws_provider),
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy.secretsmanager_client.audited_partition",
+                    AWS_CHINA_PARTITION,
+                ),
+            ):
+                from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
+                    secretsmanager_has_restrictive_resource_policy,
+                )
+
+                check = secretsmanager_has_restrictive_resource_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert (
+                    result[0].status == "FAIL"
+                ), f"Commercial ARNs in China partition should FAIL but got: {result[0].status_extended}"
