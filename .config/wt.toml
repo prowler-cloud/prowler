@@ -6,6 +6,9 @@
 [[pre-start]]
 skills = "./skills/setup.sh --claude"
 python = "poetry env use python3.12"
+# Copies gitignored files listed in .worktreeinclude from the primary
+# worktree (.envrc, ui/.env.local).
+envs = "wt step copy-ignored"
 
 # Reminder runs after earlier pre-start steps so it's the last visible
 # output before `wt switch` returns. Hooks can't mutate the parent shell,
