@@ -50,6 +50,12 @@ DATABASES = {
         "USER": env.str("NEO4J_USER", "neo4j"),
         "PASSWORD": env.str("NEO4J_PASSWORD", "neo4j_password"),
     },
+    "neptune": {
+        "WRITER_ENDPOINT": env.str("NEPTUNE_WRITER_ENDPOINT", ""),
+        "READER_ENDPOINT": env.str("NEPTUNE_READER_ENDPOINT", ""),
+        "PORT": env.str("NEPTUNE_PORT", "8182"),
+        "REGION": env.str("AWS_REGION", ""),
+    },
 }
 
 DATABASES["default"] = DATABASES["prowler_user"]

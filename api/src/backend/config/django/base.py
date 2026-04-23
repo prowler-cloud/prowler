@@ -304,3 +304,8 @@ SESSION_COOKIE_SECURE = True
 ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 2880
 )  # 48h
+
+# Selects where the persistent attack-paths graph is stored. The scan
+# temporary database is always Neo4j; only the sink is configurable.
+# Valid values: "neo4j" (default, OSS and local dev), "neptune" (hosted).
+ATTACK_PATHS_SINK_DATABASE = env.str("ATTACK_PATHS_SINK_DATABASE", default="neo4j")

@@ -49,11 +49,21 @@ DATABASES = {
         "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
         "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
     },
+    # NEO4J_* fall back to empty strings so an API pod running with
+    # ATTACK_PATHS_SINK_DATABASE=neptune can start without Neo4j env.
+    # Workers (and Neo4j-sink API pods) must still set them; the sink/temp
+    # modules validate at init time based on role.
     "neo4j": {
-        "HOST": env.str("NEO4J_HOST"),
-        "PORT": env.str("NEO4J_PORT"),
-        "USER": env.str("NEO4J_USER"),
-        "PASSWORD": env.str("NEO4J_PASSWORD"),
+        "HOST": env.str("NEO4J_HOST", default=""),
+        "PORT": env.str("NEO4J_PORT", default=""),
+        "USER": env.str("NEO4J_USER", default=""),
+        "PASSWORD": env.str("NEO4J_PASSWORD", default=""),
+    },
+    "neptune": {
+        "WRITER_ENDPOINT": env.str("NEPTUNE_WRITER_ENDPOINT", default=""),
+        "READER_ENDPOINT": env.str("NEPTUNE_READER_ENDPOINT", default=""),
+        "PORT": env.str("NEPTUNE_PORT", default="8182"),
+        "REGION": env.str("AWS_REGION", default=""),
     },
 }
 

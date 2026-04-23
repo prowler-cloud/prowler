@@ -170,3 +170,7 @@ GEMINI.md
 
 # Claude Code
 .claude/*
+
+# Docker
+docker-compose.override.yml
+docker-compose-dev.override.yml
