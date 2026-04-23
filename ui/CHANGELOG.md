@@ -4,23 +4,20 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.25.0] (Prowler UNRELEASED)
 
-### 🚀 Added
-
-- Redesign Mutelist simple rules page with target previews, a dedicated targets modal to inspect the muted findings per rule, and a refreshed create/edit mute modal aligned with the design system and sharing a 500-character reason counter [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
-- Mutelist table improvements: now supports name/reason search and visual count badges for finding targets [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
-
 ### 🔄 Changed
 
+- Redesign compliance page, client-side search for compliance frameworks, compact scan selector trigger, enhanced compliance cards [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+- Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
+- Mutelist improvements: table now supports name/reason search and visual count badges for finding targets [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
+
+---
+
+## [1.24.4] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
 
-- Finding group resource drawer no longer forces muted findings into the "Other findings" list; muted items are only included when the `filter[muted]=include` filter is active [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
-
-### ❌ Removed
-
-- Redesign compliance page with a horizontal ThreatScore card (always-visible pillar breakdown + ActionDropdown), client-side search for compliance frameworks, compact scan selector trigger, responsive mobile filters, download-started toasts for CSV/PDF exports, enhanced compliance cards with truncated titles, and Alert-based empty/error states; migrate Progress component from HeroUI to shadcn [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
-- Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
+- Provider wizard no longer advances to the Launch Scan step when rotating credentials [(#10851)](https://github.com/prowler-cloud/prowler/pull/10851)
 
 ---
 
