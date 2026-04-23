@@ -12130,7 +12130,8 @@ class TestSAMLConfigurationViewSet:
             "data": {
                 "type": "saml-configurations",
                 "id": str(config.id),
-                "attributes": {"metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
+                "attributes": {
+                    "metadata_xml": """<?xml version='1.0' encoding='UTF-8'?>
         <md:EntityDescriptor entityID='TEST' xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'>
         <md:IDPSSODescriptor WantAuthnRequestsSigned='false' protocolSupportEnumeration='urn:oasis:names:tc:SAML:2.0:protocol'>
             <md:KeyDescriptor use='signing'>
@@ -12145,7 +12146,8 @@ class TestSAMLConfigurationViewSet:
             <md:SingleSignOnService Binding='urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect' Location='https://TEST/sso/saml'/>
         </md:IDPSSODescriptor>
         </md:EntityDescriptor>
-        """},
+        """
+                },
             }
         }
         response = authenticated_client.patch(
