@@ -9,6 +9,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
 - `repository_default_branch_dismisses_stale_reviews` check for GitHub provider to ensure stale pull request approvals are dismissed when new commits are pushed [(#10569)](https://github.com/prowler-cloud/prowler/pull/10569)
 
+### 🐞 Fixed
+
+- Alibaba Cloud CS service SDK compatibility, harden other services and improve documentation [(#10871)](https://github.com/prowler-cloud/prowler/pull/10871)
+
 ---
 
 ## [5.24.3] (Prowler v5.24.3)
