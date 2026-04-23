@@ -642,6 +642,10 @@ describe("ResourceDetailDrawerContent — fix available version links", () => {
       "href",
       externalCveUrl,
     );
+    expect(screen.getByRole("link", { name: "View CVE" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
     expect(
       screen.getByText((_, element) => {
         return element?.textContent === statusExtendedWithFixVersions;
@@ -698,6 +702,60 @@ describe("ResourceDetailDrawerContent — fix available version links", () => {
     ).toHaveAttribute(
       "href",
       "https://hub.prowler.com/check/image_vulnerability",
+    );
+  });
+
+  it("should render View CVE when the advisory only exists in references", () => {
+    const referencedCveCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "",
+          url: "",
+        },
+      },
+      additionalUrls: [externalCveUrl, "https://example.com/reference"],
+    };
+    const referencedCveFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      statusExtended: statusExtendedWithFixVersions,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "",
+          url: "",
+        },
+      },
+      additionalUrls: [externalCveUrl, "https://example.com/reference"],
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={referencedCveCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={referencedCveFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "View CVE" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
+    expect(screen.getByRole("link", { name: "5.7.13" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
+    expect(screen.getByRole("link", { name: externalCveUrl })).toHaveAttribute(
+      "href",
+      externalCveUrl,
     );
   });
 });

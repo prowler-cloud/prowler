@@ -94,6 +94,20 @@ function isExternalCveRecommendationUrl(url: string): boolean {
   return Boolean(url) && !isProwlerHubUrl(url) && /CVE-\d{4}-\d+/i.test(url);
 }
 
+function resolveExternalCveUrl({
+  recommendationUrl,
+  additionalUrls,
+}: {
+  recommendationUrl: string;
+  additionalUrls: string[];
+}): string {
+  if (isExternalCveRecommendationUrl(recommendationUrl)) {
+    return recommendationUrl;
+  }
+
+  return additionalUrls.find(isExternalCveRecommendationUrl) ?? "";
+}
+
 function renderStatusExtended({
   statusExtended,
   recommendationUrl,
@@ -468,9 +482,24 @@ export function ResourceDetailDrawerContent({
   const recommendationUrl =
     f?.remediation.recommendation.url ||
     checkMeta.remediation.recommendation.url;
+  const externalCveUrl = resolveExternalCveUrl({
+    recommendationUrl,
+    additionalUrls: checkMeta.additionalUrls,
+  });
   const showProwlerHubRecommendationLink =
-    Boolean(checkMeta.remediation.recommendation.url) &&
-    isProwlerHubUrl(checkMeta.remediation.recommendation.url);
+    Boolean(recommendationUrl) && isProwlerHubUrl(recommendationUrl);
+  const showExternalCveRecommendationLink = Boolean(externalCveUrl);
+  const recommendationLink = showProwlerHubRecommendationLink
+    ? {
+        href: recommendationUrl,
+        label: "View in Prowler Hub",
+      }
+    : showExternalCveRecommendationLink
+      ? {
+          href: externalCveUrl,
+          label: "View CVE",
+        }
+      : null;
 
   const handleOpenCompliance = async (framework: string) => {
     if (!complianceScanId || resolvingFramework) {
@@ -867,7 +896,8 @@ export function ResourceDetailDrawerContent({
                         <p className="text-text-neutral-primary text-sm">
                           {renderStatusExtended({
                             statusExtended: f.statusExtended,
-                            recommendationUrl,
+                            recommendationUrl:
+                              externalCveUrl || recommendationUrl,
                           })}
                         </p>
                       </div>
@@ -877,28 +907,34 @@ export function ResourceDetailDrawerContent({
 
                 {/* Card 2: Remediation + Commands */}
                 {(checkMeta.remediation.recommendation.text ||
+                  recommendationLink ||
                   checkMeta.remediation.code.cli ||
                   checkMeta.remediation.code.terraform ||
                   checkMeta.remediation.code.nativeiac) && (
                   <Card variant="inner">
-                    {checkMeta.remediation.recommendation.text && (
+                    {(checkMeta.remediation.recommendation.text ||
+                      recommendationLink) && (
                       <div className="flex flex-col gap-1">
-                        <span className="text-text-neutral-secondary text-xs">
-                          Remediation:
-                        </span>
+                        {checkMeta.remediation.recommendation.text && (
+                          <span className="text-text-neutral-secondary text-xs">
+                            Remediation:
+                          </span>
+                        )}
                         <div className="flex items-start gap-3">
-                          <div className="text-text-neutral-primary flex-1 text-sm">
-                            <MarkdownContainer>
-                              {checkMeta.remediation.recommendation.text}
-                            </MarkdownContainer>
-                          </div>
-                          {showProwlerHubRecommendationLink && (
+                          {checkMeta.remediation.recommendation.text && (
+                            <div className="text-text-neutral-primary flex-1 text-sm">
+                              <MarkdownContainer>
+                                {checkMeta.remediation.recommendation.text}
+                              </MarkdownContainer>
+                            </div>
+                          )}
+                          {recommendationLink && (
                             <CustomLink
-                              href={checkMeta.remediation.recommendation.url}
+                              href={recommendationLink.href}
                               size="sm"
                               className="shrink-0"
                             >
-                              View in Prowler Hub
+                              {recommendationLink.label}
                             </CustomLink>
                           )}
                         </div>
