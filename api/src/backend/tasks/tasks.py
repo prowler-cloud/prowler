@@ -1013,12 +1013,16 @@ def jira_integration_task(
 @handle_provider_deletion
 def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Optimized task to generate ThreatScore, ENS, NIS2, and CSA CCM reports with shared queries.
+    Optimized task to generate ThreatScore, ENS, NIS2, CSA CCM and CIS reports with shared queries.
 
     This task is more efficient than running separate report tasks because it reuses database queries:
     - Provider object fetched once (instead of multiple times)
     - Requirement statistics aggregated once (instead of multiple times)
     - Can reduce database load by up to 50-70%
+
+    CIS emits a single PDF per run: the one matching the highest CIS version
+    available for the scan's provider, picked dynamically from
+    ``Compliance.get_bulk`` (no hard-coded provider → version mapping).
 
     Args:
         tenant_id (str): The tenant identifier.
@@ -1036,6 +1040,7 @@ def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: 
         generate_ens=True,
         generate_nis2=True,
         generate_csa=True,
+        generate_cis=True,
     )
 
 

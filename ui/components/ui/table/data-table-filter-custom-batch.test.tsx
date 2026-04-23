@@ -65,11 +65,19 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
   MultiSelectContent: ({
     children,
     width,
+    search,
   }: {
     children: React.ReactNode;
     width?: string;
+    search?: boolean | { placeholder?: string; emptyMessage?: string };
   }) => (
-    <div data-testid="multiselect-content" data-width={width ?? "default"}>
+    <div
+      data-testid="multiselect-content"
+      data-width={width ?? "default"}
+      data-search-placeholder={
+        typeof search === "object" ? search.placeholder : String(search)
+      }
+    >
       {children}
     </div>
   ),
@@ -298,6 +306,15 @@ describe("DataTableFilterCustom — batch vs instant mode", () => {
       expect(screen.getByTestId("multiselect-content")).toHaveAttribute(
         "data-width",
         "wide",
+      );
+    });
+
+    it("should enable searchable filter dropdowns by default", () => {
+      render(<DataTableFilterCustom filters={[severityFilter]} />);
+
+      expect(screen.getByTestId("multiselect-content")).toHaveAttribute(
+        "data-search-placeholder",
+        "Search severity...",
       );
     });
   });

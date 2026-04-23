@@ -165,6 +165,13 @@
             ]
           },
           {
+            "group": "CI/CD",
+            "pages": [
+              "user-guide/tutorials/prowler-app-github-action",
+              "user-guide/cookbooks/cicd-pipeline"
+            ]
+          },
+          {
             "group": "CLI",
             "pages": [
               "user-guide/cli/tutorials/misc",

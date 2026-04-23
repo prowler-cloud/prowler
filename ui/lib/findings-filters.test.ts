@@ -1,42 +1,120 @@
 import { describe, expect, it } from "vitest";
 
-import { applyDefaultMutedFilter, MUTED_FILTER } from "./findings-filters";
+import {
+  applyDefaultMutedFilter,
+  applyFailNonMutedFilters,
+  FAIL_FILTER_VALUE,
+  includesMutedFindings,
+  MUTED_FILTER,
+  NEW_DELTA_FILTER_VALUE,
+  splitCsvFilterValues,
+} from "./findings-filters";
+
+describe("filter value constants", () => {
+  it("exposes wire-format values exactly as the API expects", () => {
+    expect(FAIL_FILTER_VALUE).toBe("FAIL");
+    expect(NEW_DELTA_FILTER_VALUE).toBe("new");
+    expect(MUTED_FILTER.EXCLUDE).toBe("false");
+    expect(MUTED_FILTER.INCLUDE).toBe("include");
+  });
+});
+
+describe("applyFailNonMutedFilters", () => {
+  it("sets filter[status__in]=FAIL and filter[muted]=false", () => {
+    const params = new URLSearchParams();
+
+    applyFailNonMutedFilters(params);
+
+    expect(params.get("filter[status__in]")).toBe("FAIL");
+    expect(params.get("filter[muted]")).toBe("false");
+  });
+
+  it("overrides pre-existing values so the drill-down is idempotent", () => {
+    const params = new URLSearchParams(
+      "filter[status__in]=PASS&filter[muted]=include",
+    );
+
+    applyFailNonMutedFilters(params);
+
+    expect(params.get("filter[status__in]")).toBe("FAIL");
+    expect(params.get("filter[muted]")).toBe("false");
+  });
+
+  it("preserves unrelated params", () => {
+    const params = new URLSearchParams(
+      "filter[provider_id__in]=abc&sort=-severity",
+    );
+
+    applyFailNonMutedFilters(params);
+
+    expect(params.get("filter[provider_id__in]")).toBe("abc");
+    expect(params.get("sort")).toBe("-severity");
+  });
+});
 
 describe("applyDefaultMutedFilter", () => {
-  it("injects filter[muted]=false when the caller has not set it", () => {
-    const input: Record<string, string> = { "filter[status__in]": "FAIL" };
-    const result = applyDefaultMutedFilter(input);
-
-    expect(result["filter[muted]"]).toBe(MUTED_FILTER.EXCLUDE);
-    expect(result["filter[status__in]"]).toBe("FAIL");
-  });
-
-  it("preserves an explicit filter[muted]=include opt-in from the checkbox", () => {
-    const result = applyDefaultMutedFilter({
-      "filter[muted]": MUTED_FILTER.INCLUDE,
+  it("adds filter[muted]=false when the filter is absent", () => {
+    expect(applyDefaultMutedFilter({ "filter[status__in]": "FAIL" })).toEqual({
+      "filter[muted]": "false",
+      "filter[status__in]": "FAIL",
     });
-
-    expect(result["filter[muted]"]).toBe(MUTED_FILTER.INCLUDE);
   });
 
-  it("preserves an explicit filter[muted]=false (no silent overwrite)", () => {
-    const result = applyDefaultMutedFilter({
-      "filter[muted]": MUTED_FILTER.EXCLUDE,
+  it("preserves an explicit include value from the caller", () => {
+    expect(
+      applyDefaultMutedFilter({
+        "filter[muted]": "include",
+        "filter[status__in]": "FAIL",
+      }),
+    ).toEqual({
+      "filter[muted]": "include",
+      "filter[status__in]": "FAIL",
     });
+  });
+});
 
-    expect(result["filter[muted]"]).toBe(MUTED_FILTER.EXCLUDE);
+describe("splitCsvFilterValues", () => {
+  it("returns an empty array when the value is undefined", () => {
+    expect(splitCsvFilterValues(undefined)).toEqual([]);
   });
 
-  it("does not mutate the input object", () => {
-    const input = { "filter[status__in]": "FAIL" };
-    applyDefaultMutedFilter(input);
-
-    expect(input).not.toHaveProperty("filter[muted]");
+  it("splits a CSV string and trims whitespace", () => {
+    expect(splitCsvFilterValues("FAIL, PASS ,MANUAL")).toEqual([
+      "FAIL",
+      "PASS",
+      "MANUAL",
+    ]);
   });
 
-  it("returns a default-filled object when called with no caller filters", () => {
-    const result = applyDefaultMutedFilter({} as Record<string, string>);
+  it("flattens repeated array values (Next.js can surface them this way)", () => {
+    expect(splitCsvFilterValues(["FAIL", "PASS,MANUAL"])).toEqual([
+      "FAIL",
+      "PASS",
+      "MANUAL",
+    ]);
+  });
 
-    expect(result["filter[muted]"]).toBe(MUTED_FILTER.EXCLUDE);
+  it("drops empty tokens produced by stray commas", () => {
+    expect(splitCsvFilterValues("FAIL,,PASS,")).toEqual(["FAIL", "PASS"]);
+  });
+});
+
+describe("includesMutedFindings", () => {
+  it("returns false when filter[muted] is absent", () => {
+    expect(includesMutedFindings({})).toBe(false);
+  });
+
+  it("returns true for the literal 'include' sentinel", () => {
+    expect(includesMutedFindings({ "filter[muted]": "include" })).toBe(true);
+  });
+
+  it("returns false for 'false' (the exclude value)", () => {
+    expect(includesMutedFindings({ "filter[muted]": "false" })).toBe(false);
+  });
+
+  it("returns true when 'include' appears anywhere in an array value", () => {
+    expect(
+      includesMutedFindings({ "filter[muted]": ["false", "include"] }),
+    ).toBe(true);
   });
 });
