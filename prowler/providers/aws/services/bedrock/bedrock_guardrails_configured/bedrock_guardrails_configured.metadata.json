@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "bedrock_guardrails_configured",
-  "CheckTitle": "Amazon Bedrock has at least one guardrail configured in the audited region",
+  "CheckTitle": "Bedrock has at least one guardrail configured in the audited region",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
@@ -12,7 +12,7 @@
   "Severity": "medium",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
-  "Description": "**Bedrock guardrails** provide reusable safety policies for filtering harmful or unwanted content in model inputs and outputs.\n\nThis evaluation checks whether at least one guardrail exists in each successfully scanned region. It does **not** verify that guardrails are attached to agents or passed on individual model invocation API calls.",
+  "Description": "**Amazon Bedrock guardrails** provide reusable safety policies for filtering harmful or unwanted content in model inputs and outputs.\n\nThis evaluation checks whether at least one guardrail exists in each successfully scanned region. It does **not** verify that guardrails are attached to agents or passed on individual model invocation API calls.",
   "Risk": "Without any configured Bedrock guardrails in a region, teams lack a native reusable policy object for content filtering and safety controls. Applications may invoke models without standardized protections against harmful content, prompt injection, or sensitive-data exposure unless equivalent controls are enforced elsewhere.",
   "RelatedUrl": "",
   "AdditionalURLs": [
