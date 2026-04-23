@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [1.26.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
@@ -28,7 +26,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
->>>>>>> 0df24eeff (fix(api): make Neo4j connection acquisition timeout configurable and enable Sentry tracing (#10873))
 ## [1.25.3] (Prowler v5.24.3)
 
 ### 🚀 Added
