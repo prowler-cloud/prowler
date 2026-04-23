@@ -4,13 +4,13 @@ title: 'Alibaba Cloud Authentication in Prowler'
 
 Prowler supports multiple Alibaba Cloud authentication flows. If more than one is configured at the same time, the provider resolves them in this order:
 
-1. `Credentials URI`
-2. `OIDC role authentication`
-3. `ECS RAM role`
-4. `RAM role assumption`
-5. `STS temporary credentials`
-6. `AccessKey pair`
-7. `Default credential chain`
+1. **Credentials URI**
+2. **OIDC Role Authentication**
+3. **ECS RAM Role**
+4. **RAM Role Assumption**
+5. **STS Temporary Credentials**
+6. **Permanent Access Keys**
+7. **Default Credential Chain**
 
 <Warning>
 Do not use the AccessKey pair of the main Alibaba Cloud account for Prowler. Use a RAM user, a RAM role, or another temporary credential flow instead.
@@ -23,7 +23,7 @@ Do not use the AccessKey pair of the main Alibaba Cloud account for Prowler. Use
 | Local workstation | RAM user + AccessKey pair | [RAM User And AccessKey](#ram-user-and-accesskey) |
 | CI runner outside Alibaba Cloud | RAM user + AccessKey pair, optionally a target RAM role | [RAM Role Assumption](#ram-role-assumption-recommended) |
 | ECS instance | ECS RAM role attached to the instance | [ECS RAM Role](#ecs-ram-role) |
-| ACK / Kubernetes | OIDC IdP + RAM role + OIDC token file | [OIDC Role Authentication](#oidc-role-authentication-ackkubernetes) |
+| ACK / Kubernetes | OIDC IdP + RAM role + OIDC token file | [OIDC Role Authentication](#oidc-role-authentication) |
 | Internal credential broker | An HTTP endpoint that returns STS credentials | [Credentials URI](#credentials-uri) |
 
 ## RAM User And AccessKey
@@ -37,8 +37,13 @@ This is the simplest setup for a workstation or a basic CI runner.
 3. Click `Create User`.
 4. Enter a logon name and display name.
 5. In `Access Configuration`, select `Permanent AccessKey`.
+
+![Create a RAM user and enable Permanent AccessKey](./img/create_user.png)
+
 6. Save the generated `AccessKey ID` and `AccessKey Secret` immediately. Alibaba Cloud only shows the secret once.
 7. Grant the user the read permissions required for the Alibaba Cloud services you want Prowler to scan.
+
+![Grant permissions to the RAM user](./img/grant_permissions.png)
 
 Alibaba Cloud walkthroughs with current console screenshots:
 
@@ -187,7 +192,7 @@ export ALIBABA_CLOUD_ECS_METADATA="ProwlerEcsRole"
 prowler alibabacloud
 ```
 
-## OIDC Role Authentication (ACK/Kubernetes)
+## OIDC Role Authentication
 
 Use this when Prowler runs in ACK or another Kubernetes environment that provides an OIDC token file.
 
