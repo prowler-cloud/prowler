@@ -14,6 +14,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 - Shared filter dropdowns now support local option search and auto-scroll to the first visible match across table and provider filters [(#10859)](https://github.com/prowler-cloud/prowler/pull/10859)
 - Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
+- Mutelist improvements: table now supports name/reason search and visual count badges for finding targets [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
 
 ---
 
