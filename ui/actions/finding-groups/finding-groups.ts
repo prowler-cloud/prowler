@@ -2,7 +2,17 @@
 
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import {
+  apiBaseUrl,
+  composeSort,
+  FG_FAIL_FIRST,
+  FG_RECENT_LAST_SEEN,
+  FG_SEVERITY_HIGH_FIRST,
+  FINDING_GROUP_RESOURCES_DEFAULT_SORT,
+  getAuthHeaders,
+  includesMutedFindings,
+  splitCsvFilterValues,
+} from "@/lib";
 import { appendSanitizedProviderFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { FilterParam } from "@/types/filters";
@@ -22,24 +32,6 @@ function mapSearchFilter(
     delete mapped["filter[search]"];
   }
   return mapped;
-}
-
-function splitCsvFilterValues(value: string | string[] | undefined): string[] {
-  if (Array.isArray(value)) {
-    return value
-      .flatMap((item) => item.split(","))
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  if (typeof value === "string") {
-    return value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [];
 }
 
 /**
@@ -82,32 +74,40 @@ function normalizeFindingGroupResourceFilters(
   return normalized;
 }
 
-const DEFAULT_FINDING_GROUPS_SORT =
-  "-status,-severity,-new_fail_count,-changed_fail_count,-fail_count,-last_seen_at";
+// Composite sorts for finding-groups (Family B in lib/findings-sort.ts).
+// The `-status,-severity,...,-last_seen_at` shape is required by the API:
+// these endpoints map status/severity to weighted integer columns where
+// DESC = FAIL/critical first. The intermediate `*_count` tokens are
+// finding-group-specific impact tiebreakers and have no Family A analogue.
+const DEFAULT_FINDING_GROUPS_SORT = composeSort(
+  FG_FAIL_FIRST,
+  FG_SEVERITY_HIGH_FIRST,
+  "-new_fail_count",
+  "-changed_fail_count",
+  "-fail_count",
+  FG_RECENT_LAST_SEEN,
+);
 
-const DEFAULT_FINDING_GROUPS_SORT_WITH_MUTED =
-  "-status,-severity,-new_fail_count,-changed_fail_count,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at";
+const DEFAULT_FINDING_GROUPS_SORT_WITH_MUTED = composeSort(
+  FG_FAIL_FIRST,
+  FG_SEVERITY_HIGH_FIRST,
+  "-new_fail_count",
+  "-changed_fail_count",
+  "-new_fail_muted_count",
+  "-changed_fail_muted_count",
+  "-fail_count",
+  "-fail_muted_count",
+  FG_RECENT_LAST_SEEN,
+);
 
 const DEFAULT_FINDING_GROUP_RESOURCES_SORT =
-  "-status,-severity,-delta,-last_seen_at";
+  FINDING_GROUP_RESOURCES_DEFAULT_SORT;
 
 interface FetchFindingGroupsParams {
   page?: number;
   pageSize?: number;
   sort?: string;
   filters?: Record<string, string | string[] | undefined>;
-}
-
-function includesMutedFindings(
-  filters: Record<string, string | string[] | undefined>,
-): boolean {
-  const mutedFilter = filters["filter[muted]"];
-
-  if (Array.isArray(mutedFilter)) {
-    return mutedFilter.includes("include");
-  }
-
-  return mutedFilter === "include";
 }
 
 function getDefaultFindingGroupsSort(

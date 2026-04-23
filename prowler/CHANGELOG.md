@@ -2,11 +2,21 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.25.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
+- `repository_default_branch_dismisses_stale_reviews` check for GitHub provider to ensure stale pull request approvals are dismissed when new commits are pushed [(#10569)](https://github.com/prowler-cloud/prowler/pull/10569)
+
+---
+
 ## [5.24.3] (Prowler v5.24.3)
 
 ### 🐞 Fixed
 
 - CloudTrail resource timeline uses resource name as fallback in `LookupEvents` [(#10828)](https://github.com/prowler-cloud/prowler/pull/10828)
+- Exclude `me-south-1` and `me-central-1` from default AWS scans to prevent hangs when the host can't reach those regional endpoints [(#10837)](https://github.com/prowler-cloud/prowler/pull/10837)
 
 ---
 

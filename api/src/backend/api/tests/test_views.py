@@ -32,6 +32,11 @@ from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.attack_paths import (
     AttackPathsQueryDefinition,
@@ -47,6 +52,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    InvitationRoleRelationship,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
     LighthouseTenantConfiguration,
@@ -746,6 +752,39 @@ class TestTenantViewSet:
         # Test user + 2 extra users for tenant 2
         assert len(response.json()["data"]) == 3
 
+    def test_tenants_list_memberships_filter_by_user(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        response = authenticated_client.get(
+            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant2.id}),
+            {"filter[user]": str(user3.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == str(membership3.id)
+
+    def test_tenants_list_memberships_filter_by_user_no_match(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2, _ = tenants_fixture
+        unrelated_user = User.objects.create_user(
+            name="unrelated",
+            password=TEST_PASSWORD,
+            email="unrelated@gmail.com",
+        )
+
+        response = authenticated_client.get(
+            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant2.id}),
+            {"filter[user]": str(unrelated_user.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
     def test_tenants_list_memberships_as_member(
         self, authenticated_client, tenants_fixture, extra_users
     ):
@@ -803,6 +842,7 @@ class TestTenantViewSet:
     ):
         _, tenant2, _ = tenants_fixture
         user_membership = Membership.objects.get(tenant=tenant2, user__email=TEST_USER)
+        user_id = user_membership.user_id
         response = authenticated_client.delete(
             reverse(
                 "tenant-membership-detail",
@@ -811,6 +851,127 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert Membership.objects.filter(id=user_membership.id).exists()
+        assert User.objects.filter(id=user_id).exists()
+
+    def test_expel_user_deletes_account_if_last_membership(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        # TEST_USER is OWNER of tenant2; user3 is MEMBER only in tenant2
+        _, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        assert Membership.objects.filter(user=user3).count() == 1
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Membership.objects.filter(id=membership3.id).exists()
+        assert not User.objects.filter(id=user3.id).exists()
+
+    def test_expel_user_blacklists_refresh_tokens(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        # Issue two refresh tokens to simulate active sessions
+        RefreshToken.for_user(user3)
+        RefreshToken.for_user(user3)
+        outstanding_ids = list(
+            OutstandingToken.objects.filter(user=user3).values_list("id", flat=True)
+        )
+        assert len(outstanding_ids) == 2
+        assert not BlacklistedToken.objects.filter(
+            token_id__in=outstanding_ids
+        ).exists()
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert (
+            BlacklistedToken.objects.filter(token_id__in=outstanding_ids).count() == 2
+        )
+
+    def test_expel_user_blacklists_refresh_tokens_is_idempotent(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        # Regression test for the bulk blacklisting path: if one of the
+        # user's refresh tokens is already blacklisted when the expel
+        # endpoint runs, the remaining tokens must still be blacklisted
+        # and the already-blacklisted one must not be duplicated.
+        tenant1, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        # Keep the user alive after the expel so the assertions below can
+        # still query OutstandingToken by user_id.
+        Membership.objects.create(
+            user=user3,
+            tenant=tenant1,
+            role=Membership.RoleChoices.MEMBER,
+        )
+
+        RefreshToken.for_user(user3)
+        RefreshToken.for_user(user3)
+        outstanding_ids = list(
+            OutstandingToken.objects.filter(user=user3).values_list("id", flat=True)
+        )
+        assert len(outstanding_ids) == 2
+
+        # Pre-blacklist one of the two tokens to simulate a prior revocation.
+        BlacklistedToken.objects.create(token_id=outstanding_ids[0])
+        assert (
+            BlacklistedToken.objects.filter(token_id__in=outstanding_ids).count() == 1
+        )
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        blacklisted = BlacklistedToken.objects.filter(token_id__in=outstanding_ids)
+        assert blacklisted.count() == 2
+        assert set(blacklisted.values_list("token_id", flat=True)) == set(
+            outstanding_ids
+        )
+
+    def test_expel_user_keeps_account_if_has_other_memberships(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        tenant1, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        # Give user3 an additional membership in tenant1 so they are not orphaned
+        other_membership = Membership.objects.create(
+            user=user3,
+            tenant=tenant1,
+            role=Membership.RoleChoices.MEMBER,
+        )
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Membership.objects.filter(id=membership3.id).exists()
+        assert User.objects.filter(id=user3.id).exists()
+        assert Membership.objects.filter(id=other_membership.id).exists()
 
     def test_tenants_delete_another_membership_as_owner(
         self, authenticated_client, tenants_fixture, extra_users
@@ -881,6 +1042,128 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert Membership.objects.filter(id=other_membership.id).exists()
+
+    def test_delete_membership_cleans_up_orphaned_role_grants(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that deleting a membership removes UserRoleRelationship records
+        for that tenant while preserving grants in other tenants."""
+        tenant1, tenant2, _ = tenants_fixture
+
+        # Create a user with memberships in both tenants
+        user = User.objects.create_user(
+            name="Multi-tenant User",
+            password=TEST_PASSWORD,
+            email="multitenant@test.com",
+        )
+
+        # Create memberships in both tenants
+        Membership.objects.create(
+            user=user, tenant=tenant1, role=Membership.RoleChoices.MEMBER
+        )
+        membership2 = Membership.objects.create(
+            user=user, tenant=tenant2, role=Membership.RoleChoices.MEMBER
+        )
+
+        # Create roles in both tenants
+        role1 = Role.objects.create(
+            name="Test Role 1", tenant=tenant1, manage_providers=True
+        )
+        role2 = Role.objects.create(
+            name="Test Role 2", tenant=tenant2, manage_scans=True
+        )
+
+        # Create user role relationships for both tenants
+        UserRoleRelationship.objects.create(user=user, role=role1, tenant=tenant1)
+        UserRoleRelationship.objects.create(user=user, role=role2, tenant=tenant2)
+
+        # Verify initial state
+        assert UserRoleRelationship.objects.filter(user=user, tenant=tenant1).exists()
+        assert UserRoleRelationship.objects.filter(user=user, tenant=tenant2).exists()
+        assert Role.objects.filter(id=role1.id).exists()
+        assert Role.objects.filter(id=role2.id).exists()
+
+        # Delete membership from tenant2 (authenticated user is owner of tenant2)
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership2.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify the membership was deleted
+        assert not Membership.objects.filter(id=membership2.id).exists()
+
+        # Verify UserRoleRelationship for tenant2 was deleted
+        assert not UserRoleRelationship.objects.filter(
+            user=user, tenant=tenant2
+        ).exists()
+
+        # Verify UserRoleRelationship for tenant1 is preserved
+        assert UserRoleRelationship.objects.filter(user=user, tenant=tenant1).exists()
+
+        # Verify orphaned role2 was deleted (no more user or invitation relationships)
+        assert not Role.objects.filter(id=role2.id).exists()
+
+        # Verify role1 is preserved (still has user relationship)
+        assert Role.objects.filter(id=role1.id).exists()
+
+        # Verify the user still exists (has other memberships)
+        assert User.objects.filter(id=user.id).exists()
+
+    def test_delete_membership_preserves_role_with_invitation_relationship(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that roles are not deleted if they have invitation relationships."""
+        _, tenant2, _ = tenants_fixture
+
+        # Create a user with membership
+        user = User.objects.create_user(
+            name="Test User", password=TEST_PASSWORD, email="testuser@test.com"
+        )
+        membership = Membership.objects.create(
+            user=user, tenant=tenant2, role=Membership.RoleChoices.MEMBER
+        )
+
+        # Create a role and user relationship
+        role = Role.objects.create(
+            name="Shared Role", tenant=tenant2, manage_providers=True
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant=tenant2)
+
+        # Create an invitation with the same role
+        invitation = Invitation.objects.create(email="pending@test.com", tenant=tenant2)
+        InvitationRoleRelationship.objects.create(
+            invitation=invitation, role=role, tenant=tenant2
+        )
+
+        # Verify initial state
+        assert UserRoleRelationship.objects.filter(user=user, role=role).exists()
+        assert InvitationRoleRelationship.objects.filter(
+            invitation=invitation, role=role
+        ).exists()
+        assert Role.objects.filter(id=role.id).exists()
+
+        # Delete the membership
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify UserRoleRelationship was deleted
+        assert not UserRoleRelationship.objects.filter(user=user, role=role).exists()
+
+        # Verify role is preserved because invitation relationship exists
+        assert Role.objects.filter(id=role.id).exists()
+        assert InvitationRoleRelationship.objects.filter(
+            invitation=invitation, role=role
+        ).exists()
 
     def test_tenants_list_no_permissions(
         self, authenticated_client_no_permissions_rbac, tenants_fixture
@@ -3826,6 +4109,51 @@ class TestScanViewSet:
             )
             resp = authenticated_client.get(url)
             assert resp.status_code == status.HTTP_200_OK
+            cd = resp["Content-Disposition"]
+            assert cd.startswith('attachment; filename="')
+            assert cd.endswith(f'filename="{fname.name}"')
+
+    def test_cis_no_output(self, authenticated_client, scans_fixture):
+        """CIS PDF endpoint must 404 when the scan has no output_location."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = ""
+        scan.save()
+
+        url = reverse("scan-cis", kwargs={"pk": scan.id})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            resp.json()["errors"]["detail"]
+            == "The scan has no reports, or the CIS report generation task has not started yet."
+        )
+
+    def test_cis_local_file(self, authenticated_client, scans_fixture, monkeypatch):
+        """CIS PDF endpoint must serve the latest generated PDF."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            base = tmp_path / "reports"
+            cis_dir = base / "cis"
+            cis_dir.mkdir(parents=True, exist_ok=True)
+            fname = cis_dir / "prowler-output-aws-20260101000000_cis_report.pdf"
+            fname.write_bytes(b"%PDF-1.4 fake pdf")
+
+            scan.output_location = str(base / "scan.zip")
+            scan.save()
+
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda p: [str(fname)] if p.endswith("*_cis_report.pdf") else [],
+            )
+
+            url = reverse("scan-cis", kwargs={"pk": scan.id})
+            resp = authenticated_client.get(url)
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp["Content-Type"] == "application/pdf"
             cd = resp["Content-Disposition"]
             assert cd.startswith('attachment; filename="')
             assert cd.endswith(f'filename="{fname.name}"')
