@@ -47,11 +47,9 @@ vi.mock("@/components/filters/apply-filters-button", () => ({
 }));
 
 vi.mock("@/components/filters/clear-filters-button", () => ({
-  ClearFiltersButton: ({
-    pendingCount,
-  }: {
-    pendingCount?: number;
-  }) => <div data-testid="clear-filters-button">{pendingCount ?? 0}</div>,
+  ClearFiltersButton: ({ pendingCount }: { pendingCount?: number }) => (
+    <div data-testid="clear-filters-button">{pendingCount ?? 0}</div>
+  ),
 }));
 
 vi.mock("@/components/filters/filter-summary-strip", () => ({
@@ -79,11 +77,9 @@ vi.mock("@/components/ui/expandable-section", () => ({
 }));
 
 vi.mock("@/components/ui/table", () => ({
-  DataTableFilterCustom: ({
-    mode,
-  }: {
-    mode?: string;
-  }) => <div data-testid="data-table-filter-custom">{mode}</div>,
+  DataTableFilterCustom: ({ mode }: { mode?: string }) => (
+    <div data-testid="data-table-filter-custom">{mode}</div>
+  ),
 }));
 
 import { ResourcesFilters } from "./resources-filters";
