@@ -1,9 +1,13 @@
 import gc
+import os
 import re
+import time
 from collections.abc import Iterable
 from pathlib import Path
 from shutil import rmtree
+from uuid import UUID
 
+import fcntl
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_TMP_OUTPUT_DIRECTORY
 from tasks.jobs.export import _generate_compliance_output_directory, _upload_to_s3
@@ -20,11 +24,16 @@ from tasks.jobs.threatscore_utils import _aggregate_requirement_statistics_from_
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
-from api.models import Provider, ScanSummary, ThreatScoreSnapshot
+from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
+STALE_TMP_OUTPUT_MAX_AGE_HOURS = 48
+STALE_TMP_OUTPUT_MAX_DELETIONS_PER_RUN = 50
+STALE_TMP_OUTPUT_THROTTLE_SECONDS = 60 * 60
+STALE_TMP_OUTPUT_LOCK_FILE_NAME = ".stale_tmp_cleanup.lock"
+STALE_TMP_OUTPUT_SAFE_ROOT = Path("/tmp/prowler_api_output").resolve()
 
 # Matches CIS compliance_ids like "cis_1.4_aws", "cis_5.0_azure",
 # "cis_1.10_kubernetes", "cis_3.0.1_aws". Requires at least one dotted
@@ -67,6 +76,318 @@ def _pick_latest_cis_variant(compliance_ids: Iterable[str]) -> str | None:
             best_key = key
             best_name = name
     return best_name
+
+
+def _should_run_stale_cleanup(
+    root_path: Path,
+    throttle_seconds: int = STALE_TMP_OUTPUT_THROTTLE_SECONDS,
+) -> bool:
+    """Throttle stale cleanup to at most once per hour per host."""
+    lock_file_path = root_path / STALE_TMP_OUTPUT_LOCK_FILE_NAME
+    now_timestamp = int(time.time())
+
+    try:
+        with lock_file_path.open("a+", encoding="ascii") as lock_file:
+            try:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                return False
+            lock_file.seek(0)
+            previous_value = lock_file.read().strip()
+            try:
+                last_run_timestamp = int(previous_value) if previous_value else 0
+            except ValueError:
+                last_run_timestamp = 0
+
+            if now_timestamp - last_run_timestamp < throttle_seconds:
+                return False
+
+            lock_file.seek(0)
+            lock_file.truncate()
+            lock_file.write(str(now_timestamp))
+            lock_file.flush()
+            os.fsync(lock_file.fileno())
+    except OSError as error:
+        logger.warning("Skipping stale tmp cleanup: lock file error (%s)", error)
+        return False
+
+    return True
+
+
+def _is_scan_metadata_protected(
+    scan_path: Path,
+    scan_state: str | None,
+    output_location: str | None,
+) -> bool:
+    """
+    Return True when metadata indicates the directory must not be deleted.
+
+    Protected cases:
+    - Scan is still EXECUTING.
+    - Scan has a local output artifact path (non-S3) under this scan directory.
+    """
+    if scan_state == StateChoices.EXECUTING.value:
+        return True
+
+    output_location = output_location or ""
+    if output_location and not output_location.startswith("s3://"):
+        try:
+            resolved_output_location = Path(output_location).resolve()
+        except OSError:
+            # Conservative fallback: if we cannot resolve a local output path,
+            # keep the directory to avoid deleting potentially needed artifacts.
+            return True
+
+        if (
+            resolved_output_location == scan_path
+            or scan_path in resolved_output_location.parents
+        ):
+            return True
+
+    return False
+
+
+def _is_scan_directory_protected(
+    tenant_id: str,
+    scan_id: str,
+    scan_path: Path,
+) -> bool:
+    """
+    DB-backed wrapper used when batch metadata is not already available.
+    """
+    try:
+        scan_uuid = UUID(scan_id)
+    except ValueError:
+        return False
+
+    try:
+        scan = (
+            Scan.all_objects.filter(tenant_id=tenant_id, id=scan_uuid)
+            .only("state", "output_location")
+            .first()
+        )
+    except Exception as error:
+        logger.warning(
+            "Skipping stale tmp cleanup for %s/%s due to scan lookup error: %s",
+            tenant_id,
+            scan_id,
+            error,
+        )
+        return True
+
+    if not scan:
+        return False
+
+    return _is_scan_metadata_protected(
+        scan_path=scan_path,
+        scan_state=scan.state,
+        output_location=scan.output_location,
+    )
+
+
+def _cleanup_stale_tmp_output_directories(
+    tmp_output_root: str,
+    max_age_hours: int = STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    exclude_scan: tuple[str, str] | None = None,
+    tenant_scope: str | None = None,
+    max_deletions_per_run: int = STALE_TMP_OUTPUT_MAX_DELETIONS_PER_RUN,
+) -> int:
+    """
+    Opportunistically delete stale scan directories under the tmp output root.
+
+    Expected directory layout:
+        <tmp_output_root>/<tenant_id>/<scan_id>/...
+
+    Args:
+        tmp_output_root: Base tmp output path.
+        max_age_hours: Directory max age before deletion.
+        exclude_scan: Optional (tenant_id, scan_id) that must never be deleted.
+        tenant_scope: Optional tenant directory name to scope cleanup.
+        max_deletions_per_run: Max number of scan directories deleted per run.
+
+    Returns:
+        Number of deleted scan directories.
+    """
+    try:
+        if max_age_hours <= 0:
+            return 0
+
+        try:
+            root_path = Path(tmp_output_root).resolve()
+        except OSError as error:
+            logger.warning(
+                "Skipping stale tmp cleanup: unable to resolve %s (%s)",
+                tmp_output_root,
+                error,
+            )
+            return 0
+
+        if root_path != STALE_TMP_OUTPUT_SAFE_ROOT:
+            logger.warning(
+                "Skipping stale tmp cleanup: unsupported root %s (allowed: %s)",
+                root_path,
+                STALE_TMP_OUTPUT_SAFE_ROOT,
+            )
+            return 0
+
+        if not root_path.exists() or not root_path.is_dir():
+            return 0
+
+        if max_deletions_per_run <= 0:
+            return 0
+
+        if not _should_run_stale_cleanup(root_path):
+            return 0
+
+        cutoff_timestamp = time.time() - (max_age_hours * 60 * 60)
+        deleted_scan_dirs = 0
+
+        if tenant_scope:
+            tenant_path = root_path / tenant_scope
+            tenant_dirs = [tenant_path] if tenant_path.exists() else []
+        else:
+            try:
+                tenant_dirs = list(root_path.iterdir())
+            except OSError as error:
+                logger.warning(
+                    "Skipping stale tmp cleanup: unable to list %s (%s)",
+                    root_path,
+                    error,
+                )
+                return 0
+
+        for tenant_dir in tenant_dirs:
+            if deleted_scan_dirs >= max_deletions_per_run:
+                break
+
+            if not tenant_dir.is_dir() or tenant_dir.is_symlink():
+                continue
+
+            try:
+                scan_dirs = list(tenant_dir.iterdir())
+            except OSError:
+                continue
+
+            stale_candidates: list[tuple[str, Path, UUID | None]] = []
+            for scan_dir in scan_dirs:
+                if not scan_dir.is_dir() or scan_dir.is_symlink():
+                    continue
+
+                if exclude_scan and (
+                    tenant_dir.name == exclude_scan[0]
+                    and scan_dir.name == exclude_scan[1]
+                ):
+                    continue
+
+                try:
+                    if scan_dir.stat().st_mtime >= cutoff_timestamp:
+                        continue
+                except OSError:
+                    continue
+
+                try:
+                    resolved_scan_dir = scan_dir.resolve()
+                except OSError:
+                    continue
+
+                if root_path not in resolved_scan_dir.parents:
+                    logger.warning(
+                        "Skipping stale tmp cleanup for path outside root: %s",
+                        resolved_scan_dir,
+                    )
+                    continue
+
+                try:
+                    scan_uuid: UUID | None = UUID(scan_dir.name)
+                except ValueError:
+                    scan_uuid = None
+
+                stale_candidates.append((scan_dir.name, resolved_scan_dir, scan_uuid))
+
+            if not stale_candidates:
+                continue
+
+            scan_metadata_by_id: dict[UUID, tuple[str | None, str | None]] = {}
+            metadata_preload_succeeded = False
+            candidate_scan_ids = [
+                candidate[2] for candidate in stale_candidates if candidate[2]
+            ]
+            if candidate_scan_ids:
+                try:
+                    scan_rows = Scan.all_objects.filter(
+                        tenant_id=tenant_dir.name,
+                        id__in=candidate_scan_ids,
+                    ).values_list("id", "state", "output_location")
+                    scan_metadata_by_id = {
+                        scan_id: (scan_state, output_location)
+                        for scan_id, scan_state, output_location in scan_rows
+                    }
+                    metadata_preload_succeeded = True
+                except Exception as error:
+                    logger.warning(
+                        "Skipping stale tmp cleanup metadata preload for tenant %s: %s",
+                        tenant_dir.name,
+                        error,
+                    )
+            else:
+                metadata_preload_succeeded = True
+
+            for scan_name, resolved_scan_dir, scan_uuid in stale_candidates:
+                if deleted_scan_dirs >= max_deletions_per_run:
+                    break
+
+                should_check_scan_fallback = True
+                if scan_uuid and metadata_preload_succeeded:
+                    should_check_scan_fallback = False
+                    scan_metadata = scan_metadata_by_id.get(scan_uuid)
+                    if scan_metadata:
+                        scan_state, output_location = scan_metadata
+                        if _is_scan_metadata_protected(
+                            scan_path=resolved_scan_dir,
+                            scan_state=scan_state,
+                            output_location=output_location,
+                        ):
+                            continue
+
+                if should_check_scan_fallback and _is_scan_directory_protected(
+                    tenant_id=tenant_dir.name,
+                    scan_id=scan_name,
+                    scan_path=resolved_scan_dir,
+                ):
+                    continue
+
+                try:
+                    rmtree(resolved_scan_dir, ignore_errors=True)
+                    deleted_scan_dirs += 1
+                except Exception as error:
+                    logger.warning(
+                        "Error cleaning stale tmp directory %s: %s",
+                        resolved_scan_dir,
+                        error,
+                    )
+
+        if deleted_scan_dirs:
+            logger.info(
+                "Deleted %s stale tmp output directories older than %sh from %s",
+                deleted_scan_dirs,
+                max_age_hours,
+                root_path,
+            )
+        if deleted_scan_dirs >= max_deletions_per_run:
+            logger.info(
+                "Stale tmp cleanup hit deletion limit (%s) for root %s",
+                max_deletions_per_run,
+                root_path,
+            )
+
+        return deleted_scan_dirs
+    except Exception as error:
+        logger.warning(
+            "Skipping stale tmp cleanup due to unexpected error: %s",
+            error,
+            exc_info=True,
+        )
+        return 0
 
 
 def generate_threatscore_report(
@@ -355,6 +676,20 @@ def generate_compliance_reports(
         generate_cis,
     )
 
+    try:
+        _cleanup_stale_tmp_output_directories(
+            DJANGO_TMP_OUTPUT_DIRECTORY,
+            max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+            exclude_scan=(tenant_id, scan_id),
+            tenant_scope=tenant_id,
+        )
+    except Exception as error:
+        logger.warning(
+            "Skipping stale tmp cleanup before compliance reports for scan %s: %s",
+            scan_id,
+            error,
+        )
+
     results: dict = {}
 
     # Validate that the scan has findings and get provider info
@@ -412,10 +747,31 @@ def generate_compliance_reports(
         generate_csa = False
 
     # For CIS we do NOT pre-check the provider against a hard-coded whitelist
-    # (that list drifts the moment a new CIS JSON ships). Instead, we let
-    # `_pick_latest_cis_variant` over `Compliance.get_bulk(provider_type)`
-    # return None for providers that lack CIS, and treat that as "nothing to
-    # do" below.
+    # (that list drifts the moment a new CIS JSON ships). Instead, we inspect
+    # the dynamically loaded framework map and pick the latest available CIS
+    # version, if any.
+    latest_cis: str | None = None
+    if generate_cis:
+        try:
+            frameworks_bulk = Compliance.get_bulk(provider_type)
+            latest_cis = _pick_latest_cis_variant(
+                name for name in frameworks_bulk.keys() if name.startswith("cis_")
+            )
+        except Exception as e:
+            logger.error("Error discovering CIS variants for %s: %s", provider_type, e)
+            results["cis"] = {"upload": False, "path": "", "error": str(e)}
+            generate_cis = False
+        else:
+            if latest_cis is None:
+                logger.info("No CIS variants available for provider %s", provider_type)
+                results["cis"] = {"upload": False, "path": ""}
+                generate_cis = False
+            else:
+                logger.info(
+                    "Selected latest CIS variant for provider %s: %s",
+                    provider_type,
+                    latest_cis,
+                )
 
     if (
         not generate_threatscore
@@ -438,45 +794,56 @@ def generate_compliance_reports(
     findings_cache = {}
     logger.info("Created shared findings cache for all reports")
 
-    # Generate output directories
+    generated_report_keys: list[str] = []
+    output_paths: dict[str, str] = {}
+    out_dir: str | None = None
+
+    # Generate output directories only for enabled and supported report types.
     try:
         logger.info("Generating output directories")
-        threatscore_path = _generate_compliance_output_directory(
-            DJANGO_TMP_OUTPUT_DIRECTORY,
-            provider_uid,
-            tenant_id,
-            scan_id,
-            compliance_framework="threatscore",
-        )
-        ens_path = _generate_compliance_output_directory(
-            DJANGO_TMP_OUTPUT_DIRECTORY,
-            provider_uid,
-            tenant_id,
-            scan_id,
-            compliance_framework="ens",
-        )
-        nis2_path = _generate_compliance_output_directory(
-            DJANGO_TMP_OUTPUT_DIRECTORY,
-            provider_uid,
-            tenant_id,
-            scan_id,
-            compliance_framework="nis2",
-        )
-        csa_path = _generate_compliance_output_directory(
-            DJANGO_TMP_OUTPUT_DIRECTORY,
-            provider_uid,
-            tenant_id,
-            scan_id,
-            compliance_framework="csa",
-        )
-        cis_path = _generate_compliance_output_directory(
-            DJANGO_TMP_OUTPUT_DIRECTORY,
-            provider_uid,
-            tenant_id,
-            scan_id,
-            compliance_framework="cis",
-        )
-        out_dir = str(Path(threatscore_path).parent.parent)
+        if generate_threatscore:
+            output_paths["threatscore"] = _generate_compliance_output_directory(
+                DJANGO_TMP_OUTPUT_DIRECTORY,
+                provider_uid,
+                tenant_id,
+                scan_id,
+                compliance_framework="threatscore",
+            )
+        if generate_ens:
+            output_paths["ens"] = _generate_compliance_output_directory(
+                DJANGO_TMP_OUTPUT_DIRECTORY,
+                provider_uid,
+                tenant_id,
+                scan_id,
+                compliance_framework="ens",
+            )
+        if generate_nis2:
+            output_paths["nis2"] = _generate_compliance_output_directory(
+                DJANGO_TMP_OUTPUT_DIRECTORY,
+                provider_uid,
+                tenant_id,
+                scan_id,
+                compliance_framework="nis2",
+            )
+        if generate_csa:
+            output_paths["csa"] = _generate_compliance_output_directory(
+                DJANGO_TMP_OUTPUT_DIRECTORY,
+                provider_uid,
+                tenant_id,
+                scan_id,
+                compliance_framework="csa",
+            )
+        if generate_cis and latest_cis:
+            output_paths["cis"] = _generate_compliance_output_directory(
+                DJANGO_TMP_OUTPUT_DIRECTORY,
+                provider_uid,
+                tenant_id,
+                scan_id,
+                compliance_framework="cis",
+            )
+        if output_paths:
+            first_output_path = next(iter(output_paths.values()))
+            out_dir = str(Path(first_output_path).parent.parent)
     except Exception as e:
         logger.error("Error generating output directory: %s", e)
         error_dict = {"error": str(e), "upload": False, "path": ""}
@@ -494,6 +861,8 @@ def generate_compliance_reports(
 
     # Generate ThreatScore report
     if generate_threatscore:
+        generated_report_keys.append("threatscore")
+        threatscore_path = output_paths["threatscore"]
         compliance_id_threatscore = f"prowler_threatscore_{provider_type}"
         pdf_path_threatscore = f"{threatscore_path}_threatscore_report.pdf"
         logger.info(
@@ -595,6 +964,8 @@ def generate_compliance_reports(
 
     # Generate ENS report
     if generate_ens:
+        generated_report_keys.append("ens")
+        ens_path = output_paths["ens"]
         compliance_id_ens = f"ens_rd2022_{provider_type}"
         pdf_path_ens = f"{ens_path}_ens_report.pdf"
         logger.info("Generating ENS report with compliance %s", compliance_id_ens)
@@ -629,6 +1000,8 @@ def generate_compliance_reports(
 
     # Generate NIS2 report
     if generate_nis2:
+        generated_report_keys.append("nis2")
+        nis2_path = output_paths["nis2"]
         compliance_id_nis2 = f"nis2_{provider_type}"
         pdf_path_nis2 = f"{nis2_path}_nis2_report.pdf"
         logger.info("Generating NIS2 report with compliance %s", compliance_id_nis2)
@@ -664,6 +1037,8 @@ def generate_compliance_reports(
 
     # Generate CSA CCM report
     if generate_csa:
+        generated_report_keys.append("csa")
+        csa_path = output_paths["csa"]
         compliance_id_csa = f"csa_ccm_4.0_{provider_type}"
         pdf_path_csa = f"{csa_path}_csa_report.pdf"
         logger.info("Generating CSA CCM report with compliance %s", compliance_id_csa)
@@ -700,91 +1075,72 @@ def generate_compliance_reports(
     # Generate CIS Benchmark report for the latest available version only.
     # CIS ships multiple versions per provider (e.g. cis_1.4_aws, cis_5.0_aws,
     # cis_6.0_aws); we dynamically pick the highest semantic version at run
-    # time rather than hard-coding a per-provider mapping. `Compliance.get_bulk`
-    # is the single source of truth for which providers have CIS.
-    if generate_cis:
-        latest_cis: str | None = None
+    # time rather than hard-coding a per-provider mapping.
+    if generate_cis and latest_cis:
+        generated_report_keys.append("cis")
+        cis_path = output_paths["cis"]
+        if out_dir is None:
+            out_dir = str(Path(cis_path).parent.parent)
+        pdf_path_cis = f"{cis_path}_cis_report.pdf"
         try:
-            frameworks_bulk = Compliance.get_bulk(provider_type)
-            latest_cis = _pick_latest_cis_variant(
-                name for name in frameworks_bulk.keys() if name.startswith("cis_")
+            generate_cis_report(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                compliance_id=latest_cis,
+                output_path=pdf_path_cis,
+                provider_id=provider_id,
+                only_failed=only_failed_cis,
+                include_manual=include_manual_cis,
+                provider_obj=provider_obj,
+                requirement_statistics=requirement_statistics,
+                findings_cache=findings_cache,
             )
-        except Exception as e:
-            logger.error("Error discovering CIS variants for %s: %s", provider_type, e)
-            results["cis"] = {"upload": False, "path": "", "error": str(e)}
 
-        if "cis" not in results:
-            if latest_cis is None:
-                logger.info("No CIS variants available for provider %s", provider_type)
-                results["cis"] = {"upload": False, "path": ""}
-            else:
+            upload_uri_cis = _upload_to_s3(
+                tenant_id,
+                scan_id,
+                pdf_path_cis,
+                f"cis/{Path(pdf_path_cis).name}",
+            )
+
+            if upload_uri_cis:
+                results["cis"] = {
+                    "upload": True,
+                    "path": upload_uri_cis,
+                }
                 logger.info(
-                    "Selected latest CIS variant for provider %s: %s",
-                    provider_type,
+                    "CIS report %s uploaded to %s",
                     latest_cis,
+                    upload_uri_cis,
                 )
-                pdf_path_cis = f"{cis_path}_cis_report.pdf"
-                try:
-                    generate_cis_report(
-                        tenant_id=tenant_id,
-                        scan_id=scan_id,
-                        compliance_id=latest_cis,
-                        output_path=pdf_path_cis,
-                        provider_id=provider_id,
-                        only_failed=only_failed_cis,
-                        include_manual=include_manual_cis,
-                        provider_obj=provider_obj,
-                        requirement_statistics=requirement_statistics,
-                        findings_cache=findings_cache,
-                    )
+            else:
+                results["cis"] = {"upload": False, "path": out_dir}
+                logger.warning(
+                    "CIS report %s saved locally at %s",
+                    latest_cis,
+                    out_dir,
+                )
 
-                    upload_uri_cis = _upload_to_s3(
-                        tenant_id,
-                        scan_id,
-                        pdf_path_cis,
-                        f"cis/{Path(pdf_path_cis).name}",
-                    )
+        except Exception as e:
+            logger.error("Error generating CIS report %s: %s", latest_cis, e)
+            results["cis"] = {
+                "upload": False,
+                "path": "",
+                "error": str(e),
+            }
+        finally:
+            # Free ReportLab/matplotlib memory before moving on.
+            gc.collect()
 
-                    if upload_uri_cis:
-                        results["cis"] = {
-                            "upload": True,
-                            "path": upload_uri_cis,
-                        }
-                        logger.info(
-                            "CIS report %s uploaded to %s",
-                            latest_cis,
-                            upload_uri_cis,
-                        )
-                    else:
-                        results["cis"] = {"upload": False, "path": out_dir}
-                        logger.warning(
-                            "CIS report %s saved locally at %s",
-                            latest_cis,
-                            out_dir,
-                        )
+    # Clean up temporary files only if all generated reports were
+    # uploaded successfully. Reports skipped for provider incompatibility
+    # or missing CIS variants must not block cleanup.
+    all_uploaded = bool(generated_report_keys) and all(
+        results.get(report_key, {}).get("upload", False)
+        for report_key in generated_report_keys
+    )
 
-                except Exception as e:
-                    logger.error("Error generating CIS report %s: %s", latest_cis, e)
-                    results["cis"] = {
-                        "upload": False,
-                        "path": "",
-                        "error": str(e),
-                    }
-                finally:
-                    # Free ReportLab/matplotlib memory before moving on.
-                    gc.collect()
-
-    # Clean up temporary files only if every requested report has been
-    # successfully uploaded. All result entries now share the same flat
-    # shape, so the check is a single comprehension.
-    upload_flags = [
-        bool(entry.get("upload", False))
-        for entry in results.values()
-        if isinstance(entry, dict) and entry.get("upload") is not None
-    ]
-    all_uploaded = bool(upload_flags) and all(upload_flags)
-
-    if all_uploaded:
+    if all_uploaded and out_dir:
         try:
             rmtree(Path(out_dir), ignore_errors=True)
             logger.info("Cleaned up temporary files at %s", out_dir)

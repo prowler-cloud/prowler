@@ -1,3 +1,5 @@
+import os
+import time
 import uuid
 from unittest.mock import Mock, patch
 
@@ -5,7 +7,12 @@ import matplotlib
 import pytest
 from reportlab.lib import colors
 from tasks.jobs.report import (
+    STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    STALE_TMP_OUTPUT_LOCK_FILE_NAME,
+    _cleanup_stale_tmp_output_directories,
+    _is_scan_directory_protected,
     _pick_latest_cis_variant,
+    _should_run_stale_cleanup,
     generate_compliance_reports,
     generate_threatscore_report,
 )
@@ -33,7 +40,13 @@ from tasks.jobs.threatscore_utils import (
     _load_findings_for_requirement_checks,
 )
 
-from api.models import Finding, Resource, ResourceFindingMapping, StatusChoices
+from api.models import (
+    Finding,
+    Resource,
+    ResourceFindingMapping,
+    StateChoices,
+    StatusChoices,
+)
 from prowler.lib.check.models import Severity
 
 matplotlib.use("Agg")  # Use non-interactive backend for tests
@@ -355,6 +368,294 @@ class TestLoadFindingsForChecks:
         assert result == {}
 
 
+class TestCleanupStaleTmpOutputDirectories:
+    """Unit tests for opportunistic stale cleanup under tmp output root."""
+
+    def test_removes_only_scan_dirs_older_than_ttl(self, tmp_path, monkeypatch):
+        """Should remove stale scan directories and keep recent ones."""
+        root_dir = tmp_path / "prowler_api_output"
+
+        old_scan_dir = root_dir / "tenant-a" / "scan-old"
+        old_scan_dir.mkdir(parents=True)
+        (old_scan_dir / "artifact.txt").write_text("old")
+
+        recent_scan_dir = root_dir / "tenant-a" / "scan-recent"
+        recent_scan_dir.mkdir(parents=True)
+        (recent_scan_dir / "artifact.txt").write_text("recent")
+
+        now = time.time()
+        stale_ts = now - ((STALE_TMP_OUTPUT_MAX_AGE_HOURS + 1) * 60 * 60)
+        os.utime(old_scan_dir, (stale_ts, stale_ts))
+
+        monkeypatch.setattr(
+            "tasks.jobs.report.STALE_TMP_OUTPUT_SAFE_ROOT", root_dir.resolve()
+        )
+        monkeypatch.setattr(
+            "tasks.jobs.report._should_run_stale_cleanup", lambda *_: True
+        )
+        monkeypatch.setattr(
+            "tasks.jobs.report._is_scan_directory_protected", lambda **_: False
+        )
+
+        removed = _cleanup_stale_tmp_output_directories(
+            str(root_dir), max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS
+        )
+
+        assert removed == 1
+        assert not old_scan_dir.exists()
+        assert recent_scan_dir.exists()
+
+    def test_skips_current_scan_even_when_stale(self, tmp_path, monkeypatch):
+        """Should not delete stale directory for the currently processed scan."""
+        root_dir = tmp_path / "prowler_api_output"
+
+        current_scan_dir = root_dir / "tenant-current" / "scan-current"
+        current_scan_dir.mkdir(parents=True)
+        (current_scan_dir / "artifact.txt").write_text("current")
+
+        other_stale_scan_dir = root_dir / "tenant-other" / "scan-old"
+        other_stale_scan_dir.mkdir(parents=True)
+        (other_stale_scan_dir / "artifact.txt").write_text("other")
+
+        now = time.time()
+        stale_ts = now - ((STALE_TMP_OUTPUT_MAX_AGE_HOURS + 1) * 60 * 60)
+        os.utime(current_scan_dir, (stale_ts, stale_ts))
+        os.utime(other_stale_scan_dir, (stale_ts, stale_ts))
+
+        monkeypatch.setattr(
+            "tasks.jobs.report.STALE_TMP_OUTPUT_SAFE_ROOT", root_dir.resolve()
+        )
+        monkeypatch.setattr(
+            "tasks.jobs.report._should_run_stale_cleanup", lambda *_: True
+        )
+        monkeypatch.setattr(
+            "tasks.jobs.report._is_scan_directory_protected", lambda **_: False
+        )
+
+        removed = _cleanup_stale_tmp_output_directories(
+            str(root_dir),
+            max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+            exclude_scan=("tenant-current", "scan-current"),
+        )
+
+        assert removed == 1
+        assert current_scan_dir.exists()
+        assert not other_stale_scan_dir.exists()
+
+    def test_respects_max_deletions_per_run(self, tmp_path, monkeypatch):
+        """Cleanup should stop deleting when max_deletions_per_run is reached."""
+        root_dir = tmp_path / "prowler_api_output"
+
+        stale_dir_1 = root_dir / "tenant-a" / "scan-old-1"
+        stale_dir_2 = root_dir / "tenant-a" / "scan-old-2"
+        stale_dir_1.mkdir(parents=True)
+        stale_dir_2.mkdir(parents=True)
+        (stale_dir_1 / "artifact.txt").write_text("old-1")
+        (stale_dir_2 / "artifact.txt").write_text("old-2")
+
+        now = time.time()
+        stale_ts = now - ((STALE_TMP_OUTPUT_MAX_AGE_HOURS + 1) * 60 * 60)
+        os.utime(stale_dir_1, (stale_ts, stale_ts))
+        os.utime(stale_dir_2, (stale_ts, stale_ts))
+
+        monkeypatch.setattr(
+            "tasks.jobs.report.STALE_TMP_OUTPUT_SAFE_ROOT", root_dir.resolve()
+        )
+        monkeypatch.setattr(
+            "tasks.jobs.report._should_run_stale_cleanup", lambda *_: True
+        )
+        monkeypatch.setattr(
+            "tasks.jobs.report._is_scan_directory_protected", lambda **_: False
+        )
+
+        removed = _cleanup_stale_tmp_output_directories(
+            str(root_dir),
+            max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+            max_deletions_per_run=1,
+        )
+
+        assert removed == 1
+        remaining = sum(
+            1 for scan_dir in (stale_dir_1, stale_dir_2) if scan_dir.exists()
+        )
+        assert remaining == 1
+
+    def test_rejects_non_safe_root(self, tmp_path, monkeypatch):
+        """Cleanup must no-op when called with a root outside the allowed safe root."""
+        root_dir = tmp_path / "prowler_api_output"
+        root_dir.mkdir(parents=True)
+
+        monkeypatch.setattr(
+            "tasks.jobs.report.STALE_TMP_OUTPUT_SAFE_ROOT",
+            (tmp_path / "another-root").resolve(),
+        )
+
+        def _fail_should_run(*_args, **_kwargs):
+            raise AssertionError("_should_run_stale_cleanup should not be called")
+
+        monkeypatch.setattr(
+            "tasks.jobs.report._should_run_stale_cleanup", _fail_should_run
+        )
+
+        removed = _cleanup_stale_tmp_output_directories(str(root_dir), max_age_hours=48)
+
+        assert removed == 0
+
+    def test_ignores_symlink_scan_directories(self, tmp_path, monkeypatch):
+        """Symlinked scan directories must never be deleted by cleanup."""
+        root_dir = tmp_path / "prowler_api_output"
+        stale_real_scan_dir = root_dir / "tenant-a" / "scan-old-real"
+        stale_real_scan_dir.mkdir(parents=True)
+        (stale_real_scan_dir / "artifact.txt").write_text("old")
+
+        symlink_target = tmp_path / "symlink-target"
+        symlink_target.mkdir(parents=True)
+        (symlink_target / "artifact.txt").write_text("target")
+        symlink_scan_dir = root_dir / "tenant-a" / "scan-link"
+        symlink_scan_dir.symlink_to(symlink_target, target_is_directory=True)
+
+        now = time.time()
+        stale_ts = now - ((STALE_TMP_OUTPUT_MAX_AGE_HOURS + 1) * 60 * 60)
+        os.utime(stale_real_scan_dir, (stale_ts, stale_ts))
+
+        monkeypatch.setattr(
+            "tasks.jobs.report.STALE_TMP_OUTPUT_SAFE_ROOT", root_dir.resolve()
+        )
+        monkeypatch.setattr(
+            "tasks.jobs.report._should_run_stale_cleanup", lambda *_: True
+        )
+        monkeypatch.setattr(
+            "tasks.jobs.report._is_scan_directory_protected", lambda **_: False
+        )
+
+        removed = _cleanup_stale_tmp_output_directories(
+            str(root_dir), max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS
+        )
+
+        assert removed == 1
+        assert not stale_real_scan_dir.exists()
+        assert symlink_scan_dir.exists()
+        assert symlink_target.exists()
+
+    def test_handles_internal_exception_without_propagating(
+        self, tmp_path, monkeypatch
+    ):
+        """Cleanup errors must be swallowed so callers are not interrupted."""
+        root_dir = tmp_path / "prowler_api_output"
+        stale_scan_dir = root_dir / "tenant-a" / "scan-old"
+        stale_scan_dir.mkdir(parents=True)
+
+        now = time.time()
+        stale_ts = now - ((STALE_TMP_OUTPUT_MAX_AGE_HOURS + 1) * 60 * 60)
+        os.utime(stale_scan_dir, (stale_ts, stale_ts))
+
+        monkeypatch.setattr(
+            "tasks.jobs.report.STALE_TMP_OUTPUT_SAFE_ROOT", root_dir.resolve()
+        )
+        monkeypatch.setattr(
+            "tasks.jobs.report._should_run_stale_cleanup", lambda *_: True
+        )
+
+        def _raise(*_args, **_kwargs):
+            raise RuntimeError("db timeout")
+
+        monkeypatch.setattr("tasks.jobs.report._is_scan_directory_protected", _raise)
+
+        removed = _cleanup_stale_tmp_output_directories(
+            str(root_dir), max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS
+        )
+
+        assert removed == 0
+        assert stale_scan_dir.exists()
+
+
+class TestStaleCleanupProtectionHelpers:
+    """Unit tests for stale cleanup helper guard logic."""
+
+    def test_should_run_cleanup_is_throttled(self, tmp_path):
+        root_dir = tmp_path / "prowler_api_output"
+        root_dir.mkdir(parents=True)
+
+        assert _should_run_stale_cleanup(root_dir, throttle_seconds=3600) is True
+        assert _should_run_stale_cleanup(root_dir, throttle_seconds=3600) is False
+
+        lock_file = root_dir / STALE_TMP_OUTPUT_LOCK_FILE_NAME
+        lock_file.write_text(str(int(time.time()) - 7200), encoding="ascii")
+
+        assert _should_run_stale_cleanup(root_dir, throttle_seconds=3600) is True
+
+    @patch("tasks.jobs.report.fcntl.flock", side_effect=BlockingIOError)
+    def test_should_run_cleanup_returns_false_when_lock_is_busy(
+        self, _mock_flock, tmp_path
+    ):
+        root_dir = tmp_path / "prowler_api_output"
+        root_dir.mkdir(parents=True)
+
+        assert _should_run_stale_cleanup(root_dir, throttle_seconds=3600) is False
+
+    @patch("tasks.jobs.report.Scan.all_objects.filter")
+    def test_is_scan_directory_protected_for_executing_scan(
+        self, mock_scan_filter, tmp_path
+    ):
+        scan_id = str(uuid.uuid4())
+        scan_path = tmp_path / scan_id
+        scan_path.mkdir(parents=True)
+        mock_scan_filter.return_value.only.return_value.first.return_value = Mock(
+            state=StateChoices.EXECUTING, output_location=None
+        )
+
+        assert (
+            _is_scan_directory_protected(
+                tenant_id="tenant-a",
+                scan_id=scan_id,
+                scan_path=scan_path,
+            )
+            is True
+        )
+
+    @patch("tasks.jobs.report.Scan.all_objects.filter")
+    def test_is_scan_directory_protected_for_local_output(
+        self, mock_scan_filter, tmp_path
+    ):
+        scan_id = str(uuid.uuid4())
+        scan_path = tmp_path / scan_id
+        scan_path.mkdir(parents=True)
+        local_output_path = scan_path / "outputs.zip"
+        mock_scan_filter.return_value.only.return_value.first.return_value = Mock(
+            state=StateChoices.COMPLETED, output_location=str(local_output_path)
+        )
+
+        assert (
+            _is_scan_directory_protected(
+                tenant_id="tenant-a",
+                scan_id=scan_id,
+                scan_path=scan_path.resolve(),
+            )
+            is True
+        )
+
+    @patch("tasks.jobs.report.Scan.all_objects.filter")
+    def test_is_scan_directory_not_protected_for_s3_output(
+        self, mock_scan_filter, tmp_path
+    ):
+        scan_id = str(uuid.uuid4())
+        scan_path = tmp_path / scan_id
+        scan_path.mkdir(parents=True)
+        mock_scan_filter.return_value.only.return_value.first.return_value = Mock(
+            state=StateChoices.COMPLETED,
+            output_location="s3://bucket/path/report.zip",
+        )
+
+        assert (
+            _is_scan_directory_protected(
+                tenant_id="tenant-a",
+                scan_id=scan_id,
+                scan_path=scan_path,
+            )
+            is False
+        )
+
+
 @pytest.mark.django_db
 class TestGenerateThreatscoreReportFunction:
     """Test suite for generate_threatscore_report function."""
@@ -426,6 +727,31 @@ class TestGenerateComplianceReportsOptimized:
         mock_ens.assert_not_called()
         mock_nis2.assert_not_called()
 
+    @patch(
+        "tasks.jobs.report._cleanup_stale_tmp_output_directories",
+        side_effect=RuntimeError("cleanup boom"),
+    )
+    def test_cleanup_exception_does_not_break_no_findings_flow(self, _mock_cleanup):
+        """Unexpected cleanup failures must not abort report generation."""
+        random_tenant = str(uuid.uuid4())
+        random_scan = str(uuid.uuid4())
+        random_provider = str(uuid.uuid4())
+
+        with patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter:
+            mock_filter.return_value.exists.return_value = False
+            result = generate_compliance_reports(
+                tenant_id=random_tenant,
+                scan_id=random_scan,
+                provider_id=random_provider,
+                generate_threatscore=True,
+                generate_ens=False,
+                generate_nis2=False,
+                generate_csa=False,
+                generate_cis=False,
+            )
+
+        assert result["threatscore"] == {"upload": False, "path": ""}
+
     @patch("tasks.jobs.report._upload_to_s3")
     @patch("tasks.jobs.report.generate_cis_report")
     def test_no_findings_returns_flat_cis_entry(
@@ -456,6 +782,103 @@ class TestGenerateComplianceReportsOptimized:
 
         assert result["cis"] == {"upload": False, "path": ""}
         mock_cis.assert_not_called()
+
+    @patch("tasks.jobs.report.rmtree")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_threatscore_report")
+    @patch("tasks.jobs.report._generate_compliance_output_directory")
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    @patch("tasks.jobs.report.Provider.objects.get")
+    @patch("tasks.jobs.report.ScanSummary.objects.filter")
+    def test_cleanup_runs_when_supported_reports_upload_successfully(
+        self,
+        mock_scan_summary_filter,
+        mock_provider_get,
+        mock_get_bulk,
+        mock_aggregate_stats,
+        mock_generate_output_dir,
+        mock_threatscore,
+        mock_upload_to_s3,
+        mock_rmtree,
+    ):
+        """Cleanup must run when all generated (supported) reports are uploaded."""
+        mock_scan_summary_filter.return_value.exists.return_value = True
+        mock_provider_get.return_value = Mock(uid="provider-uid", provider="m365")
+        mock_get_bulk.return_value = {}
+        mock_aggregate_stats.return_value = {}
+        mock_generate_output_dir.return_value = (
+            "/tmp/tenant/scan/threatscore/prowler-output-provider-20240101000000"
+        )
+        mock_upload_to_s3.return_value = (
+            "s3://bucket/tenant/scan/threatscore/report.pdf"
+        )
+
+        result = generate_compliance_reports(
+            tenant_id=str(uuid.uuid4()),
+            scan_id=str(uuid.uuid4()),
+            provider_id=str(uuid.uuid4()),
+            generate_threatscore=True,
+            generate_ens=True,
+            generate_nis2=True,
+            generate_csa=True,
+            generate_cis=True,
+        )
+
+        assert result["threatscore"]["upload"] is True
+        assert result["ens"]["upload"] is False
+        assert result["nis2"]["upload"] is False
+        assert result["csa"]["upload"] is False
+        assert result["cis"] == {"upload": False, "path": ""}
+        mock_generate_output_dir.assert_called_once()
+        mock_threatscore.assert_called_once()
+        mock_rmtree.assert_called_once()
+
+    @patch("tasks.jobs.report.rmtree")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_threatscore_report")
+    @patch("tasks.jobs.report._generate_compliance_output_directory")
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    @patch("tasks.jobs.report.Provider.objects.get")
+    @patch("tasks.jobs.report.ScanSummary.objects.filter")
+    def test_cleanup_skipped_when_supported_upload_fails(
+        self,
+        mock_scan_summary_filter,
+        mock_provider_get,
+        mock_get_bulk,
+        mock_aggregate_stats,
+        mock_generate_output_dir,
+        mock_threatscore,
+        mock_upload_to_s3,
+        mock_rmtree,
+    ):
+        """Cleanup must not run when a generated report upload fails."""
+        mock_scan_summary_filter.return_value.exists.return_value = True
+        mock_provider_get.return_value = Mock(uid="provider-uid", provider="m365")
+        mock_get_bulk.return_value = {}
+        mock_aggregate_stats.return_value = {}
+        mock_generate_output_dir.return_value = (
+            "/tmp/tenant/scan/threatscore/prowler-output-provider-20240101000000"
+        )
+        mock_upload_to_s3.return_value = None
+
+        result = generate_compliance_reports(
+            tenant_id=str(uuid.uuid4()),
+            scan_id=str(uuid.uuid4()),
+            provider_id=str(uuid.uuid4()),
+            generate_threatscore=True,
+            generate_ens=True,
+            generate_nis2=True,
+            generate_csa=True,
+            generate_cis=True,
+        )
+
+        assert result["threatscore"]["upload"] is False
+        assert result["cis"] == {"upload": False, "path": ""}
+        mock_generate_output_dir.assert_called_once()
+        mock_threatscore.assert_called_once()
+        mock_rmtree.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -621,6 +1044,43 @@ class TestGenerateComplianceReportsCIS:
 
         assert result["cis"] == {"upload": False, "path": ""}
         mock_cis.assert_not_called()
+
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report._generate_compliance_output_directory")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    def test_cis_output_directory_failure_is_captured(
+        self,
+        mock_get_bulk,
+        mock_generate_output_dir,
+        mock_stats,
+        monkeypatch,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """CIS output dir errors must be captured in results (not raised)."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        self._force_scan_has_findings(monkeypatch)
+        mock_stats.return_value = {}
+        mock_get_bulk.return_value = {"cis_5.0_aws": Mock()}
+        mock_generate_output_dir.side_effect = RuntimeError("dir boom")
+
+        result = generate_compliance_reports(
+            tenant_id=str(tenant.id),
+            scan_id=str(scan.id),
+            provider_id=str(provider.id),
+            generate_threatscore=False,
+            generate_ens=False,
+            generate_nis2=False,
+            generate_csa=False,
+            generate_cis=True,
+        )
+
+        assert result["cis"]["upload"] is False
+        assert result["cis"]["error"] == "dir boom"
 
 
 class TestPickLatestCisVariant:
