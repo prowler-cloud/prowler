@@ -593,14 +593,14 @@ class TestStaleCleanupProtectionHelpers:
 
         assert _should_run_stale_cleanup(root_dir, throttle_seconds=3600) is False
 
-    @patch("tasks.jobs.report.Scan.all_objects.filter")
+    @patch("tasks.jobs.report.Scan.all_objects.using")
     def test_is_scan_directory_protected_for_executing_scan(
-        self, mock_scan_filter, tmp_path
+        self, mock_scan_using, tmp_path
     ):
         scan_id = str(uuid.uuid4())
         scan_path = tmp_path / scan_id
         scan_path.mkdir(parents=True)
-        mock_scan_filter.return_value.only.return_value.first.return_value = Mock(
+        mock_scan_using.return_value.filter.return_value.only.return_value.first.return_value = Mock(
             state=StateChoices.EXECUTING, output_location=None
         )
 
@@ -613,15 +613,15 @@ class TestStaleCleanupProtectionHelpers:
             is True
         )
 
-    @patch("tasks.jobs.report.Scan.all_objects.filter")
+    @patch("tasks.jobs.report.Scan.all_objects.using")
     def test_is_scan_directory_protected_for_local_output(
-        self, mock_scan_filter, tmp_path
+        self, mock_scan_using, tmp_path
     ):
         scan_id = str(uuid.uuid4())
         scan_path = tmp_path / scan_id
         scan_path.mkdir(parents=True)
         local_output_path = scan_path / "outputs.zip"
-        mock_scan_filter.return_value.only.return_value.first.return_value = Mock(
+        mock_scan_using.return_value.filter.return_value.only.return_value.first.return_value = Mock(
             state=StateChoices.COMPLETED, output_location=str(local_output_path)
         )
 
@@ -634,14 +634,14 @@ class TestStaleCleanupProtectionHelpers:
             is True
         )
 
-    @patch("tasks.jobs.report.Scan.all_objects.filter")
+    @patch("tasks.jobs.report.Scan.all_objects.using")
     def test_is_scan_directory_not_protected_for_s3_output(
-        self, mock_scan_filter, tmp_path
+        self, mock_scan_using, tmp_path
     ):
         scan_id = str(uuid.uuid4())
         scan_path = tmp_path / scan_id
         scan_path.mkdir(parents=True)
-        mock_scan_filter.return_value.only.return_value.first.return_value = Mock(
+        mock_scan_using.return_value.filter.return_value.only.return_value.first.return_value = Mock(
             state=StateChoices.COMPLETED,
             output_location="s3://bucket/path/report.zip",
         )
