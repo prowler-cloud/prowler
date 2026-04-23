@@ -1369,9 +1369,9 @@ class TestCheckIntegrationsTask:
             )
 
             # Verify ASFF was NOT created for non-AWS provider
-            assert "asff" not in created_writers, (
-                "ASFF writer should NOT be created for non-AWS providers"
-            )
+            assert (
+                "asff" not in created_writers
+            ), "ASFF writer should NOT be created for non-AWS providers"
             assert "csv" in created_writers, "CSV writer should be created"
             assert "ocsf" in created_writers, "OCSF writer should be created"
 
