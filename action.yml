@@ -1,0 +1,247 @@
+name: Prowler Security Scan
+description: Run Prowler cloud security scanner using the official Docker image
+branding:
+  icon: shield
+  color: orange
+
+inputs:
+  provider:
+    description: Cloud provider to scan (e.g. aws, azure, gcp, github, kubernetes, iac). See https://docs.prowler.com for supported providers.
+    required: true
+  image-tag:
+    description: >
+      Docker image tag for prowlercloud/prowler.
+      Default is "stable" (latest release). Available tags:
+      "stable" (latest release), "latest" (master branch, not stable),
+      "<x.y.z>" (pinned release version).
+      See all tags at https://hub.docker.com/r/prowlercloud/prowler/tags
+    required: false
+    default: stable
+  output-formats:
+    description: Output format(s) for scan results (e.g. "json-ocsf", "sarif json-ocsf")
+    required: false
+    default: json-ocsf
+  push-to-cloud:
+    description: Push scan findings to Prowler Cloud. Requires the PROWLER_CLOUD_API_KEY environment variable. See https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings#using-the-cli
+    required: false
+    default: "false"
+  flags:
+    description: 'Additional CLI flags passed to the Prowler scan (e.g. "--severity critical high --compliance cis_aws"). Values containing spaces can be quoted, e.g. "--resource-tag ''Environment=My Server''".'
+    required: false
+    default: ""
+  extra-env:
+    description: >
+      Space-, newline-, or comma-separated list of host environment variable NAMES to forward to the Prowler container
+      (e.g. "AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN" for AWS,
+      "GITHUB_PERSONAL_ACCESS_TOKEN" for GitHub, "CLOUDFLARE_API_TOKEN" for Cloudflare).
+      List names only; set the values via `env:` at the workflow or job level (typically from `secrets.*`).
+      See the README for per-provider examples.
+    required: false
+    default: ""
+  upload-sarif:
+    description: 'Upload SARIF results to GitHub Code Scanning (requires "sarif" in output-formats and both `security-events: write` and `actions: read` permissions)'
+    required: false
+    default: "false"
+  sarif-file:
+    description: Path to the SARIF file to upload (auto-detected from output/ if not set)
+    required: false
+    default: ""
+  sarif-category:
+    description: Category for the SARIF upload (used to distinguish multiple analyses)
+    required: false
+    default: prowler
+  fail-on-findings:
+    description: Fail the workflow step when Prowler detects findings (exit code 3). By default the action tolerates findings and succeeds.
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Validate inputs
+      shell: bash
+      env:
+        INPUT_IMAGE_TAG: ${{ inputs.image-tag }}
+        INPUT_UPLOAD_SARIF: ${{ inputs.upload-sarif }}
+        INPUT_OUTPUT_FORMATS: ${{ inputs.output-formats }}
+      run: |
+        # Validate image tag format (alphanumeric, dots, hyphens, underscores only)
+        if [[ ! "$INPUT_IMAGE_TAG" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+          echo "::error::Invalid image-tag '${INPUT_IMAGE_TAG}'. Must contain only alphanumeric characters, dots, hyphens, and underscores."
+          exit 1
+        fi
+
+        # Warn if upload-sarif is enabled but sarif not in output-formats
+        if [ "$INPUT_UPLOAD_SARIF" = "true" ]; then
+          if [[ ! "$INPUT_OUTPUT_FORMATS" =~ (^|[[:space:]])sarif($|[[:space:]]) ]]; then
+            echo "::warning::upload-sarif is enabled but 'sarif' is not included in output-formats ('${INPUT_OUTPUT_FORMATS}'). SARIF upload will fail unless you add 'sarif' to output-formats."
+          fi
+        fi
+
+    - name: Run Prowler scan
+      shell: bash
+      env:
+        INPUT_PROVIDER: ${{ inputs.provider }}
+        INPUT_IMAGE_TAG: ${{ inputs.image-tag }}
+        INPUT_OUTPUT_FORMATS: ${{ inputs.output-formats }}
+        INPUT_PUSH_TO_CLOUD: ${{ inputs.push-to-cloud }}
+        INPUT_FLAGS: ${{ inputs.flags }}
+        INPUT_EXTRA_ENV: ${{ inputs.extra-env }}
+        INPUT_FAIL_ON_FINDINGS: ${{ inputs.fail-on-findings }}
+      run: |
+        set -e
+
+        # Parse space-separated inputs with shlex so values with spaces can be quoted
+        # (e.g. `--resource-tag 'Environment=My Server'`).
+        mapfile -t OUTPUT_FORMATS < <(python3 -c 'import shlex, os; [print(t) for t in shlex.split(os.environ.get("INPUT_OUTPUT_FORMATS", ""))]')
+        mapfile -t EXTRA_FLAGS < <(python3 -c 'import shlex, os; [print(t) for t in shlex.split(os.environ.get("INPUT_FLAGS", ""))]')
+        mapfile -t EXTRA_ENV_NAMES < <(python3 -c 'import shlex, os; [print(t) for t in shlex.split(os.environ.get("INPUT_EXTRA_ENV", "").replace(",", " "))]')
+
+        env_args=()
+        for var in "${EXTRA_ENV_NAMES[@]}"; do
+          [ -z "$var" ] && continue
+          if [[ ! "$var" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+            echo "::error::Invalid env var name '${var}' in extra-env. Names must match ^[A-Za-z_][A-Za-z0-9_]*$."
+            exit 1
+          fi
+          env_args+=("-e" "$var")
+        done
+
+        push_args=()
+        if [ "$INPUT_PUSH_TO_CLOUD" = "true" ]; then
+          push_args=("--push-to-cloud")
+          env_args+=("-e" "PROWLER_CLOUD_API_KEY")
+        fi
+
+        mkdir -p "$GITHUB_WORKSPACE/output"
+        chmod 777 "$GITHUB_WORKSPACE/output"
+
+        set +e
+        docker run --rm \
+          "${env_args[@]}" \
+          -v "$GITHUB_WORKSPACE:/home/prowler/workspace" \
+          -v "$GITHUB_WORKSPACE/output:/home/prowler/workspace/output" \
+          -w /home/prowler/workspace \
+          "prowlercloud/prowler:${INPUT_IMAGE_TAG}" \
+          "$INPUT_PROVIDER" \
+          --output-formats "${OUTPUT_FORMATS[@]}" \
+          "${push_args[@]}" \
+          "${EXTRA_FLAGS[@]}"
+        exit_code=$?
+        set -e
+
+        # Exit code 3 = findings detected
+        if [ "$exit_code" -eq 3 ] && [ "$INPUT_FAIL_ON_FINDINGS" != "true" ]; then
+          echo "::notice::Prowler detected findings (exit code 3). Set fail-on-findings to 'true' to fail the workflow on findings."
+          exit 0
+        fi
+        exit $exit_code
+
+    - name: Upload scan results
+      if: always()
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      with:
+        name: prowler-${{ inputs.provider }}
+        path: output/
+        retention-days: 30
+        if-no-files-found: warn
+
+    - name: Find SARIF file
+      if: always() && inputs.upload-sarif == 'true'
+      id: find-sarif
+      shell: bash
+      env:
+        INPUT_SARIF_FILE: ${{ inputs.sarif-file }}
+      run: |
+        if [ -n "$INPUT_SARIF_FILE" ]; then
+          echo "sarif_path=$INPUT_SARIF_FILE" >> "$GITHUB_OUTPUT"
+        else
+          sarif_file=$(find output/ -name '*.sarif' -type f | head -1)
+          if [ -z "$sarif_file" ]; then
+            echo "::warning::No .sarif file found in output/. Ensure 'sarif' is included in output-formats."
+            echo "sarif_path=" >> "$GITHUB_OUTPUT"
+          else
+            echo "sarif_path=$sarif_file" >> "$GITHUB_OUTPUT"
+          fi
+        fi
+
+    - name: Upload SARIF to GitHub Code Scanning
+      if: always() && inputs.upload-sarif == 'true' && steps.find-sarif.outputs.sarif_path != ''
+      uses: github/codeql-action/upload-sarif@d4b3ca9fa7f69d38bfcd667bdc45bc373d16277e # v4
+      with:
+        sarif_file: ${{ steps.find-sarif.outputs.sarif_path }}
+        category: ${{ inputs.sarif-category }}
+
+    - name: Write scan summary
+      if: always()
+      shell: bash
+      env:
+        INPUT_PROVIDER: ${{ inputs.provider }}
+        INPUT_UPLOAD_SARIF: ${{ inputs.upload-sarif }}
+        INPUT_PUSH_TO_CLOUD: ${{ inputs.push-to-cloud }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        BRANCH: ${{ github.head_ref || github.ref_name }}
+      run: |
+        set +e
+
+        ocsf_file=$(find output/ -name '*.ocsf.json' -type f 2>/dev/null | head -1)
+
+        {
+          echo "## Prowler ${INPUT_PROVIDER} scan summary"
+          echo ""
+
+          counts=""
+          if [ -n "$ocsf_file" ] && [ -s "$ocsf_file" ]; then
+            counts=$(jq -r '[
+                length,
+                ([.[] | select(.status_code == "FAIL")] | length),
+                ([.[] | select(.status_code == "PASS")] | length),
+                ([.[] | select(.status_code == "MUTED")] | length),
+                ([.[] | select(.status_code == "MANUAL")] | length),
+                ([.[] | select(.status_code == "FAIL" and .severity == "Critical")] | length),
+                ([.[] | select(.status_code == "FAIL" and .severity == "High")] | length),
+                ([.[] | select(.status_code == "FAIL" and .severity == "Medium")] | length),
+                ([.[] | select(.status_code == "FAIL" and .severity == "Low")] | length),
+                ([.[] | select(.status_code == "FAIL" and .severity == "Informational")] | length)
+              ] | @tsv' "$ocsf_file" 2>/dev/null)
+          fi
+
+          if [ -n "$counts" ]; then
+            read -r total fail pass muted manual critical high medium low info <<<"$counts"
+
+            line="**${fail:-0} failing** · ${pass:-0} passing"
+            [ "${muted:-0}" -gt 0 ] && line="${line} · ${muted} muted"
+            [ "${manual:-0}" -gt 0 ] && line="${line} · ${manual} manual"
+            echo "${line} — ${total:-0} checks total"
+            echo ""
+            echo "| Severity | Failing |"
+            echo "|----------|---------|"
+            echo "| Critical | ${critical:-0} |"
+            echo "| High | ${high:-0} |"
+            echo "| Medium | ${medium:-0} |"
+            echo "| Low | ${low:-0} |"
+            echo "| Informational | ${info:-0} |"
+            echo ""
+          else
+            echo "_No findings report was produced. Check the scan logs above._"
+            echo ""
+          fi
+
+          echo "**Full report:** [\`prowler-${INPUT_PROVIDER}\` artifact](${RUN_URL}#artifacts)"
+
+          if [ "$INPUT_UPLOAD_SARIF" = "true" ] && [ -n "$BRANCH" ]; then
+            encoded_branch=$(jq -nr --arg b "$BRANCH" '$b|@uri')
+            echo ""
+            echo "**Code Scanning:** [open alerts on \`${BRANCH}\`](${REPO_URL}/security/code-scanning?query=is%3Aopen+branch%3A${encoded_branch})"
+          fi
+
+          if [ "$INPUT_PUSH_TO_CLOUD" != "true" ]; then
+            echo ""
+            echo "---"
+            echo ""
+            echo "### Unlock continuous security monitoring"
+            echo ""
+            echo "Centralize findings across accounts and providers, track posture drift over time, and collaborate on remediation with **[Prowler Cloud](https://cloud.prowler.com)**."
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"
