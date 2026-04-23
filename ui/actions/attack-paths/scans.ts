@@ -30,8 +30,8 @@ export const getAttackPathScans = async (): Promise<
   let lastResponse: AttackPathScansResponse | undefined;
   let hasMorePages = true;
 
-  try {
-    while (hasMorePages && currentPage <= ATTACK_PATH_SCANS_MAX_PAGES) {
+  while (hasMorePages && currentPage <= ATTACK_PATH_SCANS_MAX_PAGES) {
+    try {
       const url = new URL(`${apiBaseUrl}/attack-paths-scans`);
       url.searchParams.append("page[number]", currentPage.toString());
       url.searchParams.append(
@@ -62,32 +62,25 @@ export const getAttackPathScans = async (): Promise<
       } else {
         currentPage++;
       }
+    } catch (error) {
+      console.error("Error fetching attack path scans:", error);
+      if (allScans.length === 0) {
+        return undefined;
+      }
+      break;
     }
-
-    if (!lastResponse) {
-      return { data: [] };
-    }
-
-    const aggregatedResponse: AttackPathScansResponse = {
-      ...lastResponse,
-      data: allScans,
-      meta: {
-        ...lastResponse.meta,
-        pagination: {
-          page: 1,
-          pages: 1,
-          count: allScans.length,
-        },
-      },
-    };
-
-    const adapted = adaptAttackPathScansResponse(aggregatedResponse);
-
-    return { data: adapted.data };
-  } catch (error) {
-    console.error("Error fetching attack path scans:", error);
-    return undefined;
   }
+
+  if (!lastResponse) {
+    return { data: [] };
+  }
+
+  const adapted = adaptAttackPathScansResponse({
+    ...lastResponse,
+    data: allScans,
+  });
+
+  return { data: adapted.data };
 };
 
 /**

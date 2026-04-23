@@ -163,6 +163,20 @@ describe("getAttackPathScans", () => {
     expect(result).toBeUndefined();
   });
 
+  it("preserves scans from earlier pages when a later fetch throws", async () => {
+    // Given the first page resolves but the second page errors mid-iteration
+    handleApiResponseMock
+      .mockResolvedValueOnce(pageResponse(["a0", "a1"], 1, 3, 5))
+      .mockRejectedValueOnce(new Error("network blip"));
+
+    // When
+    const result = await getAttackPathScans();
+
+    // Then we keep the scans we already fetched instead of discarding everything
+    expect(result?.data).toHaveLength(2);
+    expect(result?.data.map((scan) => scan.id)).toEqual(["a0", "a1"]);
+  });
+
   it("returns an empty list when the first page has no data", async () => {
     // Given
     handleApiResponseMock.mockResolvedValueOnce(undefined);
