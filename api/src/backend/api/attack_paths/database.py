@@ -28,6 +28,7 @@ READ_QUERY_TIMEOUT_SECONDS = env.int(
     "ATTACK_PATHS_READ_QUERY_TIMEOUT_SECONDS", default=30
 )
 MAX_CUSTOM_QUERY_NODES = env.int("ATTACK_PATHS_MAX_CUSTOM_QUERY_NODES", default=250)
+CONN_ACQUISITION_TIMEOUT = env.int("NEO4J_CONN_ACQUISITION_TIMEOUT", default=15)
 READ_EXCEPTION_CODES = [
     "Neo.ClientError.Statement.AccessMode",
     "Neo.ClientError.Procedure.ProcedureNotFound",
@@ -62,7 +63,7 @@ def init_driver() -> neo4j.Driver:
                 auth=(config["USER"], config["PASSWORD"]),
                 keep_alive=True,
                 max_connection_lifetime=7200,
-                connection_acquisition_timeout=120,
+                connection_acquisition_timeout=CONN_ACQUISITION_TIMEOUT,
                 max_connection_pool_size=50,
             )
             _driver.verify_connectivity()
