@@ -1,8 +1,12 @@
 "use client";
 
-import { forwardRef, type ComponentPropsWithoutRef, type ElementRef } from "react";
 import { Command as CommandPrimitive } from "cmdk";
 import { SearchIcon } from "lucide-react";
+import {
+  type ComponentPropsWithoutRef,
+  type ElementRef,
+  forwardRef,
+} from "react";
 
 import {
   Dialog,

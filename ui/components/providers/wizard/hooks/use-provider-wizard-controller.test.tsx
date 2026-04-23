@@ -153,7 +153,7 @@ describe("useProviderWizardController", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it("moves to launch step after a successful connection test in update mode", async () => {
+  it("closes the wizard after a successful connection test in update mode", async () => {
     // Given
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
@@ -181,9 +181,10 @@ describe("useProviderWizardController", () => {
       result.current.handleTestSuccess();
     });
 
-    // Then
-    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.LAUNCH);
-    expect(onOpenChange).not.toHaveBeenCalled();
+    // Then: credential rotation never surfaces the launch/schedule step
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(result.current.currentStep).not.toBe(PROVIDER_WIZARD_STEP.LAUNCH);
   });
 
   it("does not override launch footer config in the controller", () => {
