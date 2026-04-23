@@ -3,6 +3,7 @@ from typing import Any
 
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
+from django.conf import settings
 from tasks.jobs.attack_paths.config import is_provider_available
 
 from api.attack_paths import database as graph_database
@@ -38,6 +39,9 @@ def create_attack_paths_scan(
             graph_data_ready=True,
         ).exists()
 
+        # TODO: Drop after Neptune migration is finished
+        is_neptune = getattr(settings, "ATTACK_PATHS_SINK_DATABASE", "neo4j") == "neptune"
+
         attack_paths_scan = ProwlerAPIAttackPathsScan.objects.create(
             tenant_id=tenant_id,
             provider_id=provider_id,
@@ -45,6 +49,7 @@ def create_attack_paths_scan(
             state=StateChoices.SCHEDULED,
             started_at=datetime.now(tz=timezone.utc),
             graph_data_ready=previous_data_ready,
+            is_neptune=is_neptune,
         )
         attack_paths_scan.save()
 
