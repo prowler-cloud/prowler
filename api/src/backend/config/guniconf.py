@@ -41,3 +41,23 @@ def on_reload(_):
 
 def when_ready(_):
     gunicorn_logger.info("Gunicorn server is ready")
+
+
+def post_fork(_server, worker):
+    """Re-initialize attack-paths drivers after each worker fork.
+
+    Neo4j / Neptune drivers spawn background IO threads that do not survive
+    ``fork()``. When the gunicorn master runs with ``preload_app=True``, the
+    child inherits driver objects whose pool references dead threads and
+    hangs on the first ``pool.acquire`` call until the watchdog kills the
+    worker. Re-initializing per worker guarantees each child owns its own
+    live threads. See GUNICORN_WORKER_TIMEOUTS_ANALYSIS.md for detail.
+    """
+    from api.attack_paths import database as graph_database
+
+    try:
+        graph_database.close_driver()
+    except Exception:  # pragma: no cover - best-effort cleanup
+        pass
+    graph_database.init_driver()
+    gunicorn_logger.info(f"Attack-paths drivers initialized for worker {worker.pid}")
