@@ -12,6 +12,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 
+### 🐞 Fixed
+
+- `/tmp/prowler_api_output` saturation in compliance report workers: the final `rmtree` in `generate_compliance_reports` now only waits on frameworks actually generated for the provider (so unsupported frameworks no longer leave a placeholder `results` entry that blocks cleanup), output directories are created lazily per enabled framework, and both `generate_compliance_reports` and `generate_outputs_task` run an opportunistic stale cleanup at task start with a 48h age threshold, a per-host `fcntl` throttle, a 50-deletions-per-run cap, and guards that protect EXECUTING scans and scans whose `output_location` still points to a local path (metadata lookups routed through the admin DB so RLS does not hide those rows) [(#10874)](https://github.com/prowler-cloud/prowler/pull/10874)
+
 ---
 
 ## [1.25.3] (Prowler v5.24.3)
