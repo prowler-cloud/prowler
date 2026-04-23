@@ -2,11 +2,21 @@
 # Runs automatically on `wt switch --create`.
 
 # Block 1: setup + copy env files from primary worktree (all concurrent).
+#
+# We use explicit `cp` instead of `wt step copy-ignored` because the latter
+# reads `.worktreeinclude` from the SOURCE worktree (the primary, usually on
+# master), so the filter is ignored until `.worktreeinclude` lands on master
+# — without filtering it copies every gitignored file (.venv/, node_modules/,
+# caches, etc.), which is not what we want.
+#
+# Once `.worktreeinclude` is merged to master, drop the `cp` lines and
+# uncomment the copy-ignored hook below.
 [[pre-start]]
 skills = "./skills/setup.sh --claude"
 python = "poetry env use python3.12"
 envrc = "cp {{ primary_worktree_path }}/.envrc ."
 env_local = "cp {{ primary_worktree_path }}/ui/.env.local ui/.env.local"
+# envs = "wt step copy-ignored"
 
 # Block 2: install Python deps (requires `poetry env use` from block 1).
 [[pre-start]]
