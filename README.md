@@ -305,16 +305,27 @@ python prowler-cli.py -v
 The official **Prowler GitHub Action** runs Prowler scans in your GitHub workflows using the official [`prowlercloud/prowler`](https://hub.docker.com/r/prowlercloud/prowler) Docker image. Scans run on any [supported provider](https://docs.prowler.com/user-guide/providers/), with optional [`--push-to-cloud`](https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings) to send findings to Prowler Cloud and optional SARIF upload so findings show up in the repo's **Security → Code scanning** tab and as inline PR annotations.
 
 ```yaml
-- uses: prowler-cloud/prowler@v1
-  with:
-    provider: aws
-    push-to-cloud: true
-    extra-env: AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
-  env:
-    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-    PROWLER_CLOUD_API_KEY: ${{ secrets.PROWLER_CLOUD_API_KEY }}
+name: Prowler IaC Scan
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  prowler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prowler-cloud/prowler@v1
+        with:
+          provider: iac
+          output-formats: sarif json-ocsf
+          upload-sarif: true
+          flags: --severity critical high
 ```
 
 Full configuration, per-provider authentication, and SARIF examples: [Prowler GitHub Action tutorial](https://docs.prowler.com/user-guide/tutorials/prowler-app-github-action). Marketplace listing: [Prowler Security Scan](https://github.com/marketplace/actions/prowler-security-scan).
