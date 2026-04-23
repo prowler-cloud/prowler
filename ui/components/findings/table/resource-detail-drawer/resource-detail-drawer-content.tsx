@@ -108,48 +108,6 @@ function resolveExternalCveUrl({
   return additionalUrls.find(isExternalCveRecommendationUrl) ?? "";
 }
 
-function renderStatusExtended({
-  statusExtended,
-  recommendationUrl,
-}: {
-  statusExtended: string;
-  recommendationUrl: string;
-}) {
-  if (!isExternalCveRecommendationUrl(recommendationUrl)) {
-    return statusExtended;
-  }
-
-  const fixAvailableMatch = statusExtended.match(
-    /^(.*?\(fix available:\s*)([^)]+)(\).*)$/,
-  );
-  if (!fixAvailableMatch) {
-    return statusExtended;
-  }
-
-  const [, prefix, rawVersions, suffix] = fixAvailableMatch;
-  const versions = rawVersions
-    .split(",")
-    .map((version) => version.trim())
-    .filter(Boolean);
-
-  if (versions.length === 0) {
-    return statusExtended;
-  }
-
-  return (
-    <>
-      {prefix}
-      {versions.map((version, index) => (
-        <span key={`${version}-${index}`}>
-          {index > 0 ? ", " : null}
-          <CustomLink href={recommendationUrl}>{version}</CustomLink>
-        </span>
-      ))}
-      {suffix}
-    </>
-  );
-}
-
 function resolveNativeIacConfig(providerType: string | undefined): {
   label: string;
   language: QueryEditorLanguage;
@@ -894,11 +852,7 @@ export function ResourceDetailDrawerContent({
                           Status Extended:
                         </span>
                         <p className="text-text-neutral-primary text-sm">
-                          {renderStatusExtended({
-                            statusExtended: f.statusExtended,
-                            recommendationUrl:
-                              externalCveUrl || recommendationUrl,
-                          })}
+                          {f.statusExtended}
                         </p>
                       </div>
                     )}
