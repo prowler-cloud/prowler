@@ -10,13 +10,19 @@ const REPO = "prowler-cloud/prowler";
 const REPO_URL = `https://github.com/${REPO}`;
 const RELEASES_ENDPOINT = `https://api.github.com/repos/${REPO}/releases?per_page=10`;
 const MAX_HIGHLIGHTS = 3;
+const MAX_CONTRIBUTORS = 8;
 const REVALIDATE_SECONDS = 3600;
 
 const META_HEADINGS = [
   /^what'?s changed$/i,
   /^new contributors$/i,
+  /^community contributors$/i,
+  /^contributors$/i,
   /^full changelog$/i,
 ];
+
+const CONTRIBUTOR_HEADING = /contributor/i;
+const CONTRIBUTOR_HANDLE = /(?:^|[\s([])@([A-Za-z0-9](?:[A-Za-z0-9-]{0,38}))/g;
 
 const releaseSchema = z.object({
   tag_name: z.string(),
@@ -41,9 +47,39 @@ const stripFencedAndDetails = (body: string) =>
     .replace(/```[\s\S]*?```/g, "")
     .replace(/<details[\s\S]*?<\/details>/gi, "");
 
+const parseContributors = (clean: string): string[] => {
+  const sectionRe = /^##\s+(.+?)\s*$/gm;
+  const matches = Array.from(clean.matchAll(sectionRe));
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+
+  for (let i = 0; i < matches.length; i++) {
+    const heading = matches[i][1].trim();
+    if (!CONTRIBUTOR_HEADING.test(stripLeadingSymbols(heading))) continue;
+
+    const start = matches[i].index! + matches[i][0].length;
+    const end = matches[i + 1]?.index ?? clean.length;
+    const section = clean.slice(start, end);
+
+    for (const m of Array.from(section.matchAll(CONTRIBUTOR_HANDLE))) {
+      const handle = m[1];
+      if (seen.has(handle.toLowerCase())) continue;
+      seen.add(handle.toLowerCase());
+      ordered.push(handle);
+      if (ordered.length >= MAX_CONTRIBUTORS) return ordered;
+    }
+  }
+
+  return ordered;
+};
+
 const parseBody = (
   body: string,
-): { curated: string[]; components: ReleaseComponent[] } => {
+): {
+  curated: string[];
+  components: ReleaseComponent[];
+  contributors: string[];
+} => {
   const clean = stripFencedAndDetails(body);
   const headings = Array.from(clean.matchAll(/^##\s+(.+?)\s*$/gm)).map((m) =>
     m[1].trim(),
@@ -58,7 +94,9 @@ const parseBody = (
     headings.some((h) => h.toUpperCase() === comp),
   );
 
-  return { curated, components };
+  const contributors = parseContributors(clean);
+
+  return { curated, components, contributors };
 };
 
 const buildHeaders = (): HeadersInit => {
@@ -87,12 +125,13 @@ const fetchLatestReleaseWithHighlights = async (): Promise<LatestRelease> => {
 
   for (const release of releases) {
     if (release.draft || release.prerelease || !release.body) continue;
-    const { curated, components } = parseBody(release.body);
+    const { curated, components, contributors } = parseBody(release.body);
 
     const base = {
       version: release.tag_name.replace(/^v/, ""),
       url: release.html_url,
       repoUrl: REPO_URL,
+      contributors,
     };
 
     if (curated.length > 0) {
