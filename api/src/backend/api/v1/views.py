@@ -2714,6 +2714,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             query_definition,
             parameters,
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
 
@@ -2781,6 +2782,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             database_name,
             serializer.validated_data["query"],
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
 
