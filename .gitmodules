@@ -1,0 +1,3 @@
+[submodule "openspec"]
+	path = openspec
+	url = https://github.com/prowler-cloud/prowler-openspec-opensource.git
