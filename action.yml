@@ -185,10 +185,32 @@ runs:
       run: |
         set +e
 
+        # Map provider code to a properly-cased display name.
+        case "$INPUT_PROVIDER" in
+          alibabacloud)    provider_name="Alibaba Cloud" ;;
+          aws)             provider_name="AWS" ;;
+          azure)           provider_name="Azure" ;;
+          cloudflare)      provider_name="Cloudflare" ;;
+          gcp)             provider_name="GCP" ;;
+          github)          provider_name="GitHub" ;;
+          googleworkspace) provider_name="Google Workspace" ;;
+          iac)             provider_name="IaC" ;;
+          image)           provider_name="Container Image" ;;
+          kubernetes)      provider_name="Kubernetes" ;;
+          llm)             provider_name="LLM" ;;
+          m365)            provider_name="Microsoft 365" ;;
+          mongodbatlas)    provider_name="MongoDB Atlas" ;;
+          nhn)             provider_name="NHN" ;;
+          openstack)       provider_name="OpenStack" ;;
+          oraclecloud)     provider_name="Oracle Cloud" ;;
+          vercel)          provider_name="Vercel" ;;
+          *)               provider_name="${INPUT_PROVIDER^}" ;;
+        esac
+
         ocsf_file=$(find output/ -name '*.ocsf.json' -type f 2>/dev/null | head -1)
 
         {
-          echo "## Prowler ${INPUT_PROVIDER} scan summary"
+          echo "## Prowler ${provider_name} Scan Summary"
           echo ""
 
           counts=""
@@ -198,7 +220,6 @@ runs:
                 ([.[] | select(.status_code == "FAIL")] | length),
                 ([.[] | select(.status_code == "PASS")] | length),
                 ([.[] | select(.status_code == "MUTED")] | length),
-                ([.[] | select(.status_code == "MANUAL")] | length),
                 ([.[] | select(.status_code == "FAIL" and .severity == "Critical")] | length),
                 ([.[] | select(.status_code == "FAIL" and .severity == "High")] | length),
                 ([.[] | select(.status_code == "FAIL" and .severity == "Medium")] | length),
@@ -208,11 +229,10 @@ runs:
           fi
 
           if [ -n "$counts" ]; then
-            read -r total fail pass muted manual critical high medium low info <<<"$counts"
+            read -r total fail pass muted critical high medium low info <<<"$counts"
 
             line="**${fail:-0} failing** · ${pass:-0} passing"
             [ "${muted:-0}" -gt 0 ] && line="${line} · ${muted} muted"
-            [ "${manual:-0}" -gt 0 ] && line="${line} · ${manual} manual"
             echo "${line} — ${total:-0} checks total"
             echo ""
             echo "| Severity | Failing |"
@@ -240,8 +260,21 @@ runs:
             echo ""
             echo "---"
             echo ""
-            echo "### Unlock continuous security monitoring"
+            echo "### Scale ${provider_name} security with Prowler Cloud"
             echo ""
-            echo "Centralize findings across accounts and providers, track posture drift over time, and collaborate on remediation with **[Prowler Cloud](https://cloud.prowler.com)**."
+            echo "Send this scan's findings to **[Prowler Cloud](https://cloud.prowler.com)** and get:"
+            echo ""
+            echo "- **Unified findings** across every cloud, SaaS provider (M365, Google Workspace, GitHub, MongoDB Atlas), IaC repo, Kubernetes cluster, and container image"
+            echo "- **Posture over time** with alerts, and notifications"
+            echo "- **Prowler Lighthouse AI**: agentic assistant that triages findings, explains root cause and helps with remediation"
+            echo "- **50+ Compliance frameworks** mapped automatically"
+            echo "- **Enterprise-ready platform**: SOC 2 Type 2, SSO/SAML, AWS Security Hub, S3 and Jira integrations"
+            echo ""
+            echo "**Get started in 3 steps:**"
+            echo "1. Create a workspace at [cloud.prowler.com](https://cloud.prowler.com)"
+            echo "2. Generate a Prowler Cloud API key ([docs](https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings#using-the-cli))"
+            echo "3. Add \`PROWLER_CLOUD_API_KEY\` to your GitHub secrets and set \`push-to-cloud: true\` on this action"
+            echo ""
+            echo "See [prowler.com/pricing](https://prowler.com/pricing) for plan details."
           fi
         } >> "$GITHUB_STEP_SUMMARY"
