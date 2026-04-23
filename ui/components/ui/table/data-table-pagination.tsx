@@ -34,17 +34,6 @@ interface DataTablePaginationProps {
    */
   controlledPage?: number;
   controlledPageSize?: number;
-  /**
-   * Single atomic callback fired whenever the user navigates or changes
-   * the page size. Emits the full post-event state (`page`, `pageSize`)
-   * so the consumer can apply both in one update and never desync.
-   *
-   * Replaces the previous `onPageChange` + `onPageSizeChange` pair, which
-   * could race when the parent drove state through `router.push`: the
-   * pagination component emitted both callbacks in the same tick and the
-   * second push read a stale `useSearchParams` snapshot, silently
-   * reverting the size change.
-   */
   onPaginationChange?: (page: number, pageSize: number) => void;
 }
 
@@ -150,8 +139,6 @@ export function DataTablePagination({
                 setSelectedPageSize(value);
 
                 if (isControlled) {
-                  // Atomic update: page resets to 1 AND size changes in one call
-                  // so consumers using router.push cannot race on stale params.
                   onPaginationChange(1, parseInt(value, 10));
                   return;
                 }

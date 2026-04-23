@@ -67,30 +67,6 @@ interface DataTableProviderProps<TData, TValue> {
   /** Prefix for URL params to avoid conflicts (e.g., "findings" -> "findingsPage") */
   paramPrefix?: string;
 
-  /*
-   * Controlled Mode Props
-   * ---------------------
-   * By default, DataTable uses URL params for pagination/search (via paramPrefix).
-   * This causes Next.js page re-renders on every interaction.
-   *
-   * For tables inside drawers/modals, use controlled mode instead:
-   * - Pass controlledPage, controlledPageSize, controlledSearch as state values
-   * - Pass onPaginationChange, onSearchChange as state setters
-   * - This keeps state local, avoiding URL changes and unnecessary page re-renders
-   *
-   * Example:
-   *   const [page, setPage] = useState(1);
-   *   const [pageSize, setPageSize] = useState(10);
-   *   <DataTable
-   *     controlledPage={page}
-   *     controlledPageSize={pageSize}
-   *     onPaginationChange={(nextPage, nextPageSize) => {
-   *       setPage(nextPage);
-   *       setPageSize(nextPageSize);
-   *     }}
-   *     isLoading={isLoading}
-   *   />
-   */
   controlledSearch?: string;
   onSearchChange?: (value: string) => void;
   /**
@@ -100,11 +76,6 @@ interface DataTableProviderProps<TData, TValue> {
   onSearchCommit?: (value: string) => void;
   controlledPage?: number;
   controlledPageSize?: number;
-  /**
-   * Single atomic pagination callback. Emits the full post-event state
-   * (`page`, `pageSize`). Fold both into one URL/state update so they
-   * cannot race.
-   */
   onPaginationChange?: (page: number, pageSize: number) => void;
   /** Show loading state with opacity overlay (for controlled mode) */
   isLoading?: boolean;
