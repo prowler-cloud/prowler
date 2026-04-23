@@ -7,6 +7,12 @@
 skills = "./skills/setup.sh --claude"
 python = "poetry env use python3.12"
 
+# Reminder runs after earlier pre-start steps so it's the last visible
+# output before `wt switch` returns. Hooks can't mutate the parent shell,
+# so venv activation must be done manually.
+[[pre-start]]
+reminder = "echo '>> Reminder: activate the venv in this shell with: eval $(poetry env activate)'"
+
 # Slow step runs in background so `wt switch` returns quickly.
 # Tail logs via `wt config state logs`.
 [post-start]
