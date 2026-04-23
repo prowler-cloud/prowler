@@ -1,8 +1,8 @@
 name: Prowler Security Scan
 description: Run Prowler cloud security scanner using the official Docker image
 branding:
-  icon: shield
-  color: orange
+  icon: cloud
+  color: green
 
 inputs:
   provider:

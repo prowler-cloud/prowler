@@ -2,6 +2,10 @@
 title: 'Run Prowler in CI/CD and Send Findings to Prowler Cloud'
 ---
 
+<Warning>
+For new projects, use the official [Prowler GitHub Action](/user-guide/tutorials/prowler-app-github-action) — a Docker-based reusable action that runs scans, optionally pushes findings to Prowler Cloud, and uploads SARIF results to GitHub Code Scanning. The GitHub Actions examples below document the legacy pip-based flow.
+</Warning>
+
 This cookbook demonstrates how to integrate Prowler into CI/CD pipelines so that security scans run automatically and findings are sent to Prowler Cloud via [Import Findings](/user-guide/tutorials/prowler-app-import-findings). Examples cover GitHub Actions and GitLab CI.
 
 ## Prerequisites
@@ -22,10 +26,6 @@ The examples in this guide use AWS as the target provider, but the same approach
 </Note>
 
 ## GitHub Actions
-
-<Info>
-For new projects, use the official [Prowler GitHub Action](/user-guide/tutorials/prowler-app-github-action) — a Docker-based reusable action that runs scans, optionally pushes findings to Prowler Cloud, and uploads SARIF results to GitHub Code Scanning. The examples below document the legacy pip-based flow.
-</Info>
 
 ### Store Secrets
 

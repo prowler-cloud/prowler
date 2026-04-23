@@ -328,7 +328,7 @@ jobs:
           flags: --severity critical high
 ```
 
-Full configuration, per-provider authentication, and SARIF examples: [Prowler GitHub Action tutorial](https://docs.prowler.com/user-guide/tutorials/prowler-app-github-action). Marketplace listing: [Prowler Security Scan](https://github.com/marketplace/actions/prowler-security-scan).
+Full configuration, per-provider authentication, and SARIF examples: [Prowler GitHub Action tutorial](docs/user-guide/tutorials/prowler-app-github-action.mdx). Marketplace listing: [Prowler Security Scan](https://github.com/marketplace/actions/prowler-security-scan).
 
 # ✏️ High level architecture
 
