@@ -126,7 +126,7 @@ moto = {extras = ["all"], version = "5.1.11"}
 openapi-schema-validator = "0.6.3"
 openapi-spec-validator = "0.7.1"
 prek = "0.3.9"
-pylint = "3.3.4"
+pylint = "4.0.5"
 pytest = "8.3.5"
 pytest-cov = "6.0.0"
 pytest-env = "1.1.5"
