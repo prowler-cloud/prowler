@@ -4,9 +4,15 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.26.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- Attack Paths: AWS Neptune is now supported as the persistent sink database, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`). Cartography's per-scan staging database stays on Neo4j on all deployments; OSS and local dev continue to use Neo4j as the sink.
+- `python manage.py list_neo4j_tenant_dbs` management command to inspect legacy Neo4j tenant databases that still hold data, to help decide when phase 2 of the migration can ship.
+
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+- Attack Paths: lowered `connection_acquisition_timeout` defaults (`15s` Neo4j, `60s` Neptune) and added a gunicorn `post_fork` hook that re-initializes the drivers per worker. Addresses the fork-unsafety pattern that caused 120-second `pool.acquire` wedges.
 
 ---
 
