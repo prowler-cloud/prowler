@@ -1,23 +1,23 @@
 # Prowler worktree automation for worktrunk (wt CLI).
 # Runs automatically on `wt switch --create`.
 
-# Fast, blocking setup — AI skill symlinks + Python version must be ready
-# before dependency install.
+# Block 1: setup + copy env files from primary worktree (all concurrent).
 [[pre-start]]
 skills = "./skills/setup.sh --claude"
 python = "poetry env use python3.12"
-# Copies gitignored files listed in .worktreeinclude from the primary
-# worktree (.envrc, ui/.env.local).
-envs = "wt step copy-ignored"
+envrc = "cp {{ primary_worktree_path }}/.envrc ."
+env_local = "cp {{ primary_worktree_path }}/ui/.env.local ui/.env.local"
 
-# Reminder runs after earlier pre-start steps so it's the last visible
-# output before `wt switch` returns. Hooks can't mutate the parent shell,
-# so venv activation must be done manually.
+# Block 2: install Python deps (requires `poetry env use` from block 1).
+[[pre-start]]
+deps = "poetry install --with dev"
+
+# Block 3: reminder — last visible output before `wt switch` returns.
+# Hooks can't mutate the parent shell, so venv activation is manual.
 [[pre-start]]
 reminder = "echo '>> Reminder: activate the venv in this shell with: eval $(poetry env activate)'"
 
-# Slow steps run concurrently in background so `wt switch` returns quickly.
+# Background: pnpm install runs while you start working.
 # Tail logs via `wt config state logs`.
 [post-start]
-deps = "poetry install --with dev"
 ui = "cd ui && pnpm install"
