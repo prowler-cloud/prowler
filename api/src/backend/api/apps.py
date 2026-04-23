@@ -41,8 +41,8 @@ class ApiConfig(AppConfig):
         ):
             self._ensure_crypto_keys()
 
-        # Commands that don't need Neo4j
-        SKIP_NEO4J_DJANGO_COMMANDS = [
+        # Commands that don't need the attack-paths sink
+        SKIP_SINK_DJANGO_COMMANDS = [
             "makemigrations",
             "migrate",
             "pgpartition",
@@ -52,26 +52,27 @@ class ApiConfig(AppConfig):
             "check_and_fix_socialaccount_sites_migration",
         ]
 
-        # Skip Neo4j initialization during tests, some Django commands, and Celery
+        # Skip sink initialization during tests, some Django commands, and Celery.
+        # Celery workers initialize drivers post-fork via worker_process_init in
+        # config/celery.py; gunicorn workers re-initialize via post_fork in
+        # config/guniconf.py. The staging (Neo4j) driver is lazy and only
+        # materializes when a worker opens a temp-DB session.
         if getattr(settings, "TESTING", False) or (
             len(sys.argv) > 1
             and (
                 (
                     "manage.py" in sys.argv[0]
-                    and sys.argv[1] in SKIP_NEO4J_DJANGO_COMMANDS
+                    and sys.argv[1] in SKIP_SINK_DJANGO_COMMANDS
                 )
                 or "celery" in sys.argv[0]
             )
         ):
             logger.info(
-                "Skipping Neo4j initialization because tests, some Django commands or Celery"
+                "Skipping attack-paths sink initialization (tests, Django command, or Celery)"
             )
 
         else:
             graph_database.init_driver()
-
-        # Neo4j driver is initialized at API startup (see api.attack_paths.database)
-        # It remains lazy for Celery workers and selected Django commands
 
     def _ensure_crypto_keys(self):
         """

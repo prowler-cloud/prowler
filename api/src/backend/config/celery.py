@@ -1,6 +1,7 @@
 import warnings
 
 from celery import Celery, Task
+from celery.signals import worker_process_init
 
 from config.env import env
 
@@ -27,6 +28,27 @@ celery_app.conf.result_backend_transport_options = {
 celery_app.conf.visibility_timeout = BROKER_VISIBILITY_TIMEOUT
 
 celery_app.autodiscover_tasks(["api"])
+
+
+@worker_process_init.connect
+def _init_attack_paths_drivers(**_: object) -> None:
+    """Initialize the attack-paths drivers in each forked worker.
+
+    Runs after the Celery worker fork so each child owns its own Neo4j /
+    Neptune driver with live IO threads. Prevents the fork-unsafety pattern
+    that wedges gunicorn workers on ``pool.acquire`` — the Celery prefork
+    pool has the same class of risk for any driver initialized in the parent.
+    """
+    from api.attack_paths import sink, staging
+
+    # Staging is Neo4j-only, always needed on workers for cartography temp DBs.
+    try:
+        staging.init_driver()
+    except Exception:  # pragma: no cover - defer to first-use failure semantics
+        pass
+    # Sink may be Neo4j or Neptune; fail loud if misconfigured so the worker
+    # doesn't silently accept tasks it cannot fulfil.
+    sink.init()
 
 
 class RLSTask(Task):
