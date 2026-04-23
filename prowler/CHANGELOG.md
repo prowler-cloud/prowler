@@ -9,6 +9,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
 - `repository_default_branch_dismisses_stale_reviews` check for GitHub provider to ensure stale pull request approvals are dismissed when new commits are pushed [(#10569)](https://github.com/prowler-cloud/prowler/pull/10569)
 
+### 📚 Docs
+
+- Expand the developer guide for creating a new security compliance framework with directory layout, full JSON schema reference, check mapping conventions, output formatter steps, local validation, testing, and troubleshooting [PROWLER-1359]
+
 ---
 
 ## [5.24.3] (Prowler v5.24.3)

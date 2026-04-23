@@ -2,7 +2,7 @@
 
 - Contribute with your code or fixes to Prowler
 - Create a new check for a provider
-- Create a new security compliance framework
+- [Create a new security compliance framework](https://docs.prowler.com/projects/prowler-open-source/en/latest/developer-guide/security-compliance-framework/)
 - Add a custom output format
 - Add a new integration
 - Contribute with documentation
