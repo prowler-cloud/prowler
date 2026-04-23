@@ -2,26 +2,24 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [1.25.0] (Prowler UNRELEASED)
 
 ### 🔄 Changed
 
+- Redesign compliance page, client-side search for compliance frameworks, compact scan selector trigger, enhanced compliance cards [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
-
-### 🐞 Fixed
-
-- Provider wizard no longer advances to the Launch Scan step when rotating credentials: the modal closes after a successful connection test, preventing inadvertent scan rescheduling during credential updates [(#10851)](https://github.com/prowler-cloud/prowler/pull/10851)
-
-### ❌ Removed
-
-- Redesign compliance page with a horizontal ThreatScore card (always-visible pillar breakdown + ActionDropdown), client-side search for compliance frameworks, compact scan selector trigger, responsive mobile filters, download-started toasts for CSV/PDF exports, enhanced compliance cards with truncated titles, and Alert-based empty/error states; migrate Progress component from HeroUI to shadcn [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
 - Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
 
 ---
 
->>>>>>> f4b0f8fa2 (fix(ui): prevent rescheduling scans during credential update (#10851))
+## [1.24.4] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Provider wizard no longer advances to the Launch Scan step when rotating credentials [(#10851)](https://github.com/prowler-cloud/prowler/pull/10851)
+
+---
+
 ## [1.24.2] (Prowler v5.24.2)
 
 ### 🐞 Fixed
