@@ -160,3 +160,21 @@ Prowler for Vercel includes security checks across the following services:
 | **Project** | Deployment protection, environment variable security, fork protection, and skew protection |
 | **Security** | Web Application Firewall (WAF), rate limiting, IP blocking, and managed rulesets |
 | **Team** | SSO enforcement, directory sync, member access, and invitation hygiene |
+
+## Checks With Explicit Plan-Based Behavior
+
+Prowler currently includes 26 Vercel checks. Only the 7 checks below have explicit billing-plan handling in the provider metadata or check logic. When the scanned scope reports a billing plan, Prowler adds plan-aware context to findings for these checks. If the API does not expose the required configuration, Prowler may return `MANUAL` and require verification in the Vercel dashboard.
+
+| Check ID | Hobby | Pro | Enterprise | Notes |
+|----------|-------|-----|------------|-------|
+| `project_password_protection_enabled` | Not available | Available as a paid add-on | Available | Checks password protection for deployments |
+| `project_production_deployment_protection_enabled` | Not available | Available with supported paid deployment protection options | Available | Checks protection for production deployments |
+| `project_skew_protection_enabled` | Not available | Available | Available | Checks skew protection during rollouts |
+| `team_saml_sso_enabled` | Not available | Available | Available | Checks team SAML SSO configuration |
+| `team_saml_sso_enforced` | Not available | Available | Available | Checks SAML SSO enforcement for all team members |
+| `team_directory_sync_enabled` | Not available | Not available | Available | Checks SCIM directory sync |
+| `security_managed_rulesets_enabled` | Bot Protection and AI Bots managed rulesets | Bot Protection and AI Bots managed rulesets | All managed rulesets, including OWASP Core Ruleset | Returns `MANUAL` when the firewall configuration cannot be assessed from the API |
+
+<Note>
+`security_waf_enabled` and `security_managed_rulesets_enabled` return `MANUAL` when the firewall configuration endpoint is not accessible from the API. The other 19 current Vercel checks do not currently include plan-specific handling in the provider. As long as the API token can read the required resources, those checks can be assessed regardless of plan.
+</Note>

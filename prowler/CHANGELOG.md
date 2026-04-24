@@ -9,6 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
 - `repository_default_branch_dismisses_stale_reviews` check for GitHub provider to ensure stale pull request approvals are dismissed when new commits are pushed [(#10569)](https://github.com/prowler-cloud/prowler/pull/10569)
 - Official Prowler GitHub Action (`prowler-cloud/prowler@5.25`) for running scans in GitHub workflows with optional `--push-to-cloud` and SARIF upload to GitHub Code Scanning [(#10872)](https://github.com/prowler-cloud/prowler/pull/10872)
+- Update Vercel checks to return personalized finding status extended depending on billing plan [(#10663)](https://github.com/prowler-cloud/prowler/pull/10663)
 
 ### 🐞 Fixed
 
@@ -66,7 +67,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Bump Poetry to `2.3.4` and consolidate SDK workflows onto the `setup-python-poetry` composite action with opt-in lockfile regeneration [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
 - Normalize Conditional Access platform values in Entra models and simplify platform-based checks [(#10635)](https://github.com/prowler-cloud/prowler/pull/10635)
-- Update Vercel checks to return personalized finding status extended depending on billing plan [(#10663)](https://github.com/prowler-cloud/prowler/pull/10663)
 
 ### 🐞 Fixed
 
