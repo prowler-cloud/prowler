@@ -239,18 +239,26 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
         with open(config_file_path, "r", encoding=encoding_format_utf_8) as f:
             config_file = yaml.safe_load(f)
 
-            # Not to introduce a breaking change, allow the old format config file without any provider keys
-            # and a new format with a key for each provider to include their configuration values within.
-            if any(
-                key in config_file
-                for key in ["aws", "gcp", "azure", "kubernetes", "m365"]
+            # Namespaced format: each provider has its own top-level key.
+            # Works for every built-in and every external plugin without a hardcoded list.
+            # Flat legacy format is AWS-only (historical, pre-multicloud). We identify it
+            # by the absence of nested-dict top-level values (namespaced files always
+            # have dict values; the legacy AWS format only has primitives/lists).
+            if (
+                isinstance(config_file, dict)
+                and provider in config_file
+                and isinstance(config_file[provider], dict)
             ):
-                config = config_file.get(provider, {})
+                config = config_file.get(provider, {}) or {}
+            elif (
+                isinstance(config_file, dict)
+                and config_file
+                and provider == "aws"
+                and not any(isinstance(v, dict) for v in config_file.values())
+            ):
+                config = config_file
             else:
-                config = config_file if config_file else {}
-                # Not to break Azure, K8s and GCP does not support or use the old config format
-                if provider in ["azure", "gcp", "kubernetes", "m365"]:
-                    config = {}
+                config = {}
 
             return config
 

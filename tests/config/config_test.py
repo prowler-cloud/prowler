@@ -465,6 +465,32 @@ class Test_Config:
         assert load_and_validate_config_file("azure", config_test_file) == {}
         assert load_and_validate_config_file("kubernetes", config_test_file) == {}
 
+    def test_load_and_validate_config_file_namespaced_non_listed_provider(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config_namespaced_external.yaml"
+        # github is a built-in not in the legacy hardcoded list; namespaced format must unwrap it.
+        assert load_and_validate_config_file("github", config_test_file) == {
+            "token": "abc",
+            "org": "prowler-cloud",
+        }
+
+    def test_load_and_validate_config_file_namespaced_external_provider(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config_namespaced_external.yaml"
+        # External plug-in provider: namespaced format must unwrap its block.
+        assert load_and_validate_config_file("custom_plugin", config_test_file) == {
+            "setting": "value",
+            "nested": {"key": 42},
+        }
+
+    def test_load_and_validate_config_file_namespaced_missing_provider(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config_namespaced_external.yaml"
+        # Provider with no section in a namespaced file must return empty config,
+        # not the full file (prevents cross-provider config leakage).
+        assert load_and_validate_config_file("aws", config_test_file) == {}
+        assert load_and_validate_config_file("gcp", config_test_file) == {}
+
     def test_load_and_validate_config_file_invalid_config_file_path(self, caplog):
         provider = "aws"
         config_file_path = "invalid/path/to/fixer_config.yaml"
