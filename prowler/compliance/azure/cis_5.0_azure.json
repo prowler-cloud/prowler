@@ -1869,7 +1869,8 @@
       "Id": "7.6",
       "Description": "Ensure that Network Watcher is 'Enabled' for Azure Regions that are in use",
       "Checks": [
-        "network_watcher_enabled"
+        "network_watcher_enabled",
+        "recovery_vault_has_protected_items"
       ],
       "Attributes": [
         {
@@ -1974,7 +1975,9 @@
     {
       "Id": "7.11",
       "Description": "Ensure subnets are associated with network security groups",
-      "Checks": [],
+      "Checks": [
+        "network_subnet_nsg_associated"
+      ],
       "Attributes": [
         {
           "Section": "7 Networking Services",
@@ -2094,7 +2097,9 @@
     {
       "Id": "8.1.1.1",
       "Description": "Ensure Microsoft Defender CSPM is set to 'On'",
-      "Checks": [],
+      "Checks": [
+        "defender_ensure_defender_cspm_is_on"
+      ],
       "Attributes": [
         {
           "Section": "8 Security Services",
@@ -2887,7 +2892,9 @@
     {
       "Id": "8.3.11",
       "Description": "Ensure certificate 'Validity Period (in months)' is less than or equal to '12'",
-      "Checks": [],
+      "Checks": [
+        "entra_app_registration_credential_not_expired"
+      ],
       "Attributes": [
         {
           "Section": "8 Security Services",
@@ -2931,7 +2938,9 @@
     {
       "Id": "8.5",
       "Description": "Ensure Azure DDoS Network Protection is enabled on virtual networks",
-      "Checks": [],
+      "Checks": [
+        "network_vnet_ddos_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "8 Security Services",

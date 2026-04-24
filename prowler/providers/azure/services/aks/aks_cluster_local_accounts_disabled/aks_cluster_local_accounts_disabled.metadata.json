@@ -1,0 +1,34 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_cluster_local_accounts_disabled",
+  "CheckTitle": "AKS cluster has local accounts disabled",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "container",
+  "Description": "**Azure Kubernetes Service** clusters are evaluated for **local account** status. Disabling local accounts forces all authentication through Microsoft Entra ID, ensuring centralized identity management, MFA, and conditional access.",
+  "Risk": "Local accounts bypass **Entra ID** authentication, MFA, and conditional access policies. Compromised local credentials provide persistent cluster access without audit trail or identity governance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://hub.prowler.com/check/aks_cluster_local_accounts_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

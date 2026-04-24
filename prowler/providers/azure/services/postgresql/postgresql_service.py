@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from azure.mgmt.postgresqlflexibleservers import PostgreSQLManagementClient
 
@@ -53,6 +54,8 @@ class PostgreSQL(AzureService):
                         subscription, resource_group, postgresql_server.name
                     )
                     location = server_details.location
+                    backup = getattr(server_details, "backup", None)
+                    ha = getattr(server_details, "high_availability", None)
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
@@ -68,6 +71,12 @@ class PostgreSQL(AzureService):
                             connection_throttling=connection_throttling,
                             log_retention_days=log_retention_days,
                             firewall=firewall,
+                            geo_redundant_backup=getattr(
+                                backup, "geo_redundant_backup", None
+                            ),
+                            high_availability_mode=getattr(
+                                ha, "mode", None
+                            ),
                         )
                     )
             except Exception as error:
@@ -217,3 +226,5 @@ class Server:
     connection_throttling: str
     log_retention_days: str
     firewall: list[Firewall]
+    geo_redundant_backup: Optional[str] = None
+    high_availability_mode: Optional[str] = None
