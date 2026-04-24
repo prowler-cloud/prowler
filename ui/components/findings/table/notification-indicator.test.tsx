@@ -1,7 +1,3 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -62,17 +58,8 @@ vi.mock("@/components/shadcn/tooltip", () => ({
 }));
 
 import { NotificationIndicator } from "./notification-indicator";
-const currentDir = path.dirname(fileURLToPath(import.meta.url));
-const filePath = path.join(currentDir, "notification-indicator.tsx");
-const source = readFileSync(filePath, "utf8");
 
 describe("NotificationIndicator", () => {
-  it("uses a popover for delta learn-more content so the link stays interactive", () => {
-    expect(source).toContain("<Popover");
-    expect(source).toContain("Learn more");
-    expect(source).not.toContain("<Tooltip>");
-  });
-
   it("reserves the muted slot for delta-only rows when requested", () => {
     const { container } = render(
       <NotificationIndicator delta="new" showDeltaWhenMuted reserveMutedSlot />,

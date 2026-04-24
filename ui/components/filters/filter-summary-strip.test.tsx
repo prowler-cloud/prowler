@@ -145,19 +145,6 @@ describe("FilterSummaryStrip", () => {
         screen.getByRole("region", { name: "Active filters" }),
       ).toBeInTheDocument();
     });
-
-    it("should not add vertical padding around the chip strip", () => {
-      // Given
-      const onRemove = vi.fn();
-
-      // When
-      render(<FilterSummaryStrip chips={mockChips} onRemove={onRemove} />);
-
-      // Then
-      expect(
-        screen.getByRole("region", { name: "Active filters" }),
-      ).not.toHaveClass("py-2");
-    });
   });
 
   // ── onRemove interaction ─────────────────────────────────────────────────

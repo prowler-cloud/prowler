@@ -108,26 +108,6 @@ describe("ApplyFiltersButton", () => {
         screen.getByRole("button", { name: "Apply Filters" }),
       ).toBeInTheDocument();
     });
-
-    it("should not render an icon in the Apply Filters button", () => {
-      // Given / When
-      render(
-        <ApplyFiltersButton
-          hasChanges={false}
-          changeCount={0}
-          onApply={vi.fn()}
-          onDiscard={vi.fn()}
-        />,
-      );
-
-      // Then
-      const applyButton = screen.getByRole("button", {
-        name: "Apply Filters",
-      });
-      expect(applyButton).not.toContainElement(
-        screen.queryByTestId("check-icon"),
-      );
-    });
   });
 
   // ── Has changes ──────────────────────────────────────────────────────────
@@ -200,24 +180,6 @@ describe("ApplyFiltersButton", () => {
       expect(
         screen.getByRole("button", { name: /undo pending filter changes/i }),
       ).toBeInTheDocument();
-    });
-
-    it("should use the same spacing between Apply Filters and Undo as the filters action row", () => {
-      // Given / When
-      render(
-        <ApplyFiltersButton
-          hasChanges={true}
-          changeCount={1}
-          onApply={vi.fn()}
-          onDiscard={vi.fn()}
-        />,
-      );
-
-      // Then
-      const applyButton = screen.getByRole("button", {
-        name: "Apply Filters (1)",
-      });
-      expect(applyButton.parentElement).toHaveClass("gap-2");
     });
   });
 

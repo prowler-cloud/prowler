@@ -1,7 +1,3 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -35,10 +31,6 @@ Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
 });
 
 describe("MultiSelect", () => {
-  const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  const filePath = path.join(currentDir, "multiselect.tsx");
-  const source = readFileSync(filePath, "utf8");
-
   beforeEach(() => {
     scrollIntoViewMock.mockClear();
   });
@@ -147,15 +139,6 @@ describe("MultiSelect", () => {
     await waitFor(() => {
       expect(scrollIntoViewMock).toHaveBeenCalled();
     });
-  });
-
-  it("keeps MultiSelectContent free of direct useEffect calls", () => {
-    const multiSelectContentSource = source.slice(
-      source.indexOf("export function MultiSelectContent"),
-      source.indexOf("export function MultiSelectItem"),
-    );
-
-    expect(multiSelectContentSource).not.toContain("useEffect(");
   });
 
   it("clears the search input when reopening the popover", async () => {

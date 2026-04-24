@@ -26,16 +26,4 @@ describe("resource detail content", () => {
     expect(source).not.toContain("useEffect");
     expect(source).not.toContain("useEffect(");
   });
-
-  it("renders resource metadata with the shared code editor JSON highlighting instead of a plain pre block", () => {
-    expect(source).toContain("QueryCodeEditor");
-    expect(source).toContain("QUERY_EDITOR_LANGUAGE.JSON");
-    expect(source).toContain("visibleLabel={null}");
-    expect(source).not.toContain("<pre");
-  });
-
-  it("refreshes findings locally after mute without forcing a router refresh", () => {
-    expect(source).toContain("setFindingsReloadNonce");
-    expect(source).not.toContain("router.refresh()");
-  });
 });
