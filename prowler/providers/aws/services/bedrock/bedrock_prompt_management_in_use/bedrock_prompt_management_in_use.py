@@ -31,7 +31,7 @@ class bedrock_prompt_management_in_use(Check):
             report.resource_arn = f"arn:{bedrock_agent_client.audited_partition}:bedrock:{region}:{bedrock_agent_client.audited_account}:prompt-management"
             report.status = "FAIL"
             report.status_extended = (
-                "Bedrock Prompt Management is not in use in this region."
+                f"Bedrock Prompt Management is not in use in region {region}."
             )
 
             region_prompts = [
@@ -41,7 +41,7 @@ class bedrock_prompt_management_in_use(Check):
             ]
             if region_prompts:
                 report.status = "PASS"
-                report.status_extended = f"Bedrock Prompt Management is in use with {len(region_prompts)} prompt(s) in this region."
+                report.status_extended = f"Bedrock Prompt Management is in use with {len(region_prompts)} prompt(s) in region {region}."
 
             findings.append(report)
 
