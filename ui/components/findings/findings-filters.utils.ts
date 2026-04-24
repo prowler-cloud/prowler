@@ -140,11 +140,10 @@ export function buildFindingsFilterChips(
 
   Object.entries(pendingFilters).forEach(([key, values]) => {
     if (!values || values.length === 0) return;
+    if (key === "filter[muted]") return;
     const label = FILTER_KEY_LABELS[key as FilterParam] ?? key;
 
-    const visibleValues = values.filter(
-      (value) => !(key === "filter[muted]" && value === "false"),
-    );
+    const visibleValues = values;
     if (visibleValues.length === 0) return;
 
     const displayValues = visibleValues.map((value) =>

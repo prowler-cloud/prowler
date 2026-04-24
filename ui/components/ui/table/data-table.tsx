@@ -112,6 +112,8 @@ interface DataTableProviderProps<TData, TValue> {
   onRowClick?: (row: Row<TData>) => void;
   /** Optional header rendered inside the table container, above the toolbar. */
   header?: ReactNode;
+  /** Optional content rendered in the toolbar before the total entries count. */
+  toolbarRightContent?: ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -143,6 +145,7 @@ export function DataTable<TData, TValue>({
   searchBadge,
   onRowClick,
   header,
+  toolbarRightContent,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -215,7 +218,7 @@ export function DataTable<TData, TValue>({
   // Format total entries count
   const totalEntries = metadata?.pagination?.count ?? 0;
   const formattedTotal = totalEntries.toLocaleString();
-  const showToolbar = showSearch || metadata;
+  const showToolbar = showSearch || metadata || toolbarRightContent;
 
   const rows = table.getRowModel().rows;
 
@@ -254,11 +257,14 @@ export function DataTable<TData, TValue>({
               />
             )}
           </div>
-          {metadata && (
-            <span className="text-text-neutral-secondary text-sm">
-              {formattedTotal} Total Entries
-            </span>
-          )}
+          <div className="ml-auto flex items-center gap-4">
+            {toolbarRightContent}
+            {metadata && (
+              <span className="text-text-neutral-secondary text-sm whitespace-nowrap">
+                {formattedTotal} Total Entries
+              </span>
+            )}
+          </div>
         </div>
       )}
       <Table className={getSubRows ? "table-fixed" : undefined}>

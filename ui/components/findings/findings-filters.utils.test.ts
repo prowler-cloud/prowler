@@ -250,13 +250,13 @@ describe("buildFindingsFilterChips", () => {
     expect(chipsPlural[0].displayValues).toEqual(["New", "Changed"]);
   });
 
-  it("skips the silent default filter[muted]=false", () => {
+  it("skips muted filters because the table toolbar owns that control", () => {
     const chips = buildFindingsFilterChips({
-      "filter[muted]": ["false"],
+      "filter[muted]": ["include"],
       "filter[delta]": ["new"],
     });
 
-    // Only the delta chip — the default muted=false should not surface
+    // Only the delta chip — muted state is shown by the table checkbox.
     expect(chips).toHaveLength(1);
     expect(chips[0].key).toBe("filter[delta]");
   });

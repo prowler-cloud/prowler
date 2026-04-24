@@ -8,7 +8,6 @@ import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/prov
 import { ApplyFiltersButton } from "@/components/filters/apply-filters-button";
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
-import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
 import { CustomDatePicker } from "@/components/filters/custom-date-picker";
 import { filterFindings } from "@/components/filters/data-filters";
 import {
@@ -44,8 +43,7 @@ interface FindingsFiltersProps {
 const countVisibleFilterKeys = (filters: Record<string, string[]>): number =>
   Object.entries(filters).filter(([key, values]) => {
     if (!values || values.length === 0) return false;
-    if (key === "filter[muted]" && values.length === 1 && values[0] === "false")
-      return false;
+    if (key === "filter[muted]") return false;
     return true;
   }).length;
 
@@ -167,16 +165,6 @@ export const FindingsFilters = ({
     setPending(filterKey, nextValues);
   };
 
-  // Derive pending muted state for the checkbox.
-  // Note: "filter[muted]" participates in batch mode — applyAll includes it
-  // when present in pending state, and the defaultParams option ensures
-  // filter[muted]=false is applied as a fallback when no muted value is pending.
-  const pendingMutedValue = pendingFilters["filter[muted]"];
-  const mutedChecked =
-    pendingMutedValue !== undefined
-      ? pendingMutedValue[0] === "include"
-      : undefined;
-
   // For the date picker, read from pendingFilters
   const pendingDateValues = pendingFilters["filter[inserted_at]"];
   const pendingDateValue =
@@ -256,10 +244,6 @@ export const FindingsFilters = ({
               )}
             />
           </div>
-          <CustomCheckboxMutedFindings
-            onBatchChange={(filterKey, value) => setPending(filterKey, [value])}
-            checked={mutedChecked}
-          />
           {hasCustomFilters && (
             <Button
               variant="outline"
