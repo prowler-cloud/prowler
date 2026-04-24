@@ -19,7 +19,9 @@ vi.mock("@/lib", () => ({
 }));
 
 vi.mock("@/components/shadcn/select/select", () => ({
-  Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Select: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
   SelectContent: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
