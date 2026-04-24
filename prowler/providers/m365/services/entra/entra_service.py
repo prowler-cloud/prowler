@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID
 
+import httpx
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
@@ -23,10 +24,11 @@ class Entra(M365Service):
     This class provides methods to retrieve and manage Microsoft Entra ID
     security policies and configurations, including authorization policies,
     conditional access policies, admin consent policies, groups, organizations,
-    users, and OAuth application data from Defender XDR.
+    users, OAuth application data from Defender XDR, and PIM alerts.
 
     Attributes:
         tenant_domain (str): The tenant domain.
+        tenant_id (str): The tenant ID.
         authorization_policy (AuthorizationPolicy): The authorization policy.
         conditional_access_policies (dict): Dictionary of conditional access policies.
         admin_consent_policy (AdminConsentPolicy): The admin consent policy.
@@ -36,6 +38,7 @@ class Entra(M365Service):
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
         authentication_method_configurations (dict): Dictionary of authentication method configurations.
+        pim_alerts (list): List of PIM alerts for privileged role governance.
     """
 
     def __init__(self, provider: M365Provider):
@@ -71,6 +74,8 @@ class Entra(M365Service):
             )
 
         self.tenant_domain = provider.identity.tenant_domain
+        self.tenant_id = provider.identity.tenant_id
+        self._credentials = provider.session
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -83,6 +88,7 @@ class Entra(M365Service):
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
+                self._get_pim_alerts(),
             )
         )
 
@@ -98,6 +104,7 @@ class Entra(M365Service):
         self.authentication_method_configurations: Dict[
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
+        self.pim_alerts: List[PimAlert] = attributes[10]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -1054,6 +1061,54 @@ OAuthAppInfo
             )
         return authentication_method_configurations
 
+    async def _get_pim_alerts(self):
+        """Retrieve Privileged Identity Management (PIM) alerts.
+
+        Fetches PIM alerts from the Microsoft Graph beta API to detect
+        governance issues such as role assignments made outside of PIM.
+
+        Returns:
+            list[PimAlert]: A list of PIM alert objects, or an empty list
+                if retrieval fails or PIM is not configured.
+        """
+        logger.info("Entra - Getting PIM alerts...")
+        pim_alerts = []
+        try:
+            token = self._credentials.get_token(
+                "https://graph.microsoft.com/.default"
+            )
+            url = (
+                f"https://graph.microsoft.com/beta/privilegedAccess/aadroles"
+                f"/resources/{self.tenant_id}/alerts"
+            )
+            async with httpx.AsyncClient() as http_client:
+                response = await http_client.get(
+                    url,
+                    headers={
+                        "Authorization": f"Bearer {token.token}",
+                        "Accept": "application/json",
+                    },
+                )
+                response.raise_for_status()
+                data = response.json()
+
+            for alert in data.get("value", []):
+                pim_alerts.append(
+                    PimAlert(
+                        id=alert.get("id", ""),
+                        alert_definition_id=alert.get("alertDefinitionId", ""),
+                        number_of_affected_items=alert.get(
+                            "numberOfAffectedItems", 0
+                        ),
+                        is_active=alert.get("isActive", False),
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return pim_alerts
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -1481,3 +1536,24 @@ class OAuthApp(BaseModel):
     is_admin_consented: bool = False
     last_used_time: Optional[str] = None
     app_origin: str = ""
+
+
+class PimAlert(BaseModel):
+    """Model representing a Privileged Identity Management (PIM) alert.
+
+    PIM alerts detect governance issues in privileged role management,
+    such as role assignments made outside of PIM, redundant assignments,
+    or stale sign-ins.
+
+    Attributes:
+        id: The unique identifier of the alert.
+        alert_definition_id: The definition ID indicating the alert type
+            (e.g., 'DirectoryRole_..._RolesAssignedOutsidePimAlert').
+        number_of_affected_items: The number of resources affected by this alert.
+        is_active: Whether the alert is currently active.
+    """
+
+    id: str
+    alert_definition_id: str
+    number_of_affected_items: int = 0
+    is_active: bool = False
