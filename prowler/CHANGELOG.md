@@ -4,10 +4,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [5.24.3] (Prowler v5.24.3)
 
-### 🚀 Added
-
-- Universal compliance framework discovery now filters top-level JSONs by real provider support so unsupported providers do not expose invalid `--list-compliance` entries [(#10300)](https://github.com/prowler-cloud/prowler/pull/10300)
-
 ### 🐞 Fixed
 
 - CloudTrail resource timeline uses resource name as fallback in `LookupEvents` [(#10828)](https://github.com/prowler-cloud/prowler/pull/10828)
