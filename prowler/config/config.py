@@ -9,6 +9,7 @@ import requests
 import yaml
 from packaging import version
 
+from prowler.lib.check.compliance_models import load_compliance_framework_universal
 from prowler.lib.logger import logger
 
 
@@ -91,6 +92,21 @@ def get_available_compliance_frameworks(provider=None):
                     available_compliance_frameworks.append(
                         file.name.removesuffix(".json")
                     )
+    # Also scan top-level compliance/ for multi-provider JSONs
+    compliance_root = f"{actual_directory}/../compliance"
+    if os.path.isdir(compliance_root):
+        with os.scandir(compliance_root) as files:
+            for file in files:
+                if file.is_file() and file.name.endswith(".json"):
+                    name = file.name.removesuffix(".json")
+                    if provider:
+                        framework = load_compliance_framework_universal(file.path)
+                        if framework is None or not framework.supports_provider(
+                            provider
+                        ):
+                            continue
+                    if name not in available_compliance_frameworks:
+                        available_compliance_frameworks.append(name)
     return available_compliance_frameworks
 
 
