@@ -1,4 +1,6 @@
+import json
 from datetime import datetime
+from threading import Lock
 from typing import Optional
 
 from alibabacloud_cs20151215 import models as cs_models
@@ -23,6 +25,8 @@ class CS(AlibabaCloudService):
 
         # Fetch CS resources
         self.clusters = []
+        self._cluster_ids_lock = Lock()
+        self._seen_cluster_ids = set()
         self.__threading_call__(self._describe_clusters)
 
     def _describe_clusters(self, regional_client):
@@ -33,18 +37,30 @@ class CS(AlibabaCloudService):
         try:
             # DescribeClustersV1 returns cluster list
             request = cs_models.DescribeClustersV1Request()
-            response = regional_client.describe_clusters_v1(request)
+            response = self._call_with_retries(
+                regional_client.describe_clusters_v1, request
+            )
 
             if response and response.body and response.body.clusters:
                 for cluster_data in response.body.clusters:
                     cluster_id = getattr(cluster_data, "cluster_id", "")
+                    cluster_region = getattr(cluster_data, "region_id", "") or region
+
+                    if (
+                        cluster_region != region
+                        and cluster_region in self.regional_clients
+                    ):
+                        continue
 
                     if not self.audit_resources or is_resource_filtered(
                         cluster_id, self.audit_resources
                     ):
+                        cluster_client = self.regional_clients.get(
+                            cluster_region, regional_client
+                        )
                         # Get detailed information for each cluster
                         cluster_detail = self._get_cluster_detail(
-                            regional_client, cluster_id
+                            cluster_client, cluster_id
                         )
 
                         if cluster_detail:
@@ -60,12 +76,12 @@ class CS(AlibabaCloudService):
 
                             # Get node pools to check CloudMonitor
                             cloudmonitor_enabled = self._check_cloudmonitor_enabled(
-                                regional_client, cluster_id
+                                cluster_client, cluster_id
                             )
 
                             # Check if cluster checks have been run in the last week
                             last_check_time = self._get_last_cluster_check(
-                                regional_client, cluster_id
+                                cluster_client, cluster_id
                             )
 
                             # Check addons for dashboard, network policy, etc.
@@ -78,32 +94,32 @@ class CS(AlibabaCloudService):
                                 cluster_detail, region
                             )
 
-                            self.clusters.append(
-                                Cluster(
-                                    id=cluster_id,
-                                    name=getattr(cluster_data, "name", cluster_id),
-                                    region=region,
-                                    cluster_type=getattr(
-                                        cluster_data, "cluster_type", ""
-                                    ),
-                                    state=getattr(cluster_data, "state", ""),
-                                    audit_project_name=audit_project_name,
-                                    log_service_enabled=bool(audit_project_name),
-                                    cloudmonitor_enabled=cloudmonitor_enabled,
-                                    rbac_enabled=rbac_enabled,
-                                    last_check_time=last_check_time,
-                                    dashboard_enabled=addons_status[
-                                        "dashboard_enabled"
-                                    ],
-                                    network_policy_enabled=addons_status[
-                                        "network_policy_enabled"
-                                    ],
-                                    eni_multiple_ip_enabled=addons_status[
-                                        "eni_multiple_ip_enabled"
-                                    ],
-                                    private_cluster_enabled=not public_access_enabled,
-                                )
+                            cluster = Cluster(
+                                id=cluster_id,
+                                name=getattr(cluster_data, "name", cluster_id),
+                                region=cluster_region,
+                                cluster_type=getattr(cluster_data, "cluster_type", ""),
+                                state=getattr(cluster_data, "state", ""),
+                                audit_project_name=audit_project_name,
+                                log_service_enabled=bool(audit_project_name),
+                                cloudmonitor_enabled=cloudmonitor_enabled,
+                                rbac_enabled=rbac_enabled,
+                                last_check_time=last_check_time,
+                                dashboard_enabled=addons_status["dashboard_enabled"],
+                                network_policy_enabled=addons_status[
+                                    "network_policy_enabled"
+                                ],
+                                eni_multiple_ip_enabled=addons_status[
+                                    "eni_multiple_ip_enabled"
+                                ],
+                                private_cluster_enabled=not public_access_enabled,
                             )
+
+                            with self._cluster_ids_lock:
+                                if cluster_id in self._seen_cluster_ids:
+                                    continue
+                                self._seen_cluster_ids.add(cluster_id)
+                                self.clusters.append(cluster)
 
         except Exception as error:
             logger.error(
@@ -114,19 +130,43 @@ class CS(AlibabaCloudService):
         """Get detailed information for a specific cluster."""
         try:
             # DescribeClusterDetail returns detailed cluster information
-            request = cs_models.DescribeClusterDetailRequest()
-            response = regional_client.describe_cluster_detail(cluster_id, request)
+            if hasattr(cs_models, "DescribeClusterDetailRequest"):
+                request = cs_models.DescribeClusterDetailRequest()
+                response = self._call_with_retries(
+                    regional_client.describe_cluster_detail,
+                    cluster_id,
+                    request,
+                )
+            else:
+                response = self._call_with_retries(
+                    regional_client.describe_cluster_detail, cluster_id
+                )
 
             if response and response.body:
                 # Convert response body to dict
                 body = response.body
-                result = {"meta_data": {}}
+                result = {"meta_data": {}, "parameters": {}, "master_url": ""}
 
-                # Check if meta_data exists in the response
+                # The ACK SDK exposes meta_data as a JSON string in recent versions.
                 if hasattr(body, "meta_data"):
                     meta_data = body.meta_data
                     if meta_data:
-                        result["meta_data"] = dict(meta_data)
+                        if isinstance(meta_data, dict):
+                            result["meta_data"] = meta_data
+                        elif isinstance(meta_data, str):
+                            try:
+                                parsed_meta_data = json.loads(meta_data)
+                            except (TypeError, ValueError):
+                                parsed_meta_data = {}
+
+                            if isinstance(parsed_meta_data, dict):
+                                result["meta_data"] = parsed_meta_data
+
+                if hasattr(body, "parameters") and body.parameters:
+                    result["parameters"] = body.parameters
+
+                if hasattr(body, "master_url") and body.master_url:
+                    result["master_url"] = body.master_url
 
                 return result
 
@@ -143,7 +183,9 @@ class CS(AlibabaCloudService):
         try:
             # DescribeClusterNodePools returns node pool information
             request = cs_models.DescribeClusterNodePoolsRequest()
-            response = regional_client.describe_cluster_node_pools(cluster_id, request)
+            response = self._call_with_retries(
+                regional_client.describe_cluster_node_pools, cluster_id, request
+            )
 
             if response and response.body and response.body.nodepools:
                 nodepools = response.body.nodepools
@@ -214,9 +256,19 @@ class CS(AlibabaCloudService):
         or None if no successful checks found.
         """
         try:
-            # DescribeClusterChecks returns cluster check history
-            request = cs_models.DescribeClusterChecksRequest()
-            response = regional_client.describe_cluster_checks(cluster_id, request)
+            # Newer ACK SDKs expose ListClusterChecks; older ones used DescribeClusterChecks.
+            if hasattr(cs_models, "ListClusterChecksRequest") and hasattr(
+                regional_client, "list_cluster_checks"
+            ):
+                request = cs_models.ListClusterChecksRequest()
+                response = self._call_with_retries(
+                    regional_client.list_cluster_checks, cluster_id, request
+                )
+            else:
+                request = cs_models.DescribeClusterChecksRequest()
+                response = self._call_with_retries(
+                    regional_client.describe_cluster_checks, cluster_id, request
+                )
 
             if response and response.body and response.body.checks:
                 checks = response.body.checks
@@ -267,18 +319,20 @@ class CS(AlibabaCloudService):
             # Note: Addons structure from API is typically a string representation of JSON or a list
             # Based on sample: "Addons": [{"name": "gateway-api", ...}, ...]
             addons = meta_data.get("Addons", [])
+            if addons is None:
+                addons = []
 
             # If addons is string, try to parse it?
             # The SDK typically handles this conversion, but let's be safe
             if isinstance(addons, str):
-                import json
-
                 try:
                     addons = json.loads(addons)
                 except Exception:
                     addons = []
 
             for addon in addons:
+                if not isinstance(addon, dict):
+                    continue
                 name = addon.get("name", "")
                 disabled = addon.get("disabled", False)
 
@@ -317,7 +371,13 @@ class CS(AlibabaCloudService):
             parameters = cluster_detail.get("parameters", {})
             endpoint_public = parameters.get("endpoint_public", "")
 
-            if endpoint_public:
+            if isinstance(endpoint_public, str):
+                normalized_public = endpoint_public.strip().lower()
+                if normalized_public in {"true", "1", "yes"}:
+                    return True
+                if normalized_public in {"false", "0", "no", ""}:
+                    return False
+            elif endpoint_public:
                 return True
 
             # If we can't find explicit indicator, check if master_url is present
