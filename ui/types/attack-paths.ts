@@ -180,8 +180,8 @@ export interface GraphNode {
 
 export interface GraphEdge {
   id: string;
-  source: string | object;
-  target: string | object;
+  source: string;
+  target: string;
   type: string;
   properties?: GraphNodeProperties;
 }
@@ -220,40 +220,6 @@ export interface AttackPathQueryError {
   status: number;
 }
 
-// Finding severity and status constants
-export const FINDING_SEVERITIES = {
-  CRITICAL: "critical",
-  HIGH: "high",
-  MEDIUM: "medium",
-  LOW: "low",
-  INFO: "info",
-} as const;
-
-type FindingSeverity =
-  (typeof FINDING_SEVERITIES)[keyof typeof FINDING_SEVERITIES];
-
-export const FINDING_STATUSES = {
-  PASS: "PASS",
-  FAIL: "FAIL",
-  MANUAL: "MANUAL",
-} as const;
-
-type FindingStatus = (typeof FINDING_STATUSES)[keyof typeof FINDING_STATUSES];
-
-export interface RelatedFinding {
-  id: string;
-  title: string;
-  severity: FindingSeverity;
-  status: FindingStatus;
-}
-
-// Node Detail Types
-export interface NodeDetailData extends GraphNode {
-  relatedFindings?: RelatedFinding[];
-  incomingEdges?: GraphEdge[];
-  outgoingEdges?: GraphEdge[];
-}
-
 // Wizard State Types
 export interface WizardState {
   currentStep: 1 | 2;
@@ -268,9 +234,6 @@ export interface GraphState {
   selectedNodeId: string | null;
   loading: boolean;
   error: string | null;
-  zoomLevel: number;
-  panX: number;
-  panY: number;
 }
 
 // Provider Integration
