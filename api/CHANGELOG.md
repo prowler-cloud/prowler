@@ -14,6 +14,18 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.25.4] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `DJANGO_SENTRY_TRACES_SAMPLE_RATE` env var (default `0.02`) enables Sentry performance tracing for the API [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
+
+### 🔄 Changed
+
+- Attack Paths: Neo4j driver `connection_acquisition_timeout` is now configurable via `NEO4J_CONN_ACQUISITION_TIMEOUT` (default lowered from 120 s to 15 s) [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
+
+---
+
 ## [1.25.3] (Prowler v5.24.3)
 
 ### 🚀 Added

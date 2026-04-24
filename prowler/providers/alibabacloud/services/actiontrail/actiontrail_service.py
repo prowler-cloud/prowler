@@ -33,7 +33,7 @@ class ActionTrail(AlibabaCloudService):
         try:
             # Use Tea SDK client (ActionTrail is regional service)
             request = actiontrail_models.DescribeTrailsRequest()
-            response = regional_client.describe_trails(request)
+            response = self._call_with_retries(regional_client.describe_trails, request)
 
             if response and response.body and response.body.trail_list:
                 # trail_list is already a list, not an object with a trail attribute
