@@ -145,6 +145,41 @@ class FakeToolWrapperProvider(Provider):
         pass
 
 
+class FakePureContractProvider(Provider):
+    """External provider that honors the from_cli_args type hint literally:
+    returns an instance without calling Provider.set_global_provider() from
+    __init__. Used to verify the call site wires the returned instance."""
+
+    _type = "fakepure"
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def identity(self):
+        return MagicMock(host_id="fake-pure-1")
+
+    @property
+    def session(self):
+        return MagicMock()
+
+    @property
+    def audit_config(self):
+        return {}
+
+    def setup_session(self):
+        return MagicMock()
+
+    def print_credentials(self):
+        pass
+
+    @classmethod
+    def from_cli_args(cls, arguments, fixer_config):
+        # Literal contract: return the instance, no side-effect in __init__.
+        return cls()
+
+
 class FakeProviderNoHelpText(Provider):
     """Provider without _cli_help_text."""
 
@@ -438,6 +473,31 @@ class TestProviderInitialization:
 
         with pytest.raises(SystemExit):
             Provider.init_global_provider(args)
+
+    @patch("prowler.providers.common.provider.load_and_validate_config_file")
+    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    @patch("prowler.providers.common.provider.import_module")
+    def test_init_global_provider_wires_instance_returned_by_from_cli_args(
+        self, mock_import, mock_load_ep, mock_config
+    ):
+        """A provider that implements from_cli_args as a pure function (returns
+        the instance without calling set_global_provider from __init__) is
+        correctly wired as the global provider by init_global_provider."""
+        mock_import.side_effect = ImportError("No built-in")
+        mock_load_ep.return_value = FakePureContractProvider
+        mock_config.return_value = {}
+
+        args = Namespace(
+            provider="fakepure",
+            fixer_config="config.yaml",
+            config_file="config.yaml",
+        )
+
+        Provider._global = None
+        Provider.init_global_provider(args)
+
+        assert isinstance(Provider._global, FakePureContractProvider)
+        Provider._global = None
 
 
 # ===========================================================================

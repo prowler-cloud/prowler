@@ -146,7 +146,13 @@ class Provider(ABC):
 
     @classmethod
     def from_cli_args(cls, arguments: Namespace, fixer_config: dict) -> "Provider":
-        """Instantiate the provider from CLI arguments."""
+        """Instantiate the provider from CLI arguments and return the instance.
+
+        The caller wires the returned instance into the global provider slot
+        via Provider.set_global_provider(). Implementations that already call
+        set_global_provider(self) from __init__ are also supported — the call
+        site tolerates a None return in that case.
+        """
         raise NotImplementedError(f"{cls.__name__} has not implemented from_cli_args()")
 
     def get_output_options(self, arguments, bulk_checks_metadata):
@@ -507,8 +513,17 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                     )
                 else:
-                    # Dynamic fallback: any external/custom provider
-                    provider_class.from_cli_args(arguments, fixer_config)
+                    # Dynamic fallback: any external/custom provider.
+                    # Honor the from_cli_args type hint (-> Provider): if the
+                    # implementation returns an instance, wire it as the global
+                    # provider here. Implementations that call
+                    # set_global_provider(self) from __init__ return None and
+                    # remain supported (the condition below is a no-op for them).
+                    provider_instance = provider_class.from_cli_args(
+                        arguments, fixer_config
+                    )
+                    if provider_instance is not None:
+                        Provider.set_global_provider(provider_instance)
 
         except TypeError as error:
             logger.critical(
