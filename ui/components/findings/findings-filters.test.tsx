@@ -13,10 +13,10 @@ vi.mock("@/hooks/use-filter-batch", () => ({
   useFilterBatch: () => ({
     appliedFilters: {},
     pendingFilters: {
-      "filter[region__in]": ["eu-west-1"],
+      "filter[severity__in]": ["critical"],
     },
     changedFilters: {
-      "filter[region__in]": ["eu-west-1"],
+      "filter[severity__in]": ["critical"],
     },
     setPending: mockSetPending,
     applyAll: mockApplyAll,
@@ -55,6 +55,18 @@ vi.mock("@/components/filters/clear-filters-button", () => ({
   ClearFiltersButton: ({ pendingCount }: { pendingCount?: number }) => (
     <div data-testid="clear-filters-button">{pendingCount ?? 0}</div>
   ),
+}));
+
+vi.mock("@/components/filters/custom-checkbox-muted-findings", () => ({
+  CustomCheckboxMutedFindings: () => <div>Muted selector</div>,
+}));
+
+vi.mock("@/components/filters/custom-date-picker", () => ({
+  CustomDatePicker: () => <div>Date picker</div>,
+}));
+
+vi.mock("@/components/filters/data-filters", () => ({
+  filterFindings: [],
 }));
 
 vi.mock("@/components/filters/filter-summary-strip", () => ({
@@ -106,16 +118,24 @@ vi.mock("@/components/ui/table", () => ({
   ),
 }));
 
-import { ResourcesFilters } from "./resources-filters";
+vi.mock("@/lib/categories", () => ({
+  getCategoryLabel: (value: string) => value,
+  getGroupLabel: (value: string) => value,
+}));
 
-describe("ResourcesFilters", () => {
+import { FindingsFilters } from "./findings-filters";
+
+describe("FindingsFilters", () => {
   it("uses batch mode controls and renders pending summary chips", () => {
     render(
-      <ResourcesFilters
+      <FindingsFilters
         providers={[]}
+        completedScanIds={["scan-1"]}
+        scanDetails={[]}
         uniqueRegions={["eu-west-1"]}
         uniqueServices={["ec2"]}
         uniqueResourceTypes={["aws_instance"]}
+        uniqueCategories={["security"]}
         uniqueGroups={["engineering_team"]}
       />,
     );
@@ -131,7 +151,7 @@ describe("ResourcesFilters", () => {
       "data-content-class",
       "pt-0",
     );
-    expect(screen.getByTestId("resources-expanded-filters")).toHaveClass(
+    expect(screen.getByTestId("findings-expanded-filters")).toHaveClass(
       "hidden",
     );
     expect(screen.getByTestId("apply-filters-button")).toHaveTextContent(
@@ -141,27 +161,31 @@ describe("ResourcesFilters", () => {
       screen.queryByTestId("clear-filters-button"),
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("filter-summary-strip")).toHaveTextContent(
-      "eu-west-1",
+      "Critical",
     );
   });
 
   it("renders filter actions outside the selector controls row", () => {
     render(
-      <ResourcesFilters
+      <FindingsFilters
         providers={[]}
+        completedScanIds={["scan-1"]}
+        scanDetails={[]}
         uniqueRegions={["eu-west-1"]}
         uniqueServices={["ec2"]}
         uniqueResourceTypes={["aws_instance"]}
+        uniqueCategories={["security"]}
         uniqueGroups={["engineering_team"]}
       />,
     );
 
-    const controls = screen.getByTestId("resources-filter-controls");
-    const expandedFilters = screen.getByTestId("resources-expanded-filters");
-    const pendingRow = screen.getByTestId("resources-pending-filter-row");
+    const controls = screen.getByTestId("findings-filter-controls");
+    const expandedFilters = screen.getByTestId("findings-expanded-filters");
+    const pendingRow = screen.getByTestId("findings-pending-filter-row");
 
     expect(within(controls).getByText("Provider type selector")).toBeVisible();
     expect(within(controls).getByText("Accounts selector")).toBeVisible();
+    expect(within(controls).getByText("Muted selector")).toBeVisible();
     expect(
       within(controls).queryByTestId("apply-filters-button"),
     ).not.toBeInTheDocument();

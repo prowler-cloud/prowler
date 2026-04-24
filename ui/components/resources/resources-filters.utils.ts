@@ -60,15 +60,26 @@ export function buildResourcesFilterChips(
     if (!values || values.length === 0) return;
 
     const label = RESOURCE_FILTER_KEY_LABELS[key] ?? key;
+    const displayValues = values.map((value) =>
+      getResourcesFilterDisplayValue(key, value, providers),
+    );
 
-    values.forEach((value) => {
-      chips.push({
-        key,
-        label,
-        value,
-        displayValue: getResourcesFilterDisplayValue(key, value, providers),
-      });
-    });
+    const chip: FilterChip = {
+      key,
+      label,
+      value: values[0],
+      displayValue:
+        displayValues.length > 1
+          ? `+${displayValues.length}`
+          : displayValues[0],
+    };
+
+    if (values.length > 1) {
+      chip.values = values;
+      chip.displayValues = displayValues;
+    }
+
+    chips.push(chip);
   });
 
   return chips;

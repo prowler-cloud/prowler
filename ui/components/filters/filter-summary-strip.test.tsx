@@ -22,6 +22,13 @@ vi.mock("@/components/shadcn", () => ({
       {children}
     </span>
   ),
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: React.ReactNode }) => (
+    <span>{children}</span>
+  ),
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
 vi.mock("@/lib/utils", () => ({
@@ -137,6 +144,19 @@ describe("FilterSummaryStrip", () => {
       expect(
         screen.getByRole("region", { name: "Active filters" }),
       ).toBeInTheDocument();
+    });
+
+    it("should not add vertical padding around the chip strip", () => {
+      // Given
+      const onRemove = vi.fn();
+
+      // When
+      render(<FilterSummaryStrip chips={mockChips} onRemove={onRemove} />);
+
+      // Then
+      expect(
+        screen.getByRole("region", { name: "Active filters" }),
+      ).not.toHaveClass("py-2");
     });
   });
 

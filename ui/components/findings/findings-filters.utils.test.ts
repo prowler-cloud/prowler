@@ -200,7 +200,7 @@ describe("getFindingsFilterDisplayValue", () => {
 });
 
 describe("buildFindingsFilterChips", () => {
-  it("creates one chip per value with normalized labels", () => {
+  it("creates one chip per filter with normalized labels", () => {
     // Given — this is the exact pending state derived from the LinkToFindings URL:
     // /findings?sort=...&filter[status__in]=FAIL&filter[delta]=new
     const pendingFilters = {
@@ -211,7 +211,7 @@ describe("buildFindingsFilterChips", () => {
     // When
     const chips = buildFindingsFilterChips(pendingFilters);
 
-    // Then — both chips must appear; the delta chip must use "Delta" as label
+    // Then — both filters must appear; the delta chip must use "Delta" as label
     // (not the raw "filter[delta]") and "New" as displayValue (not "NEW" via
     // the short-word acronym heuristic in formatLabel).
     expect(chips).toEqual([
@@ -239,19 +239,15 @@ describe("buildFindingsFilterChips", () => {
       "filter[delta__in]": ["new", "changed"],
     });
 
-    // Then — both shapes produce the same human labels and display values
+    // Then — both shapes produce the same human labels and grouped display values
     expect(
       chipsSingular.map((c) => ({ label: c.label, v: c.displayValue })),
-    ).toEqual([
-      { label: "Delta", v: "New" },
-      { label: "Delta", v: "Changed" },
-    ]);
+    ).toEqual([{ label: "Delta", v: "+2" }]);
+    expect(chipsSingular[0].displayValues).toEqual(["New", "Changed"]);
     expect(
       chipsPlural.map((c) => ({ label: c.label, v: c.displayValue })),
-    ).toEqual([
-      { label: "Delta", v: "New" },
-      { label: "Delta", v: "Changed" },
-    ]);
+    ).toEqual([{ label: "Delta", v: "+2" }]);
+    expect(chipsPlural[0].displayValues).toEqual(["New", "Changed"]);
   });
 
   it("skips the silent default filter[muted]=false", () => {
