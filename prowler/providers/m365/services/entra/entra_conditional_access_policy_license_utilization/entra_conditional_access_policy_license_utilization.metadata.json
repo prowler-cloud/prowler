@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_license_utilization",
+  "CheckTitle": "P2 license coverage ensures all users consuming risk-based Conditional Access are properly licensed",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra ID **P2 license utilization** validates that the number of users consuming P2-level features such as **risk-based Conditional Access** does not exceed the number of entitled P2 licenses in the tenant.",
+  "Risk": "When users consume P2 features (risk-based Conditional Access) without proper licensing, the tenant is out of compliance with Microsoft licensing terms. This can result in audit findings, enforcement actions, loss of feature access, and gaps in identity protection coverage that attackers can exploit.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+    "https://learn.microsoft.com/en-us/entra/fundamentals/licensing",
+    "https://maester.dev/docs/tests/MT.1023"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center (entra.microsoft.com)\n2. Go to Identity > Billing > Licenses > Overview\n3. Review the P2 license utilization report to identify under-licensed users\n4. Assign P2 licenses to all users consuming risk-based Conditional Access features\n5. Alternatively, reduce the scope of risk-based Conditional Access policies to only include properly licensed users",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure all users targeted by **risk-based Conditional Access** policies hold a valid **Entra ID P2** license. Review the Entra ID License Utilization Report regularly to detect and remediate licensing gaps before they lead to compliance violations or loss of identity protection coverage.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_license_utilization"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -21,6 +21,7 @@
         "defender_antiphishing_policy_configured",
         "defender_antispam_policy_inbound_no_allowed_domains",
         "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+        "entra_conditional_access_policy_license_utilization",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
       ]
@@ -211,6 +212,7 @@
         "entra_conditional_access_policy_block_unknown_device_platforms",
         "entra_conditional_access_policy_directory_sync_account_excluded",
         "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
+        "entra_conditional_access_policy_license_utilization",
         "entra_policy_guest_users_access_restrictions",
         "entra_seamless_sso_disabled"
       ]
