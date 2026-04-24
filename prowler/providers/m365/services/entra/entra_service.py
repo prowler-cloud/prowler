@@ -5,6 +5,8 @@ from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID
 
+from kiota_abstractions.method import Method
+from kiota_abstractions.request_information import RequestInformation
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
@@ -36,6 +38,7 @@ class Entra(M365Service):
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
         authentication_method_configurations (dict): Dictionary of authentication method configurations.
+        recommendations (dict): Dictionary of Entra directory recommendations.
     """
 
     def __init__(self, provider: M365Provider):
@@ -83,6 +86,7 @@ class Entra(M365Service):
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
+                self._get_recommendations(),
             )
         )
 
@@ -98,6 +102,7 @@ class Entra(M365Service):
         self.authentication_method_configurations: Dict[
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
+        self.recommendations: Dict[str, Recommendation] = attributes[10]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -1054,6 +1059,66 @@ OAuthAppInfo
             )
         return authentication_method_configurations
 
+    async def _get_recommendations(self) -> Dict[str, "Recommendation"]:
+        """Retrieve Entra directory recommendations.
+
+        Fetches directory recommendations from the Microsoft Graph API to
+        evaluate whether the tenant follows security best practices and
+        maintains a healthy configuration state.
+
+        The recommendations endpoint is not available in the current msgraph
+        SDK version, so a raw HTTP request is used instead.
+
+        Returns:
+            A dictionary mapping recommendation IDs to Recommendation objects.
+        """
+        logger.info("Entra - Getting directory recommendations...")
+        recommendations: Dict[str, Recommendation] = {}
+        try:
+            request_info = RequestInformation()
+            request_info.http_method = Method.GET
+            request_info.url = (
+                "https://graph.microsoft.com/beta/directory/recommendations"
+                "?$expand=impactedResources"
+            )
+            request_info.request_headers.try_add("Accept", "application/json")
+
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+
+            if response:
+                data = json.loads(response)
+                for rec in data.get("value", []):
+                    rec_id = rec.get("id", "")
+                    display_name = rec.get("displayName", "")
+                    status = rec.get("status", "")
+                    impacted_resources = rec.get("impactedResources", [])
+                    recommendations[rec_id] = Recommendation(
+                        id=rec_id,
+                        display_name=display_name,
+                        status=RecommendationStatus(status)
+                        if status
+                        in [s.value for s in RecommendationStatus]
+                        else RecommendationStatus.ACTIVE,
+                        impacted_resources=[
+                            ImpactedResource(
+                                id=resource.get("id", ""),
+                                display_name=resource.get("displayName", ""),
+                                status=resource.get("status", ""),
+                                added_date_time=resource.get(
+                                    "addedDateTime", ""
+                                ),
+                            )
+                            for resource in impacted_resources
+                        ],
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return recommendations
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -1481,3 +1546,51 @@ class OAuthApp(BaseModel):
     is_admin_consented: bool = False
     last_used_time: Optional[str] = None
     app_origin: str = ""
+
+
+class RecommendationStatus(Enum):
+    """Status of an Entra directory recommendation.
+
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/recommendation
+    """
+
+    ACTIVE = "active"
+    COMPLETED_BY_SYSTEM = "completedBySystem"
+    COMPLETED_BY_USER = "completedByUser"
+    DISMISSED = "dismissed"
+    POSTPONED = "postponed"
+
+
+class ImpactedResource(BaseModel):
+    """Model representing a resource impacted by an Entra recommendation.
+
+    Attributes:
+        id: The unique identifier of the impacted resource.
+        display_name: The display name of the impacted resource.
+        status: The status of the impacted resource.
+        added_date_time: The date and time when the resource was first detected.
+    """
+
+    id: str
+    display_name: str = ""
+    status: str = ""
+    added_date_time: str = ""
+
+
+class Recommendation(BaseModel):
+    """Model representing an Entra directory recommendation.
+
+    Entra recommendations help keep the tenant in a secure and healthy state
+    by surfacing best-practice guidance and actionable improvements.
+
+    Attributes:
+        id: The unique identifier of the recommendation.
+        display_name: The display name of the recommendation.
+        status: The current status of the recommendation.
+        impacted_resources: List of resources impacted by the recommendation.
+    """
+
+    id: str
+    display_name: str
+    status: RecommendationStatus = RecommendationStatus.ACTIVE
+    impacted_resources: List[ImpactedResource] = []
