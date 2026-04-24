@@ -2,11 +2,82 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.25.0] (Prowler UNRELEASED)
+## [1.26.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- CIS Benchmark PDF report generation for scans, exposing the latest CIS version per provider via `GET /scans/{id}/cis/{name}/` and picking the variant dynamically via `_pick_latest_cis_variant` (no hard-coded provider → version mapping) [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
+
+### 🔄 Changed
+
+- Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+
+---
+
+## [1.25.4] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `DJANGO_SENTRY_TRACES_SAMPLE_RATE` env var (default `0.02`) enables Sentry performance tracing for the API [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
+
+### 🔄 Changed
+
+- Attack Paths: Neo4j driver `connection_acquisition_timeout` is now configurable via `NEO4J_CONN_ACQUISITION_TIMEOUT` (default lowered from 120 s to 15 s) [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
+
+---
+
+## [1.25.3] (Prowler v5.24.3)
+
+### 🚀 Added
+
+- `/overviews/findings`, `/overviews/findings-severity` and `/overviews/services` now reflect newly-muted findings without waiting for the next scan. The post-mute `reaggregate-all-finding-group-summaries` task was extended to re-run the same per-scan pipeline that scan completion runs (`ScanSummary`, `DailySeveritySummary`, `FindingGroupDailySummary`) on the latest scan of every `(provider, day)` pair, keeping the pre-aggregated tables in sync with `Finding.muted` updates [(#10827)](https://github.com/prowler-cloud/prowler/pull/10827)
+
+### 🐞 Fixed
+
+- Finding groups aggregated `status` now treats muted findings as resolved: a group is `FAIL` only while at least one non-muted FAIL remains, otherwise it is `PASS` (including fully-muted groups). The `filter[status]` filter and the `sort=status` ordering share the same semantics, keeping `status` consistent with `fail_count` and the orthogonal `muted` flag [(#10825)](https://github.com/prowler-cloud/prowler/pull/10825)
+- `aggregate_findings` is now idempotent: it deletes the scan's existing `ScanSummary` rows before `bulk_create`, so re-runs (such as the post-mute reaggregation pipeline) no longer violate the `unique_scan_summary` constraint and no longer abort the downstream `DailySeveritySummary` / `FindingGroupDailySummary` recomputation for the affected scan [(#10827)](https://github.com/prowler-cloud/prowler/pull/10827)
+- Attack Paths: Findings on AWS were silently dropped during the Neo4j merge for resources whose Cartography node is keyed by a short identifier (e.g. EC2 instances) rather than the full ARN [(#10839)](https://github.com/prowler-cloud/prowler/pull/10839)
+
+---
+
+## [1.25.2] (Prowler v5.24.2)
+
+### 🔄 Changed
+
+- Finding groups `/resources` endpoints now materialize the filtered finding IDs into a Python list before filtering `ResourceFindingMapping`, so PostgreSQL switches from a Merge Semi Join that read hundreds of thousands of RFM index entries to a Nested Loop Index Scan over `finding_id`. The `has_mappings.exists()` pre-check is removed, and a request-scoped cache deduplicates the finding-id round-trip across the helpers that build different RFM querysets [(#10816)](https://github.com/prowler-cloud/prowler/pull/10816)
+
+### 🐞 Fixed
+
+- `/finding-groups/latest/<check_id>/resources` now selects the latest completed scan per provider by `-completed_at` (then `-inserted_at`) instead of `-inserted_at`, matching the `/finding-groups/latest` summary path and the daily-summary upsert so overlapping scans no longer produce diverging `delta`/`new_count` between the two endpoints [(#10802)](https://github.com/prowler-cloud/prowler/pull/10802)
+
+
+## [1.25.1] (Prowler v5.24.1)
+
+### 🔄 Changed
+
+- Attack Paths: Restore `SYNC_BATCH_SIZE` and `FINDINGS_BATCH_SIZE` defaults to 1000, upgrade Cartography to 0.135.0, enable Celery queue priority for cleanup task, rewrite Finding insertion, remove AWS graph cleanup and add timing logs [(#10729)](https://github.com/prowler-cloud/prowler/pull/10729)
+
+### 🐞 Fixed
+
+- Finding group resources endpoints now include findings without associated resources (orphaned IaC findings) as simulated resource rows, and return one row per finding when multiple findings share a resource [(#10708)](https://github.com/prowler-cloud/prowler/pull/10708)
+- Attack Paths: Missing `tenant_id` filter while getting related findings after scan completes [(#10722)](https://github.com/prowler-cloud/prowler/pull/10722)
+- Finding group counters `pass_count`, `fail_count` and `manual_count` now exclude muted findings [(#10753)](https://github.com/prowler-cloud/prowler/pull/10753)
+- Silent data loss in `ResourceFindingMapping` bulk insert that left findings orphaned when `INSERT ... ON CONFLICT DO NOTHING` dropped rows without raising; added explicit `unique_fields` [(#10724)](https://github.com/prowler-cloud/prowler/pull/10724)
+- `DELETE /tenants/{tenant_pk}/memberships/{id}` now deletes the expelled user's account when the removed membership was their last one, and blacklists every outstanding refresh token for that user so their existing sessions can no longer mint new access tokens [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+
+---
+
+## [1.25.0] (Prowler v5.24.0)
 
 ### 🔄 Changed
 
 - Bump Poetry to `2.3.4` in Dockerfile and pre-commit hooks. Regenerate `api/poetry.lock` [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
+- Attack Paths: Remove dead `cleanup_findings` no-op and its supporting `prowler_finding_lastupdated` index [(#10684)](https://github.com/prowler-cloud/prowler/pull/10684)
+
+### 🐞 Fixed
+
+- Worker-beat race condition on cold start: replaced `sleep 15` with API service healthcheck dependency (Docker Compose) and init containers (Helm), aligned Gunicorn default port to `8080` [(#10603)](https://github.com/prowler-cloud/prowler/pull/10603)
+- API container startup crash on Linux due to root-owned bind-mount preventing JWT key generation [(#10646)](https://github.com/prowler-cloud/prowler/pull/10646)
 
 ### 🔐 Security
 

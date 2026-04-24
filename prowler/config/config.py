@@ -38,7 +38,7 @@ class _MutableTimestamp:
 
 timestamp = _MutableTimestamp(datetime.today())
 timestamp_utc = _MutableTimestamp(datetime.now(timezone.utc))
-prowler_version = "5.24.0"
+prowler_version = "5.25.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://raw.githubusercontent.com/prowler-cloud/prowler/dc7d2d5aeb92fdf12e8604f42ef6472cd3e8e889/docs/img/prowler-logo-black.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
@@ -110,6 +110,7 @@ json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 json_ocsf_file_suffix = ".ocsf.json"
 html_file_suffix = ".html"
+sarif_file_suffix = ".sarif"
 default_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
 )
@@ -120,7 +121,7 @@ default_redteam_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/llm_config.yaml"
 )
 encoding_format_utf_8 = "utf-8"
-available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
+available_output_formats = ["csv", "json-asff", "json-ocsf", "html", "sarif"]
 
 # Prowler Cloud API settings
 cloud_api_base_url = os.getenv("PROWLER_CLOUD_API_BASE_URL", "https://api.prowler.com")

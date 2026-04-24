@@ -24,9 +24,15 @@ const {
   getLatestFindingGroupResourcesMock: vi.fn(),
 }));
 
+// Import the real sort constant directly from its submodule. Going via the
+// `@/lib` barrel would pull in server-only code (next-auth) that does not
+// resolve in the vitest runtime.
+import { RESOURCE_DRAWER_OTHER_FINDINGS_SORT } from "@/lib/findings-sort";
+
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
   getAuthHeaders: getAuthHeadersMock,
+  RESOURCE_DRAWER_OTHER_FINDINGS_SORT,
 }));
 
 vi.mock("@/lib/provider-filters", () => ({
@@ -43,6 +49,7 @@ vi.mock("@/actions/finding-groups", () => ({
 }));
 
 import {
+  getLatestFindingsByResourceUid,
   resolveFindingIdsByCheckIds,
   resolveFindingIdsByVisibleGroupResources,
 } from "./findings-by-resource";
@@ -260,5 +267,48 @@ describe("resolveFindingIdsByVisibleGroupResources", () => {
     expect(getFindingGroupResourcesMock).toHaveBeenCalledTimes(1);
     expect(getLatestFindingGroupResourcesMock).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("getLatestFindingsByResourceUid", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+  });
+
+  it("should restrict to FAIL, exclude muted findings, and apply severity/time sorting by default", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+
+    await getLatestFindingsByResourceUid({
+      resourceUid: "resource-1",
+    });
+
+    const calledUrl = new URL(fetchMock.mock.calls[0][0]);
+    expect(calledUrl.pathname).toBe("/api/v1/findings/latest");
+    expect(calledUrl.searchParams.get("filter[resource_uid]")).toBe(
+      "resource-1",
+    );
+    // Status filter is applied server-side so the page[size]=50 window
+    // always holds FAIL rows — guards against PASS-heavy resources
+    // starving FAILs out of the result.
+    expect(calledUrl.searchParams.get("filter[status]")).toBe("FAIL");
+    expect(calledUrl.searchParams.get("filter[muted]")).toBe("false");
+    expect(calledUrl.searchParams.get("sort")).toBe("severity,-updated_at");
+  });
+
+  it("should include muted findings only when explicitly requested", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+
+    await getLatestFindingsByResourceUid({
+      resourceUid: "resource-1",
+      includeMuted: true,
+    });
+
+    const calledUrl = new URL(fetchMock.mock.calls[0][0]);
+    expect(calledUrl.searchParams.get("filter[status]")).toBe("FAIL");
+    expect(calledUrl.searchParams.get("filter[muted]")).toBe("include");
+    expect(calledUrl.searchParams.get("sort")).toBe("severity,-updated_at");
   });
 });

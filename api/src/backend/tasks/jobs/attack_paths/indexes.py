@@ -13,14 +13,13 @@ from tasks.jobs.attack_paths.config import (
 logger = get_task_logger(__name__)
 
 
-# Indexes for Prowler findings and resource lookups
+# Indexes for Prowler Findings and resource lookups
 FINDINGS_INDEX_STATEMENTS = [
     # Resource indexes for Prowler Finding lookups
     "CREATE INDEX aws_resource_arn IF NOT EXISTS FOR (n:_AWSResource) ON (n.arn);",
     "CREATE INDEX aws_resource_id IF NOT EXISTS FOR (n:_AWSResource) ON (n.id);",
     # Prowler Finding indexes
     f"CREATE INDEX prowler_finding_id IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.id);",
-    f"CREATE INDEX prowler_finding_lastupdated IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.lastupdated);",
     f"CREATE INDEX prowler_finding_status IF NOT EXISTS FOR (n:{PROWLER_FINDING_LABEL}) ON (n.status);",
     # Internet node index for MERGE lookups
     f"CREATE INDEX internet_id IF NOT EXISTS FOR (n:{INTERNET_NODE_LABEL}) ON (n.id);",

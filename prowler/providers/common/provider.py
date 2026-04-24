@@ -1,4 +1,5 @@
 import importlib
+import os
 import pkgutil
 import sys
 from abc import ABC, abstractmethod
@@ -136,6 +137,18 @@ class Provider(ABC):
         return set()
 
     @staticmethod
+    def get_excluded_regions_from_env() -> set:
+        """Parse the PROWLER_AWS_DISALLOWED_REGIONS environment variable.
+
+        The variable is a comma-separated list of region identifiers to skip
+        during scans (e.g. "me-south-1, ap-east-1"). Whitespace around entries
+        is tolerated and empty entries are dropped. Returns an empty set when
+        the variable is unset or contains no usable values.
+        """
+        raw = os.environ.get("PROWLER_AWS_DISALLOWED_REGIONS", "")
+        return {region.strip() for region in raw.split(",") if region.strip()}
+
+    @staticmethod
     def get_global_provider() -> "Provider":
         return Provider._global
 
@@ -160,6 +173,11 @@ class Provider(ABC):
 
             if not isinstance(Provider._global, provider_class):
                 if "aws" in provider_class_name.lower():
+                    excluded_regions = (
+                        set(arguments.excluded_region)
+                        if getattr(arguments, "excluded_region", None)
+                        else None
+                    )
                     provider_class(
                         retries_max_attempts=arguments.aws_retries_max_attempts,
                         role_arn=arguments.role,
@@ -169,6 +187,7 @@ class Provider(ABC):
                         mfa=arguments.mfa,
                         profile=arguments.profile,
                         regions=set(arguments.region) if arguments.region else None,
+                        excluded_regions=excluded_regions,
                         organizations_role_arn=arguments.organizations_role,
                         scan_unused_services=arguments.scan_unused_services,
                         resource_tags=arguments.resource_tag,
@@ -261,6 +280,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
                         repositories=repos,
+                        repo_list_file=getattr(arguments, "repo_list_file", None),
                         organizations=orgs,
                     )
                 elif "googleworkspace" in provider_class_name.lower():

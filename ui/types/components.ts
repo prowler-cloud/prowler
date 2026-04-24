@@ -82,6 +82,7 @@ export type PermissionState =
 export const FINDING_DELTA = {
   NEW: "new",
   CHANGED: "changed",
+  NONE: "none",
 } as const;
 export type FindingDelta =
   | (typeof FINDING_DELTA)[keyof typeof FINDING_DELTA]

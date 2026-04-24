@@ -752,11 +752,19 @@ def _process_finding_micro_batch(
             )
 
         if mappings_to_create:
-            ResourceFindingMapping.objects.bulk_create(
+            created_mappings = ResourceFindingMapping.objects.bulk_create(
                 mappings_to_create,
                 batch_size=SCAN_DB_BATCH_SIZE,
                 ignore_conflicts=True,
+                unique_fields=["tenant_id", "resource_id", "finding_id"],
             )
+            inserted = sum(1 for m in created_mappings if m.pk)
+            if inserted != len(mappings_to_create):
+                logger.error(
+                    f"scan {scan_instance.id}: expected "
+                    f"{len(mappings_to_create)} ResourceFindingMapping rows, "
+                    f"inserted {inserted}. Rolling back micro-batch."
+                )
 
         # Update finding denormalized arrays
         findings_to_update = []
@@ -1190,6 +1198,9 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             )
             for agg in aggregation
         }
+        # Delete first so re-runs (e.g. post-mute reaggregation) don't hit
+        # the `unique_scan_summary` constraint.
+        ScanSummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id).delete()
         ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
 
 
@@ -1804,11 +1815,9 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
         )
 
         # Aggregate findings by check_id for this scan.
-        # `pass_count`, `fail_count` and `manual_count` count *every* finding
-        # in this group, regardless of mute state, so the aggregated `status`
-        # always reflects the underlying check outcome (FAIL > PASS > MANUAL)
-        # even when the group is fully muted. The orthogonal `muted` flag is
-        # what tells whether the group has any actionable (non-muted) findings.
+        # `pass_count`, `fail_count` and `manual_count` only count non-muted
+        # findings. Muted findings are tracked separately via the
+        # `*_muted_count` fields.
         aggregated = (
             Finding.objects.filter(
                 tenant_id=tenant_id,
@@ -1817,9 +1826,9 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
             .values("check_id")
             .annotate(
                 severity_order=Max(severity_case),
-                pass_count=Count("id", filter=Q(status="PASS")),
-                fail_count=Count("id", filter=Q(status="FAIL")),
-                manual_count=Count("id", filter=Q(status="MANUAL")),
+                pass_count=Count("id", filter=Q(status="PASS", muted=False)),
+                fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                manual_count=Count("id", filter=Q(status="MANUAL", muted=False)),
                 pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
                 fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
                 manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),

@@ -18,6 +18,7 @@ from prowler.config.config import (
     json_asff_file_suffix,
     json_ocsf_file_suffix,
     orange_color,
+    sarif_file_suffix,
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -69,11 +70,11 @@ from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_googleworkspace import GoogleWorkspaceCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
+from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
+from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
     GoogleWorkspaceCISASCuBA,
 )
-from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
-from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
@@ -122,6 +123,7 @@ from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ingestion import send_ocsf_to_api
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics, report
+from prowler.lib.outputs.sarif.sarif import SARIF
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.alibabacloud.models import AlibabaCloudOutputOptions
@@ -292,6 +294,10 @@ def prowler():
     # Print Provider Credentials
     if not args.only_logs:
         global_provider.print_credentials()
+
+    # --registry-list: listing already printed during provider init, exit
+    if getattr(global_provider, "_listing_only", False):
+        sys.exit()
 
     # Skip service and check loading for external-tool providers
     if provider not in EXTERNAL_TOOL_PROVIDERS:
@@ -548,6 +554,13 @@ def prowler():
                 html_output.batch_write_data_to_file(
                     provider=global_provider, stats=stats
                 )
+            if mode == "sarif":
+                sarif_output = SARIF(
+                    findings=finding_outputs,
+                    file_path=f"{filename}{sarif_file_suffix}",
+                )
+                generated_outputs["regular"].append(sarif_output)
+                sarif_output.batch_write_data_to_file()
 
     if getattr(args, "push_to_cloud", False):
         if not ocsf_output or not getattr(ocsf_output, "file_path", None):
@@ -1311,8 +1324,12 @@ def prowler():
                     global_provider.identity.audited_regions,
                 )
                 if not global_provider.identity.audited_regions
-                else global_provider.identity.audited_regions
+                else set(global_provider.identity.audited_regions)
             )
+            if global_provider._enabled_regions is not None:
+                security_hub_regions = security_hub_regions.intersection(
+                    global_provider._enabled_regions
+                )
 
             security_hub = SecurityHub(
                 aws_account_id=global_provider.identity.account,
