@@ -81,7 +81,7 @@ runs:
         # Disable cache when callers skip dependency install: Poetry 2.3.4 creates
         # the venv in a path setup-python can't hash, breaking the post-step save-cache.
         cache: ${{ inputs.enable-cache == 'true' && 'poetry' || '' }}
-        cache-dependency-path: ${{ inputs.working-directory }}/poetry.lock
+        cache-dependency-path: ${{ inputs.enable-cache == 'true' && format('{0}/poetry.lock', inputs.working-directory) || '' }}
 
     - name: Install Python dependencies
       if: inputs.install-dependencies == 'true'
