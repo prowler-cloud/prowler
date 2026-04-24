@@ -379,6 +379,102 @@ class TestIsToolWrapperProvider:
 
         assert Provider.is_tool_wrapper_provider(None) is False
 
+
+class TestIsBuiltinProvider:
+    """Tests for Provider.is_builtin — the helper that discriminates built-in
+    providers from external ones before attempting the import, so transitive
+    dependency failures in built-ins don't get silently re-routed to entry points."""
+
+    def test_returns_true_for_builtin_provider(self):
+        assert Provider.is_builtin("aws") is True
+        assert Provider.is_builtin("github") is True
+
+    def test_returns_false_for_unknown_provider(self):
+        assert Provider.is_builtin("nonexistent_xyz") is False
+
+    @patch("prowler.providers.common.provider.importlib.util.find_spec")
+    def test_returns_false_when_find_spec_raises(self, mock_find_spec):
+        # Certain namespace package edge cases raise ValueError/ImportError —
+        # helper should swallow and return False rather than propagate.
+        mock_find_spec.side_effect = ValueError("namespace package edge case")
+
+        assert Provider.is_builtin("some_provider") is False
+
+
+class TestInitProvidersParserBuiltinDependencyFailure:
+    """Tests the critical behavior fix: when a built-in provider's arguments
+    module exists but its imports fail (e.g. boto3 not installed), we must
+    fail loudly with a clear message — not silently fall through to entry
+    points as if the provider were external."""
+
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.import_module")
+    def test_builtin_with_missing_transitive_dep_fails_loudly(
+        self, mock_import, mock_is_builtin
+    ):
+        from prowler.providers.common.arguments import init_providers_parser
+
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'boto3'")
+
+        parser = MagicMock()
+        parser._providers = ["aws"]
+
+        with (
+            patch(
+                "prowler.providers.common.arguments.Provider.get_available_providers",
+                return_value=["aws"],
+            ),
+            pytest.raises(SystemExit),
+        ):
+            init_providers_parser(parser)
+
+    @patch("prowler.providers.common.arguments.Provider.is_builtin")
+    @patch("prowler.providers.common.arguments.Provider._load_ep_provider")
+    def test_external_provider_does_not_touch_builtin_path(
+        self, mock_load_ep, mock_is_builtin
+    ):
+        from prowler.providers.common.arguments import init_providers_parser
+
+        mock_is_builtin.return_value = False
+        ext_cls = MagicMock()
+        ext_cls.init_parser = MagicMock()
+        mock_load_ep.return_value = ext_cls
+
+        parser = MagicMock()
+
+        with patch(
+            "prowler.providers.common.arguments.Provider.get_available_providers",
+            return_value=["fakeexternal"],
+        ):
+            init_providers_parser(parser)
+
+        ext_cls.init_parser.assert_called_once_with(parser)
+
+
+class TestInitGlobalProviderBuiltinDependencyFailure:
+    """Same contract as TestInitProvidersParserBuiltinDependencyFailure but
+    for the provider class import path in init_global_provider."""
+
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    @patch("prowler.providers.common.provider.import_module")
+    def test_builtin_with_missing_transitive_dep_fails_loudly(
+        self, mock_import, mock_is_builtin
+    ):
+        mock_is_builtin.return_value = True
+        mock_import.side_effect = ImportError("No module named 'boto3'")
+
+        args = Namespace(
+            provider="aws",
+            fixer_config="config.yaml",
+            config_file="config.yaml",
+        )
+
+        Provider._global = None
+        with pytest.raises(SystemExit):
+            Provider.init_global_provider(args)
+        Provider._global = None
+
     @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
     def test_load_ep_provider_handles_load_exception(self, mock_ep):
         """_load_ep_provider returns None when ep.load() raises."""

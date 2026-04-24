@@ -1,5 +1,6 @@
 import importlib
 import importlib.metadata
+import importlib.util
 import os
 import pkgutil
 import sys
@@ -265,21 +266,38 @@ class Provider(ABC):
     @staticmethod
     def init_global_provider(arguments: Namespace) -> None:
         try:
-            # Try built-in provider first, fall back to entry point
+            # Discriminate built-in vs external upfront via find_spec, so an
+            # ImportError from a transitive dependency missing inside a
+            # built-in's own import chain surfaces clearly instead of being
+            # silently re-routed to the entry-point path.
             provider_class = None
-            try:
+            if Provider.is_builtin(arguments.provider):
                 provider_class_path = f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
                 provider_class_name = f"{arguments.provider.capitalize()}Provider"
-                provider_class = getattr(
-                    import_module(provider_class_path), provider_class_name
-                )
-            except (ImportError, AttributeError):
-                # External provider — load via entry point
-                provider_class = Provider._load_ep_provider(arguments.provider)
-                if provider_class is None:
-                    raise ImportError(
-                        f"Provider '{arguments.provider}' not found as built-in or entry point"
+                try:
+                    provider_class = getattr(
+                        import_module(provider_class_path), provider_class_name
                     )
+                except ImportError as e:
+                    logger.critical(
+                        f"Failed to load built-in provider '{arguments.provider}'. "
+                        f"Missing dependency: {e}. "
+                        f"Ensure all required dependencies are installed."
+                    )
+                    logger.debug("Full traceback:", exc_info=True)
+                    sys.exit(1)
+                except AttributeError:
+                    # Module exists but doesn't define the expected class —
+                    # treat as external and try entry points.
+                    provider_class = Provider._load_ep_provider(arguments.provider)
+            else:
+                provider_class = Provider._load_ep_provider(arguments.provider)
+
+            if provider_class is None:
+                raise ImportError(
+                    f"Provider '{arguments.provider}' not found as built-in or entry point"
+                )
+            provider_class_name = f"{arguments.provider.capitalize()}Provider"
 
             fixer_config = load_and_validate_config_file(
                 arguments.provider, arguments.fixer_config
@@ -567,6 +585,23 @@ class Provider(ABC):
             return True
         ep_cls = Provider._load_ep_provider(provider)
         return bool(ep_cls and getattr(ep_cls, "is_external_tool_provider", False))
+
+    @staticmethod
+    def is_builtin(provider: str) -> bool:
+        """Return True if the provider's own package is importable as a built-in.
+
+        Uses `importlib.util.find_spec` — Python's canonical API to check module
+        existence without executing it. Discriminates at call sites between
+        built-in providers (`prowler.providers.{provider}`) and externals, so we
+        don't rely on catching `ImportError` after the fact and inspecting
+        `e.name` — which is fragile when the error comes from a transitive
+        dependency inside the built-in's own import chain.
+        """
+        try:
+            spec = importlib.util.find_spec(f"{providers_path}.{provider}")
+            return spec is not None
+        except (ImportError, ValueError):
+            return False
 
     @staticmethod
     def _load_ep_provider(name: str):
