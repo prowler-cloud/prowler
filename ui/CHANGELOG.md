@@ -18,11 +18,12 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.24.4] (Prowler UNRELEASED)
+## [1.24.4] (Prowler 5.24.4)
 
 ### 🐞 Fixed
 
 - Provider wizard no longer advances to the Launch Scan step when rotating credentials [(#10851)](https://github.com/prowler-cloud/prowler/pull/10851)
+- Attack Paths scan selector now lists scans from every provider with working pagination, instead of capping the list at the first ten [(#10864)](https://github.com/prowler-cloud/prowler/pull/10864)
 
 ---
 
