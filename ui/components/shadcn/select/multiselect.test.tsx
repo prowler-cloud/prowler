@@ -188,7 +188,9 @@ describe("MultiSelect", () => {
     expect(searchInput).toHaveValue("aws");
 
     await user.keyboard("{Escape}");
-    expect(screen.queryByPlaceholderText("Search accounts...")).not.toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText("Search accounts..."),
+    ).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("combobox"));
 
