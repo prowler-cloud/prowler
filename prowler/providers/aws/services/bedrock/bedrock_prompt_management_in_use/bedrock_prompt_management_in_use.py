@@ -1,4 +1,4 @@
-"""Check for Bedrock Prompt Management utilization."""
+"""Check for region-level Bedrock Prompt Management adoption."""
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.bedrock.bedrock_agent_client import (
@@ -7,10 +7,12 @@ from prowler.providers.aws.services.bedrock.bedrock_agent_client import (
 
 
 class bedrock_prompt_management_in_use(Check):
-    """Ensure that Bedrock Prompt Management is utilized for centralized prompt governance.
+    """Check whether Amazon Bedrock Prompt Management is in use in the region.
 
-    This check verifies whether Amazon Bedrock Prompt Management is in use
-    by checking for the existence of managed prompts in each region.
+    A region is reported only when ListPrompts succeeded for it; regions where
+    the API call failed (e.g. AccessDenied, unsupported region) are skipped at
+    the service layer and produce no finding.
+
     - PASS: At least one managed prompt exists in the region.
     - FAIL: No managed prompts exist in the region.
     """
@@ -22,10 +24,8 @@ class bedrock_prompt_management_in_use(Check):
             A list of reports containing the result of the check.
         """
         findings = []
-        for region in bedrock_agent_client.regional_clients:
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource={}
-            )
+        for region in sorted(bedrock_agent_client.prompt_scanned_regions):
+            report = Check_Report_AWS(metadata=self.metadata(), resource={})
             report.region = region
             report.resource_id = "prompt-management"
             report.resource_arn = f"arn:{bedrock_agent_client.audited_partition}:bedrock:{region}:{bedrock_agent_client.audited_account}:prompt-management"

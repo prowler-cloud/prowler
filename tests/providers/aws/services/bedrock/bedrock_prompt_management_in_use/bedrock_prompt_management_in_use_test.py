@@ -1,6 +1,7 @@
 from unittest import mock
 
 import botocore
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
@@ -12,7 +13,24 @@ from tests.providers.aws.utils import (
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
-PROMPT_ARN = f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:prompt/test-prompt-id"
+PROMPT_ARN = (
+    f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:prompt/test-prompt-id"
+)
+
+
+def mock_make_api_call_list_prompts_access_denied(self, operation_name, kwarg):
+    """Mock API call where ListPrompts fails with AccessDeniedException."""
+    if operation_name == "ListPrompts":
+        raise ClientError(
+            {
+                "Error": {
+                    "Code": "AccessDeniedException",
+                    "Message": "User is not authorized to perform: bedrock:ListPrompts",
+                }
+            },
+            operation_name,
+        )
+    return make_api_call(self, operation_name, kwarg)
 
 
 def mock_make_api_call_with_prompts(self, operation_name, kwarg):
@@ -230,3 +248,33 @@ class Test_bedrock_prompt_management_in_use:
                 )
             regions = {finding.region for finding in result}
             assert regions == {AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1}
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_list_prompts_access_denied,
+    )
+    @mock_aws
+    def test_list_prompts_client_error_skips_region(self):
+        """Test that regions where ListPrompts fails produce no findings."""
+        from prowler.providers.aws.services.bedrock.bedrock_service import BedrockAgent
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use.bedrock_agent_client",
+                new=BedrockAgent(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use import (
+                bedrock_prompt_management_in_use,
+            )
+
+            check = bedrock_prompt_management_in_use()
+            result = check.execute()
+
+            assert result == []

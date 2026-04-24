@@ -127,6 +127,7 @@ class BedrockAgent(AWSService):
         super().__init__("bedrock-agent", provider)
         self.agents = {}
         self.prompts = {}
+        self.prompt_scanned_regions: set = set()
         self.__threading_call__(self._list_agents)
         self.__threading_call__(self._list_prompts)
         self.__threading_call__(self._list_tags_for_resource, self.agents.values())
@@ -156,22 +157,24 @@ class BedrockAgent(AWSService):
             )
 
     def _list_prompts(self, regional_client):
-        """List all prompts in a region."""
+        """List all prompts in a region.
+
+        Prompt Management is evaluated as a region-level adoption signal, so
+        prompt collection is intentionally not filtered by audit_resources.
+        """
         logger.info("Bedrock Agent - Listing Prompts...")
         try:
             paginator = regional_client.get_paginator("list_prompts")
             for page in paginator.paginate():
                 for prompt in page.get("promptSummaries", []):
                     prompt_arn = prompt.get("arn", "")
-                    if not self.audit_resources or (
-                        is_resource_filtered(prompt_arn, self.audit_resources)
-                    ):
-                        self.prompts[prompt_arn] = Prompt(
-                            id=prompt.get("id", ""),
-                            name=prompt.get("name", ""),
-                            arn=prompt_arn,
-                            region=regional_client.region,
-                        )
+                    self.prompts[prompt_arn] = Prompt(
+                        id=prompt.get("id", ""),
+                        name=prompt.get("name", ""),
+                        arn=prompt_arn,
+                        region=regional_client.region,
+                    )
+            self.prompt_scanned_regions.add(regional_client.region)
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
