@@ -10,6 +10,7 @@ import requests
 import yaml
 from packaging import version
 
+from prowler.lib.check.compliance_models import load_compliance_framework_universal
 from prowler.lib.logger import logger
 
 
@@ -117,7 +118,24 @@ def get_available_compliance_frameworks(provider=None):
                     available_compliance_frameworks.append(
                         file.name.removesuffix(".json")
                     )
-    # External compliance via entry points
+    # Built-in multi-provider frameworks at top-level compliance/ directory.
+    # Placed before external entry points so built-ins win on name collisions.
+    compliance_root = f"{actual_directory}/../compliance"
+    if os.path.isdir(compliance_root):
+        with os.scandir(compliance_root) as files:
+            for file in files:
+                if file.is_file() and file.name.endswith(".json"):
+                    name = file.name.removesuffix(".json")
+                    if provider:
+                        framework = load_compliance_framework_universal(file.path)
+                        if framework is None or not framework.supports_provider(
+                            provider
+                        ):
+                            continue
+                    if name not in available_compliance_frameworks:
+                        available_compliance_frameworks.append(name)
+    # External compliance via entry points.
+    # Multi-provider support for external plug-ins is tracked in PROWLER-1444.
     ep_dirs = _get_ep_compliance_dirs()
     for prov, path in ep_dirs.items():
         if provider and prov != provider:

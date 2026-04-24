@@ -8,6 +8,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Support for external/custom providers, checks, and compliance frameworks without modifying core code [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
 - SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
+- `repository_default_branch_dismisses_stale_reviews` check for GitHub provider to ensure stale pull request approvals are dismissed when new commits are pushed [(#10569)](https://github.com/prowler-cloud/prowler/pull/10569)
+- Official Prowler GitHub Action (`prowler-cloud/prowler@5.25`) for running scans in GitHub workflows with optional `--push-to-cloud` and SARIF upload to GitHub Code Scanning [(#10872)](https://github.com/prowler-cloud/prowler/pull/10872)
+
+### 🐞 Fixed
+
+- Alibaba Cloud CS service SDK compatibility, harden other services and improve documentation [(#10871)](https://github.com/prowler-cloud/prowler/pull/10871)
 
 ### 🐞 Fixed
 
@@ -20,6 +26,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - CloudTrail resource timeline uses resource name as fallback in `LookupEvents` [(#10828)](https://github.com/prowler-cloud/prowler/pull/10828)
+- Exclude `me-south-1` and `me-central-1` from default AWS scans to prevent hangs when the host can't reach those regional endpoints [(#10837)](https://github.com/prowler-cloud/prowler/pull/10837)
 
 ---
 

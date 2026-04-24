@@ -4,17 +4,39 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.26.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- CIS Benchmark PDF report generation for scans, exposing the latest CIS version per provider via `GET /scans/{id}/cis/{name}/` and picking the variant dynamically via `_pick_latest_cis_variant` (no hard-coded provider → version mapping) [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
+
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 
 ---
 
+## [1.25.4] (Prowler v5.24.4)
+
+### 🚀 Added
+
+- `DJANGO_SENTRY_TRACES_SAMPLE_RATE` env var (default `0.02`) enables Sentry performance tracing for the API [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
+
+### 🔄 Changed
+
+- Attack Paths: Neo4j driver `connection_acquisition_timeout` is now configurable via `NEO4J_CONN_ACQUISITION_TIMEOUT` (default lowered from 120 s to 15 s) [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
+
+---
+
 ## [1.25.3] (Prowler v5.24.3)
+
+### 🚀 Added
+
+- `/overviews/findings`, `/overviews/findings-severity` and `/overviews/services` now reflect newly-muted findings without waiting for the next scan. The post-mute `reaggregate-all-finding-group-summaries` task was extended to re-run the same per-scan pipeline that scan completion runs (`ScanSummary`, `DailySeveritySummary`, `FindingGroupDailySummary`) on the latest scan of every `(provider, day)` pair, keeping the pre-aggregated tables in sync with `Finding.muted` updates [(#10827)](https://github.com/prowler-cloud/prowler/pull/10827)
 
 ### 🐞 Fixed
 
 - Finding groups aggregated `status` now treats muted findings as resolved: a group is `FAIL` only while at least one non-muted FAIL remains, otherwise it is `PASS` (including fully-muted groups). The `filter[status]` filter and the `sort=status` ordering share the same semantics, keeping `status` consistent with `fail_count` and the orthogonal `muted` flag [(#10825)](https://github.com/prowler-cloud/prowler/pull/10825)
+- `aggregate_findings` is now idempotent: it deletes the scan's existing `ScanSummary` rows before `bulk_create`, so re-runs (such as the post-mute reaggregation pipeline) no longer violate the `unique_scan_summary` constraint and no longer abort the downstream `DailySeveritySummary` / `FindingGroupDailySummary` recomputation for the affected scan [(#10827)](https://github.com/prowler-cloud/prowler/pull/10827)
+- Attack Paths: Findings on AWS were silently dropped during the Neo4j merge for resources whose Cartography node is keyed by a short identifier (e.g. EC2 instances) rather than the full ARN [(#10839)](https://github.com/prowler-cloud/prowler/pull/10839)
 
 ---
 

@@ -130,7 +130,7 @@ jobs:
         with:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          base: master
+          base: ${{ env.BASE_BRANCH }}
           commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
           branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}
           title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
@@ -221,11 +221,6 @@ jobs:
         with:
           egress-policy: audit
 
-      - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
       - name: Calculate next patch version
         run: |
           MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
@@ -250,7 +245,52 @@ jobs:
           NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_PATCH_VERSION: ${{ needs.detect-release-type.outputs.patch_version }}
           NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_CURRENT_DOCS_VERSION: ${{ needs.detect-release-type.outputs.current_docs_version }}
 
-      - name: Bump versions in documentation for patch version
+      - name: Checkout master branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.BASE_BRANCH }}
+          persist-credentials: false
+
+      - name: Bump versions in documentation for master
+        run: |
+          set -e
+
+          # Update prowler-app.mdx with current release version
+          sed -i "s|PROWLER_UI_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_UI_VERSION=\"${PROWLER_VERSION}\"|" docs/getting-started/installation/prowler-app.mdx
+          sed -i "s|PROWLER_API_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_API_VERSION=\"${PROWLER_VERSION}\"|" docs/getting-started/installation/prowler-app.mdx
+
+          echo "Files modified:"
+          git --no-pager diff
+
+      - name: Create PR for documentation update to master
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.BASE_BRANCH }}
+          commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
+          branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}
+          title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
+          labels: no-changelog,skip-sync
+          body: |
+            ### Description
+
+            Update Prowler documentation version references to v${{ env.PROWLER_VERSION }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### Files Updated
+            - `docs/getting-started/installation/prowler-app.mdx`: `PROWLER_UI_VERSION` and `PROWLER_API_VERSION`
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+      - name: Checkout version branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.VERSION_BRANCH }}
+          persist-credentials: false
+
+      - name: Bump versions in documentation for version branch
         run: |
           set -e
 
@@ -268,13 +308,13 @@ jobs:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: ${{ env.VERSION_BRANCH }}
           commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}
+          branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}-branch
           title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
           labels: no-changelog,skip-sync
           body: |
             ### Description
 
-            Update Prowler documentation version references to v${{ env.PROWLER_VERSION }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+            Update Prowler documentation version references to v${{ env.PROWLER_VERSION }} in version branch after releasing Prowler v${{ env.PROWLER_VERSION }}.
 
             ### Files Updated
             - `docs/getting-started/installation/prowler-app.mdx`: `PROWLER_UI_VERSION` and `PROWLER_API_VERSION`
