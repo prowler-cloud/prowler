@@ -169,6 +169,9 @@ export const useFilterBatch = (
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(() =>
+    deriveAppliedFromUrl(new URLSearchParams(searchParams.toString())),
+  );
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(() =>
     deriveAppliedFromUrl(new URLSearchParams(searchParams.toString())),
   );
@@ -179,6 +182,7 @@ export const useFilterBatch = (
     const applied = deriveAppliedFromUrl(
       new URLSearchParams(searchParams.toString()),
     );
+    setAppliedFilters(applied);
     setPendingFilters(applied);
   }, [searchParams]);
 
@@ -201,6 +205,7 @@ export const useFilterBatch = (
 
   /** Private helper — builds URLSearchParams from a pending state and pushes. */
   const buildAndPush = (nextPending: PendingFilters) => {
+    setAppliedFilters(nextPending);
     const params = new URLSearchParams(searchParams.toString());
 
     // Remove all batch-managed filter params
@@ -285,9 +290,6 @@ export const useFilterBatch = (
     return pendingFilters[filterKey] ?? [];
   };
 
-  const appliedFilters = deriveAppliedFromUrl(
-    new URLSearchParams(searchParams.toString()),
-  );
   const hasChanges = !areFiltersEqual(pendingFilters, appliedFilters);
   const changeCount = hasChanges
     ? countChanges(pendingFilters, appliedFilters)

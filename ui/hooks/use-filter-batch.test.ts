@@ -498,6 +498,26 @@ describe("useFilterBatch", () => {
       expect(calledUrl).not.toContain("status");
     });
 
+    it("should not expose cleared URL filters as pending changes while navigation updates", () => {
+      // Given
+      setSearchParams({
+        "filter[severity__in]": "critical",
+        "filter[status__in]": "FAIL",
+      });
+      const { result } = renderHook(() => useFilterBatch());
+
+      // When
+      act(() => {
+        result.current.clearAndApply();
+      });
+
+      // Then — the UI should not render the pending-filter row after clearing.
+      expect(result.current.appliedFilters).toEqual({});
+      expect(result.current.changedFilters).toEqual({});
+      expect(result.current.hasChanges).toBe(false);
+      expect(result.current.changeCount).toBe(0);
+    });
+
     it("should apply defaultParams when clearing", () => {
       // Given
       setSearchParams({ "filter[severity__in]": "critical" });
