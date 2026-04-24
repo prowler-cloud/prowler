@@ -7,8 +7,15 @@ from pkgutil import walk_packages
 from prowler.lib.logger import logger
 
 
-def _recover_ep_checks(provider: str) -> list[tuple]:
+def _recover_ep_checks(provider: str, service: str = None) -> list[tuple]:
     """Discover external checks registered via entry points for a provider.
+
+    External plugins follow the same layout as built-ins:
+    `{plugin_root}.services.{service}.{check}.{check}`
+
+    When `service` is provided, only entry points whose dotted path contains
+    `.services.{service}.` are included — mirroring how built-in discovery
+    filters by the `prowler.providers.{provider}.services.{service}` package.
 
     Uses find_spec to locate the check module without importing it,
     avoiding service client initialization at discovery time.
@@ -16,6 +23,9 @@ def _recover_ep_checks(provider: str) -> list[tuple]:
     checks = []
     for ep in importlib.metadata.entry_points(group=f"prowler.checks.{provider}"):
         try:
+            if service and f".services.{service}." not in ep.value:
+                continue
+
             spec = importlib.util.find_spec(ep.value)
             if spec and spec.origin:
                 check_path = os.path.dirname(spec.origin)
@@ -58,16 +68,26 @@ def recover_checks_from_provider(
                     check_info = (check_name, check_path)
                     checks.append(check_info)
         except ModuleNotFoundError:
-            if service:
-                logger.critical(
-                    f"Service {service} was not found for the {provider} provider."
-                )
-                sys.exit(1)
-            # No built-in services for this provider (e.g., external provider)
+            # Not a built-in provider (or the requested service is not built-in).
+            # Fall through to entry points — external providers/services may be
+            # registered there. If nothing matches in either source, we fail
+            # with a clear message below.
+            pass
 
-        # External checks registered via entry points
-        if not service:
-            checks.extend(_recover_ep_checks(provider))
+        # External checks registered via entry points — always consulted, with
+        # optional service filter. Previously gated by `if not service:`, which
+        # prevented external providers from being usable with --service.
+        checks.extend(_recover_ep_checks(provider, service))
+
+        # A service was requested but nothing matched in either built-ins or
+        # entry points — surface this as a clear error instead of silently
+        # returning an empty list.
+        if service and not checks:
+            logger.critical(
+                f"Service '{service}' was not found for the '{provider}' provider "
+                f"(neither as a built-in nor via external entry points)."
+            )
+            sys.exit(1)
 
     except Exception as e:
         logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")

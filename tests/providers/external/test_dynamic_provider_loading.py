@@ -591,6 +591,114 @@ class TestCheckDiscovery:
         assert "check_a" in check_names
         assert "check_b" in check_names
 
+    @patch("prowler.lib.check.utils.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.utils.importlib.util.find_spec")
+    def test_recover_ep_checks_filters_by_service(self, mock_spec, mock_ep):
+        """Service filter keeps only entry points whose dotted path includes
+        `.services.{service}.` — mirroring the built-in package filter."""
+        from prowler.lib.check.utils import _recover_ep_checks
+
+        mock_ep.return_value = [
+            _make_entry_point(
+                "container_has_no_root_user",
+                "prowler_artifacts_dockerdesktop.services.container.container_has_no_root_user.container_has_no_root_user",
+                "prowler.checks.dockerdesktop",
+            ),
+            _make_entry_point(
+                "image_is_signed",
+                "prowler_artifacts_dockerdesktop.services.image.image_is_signed.image_is_signed",
+                "prowler.checks.dockerdesktop",
+            ),
+        ]
+        mock_spec_obj = MagicMock()
+        mock_spec_obj.origin = "/some/path/check.py"
+        mock_spec.return_value = mock_spec_obj
+
+        checks = _recover_ep_checks("dockerdesktop", service="container")
+
+        assert len(checks) == 1
+        assert checks[0][0] == "container_has_no_root_user"
+
+    @patch("prowler.lib.check.utils.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.utils.importlib.util.find_spec")
+    def test_recover_ep_checks_without_service_returns_all(self, mock_spec, mock_ep):
+        """Without a service filter, all entry points for the provider are returned."""
+        from prowler.lib.check.utils import _recover_ep_checks
+
+        mock_ep.return_value = [
+            _make_entry_point(
+                "container_has_no_root_user",
+                "prowler_artifacts_dockerdesktop.services.container.container_has_no_root_user.container_has_no_root_user",
+                "prowler.checks.dockerdesktop",
+            ),
+            _make_entry_point(
+                "image_is_signed",
+                "prowler_artifacts_dockerdesktop.services.image.image_is_signed.image_is_signed",
+                "prowler.checks.dockerdesktop",
+            ),
+        ]
+        mock_spec_obj = MagicMock()
+        mock_spec_obj.origin = "/some/path/check.py"
+        mock_spec.return_value = mock_spec_obj
+
+        checks = _recover_ep_checks("dockerdesktop")
+
+        assert len(checks) == 2
+
+    @patch("prowler.lib.check.utils._recover_ep_checks")
+    @patch("prowler.lib.check.utils.list_modules")
+    def test_recover_checks_external_provider_with_service(
+        self, mock_list_modules, mock_ep_checks
+    ):
+        """External provider with --service: built-in lookup fails with
+        ModuleNotFoundError, but entry points are still consulted and return
+        the requested service's checks. No premature sys.exit."""
+        from prowler.lib.check.utils import recover_checks_from_provider
+
+        mock_list_modules.side_effect = ModuleNotFoundError("No built-in")
+        mock_ep_checks.return_value = [("container_check", "/ext/path")]
+
+        checks = recover_checks_from_provider("dockerdesktop", service="container")
+
+        assert len(checks) == 1
+        assert checks[0][0] == "container_check"
+        mock_ep_checks.assert_called_once_with("dockerdesktop", "container")
+
+    @patch("prowler.lib.check.utils._recover_ep_checks")
+    @patch("prowler.lib.check.utils.list_modules")
+    def test_recover_checks_unknown_service_fails_cleanly(
+        self, mock_list_modules, mock_ep_checks
+    ):
+        """A typo or unknown service (not in built-ins nor in entry points)
+        fails with a clear error message, not a silent empty result."""
+        from prowler.lib.check.utils import recover_checks_from_provider
+
+        mock_list_modules.side_effect = ModuleNotFoundError("No built-in")
+        mock_ep_checks.return_value = []
+
+        with pytest.raises(SystemExit):
+            recover_checks_from_provider("aws", service="typo_service")
+
+    @patch("prowler.lib.check.utils._recover_ep_checks")
+    @patch("prowler.lib.check.utils.list_modules")
+    def test_recover_checks_builtin_with_new_external_service(
+        self, mock_list_modules, mock_ep_checks
+    ):
+        """Built-in provider with a new service added via entry points:
+        built-in discovery raises ModuleNotFoundError for the unknown service,
+        but entry points pick it up. The gate `if not service:` that previously
+        skipped entry points when --service was passed is removed."""
+        from prowler.lib.check.utils import recover_checks_from_provider
+
+        mock_list_modules.side_effect = ModuleNotFoundError("No built-in service")
+        mock_ep_checks.return_value = [("new_check", "/ext/path")]
+
+        checks = recover_checks_from_provider("aws", service="new_aws_service")
+
+        assert len(checks) == 1
+        assert checks[0][0] == "new_check"
+        mock_ep_checks.assert_called_once_with("aws", "new_aws_service")
+
 
 # ===========================================================================
 # 4. Check Execution
