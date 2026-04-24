@@ -153,8 +153,10 @@ Detailed documentation at https://docs.prowler.com
             and (sys.argv[1] not in ("-v", "--version"))
         ):
             # Since the provider is always the second argument, we are checking if
-            # a flag, starting by "-", is supplied
-            if "-" in sys.argv[1]:
+            # a flag is supplied. Use startswith("-") instead of "in" to avoid
+            # matching external provider names that contain hyphens
+            # (e.g. "local-acme-snowflake").
+            if sys.argv[1].startswith("-"):
                 sys.argv = self.__set_default_provider__(sys.argv)
 
             # Provider aliases mapping
