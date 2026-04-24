@@ -50,7 +50,9 @@ class SecurityCenter(AlibabaCloudService):
                 request.page_size = 100
 
                 while True:
-                    response = self.client.describe_vul_list(request)
+                    response = self._call_with_retries(
+                        self.client.describe_vul_list, request
+                    )
 
                     if response and response.body and response.body.vul_records:
                         vul_records = response.body.vul_records
@@ -112,7 +114,9 @@ class SecurityCenter(AlibabaCloudService):
             request.page_size = 100
 
             while True:
-                response = self.client.describe_cloud_center_instances(request)
+                response = self._call_with_retries(
+                    self.client.describe_cloud_center_instances, request
+                )
 
                 if response and response.body and response.body.instances:
                     instances = response.body.instances
@@ -174,7 +178,9 @@ class SecurityCenter(AlibabaCloudService):
             request.page_size = 100
 
             while True:
-                response = self.client.list_uninstall_aegis_machines(request)
+                response = self._call_with_retries(
+                    self.client.list_uninstall_aegis_machines, request
+                )
 
                 if response and response.body and response.body.machine_list:
                     machines = response.body.machine_list
@@ -221,7 +227,9 @@ class SecurityCenter(AlibabaCloudService):
         try:
             # Get notification configurations
             request = sas_models.DescribeNoticeConfigRequest()
-            response = self.client.describe_notice_config(request)
+            response = self._call_with_retries(
+                self.client.describe_notice_config, request
+            )
 
             if response and response.body and response.body.notice_config_list:
                 notice_configs = response.body.notice_config_list
@@ -253,7 +261,7 @@ class SecurityCenter(AlibabaCloudService):
         try:
             # Get vulnerability scan configuration
             request = sas_models.DescribeVulConfigRequest()
-            response = self.client.describe_vul_config(request)
+            response = self._call_with_retries(self.client.describe_vul_config, request)
 
             if response and response.body and response.body.target_configs:
                 target_configs = response.body.target_configs
@@ -281,7 +289,9 @@ class SecurityCenter(AlibabaCloudService):
         try:
             # Get vulnerability scan level priorities
             request = sas_models.DescribeConcernNecessityRequest()
-            response = self.client.describe_concern_necessity(request)
+            response = self._call_with_retries(
+                self.client.describe_concern_necessity, request
+            )
 
             if response and response.body:
                 concern_necessity = getattr(response.body, "concern_necessity", [])
@@ -314,7 +324,9 @@ class SecurityCenter(AlibabaCloudService):
         try:
             # Get Security Center edition
             request = sas_models.DescribeVersionConfigRequest()
-            response = self.client.describe_version_config(request)
+            response = self._call_with_retries(
+                self.client.describe_version_config, request
+            )
 
             if response and response.body:
                 # Get Version field from response
