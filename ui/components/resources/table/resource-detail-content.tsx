@@ -441,6 +441,7 @@ export const ResourceDetailContent = ({
               {hasMetadata && parsedMetadata && (
                 <QueryCodeEditor
                   ariaLabel="Resource metadata"
+                  visibleLabel={null}
                   language={QUERY_EDITOR_LANGUAGE.JSON}
                   value={JSON.stringify(parsedMetadata, null, 2)}
                   copyValue={JSON.stringify(parsedMetadata, null, 2)}

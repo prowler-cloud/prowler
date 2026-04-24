@@ -652,6 +652,32 @@ describe("ResourceDetailDrawerContent — Fix 5 & 6: Risk section styling", () =
     const riskHeading = headingSpans[0];
     expect(riskHeading.className).not.toContain("text-xs");
   });
+
+  it("should not render a separator under description when status extended is absent", () => {
+    // Given
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={{ ...mockFinding, statusExtended: "" }}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const descriptionLabel = screen.getByText("Description:");
+    const descriptionSection = descriptionLabel.closest("div");
+
+    // Then
+    expect(descriptionSection).not.toHaveClass("border-b");
+    expect(descriptionSection).not.toHaveClass("pb-4");
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -1167,6 +1167,7 @@ function createEditorTheme({
 interface QueryCodeEditorProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
   ariaLabel: string;
+  visibleLabel?: string | null;
   language?: QueryEditorLanguage;
   value: string;
   copyValue?: string;
@@ -1184,6 +1185,7 @@ export const QueryCodeEditor = ({
   id,
   className,
   ariaLabel,
+  visibleLabel = ariaLabel,
   language = QUERY_EDITOR_LANGUAGE.OPEN_CYPHER,
   value,
   copyValue,
@@ -1266,9 +1268,13 @@ export const QueryCodeEditor = ({
       {...props}
     >
       <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex items-center justify-between border-b px-4 py-2">
-        <span className="text-text-neutral-secondary text-xs font-medium">
-          {ariaLabel}
-        </span>
+        {visibleLabel ? (
+          <span className="text-text-neutral-secondary text-xs font-medium">
+            {visibleLabel}
+          </span>
+        ) : (
+          <span aria-hidden="true" />
+        )}
         <div className="flex items-center gap-2">
           {requirementBadge ? (
             <Badge

@@ -30,6 +30,7 @@ describe("resource detail content", () => {
   it("renders resource metadata with the shared code editor JSON highlighting instead of a plain pre block", () => {
     expect(source).toContain("QueryCodeEditor");
     expect(source).toContain("QUERY_EDITOR_LANGUAGE.JSON");
+    expect(source).toContain("visibleLabel={null}");
     expect(source).not.toContain("<pre");
   });
 
