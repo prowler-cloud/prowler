@@ -1,12 +1,7 @@
 "use client";
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
-import {
-  Container,
-  CornerDownRight,
-  ExternalLink,
-  Link,
-} from "lucide-react";
+import { Container, CornerDownRight, ExternalLink, Link } from "lucide-react";
 import { useState } from "react";
 
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
@@ -26,11 +21,11 @@ import {
   InfoTooltip,
 } from "@/components/shadcn/info-field/info-field";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import {
   QUERY_EDITOR_LANGUAGE,
   QueryCodeEditor,
 } from "@/components/shared/query-code-editor";
-import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
