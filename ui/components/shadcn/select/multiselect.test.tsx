@@ -1,4 +1,8 @@
-import { render, screen, within } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -31,6 +35,10 @@ Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
 });
 
 describe("MultiSelect", () => {
+  const currentDir = path.dirname(fileURLToPath(import.meta.url));
+  const filePath = path.join(currentDir, "multiselect.tsx");
+  const source = readFileSync(filePath, "utf8");
+
   beforeEach(() => {
     scrollIntoViewMock.mockClear();
   });
@@ -136,7 +144,55 @@ describe("MultiSelect", () => {
     await user.click(screen.getByRole("combobox"));
     await user.type(screen.getByPlaceholderText("Search accounts..."), "aws");
 
-    expect(scrollIntoViewMock).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(scrollIntoViewMock).toHaveBeenCalled();
+    });
+  });
+
+  it("keeps MultiSelectContent free of direct useEffect calls", () => {
+    const multiSelectContentSource = source.slice(
+      source.indexOf("export function MultiSelectContent"),
+      source.indexOf("export function MultiSelectItem"),
+    );
+
+    expect(multiSelectContentSource).not.toContain("useEffect(");
+  });
+
+  it("clears the search input when reopening the popover", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent
+          search={{
+            placeholder: "Search accounts...",
+            emptyMessage: "No accounts found.",
+          }}
+        >
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+
+    const searchInput = screen.getByPlaceholderText(
+      "Search accounts...",
+    ) as HTMLInputElement;
+
+    await user.type(searchInput, "aws");
+    expect(searchInput).toHaveValue("aws");
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByPlaceholderText("Search accounts...")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("combobox"));
+
+    expect(screen.getByPlaceholderText("Search accounts...")).toHaveValue("");
   });
 
   it("uses a normalized dropdown width instead of growing with the longest item", async () => {

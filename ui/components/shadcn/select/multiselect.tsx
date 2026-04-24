@@ -283,9 +283,7 @@ export function MultiSelectContent({
   children: ReactNode;
   width?: "default" | "wide";
 } & Omit<ComponentPropsWithoutRef<typeof Command>, "children">) {
-  const { open } = useMultiSelectContext();
   const canSearch = typeof search === "object" ? true : search;
-  const [searchValue, setSearchValue] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
 
   const widthClasses =
@@ -293,22 +291,19 @@ export function MultiSelectContent({
       ? "w-[min(max(var(--radix-popover-trigger-width),24rem),calc(100vw-2rem))] max-w-[32rem]"
       : "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))] max-w-[24rem]";
 
-  useEffect(() => {
-    if (open) return;
-    setSearchValue("");
-  }, [open]);
-
-  useEffect(() => {
+  function handleSearchValueChange(searchValue: string) {
     if (!canSearch || !searchValue.trim()) return;
 
-    const firstVisibleItem = listRef.current?.querySelector<HTMLElement>(
-      '[data-slot="multiselect-item"]:not([hidden])',
-    );
+    requestAnimationFrame(() => {
+      const firstVisibleItem = listRef.current?.querySelector<HTMLElement>(
+        '[data-slot="multiselect-item"]:not([hidden])',
+      );
 
-    firstVisibleItem?.scrollIntoView({
-      block: "nearest",
+      firstVisibleItem?.scrollIntoView({
+        block: "nearest",
+      });
     });
-  }, [canSearch, searchValue, children]);
+  }
 
   return (
     <>
@@ -332,8 +327,7 @@ export function MultiSelectContent({
                 typeof search === "object" ? search.placeholder : undefined
               }
               className="text-bg-button-secondary placeholder:text-bg-button-secondary"
-              value={searchValue}
-              onValueChange={setSearchValue}
+              onValueChange={handleSearchValueChange}
             />
           ) : (
             <button className="sr-only" />
