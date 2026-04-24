@@ -36,6 +36,7 @@ class Entra(M365Service):
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
         authentication_method_configurations (dict): Dictionary of authentication method configurations.
+        service_principals (dict): Dictionary of service principals with credentials and role assignments.
     """
 
     def __init__(self, provider: M365Provider):
@@ -83,6 +84,7 @@ class Entra(M365Service):
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
+                self._get_service_principals(),
             )
         )
 
@@ -98,6 +100,7 @@ class Entra(M365Service):
         self.authentication_method_configurations: Dict[
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
+        self.service_principals: Dict[str, "ServicePrincipal"] = attributes[10]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -1054,6 +1057,88 @@ OAuthAppInfo
             )
         return authentication_method_configurations
 
+    async def _get_service_principals(self):
+        """Retrieve service principals with their credentials and directory role assignments.
+
+        Fetches all service principals from Microsoft Graph API, including their
+        password credentials (client secrets) and key credentials (certificates).
+        Then maps permanent directory role assignments to each service principal.
+
+        Returns:
+            Dict[str, ServicePrincipal]: Dictionary of service principals keyed by ID.
+        """
+        logger.info("Entra - Getting service principals...")
+        service_principals = {}
+        try:
+            sp_response = await self.client.service_principals.get()
+
+            # Build a map of service principal IDs to their data
+            while sp_response:
+                for sp in getattr(sp_response, "value", []) or []:
+                    password_credentials = []
+                    for cred in getattr(sp, "password_credentials", []) or []:
+                        password_credentials.append(
+                            PasswordCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                            )
+                        )
+
+                    key_credentials = []
+                    for cred in getattr(sp, "key_credentials", []) or []:
+                        key_credentials.append(
+                            KeyCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                            )
+                        )
+
+                    service_principals[sp.id] = ServicePrincipal(
+                        id=sp.id,
+                        name=getattr(sp, "display_name", "") or "",
+                        app_id=getattr(sp, "app_id", "") or "",
+                        password_credentials=password_credentials,
+                        key_credentials=key_credentials,
+                    )
+
+                next_link = getattr(sp_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                sp_response = await self.client.service_principals.with_url(
+                    next_link
+                ).get()
+
+            # Fetch directory role assignments to identify permanent Tier 0 assignments
+            directory_roles = await self.client.directory_roles.get()
+
+            async def fetch_role_members(directory_role):
+                """Fetch members for a given directory role."""
+                members_response = (
+                    await self.client.directory_roles.by_directory_role_id(
+                        directory_role.id
+                    ).members.get()
+                )
+                return directory_role.role_template_id, members_response.value
+
+            tasks = [
+                fetch_role_members(role)
+                for role in getattr(directory_roles, "value", []) or []
+            ]
+            roles_members_list = await asyncio.gather(*tasks)
+
+            for role_template_id, members in roles_members_list:
+                for member in members:
+                    if member.id in service_principals:
+                        service_principals[
+                            member.id
+                        ].directory_role_template_ids.append(role_template_id)
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return service_principals
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -1481,3 +1566,57 @@ class OAuthApp(BaseModel):
     is_admin_consented: bool = False
     last_used_time: Optional[str] = None
     app_origin: str = ""
+
+
+class PasswordCredential(BaseModel):
+    """Model representing a password credential (client secret) on a service principal.
+
+    Attributes:
+        key_id: The unique identifier of the credential.
+        display_name: The optional display name of the credential.
+    """
+
+    key_id: str
+    display_name: Optional[str] = None
+
+
+class KeyCredential(BaseModel):
+    """Model representing a key credential (certificate) on a service principal.
+
+    Attributes:
+        key_id: The unique identifier of the credential.
+        display_name: The optional display name of the credential.
+    """
+
+    key_id: str
+    display_name: Optional[str] = None
+
+
+# Control Plane / Tier 0 role template IDs per EntraOps classification.
+# These roles grant the highest level of privilege in a Microsoft Entra tenant.
+TIER_0_ROLE_TEMPLATE_IDS = {
+    "62e90394-69f5-4237-9190-012177145e10",  # Global Administrator
+    "e8611ab8-c189-46e8-94e1-60213ab1f814",  # Privileged Role Administrator
+    "7be44c8a-adaf-4e2a-84d6-ab2649e08a13",  # Privileged Authentication Administrator
+}
+
+
+class ServicePrincipal(BaseModel):
+    """Model representing a Microsoft Entra ID service principal.
+
+    Attributes:
+        id: The service principal's unique identifier.
+        name: The service principal's display name.
+        app_id: The application ID associated with the service principal.
+        password_credentials: List of password credentials (client secrets).
+        key_credentials: List of key credentials (certificates).
+        directory_role_template_ids: List of directory role template IDs permanently
+            assigned to this service principal.
+    """
+
+    id: str
+    name: str
+    app_id: str = ""
+    password_credentials: List[PasswordCredential] = []
+    key_credentials: List[KeyCredential] = []
+    directory_role_template_ids: List[str] = []
