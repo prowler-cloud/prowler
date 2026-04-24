@@ -75,5 +75,28 @@ describe("DataTable", () => {
         tableContainerText.indexOf("7 Total Entries"),
       );
     });
+
+    it("should stack the right content below search on narrow screens", () => {
+      // Given
+      render(
+        <DataTable
+          columns={columns}
+          data={[{ name: "Finding A" }]}
+          metadata={metadata}
+          showSearch
+          toolbarRightContent={<span>Include muted findings</span>}
+        />,
+      );
+
+      // When
+      const toolbar = screen.getByTestId("data-table-toolbar");
+      const rightContent = screen.getByTestId("data-table-toolbar-right");
+
+      // Then
+      expect(toolbar).toHaveClass("flex-col");
+      expect(toolbar).toHaveClass("md:flex-row");
+      expect(rightContent).toHaveClass("w-full");
+      expect(rightContent).toHaveClass("md:w-auto");
+    });
   });
 });

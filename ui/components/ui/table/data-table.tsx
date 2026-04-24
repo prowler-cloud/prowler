@@ -244,8 +244,11 @@ export function DataTable<TData, TValue>({
       {header && <div className="w-full">{header}</div>}
       {/* Table Toolbar */}
       {showToolbar && (
-        <div className="flex items-center justify-between">
-          <div>
+        <div
+          data-testid="data-table-toolbar"
+          className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between"
+        >
+          <div className="w-full md:w-auto">
             {showSearch && (
               <DataTableSearch
                 paramPrefix={paramPrefix}
@@ -257,7 +260,10 @@ export function DataTable<TData, TValue>({
               />
             )}
           </div>
-          <div className="ml-auto flex items-center gap-4">
+          <div
+            data-testid="data-table-toolbar-right"
+            className="flex w-full flex-col items-start gap-2 md:ml-auto md:w-auto md:flex-row md:items-center md:gap-4"
+          >
             {toolbarRightContent}
             {metadata && (
               <span className="text-text-neutral-secondary text-sm whitespace-nowrap">
