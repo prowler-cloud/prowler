@@ -116,6 +116,35 @@ class FakeExternalProvider(Provider):
         pass
 
 
+class FakeToolWrapperProvider(Provider):
+    """External provider that declares itself a tool wrapper."""
+
+    _type = "faketoolwrapper"
+    is_external_tool_provider = True
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def identity(self):
+        return MagicMock()
+
+    @property
+    def session(self):
+        return MagicMock()
+
+    @property
+    def audit_config(self):
+        return {}
+
+    def setup_session(self):
+        return MagicMock()
+
+    def print_credentials(self):
+        pass
+
+
 class FakeProviderNoHelpText(Provider):
     """Provider without _cli_help_text."""
 
@@ -263,6 +292,57 @@ class TestProviderDiscovery:
         help_text = Provider.get_providers_help_text()
 
         assert help_text["nohelptext"] == ""
+
+
+class TestIsToolWrapperProvider:
+    """Tests for Provider.is_tool_wrapper_provider — the helper that combines the
+    built-in EXTERNAL_TOOL_PROVIDERS frozenset with the is_external_tool_provider
+    class attribute of entry-point providers."""
+
+    def test_returns_true_for_builtin_tool_wrappers(self):
+        # iac/llm/image are in the EXTERNAL_TOOL_PROVIDERS frozenset (fast path)
+        assert Provider.is_tool_wrapper_provider("iac") is True
+        assert Provider.is_tool_wrapper_provider("llm") is True
+        assert Provider.is_tool_wrapper_provider("image") is True
+
+    def test_returns_false_for_regular_builtin_providers(self):
+        # Regular built-ins must not be classified as tool wrappers
+        assert Provider.is_tool_wrapper_provider("aws") is False
+        assert Provider.is_tool_wrapper_provider("gcp") is False
+        assert Provider.is_tool_wrapper_provider("github") is False
+
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    def test_returns_true_for_external_provider_declaring_flag(self, mock_ep):
+        # External plugin explicitly declares is_external_tool_provider = True
+        mock_ep.return_value = [
+            _make_entry_point("faketoolwrapper", "pkg:Cls", "prowler.providers"),
+        ]
+        mock_ep.return_value[0].load.return_value = FakeToolWrapperProvider
+
+        assert Provider.is_tool_wrapper_provider("faketoolwrapper") is True
+
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    def test_returns_false_for_external_provider_without_flag(self, mock_ep):
+        # External plugin without the flag (default False) is treated as regular
+        mock_ep.return_value = [
+            _make_entry_point("fakeexternal", "pkg:Cls", "prowler.providers"),
+        ]
+        mock_ep.return_value[0].load.return_value = FakeExternalProvider
+
+        assert Provider.is_tool_wrapper_provider("fakeexternal") is False
+
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    def test_returns_false_for_unknown_provider(self, mock_ep):
+        mock_ep.return_value = []
+
+        assert Provider.is_tool_wrapper_provider("does-not-exist") is False
+
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    def test_returns_false_for_none_provider(self, mock_ep):
+        # Pydantic validators may pass None when values.get("Provider") is missing
+        mock_ep.return_value = []
+
+        assert Provider.is_tool_wrapper_provider(None) is False
 
     @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
     def test_load_ep_provider_handles_load_exception(self, mock_ep):

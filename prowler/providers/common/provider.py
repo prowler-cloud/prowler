@@ -8,7 +8,10 @@ from argparse import Namespace
 from importlib import import_module
 from typing import Any, Optional
 
-from prowler.config.config import load_and_validate_config_file
+from prowler.config.config import (
+    EXTERNAL_TOOL_PROVIDERS,
+    load_and_validate_config_file,
+)
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 
@@ -223,10 +226,13 @@ class Provider(ABC):
             f"{self.__class__.__name__} has not implemented display_compliance_table()"
         )
 
-    @property
-    def is_external_tool_provider(self) -> bool:
-        """True for providers that delegate scanning to an external tool."""
-        return False
+    # Class-level flag: True for providers that delegate scanning to an external
+    # tool (e.g. Trivy, promptfoo) and bypass standard check/service loading and
+    # metadata validation. Subclasses override as `is_external_tool_provider = True`.
+    # Kept as a class attribute (not a property) so it can be read from the class
+    # without instantiation — the metadata validators in lib.check.models need to
+    # decide whether to relax validation before any provider instance exists.
+    is_external_tool_provider: bool = False
 
     # --- End dynamic provider contract methods ---
 
@@ -531,6 +537,21 @@ class Provider(ABC):
         for ep in importlib.metadata.entry_points(group="prowler.providers"):
             providers.add(ep.name)
         return sorted(providers)
+
+    @staticmethod
+    def is_tool_wrapper_provider(provider: str) -> bool:
+        """Return True if the provider delegates scanning to an external tool.
+
+        Combines the built-in EXTERNAL_TOOL_PROVIDERS frozenset (fast path for
+        iac/llm/image) with the `is_external_tool_provider` class attribute of
+        external plug-in providers registered via entry points. This is the
+        single source of truth consulted by the execution flow and the
+        CheckMetadata validators.
+        """
+        if provider in EXTERNAL_TOOL_PROVIDERS:
+            return True
+        ep_cls = Provider._load_ep_provider(provider)
+        return bool(ep_cls and getattr(ep_cls, "is_external_tool_provider", False))
 
     @staticmethod
     def _load_ep_provider(name: str):

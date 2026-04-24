@@ -10,7 +10,6 @@ from colorama import Fore, Style
 from colorama import init as colorama_init
 
 from prowler.config.config import (
-    EXTERNAL_TOOL_PROVIDERS,
     cloud_api_base_url,
     csv_file_suffix,
     get_available_compliance_frameworks,
@@ -235,7 +234,7 @@ def prowler():
     logger.debug("Loading compliance frameworks from .json files")
 
     # Skip compliance frameworks for external-tool providers
-    if provider not in EXTERNAL_TOOL_PROVIDERS:
+    if not Provider.is_tool_wrapper_provider(provider):
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -300,7 +299,7 @@ def prowler():
         sys.exit()
 
     # Skip service and check loading for external-tool providers
-    if provider not in EXTERNAL_TOOL_PROVIDERS:
+    if not Provider.is_tool_wrapper_provider(provider):
         # Import custom checks from folder
         if checks_folder:
             custom_checks = parse_checks_from_folder(global_provider, checks_folder)
@@ -423,7 +422,7 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider in EXTERNAL_TOOL_PROVIDERS:
+    if Provider.is_tool_wrapper_provider(provider):
         # For external-tool providers, run the scan directly
         if provider == "llm":
 

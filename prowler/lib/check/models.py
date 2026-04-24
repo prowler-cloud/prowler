@@ -11,7 +11,6 @@ from typing import Any, Dict, Optional, Set
 from pydantic.v1 import BaseModel, Field, ValidationError, validator
 from pydantic.v1.error_wrappers import ErrorWrapper
 
-from prowler.config.config import EXTERNAL_TOOL_PROVIDERS
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
@@ -256,7 +255,7 @@ class CheckMetadata(BaseModel):
             )
         if (
             value_lower not in VALID_CATEGORIES
-            and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS
+            and not ProviderABC.is_tool_wrapper_provider(values.get("Provider"))
         ):
             raise ValueError(
                 f"Invalid category: '{value_lower}'. Must be one of: {', '.join(sorted(VALID_CATEGORIES))}."
@@ -285,7 +284,9 @@ class CheckMetadata(BaseModel):
             raise ValueError("ServiceName must be a non-empty string")
 
         check_id = values.get("CheckID")
-        if check_id and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+        if check_id and not ProviderABC.is_tool_wrapper_provider(
+            values.get("Provider")
+        ):
             service_from_check_id = check_id.split("_")[0]
             if service_name != service_from_check_id:
                 raise ValueError(
@@ -301,7 +302,9 @@ class CheckMetadata(BaseModel):
         if not check_id:
             raise ValueError("CheckID must be a non-empty string")
 
-        if check_id and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+        if check_id and not ProviderABC.is_tool_wrapper_provider(
+            values.get("Provider")
+        ):
             if "-" in check_id:
                 raise ValueError(
                     f"CheckID {check_id} contains a hyphen, which is not allowed"
@@ -311,7 +314,7 @@ class CheckMetadata(BaseModel):
 
     @validator("CheckTitle", pre=True, always=True)
     def validate_check_title(cls, check_title, values):
-        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+        if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             if len(check_title) > 150:
                 raise ValueError(
                     f"CheckTitle must not exceed 150 characters, got {len(check_title)} characters"
@@ -324,13 +327,15 @@ class CheckMetadata(BaseModel):
 
     @validator("RelatedUrl", pre=True, always=True)
     def validate_related_url(cls, related_url, values):
-        if related_url and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+        if related_url and not ProviderABC.is_tool_wrapper_provider(
+            values.get("Provider")
+        ):
             raise ValueError("RelatedUrl must be empty. This field is deprecated.")
         return related_url
 
     @validator("Remediation")
     def validate_recommendation_url(cls, remediation, values):
-        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+        if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             url = remediation.Recommendation.Url
             if url and not url.startswith("https://hub.prowler.com/"):
                 raise ValueError(
@@ -343,7 +348,7 @@ class CheckMetadata(BaseModel):
         provider = values.get("Provider", "").lower()
 
         # Non-AWS providers must have an empty CheckType list
-        if provider != "aws" and provider not in EXTERNAL_TOOL_PROVIDERS:
+        if provider != "aws" and not ProviderABC.is_tool_wrapper_provider(provider):
             if check_type:
                 raise ValueError(
                     f"CheckType must be empty for non-AWS providers. Got {check_type} for provider '{provider}'."
@@ -369,7 +374,7 @@ class CheckMetadata(BaseModel):
 
     @validator("Description", pre=True, always=True)
     def validate_description(cls, description, values):
-        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+        if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             if len(description) > 400:
                 raise ValueError(
                     f"Description must not exceed 400 characters, got {len(description)} characters"
@@ -378,7 +383,7 @@ class CheckMetadata(BaseModel):
 
     @validator("Risk", pre=True, always=True)
     def validate_risk(cls, risk, values):
-        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+        if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             if len(risk) > 400:
                 raise ValueError(
                     f"Risk must not exceed 400 characters, got {len(risk)} characters"
