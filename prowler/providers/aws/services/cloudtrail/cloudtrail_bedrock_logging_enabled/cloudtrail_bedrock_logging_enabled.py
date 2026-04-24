@@ -24,8 +24,15 @@ class cloudtrail_bedrock_logging_enabled(Check):
             "AWS::Bedrock::AgentAlias",
             "AWS::Bedrock::FlowAlias",
             "AWS::Bedrock::Guardrail",
+            "AWS::Bedrock::InlineAgent",
             "AWS::Bedrock::KnowledgeBase",
             "AWS::Bedrock::Model",
+            "AWS::Bedrock::Prompt",
+        }
+    )
+    BEDROCK_EVENT_SOURCES = frozenset(
+        {
+            "bedrock.amazonaws.com",
         }
     )
 
@@ -76,24 +83,80 @@ class cloudtrail_bedrock_logging_enabled(Check):
         if not data_event.is_advanced:
             # Classic event selectors: management events include Bedrock
             # control-plane API calls when IncludeManagementEvents is True.
-            return (
-                data_event.event_selector.get("IncludeManagementEvents", False)
-                and data_event.event_selector.get("ReadWriteType") == "All"
-            )
+            return data_event.event_selector.get(
+                "IncludeManagementEvents", False
+            ) and data_event.event_selector.get("ReadWriteType") in ("All", "WriteOnly")
         else:
             # Advanced event selectors: check for management events selector
             # or Bedrock-specific data event resource types.
             field_selectors = data_event.event_selector.get("FieldSelectors", [])
 
-            for field in field_selectors:
-                # Management events selector captures Bedrock control-plane calls.
-                if field.get("Field") == "eventCategory" and "Management" in field.get(
-                    "Equals", []
+            has_management_events = any(
+                field.get("Field") == "eventCategory"
+                and "Management" in field.get("Equals", [])
+                for field in field_selectors
+            )
+            if has_management_events:
+                has_read_only_restriction = any(
+                    field.get("Field") == "readOnly" and field.get("Equals") == ["true"]
+                    for field in field_selectors
+                )
+                if (
+                    not has_read_only_restriction
+                    and self._logs_bedrock_management_events(field_selectors)
                 ):
                     return True
+
+            for field in field_selectors:
                 # Advanced data event selectors targeting Bedrock resources.
                 if field.get("Field") == "resources.type":
                     for value in field.get("Equals", []):
                         if value in self.BEDROCK_RESOURCE_TYPES:
                             return True
             return False
+
+    def _logs_bedrock_management_events(self, field_selectors: list[dict]) -> bool:
+        """Check whether advanced management selectors include Bedrock sources."""
+        event_source_selectors = [
+            field for field in field_selectors if field.get("Field") == "eventSource"
+        ]
+        if not event_source_selectors:
+            return True
+
+        return any(
+            all(
+                self._field_selector_matches_value(event_source, selector)
+                for selector in event_source_selectors
+            )
+            for event_source in self.BEDROCK_EVENT_SOURCES
+        )
+
+    @staticmethod
+    def _field_selector_matches_value(value: str, selector: dict) -> bool:
+        """Evaluate a CloudTrail advanced field selector against a candidate value."""
+        conditions = []
+
+        if "Equals" in selector:
+            conditions.append(value in selector["Equals"])
+        if "NotEquals" in selector:
+            conditions.append(value not in selector["NotEquals"])
+        if "StartsWith" in selector:
+            conditions.append(
+                any(value.startswith(prefix) for prefix in selector["StartsWith"])
+            )
+        if "NotStartsWith" in selector:
+            conditions.append(
+                all(
+                    not value.startswith(prefix) for prefix in selector["NotStartsWith"]
+                )
+            )
+        if "EndsWith" in selector:
+            conditions.append(
+                any(value.endswith(suffix) for suffix in selector["EndsWith"])
+            )
+        if "NotEndsWith" in selector:
+            conditions.append(
+                all(not value.endswith(suffix) for suffix in selector["NotEndsWith"])
+            )
+
+        return all(conditions) if conditions else True

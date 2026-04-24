@@ -1377,7 +1377,6 @@
         "wafv2_webacl_logging_enabled",
         "wafv2_webacl_rule_logging_enabled",
         "cloudfront_distributions_logging_enabled",
-        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_kms_encryption_enabled",
         "cloudtrail_log_file_validation_enabled",

@@ -1524,7 +1524,6 @@
         "cloudtrail_threat_detection_enumeration",
         "cloudtrail_threat_detection_privilege_escalation",
         "cloudtrail_threat_detection_llm_jacking",
-        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_insights_exist",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",

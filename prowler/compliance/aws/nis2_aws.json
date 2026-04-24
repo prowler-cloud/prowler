@@ -724,7 +724,6 @@
       "Id": "3.4.2.c",
       "Description": "review the appropriate logs for the purposes of event assessment and classification;",
       "Checks": [
-        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_cloudwatch_logging_enabled",

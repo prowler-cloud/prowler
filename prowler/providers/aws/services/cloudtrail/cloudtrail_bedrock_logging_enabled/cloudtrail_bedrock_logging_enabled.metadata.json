@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "cloudtrail_bedrock_logging_enabled",
-  "CheckTitle": "CloudTrail monitors Amazon Bedrock API calls for security auditing",
+  "CheckTitle": "CloudTrail logs Amazon Bedrock API calls for security auditing",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
@@ -11,7 +11,7 @@
   "Severity": "medium",
   "ResourceType": "AwsCloudTrailTrail",
   "ResourceGroup": "monitoring",
-  "Description": "**CloudTrail trails** log **Amazon Bedrock API calls** through management events or advanced event selectors targeting Bedrock resources.\n\nThis captures model invocations, guardrail usage, and configuration changes for audit and security monitoring of generative AI workloads.",
+  "Description": "**At least one actively logging CloudTrail trail** records **Amazon Bedrock API calls** through management events or advanced event selectors targeting Bedrock resources.\n\nThis captures model invocations, guardrail usage, and configuration changes for audit and security monitoring of generative AI workloads.",
   "Risk": "Without CloudTrail logging for Bedrock, **model invocations** and configuration changes are invisible. Attackers could abuse foundation models for unauthorized content generation or data extraction (**LLM jacking**) without leaving an audit trail, undermining **forensics** and incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -20,13 +20,13 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws cloudtrail put-event-selectors --trail-name <example_resource_name> --advanced-event-selectors '[{\"Name\":\"Bedrock data events\",\"FieldSelectors\":[{\"Field\":\"eventCategory\",\"Equals\":[\"Data\"]},{\"Field\":\"resources.type\",\"Equals\":[\"AWS::Bedrock::Model\"]}]}]'",
-      "NativeIaC": "```yaml\n# CloudFormation: enable Bedrock data event logging on a trail\nResources:\n  ExampleTrail:\n    Type: AWS::CloudTrail::Trail\n    Properties:\n      TrailName: <example_resource_name>\n      S3BucketName: <example_resource_name>\n      IsLogging: true\n      AdvancedEventSelectors:\n        - Name: Bedrock data events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Data\n            - Field: resources.type          # CRITICAL: target Bedrock resources\n              Equals:\n                - AWS::Bedrock::Model\n```",
-      "Other": "1. In the AWS Console, open CloudTrail and select Trails\n2. Open your trail and go to the Data events section\n3. Click Edit and add a data event type for Bedrock\n4. Select the Bedrock resource types you want to log\n5. Save changes",
-      "Terraform": "```hcl\n# Terraform: enable Bedrock data event logging on a trail\nresource \"aws_cloudtrail\" \"example_resource\" {\n  name           = \"example_resource\"\n  s3_bucket_name = \"example_resource\"\n\n  advanced_event_selector {\n    name = \"Bedrock data events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Data\"]\n    }\n    field_selector {\n      field  = \"resources.type\"                # CRITICAL: target Bedrock resources\n      equals = [\"AWS::Bedrock::Model\"]\n    }\n  }\n}\n```"
+      "CLI": "aws cloudtrail put-event-selectors --trail-name <example_resource_name> --advanced-event-selectors '[{\"Name\":\"Bedrock data events\",\"FieldSelectors\":[{\"Field\":\"eventCategory\",\"Equals\":[\"Data\"]},{\"Field\":\"resources.type\",\"Equals\":[\"AWS::Bedrock::Model\",\"AWS::Bedrock::Guardrail\",\"AWS::Bedrock::AgentAlias\",\"AWS::Bedrock::FlowAlias\",\"AWS::Bedrock::InlineAgent\",\"AWS::Bedrock::KnowledgeBase\",\"AWS::Bedrock::Prompt\"]}]}]'",
+      "NativeIaC": "```yaml\n# CloudFormation: enable Bedrock data event logging on an actively logging trail\nResources:\n  ExampleTrail:\n    Type: AWS::CloudTrail::Trail\n    Properties:\n      TrailName: <example_resource_name>\n      S3BucketName: <example_resource_name>\n      IsLogging: true\n      AdvancedEventSelectors:\n        - Name: Bedrock data events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Data\n            - Field: resources.type          # CRITICAL: target Bedrock resources\n              Equals:\n                - AWS::Bedrock::Model\n                - AWS::Bedrock::Guardrail\n                - AWS::Bedrock::AgentAlias\n                - AWS::Bedrock::FlowAlias\n                - AWS::Bedrock::InlineAgent\n                - AWS::Bedrock::KnowledgeBase\n                - AWS::Bedrock::Prompt\n```",
+      "Other": "1. In the AWS Console, open CloudTrail and select a trail that is actively logging\n2. Edit the trail and either keep Management events enabled or add Bedrock data event selectors\n3. If using data events, select the Bedrock resource types you want to log\n4. Save changes and confirm the trail remains in logging state",
+      "Terraform": "```hcl\n# Terraform: enable Bedrock data event logging on an actively logging trail\nresource \"aws_cloudtrail\" \"example_resource\" {\n  name           = \"example_resource\"\n  s3_bucket_name = \"example_resource\"\n\n  advanced_event_selector {\n    name = \"Bedrock data events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Data\"]\n    }\n    field_selector {\n      field  = \"resources.type\"                # CRITICAL: target Bedrock resources\n      equals = [\"AWS::Bedrock::Model\", \"AWS::Bedrock::Guardrail\", \"AWS::Bedrock::AgentAlias\", \"AWS::Bedrock::FlowAlias\", \"AWS::Bedrock::InlineAgent\", \"AWS::Bedrock::KnowledgeBase\", \"AWS::Bedrock::Prompt\"]\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable CloudTrail logging for Amazon Bedrock by configuring **management events** or **advanced event selectors** targeting Bedrock resource types. Use a multi-region trail and centralize logs in an encrypted bucket to support **defense in depth** and forensic readiness for AI workloads.",
+      "Text": "Enable CloudTrail logging for Amazon Bedrock on **at least one actively logging trail** by configuring **management events** or **advanced event selectors** targeting Bedrock resource types.\n\nFor broader region coverage, pair this control with a separate multi-region CloudTrail check. Centralize logs in an encrypted bucket or CloudWatch Logs to support **defense in depth** and forensic readiness for AI workloads.",
       "Url": "https://hub.prowler.com/check/cloudtrail_bedrock_logging_enabled"
     }
   },
@@ -40,5 +40,5 @@
     "cloudtrail_multi_region_enabled_logging_management_events",
     "bedrock_model_invocation_logging_enabled"
   ],
-  "Notes": ""
+  "Notes": "This check verifies that at least one actively logging trail records Bedrock API calls. It does not require multi-region coverage; evaluate that separately with related CloudTrail controls."
 }
