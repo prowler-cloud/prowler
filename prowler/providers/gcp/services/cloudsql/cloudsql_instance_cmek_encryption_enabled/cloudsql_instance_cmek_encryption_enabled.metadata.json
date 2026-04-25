@@ -10,7 +10,7 @@
   "ResourceType": "sqladmin.googleapis.com/Instance",
   "Description": "Ensures that Cloud SQL instances use customer-managed encryption keys (CMEK) via Cloud KMS rather than Google-managed default keys. CMEK gives the organization full control over the key lifecycle, including the ability to revoke access immediately.",
   "Risk": "Without CMEK, Google holds sole control of the encryption keys. If the organization must demonstrate key custody, meet data residency requirements, or immediately revoke access to data (e.g., upon contract termination), Google-managed keys are insufficient. This may violate ISMS-P 2.7.1 and regulatory requirements for sensitive or personal data.",
-  "RelatedUrl": "https://cloud.google.com/sql/docs/mysql/cmek",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/sql/docs/postgres/cmek",
     "https://cloud.google.com/kms/docs/resource-hierarchy"
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "For instances storing personal or sensitive data, create new Cloud SQL instances with CMEK using a Cloud KMS key in the same region. Ensure the Cloud SQL service account has the roles/cloudkms.cryptoKeyEncrypterDecrypter role on the key, and enable key rotation per your policy.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/cmek"
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_cmek_encryption_enabled"
     }
   },
   "Categories": [

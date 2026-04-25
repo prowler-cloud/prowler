@@ -10,7 +10,7 @@
   "ResourceType": "cloudfunctions.googleapis.com/Function",
   "Description": "Ensures that no Cloud Function has IAM bindings granting invocation rights to 'allUsers' or 'allAuthenticatedUsers'. Functions should only be callable by explicitly authorized identities or services.",
   "Risk": "Publicly accessible Cloud Functions can be invoked by any internet user or any authenticated Google account. This exposes business logic, enables abuse (e.g., denial-of-wallet via high invocation costs), and can lead to unauthorized data access or code execution if the function processes sensitive operations.",
-  "RelatedUrl": "https://cloud.google.com/functions/docs/securing/managing-access-iam",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/functions/docs/securing/function-identity",
     "https://cloud.google.com/iam/docs/overview"
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Remove all IAM bindings that grant 'allUsers' or 'allAuthenticatedUsers' invocation access to Cloud Functions. Use service-account-based authentication for internal callers, and Cloud Endpoints or API Gateway with authentication for externally exposed functions.",
-      "Url": "https://cloud.google.com/functions/docs/securing/managing-access-iam"
+      "Url": "https://hub.prowler.com/check/cloudfunction_function_not_publicly_accessible"
     }
   },
   "Categories": [

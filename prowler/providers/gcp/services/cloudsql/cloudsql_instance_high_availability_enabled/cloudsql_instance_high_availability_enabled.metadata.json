@@ -10,7 +10,7 @@
   "ResourceType": "sqladmin.googleapis.com/Instance",
   "Description": "Ensures that Cloud SQL instances have high availability configured by setting availabilityType to REGIONAL. A REGIONAL instance maintains a standby replica in a different zone within the same region and automatically fails over on zone-level outages.",
   "Risk": "Instances with ZONAL availability have no standby replica. A zone-level outage will cause database downtime until manual recovery, violating availability requirements and potentially breaching SLAs and ISMS-P 2.12.1 disaster preparedness controls.",
-  "RelatedUrl": "https://cloud.google.com/sql/docs/mysql/high-availability",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/sql/docs/postgres/high-availability",
     "https://cloud.google.com/sql/docs/sqlserver/high-availability"
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Set availabilityType to REGIONAL for all production Cloud SQL instances. This creates a standby replica in a different zone and enables automatic failover, reducing RTO in the event of a zone outage.",
-      "Url": "https://cloud.google.com/sql/docs/mysql/high-availability"
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_high_availability_enabled"
     }
   },
   "Categories": [

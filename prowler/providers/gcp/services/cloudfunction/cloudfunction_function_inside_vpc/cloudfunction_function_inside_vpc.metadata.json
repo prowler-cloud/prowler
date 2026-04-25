@@ -10,7 +10,7 @@
   "ResourceType": "cloudfunctions.googleapis.com/Function",
   "Description": "Ensures that Cloud Functions are configured with a VPC connector so that egress traffic is routed through a private VPC network rather than the public internet. Functions without a VPC connector communicate with internal resources over public routes.",
   "Risk": "Cloud Functions without a VPC connector cannot reach internal GCP resources (e.g., Cloud SQL, Memorystore, GKE) privately and must expose those resources to the internet or use public IPs. This increases the attack surface and violates network segmentation controls required by security frameworks.",
-  "RelatedUrl": "https://cloud.google.com/vpc/docs/configure-serverless-vpc-access",
+  "RelatedUrl": "",
   "AdditionalURLs": [
     "https://cloud.google.com/run/docs/configuring/vpc-connectors",
     "https://cloud.google.com/vpc/docs/serverless-vpc-access"
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Attach a Serverless VPC Access connector to every Cloud Function that needs to reach internal GCP resources. Set egress to route all traffic through the VPC to avoid accidental public exposure of internal services.",
-      "Url": "https://cloud.google.com/vpc/docs/configure-serverless-vpc-access"
+      "Url": "https://hub.prowler.com/check/cloudfunction_function_inside_vpc"
     }
   },
   "Categories": [
