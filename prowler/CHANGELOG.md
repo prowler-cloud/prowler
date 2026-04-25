@@ -31,6 +31,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `--repo-list-file` CLI flag for GitHub provider to load repositories from a file [(#10501)](https://github.com/prowler-cloud/prowler/pull/10501)
 
+### 🚀 Added
+
+- `entra_conditional_access_policy_p1_license_utilization` check for m365 provider [(#10783)](https://github.com/prowler-cloud/prowler/pull/10783)
+
 ### 🔄 Changed
 
 - `msgraph-sdk` from 1.23.0 to 1.55.0 and `azure-mgmt-resource` from 23.3.0 to 24.0.0, removing `marshmallow` as is a transitively dev dependency [(#10733)](https://github.com/prowler-cloud/prowler/pull/10733)

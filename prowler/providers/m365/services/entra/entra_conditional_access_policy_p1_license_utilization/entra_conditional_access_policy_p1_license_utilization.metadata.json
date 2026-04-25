@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_p1_license_utilization",
+  "CheckTitle": "P1 license entitlements ensure sufficient coverage for Conditional Access users",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Verifies that the number of entitled Azure AD Premium **P1 licenses** is sufficient to cover all users actively utilizing **Conditional Access**. Unlicensed Conditional Access usage may violate Microsoft licensing terms and indicates gaps in license governance.",
+  "Risk": "When more users consume Conditional Access than the organization has P1 licenses for, it creates a **licensing compliance gap**. Microsoft may flag the tenant during audits, leading to retroactive charges or service restrictions. Additionally, unlicensed users may lose Conditional Access protection if Microsoft enforces entitlements.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
+    "https://learn.microsoft.com/en-us/entra/fundamentals/concept-license-utilization"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the **Microsoft Entra admin center** (https://entra.microsoft.com).\n2. Go to **Identity** > **Billing** > **Licenses** > **Licensed features**.\n3. Review the **License utilization** report for P1 features.\n4. Purchase additional P1 licenses or remove Conditional Access policy assignments for unlicensed users to bring entitlements in line with utilization.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review the Azure AD Premium license utilization report and ensure that P1 license entitlements match or exceed the number of users utilizing Conditional Access. Purchase additional licenses or adjust policy scope as needed.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_p1_license_utilization"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check uses the Microsoft Graph beta API endpoint reports/azureADPremiumLicenseInsight. The Reports.Read.All permission is required."
+}
