@@ -97,6 +97,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `internet-exposed` category for 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 - `stepfunctions_statemachine_no_secrets_in_definition` check for hardcoded secrets in AWS Step Functions state machine definitions [(#10570)](https://github.com/prowler-cloud/prowler/pull/10570)
 - CCC improvements with the latest checks and new mappings [(#10625)](https://github.com/prowler-cloud/prowler/pull/10625)
+- Added new Github's Agentic Workflow to review CHANGELOG files
 
 ### 🔄 Changed
 

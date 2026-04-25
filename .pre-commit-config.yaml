@@ -27,6 +27,7 @@ repos:
     hooks:
       - id: zizmor
         files: ^\.github/
+        exclude: \.lock\.yml$
 
   ## BASH
   - repo: https://github.com/koalaman/shellcheck-precommit

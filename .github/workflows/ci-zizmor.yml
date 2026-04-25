@@ -50,7 +50,13 @@ jobs:
         with:
           persist-credentials: false
 
+      # Exclude *.lock.yml (gh-aw auto-generated) — zizmor has no --exclude flag
+      - name: Collect non-generated workflow files
+        id: collect
+        run: echo "files=$(find .github -name '*.yml' -o -name '*.yaml' | grep -v '\.lock\.yml$' | sort | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@71321a20a9ded102f6e9ce5718a2fcec2c4f70d8 # v0.5.2
         with:
+          inputs: ${{ steps.collect.outputs.files }}
           token: ${{ github.token }}
