@@ -1,0 +1,762 @@
+{
+  "Framework": "KISA-ISMS-P",
+  "Name": "KISA ISMS compliance framework 2023",
+  "Version": "2023",
+  "Provider": "GCP",
+  "Description": "The ISMS-P certification, established by KISA (Korea Internet & Security Agency), is a system where an independent certification body evaluates whether a company or organization's information security and privacy protection measures comply with certification standards, and grants certification. This mapping applies ISMS-P control requirements to Google Cloud Platform (GCP) environments.",
+  "Requirements": [
+    {
+      "Id": "2.1.3",
+      "Name": "Management of Information Assets",
+      "Description": "Organizations must identify and classify information assets (information systems, databases, documents, etc.) and manage their inventory, including ownership and criticality.",
+      "Checks": [
+        "iam_cloud_asset_inventory_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.1 Policy, Organization, Asset Management",
+          "Section": "2.1.3 Management of Information Assets",
+          "AuditChecklist": [
+            "Does the organization maintain an up-to-date inventory of GCP resources and their owners?",
+            "Is Cloud Asset Inventory enabled to track all GCP assets across the organization?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "Cloud Asset Inventory export records",
+            "GCP resource inventory reports"
+          ],
+          "NonComplianceCases": [
+            "Case 1: Cloud Asset Inventory is not enabled, making it impossible to enumerate and classify all GCP assets."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.5.1",
+      "Name": "User Account Management",
+      "Description": "Organizations must establish and implement procedures for user registration, termination, and granting, changing, or revoking access rights, ensuring that access rights are granted only to the minimum necessary for work purposes.",
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_user_managed_keys",
+        "iam_audit_logs_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.5 Authentication and Access Management",
+          "Section": "2.5.1 User Account Management",
+          "AuditChecklist": [
+            "Are service accounts granted only the minimum required roles?",
+            "Is separation of duties enforced for KMS and service account administration?",
+            "Are user-managed service account keys avoided in favor of Google-managed keys?",
+            "Are IAM audit logs enabled to record all permission grants and revocations?"
+          ],
+          "RelatedRegulations": [
+            "Personal Information Protection Act, Article 29",
+            "Standards for Ensuring the Safety of Personal Information, Article 5"
+          ],
+          "AuditEvidence": [
+            "IAM policy export showing service account role bindings",
+            "Cloud Audit Logs for IAM changes",
+            "Service account key inventory"
+          ],
+          "NonComplianceCases": [
+            "Case 1: A service account is granted the roles/owner or roles/editor role, violating least privilege.",
+            "Case 2: The same principal holds both KMS Admin and CryptoKey Encrypter/Decrypter roles, violating separation of duties.",
+            "Case 3: User-managed service account keys are used instead of Google-managed keys."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.5.5",
+      "Name": "Management of Special Accounts and Privileges",
+      "Description": "Organizations must establish special procedures for managing privileged accounts (administrator accounts) to prevent misuse, including minimizing the number of privileged accounts and regularly reviewing their necessity.",
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_user_managed_key_unused",
+        "iam_account_access_approval_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.5 Authentication and Access Management",
+          "Section": "2.5.5 Management of Special Accounts and Privileges",
+          "AuditChecklist": [
+            "Are privileged IAM roles (owner, editor) assigned only when strictly necessary?",
+            "Is Access Approval enabled so that Google personnel access requires explicit approval?",
+            "Are unused service account keys identified and removed?",
+            "Is separation of duties enforced for high-privilege operations?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "IAM policy showing owner/editor role assignments",
+            "Access Approval configuration",
+            "Service account key usage logs"
+          ],
+          "NonComplianceCases": [
+            "Case 1: Access Approval is disabled, allowing Google support engineers unrestricted access to data.",
+            "Case 2: Unused service account keys remain active for months without review."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.5.6",
+      "Name": "Review of Access Rights",
+      "Description": "Organizations must periodically review user accounts and access rights to identify and remove unnecessary, dormant, or excessive access rights.",
+      "Checks": [
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused",
+        "apikeys_key_rotated_in_90_days",
+        "apikeys_key_exists"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.5 Authentication and Access Management",
+          "Section": "2.5.6 Review of Access Rights",
+          "AuditChecklist": [
+            "Are service account keys rotated at least every 90 days?",
+            "Are unused service accounts and their keys identified and disabled?",
+            "Are API keys rotated every 90 days?",
+            "Are API keys restricted to specific APIs rather than allowing unrestricted access?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "Service account key rotation logs",
+            "Unused service account report",
+            "API key audit records"
+          ],
+          "NonComplianceCases": [
+            "Case 1: Service account keys older than 90 days are still in use without rotation.",
+            "Case 2: Service accounts that have not been used for more than 90 days remain active.",
+            "Case 3: API keys exist without restrictions or rotation schedules."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.6.1",
+      "Name": "Network Access",
+      "Description": "Organizations must control unauthorized network access through IP management, network segmentation (DMZ, server farm, DB zone), and appropriate access controls.",
+      "Checks": [
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "compute_network_default_in_use",
+        "compute_network_not_legacy",
+        "compute_subnet_flow_logs_enabled",
+        "compute_network_dns_logging_enabled",
+        "dns_dnssec_disabled",
+        "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+        "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_public_ip",
+        "bigquery_dataset_public_access",
+        "cloudfunction_function_inside_vpc"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.6 Access Control",
+          "Section": "2.6.1 Network Access",
+          "AuditChecklist": [
+            "Are firewall rules allowing SSH (port 22) or RDP (port 3389) from 0.0.0.0/0 blocked?",
+            "Are compute instances limited to private IP addresses where possible?",
+            "Is the default VPC network avoided in production environments?",
+            "Are VPC flow logs enabled to capture network traffic metadata?",
+            "Is DNSSEC enabled for all Cloud DNS managed zones?",
+            "Are Cloud SQL instances restricted to private IPs?",
+            "Are Cloud Functions connected to a VPC network via a Serverless VPC Access connector?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "VPC firewall rule audit",
+            "Compute instance network configuration",
+            "VPC flow log configuration",
+            "Cloud DNS DNSSEC configuration"
+          ],
+          "NonComplianceCases": [
+            "Case 1: A firewall rule allows SSH from 0.0.0.0/0, exposing the instance to brute-force attacks.",
+            "Case 2: The default VPC network is used in production with overly permissive default firewall rules.",
+            "Case 3: Cloud SQL instances have public IPs, allowing direct internet access.",
+            "Case 4: Cloud Functions are deployed without a VPC connector, routing all traffic over the public internet."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.6.2",
+      "Name": "Access to Information Systems",
+      "Description": "Organizations must apply appropriate access controls to information systems, including authentication and authorization measures, to prevent unauthorized access.",
+      "Checks": [
+        "compute_instance_serial_ports_in_use",
+        "compute_project_os_login_enabled",
+        "compute_project_os_login_2fa_enabled",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "compute_instance_shielded_vm_enabled",
+        "compute_instance_confidential_computing_enabled",
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "compute_image_not_publicly_shared",
+        "cloudfunction_function_not_publicly_accessible"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.6 Access Control",
+          "Section": "2.6.2 Access to Information Systems",
+          "AuditChecklist": [
+            "Are serial port connections to VM instances disabled?",
+            "Is OS Login (with 2FA) enabled for centralized SSH key management?",
+            "Are project-wide SSH keys blocked at the instance level?",
+            "Are Shielded VMs enabled to protect against boot-level attacks?",
+            "Are Cloud Storage buckets restricted from public access?",
+            "Is uniform bucket-level access enabled to prevent ACL-based misconfigurations?",
+            "Are GCE disk images kept private?",
+            "Are Cloud Functions restricted so that 'allUsers' and 'allAuthenticatedUsers' cannot invoke them?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "VM instance metadata configuration",
+            "Cloud Storage bucket IAM policy",
+            "OS Login configuration"
+          ],
+          "NonComplianceCases": [
+            "Case 1: Serial ports are enabled on production VMs, providing an unmonitored access path.",
+            "Case 2: A Cloud Storage bucket containing sensitive data is publicly accessible.",
+            "Case 3: Project-wide SSH keys are not blocked, allowing any project editor to SSH into VMs.",
+            "Case 4: A Cloud Function has an IAM binding granting 'allUsers' invocation access, making business logic and data publicly callable."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.6.4",
+      "Name": "Database Access",
+      "Description": "Organizations must establish and implement access control policies for databases containing personal or critical information, restricting database access to authorized users and applications only.",
+      "Checks": [
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_public_ip",
+        "cloudsql_instance_ssl_connections",
+        "cloudsql_instance_private_ip_assignment",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_mysql_local_infile_flag",
+        "cloudsql_instance_sqlserver_remote_access_flag",
+        "bigquery_dataset_public_access",
+        "cloudsql_instance_cmek_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.6 Access Control",
+          "Section": "2.6.4 Database Access",
+          "AuditChecklist": [
+            "Are Cloud SQL instances configured to block all public IP access?",
+            "Is SSL/TLS enforced for all Cloud SQL connections?",
+            "Are Cloud SQL instances assigned private IPs rather than public IPs?",
+            "Are connection and disconnection logs enabled for PostgreSQL instances?",
+            "Is the local_infile flag disabled for MySQL instances to prevent data exfiltration?",
+            "Is remote access disabled for SQL Server instances?",
+            "Are BigQuery datasets restricted from public access?",
+            "Are Cloud SQL instances encrypted with customer-managed encryption keys (CMEK)?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "Cloud SQL instance configuration",
+            "Cloud SQL database flags audit",
+            "BigQuery dataset IAM policy"
+          ],
+          "NonComplianceCases": [
+            "Case 1: A Cloud SQL instance has a public IP and authorized networks set to 0.0.0.0/0.",
+            "Case 2: SSL is not required for Cloud SQL connections, allowing plaintext data transmission.",
+            "Case 3: BigQuery datasets are publicly accessible, exposing sensitive data.",
+            "Case 4: Cloud SQL instances use Google-managed encryption keys rather than customer-managed keys, reducing encryption control over sensitive database content."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.6.6",
+      "Name": "Remote Access Control",
+      "Description": "Organizations must establish and implement security measures for remote access to internal networks and systems, including strong authentication and encrypted communication.",
+      "Checks": [
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_project_os_login_enabled",
+        "compute_project_os_login_2fa_enabled",
+        "compute_instance_serial_ports_in_use"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.6 Access Control",
+          "Section": "2.6.6 Remote Access Control",
+          "AuditChecklist": [
+            "Are direct SSH and RDP access from the internet blocked at the firewall level?",
+            "Is OS Login with 2FA enforced for all SSH access to compute instances?",
+            "Are serial port connections disabled to prevent unmonitored remote access?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "VPC firewall rule configuration",
+            "OS Login and 2FA configuration",
+            "VM instance metadata"
+          ],
+          "NonComplianceCases": [
+            "Case 1: SSH access is allowed from 0.0.0.0/0 without requiring OS Login or MFA.",
+            "Case 2: Serial port access is enabled and not monitored for unauthorized use."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.7.1",
+      "Name": "Application of Encryption Policy",
+      "Description": "Organizations must classify information requiring encryption and apply appropriate encryption to ensure confidentiality and integrity of data in transit and at rest.",
+      "Checks": [
+        "cloudsql_instance_ssl_connections",
+        "compute_instance_confidential_computing_enabled",
+        "compute_instance_encryption_with_csek_enabled",
+        "kms_key_not_publicly_accessible",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "dataproc_encrypted_with_cmks_disabled",
+        "cloudstorage_bucket_public_access",
+        "secretmanager_secret_not_publicly_accessible",
+        "cloudsql_instance_cmek_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.7 Application of Encryption",
+          "Section": "2.7.1 Application of Encryption Policy",
+          "AuditChecklist": [
+            "Is SSL/TLS enforced for Cloud SQL data in transit?",
+            "Is Confidential Computing enabled for VMs processing sensitive workloads?",
+            "Are customer-supplied encryption keys (CSEK) used for VM persistent disks?",
+            "Are BigQuery datasets and tables encrypted with customer-managed keys (CMEK)?",
+            "Are Dataproc clusters encrypted with CMEKs?",
+            "Are KMS keys kept private (no public IAM access)?",
+            "Are Secret Manager secrets kept private (no public IAM access)?",
+            "Are Cloud SQL instances encrypted with customer-managed encryption keys (CMEK)?"
+          ],
+          "RelatedRegulations": [
+            "Personal Information Protection Act, Article 29",
+            "Standards for Ensuring the Safety of Personal Information, Article 7"
+          ],
+          "AuditEvidence": [
+            "Cloud SQL SSL configuration",
+            "BigQuery CMEK configuration",
+            "Dataproc cluster encryption settings",
+            "KMS and Secret Manager IAM policy"
+          ],
+          "NonComplianceCases": [
+            "Case 1: Cloud SQL allows non-SSL connections, transmitting data in plaintext.",
+            "Case 2: BigQuery datasets containing personal information are not encrypted with CMEK.",
+            "Case 3: A KMS key has IAM bindings granting 'allUsers' access, exposing the key publicly.",
+            "Case 4: Cloud SQL instances rely on Google-managed encryption rather than CMEK, preventing the organization from controlling key lifecycle and revocation."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.7.2",
+      "Name": "Cryptographic Key Management",
+      "Description": "Organizations must establish and implement procedures for the lifecycle management of cryptographic keys, including generation, storage, distribution, rotation, revocation, and destruction.",
+      "Checks": [
+        "kms_key_rotation_enabled",
+        "kms_key_not_publicly_accessible",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "apikeys_key_rotated_in_90_days",
+        "secretmanager_secret_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.7 Application of Encryption",
+          "Section": "2.7.2 Cryptographic Key Management",
+          "AuditChecklist": [
+            "Is automatic rotation enabled for all Cloud KMS keys (at most every 90 days)?",
+            "Are KMS keys protected from public access?",
+            "Are user-managed service account keys rotated at least every 90 days?",
+            "Are unused service account keys removed?",
+            "Are API keys rotated at least every 90 days?",
+            "Are secrets in Secret Manager rotated at least every 90 days?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "KMS key rotation configuration",
+            "Service account key rotation logs",
+            "API key audit",
+            "Secret Manager rotation configuration"
+          ],
+          "NonComplianceCases": [
+            "Case 1: KMS keys do not have automatic rotation enabled.",
+            "Case 2: Service account keys have not been rotated in more than 90 days.",
+            "Case 3: Secrets stored in Secret Manager have no rotation policy configured."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.9.2",
+      "Name": "Performance and Fault Management",
+      "Description": "Organizations must monitor and manage the performance and availability of information systems to ensure continuous and stable service delivery.",
+      "Checks": [
+        "compute_instance_deletion_protection_enabled",
+        "compute_instance_automatic_restart_enabled",
+        "compute_instance_on_host_maintenance_migrate",
+        "compute_instance_group_autohealing_enabled",
+        "compute_instance_group_load_balancer_attached",
+        "compute_instance_group_multiple_zones",
+        "compute_loadbalancer_logging_enabled",
+        "cloudsql_instance_high_availability_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.9 System and Service Operation Management",
+          "Section": "2.9.2 Performance and Fault Management",
+          "AuditChecklist": [
+            "Is deletion protection enabled for critical compute instances?",
+            "Are compute instances configured to automatically restart on failure?",
+            "Are managed instance groups configured with autohealing health checks?",
+            "Are managed instance groups distributed across multiple zones for high availability?",
+            "Are load balancers attached to instance groups for traffic distribution?",
+            "Are Cloud SQL instances configured with high availability (regional replication with a standby replica)?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "Compute instance configuration",
+            "Managed instance group health check configuration",
+            "Load balancer configuration"
+          ],
+          "NonComplianceCases": [
+            "Case 1: Critical compute instances have deletion protection disabled, risking accidental deletion.",
+            "Case 2: Instance groups are confined to a single zone with no autohealing, creating a single point of failure.",
+            "Case 3: Cloud SQL instances are configured as ZONAL without a standby replica, creating a database single point of failure."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.9.3",
+      "Name": "Backup and Recovery Management",
+      "Description": "Organizations must establish and implement backup and recovery procedures to ensure data availability and business continuity in the event of system failures, disasters, or data loss.",
+      "Checks": [
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_versioning_enabled",
+        "cloudstorage_bucket_soft_delete_enabled",
+        "cloudstorage_bucket_sufficient_retention_period",
+        "cloudstorage_bucket_lifecycle_management_enabled",
+        "compute_snapshot_not_outdated"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.9 System and Service Operation Management",
+          "Section": "2.9.3 Backup and Recovery Management",
+          "AuditChecklist": [
+            "Are automated backups enabled for all Cloud SQL instances?",
+            "Is versioning enabled for Cloud Storage buckets containing important data?",
+            "Is soft delete enabled for Cloud Storage buckets to allow recovery from accidental deletion?",
+            "Is a sufficient retention period configured for Cloud Storage bucket data?",
+            "Are disk snapshots current (not outdated)?",
+            "Is lifecycle management configured for Cloud Storage buckets?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "Cloud SQL backup configuration",
+            "Cloud Storage versioning and soft delete settings",
+            "Disk snapshot creation dates"
+          ],
+          "NonComplianceCases": [
+            "Case 1: Automated backups are disabled for a Cloud SQL instance hosting critical application data.",
+            "Case 2: Cloud Storage buckets containing business records have no versioning or retention policy."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.9.4",
+      "Name": "Log and Access Record Management",
+      "Description": "Organizations must collect, retain, and protect logs of access to and activities within information systems and personal information processing systems.",
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "logging_sink_created",
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "cloudstorage_audit_logs_enabled",
+        "cloudstorage_bucket_logging_enabled",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_error_verbosity_flag",
+        "cloudsql_instance_postgres_log_min_duration_statement_flag",
+        "cloudsql_instance_postgres_log_min_error_statement_flag",
+        "cloudsql_instance_postgres_log_min_messages_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "cloudsql_instance_postgres_enable_pgaudit_flag",
+        "cloudsql_instance_mysql_local_infile_flag",
+        "compute_loadbalancer_logging_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.9 System and Service Operation Management",
+          "Section": "2.9.4 Log and Access Record Management",
+          "AuditChecklist": [
+            "Are Cloud Audit Logs (Admin Activity, Data Access, System Event) enabled for all GCP services?",
+            "Is a log sink configured to export logs to a secure destination (Cloud Storage, BigQuery, Pub/Sub)?",
+            "Are log buckets locked with retention policies to prevent tampering?",
+            "Is Cloud Storage access logging enabled for all buckets?",
+            "Are pgAudit and detailed logging flags enabled for PostgreSQL Cloud SQL instances?",
+            "Is load balancer request logging enabled?"
+          ],
+          "RelatedRegulations": [
+            "Personal Information Protection Act, Article 29",
+            "Standards for Ensuring the Safety of Personal Information, Article 8"
+          ],
+          "AuditEvidence": [
+            "Cloud Audit Log configuration",
+            "Log sink destinations",
+            "Log retention policy settings",
+            "Cloud SQL database flag configuration"
+          ],
+          "NonComplianceCases": [
+            "Case 1: Data Access audit logs are disabled for Cloud Storage, leaving no record of who accessed which objects.",
+            "Case 2: No log sink is configured, meaning logs are not exported or retained beyond the default 30-day period.",
+            "Case 3: Log retention buckets do not have locked retention policies, allowing log tampering."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.10.1",
+      "Name": "Security System Operation",
+      "Description": "Organizations must establish and operate security systems (including access control, intrusion detection, vulnerability management, and anti-malware) to protect information systems.",
+      "Checks": [
+        "iam_account_access_approval_enabled",
+        "iam_organization_essential_contacts_configured",
+        "iam_cloud_asset_inventory_enabled",
+        "gcr_container_scanning_enabled",
+        "artifacts_container_analysis_enabled",
+        "compute_instance_shielded_vm_enabled",
+        "apikeys_api_restrictions_configured",
+        "apikeys_api_restricted_with_gemini_api",
+        "gemini_api_disabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.10 System and Service Security Management",
+          "Section": "2.10.1 Security System Operation",
+          "AuditChecklist": [
+            "Is Access Approval enabled to require explicit approval for Google personnel access?",
+            "Are essential contacts configured to receive security notifications?",
+            "Is Cloud Asset Inventory enabled for asset tracking and compliance?",
+            "Is container image scanning enabled in GCR or Artifact Registry?",
+            "Are Shielded VMs enabled to protect against firmware and boot attacks?",
+            "Are API keys restricted to specific APIs?",
+            "Are unnecessary Google APIs (e.g., Gemini) disabled?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "Access Approval configuration",
+            "Essential contacts configuration",
+            "Container vulnerability scan results",
+            "Shielded VM configuration",
+            "API key restriction settings"
+          ],
+          "NonComplianceCases": [
+            "Case 1: No essential contacts are configured, so security alerts are not delivered to responsible parties.",
+            "Case 2: Container images are deployed without vulnerability scanning.",
+            "Case 3: API keys have no API restrictions, allowing them to call any Google API."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.10.2",
+      "Name": "Cloud Security",
+      "Description": "Organizations using cloud services must manage cloud-specific security requirements including access control, encryption, monitoring, and compliance with the shared responsibility model.",
+      "Checks": [
+        "iam_sa_no_administrative_privileges",
+        "iam_role_kms_enforce_separation_of_duties",
+        "iam_role_sa_enforce_separation_of_duties",
+        "iam_sa_no_user_managed_keys",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "iam_organization_essential_contacts_configured",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_instance_public_ip",
+        "compute_instance_serial_ports_in_use",
+        "compute_instance_shielded_vm_enabled",
+        "compute_instance_confidential_computing_enabled",
+        "compute_instance_deletion_protection_enabled",
+        "compute_network_default_in_use",
+        "compute_network_not_legacy",
+        "compute_subnet_flow_logs_enabled",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "cloudsql_instance_public_access",
+        "cloudsql_instance_ssl_connections",
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_public_access",
+        "cloudstorage_bucket_versioning_enabled",
+        "cloudstorage_bucket_logging_enabled",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "kms_key_rotation_enabled",
+        "kms_key_not_publicly_accessible",
+        "logging_sink_created",
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "bigquery_dataset_public_access",
+        "bigquery_dataset_cmk_encryption",
+        "gcr_container_scanning_enabled",
+        "dns_dnssec_disabled",
+        "secretmanager_secret_not_publicly_accessible",
+        "secretmanager_secret_rotation_enabled",
+        "cloudfunction_function_not_publicly_accessible",
+        "cloudfunction_function_inside_vpc",
+        "cloudsql_instance_high_availability_enabled",
+        "cloudsql_instance_cmek_encryption_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.10 System and Service Security Management",
+          "Section": "2.10.2 Cloud Security",
+          "AuditChecklist": [
+            "Are all GCP IAM policies following the principle of least privilege?",
+            "Are GCP network controls (firewall, VPC, private access) properly configured?",
+            "Are encryption-at-rest and in-transit controls applied to cloud data?",
+            "Are cloud audit logs enabled and exported to immutable storage?",
+            "Are cloud-native monitoring and alerting mechanisms active?",
+            "Are cloud databases and storage services protected from public access?",
+            "Are container images scanned for vulnerabilities before deployment?",
+            "Are secrets and keys managed with proper rotation and access controls?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "Full GCP IAM policy export",
+            "Security Command Center findings",
+            "Cloud Audit Log export",
+            "Firewall and VPC configuration",
+            "Cloud Storage and Cloud SQL access policies"
+          ],
+          "NonComplianceCases": [
+            "Case 1: Multiple GCP services are missing Cloud Audit Log (Data Access) configuration.",
+            "Case 2: Production Cloud SQL databases are publicly accessible via the internet.",
+            "Case 3: No monitoring alerts are configured for critical IAM or firewall changes."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.11.3",
+      "Name": "Abnormal Behavior Analysis and Monitoring",
+      "Description": "Organizations must monitor and analyze information systems and networks for abnormal behaviors that may indicate a security incident, and respond appropriately.",
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_compute_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+        "logging_sink_created",
+        "compute_network_dns_logging_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.11 Incident Prevention and Response",
+          "Section": "2.11.3 Abnormal Behavior Analysis and Monitoring",
+          "AuditChecklist": [
+            "Are log-based metric filters and alerts configured for audit configuration changes?",
+            "Are alerts configured for Cloud Storage bucket permission changes?",
+            "Are alerts configured for Compute Engine configuration changes?",
+            "Are alerts configured for custom IAM role changes?",
+            "Are alerts configured for project ownership changes?",
+            "Are alerts configured for Cloud SQL instance configuration changes?",
+            "Are alerts configured for VPC firewall rule, network, and route changes?",
+            "Is DNS query logging enabled on all VPCs?",
+            "Is a log sink configured to export logs to a long-term retention destination?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "Cloud Monitoring alerting policy list",
+            "Log-based metric filter configuration",
+            "VPC DNS logging configuration",
+            "Log sink configuration"
+          ],
+          "NonComplianceCases": [
+            "Case 1: No metric filter or alert is configured for project ownership changes, allowing silent privilege escalation.",
+            "Case 2: VPC firewall rule changes are not monitored, enabling undetected network exposure.",
+            "Case 3: DNS query logging is disabled, preventing detection of DNS-based data exfiltration or C2 communications."
+          ]
+        }
+      ]
+    },
+    {
+      "Id": "2.12.1",
+      "Name": "Safety Measures for Disaster Preparedness",
+      "Description": "Organizations must implement redundancy, geographic distribution, and backup measures to ensure that critical services can continue operating even during a disaster.",
+      "Checks": [
+        "cloudsql_instance_automated_backups",
+        "compute_instance_deletion_protection_enabled",
+        "compute_instance_automatic_restart_enabled",
+        "compute_instance_on_host_maintenance_migrate",
+        "compute_instance_group_multiple_zones",
+        "compute_instance_group_autohealing_enabled",
+        "cloudstorage_bucket_versioning_enabled",
+        "cloudstorage_bucket_soft_delete_enabled",
+        "cloudsql_instance_high_availability_enabled"
+      ],
+      "Attributes": [
+        {
+          "Domain": "2. Control Measures Requirements",
+          "Subdomain": "2.12 Disaster Recovery",
+          "Section": "2.12.1 Safety Measures for Disaster Preparedness",
+          "AuditChecklist": [
+            "Are Cloud SQL instances backed up automatically and cross-regionally where required?",
+            "Are Cloud SQL instances configured with high availability (REGIONAL availabilityType) to withstand zone failures?",
+            "Are compute instances configured to survive host maintenance events via live migration?",
+            "Are managed instance groups distributed across multiple zones?",
+            "Is deletion protection enabled for critical compute infrastructure?",
+            "Is Cloud Storage versioning and soft delete enabled for critical data?"
+          ],
+          "RelatedRegulations": [],
+          "AuditEvidence": [
+            "Cloud SQL high availability and backup configuration",
+            "Compute instance maintenance policy",
+            "Managed instance group zone distribution",
+            "Cloud Storage versioning configuration"
+          ],
+          "NonComplianceCases": [
+            "Case 1: Cloud SQL instances do not have automated backups enabled.",
+            "Case 2: Cloud SQL instances are configured as ZONAL with no standby replica, making the database unavailable during a zone outage.",
+            "Case 3: Managed instance groups exist in a single zone, making the service vulnerable to a zone outage.",
+            "Case 4: Critical VM instances are not protected by deletion protection, risking accidental removal."
+          ]
+        }
+      ]
+    }
+  ]
+}

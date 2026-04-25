@@ -1,0 +1,40 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_cmek_encryption_enabled",
+  "CheckTitle": "Cloud SQL instance is encrypted with a customer-managed key (CMEK)",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "Ensures that Cloud SQL instances use customer-managed encryption keys (CMEK) via Cloud KMS rather than Google-managed default keys. CMEK gives the organization full control over the key lifecycle, including the ability to revoke access immediately.",
+  "Risk": "Without CMEK, Google holds sole control of the encryption keys. If the organization must demonstrate key custody, meet data residency requirements, or immediately revoke access to data (e.g., upon contract termination), Google-managed keys are insufficient. This may violate ISMS-P 2.7.1 and regulatory requirements for sensitive or personal data.",
+  "RelatedUrl": "https://cloud.google.com/sql/docs/mysql/cmek",
+  "AdditionalURLs": [
+    "https://cloud.google.com/sql/docs/postgres/cmek",
+    "https://cloud.google.com/kms/docs/resource-hierarchy"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances create <INSTANCE_NAME> \\\n  --database-version=POSTGRES_15 \\\n  --region=<REGION> \\\n  --disk-encryption-key=projects/<PROJECT>/locations/<REGION>/keyRings/<RING>/cryptoKeys/<KEY>",
+      "NativeIaC": "",
+      "Other": "CMEK must be configured at instance creation time. To migrate an existing instance:\n1. Create a new Cloud SQL instance with CMEK enabled.\n2. Export data from the existing instance.\n3. Import data into the new CMEK-enabled instance.\n4. Update application connection strings.",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"example\" {\n  name             = \"<instance_name>\"\n  database_version = \"POSTGRES_15\"\n  region           = \"<region>\"\n\n  encryption_key_name = \"projects/<project>/locations/<region>/keyRings/<ring>/cryptoKeys/<key>\"\n\n  settings {\n    tier = \"db-custom-2-7680\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "For instances storing personal or sensitive data, create new Cloud SQL instances with CMEK using a Cloud KMS key in the same region. Ensure the Cloud SQL service account has the roles/cloudkms.cryptoKeyEncrypterDecrypter role on the key, and enable key rotation per your policy.",
+      "Url": "https://cloud.google.com/sql/docs/mysql/cmek"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "kms_key_rotation_enabled",
+    "kms_key_not_publicly_accessible",
+    "bigquery_dataset_cmk_encryption"
+  ],
+  "Notes": "CMEK cannot be enabled on an existing Cloud SQL instance; it must be set at creation time. Existing instances require data migration to a new CMEK-enabled instance."
+}
