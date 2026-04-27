@@ -117,7 +117,10 @@ runs:
         INPUTS_IMAGE_TAG: ${{ inputs.image-tag }}
 
     - name: Comment scan results on PR
-      if: inputs.create-pr-comment == 'true' && github.event_name == 'pull_request'
+      if: >-
+        inputs.create-pr-comment == 'true'
+        && github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository
       uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
       env:
         IMAGE_NAME: ${{ inputs.image-name }}

@@ -1,0 +1,1776 @@
+{
+  "Framework": "CISA-SCuBA",
+  "Name": "CISA Secure Cloud Business Applications (SCuBA) Google Workspace Baselines",
+  "Version": "0.6",
+  "Provider": "GoogleWorkspace",
+  "Description": "The CISA Secure Cloud Business Applications (SCuBA) project provides security configuration baselines for Google Workspace. These baselines define minimum security requirements using RFC 2119 requirement levels (SHALL/SHOULD/SHALL NOT) and include mappings to NIST SP 800-53 Rev 5 and MITRE ATT&CK.",
+  "Requirements": [
+    {
+      "Id": "GWS.COMMONCONTROLS.1.1",
+      "Description": "Phishing-resistant MFA SHALL be required for all users",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "1 Phishing-Resistant MFA",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.1.2",
+      "Description": "If phishing-resistant MFA is not yet tenable, an MFA method from the list of acceptable MFA methods SHALL be used as an interim solution",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "1 Phishing-Resistant MFA",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.1.3",
+      "Description": "If phishing-resistant MFA is not yet tenable, SMS or Voice as the MFA method SHALL NOT be used",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "1 Phishing-Resistant MFA",
+          "Service": "commoncontrols",
+          "Type": "SHALL NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.1.4",
+      "Description": "The 2SV enrollment period for new users SHALL be set to 1 day to 1 week",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "1 Phishing-Resistant MFA",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.1.5",
+      "Description": "Allow user to trust the device SHALL be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "1 Phishing-Resistant MFA",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.2.1",
+      "Description": "Context-Aware Access device-based policies SHOULD be implemented",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "2 Context-Aware Access",
+          "Service": "commoncontrols",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.3.1",
+      "Description": "Post-SSO verification for corporate SSO profile SHOULD be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "3 Login Challenges",
+          "Service": "commoncontrols",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.3.2",
+      "Description": "Post-SSO verification for other SSO profiles SHOULD be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "3 Login Challenges",
+          "Service": "commoncontrols",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.4.1",
+      "Description": "Google Workspace sessions SHALL re-authenticate after 12 hours",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "4 User Session Duration",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.5.1",
+      "Description": "Password strength SHALL be enforced",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "5 Secure Passwords",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.5.2",
+      "Description": "Minimum password length SHALL be at least 12 characters",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "5 Secure Passwords",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.5.3",
+      "Description": "Minimum password length SHOULD be at least 15 characters",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "5 Secure Passwords",
+          "Service": "commoncontrols",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.5.4",
+      "Description": "Password policy SHALL be enforced at next sign-in",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "5 Secure Passwords",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.5.5",
+      "Description": "Password reuse SHALL be restricted",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "5 Secure Passwords",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.5.6",
+      "Description": "Password expiration period SHALL NOT be set",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "5 Secure Passwords",
+          "Service": "commoncontrols",
+          "Type": "SHALL NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.6.1",
+      "Description": "All admin accounts SHALL be cloud-only and not federated",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "6 Privileged Accounts",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.6.2",
+      "Description": "Between 2 and 8 super admin users SHALL be configured",
+      "Checks": [
+        "directory_super_admin_count"
+      ],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "6 Privileged Accounts",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.7.1",
+      "Description": "Unmanaged conflicting accounts SHOULD be replaced with managed ones",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "7 Conflicting Account Management",
+          "Service": "commoncontrols",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.8.1",
+      "Description": "Account recovery for super admins SHALL be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "8 Account Recovery",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.8.2",
+      "Description": "Account recovery for non-super admin users SHALL be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "8 Account Recovery",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.8.3",
+      "Description": "Adding a recovery phone number and email address SHOULD be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "8 Account Recovery",
+          "Service": "commoncontrols",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.9.1",
+      "Description": "Privileged accounts SHALL be enrolled in the Advanced Protection Program",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "9 Advanced Protection Program",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.9.2",
+      "Description": "Sensitive user accounts SHOULD be enrolled in the Advanced Protection Program",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "9 Advanced Protection Program",
+          "Service": "commoncontrols",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.10.1",
+      "Description": "Unconfigured third-party apps SHALL be restricted from accessing GWS services",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "10 App Access to Google APIs",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.10.2",
+      "Description": "Third-party apps that do not meet minimum access requirements SHALL be blocked",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "10 App Access to Google APIs",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.10.3",
+      "Description": "Access to high-risk scopes SHALL be blocked unless explicitly trusted",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "10 App Access to Google APIs",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.10.4",
+      "Description": "OAuth apps with domain-wide delegation SHALL be reviewed periodically",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "10 App Access to Google APIs",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.10.5",
+      "Description": "Internal apps SHALL be allowed to access restricted Google Workspace APIs",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "10 App Access to Google APIs",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.11.1",
+      "Description": "Only approved Marketplace apps SHALL be allowed for installation",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "11 Authorized Marketplace Apps",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.12.1",
+      "Description": "Google Takeout SHALL be disabled for users",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "12 Google Takeout",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.13.1",
+      "Description": "All system-defined alerting rules SHALL be enabled with alerts sent to admin email addresses",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "13 System-Defined Rules",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.14.1",
+      "Description": "Google Workspace logs SHALL be sent to the organization's SIEM",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "14 Google Workspace Logs",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.14.2",
+      "Description": "Google Workspace logs SHALL be stored for a minimum of 6 months in active storage",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "14 Google Workspace Logs",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.15.1",
+      "Description": "Data SHALL be stored in the United States",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "15 Data Regions and Storage",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.15.2",
+      "Description": "Supplemental data storage SHALL be set to the United States",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "15 Data Regions and Storage",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.16.1",
+      "Description": "Non-essential additional Google services SHALL be disabled for all users",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "16 Additional Google Services",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.16.2",
+      "Description": "Essential additional Google services SHALL be enabled only for authorized users",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "16 Additional Google Services",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.17.1",
+      "Description": "Multiple super admins SHOULD be required to approve sensitive admin actions",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "17 Multi-Party Approval",
+          "Service": "commoncontrols",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.18.1",
+      "Description": "A DLP policy SHALL be configured for Drive",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "18 Data Loss Prevention",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.18.2",
+      "Description": "A DLP policy SHALL be configured for Gmail",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "18 Data Loss Prevention",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.18.3",
+      "Description": "A DLP policy SHALL be configured for Chat",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "18 Data Loss Prevention",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.COMMONCONTROLS.18.4",
+      "Description": "The DLP rule severity level SHALL be configured appropriately for the organization",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Common Controls",
+          "SubSection": "18 Data Loss Prevention",
+          "Service": "commoncontrols",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.1.1",
+      "Description": "Mail Delegation SHOULD be disabled",
+      "Checks": [
+        "gmail_mail_delegation_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "1 Mail Delegation",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.2.1",
+      "Description": "DKIM SHOULD be enabled for all domains",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "2 DomainKeys Identified Mail",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.3.1",
+      "Description": "An SPF policy SHALL be published for each domain that fails all non-approved senders",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "3 Sender Policy Framework",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.4.1",
+      "Description": "A DMARC policy SHALL be published at the full domain or the second-level domain for all Google Workspace domains, including user alias domains",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "4 Domain-based Message Authentication, Reporting, and Conformance",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.4.2",
+      "Description": "The DMARC message rejection option SHALL be p=reject",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "4 Domain-based Message Authentication, Reporting, and Conformance",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.4.3",
+      "Description": "The DMARC point of contact for aggregate reports SHALL include reports@dmarc.cyber.dhs.gov",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "4 Domain-based Message Authentication, Reporting, and Conformance",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.4.4",
+      "Description": "An agency point of contact SHOULD be included for aggregate and failure reports",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "4 Domain-based Message Authentication, Reporting, and Conformance",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.5.1",
+      "Description": "Protect against encrypted attachments from untrusted senders SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "5 Attachment Protections",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.5.2",
+      "Description": "Protect against attachments with scripts from untrusted senders SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "5 Attachment Protections",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.5.3",
+      "Description": "Protect against anomalous attachment types in emails SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "5 Attachment Protections",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.5.4",
+      "Description": "Google SHOULD be allowed to automatically apply future recommended settings for attachments",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "5 Attachment Protections",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.5.5",
+      "Description": "Emails flagged by SCuBA policies GWS.GMAIL.5.1 through GWS.GMAIL.5.3 SHALL NOT be kept in inbox",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "5 Attachment Protections",
+          "Service": "gmail",
+          "Type": "SHALL NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.5.6",
+      "Description": "Any third-party or outside application selected for attachment protection SHOULD offer services comparable to those offered by Google Workspace (GWS)",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "5 Attachment Protections",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.6.1",
+      "Description": "Identify links behind shortened URLs SHALL be enabled",
+      "Checks": [
+        "gmail_shortener_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "6 Links and External Images Protection",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.6.2",
+      "Description": "Scan linked images SHALL be enabled",
+      "Checks": [
+        "gmail_external_image_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "6 Links and External Images Protection",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.6.3",
+      "Description": "Show warning prompt for any click on links to untrusted domains SHALL be enabled",
+      "Checks": [
+        "gmail_untrusted_link_warnings_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "6 Links and External Images Protection",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.6.4",
+      "Description": "Google SHALL be allowed to automatically apply future recommended settings for links and external images",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "6 Links and External Images Protection",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.6.5",
+      "Description": "Any third-party or outside application selected for links and external images protection SHOULD offer services comparable to those offered by Google Workspace (GWS)",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "6 Links and External Images Protection",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.7.1",
+      "Description": "Protect against domain spoofing based on similar domain names SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "7 Spoofing and Authentication Protection",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.7.2",
+      "Description": "Protect against spoofing of employee names SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "7 Spoofing and Authentication Protection",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.7.3",
+      "Description": "Protect against inbound emails spoofing your domain SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "7 Spoofing and Authentication Protection",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.7.4",
+      "Description": "Protect against any unauthenticated emails SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "7 Spoofing and Authentication Protection",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.7.5",
+      "Description": "Protect your Groups from inbound emails spoofing your domain SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "7 Spoofing and Authentication Protection",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.7.6",
+      "Description": "Emails flagged by SCuBA policies GWS.GMAIL.7.1 through GWS.GMAIL.7.5 SHALL NOT be kept in inbox",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "7 Spoofing and Authentication Protection",
+          "Service": "gmail",
+          "Type": "SHALL NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.7.7",
+      "Description": "Google SHALL be allowed to automatically apply future recommended settings for spoofing and authentication",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "7 Spoofing and Authentication Protection",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.7.8",
+      "Description": "Any third-party or outside application selected for spoofing and authentication protection SHOULD offer services comparable to those offered by Google Workspace",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "7 Spoofing and Authentication Protection",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.8.1",
+      "Description": "User email uploads SHALL be disabled to protect against unauthorized files being introduced into the secured environment",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "8 User Email Uploads",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.9.1",
+      "Description": "POP and IMAP access SHALL be disabled to protect sensitive agency or organization emails from being accessed through legacy applications or other third-party mail clients",
+      "Checks": [
+        "gmail_pop_imap_access_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "9 POP and IMAP Access for Users",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.10.1",
+      "Description": "Google Workspace Sync SHOULD be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "10 Google Workspace Sync",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.11.1",
+      "Description": "Automatic forwarding SHOULD be disabled, especially to external domains",
+      "Checks": [
+        "gmail_auto_forwarding_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "11 Automatic Forwarding",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.12.1",
+      "Description": "Using a per-user outbound gateway that is a mail server other than the Google Workspace (GWS) mail servers SHALL be disabled",
+      "Checks": [
+        "gmail_per_user_outbound_gateway_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "12 Per-user Outbound Gateways",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.13.1",
+      "Description": "Unintended external reply warnings SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "13 Unintended External Reply Warning",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.14.1",
+      "Description": "An email allowlist SHOULD not be implemented",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "14 Email Allowlist",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.15.1",
+      "Description": "Enhanced pre-delivery message scanning SHALL be enabled to prevent phishing",
+      "Checks": [
+        "gmail_enhanced_pre_delivery_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "15 Enhanced Pre-Delivery Message Scanning",
+          "Service": "gmail",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.15.2",
+      "Description": "Any third-party or outside application selected for enhanced pre-delivery message scanning SHOULD offer services comparable to those offered by Google Workspace",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "15 Enhanced Pre-Delivery Message Scanning",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.16.1",
+      "Description": "Security sandbox SHOULD be enabled to provide additional protections for emails",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "16 Security Sandbox",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.16.2",
+      "Description": "Any third-party or outside application selected for security sandbox SHOULD offer services comparable to those offered by Google Workspace",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "16 Security Sandbox",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.17.1",
+      "Description": "Comprehensive mail storage SHOULD be enabled to allow information traceability across applications",
+      "Checks": [
+        "gmail_comprehensive_mail_storage_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "17 Comprehensive Mail Storage",
+          "Service": "gmail",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.18.1",
+      "Description": "Domains SHALL NOT be added to lists that bypass spam filters",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "18 Spam Filtering",
+          "Service": "gmail",
+          "Type": "SHALL NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.18.2",
+      "Description": "Domains SHALL NOT be added to lists that bypass spam filters and hide warnings",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "18 Spam Filtering",
+          "Service": "gmail",
+          "Type": "SHALL NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GMAIL.18.3",
+      "Description": "Bypass spam filters and hide warnings for all messages from internal and external senders SHALL NOT be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Gmail",
+          "SubSection": "18 Spam Filtering",
+          "Service": "gmail",
+          "Type": "SHALL NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.1",
+      "Description": "External sharing SHALL be restricted to allowlisted domains",
+      "Checks": [
+        "drive_sharing_allowlisted_domains"
+      ],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.2",
+      "Description": "Receiving files from outside of allowlisted domains SHOULD be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.3",
+      "Description": "Warnings SHALL be enabled when a user is attempting to share with someone not in allowlisted domains",
+      "Checks": [
+        "drive_warn_sharing_with_allowlisted_domains"
+      ],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.4",
+      "Description": "If sharing outside of the organization, then agencies SHOULD disable sharing of files with individuals who are not using a Google account",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.5",
+      "Description": "Any OUs that do allow external sharing SHOULD disable making content available to anyone with the link",
+      "Checks": [
+        "drive_publishing_files_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.6",
+      "Description": "Agencies SHALL set access checking to recipients only",
+      "Checks": [
+        "drive_access_checker_recipients_only"
+      ],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.7",
+      "Description": "Users SHOULD NOT be allowed to upload or move content to shared drives owned by another organization",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHOULD NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.8",
+      "Description": "Private to owner SHALL be the default access level for newly created items",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.9",
+      "Description": "Out-of-Domain file-level warnings SHALL be enabled",
+      "Checks": [
+        "drive_external_sharing_warn_users"
+      ],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.10",
+      "Description": "If external sharing is not allowed, then forms owned by users within the organization SHOULD NOT be able to accept responses from anyone with the link outside the organization",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHOULD NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.1.11",
+      "Description": "If receiving external files is not allowed, then users in the organization SHOULD NOT be able to submit responses to forms from users or shared drives outside of the organization",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "1 Sharing Outside the Organization",
+          "Service": "drivedocs",
+          "Type": "SHOULD NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.2.1",
+      "Description": "Agencies SHOULD NOT allow members with manager access to override shared Google Drive creation settings",
+      "Checks": [
+        "drive_shared_drive_managers_cannot_override"
+      ],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "2 Shared Drive Creation",
+          "Service": "drivedocs",
+          "Type": "SHOULD NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.2.2",
+      "Description": "Agencies SHALL allow users who are not shared Google Drive members to be added to files",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "2 Shared Drive Creation",
+          "Service": "drivedocs",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.3.1",
+      "Description": "Agencies SHALL enable the security update for Google Drive files",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "3 Security Updates for Files",
+          "Service": "drivedocs",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.4.1",
+      "Description": "Agencies SHOULD disable Google Drive SDK access",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "4 Drive SDK",
+          "Service": "drivedocs",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.5.1",
+      "Description": "Agencies SHALL disable Google Drive Add-Ons",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "5 User Installation of Drive and Docs Add-Ons",
+          "Service": "drivedocs",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.DRIVEDOCS.6.1",
+      "Description": "Google Drive for Desktop SHALL be enabled only for authorized devices",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Drive and Docs",
+          "SubSection": "6 Drive for Desktop",
+          "Service": "drivedocs",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CALENDAR.1.1",
+      "Description": "External Sharing Options for Primary Calendars SHALL be configured to Only free/busy information (hide event details)",
+      "Checks": [
+        "calendar_external_sharing_primary_calendar"
+      ],
+      "Attributes": [
+        {
+          "Section": "Calendar",
+          "SubSection": "1 External Sharing Options",
+          "Service": "calendar",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CALENDAR.1.2",
+      "Description": "External sharing options for secondary calendars SHALL be configured to Only free/busy information (hide event details)",
+      "Checks": [
+        "calendar_external_sharing_secondary_calendar"
+      ],
+      "Attributes": [
+        {
+          "Section": "Calendar",
+          "SubSection": "1 External Sharing Options",
+          "Service": "calendar",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CALENDAR.2.1",
+      "Description": "External invitations warnings SHALL be enabled to prompt users before sending invitations",
+      "Checks": [
+        "calendar_external_invitations_warning"
+      ],
+      "Attributes": [
+        {
+          "Section": "Calendar",
+          "SubSection": "2 External Invitations Warnings",
+          "Service": "calendar",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CALENDAR.3.1",
+      "Description": "Calendar Interop SHOULD be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Calendar",
+          "SubSection": "3 Calendar Interop Management",
+          "Service": "calendar",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CALENDAR.3.2",
+      "Description": "Microsoft 365 (Graph API) SHALL be used in lieu of basic authentication to establish connectivity between tenants or organizations in cases where Calendar Interop is deemed necessary for agency mission fulfillment",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Calendar",
+          "SubSection": "3 Calendar Interop Management",
+          "Service": "calendar",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CALENDAR.4.1",
+      "Description": "Appointment Schedule with Payments SHALL be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Calendar",
+          "SubSection": "4 Paid Appointments",
+          "Service": "calendar",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CHAT.1.1",
+      "Description": "Chat history SHALL be enabled for information traceability",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Chat",
+          "SubSection": "1 Chat History",
+          "Service": "chat",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CHAT.1.2",
+      "Description": "Users SHALL NOT be allowed to change their history setting",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Chat",
+          "SubSection": "1 Chat History",
+          "Service": "chat",
+          "Type": "SHALL NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CHAT.2.1",
+      "Description": "External file sharing SHALL be disabled to protect sensitive information from unauthorized or accidental sharing",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Chat",
+          "SubSection": "2 External File Sharing",
+          "Service": "chat",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CHAT.3.1",
+      "Description": "Space history SHOULD be enabled for information traceability",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Chat",
+          "SubSection": "3 History for Spaces",
+          "Service": "chat",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CHAT.4.1",
+      "Description": "External chat messaging SHALL be restricted to allowlisted domains only",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Chat",
+          "SubSection": "4 External Chat Messaging",
+          "Service": "chat",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CHAT.5.1",
+      "Description": "Chat content reporting SHALL be enabled for all conversation types",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Chat",
+          "SubSection": "5 Content Reporting",
+          "Service": "chat",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CHAT.5.2",
+      "Description": "All reporting message categories SHOULD be selected",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Chat",
+          "SubSection": "5 Content Reporting",
+          "Service": "chat",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.MEET.1.1",
+      "Description": "External users who were not explicitly invited SHALL be required to ask to join",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Meet",
+          "SubSection": "1 Meeting Access",
+          "Service": "meet",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.MEET.2.1",
+      "Description": "Meeting access SHALL be disabled for meetings created by users who are not members of any Google Workspace (GWS) tenant or organization",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Meet",
+          "SubSection": "2 Internal Access to External Meetings",
+          "Service": "meet",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.MEET.3.1",
+      "Description": "Host Management meeting features SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Meet",
+          "SubSection": "3 Host Management Meeting Features",
+          "Service": "meet",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.MEET.4.1",
+      "Description": "Warn for external participants SHALL be enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Meet",
+          "SubSection": "4 External Participants",
+          "Service": "meet",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.MEET.5.1",
+      "Description": "Incoming calls SHALL be restricted to contacts and other users in the organization",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Meet",
+          "SubSection": "5 Incoming Calls",
+          "Service": "meet",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.MEET.6.1",
+      "Description": "Automatic recordings for Google Meet SHALL be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Meet",
+          "SubSection": "6 Video Meeting Settings",
+          "Service": "meet",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.MEET.6.2",
+      "Description": "Automatic transcripts for Google Meet SHALL be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Meet",
+          "SubSection": "6 Video Meeting Settings",
+          "Service": "meet",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GROUPS.1.1",
+      "Description": "Group access from outside the organization SHALL be disabled unless explicitly granted by the group owner",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Groups",
+          "SubSection": "1 External Group Access",
+          "Service": "groups",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GROUPS.1.2",
+      "Description": "Group owners' ability to add external members to groups SHOULD be disabled unless necessary for agency mission fulfillment",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Groups",
+          "SubSection": "1 External Group Access",
+          "Service": "groups",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GROUPS.1.3",
+      "Description": "Group owners' ability to allow posting to a group by an external, non-group member SHOULD be disabled unless necessary for agency mission fulfillment",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Groups",
+          "SubSection": "1 External Group Access",
+          "Service": "groups",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GROUPS.2.1",
+      "Description": "Group creation SHOULD be restricted to admins within the organization unless necessary for agency mission fulfillment",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Groups",
+          "SubSection": "2 Group Creation",
+          "Service": "groups",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GROUPS.3.1",
+      "Description": "The default permission to view conversations SHOULD be set to All Group Members",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Groups",
+          "SubSection": "3 Default Permissions for Viewing Conversations",
+          "Service": "groups",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.GROUPS.4.1",
+      "Description": "The Ability for Groups to be Hidden from the Directory SHALL be disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Groups",
+          "SubSection": "4 Ability to Hide Groups from the Directory",
+          "Service": "groups",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.SITES.1.1",
+      "Description": "Sites Service SHOULD be disabled for all users",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Sites",
+          "SubSection": "1 Sites Service Status",
+          "Service": "sites",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CLASSROOM.1.1",
+      "Description": "Who can join classes in your domain SHALL be restricted to users in your domain or allowlisted domains",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Classroom",
+          "SubSection": "1 Class Membership",
+          "Service": "classroom",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CLASSROOM.1.2",
+      "Description": "Which classes users in your domain can join SHALL be restricted to classes in your domain or allowlisted domains",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Classroom",
+          "SubSection": "1 Class Membership",
+          "Service": "classroom",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CLASSROOM.2.1",
+      "Description": "Users SHALL NOT be able to authorize apps to access their Google Classroom data",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Classroom",
+          "SubSection": "2 Classroom API",
+          "Service": "classroom",
+          "Type": "SHALL NOT"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CLASSROOM.3.1",
+      "Description": "Roster import with Clever SHOULD be turned off",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Classroom",
+          "SubSection": "3 Roster Import",
+          "Service": "classroom",
+          "Type": "SHOULD"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CLASSROOM.4.1",
+      "Description": "Only teachers SHALL be allowed to unenroll students from classes",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Classroom",
+          "SubSection": "4 Student Unenrollment",
+          "Service": "classroom",
+          "Type": "SHALL"
+        }
+      ]
+    },
+    {
+      "Id": "GWS.CLASSROOM.5.1",
+      "Description": "Class creation SHALL be restricted to verified teachers only",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "Classroom",
+          "SubSection": "5 Class Creation",
+          "Service": "classroom",
+          "Type": "SHALL"
+        }
+      ]
+    }
+  ]
+}

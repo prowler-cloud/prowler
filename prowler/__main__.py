@@ -18,6 +18,7 @@ from prowler.config.config import (
     json_asff_file_suffix,
     json_ocsf_file_suffix,
     orange_color,
+    sarif_file_suffix,
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -27,6 +28,7 @@ from prowler.lib.check.check import (
     list_categories,
     list_checks_json,
     list_fixers,
+    list_resource_groups,
     list_services,
     load_custom_checks_metadata,
     parse_checks_from_file,
@@ -36,6 +38,7 @@ from prowler.lib.check.check import (
     print_compliance_frameworks,
     print_compliance_requirements,
     print_fixers,
+    print_resource_groups,
     print_services,
     remove_custom_checks_module,
     run_fixer,
@@ -65,9 +68,13 @@ from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
+from prowler.lib.outputs.compliance.cis.cis_googleworkspace import GoogleWorkspaceCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
 from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
+from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
+    GoogleWorkspaceCISASCuBA,
+)
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
@@ -116,6 +123,7 @@ from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ingestion import send_ocsf_to_api
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics, report
+from prowler.lib.outputs.sarif.sarif import SARIF
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.alibabacloud.models import AlibabaCloudOutputOptions
@@ -139,6 +147,7 @@ from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
 from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
+from prowler.providers.vercel.models import VercelOutputOptions
 
 
 def prowler():
@@ -161,6 +170,7 @@ def prowler():
     excluded_services = args.excluded_service
     services = args.service
     categories = args.category
+    resource_groups = args.resource_group
     checks_file = args.checks_file
     checks_folder = args.checks_folder
     severities = args.severity
@@ -170,6 +180,7 @@ def prowler():
         not checks
         and not services
         and not categories
+        and not resource_groups
         and not excluded_checks
         and not excluded_services
         and not severities
@@ -188,7 +199,8 @@ def prowler():
     if compliance_framework:
         args.output_formats.extend(compliance_framework)
     # If no input compliance framework, set all, unless a specific service or check is input
-    elif default_execution:
+    # Skip for IAC and LLM providers that don't use compliance frameworks
+    elif default_execution and provider not in ["iac", "llm"]:
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
@@ -213,6 +225,10 @@ def prowler():
 
     if args.list_categories:
         print_categories(list_categories(bulk_checks_metadata))
+        sys.exit()
+
+    if args.list_resource_groups:
+        print_resource_groups(list_resource_groups(bulk_checks_metadata))
         sys.exit()
 
     bulk_compliance_frameworks = {}
@@ -256,7 +272,10 @@ def prowler():
         severities=severities,
         compliance_frameworks=compliance_framework,
         categories=categories,
+        resource_groups=resource_groups,
         provider=provider,
+        list_checks=getattr(args, "list_checks", False)
+        or getattr(args, "list_checks_json", False),
     )
 
     # if --list-checks-json, dump a json file and exit
@@ -276,6 +295,10 @@ def prowler():
     # Print Provider Credentials
     if not args.only_logs:
         global_provider.print_credentials()
+
+    # --registry-list: listing already printed during provider init, exit
+    if getattr(global_provider, "_listing_only", False):
+        sys.exit()
 
     # Skip service and check loading for external-tool providers
     if provider not in EXTERNAL_TOOL_PROVIDERS:
@@ -385,6 +408,10 @@ def prowler():
         output_options = OpenStackOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "vercel":
+        output_options = VercelOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -404,14 +431,15 @@ def prowler():
 
             findings = global_provider.run_scan(streaming_callback=streaming_callback)
         else:
-            # Original behavior for IAC or non-verbose LLM
+            # Original behavior for IAC and Image
             try:
                 findings = global_provider.run()
             except ImageBaseException as error:
                 logger.critical(f"{error}")
                 sys.exit(1)
-            # Note: IaC doesn't support granular progress tracking since Trivy runs as a black box
-            # and returns all findings at once. Progress tracking would just be 0% → 100%.
+            # Note: External tool providers don't support granular progress tracking since
+            # they run external tools as a black box and return all findings at once.
+            # Progress tracking would just be 0% → 100%.
 
             # Filter findings by status if specified
             if hasattr(args, "status") and args.status:
@@ -528,6 +556,13 @@ def prowler():
                 html_output.batch_write_data_to_file(
                     provider=global_provider, stats=stats
                 )
+            if mode == "sarif":
+                sarif_output = SARIF(
+                    findings=finding_outputs,
+                    file_path=f"{filename}{sarif_file_suffix}",
+                )
+                generated_outputs["regular"].append(sarif_output)
+                sarif_output.batch_write_data_to_file()
 
     if getattr(args, "push_to_cloud", False):
         if not ocsf_output or not getattr(ocsf_output, "file_path", None):
@@ -1129,6 +1164,48 @@ def prowler():
                 generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
+    elif provider == "googleworkspace":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = GoogleWorkspaceCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            elif compliance_name.startswith("cisa_scuba_"):
+                # Generate CISA SCuBA Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cisa_scuba = GoogleWorkspaceCISASCuBA(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cisa_scuba)
+                cisa_scuba.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
     elif provider == "oraclecloud":
         for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
@@ -1249,8 +1326,12 @@ def prowler():
                     global_provider.identity.audited_regions,
                 )
                 if not global_provider.identity.audited_regions
-                else global_provider.identity.audited_regions
+                else set(global_provider.identity.audited_regions)
             )
+            if global_provider._enabled_regions is not None:
+                security_hub_regions = security_hub_regions.intersection(
+                    global_provider._enabled_regions
+                )
 
             security_hub = SecurityHub(
                 aws_account_id=global_provider.identity.account,

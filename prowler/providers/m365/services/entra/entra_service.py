@@ -9,7 +9,7 @@ from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
 )
-from pydantic.v1 import BaseModel
+from pydantic.v1 import BaseModel, validator
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -264,6 +264,20 @@ class Entra(M365Service):
                                     [],
                                 )
                             ],
+                            included_guests_or_external_users=self._parse_guests_or_external_users(
+                                getattr(
+                                    policy.conditions.users,
+                                    "include_guests_or_external_users",
+                                    None,
+                                )
+                            ),
+                            excluded_guests_or_external_users=self._parse_guests_or_external_users(
+                                getattr(
+                                    policy.conditions.users,
+                                    "exclude_guests_or_external_users",
+                                    None,
+                                )
+                            ),
                         ),
                         client_app_types=[
                             ClientAppType(client_app_type)
@@ -289,6 +303,21 @@ class Entra(M365Service):
                                 [],
                             )
                         ],
+                        # The MS Graph SDK deserializes insiderRiskLevels
+                        # as a list via get_collection_of_enum_values, so
+                        # we take the first element when present.
+                        insider_risk_levels=(
+                            InsiderRiskLevel(raw_insider_risk[0].value)
+                            if (
+                                raw_insider_risk := getattr(
+                                    policy.conditions,
+                                    "insider_risk_levels",
+                                    None,
+                                )
+                            )
+                            and raw_insider_risk
+                            else None
+                        ),
                         platform_conditions=PlatformConditions(
                             include_platforms=[
                                 platform
@@ -315,6 +344,57 @@ class Entra(M365Service):
                         ),
                         authentication_flows=self._parse_authentication_flows(
                             raw_auth_flows_map.get(policy.id)
+                        ),
+                        device_conditions=DeviceConditions(
+                            device_filter_mode=(
+                                DeviceFilterMode(
+                                    getattr(
+                                        getattr(
+                                            getattr(
+                                                policy.conditions,
+                                                "devices",
+                                                None,
+                                            ),
+                                            "device_filter",
+                                            None,
+                                        ),
+                                        "mode",
+                                        None,
+                                    )
+                                )
+                                if getattr(
+                                    getattr(policy.conditions, "devices", None),
+                                    "device_filter",
+                                    None,
+                                )
+                                and getattr(
+                                    getattr(
+                                        getattr(policy.conditions, "devices", None),
+                                        "device_filter",
+                                        None,
+                                    ),
+                                    "mode",
+                                    None,
+                                )
+                                else None
+                            ),
+                            device_filter_rule=(
+                                getattr(
+                                    getattr(
+                                        getattr(policy.conditions, "devices", None),
+                                        "device_filter",
+                                        None,
+                                    ),
+                                    "rule",
+                                    None,
+                                )
+                                if getattr(
+                                    getattr(policy.conditions, "devices", None),
+                                    "device_filter",
+                                    None,
+                                )
+                                else None
+                            ),
                         ),
                     ),
                     grant_controls=GrantControls(
@@ -530,6 +610,56 @@ class Entra(M365Service):
                     )
 
         return AuthenticationFlows(transfer_methods=transfer_methods)
+
+    @staticmethod
+    def _parse_guests_or_external_users(
+        sdk_obj,
+    ) -> "GuestsOrExternalUsers | None":
+        """Parse guest or external user conditions from the MS Graph SDK object.
+
+        The SDK deserializes ``guestOrExternalUserTypes`` via
+        ``get_collection_of_enum_values``, returning a list of SDK enum members.
+
+        Args:
+            sdk_obj: A ``ConditionalAccessGuestsOrExternalUsers`` SDK object, or ``None``.
+
+        Returns:
+            A ``GuestsOrExternalUsers`` model instance, or ``None`` if the input is absent.
+        """
+        if sdk_obj is None:
+            return None
+
+        raw_types = getattr(sdk_obj, "guest_or_external_user_types", None) or []
+        raw_membership_kind = getattr(
+            getattr(sdk_obj, "external_tenants", None),
+            "membership_kind",
+            None,
+        )
+        membership_kind = None
+        if raw_membership_kind is not None:
+            raw_membership_kind = getattr(
+                raw_membership_kind,
+                "value",
+                raw_membership_kind,
+            )
+            try:
+                membership_kind = ExternalTenantsMembershipKind(raw_membership_kind)
+            except ValueError:
+                logger.warning(
+                    f"Unknown external tenants membership kind: {raw_membership_kind}"
+                )
+
+        guest_types: list[GuestOrExternalUserType] = []
+        for raw_type in raw_types:
+            try:
+                guest_types.append(GuestOrExternalUserType(raw_type.value))
+            except (ValueError, AttributeError):
+                logger.warning(f"Unknown guest or external user type: {raw_type}")
+
+        return GuestsOrExternalUsers(
+            guest_or_external_user_types=guest_types,
+            external_tenants_membership_kind=membership_kind,
+        )
 
     @staticmethod
     def _parse_app_management_restrictions(restrictions):
@@ -942,13 +1072,58 @@ class ApplicationsConditions(BaseModel):
     included_user_actions: List[UserAction]
 
 
+class GuestOrExternalUserType(Enum):
+    """Guest or external user types for Conditional Access policies.
+
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessguestsorexternalusers
+    """
+
+    NONE = "none"
+    INTERNAL_GUEST = "internalGuest"
+    B2B_COLLABORATION_GUEST = "b2bCollaborationGuest"
+    B2B_COLLABORATION_MEMBER = "b2bCollaborationMember"
+    B2B_DIRECT_CONNECT_USER = "b2bDirectConnectUser"
+    OTHER_EXTERNAL_USER = "otherExternalUser"
+    SERVICE_PROVIDER = "serviceProvider"
+
+
+class ExternalTenantsMembershipKind(Enum):
+    """External tenant scope for guest or external user conditions."""
+
+    ALL = "all"
+    ENUMERATED = "enumerated"
+    UNKNOWN_FUTURE_VALUE = "unknownFutureValue"
+
+
+# All guest/external user types that represent actual guest or external users.
+ALL_GUEST_USER_TYPES = {
+    GuestOrExternalUserType.INTERNAL_GUEST,
+    GuestOrExternalUserType.B2B_COLLABORATION_GUEST,
+    GuestOrExternalUserType.B2B_COLLABORATION_MEMBER,
+    GuestOrExternalUserType.B2B_DIRECT_CONNECT_USER,
+    GuestOrExternalUserType.OTHER_EXTERNAL_USER,
+    GuestOrExternalUserType.SERVICE_PROVIDER,
+}
+
+
+class GuestsOrExternalUsers(BaseModel):
+    """Model representing guest or external user conditions in Conditional Access policies."""
+
+    guest_or_external_user_types: List[GuestOrExternalUserType] = []
+    external_tenants_membership_kind: Optional[ExternalTenantsMembershipKind] = None
+
+
 class UsersConditions(BaseModel):
+    """Model representing user conditions for Conditional Access policies."""
+
     included_groups: List[str]
     excluded_groups: List[str]
     included_users: List[str]
     excluded_users: List[str]
     included_roles: List[str]
     excluded_roles: List[str]
+    included_guests_or_external_users: Optional[GuestsOrExternalUsers] = None
+    excluded_guests_or_external_users: Optional[GuestsOrExternalUsers] = None
 
 
 class RiskLevel(Enum):
@@ -966,11 +1141,50 @@ class ClientAppType(Enum):
     OTHER_CLIENTS = "other"
 
 
+class InsiderRiskLevel(Enum):
+    """Insider risk levels for Conditional Access policies.
+
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessconditionset#conditionalaccessinsiderrisklevels-values
+    """
+
+    MINOR = "minor"
+    MODERATE = "moderate"
+    ELEVATED = "elevated"
+
+
+class DeviceFilterMode(Enum):
+    """Mode for device filter in Conditional Access policies."""
+
+    INCLUDE = "include"
+    EXCLUDE = "exclude"
+
+
+class DeviceConditions(BaseModel):
+    """Model representing device conditions for Conditional Access policies."""
+
+    device_filter_mode: Optional[DeviceFilterMode] = None
+    device_filter_rule: Optional[str] = None
+
+
 class PlatformConditions(BaseModel):
     """Model representing platform conditions for Conditional Access policies."""
 
     include_platforms: List[str] = []
     exclude_platforms: List[str] = []
+
+    @validator("include_platforms", "exclude_platforms", pre=True)
+    @classmethod
+    def normalize_platforms(cls, values):
+        if not values:
+            return []
+
+        normalized = []
+        for platform in values:
+            value = getattr(platform, "value", platform)
+            if isinstance(value, str) and value:
+                normalized.append(value.lower())
+
+        return normalized
 
 
 class TransferMethod(Enum):
@@ -987,13 +1201,17 @@ class AuthenticationFlows(BaseModel):
 
 
 class Conditions(BaseModel):
+    """Model representing conditions for Conditional Access policies."""
+
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
     user_risk_levels: List[RiskLevel] = []
     sign_in_risk_levels: List[RiskLevel] = []
+    insider_risk_levels: Optional[InsiderRiskLevel] = None
     platform_conditions: Optional[PlatformConditions] = None
     authentication_flows: Optional[AuthenticationFlows] = None
+    device_conditions: Optional[DeviceConditions] = None
 
 
 class PersistentBrowser(BaseModel):

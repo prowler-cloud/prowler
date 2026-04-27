@@ -1,3 +1,6 @@
+SENSITIVE_ARGUMENTS = frozenset({"--nhn-password"})
+
+
 def init_parser(self):
     """Init the NHN Provider CLI parser"""
     nhn_parser = self.subparsers.add_parser(
@@ -10,7 +13,11 @@ def init_parser(self):
         "--nhn-username", nargs="?", default=None, help="NHN API Username"
     )
     nhn_auth_subparser.add_argument(
-        "--nhn-password", nargs="?", default=None, help="NHN API Password"
+        "--nhn-password",
+        nargs="?",
+        default=None,
+        metavar="NHN_PASSWORD",
+        help="NHN API Password",
     )
     nhn_auth_subparser.add_argument(
         "--nhn-tenant-id", nargs="?", default=None, help="NHN Tenant ID"

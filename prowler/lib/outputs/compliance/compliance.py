@@ -3,6 +3,7 @@ import sys
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.c5.c5 import get_c5_table
+from prowler.lib.outputs.compliance.ccc.ccc import get_ccc_table
 from prowler.lib.outputs.compliance.cis.cis import get_cis_table
 from prowler.lib.outputs.compliance.csa.csa import get_csa_table
 from prowler.lib.outputs.compliance.ens.ens import get_ens_table
@@ -40,6 +41,9 @@ def display_compliance_table(
     Returns:
         None
     """
+    # Filter out findings with dynamic CheckIDs not present in bulk_checks_metadata
+    findings = [f for f in findings if f.check_metadata.CheckID in bulk_checks_metadata]
+
     try:
         if "ens_" in compliance_framework:
             get_ens_table(
@@ -97,6 +101,15 @@ def display_compliance_table(
             )
         elif "c5_" in compliance_framework:
             get_c5_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+                compliance_overview,
+            )
+        elif compliance_framework.startswith("ccc_"):
+            get_ccc_table(
                 findings,
                 bulk_checks_metadata,
                 compliance_framework,

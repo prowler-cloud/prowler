@@ -156,6 +156,11 @@ export const addProviderFormSchema = z
             "Customer ID must start with 'C' followed by alphanumeric characters (e.g., C01234abc)",
           ),
       }),
+      z.object({
+        providerType: z.literal("vercel"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Team ID is required"),
+      }),
     ]),
   );
 
@@ -376,7 +381,15 @@ export const addCredentialsFormSchema = (
                                           .string()
                                           .min(1, "Cloud name is required"),
                                     }
-                                  : {}),
+                                  : providerType === "vercel"
+                                    ? {
+                                        [ProviderCredentialFields.VERCEL_API_TOKEN]:
+                                          z
+                                            .string()
+                                            .trim()
+                                            .min(1, "API Token is required"),
+                                      }
+                                    : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {

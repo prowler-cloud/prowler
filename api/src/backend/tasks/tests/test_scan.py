@@ -36,6 +36,7 @@ from api.models import (
     Provider,
     Resource,
     Scan,
+    ScanSummary,
     StateChoices,
     StatusChoices,
 )
@@ -1411,7 +1412,9 @@ class TestProcessFindingMicroBatch:
         assert created_finding.status == StatusChoices.PASS
         assert created_finding.delta == Finding.DeltaChoices.NEW
         assert created_finding.muted is False
-        assert created_finding.check_metadata == finding.metadata
+        expected_metadata = {**finding.metadata, "compliance": finding.compliance}
+        assert created_finding.check_metadata == expected_metadata
+        assert created_finding.check_metadata["compliance"] == finding.compliance
         assert created_finding.resource_regions == [finding.region]
         assert created_finding.resource_services == [finding.service_name]
         assert created_finding.resource_types == [finding.resource_type]
@@ -3355,6 +3358,175 @@ class TestAggregateFindings:
 
         regions = {s.region for s in summaries}
         assert regions == {"us-east-1", "us-west-2"}
+
+    @patch("tasks.jobs.scan.Finding.objects.filter")
+    @patch("tasks.jobs.scan.ScanSummary.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_findings_skips_rows_with_null_service_or_region(
+        self, mock_rls_transaction, mock_bulk_create, mock_findings_filter
+    ):
+        """Aggregation rows with NULL service or region (orphan Findings whose
+        ResourceFindingMapping is missing) must be dropped before
+        ``bulk_create`` so the NOT NULL constraints on ``scan_summaries`` are
+        not violated. Valid rows in the same batch must still be persisted."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+
+        base_counts = {
+            "fail": 1,
+            "_pass": 0,
+            "muted_count": 0,
+            "total": 1,
+            "new": 0,
+            "changed": 0,
+            "unchanged": 1,
+            "fail_new": 0,
+            "fail_changed": 0,
+            "pass_new": 0,
+            "pass_changed": 0,
+            "muted_new": 0,
+            "muted_changed": 0,
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {
+                "check_id": "check_valid",
+                "resources__service": "s3",
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **base_counts,
+            },
+            {
+                "check_id": "check_null_service",
+                "resources__service": None,
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **base_counts,
+            },
+            {
+                "check_id": "check_null_region",
+                "resources__service": "ec2",
+                "severity": "low",
+                "resources__region": None,
+                **base_counts,
+            },
+            {
+                "check_id": "check_null_both",
+                "resources__service": None,
+                "severity": "medium",
+                "resources__region": None,
+                **base_counts,
+            },
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_findings(tenant_id, scan_id)
+
+        mock_bulk_create.assert_called_once()
+        args, _ = mock_bulk_create.call_args
+        summaries = list(args[0])
+
+        assert len(summaries) == 1
+        assert summaries[0].check_id == "check_valid"
+        assert summaries[0].service == "s3"
+        assert summaries[0].region == "us-east-1"
+
+    def test_aggregate_findings_is_idempotent_on_rerun(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        findings_fixture,
+    ):
+        """Re-running `aggregate_findings` for the same scan must not violate
+        the `unique_scan_summary` constraint. The post-mute reaggregation
+        pipeline re-dispatches `perform_scan_summary_task` against scans
+        whose summaries already exist; upsert must update existing rows in
+        place (same primary keys) rather than inserting duplicates."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        value_columns = (
+            "check_id",
+            "service",
+            "severity",
+            "region",
+            "fail",
+            "_pass",
+            "muted",
+            "total",
+        )
+
+        aggregate_findings(str(tenant.id), str(scan.id))
+        first_run_ids = set(
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant.id, scan_id=scan.id
+            ).values_list("id", flat=True)
+        )
+        first_run_rows = list(
+            ScanSummary.all_objects.filter(tenant_id=tenant.id, scan_id=scan.id).values(
+                *value_columns
+            )
+        )
+
+        # Second invocation must not raise and must not duplicate rows.
+        aggregate_findings(str(tenant.id), str(scan.id))
+        second_run_ids = set(
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant.id, scan_id=scan.id
+            ).values_list("id", flat=True)
+        )
+        second_run_rows = list(
+            ScanSummary.all_objects.filter(tenant_id=tenant.id, scan_id=scan.id).values(
+                *value_columns
+            )
+        )
+
+        # Upsert preserves the original row identities; values stay stable
+        # because the underlying Finding set is unchanged between runs.
+        assert second_run_rows == first_run_rows
+        assert first_run_ids == second_run_ids
+
+    def test_aggregate_findings_reflects_mute_between_runs(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        findings_fixture,
+    ):
+        """Re-running `aggregate_findings` after a finding is muted between
+        runs must move counters: the matching ScanSummary row's `fail`
+        decrements and `muted` increments. Guards against a regression where
+        upsert silently keeps stale values from the first run."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        finding1, _ = findings_fixture  # finding1 is FAIL and not muted.
+
+        aggregate_findings(str(tenant.id), str(scan.id))
+        before = ScanSummary.all_objects.get(
+            tenant_id=tenant.id,
+            scan_id=scan.id,
+            check_id=finding1.check_id,
+            service="ec2",
+            severity=finding1.severity,
+            region="us-east-1",
+        )
+        assert before.fail == 1
+        assert before.muted == 0
+
+        Finding.all_objects.filter(pk=finding1.pk).update(muted=True)
+
+        aggregate_findings(str(tenant.id), str(scan.id))
+        after = ScanSummary.all_objects.get(pk=before.pk)
+
+        assert after.fail == 0
+        assert after.muted == 1
+        assert after.total == before.total
 
 
 @pytest.mark.django_db

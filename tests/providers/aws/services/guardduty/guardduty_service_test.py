@@ -66,20 +66,20 @@ def mock_generate_regional_clients(provider, service):
 class Test_GuardDuty_Service:
     # Test GuardDuty Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         guardduty = GuardDuty(aws_provider)
         assert guardduty.service == "guardduty"
 
     # Test GuardDuty client
     def test_client(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         guardduty = GuardDuty(aws_provider)
         for reg_client in guardduty.regional_clients.values():
             assert reg_client.__class__.__name__ == "GuardDuty"
 
     # Test GuardDuty session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         guardduty = GuardDuty(aws_provider)
         assert guardduty.session.__class__.__name__ == "Session"
 
@@ -89,7 +89,7 @@ class Test_GuardDuty_Service:
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True, Tags={"test": "test"})
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         guardduty = GuardDuty(aws_provider)
 
         assert len(guardduty.detectors) == 1
@@ -121,7 +121,7 @@ class Test_GuardDuty_Service:
             ],
         )
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         guardduty = GuardDuty(aws_provider)
 
         assert len(guardduty.detectors) == 1
@@ -149,7 +149,7 @@ class Test_GuardDuty_Service:
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         guardduty = GuardDuty(aws_provider)
 
         assert len(guardduty.detectors) == 1
@@ -170,7 +170,7 @@ class Test_GuardDuty_Service:
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         guardduty = GuardDuty(aws_provider)
 
         assert len(guardduty.detectors) == 1
@@ -192,7 +192,7 @@ class Test_GuardDuty_Service:
         guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         response = guardduty_client.create_detector(Enable=True)
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         guardduty = GuardDuty(aws_provider)
 
         assert len(guardduty.detectors) == 1

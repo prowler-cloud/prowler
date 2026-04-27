@@ -12,11 +12,13 @@ from prowler.config.config import (
     default_output_directory,
 )
 from prowler.lib.check.models import Severity
+from prowler.lib.cli.redact import warn_sensitive_argument_values
 from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
     init_providers_parser,
     validate_asff_usage,
     validate_provider_arguments,
+    validate_sarif_usage,
 )
 
 
@@ -27,10 +29,10 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,dashboard,iac,image} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image,llm} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack}
+  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -42,11 +44,12 @@ Available Cloud Providers:
     oraclecloud         Oracle Cloud Infrastructure Provider
     openstack           OpenStack Provider
     alibabacloud        Alibaba Cloud Provider
-    iac                 IaC Provider (Beta)
+    iac                 IaC Provider
     llm                 LLM Provider (Beta)
     image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
-    mongodbatlas        MongoDB Atlas Provider (Beta)
+    mongodbatlas        MongoDB Atlas Provider
+    vercel              Vercel Provider
 
 Available components:
     dashboard           Local dashboard
@@ -123,6 +126,10 @@ Detailed documentation at https://docs.prowler.com
             elif sys.argv[1] == "oci":
                 sys.argv[1] = "oraclecloud"
 
+        # Warn about sensitive flags passed with explicit values
+        # Snapshot argv before parse_args() which may exit on errors
+        warn_sensitive_argument_values(list(sys.argv[1:]))
+
         # Parse arguments
         args = self.parser.parse_args()
 
@@ -146,6 +153,12 @@ Detailed documentation at https://docs.prowler.com
         )
         if not asff_is_valid:
             self.parser.error(asff_error)
+
+        sarif_is_valid, sarif_error = validate_sarif_usage(
+            args.provider, getattr(args, "output_formats", None)
+        )
+        if not sarif_is_valid:
+            self.parser.error(sarif_error)
 
         return args
 
@@ -322,6 +335,13 @@ Detailed documentation at https://docs.prowler.com
             default=[],
             # TODO: Pending validate choices
         )
+        group.add_argument(
+            "--resource-group",
+            "--resource-groups",
+            nargs="+",
+            help="List of resource groups to be executed.",
+            default=[],
+        )
         common_checks_parser.add_argument(
             "--checks-folder",
             "-x",
@@ -332,7 +352,7 @@ Detailed documentation at https://docs.prowler.com
     def __init_list_checks_parser__(self):
         # List checks options
         list_checks_parser = self.common_providers_parser.add_argument_group(
-            "List checks/services/categories/compliance-framework checks"
+            "List checks/services/categories/resource-groups/compliance-framework checks"
         )
         list_group = list_checks_parser.add_mutually_exclusive_group()
         list_group.add_argument(
@@ -364,6 +384,11 @@ Detailed documentation at https://docs.prowler.com
             "--list-categories",
             action="store_true",
             help="List the available check's categories",
+        )
+        list_group.add_argument(
+            "--list-resource-groups",
+            action="store_true",
+            help="List the available check's resource groups",
         )
         list_group.add_argument(
             "--list-fixer",
@@ -419,7 +444,7 @@ Detailed documentation at https://docs.prowler.com
             nargs="?",
             default=None,
             metavar="SHODAN_API_KEY",
-            help="Check if any public IPs in your Cloud environments are exposed in Shodan.",
+            help="Check if any public IPs in your Cloud environments are exposed in Shodan. We recommend to use the SHODAN_API_KEY environment variable to provide the API key.",
         )
         third_party_subparser.add_argument(
             "--slack",

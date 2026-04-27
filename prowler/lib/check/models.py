@@ -1094,15 +1094,10 @@ class CheckReportIAC(Check_Report):
 
         self.resource = finding
         self.resource_name = file_path
-        self.resource_line_range = (
-            (
-                str(finding.get("CauseMetadata", {}).get("StartLine", ""))
-                + ":"
-                + str(finding.get("CauseMetadata", {}).get("EndLine", ""))
-            )
-            if finding.get("CauseMetadata", {}).get("StartLine", "")
-            else ""
-        )
+        cause = finding.get("CauseMetadata", {})
+        start = cause.get("StartLine") or finding.get("StartLine")
+        end = cause.get("EndLine") or finding.get("EndLine")
+        self.resource_line_range = f"{start}:{end}" if start else ""
 
 
 @dataclass
@@ -1238,6 +1233,50 @@ class CheckReportMongoDBAtlas(Check_Report):
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.project_id = getattr(resource, "project_id", "")
         self.location = getattr(resource, "location", self.project_id)
+
+
+@dataclass
+class CheckReportVercel(Check_Report):
+    """Contains the Vercel Check's finding information.
+
+    Vercel is a global platform - team_id is the scoping context.
+    All resource-related attributes are derived from the resource object.
+    """
+
+    resource_name: str
+    resource_id: str
+    team_id: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        team_id: str = None,
+    ) -> None:
+        """Initialize the Vercel Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary
+            resource: The Vercel resource being checked
+            resource_name: Override for resource name
+            resource_id: Override for resource ID
+            team_id: Override for team ID
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+        self.team_id = team_id or getattr(resource, "team_id", "")
+
+    @property
+    def region(self) -> str:
+        """Vercel is global - return 'global'."""
+        return "global"
 
 
 # Testing Pending

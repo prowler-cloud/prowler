@@ -354,6 +354,9 @@ class Finding(BaseModel):
                     check_output, "resource_line_range", ""
                 )
                 output_data["framework"] = check_output.check_metadata.ServiceName
+                output_data["raw"] = {
+                    "resource_line_range": output_data.get("resource_line_range", ""),
+                }
 
             elif provider.type == "llm":
                 output_data["auth_method"] = provider.auth_method
@@ -403,6 +406,23 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.zone_name
+
+            elif provider.type == "vercel":
+                output_data["auth_method"] = "api_token"
+                team = get_nested_attribute(provider, "identity.team")
+                output_data["account_uid"] = (
+                    team.id
+                    if team
+                    else get_nested_attribute(provider, "identity.user_id")
+                )
+                output_data["account_name"] = (
+                    team.name
+                    if team
+                    else get_nested_attribute(provider, "identity.username")
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = "global"
 
             elif provider.type == "alibabacloud":
                 output_data["auth_method"] = get_nested_attribute(

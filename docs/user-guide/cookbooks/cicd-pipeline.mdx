@@ -1,0 +1,247 @@
+---
+title: 'Run Prowler in CI/CD and Send Findings to Prowler Cloud'
+---
+
+<Warning>
+For new projects, use the official [Prowler GitHub Action](/user-guide/tutorials/prowler-app-github-action) — a Docker-based reusable action that runs scans, optionally pushes findings to Prowler Cloud, and uploads SARIF results to GitHub Code Scanning. The GitHub Actions examples below document the legacy pip-based flow.
+</Warning>
+
+This cookbook demonstrates how to integrate Prowler into CI/CD pipelines so that security scans run automatically and findings are sent to Prowler Cloud via [Import Findings](/user-guide/tutorials/prowler-app-import-findings). Examples cover GitHub Actions and GitLab CI.
+
+## Prerequisites
+
+* A **Prowler Cloud** account with an active subscription (see [Prowler Cloud Pricing](https://prowler.com/pricing))
+* A Prowler Cloud **API key** with the **Manage Ingestions** permission (see [API Keys](/user-guide/tutorials/prowler-app-api-keys))
+* Cloud provider credentials configured in the CI/CD environment (e.g., AWS credentials for scanning AWS accounts)
+* Access to configure pipeline workflows and secrets in the CI/CD platform
+
+## Key Concepts
+
+Prowler CLI provides the `--push-to-cloud` flag, which uploads scan results directly to Prowler Cloud after a scan completes. Combined with the `PROWLER_CLOUD_API_KEY` environment variable, this enables fully automated ingestion without manual file uploads.
+
+For full details on the flag and API, refer to the [Import Findings](/user-guide/tutorials/prowler-app-import-findings) documentation.
+
+<Note>
+The examples in this guide use AWS as the target provider, but the same approach applies to any provider supported by Prowler (Azure, GCP, Kubernetes, and others). Replace `prowler aws` with the desired provider command (e.g., `prowler gcp`, `prowler azure`) and configure the corresponding credentials in the CI/CD environment.
+</Note>
+
+## GitHub Actions
+
+### Store Secrets
+
+Before creating the workflow, add the following secrets to the repository (under "Settings" > "Secrets and variables" > "Actions"):
+
+* `PROWLER_CLOUD_API_KEY` — the Prowler Cloud API key
+* Cloud provider credentials (e.g., `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`, or configure OIDC-based role assumption)
+
+### Workflow: Scheduled AWS Scan
+
+This workflow runs Prowler against an AWS account on a daily schedule and on every push to the `main` branch:
+
+```yaml
+name: Prowler Security Scan
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # Daily at 03:00 UTC
+  push:
+    branches: [main]
+  workflow_dispatch:  # Allow manual triggers
+
+permissions:
+  id-token: write   # Required for OIDC
+  contents: read
+
+jobs:
+  prowler-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/ProwlerScanRole
+          aws-region: us-east-1
+
+      - name: Install Prowler
+        run: pip install prowler
+
+      - name: Run Prowler Scan
+        env:
+          PROWLER_CLOUD_API_KEY: ${{ secrets.PROWLER_CLOUD_API_KEY }}
+        run: |
+          prowler aws --push-to-cloud
+```
+
+<Note>
+Replace `123456789012` with the actual AWS account ID and `ProwlerScanRole` with the IAM role name. For IAM role setup, refer to the [AWS authentication guide](/user-guide/providers/aws/authentication).
+</Note>
+
+### Workflow: Scan Specific Services on Pull Request
+
+To run targeted scans on pull requests without blocking the merge pipeline, use `continue-on-error`:
+
+```yaml
+name: Prowler PR Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  prowler-scan:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/ProwlerScanRole
+          aws-region: us-east-1
+
+      - name: Install Prowler
+        run: pip install prowler
+
+      - name: Run Prowler Scan
+        env:
+          PROWLER_CLOUD_API_KEY: ${{ secrets.PROWLER_CLOUD_API_KEY }}
+        run: |
+          prowler aws --services s3,iam,ec2 --push-to-cloud
+```
+
+<Tip>
+Limiting the scan to specific services with `--services` reduces execution time, making it practical for pull request checks.
+</Tip>
+
+## GitLab CI
+
+### Store Variables
+
+Add the following CI/CD variables in the GitLab project (under "Settings" > "CI/CD" > "Variables"):
+
+* `PROWLER_CLOUD_API_KEY` — mark as **masked** and **protected**
+* Cloud provider credentials as needed
+
+### Pipeline: Scheduled AWS Scan
+
+Add the following to `.gitlab-ci.yml`:
+
+```yaml
+prowler-scan:
+  image: python:3.12-slim
+  stage: test
+  script:
+    - pip install prowler
+    - prowler aws --push-to-cloud
+  variables:
+    PROWLER_CLOUD_API_KEY: $PROWLER_CLOUD_API_KEY
+    AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+    AWS_DEFAULT_REGION: "us-east-1"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+```
+
+To run the scan on a schedule, create a **Pipeline Schedule** in GitLab (under "Build" > "Pipeline Schedules") with the desired cron expression.
+
+### Pipeline: Multi-Provider Scan
+
+To scan multiple cloud providers in parallel:
+
+```yaml
+stages:
+  - security
+
+.prowler-base:
+  image: python:3.12-slim
+  stage: security
+  before_script:
+    - pip install prowler
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+
+prowler-aws:
+  extends: .prowler-base
+  script:
+    - prowler aws --push-to-cloud
+  variables:
+    PROWLER_CLOUD_API_KEY: $PROWLER_CLOUD_API_KEY
+    AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+
+prowler-gcp:
+  extends: .prowler-base
+  script:
+    - prowler gcp --push-to-cloud
+  variables:
+    PROWLER_CLOUD_API_KEY: $PROWLER_CLOUD_API_KEY
+    GOOGLE_APPLICATION_CREDENTIALS: $GCP_SERVICE_ACCOUNT_KEY
+```
+
+## Tips and Best Practices
+
+### When to Run Scans
+
+* **Scheduled scans** (daily or weekly) provide continuous monitoring and are ideal for baseline security assessments
+* **On-merge scans** catch configuration changes introduced by new code
+* **Pull request scans** provide early feedback but should target specific services to keep execution times reasonable
+
+### Handling Scan Failures
+
+By default, Prowler exits with a non-zero code when it finds failing checks. This causes the CI/CD job to fail. To prevent scan results from blocking the pipeline:
+
+* **GitHub Actions**: Add `continue-on-error: true` to the job
+* **GitLab CI**: Add `allow_failure: true` to the job
+
+<Note>
+Ingestion failures (e.g., network issues reaching Prowler Cloud) do not affect the Prowler exit code. The scan completes normally and only a warning is emitted. See [Import Findings troubleshooting](/user-guide/tutorials/prowler-app-import-findings#troubleshooting) for details.
+</Note>
+
+### Caching Prowler Installation
+
+For faster pipeline runs, cache the Prowler installation:
+
+**GitHub Actions:**
+```yaml
+- name: Cache pip packages
+  uses: actions/cache@v4
+  with:
+    path: ~/.cache/pip
+    key: ${{ runner.os }}-pip-prowler
+    restore-keys: ${{ runner.os }}-pip-
+
+- name: Install Prowler
+  run: pip install prowler
+```
+
+**GitLab CI:**
+```yaml
+prowler-scan:
+  cache:
+    paths:
+      - .cache/pip
+  variables:
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+```
+
+### Output Formats
+
+To generate additional report formats alongside the cloud upload:
+
+```bash
+prowler aws --push-to-cloud -M csv,html -o /tmp/prowler-reports
+```
+
+This produces CSV and HTML files locally while also pushing OCSF findings to Prowler Cloud. The local files can be stored as CI/CD artifacts for archival purposes.
+
+### Scanning Multiple AWS Accounts
+
+To scan multiple accounts sequentially in a single job, use [role assumption](/user-guide/providers/aws/role-assumption):
+
+```bash
+prowler aws -R arn:aws:iam::111111111111:role/ProwlerScanRole --push-to-cloud
+prowler aws -R arn:aws:iam::222222222222:role/ProwlerScanRole --push-to-cloud
+```
+
+Each scan run creates a separate ingestion job in Prowler Cloud.

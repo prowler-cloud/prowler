@@ -1,27 +1,15 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime, EntityInfo, InfoField } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
+import { formatDuration } from "@/lib/date-utils";
 import { ProviderProps, ProviderType, ScanProps, TaskDetails } from "@/types";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
-};
-
-const formatDuration = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-
-  const parts = [];
-  if (hours > 0) parts.push(`${hours}h`);
-  if (minutes > 0) parts.push(`${minutes}m`);
-  if (remainingSeconds > 0 || parts.length === 0)
-    parts.push(`${remainingSeconds}s`);
-
-  return parts.join(" ");
 };
 
 export const ScanDetail = ({
