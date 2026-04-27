@@ -84,10 +84,10 @@ class VercelService:
                     )
 
                 if response.status_code == 403:
-                    # Plan limitation or permission error — return None for graceful handling
+                    # Endpoint unavailable for this token/scope; let checks handle it gracefully
                     logger.warning(
                         f"{self.service} - Access denied for {path} (403). "
-                        "This may be a plan limitation."
+                        "This may be caused by plan or permission restrictions."
                     )
                     return None
 

@@ -150,6 +150,6 @@ class Test_security_managed_rulesets_enabled:
             assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == f"Project {PROJECT_NAME} ({PROJECT_ID}) could not be assessed for managed rulesets. Enterprise plan required to access this feature."
+                == f"Project {PROJECT_NAME} ({PROJECT_ID}) could not be assessed for managed rulesets because the firewall configuration endpoint was not accessible. Manual verification is required."
             )
             assert result[0].team_id == TEAM_ID

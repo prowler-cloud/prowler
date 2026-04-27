@@ -17,8 +17,8 @@ class security_managed_rulesets_enabled(Check):
         """Execute the Vercel Managed Rulesets Enabled check.
 
         Iterates over all firewall configurations and checks if managed
-        rulesets are enabled. Reports MANUAL status when the feature is
-        not available due to plan limitations.
+        rulesets are enabled. Reports MANUAL status when the firewall
+        configuration cannot be assessed from the API.
 
         Returns:
             List[CheckReportVercel]: A list of reports for each project.
@@ -31,8 +31,9 @@ class security_managed_rulesets_enabled(Check):
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"Project {config.project_name} ({config.project_id}) "
-                    f"could not be assessed for managed rulesets. "
-                    f"Enterprise plan required to access this feature."
+                    f"could not be assessed for managed rulesets because the "
+                    f"firewall configuration endpoint was not accessible. "
+                    f"Manual verification is required."
                 )
             elif config.managed_rulesets:
                 report.status = "PASS"

@@ -21,6 +21,7 @@ class VercelTeamInfo(BaseModel):
     id: str
     name: str
     slug: str
+    billing_plan: Optional[str] = None
 
 
 class VercelIdentityInfo(BaseModel):
@@ -29,6 +30,7 @@ class VercelIdentityInfo(BaseModel):
     user_id: Optional[str] = None
     username: Optional[str] = None
     email: Optional[str] = None
+    billing_plan: Optional[str] = None
     team: Optional[VercelTeamInfo] = None
     teams: list[VercelTeamInfo] = Field(default_factory=list)
 
