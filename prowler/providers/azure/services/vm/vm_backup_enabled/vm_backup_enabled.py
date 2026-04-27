@@ -22,8 +22,8 @@ class vm_backup_enabled(Check):
             A list of reports containing the result of the check.
         """
         findings = []
-        for subscription_name, vms in vm_client.virtual_machines.items():
-            vaults = recovery_client.vaults.get(subscription_name, {})
+        for subscription_id, vms in vm_client.virtual_machines.items():
+            vaults = recovery_client.vaults.get(subscription_id, {})
             for vm in vms.values():
                 found = False
                 found_vault_name = None
@@ -40,12 +40,12 @@ class vm_backup_enabled(Check):
                     if found:
                         break
                 report = Check_Report_Azure(metadata=self.metadata(), resource=vm)
-                report.subscription = subscription_name
+                report.subscription = subscription_id
                 if found:
                     report.status = "PASS"
-                    report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} is protected by Azure Backup (vault: {found_vault_name})."
+                    report.status_extended = f"VM {vm.resource_name} in subscription {subscription_id} is protected by Azure Backup (vault: {found_vault_name})."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} is not protected by Azure Backup."
+                    report.status_extended = f"VM {vm.resource_name} in subscription {subscription_id} is not protected by Azure Backup."
                 findings.append(report)
         return findings

@@ -6,12 +6,12 @@ class vm_ensure_using_managed_disks(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        for subscription_name, vms in vm_client.virtual_machines.items():
+        for subscription_id, vms in vm_client.virtual_machines.items():
             for vm in vms.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=vm)
                 report.status = "PASS"
-                report.subscription = subscription_name
-                report.status_extended = f"VM {vm.resource_name} is using managed disks in subscription {subscription_name}"
+                report.subscription = subscription_id
+                report.status_extended = f"VM {vm.resource_name} is using managed disks in subscription {subscription_id}"
 
                 using_managed_disks = (
                     True
@@ -31,7 +31,7 @@ class vm_ensure_using_managed_disks(Check):
 
                 if not using_managed_disks:
                     report.status = "FAIL"
-                    report.status_extended = f"VM {vm.resource_name} is not using managed disks in subscription {subscription_name}"
+                    report.status_extended = f"VM {vm.resource_name} is not using managed disks in subscription {subscription_id}"
 
                 findings.append(report)
 

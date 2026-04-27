@@ -38,6 +38,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
+- Azure subscriptions sharing the same display name are no longer collapsed into a single identity entry, so every subscription is scanned [(#10718)](https://github.com/prowler-cloud/prowler/pull/10718)
 - Cloudflare account-scoped API tokens failing connection test in the App with `CloudflareUserTokenRequiredError` [(#10723)](https://github.com/prowler-cloud/prowler/pull/10723)
 - `prowler image --registry-list` crashes with `AttributeError` because `ImageProvider.__init__` returns early before registering the global provider [(#10691)](https://github.com/prowler-cloud/prowler/pull/10691)
 - Google Workspace Calendar checks false FAIL on unconfigured settings with secure Google defaults [(#10726)](https://github.com/prowler-cloud/prowler/pull/10726)

@@ -7,18 +7,18 @@ class app_register_with_identity(Check):
         findings = []
 
         for (
-            subscription_name,
+            subscription_id,
             apps,
         ) in app_client.apps.items():
             for app in apps.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=app)
-                report.subscription = subscription_name
+                report.subscription = subscription_id
                 report.status = "PASS"
-                report.status_extended = f"App '{app.name}' in subscription '{subscription_name}' has an identity configured."
+                report.status_extended = f"App '{app.name}' in subscription '{subscription_id}' has an identity configured."
 
                 if not app.identity:
                     report.status = "FAIL"
-                    report.status_extended = f"App '{app.name}' in subscription '{subscription_name}' does not have an identity configured."
+                    report.status_extended = f"App '{app.name}' in subscription '{subscription_id}' does not have an identity configured."
 
                 findings.append(report)
 

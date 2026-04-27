@@ -82,8 +82,8 @@ class Slack:
                 logo = gcp_logo
             elif provider.type == "azure":
                 printed_subscriptions = []
-                for key, value in provider.identity.subscriptions.items():
-                    intermediate = f"- *{key}: {value}*\n"
+                for subscription_id, display_name in provider.identity.subscriptions.items():
+                    intermediate = f"- *{display_name}: {subscription_id}*\n"
                     printed_subscriptions.append(intermediate)
                 identity = f"Azure Subscriptions:\n{''.join(printed_subscriptions)}"
                 logo = azure_logo

@@ -14,7 +14,7 @@ class app_function_identity_without_admin_privileges(Check):
         findings = []
 
         for (
-            subscription_name,
+            subscription_id,
             functions,
         ) in app_client.functions.items():
             for function in functions.values():
@@ -22,14 +22,14 @@ class app_function_identity_without_admin_privileges(Check):
                     report = Check_Report_Azure(
                         metadata=self.metadata(), resource=function
                     )
-                    report.subscription = subscription_name
+                    report.subscription = subscription_id
                     report.status = "PASS"
                     report.status_extended = f"Function {function.name} has a managed identity enabled but without admin privileges."
 
                     admin_roles_assigned = []
 
                     for role_assignment in iam_client.role_assignments[
-                        subscription_name
+                        subscription_id
                     ].values():
                         if (
                             role_assignment.agent_id == function.identity.principal_id
@@ -43,8 +43,8 @@ class app_function_identity_without_admin_privileges(Check):
                         ):
                             admin_roles_assigned.append(
                                 getattr(
-                                    iam_client.roles[subscription_name].get(
-                                        f"/subscriptions/{iam_client.subscriptions[subscription_name]}/providers/Microsoft.Authorization/roleDefinitions/{role_assignment.role_id}"
+                                    iam_client.roles[subscription_id].get(
+                                        f"/subscriptions/{subscription_id}/providers/Microsoft.Authorization/roleDefinitions/{role_assignment.role_id}"
                                     ),
                                     "name",
                                     "",

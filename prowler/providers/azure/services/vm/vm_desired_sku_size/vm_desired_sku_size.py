@@ -32,17 +32,17 @@ class vm_desired_sku_size(Check):
             ],
         )
 
-        for subscription_name, vms in vm_client.virtual_machines.items():
+        for subscription_id, vms in vm_client.virtual_machines.items():
             for vm in vms.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=vm)
-                report.subscription = subscription_name
+                report.subscription = subscription_id
 
                 if vm.vm_size in DESIRED_SKU_SIZES:
                     report.status = "PASS"
-                    report.status_extended = f"VM {vm.resource_name} is using desired SKU size {vm.vm_size} in subscription {subscription_name}."
+                    report.status_extended = f"VM {vm.resource_name} is using desired SKU size {vm.vm_size} in subscription {subscription_id}."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"VM {vm.resource_name} is using {vm.vm_size} which is not a desired SKU size in subscription {subscription_name}."
+                    report.status_extended = f"VM {vm.resource_name} is using {vm.vm_size} which is not a desired SKU size in subscription {subscription_id}."
 
                 findings.append(report)
 

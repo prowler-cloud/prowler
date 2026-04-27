@@ -11,7 +11,7 @@ class network_bastion_host_exists(Check):
                 report.subscription = subscription
                 report.resource_name = subscription
                 report.resource_id = (
-                    f"/subscriptions/{network_client.subscriptions[subscription]}"
+                    f"/subscriptions/{subscription}"
                 )
                 report.status = "FAIL"
                 report.status_extended = (

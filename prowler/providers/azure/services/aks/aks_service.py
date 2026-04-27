@@ -17,14 +17,14 @@ class AKS(AzureService):
         logger.info("AKS - Getting clusters...")
         clusters = {}
 
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
                 clusters_list = client.managed_clusters.list()
-                clusters.update({subscription_name: {}})
+                clusters.update({subscription_id: {}})
 
                 for cluster in clusters_list:
                     if getattr(cluster, "kubernetes_version", None):
-                        clusters[subscription_name].update(
+                        clusters[subscription_id].update(
                             {
                                 cluster.id: Cluster(
                                     id=cluster.id,
@@ -60,7 +60,7 @@ class AKS(AzureService):
                         )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         return clusters

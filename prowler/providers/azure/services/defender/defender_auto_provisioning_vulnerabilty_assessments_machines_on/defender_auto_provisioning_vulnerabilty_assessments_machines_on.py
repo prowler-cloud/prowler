@@ -7,7 +7,7 @@ class defender_auto_provisioning_vulnerabilty_assessments_machines_on(Check):
         findings = []
 
         for (
-            subscription_name,
+            subscription_id,
             assessments,
         ) in defender_client.assessments.items():
             if (
@@ -20,9 +20,9 @@ class defender_auto_provisioning_vulnerabilty_assessments_machines_on(Check):
                         "Machines should have a vulnerability assessment solution"
                     ],
                 )
-                report.subscription = subscription_name
+                report.subscription = subscription_id
                 report.status = "PASS"
-                report.status_extended = f"Vulnerability assessment is set up in all VMs in subscription {subscription_name}."
+                report.status_extended = f"Vulnerability assessment is set up in all VMs in subscription {subscription_id}."
 
                 if (
                     assessments[
@@ -31,7 +31,7 @@ class defender_auto_provisioning_vulnerabilty_assessments_machines_on(Check):
                     == "Unhealthy"
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"Vulnerability assessment is not set up in all VMs in subscription {subscription_name}."
+                    report.status_extended = f"Vulnerability assessment is not set up in all VMs in subscription {subscription_id}."
 
                 findings.append(report)
 
