@@ -17,67 +17,28 @@ env:
 permissions: {}
 
 jobs:
-  detect-release-type:
+  bump-version:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     permissions:
       contents: read
-    outputs:
-      is_minor: ${{ steps.detect.outputs.is_minor }}
-      is_patch: ${{ steps.detect.outputs.is_patch }}
-      major_version: ${{ steps.detect.outputs.major_version }}
-      minor_version: ${{ steps.detect.outputs.minor_version }}
-      patch_version: ${{ steps.detect.outputs.patch_version }}
+      pull-requests: write
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
         with:
           egress-policy: audit
 
-      - name: Detect release type and parse version
-        id: detect
+      - name: Validate release version
         run: |
-          if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-            MAJOR_VERSION=${BASH_REMATCH[1]}
-            MINOR_VERSION=${BASH_REMATCH[2]}
-            PATCH_VERSION=${BASH_REMATCH[3]}
-
-            echo "major_version=${MAJOR_VERSION}" >> "${GITHUB_OUTPUT}"
-            echo "minor_version=${MINOR_VERSION}" >> "${GITHUB_OUTPUT}"
-            echo "patch_version=${PATCH_VERSION}" >> "${GITHUB_OUTPUT}"
-
-            if (( MAJOR_VERSION != 5 )); then
-              echo "::error::Releasing another Prowler major version, aborting..."
-              exit 1
-            fi
-
-            if (( PATCH_VERSION == 0 )); then
-              echo "is_minor=true" >> "${GITHUB_OUTPUT}"
-              echo "is_patch=false" >> "${GITHUB_OUTPUT}"
-              echo "✓ Minor release detected: $PROWLER_VERSION"
-            else
-              echo "is_minor=false" >> "${GITHUB_OUTPUT}"
-              echo "is_patch=true" >> "${GITHUB_OUTPUT}"
-              echo "✓ Patch release detected: $PROWLER_VERSION"
-            fi
-          else
+          if [[ ! $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
             echo "::error::Invalid version syntax: '$PROWLER_VERSION' (must be X.Y.Z)"
             exit 1
           fi
-
-  bump-minor-version:
-    needs: detect-release-type
-    if: needs.detect-release-type.outputs.is_minor == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
-        with:
-          egress-policy: audit
+          if (( ${BASH_REMATCH[1]} != 5 )); then
+            echo "::error::Releasing another Prowler major version, aborting..."
+            exit 1
+          fi
 
       - name: Checkout master branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -86,36 +47,34 @@ jobs:
           persist-credentials: false
 
       - name: Read current docs version on master
-        id: master_version
+        id: docs_version
         run: |
           CURRENT_DOCS_VERSION=$(grep -oP 'PROWLER_UI_VERSION="\K[^"]+' "${DOCS_FILE}")
           echo "CURRENT_DOCS_VERSION=${CURRENT_DOCS_VERSION}" >> "${GITHUB_ENV}"
           echo "Current docs version on master: $CURRENT_DOCS_VERSION"
           echo "Target release version: $PROWLER_VERSION"
 
-          # Skip master PR if master is already at or ahead of the release version
-          # (e.g. master manually bumped to a future version, or this run is a re-trigger)
+          # Skip if master is already at or ahead of the release version
+          # (re-run, or patch shipped against an older minor line)
           HIGHEST=$(printf '%s\n%s\n' "${CURRENT_DOCS_VERSION}" "${PROWLER_VERSION}" | sort -V | tail -n1)
           if [[ "${CURRENT_DOCS_VERSION}" == "${PROWLER_VERSION}" || "${HIGHEST}" != "${PROWLER_VERSION}" ]]; then
-            echo "skip_master=true" >> "${GITHUB_OUTPUT}"
-            echo "Skipping master bump: current ($CURRENT_DOCS_VERSION) >= release ($PROWLER_VERSION)"
+            echo "skip=true" >> "${GITHUB_OUTPUT}"
+            echo "Skipping bump: current ($CURRENT_DOCS_VERSION) >= release ($PROWLER_VERSION)"
           else
-            echo "skip_master=false" >> "${GITHUB_OUTPUT}"
+            echo "skip=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - name: Bump versions in documentation for master
-        if: steps.master_version.outputs.skip_master == 'false'
+      - name: Bump versions in documentation
+        if: steps.docs_version.outputs.skip == 'false'
         run: |
           set -e
-
           sed -i "s|PROWLER_UI_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_UI_VERSION=\"${PROWLER_VERSION}\"|" "${DOCS_FILE}"
           sed -i "s|PROWLER_API_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_API_VERSION=\"${PROWLER_VERSION}\"|" "${DOCS_FILE}"
-
           echo "Files modified:"
           git --no-pager diff
 
       - name: Create PR for documentation update to master
-        if: steps.master_version.outputs.skip_master == 'false'
+        if: steps.docs_version.outputs.skip == 'false'
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
@@ -129,192 +88,6 @@ jobs:
             ### Description
 
             Update Prowler documentation version references to v${{ env.PROWLER_VERSION }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
-
-            ### Files Updated
-            - `docs/getting-started/installation/prowler-app.mdx`: `PROWLER_UI_VERSION` and `PROWLER_API_VERSION`
-            - All `*.mdx` files with `<VersionBadge>` components
-
-            ### License
-
-            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
-
-      - name: Calculate version branch
-        run: |
-          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
-          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
-
-          VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
-          echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
-          echo "Version branch: $VERSION_BRANCH"
-        env:
-          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
-          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
-
-      - name: Checkout version branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: ${{ env.VERSION_BRANCH }}
-          persist-credentials: false
-
-      - name: Read current docs version on version branch
-        run: |
-          CURRENT_DOCS_VERSION=$(grep -oP 'PROWLER_UI_VERSION="\K[^"]+' "${DOCS_FILE}")
-          echo "CURRENT_DOCS_VERSION=${CURRENT_DOCS_VERSION}" >> "${GITHUB_ENV}"
-          echo "Current docs version on ${VERSION_BRANCH}: $CURRENT_DOCS_VERSION"
-          echo "Target release version: $PROWLER_VERSION"
-
-      - name: Bump versions in documentation for version branch
-        run: |
-          set -e
-
-          sed -i "s|PROWLER_UI_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_UI_VERSION=\"${PROWLER_VERSION}\"|" "${DOCS_FILE}"
-          sed -i "s|PROWLER_API_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_API_VERSION=\"${PROWLER_VERSION}\"|" "${DOCS_FILE}"
-
-          echo "Files modified:"
-          git --no-pager diff
-
-      - name: Create PR for documentation update to version branch
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
-        with:
-          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
-          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          base: ${{ env.VERSION_BRANCH }}
-          commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}-branch
-          title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          labels: no-changelog,skip-sync
-          body: |
-            ### Description
-
-            Update Prowler documentation version references to v${{ env.PROWLER_VERSION }} in version branch after releasing Prowler v${{ env.PROWLER_VERSION }}.
-
-            ### Files Updated
-            - `docs/getting-started/installation/prowler-app.mdx`: `PROWLER_UI_VERSION` and `PROWLER_API_VERSION`
-
-            ### License
-
-            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
-
-  bump-patch-version:
-    needs: detect-release-type
-    if: needs.detect-release-type.outputs.is_patch == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
-        with:
-          egress-policy: audit
-
-      - name: Calculate version branch
-        run: |
-          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
-          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
-
-          VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
-          echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
-          echo "Target release version: $PROWLER_VERSION"
-          echo "Version branch: $VERSION_BRANCH"
-        env:
-          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
-          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
-
-      - name: Checkout master branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: ${{ env.BASE_BRANCH }}
-          persist-credentials: false
-
-      - name: Read current docs version on master
-        id: master_version
-        run: |
-          CURRENT_DOCS_VERSION=$(grep -oP 'PROWLER_UI_VERSION="\K[^"]+' "${DOCS_FILE}")
-          echo "CURRENT_DOCS_VERSION=${CURRENT_DOCS_VERSION}" >> "${GITHUB_ENV}"
-          echo "Current docs version on master: $CURRENT_DOCS_VERSION"
-
-          # Skip master PR if master is already at or ahead of the release version
-          # (avoids downgrading master when a patch ships against an older minor line)
-          HIGHEST=$(printf '%s\n%s\n' "${CURRENT_DOCS_VERSION}" "${PROWLER_VERSION}" | sort -V | tail -n1)
-          if [[ "${CURRENT_DOCS_VERSION}" == "${PROWLER_VERSION}" || "${HIGHEST}" != "${PROWLER_VERSION}" ]]; then
-            echo "skip_master=true" >> "${GITHUB_OUTPUT}"
-            echo "Skipping master bump: current ($CURRENT_DOCS_VERSION) >= release ($PROWLER_VERSION)"
-          else
-            echo "skip_master=false" >> "${GITHUB_OUTPUT}"
-          fi
-
-      - name: Bump versions in documentation for master
-        if: steps.master_version.outputs.skip_master == 'false'
-        run: |
-          set -e
-
-          sed -i "s|PROWLER_UI_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_UI_VERSION=\"${PROWLER_VERSION}\"|" "${DOCS_FILE}"
-          sed -i "s|PROWLER_API_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_API_VERSION=\"${PROWLER_VERSION}\"|" "${DOCS_FILE}"
-
-          echo "Files modified:"
-          git --no-pager diff
-
-      - name: Create PR for documentation update to master
-        if: steps.master_version.outputs.skip_master == 'false'
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
-        with:
-          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
-          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          base: ${{ env.BASE_BRANCH }}
-          commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}
-          title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          labels: no-changelog,skip-sync
-          body: |
-            ### Description
-
-            Update Prowler documentation version references to v${{ env.PROWLER_VERSION }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
-
-            ### Files Updated
-            - `docs/getting-started/installation/prowler-app.mdx`: `PROWLER_UI_VERSION` and `PROWLER_API_VERSION`
-
-            ### License
-
-            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
-
-      - name: Checkout version branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: ${{ env.VERSION_BRANCH }}
-          persist-credentials: false
-
-      - name: Read current docs version on version branch
-        run: |
-          CURRENT_DOCS_VERSION=$(grep -oP 'PROWLER_UI_VERSION="\K[^"]+' "${DOCS_FILE}")
-          echo "CURRENT_DOCS_VERSION=${CURRENT_DOCS_VERSION}" >> "${GITHUB_ENV}"
-          echo "Current docs version on ${VERSION_BRANCH}: $CURRENT_DOCS_VERSION"
-
-      - name: Bump versions in documentation for version branch
-        run: |
-          set -e
-
-          sed -i "s|PROWLER_UI_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_UI_VERSION=\"${PROWLER_VERSION}\"|" "${DOCS_FILE}"
-          sed -i "s|PROWLER_API_VERSION=\"${CURRENT_DOCS_VERSION}\"|PROWLER_API_VERSION=\"${PROWLER_VERSION}\"|" "${DOCS_FILE}"
-
-          echo "Files modified:"
-          git --no-pager diff
-
-      - name: Create PR for documentation update to version branch
-        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
-        with:
-          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
-          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          base: ${{ env.VERSION_BRANCH }}
-          commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}-branch
-          title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          labels: no-changelog,skip-sync
-          body: |
-            ### Description
-
-            Update Prowler documentation version references to v${{ env.PROWLER_VERSION }} in version branch after releasing Prowler v${{ env.PROWLER_VERSION }}.
 
             ### Files Updated
             - `docs/getting-started/installation/prowler-app.mdx`: `PROWLER_UI_VERSION` and `PROWLER_API_VERSION`
