@@ -6,6 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
+- Sign-in and sign-up redesigned with an animated background and a live release highlights panel from GitHub, with adaptive summaries for patch releases [(#10774)](https://github.com/prowler-cloud/prowler/pull/10774)
 - Download PDF button for CIS Benchmark compliance cards, surfaced only on the latest CIS variant per provider to match the backend's latest-only PDF generation [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
 
 ### 🔄 Changed
