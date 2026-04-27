@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Download PDF button for CIS Benchmark compliance cards, surfaced only on the latest CIS variant per provider to match the backend's latest-only PDF generation [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
+- View Resource button in the findings resource detail drawer to open the related resource page [(#10847)](https://github.com/prowler-cloud/prowler/pull/10847)
 
 ### 🔄 Changed
 
