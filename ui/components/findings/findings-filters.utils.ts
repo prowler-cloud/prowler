@@ -126,8 +126,7 @@ interface BuildFindingsFilterChipsOptions {
 /**
  * Builds the chips displayed in the FilterSummaryStrip from a pendingFilters map.
  *
- * - One chip per individual value (not one per key), so a multi-select filter
- *   produces multiple chips.
+ * - One chip per filter key. Multi-select filters are grouped as `Label +N`.
  * - Silently skips the default `filter[muted]=false` so it doesn't appear as a
  *   user-applied filter.
  * - Falls back to the raw key as label for unmapped keys, so an unexpected
@@ -141,16 +140,32 @@ export function buildFindingsFilterChips(
 
   Object.entries(pendingFilters).forEach(([key, values]) => {
     if (!values || values.length === 0) return;
+    if (key === "filter[muted]") return;
     const label = FILTER_KEY_LABELS[key as FilterParam] ?? key;
-    values.forEach((value) => {
-      if (key === "filter[muted]" && value === "false") return;
-      chips.push({
-        key,
-        label,
-        value,
-        displayValue: getFindingsFilterDisplayValue(key, value, options),
-      });
-    });
+
+    const visibleValues = values;
+    if (visibleValues.length === 0) return;
+
+    const displayValues = visibleValues.map((value) =>
+      getFindingsFilterDisplayValue(key, value, options),
+    );
+
+    const chip: FilterChip = {
+      key,
+      label,
+      value: visibleValues[0],
+      displayValue:
+        displayValues.length > 1
+          ? `+${displayValues.length}`
+          : displayValues[0],
+    };
+
+    if (visibleValues.length > 1) {
+      chip.values = visibleValues;
+      chip.displayValues = displayValues;
+    }
+
+    chips.push(chip);
   });
 
   return chips;

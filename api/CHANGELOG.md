@@ -4,9 +4,26 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.26.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- CIS Benchmark PDF report generation for scans, exposing the latest CIS version per provider via `GET /scans/{id}/cis/{name}/` and picking the variant dynamically via `_pick_latest_cis_variant` (no hard-coded provider → version mapping) [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
+- Install zizmor v1.24.1 in API Docker image for GitHub Actions workflow scanning [(#10607)](https://github.com/prowler-cloud/prowler/pull/10607)
+
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+
+---
+
+## [1.25.4] (Prowler v5.24.4)
+
+### 🚀 Added
+
+- `DJANGO_SENTRY_TRACES_SAMPLE_RATE` env var (default `0.02`) enables Sentry performance tracing for the API [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
+
+### 🔄 Changed
+
+- Attack Paths: Neo4j driver `connection_acquisition_timeout` is now configurable via `NEO4J_CONN_ACQUISITION_TIMEOUT` (default lowered from 120 s to 15 s) [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
 
 ---
 

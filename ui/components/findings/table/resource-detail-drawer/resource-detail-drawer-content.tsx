@@ -69,6 +69,7 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
+import { cn } from "@/lib/utils";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
 
@@ -424,6 +425,8 @@ export function ResourceDetailDrawerContent({
   const resourceDetailHref = f?.resourceId
     ? buildResourceDetailHref(f.resourceId)
     : null;
+  const overviewStatusExtended = f?.statusExtended;
+  const showOverviewStatusExtended = Boolean(overviewStatusExtended);
 
   const handleOpenCompliance = async (framework: string) => {
     if (!complianceScanId || resolvingFramework) {
@@ -818,7 +821,13 @@ export function ResourceDetailDrawerContent({
                       </Card>
                     )}
                     {checkMeta.description && (
-                      <div className="border-default-200 flex flex-col gap-1 border-b pb-4">
+                      <div
+                        className={cn(
+                          "flex flex-col gap-1",
+                          showOverviewStatusExtended &&
+                            "border-default-200 border-b pb-4",
+                        )}
+                      >
                         <span className="text-text-neutral-secondary text-sm font-semibold">
                           Description:
                         </span>
@@ -827,16 +836,17 @@ export function ResourceDetailDrawerContent({
                         </MarkdownContainer>
                       </div>
                     )}
-                    {showOverviewFindingContent && f?.statusExtended && (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-text-neutral-secondary text-sm font-semibold">
-                          Status Extended:
-                        </span>
-                        <p className="text-text-neutral-primary text-sm">
-                          {f.statusExtended}
-                        </p>
-                      </div>
-                    )}
+                    {showOverviewFindingContent &&
+                      showOverviewStatusExtended && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-text-neutral-secondary text-sm font-semibold">
+                            Status Extended:
+                          </span>
+                          <p className="text-text-neutral-primary text-sm">
+                            {overviewStatusExtended}
+                          </p>
+                        </div>
+                      )}
                   </Card>
                 )}
 
@@ -994,7 +1004,7 @@ export function ResourceDetailDrawerContent({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-10" />
+                      <TableHead className="w-14" />
                       <TableHead>
                         <span className="text-text-neutral-secondary text-sm font-medium">
                           Status
@@ -1336,18 +1346,21 @@ function OtherFindingRow({
         className="cursor-pointer"
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
       >
-        <TableCell className="w-10">
-          <NotificationIndicator
-            isMuted={isMuted}
-            delta={
-              finding.delta === DeltaValues.NEW ||
-              finding.delta === DeltaValues.CHANGED
-                ? finding.delta
-                : undefined
-            }
-            mutedReason={finding.mutedReason ?? undefined}
-            showDeltaWhenMuted
-          />
+        <TableCell className="w-14">
+          <div className="flex items-center justify-center">
+            <NotificationIndicator
+              isMuted={isMuted}
+              delta={
+                finding.delta === DeltaValues.NEW ||
+                finding.delta === DeltaValues.CHANGED
+                  ? finding.delta
+                  : undefined
+              }
+              mutedReason={finding.mutedReason ?? undefined}
+              showDeltaWhenMuted
+              reserveMutedSlot
+            />
+          </div>
         </TableCell>
         <TableCell>
           <StatusFindingBadge status={finding.status as FindingStatus} />

@@ -11,12 +11,19 @@ interface ComplianceOverviewGridProps {
   frameworks: ComplianceOverviewData[];
   scanId: string;
   selectedScan?: ScanEntity;
+  /**
+   * Subset of compliance_ids that represent the latest CIS variant per
+   * provider. Only those cards expose the PDF download button, matching
+   * the backend's latest-only CIS PDF generation.
+   */
+  latestCisIds?: ReadonlySet<string>;
 }
 
 export const ComplianceOverviewGrid = ({
   frameworks,
   scanId,
   selectedScan,
+  latestCisIds,
 }: ComplianceOverviewGridProps) => {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -61,6 +68,7 @@ export const ComplianceOverviewGrid = ({
               complianceId={id}
               id={id}
               selectedScan={selectedScan}
+              isLatestCisForProvider={latestCisIds?.has(id) ?? false}
             />
           );
         })}

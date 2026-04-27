@@ -394,6 +394,7 @@ class Test_Config:
 
     def test_get_available_compliance_frameworks(self):
         compliance_frameworks = [
+            "csa_ccm_4.0",
             "cisa_aws",
             "soc2_aws",
             "cis_1.4_aws",
@@ -427,6 +428,13 @@ class Test_Config:
         assert (
             get_available_compliance_frameworks().sort() == compliance_frameworks.sort()
         )
+
+    def test_get_available_compliance_frameworks_filters_universal_by_provider(self):
+        aws_frameworks = get_available_compliance_frameworks("aws")
+        kubernetes_frameworks = get_available_compliance_frameworks("kubernetes")
+
+        assert "csa_ccm_4.0" in aws_frameworks
+        assert "csa_ccm_4.0" not in kubernetes_frameworks
 
     def test_load_and_validate_config_file_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
