@@ -456,6 +456,15 @@ class Identity(OCIService):
             try:
                 # List all domains in the tenancy
                 for compartment in self.audited_compartments:
+
+                    existing = next((d for d in self.domains if d.id == domain.id), None)
+                    if existing is not None:
+                        # Prefer the entry from the domain's home region
+                        if domain.home_region == regional_client.region:
+                            self.domains.remove(existing)
+                        else:
+                            continue
+
                     domains = oci.pagination.list_call_get_all_results(
                         identity_client.list_domains,
                         compartment_id=compartment.id,
@@ -477,17 +486,6 @@ class Identity(OCIService):
                                 password_policies=[],
                             )
                         )
-                    to_remove = []
-                    for i, domain in enumerate(domains):
-                        if any(d.id == domain.id and d is not domain for d in domains):
-                            if domain.home_region != regional_client.region:
-                                to_remove += [i]
-                    for i in sorted(to_remove, reverse=True):
-                        logger.info(
-                            "Skipping replicated domain in non-home region: %s",
-                            domain.id,
-                        )
-                        del self.domains[i]
 
             except Exception as error:
                 logger.error(
@@ -502,6 +500,10 @@ class Identity(OCIService):
     def __list_domain_password_policies__(self, regional_client):
         """List password policies for all identity domains."""
         try:
+            # Only use one region for all domain scan
+            if regional_client.region != self.provider.home_region:
+                return
+
             logger.info("Identity - Listing Domain Password Policies...")
 
             for domain in self.domains:
