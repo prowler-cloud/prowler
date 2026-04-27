@@ -96,7 +96,7 @@ PROWLER_CHECKS = LazyChecksMapping()
 def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[str]:
     """List compliance frameworks the API can load for `provider_type`.
 
-    The list is sourced from ``Compliance.get_bulk`` so that the names
+    The list is sourced from `Compliance.get_bulk` so that the names
     returned here are guaranteed to be loadable by the bulk loader. This
     prevents downstream key mismatches (e.g. CSV report generation iterating
     framework names and looking them up in the bulk dict).
