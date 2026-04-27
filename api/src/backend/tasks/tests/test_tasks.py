@@ -2361,6 +2361,9 @@ class TestReaggregateAllFindingGroupSummaries:
 
     @patch("tasks.tasks.chain")
     @patch("tasks.tasks.group")
+    @patch("tasks.tasks.aggregate_attack_surface_task")
+    @patch("tasks.tasks.aggregate_scan_category_summaries_task")
+    @patch("tasks.tasks.aggregate_scan_resource_group_summaries_task")
     @patch("tasks.tasks.aggregate_finding_group_summaries_task")
     @patch("tasks.tasks.aggregate_daily_severity_task")
     @patch("tasks.tasks.perform_scan_summary_task")
@@ -2371,6 +2374,9 @@ class TestReaggregateAllFindingGroupSummaries:
         mock_scan_summary_task,
         mock_daily_severity_task,
         mock_finding_group_task,
+        mock_resource_group_task,
+        mock_category_task,
+        mock_attack_surface_task,
         mock_group,
         mock_chain,
     ):
@@ -2383,8 +2389,8 @@ class TestReaggregateAllFindingGroupSummaries:
         yesterday = today - timedelta(days=1)
 
         mock_outer_group_result = MagicMock()
-        # The first `group()` call wraps the inner (severity, finding-group)
-        # parallel step; subsequent calls wrap the outer per-scan generator.
+        # The first `group()` call wraps the inner parallel step; subsequent
+        # calls wrap the outer per-scan generator.
         mock_group.side_effect = lambda *args, **kwargs: (
             list(args[0]) if args and hasattr(args[0], "__iter__") else None,
             mock_outer_group_result,
@@ -2420,6 +2426,9 @@ class TestReaggregateAllFindingGroupSummaries:
             mock_scan_summary_task,
             mock_daily_severity_task,
             mock_finding_group_task,
+            mock_resource_group_task,
+            mock_category_task,
+            mock_attack_surface_task,
         ):
             assert task_mock.si.call_count == 3
             dispatched = {
@@ -2433,6 +2442,9 @@ class TestReaggregateAllFindingGroupSummaries:
 
     @patch("tasks.tasks.chain")
     @patch("tasks.tasks.group")
+    @patch("tasks.tasks.aggregate_attack_surface_task")
+    @patch("tasks.tasks.aggregate_scan_category_summaries_task")
+    @patch("tasks.tasks.aggregate_scan_resource_group_summaries_task")
     @patch("tasks.tasks.aggregate_finding_group_summaries_task")
     @patch("tasks.tasks.aggregate_daily_severity_task")
     @patch("tasks.tasks.perform_scan_summary_task")
@@ -2443,6 +2455,9 @@ class TestReaggregateAllFindingGroupSummaries:
         mock_scan_summary_task,
         mock_daily_severity_task,
         mock_finding_group_task,
+        mock_resource_group_task,
+        mock_category_task,
+        mock_attack_surface_task,
         mock_group,
         mock_chain,
     ):
@@ -2481,6 +2496,9 @@ class TestReaggregateAllFindingGroupSummaries:
             mock_scan_summary_task,
             mock_daily_severity_task,
             mock_finding_group_task,
+            mock_resource_group_task,
+            mock_category_task,
+            mock_attack_surface_task,
         ):
             task_mock.si.assert_called_once_with(
                 tenant_id=self.tenant_id, scan_id=str(latest_scan_today)
