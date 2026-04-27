@@ -34,8 +34,7 @@ interface DataTablePaginationProps {
    */
   controlledPage?: number;
   controlledPageSize?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
+  onPaginationChange?: (page: number, pageSize: number) => void;
 }
 
 const NAV_BUTTON_STYLES = {
@@ -51,15 +50,15 @@ export function DataTablePagination({
   paramPrefix = "",
   controlledPage,
   controlledPageSize,
-  onPageChange,
-  onPageSizeChange,
+  onPaginationChange,
 }: DataTablePaginationProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   // Determine if we're in controlled mode
-  const isControlled = controlledPage !== undefined && onPageChange;
+  const isControlled =
+    controlledPage !== undefined && onPaginationChange !== undefined;
 
   // Determine param names based on prefix
   const pageParam = paramPrefix ? `${paramPrefix}Page` : "page";
@@ -112,7 +111,7 @@ export function DataTablePagination({
   // Handle page navigation for controlled mode
   const handlePageChange = (pageNumber: number) => {
     if (isControlled) {
-      onPageChange(pageNumber);
+      onPaginationChange(pageNumber, controlledPageSize ?? 10);
     } else {
       const url = createPageUrl(pageNumber);
       if (disableScroll) {
@@ -141,8 +140,7 @@ export function DataTablePagination({
                 setSelectedPageSize(value);
 
                 if (isControlled) {
-                  onPageSizeChange?.(parseInt(value, 10));
-                  onPageChange(1); // Reset to first page
+                  onPaginationChange(1, parseInt(value, 10));
                   return;
                 }
 

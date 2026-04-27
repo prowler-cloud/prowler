@@ -67,28 +67,6 @@ interface DataTableProviderProps<TData, TValue> {
   /** Prefix for URL params to avoid conflicts (e.g., "findings" -> "findingsPage") */
   paramPrefix?: string;
 
-  /*
-   * Controlled Mode Props
-   * ---------------------
-   * By default, DataTable uses URL params for pagination/search (via paramPrefix).
-   * This causes Next.js page re-renders on every interaction.
-   *
-   * For tables inside drawers/modals, use controlled mode instead:
-   * - Pass controlledPage, controlledPageSize, controlledSearch as state values
-   * - Pass onPageChange, onPageSizeChange, onSearchChange as state setters
-   * - This keeps state local, avoiding URL changes and unnecessary page re-renders
-   *
-   * Example:
-   *   const [page, setPage] = useState(1);
-   *   const [search, setSearch] = useState("");
-   *   <DataTable
-   *     controlledPage={page}
-   *     onPageChange={setPage}
-   *     controlledSearch={search}
-   *     onSearchChange={setSearch}
-   *     isLoading={isLoading}
-   *   />
-   */
   controlledSearch?: string;
   onSearchChange?: (value: string) => void;
   /**
@@ -98,8 +76,7 @@ interface DataTableProviderProps<TData, TValue> {
   onSearchCommit?: (value: string) => void;
   controlledPage?: number;
   controlledPageSize?: number;
-  onPageChange?: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
+  onPaginationChange?: (page: number, pageSize: number) => void;
   /** Show loading state with opacity overlay (for controlled mode) */
   isLoading?: boolean;
   /** Custom placeholder text for the search input */
@@ -137,8 +114,7 @@ export function DataTable<TData, TValue>({
   onSearchCommit,
   controlledPage,
   controlledPageSize,
-  onPageChange,
-  onPageSizeChange,
+  onPaginationChange,
   isLoading = false,
   searchPlaceholder,
   renderAfterRow,
@@ -353,8 +329,7 @@ export function DataTable<TData, TValue>({
           paramPrefix={paramPrefix}
           controlledPage={controlledPage}
           controlledPageSize={controlledPageSize}
-          onPageChange={onPageChange}
-          onPageSizeChange={onPageSizeChange}
+          onPaginationChange={onPaginationChange}
         />
       )}
     </div>
