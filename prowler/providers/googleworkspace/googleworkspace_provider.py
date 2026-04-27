@@ -64,6 +64,7 @@ class GoogleworkspaceProvider(Provider):
         "https://www.googleapis.com/auth/admin.directory.user.readonly",
         "https://www.googleapis.com/auth/admin.directory.domain.readonly",
         "https://www.googleapis.com/auth/admin.directory.customer.readonly",
+        "https://www.googleapis.com/auth/admin.directory.orgunit.readonly",
         # Cloud Identity Policy API (calendar and other app policies)
         "https://www.googleapis.com/auth/cloud-identity.policies.readonly",
         "https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly",
@@ -449,10 +450,37 @@ class GoogleworkspaceProvider(Provider):
                 message=f"Delegated user domain {user_domain} is not configured in this Google Workspace. Valid domains: {', '.join(valid_domains)}. Ensure the delegated user belongs to the correct workspace or domain alias.",
             )
 
+        # Fetch root org unit ID for policy filtering
+        # The Cloud Identity Policy API scopes all policies to an OU;
+        # the root OU is equivalent to customer-level.
+        root_org_unit_id = None
+        try:
+            orgunits_response = (
+                service.orgunits()
+                .list(
+                    customerId=customer_id,
+                    orgUnitPath="/",
+                    type="allIncludingParent",
+                )
+                .execute()
+            )
+            for ou in orgunits_response.get("organizationUnits", []):
+                if ou.get("orgUnitPath") == "/":
+                    root_org_unit_id = (
+                        ou.get("orgUnitId", "").removeprefix("id:") or None
+                    )
+                    break
+        except Exception as error:
+            logger.warning(
+                f"Could not fetch root org unit: {error}. "
+                "Policy filtering will fall back to strict customer-level only."
+            )
+
         identity = GoogleWorkspaceIdentityInfo(
             domain=user_domain,
             customer_id=customer_id,
             delegated_user=delegated_user,
+            root_org_unit_id=root_org_unit_id,
             profile="default",
         )
 

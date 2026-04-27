@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
+    ROOT_ORG_UNIT_ID,
     set_mocked_googleworkspace_provider,
 )
 
@@ -271,114 +272,8 @@ class TestGmailService:
             assert gmail.policies_fetched is False
             assert gmail.policies.enable_mail_delegation is None
 
-    def test_gmail_fetch_policies_partial_fetch_still_marks_fetched(self):
-        """Test that policies_fetched is True when data was stored before a pagination error (e.g. 429 rate limit)"""
-        mock_provider = set_mocked_googleworkspace_provider()
-        mock_provider.audit_config = {}
-        mock_provider.fixer_config = {}
-        mock_session = MagicMock()
-        mock_session.credentials = MagicMock()
-        mock_provider.session = mock_session
-
-        mock_service = MagicMock()
-
-        # First page succeeds with policy data
-        first_response = MagicMock()
-        first_response.execute.return_value = {
-            "policies": [
-                {
-                    "setting": {
-                        "type": "settings/gmail.mail_delegation",
-                        "value": {"enableMailDelegation": True},
-                    }
-                },
-            ]
-        }
-        # Second page fails with rate limit
-        second_request = MagicMock()
-        second_request.execute.side_effect = Exception("429 Rate limit exceeded")
-
-        mock_service.policies().list.return_value = first_response
-        mock_service.policies().list_next.return_value = second_request
-
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mock_provider,
-            ),
-            patch(
-                "prowler.providers.googleworkspace.services.gmail.gmail_service.GoogleWorkspaceService._build_service",
-                return_value=mock_service,
-            ),
-        ):
-            from prowler.providers.googleworkspace.services.gmail.gmail_service import (
-                Gmail,
-            )
-
-            gmail = Gmail(mock_provider)
-
-            # Data was stored before the error, so policies_fetched should be True
-            assert gmail.policies_fetched is True
-            assert gmail.policies.enable_mail_delegation is True
-
-    def test_gmail_fetch_policies_accepts_ou_level_as_fallback(self):
-        """Test that OU-level policies are accepted when no customer-level exists for that setting type"""
-        mock_provider = set_mocked_googleworkspace_provider()
-        mock_provider.audit_config = {}
-        mock_provider.fixer_config = {}
-        mock_session = MagicMock()
-        mock_session.credentials = MagicMock()
-        mock_provider.session = mock_session
-
-        mock_service = MagicMock()
-        mock_policies_list = MagicMock()
-        mock_policies_list.execute.return_value = {
-            "policies": [
-                {
-                    # OU-level (root OU): no customer-level exists → should be used as fallback
-                    "policyQuery": {"orgUnit": "orgUnits/root_ou_id"},
-                    "setting": {
-                        "type": "settings/gmail.mail_delegation",
-                        "value": {"enableMailDelegation": False},
-                    },
-                },
-                {
-                    # Group-level: should always be skipped
-                    "policyQuery": {"group": "groups/contractors"},
-                    "setting": {
-                        "type": "settings/gmail.auto_forwarding",
-                        "value": {"enableAutoForwarding": True},
-                    },
-                },
-            ]
-        }
-        mock_service.policies().list.return_value = mock_policies_list
-        mock_service.policies().list_next.return_value = None
-
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=mock_provider,
-            ),
-            patch(
-                "prowler.providers.googleworkspace.services.gmail.gmail_service.GoogleWorkspaceService._build_service",
-                return_value=mock_service,
-            ),
-        ):
-            from prowler.providers.googleworkspace.services.gmail.gmail_service import (
-                Gmail,
-            )
-
-            gmail = Gmail(mock_provider)
-
-            assert gmail.policies_fetched is True
-            # OU-level accepted as fallback
-            assert gmail.policies.enable_mail_delegation is False
-            # Group-level still skipped
-            assert gmail.policies.enable_auto_forwarding is None
-
-    def test_gmail_fetch_policies_customer_level_overrides_ou_level(self):
-        """Test that customer-level policies take priority over OU-level, and group-level is always skipped"""
+    def test_gmail_fetch_policies_ignores_ou_and_group_level(self):
+        """Test that OU-level and group-level policies are skipped, only customer-level used"""
         mock_provider = set_mocked_googleworkspace_provider()
         mock_provider.audit_config = {}
         mock_provider.fixer_config = {}
@@ -444,6 +339,62 @@ class TestGmailService:
             assert gmail.policies_fetched is True
             assert gmail.policies.enable_mail_delegation is False
             assert gmail.policies.enable_auto_forwarding is False
+
+    def test_gmail_fetch_policies_accepts_root_ou(self):
+        """Test that root-OU-scoped policies are accepted as customer-level"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    # Root OU: matches provider's root_org_unit_id → should be accepted
+                    "policyQuery": {"orgUnit": f"orgUnits/{ROOT_ORG_UNIT_ID}"},
+                    "setting": {
+                        "type": "settings/gmail.mail_delegation",
+                        "value": {"enableMailDelegation": True},
+                    },
+                },
+                {
+                    # Sub-OU: different orgUnit → should be skipped
+                    "policyQuery": {"orgUnit": "orgUnits/sub_ou_sales"},
+                    "setting": {
+                        "type": "settings/gmail.auto_forwarding",
+                        "value": {"enableAutoForwarding": True},
+                    },
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.gmail.gmail_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.gmail.gmail_service import (
+                Gmail,
+            )
+
+            gmail = Gmail(mock_provider)
+
+            assert gmail.policies_fetched is True
+            # Root OU policy accepted
+            assert gmail.policies.enable_mail_delegation is True
+            # Sub-OU policy skipped
+            assert gmail.policies.enable_auto_forwarding is None
 
     def test_gmail_policies_model(self):
         """Test GmailPolicies Pydantic model"""
