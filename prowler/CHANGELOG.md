@@ -146,7 +146,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Azure MySQL flexible server checks now compare configuration values case-insensitively to avoid false negatives when Azure returns lowercase values [(#10396)](https://github.com/prowler-cloud/prowler/pull/10396)
 - Azure `vm_backup_enabled` and `vm_sufficient_daily_backup_retention_period` checks now compare VM names case-insensitively to avoid false negatives when Azure stores backup item names in a different case [(#10395)](https://github.com/prowler-cloud/prowler/pull/10395)
 - `entra_non_privileged_user_has_mfa` skips disabled users to avoid false positives [(#10426)](https://github.com/prowler-cloud/prowler/pull/10426)
->>>>>>> upstream/master
 
 ---
 
