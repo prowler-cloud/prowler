@@ -318,8 +318,14 @@ class AwsProvider(Provider):
         ########
 
         ######## AWS Organizations Metadata
-        # This is needed in the case we don't assume an AWS Organizations IAM Role
-        aws_organizations_session = self._session.original_session
+        # Default to the current (post-assume) session so DescribeAccount runs
+        # with the same identity that performs the scan. This matches CLI
+        # behavior and makes delegated administrator scenarios work without
+        # extra configuration: when the scan role itself is in the management
+        # or delegated admin account, it already holds the Organizations
+        # permissions needed. Use `organizations_role_arn` to override when
+        # Organizations lives in a different account than the scan role.
+        aws_organizations_session = self._session.current_session
         # Get a new session if the organizations_role_arn is set
         if organizations_role_arn:
             # Validate the input role
