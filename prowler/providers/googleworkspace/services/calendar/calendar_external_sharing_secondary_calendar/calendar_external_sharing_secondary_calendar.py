@@ -20,11 +20,7 @@ class calendar_external_sharing_secondary_calendar(Check):
         if calendar_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=calendar_client.provider.identity,
-                resource_name=calendar_client.provider.identity.domain,
-                resource_id=calendar_client.provider.identity.customer_id,
-                customer_id=calendar_client.provider.identity.customer_id,
-                location="global",
+                resource=calendar_client.provider.domain_resource,
             )
 
             sharing = calendar_client.policies.secondary_calendar_external_sharing

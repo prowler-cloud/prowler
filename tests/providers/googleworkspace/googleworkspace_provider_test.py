@@ -69,6 +69,8 @@ class TestGoogleWorkspaceProvider:
                 delegated_user=DELEGATED_USER,
                 profile="default",
             )
+            assert provider.domain_resource.id == CUSTOMER_ID
+            assert provider.domain_resource.name == DOMAIN
             assert provider._audit_config == {}
 
     def test_googleworkspace_provider_with_credentials_content(self):
@@ -108,6 +110,7 @@ class TestGoogleWorkspaceProvider:
             assert provider.identity.domain == DOMAIN
             assert provider.identity.customer_id == CUSTOMER_ID
             assert provider.identity.delegated_user == DELEGATED_USER
+            assert provider.domain_resource.customer_id == CUSTOMER_ID
 
     def test_googleworkspace_provider_missing_delegated_user(self):
         """Test that missing delegated_user raises exception"""

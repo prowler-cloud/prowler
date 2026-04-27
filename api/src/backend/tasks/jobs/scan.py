@@ -1197,6 +1197,8 @@ def aggregate_findings(tenant_id: str, scan_id: str):
                 muted_changed=agg["muted_changed"],
             )
             for agg in aggregation
+            if agg["resources__service"] is not None
+            and agg["resources__region"] is not None
         }
         # Upsert so re-runs (post-mute reaggregation) don't trip
         # `unique_scan_summary`; race-safe under concurrent writers.

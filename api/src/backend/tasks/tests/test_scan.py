@@ -3359,6 +3359,85 @@ class TestAggregateFindings:
         regions = {s.region for s in summaries}
         assert regions == {"us-east-1", "us-west-2"}
 
+    @patch("tasks.jobs.scan.Finding.objects.filter")
+    @patch("tasks.jobs.scan.ScanSummary.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_findings_skips_rows_with_null_service_or_region(
+        self, mock_rls_transaction, mock_bulk_create, mock_findings_filter
+    ):
+        """Aggregation rows with NULL service or region (orphan Findings whose
+        ResourceFindingMapping is missing) must be dropped before
+        ``bulk_create`` so the NOT NULL constraints on ``scan_summaries`` are
+        not violated. Valid rows in the same batch must still be persisted."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+
+        base_counts = {
+            "fail": 1,
+            "_pass": 0,
+            "muted_count": 0,
+            "total": 1,
+            "new": 0,
+            "changed": 0,
+            "unchanged": 1,
+            "fail_new": 0,
+            "fail_changed": 0,
+            "pass_new": 0,
+            "pass_changed": 0,
+            "muted_new": 0,
+            "muted_changed": 0,
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {
+                "check_id": "check_valid",
+                "resources__service": "s3",
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **base_counts,
+            },
+            {
+                "check_id": "check_null_service",
+                "resources__service": None,
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **base_counts,
+            },
+            {
+                "check_id": "check_null_region",
+                "resources__service": "ec2",
+                "severity": "low",
+                "resources__region": None,
+                **base_counts,
+            },
+            {
+                "check_id": "check_null_both",
+                "resources__service": None,
+                "severity": "medium",
+                "resources__region": None,
+                **base_counts,
+            },
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_findings(tenant_id, scan_id)
+
+        mock_bulk_create.assert_called_once()
+        args, _ = mock_bulk_create.call_args
+        summaries = list(args[0])
+
+        assert len(summaries) == 1
+        assert summaries[0].check_id == "check_valid"
+        assert summaries[0].service == "s3"
+        assert summaries[0].region == "us-east-1"
+
     def test_aggregate_findings_is_idempotent_on_rerun(
         self,
         tenants_fixture,
