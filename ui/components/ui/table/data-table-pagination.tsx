@@ -39,7 +39,8 @@ interface DataTablePaginationProps {
 
 const NAV_BUTTON_STYLES = {
   base: "flex items-center justify-center rounded-full p-3 transition-colors",
-  enabled: "text-text-neutral-secondary hover:text-white",
+  enabled:
+    "text-text-neutral-secondary hover:bg-bg-neutral-tertiary hover:text-text-neutral-primary",
   disabled: "text-text-neutral-tertiary cursor-not-allowed pointer-events-none",
 } as const;
 

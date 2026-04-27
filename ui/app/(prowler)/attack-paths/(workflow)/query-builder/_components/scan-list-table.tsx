@@ -28,8 +28,8 @@ interface ScanListTableProps {
   scans: AttackPathScan[];
 }
 
-const DEFAULT_PAGE_SIZE = 5;
-const PAGE_SIZE_OPTIONS = [2, 5, 10, 15];
+const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 25];
 const parsePageParam = (value: string | null, fallback: number) => {
   if (!value) return fallback;
 
