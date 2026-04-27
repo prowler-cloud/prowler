@@ -475,6 +475,23 @@ class Entra(M365Service):
                                 else False
                             ),
                         ),
+                        continuous_access_evaluation=ContinuousAccessEvaluation(
+                            is_enabled=(
+                                policy.session_controls.continuous_access_evaluation.is_enabled
+                                if policy.session_controls
+                                and policy.session_controls.continuous_access_evaluation
+                                else False
+                            ),
+                            mode=(
+                                ContinuousAccessEvaluationMode(
+                                    policy.session_controls.continuous_access_evaluation.mode
+                                )
+                                if policy.session_controls
+                                and policy.session_controls.continuous_access_evaluation
+                                and policy.session_controls.continuous_access_evaluation.mode
+                                else None
+                            ),
+                        ),
                     ),
                     state=ConditionalAccessPolicyState(
                         getattr(policy, "state", "disabled")
@@ -558,9 +575,7 @@ class Entra(M365Service):
         """
         auth_flows_map = {}
         try:
-            request_info = (
-                self.client.identity.conditional_access.policies.to_get_request_information()
-            )
+            request_info = self.client.identity.conditional_access.policies.to_get_request_information()
             request_info.headers.try_add("Prefer", "include-unknown-enum-members")
             response = await self.client.request_adapter.send_primitive_async(
                 request_info, "bytes", {}
@@ -1242,12 +1257,27 @@ class ApplicationEnforcedRestrictions(BaseModel):
     is_enabled: bool = False
 
 
+class ContinuousAccessEvaluationMode(Enum):
+    """Mode for Continuous Access Evaluation in Conditional Access policies."""
+
+    STRICT_ENFORCEMENT = "strictEnforcement"
+    DISABLED = "disabled"
+
+
+class ContinuousAccessEvaluation(BaseModel):
+    """Model representing Continuous Access Evaluation session control."""
+
+    is_enabled: bool = False
+    mode: Optional[ContinuousAccessEvaluationMode] = None
+
+
 class SessionControls(BaseModel):
     """Model representing session controls for Conditional Access policies."""
 
     persistent_browser: PersistentBrowser
     sign_in_frequency: SignInFrequency
     application_enforced_restrictions: Optional[ApplicationEnforcedRestrictions] = None
+    continuous_access_evaluation: Optional[ContinuousAccessEvaluation] = None
 
 
 class ConditionalAccessGrantControl(Enum):
