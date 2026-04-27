@@ -44,7 +44,8 @@ class GoogleWorkspaceService:
     def _is_customer_level_policy(self, policy: dict) -> bool:
         """Check if a policy applies at the customer (domain-wide) level.
 
-        The Cloud Identity Policy API scopes all policies to an OU.
+        The Cloud Identity Policy API typically scopes all policies to an OU;
+        absence of orgUnit is treated as customer-level as a safety net.
         The root OU is equivalent to customer-level. This method accepts
         policies with no orgUnit or policies targeting the root OU,
         and rejects group-targeted and sub-OU policies.

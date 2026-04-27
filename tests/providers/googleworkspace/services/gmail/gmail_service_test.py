@@ -1,5 +1,8 @@
 from unittest.mock import MagicMock, patch
 
+from googleapiclient.errors import HttpError
+from httplib2 import Response as HttpResponse
+
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     ROOT_ORG_UNIT_ID,
     set_mocked_googleworkspace_provider,
@@ -395,6 +398,63 @@ class TestGmailService:
             assert gmail.policies.enable_mail_delegation is True
             # Sub-OU policy skipped
             assert gmail.policies.enable_auto_forwarding is None
+
+    def test_gmail_partial_fetch_marks_policies_fetched_false(self):
+        """Regression: if page 1 returns valid data but page 2 raises an error,
+        policies_fetched must be False even though some policy values were stored."""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+
+        # Page 1: returns valid Gmail data
+        page1_response = {
+            "policies": [
+                {
+                    "setting": {
+                        "type": "settings/gmail.mail_delegation",
+                        "value": {"enableMailDelegation": False},
+                    }
+                },
+            ]
+        }
+
+        # Page 2 request raises HttpError 429
+        page1_request = MagicMock()
+        page1_request.execute.return_value = page1_response
+
+        page2_request = MagicMock()
+        page2_request.execute.side_effect = HttpError(
+            HttpResponse({"status": "429"}), b"Rate limit exceeded"
+        )
+
+        mock_service.policies().list.return_value = page1_request
+        mock_service.policies().list_next.return_value = page2_request
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.gmail.gmail_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.gmail.gmail_service import (
+                Gmail,
+            )
+
+            gmail = Gmail(mock_provider)
+
+            # Page 1 data was stored
+            assert gmail.policies.enable_mail_delegation is False
+            # But policies_fetched must be False because page 2 failed
+            assert gmail.policies_fetched is False
 
     def test_gmail_policies_model(self):
         """Test GmailPolicies Pydantic model"""
