@@ -14,8 +14,10 @@ from prowler.lib.check.compliance_models import load_compliance_framework_univer
 # Re-exported from a leaf module so prowler.lib.check.utils can import the
 # constant without participating in the config <-> compliance_models <-> utils
 # import cycle. Existing consumers continue to import from this module.
+# The `as EXTERNAL_TOOL_PROVIDERS` rename is the PEP 484 explicit re-export
+# form so static analyzers (CodeQL, mypy, ruff) treat the name as public.
 from prowler.lib.check.external_tool_providers import (  # noqa: F401
-    EXTERNAL_TOOL_PROVIDERS,
+    EXTERNAL_TOOL_PROVIDERS as EXTERNAL_TOOL_PROVIDERS,
 )
 from prowler.lib.logger import logger
 
