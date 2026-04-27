@@ -2,6 +2,7 @@ import importlib
 import sys
 from pkgutil import walk_packages
 
+from prowler.lib.check.external_tool_providers import EXTERNAL_TOOL_PROVIDERS
 from prowler.lib.logger import logger
 
 
@@ -13,10 +14,6 @@ def recover_checks_from_provider(
 
     Returns a list of tuples with the following format (check_name, check_path)
     """
-    # Imported lazily to avoid a circular import: prowler.config.config imports
-    # prowler.lib.check.compliance_models, which imports this module.
-    from prowler.config.config import EXTERNAL_TOOL_PROVIDERS
-
     try:
         # Bypass check loading for providers that use external tools directly
         if provider in EXTERNAL_TOOL_PROVIDERS:
@@ -66,10 +63,6 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
 
     Returns a set of checks from the given services
     """
-    # Imported lazily to avoid a circular import: prowler.config.config imports
-    # prowler.lib.check.compliance_models, which imports this module.
-    from prowler.config.config import EXTERNAL_TOOL_PROVIDERS
-
     try:
         # Bypass check loading for providers that use external tools directly
         if provider in EXTERNAL_TOOL_PROVIDERS:
