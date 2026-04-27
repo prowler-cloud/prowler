@@ -9,6 +9,16 @@ import requests
 import yaml
 from packaging import version
 
+from prowler.lib.check.compliance_models import load_compliance_framework_universal
+
+# Re-exported from a leaf module so prowler.lib.check.utils can import the
+# constant without participating in the config <-> compliance_models <-> utils
+# import cycle. Existing consumers continue to import from this module.
+# The `as EXTERNAL_TOOL_PROVIDERS` rename is the PEP 484 explicit re-export
+# form so static analyzers (CodeQL, mypy, ruff) treat the name as public.
+from prowler.lib.check.external_tool_providers import (  # noqa: F401
+    EXTERNAL_TOOL_PROVIDERS as EXTERNAL_TOOL_PROVIDERS,
+)
 from prowler.lib.logger import logger
 
 
@@ -68,10 +78,6 @@ class Provider(str, Enum):
     VERCEL = "vercel"
 
 
-# Providers that delegate scanning to an external tool (e.g. Trivy, promptfoo)
-# and bypass standard check/service loading.
-EXTERNAL_TOOL_PROVIDERS = frozenset({"iac", "llm", "image"})
-
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
@@ -91,6 +97,21 @@ def get_available_compliance_frameworks(provider=None):
                     available_compliance_frameworks.append(
                         file.name.removesuffix(".json")
                     )
+    # Also scan top-level compliance/ for multi-provider JSONs
+    compliance_root = f"{actual_directory}/../compliance"
+    if os.path.isdir(compliance_root):
+        with os.scandir(compliance_root) as files:
+            for file in files:
+                if file.is_file() and file.name.endswith(".json"):
+                    name = file.name.removesuffix(".json")
+                    if provider:
+                        framework = load_compliance_framework_universal(file.path)
+                        if framework is None or not framework.supports_provider(
+                            provider
+                        ):
+                            continue
+                    if name not in available_compliance_frameworks:
+                        available_compliance_frameworks.append(name)
     return available_compliance_frameworks
 
 
@@ -136,7 +157,7 @@ def set_output_timestamp(
     Override the global output timestamps so generated artifacts reflect a specific scan.
     Returns the previous values so callers can restore them afterwards.
     """
-    global timestamp, timestamp_utc, output_file_timestamp, timestamp_iso
+    global output_file_timestamp, timestamp_iso
 
     previous_values = (
         timestamp.value,

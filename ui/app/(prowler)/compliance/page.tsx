@@ -17,6 +17,7 @@ import { ComplianceOverviewGrid } from "@/components/compliance/compliance-overv
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card, CardContent } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/ui";
+import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
 import {
   ExpandedScanData,
   ScanEntity,
@@ -232,12 +233,23 @@ const SSRComplianceGrid = async ({
     );
   }
 
+  // Compute the set of latest CIS variants per provider once, so each card
+  // can gate its PDF button without re-parsing on every render. The backend
+  // only generates a CIS PDF for the latest version per provider, so any
+  // other CIS card must not expose the PDF download button.
+  const latestCisIds = pickLatestCisPerProvider(
+    compliancesData.data.map(
+      (compliance: ComplianceOverviewData) => compliance.id,
+    ),
+  );
+
   return (
     <ComplianceOverviewPanel>
       <ComplianceOverviewGrid
         frameworks={frameworks}
         scanId={scanId}
         selectedScan={selectedScan}
+        latestCisIds={latestCisIds}
       />
     </ComplianceOverviewPanel>
   );
