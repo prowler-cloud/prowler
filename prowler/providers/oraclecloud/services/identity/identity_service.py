@@ -457,16 +457,6 @@ class Identity(OCIService):
                 # List all domains in the tenancy
                 for compartment in self.audited_compartments:
 
-                    existing = next(
-                        (d for d in self.domains if d.id == domain.id), None
-                    )
-                    if existing is not None:
-                        # Prefer the entry from the domain's home region
-                        if domain.home_region == regional_client.region:
-                            self.domains.remove(existing)
-                        else:
-                            continue
-
                     domains = oci.pagination.list_call_get_all_results(
                         identity_client.list_domains,
                         compartment_id=compartment.id,
@@ -474,6 +464,17 @@ class Identity(OCIService):
                     ).data
 
                     for domain in domains:
+
+                        existing = next(
+                            (d for d in self.domains if d.id == domain.id), None
+                        )
+                        if existing is not None:
+                            # Prefer the entry from the domain's home region
+                            if domain.home_region == regional_client.region:
+                                self.domains.remove(existing)
+                            else:
+                                continue
+
                         self.domains.append(
                             IdentityDomain(
                                 id=domain.id,
