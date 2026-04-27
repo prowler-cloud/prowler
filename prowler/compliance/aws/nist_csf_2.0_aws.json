@@ -1310,6 +1310,7 @@
         }
       ],
       "Checks": [
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_kms_encryption_enabled",
         "cloudtrail_log_file_validation_enabled",
         "cloudtrail_logs_s3_bucket_access_logging_enabled",
@@ -1473,6 +1474,7 @@
         "cloudtrail_threat_detection_enumeration",
         "cloudtrail_threat_detection_privilege_escalation",
         "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events"
       ]
@@ -1569,6 +1571,7 @@
         "cloudtrail_threat_detection_llm_jacking",
         "cloudtrail_threat_detection_enumeration",
         "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudwatch_log_metric_filter_unauthorized_api_calls",
         "cloudwatch_log_metric_filter_authentication_failures",
