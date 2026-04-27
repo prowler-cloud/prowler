@@ -2,7 +2,7 @@ import importlib
 import sys
 from pkgutil import walk_packages
 
-from prowler.config.config import EXTERNAL_TOOL_PROVIDERS
+from prowler.lib.check.external_tool_providers import EXTERNAL_TOOL_PROVIDERS
 from prowler.lib.logger import logger
 
 
