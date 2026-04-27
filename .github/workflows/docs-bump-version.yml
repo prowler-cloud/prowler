@@ -80,9 +80,9 @@ jobs:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: ${{ env.BASE_BRANCH }}
-          commit-message: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
-          branch: docs-version-update-to-v${{ env.PROWLER_VERSION }}
-          title: 'docs: Update version to v${{ env.PROWLER_VERSION }}'
+          commit-message: 'chore(docs): Bump version to v${{ env.PROWLER_VERSION }}'
+          branch: docs-version-bump-to-v${{ env.PROWLER_VERSION }}
+          title: 'chore(docs): Bump version to v${{ env.PROWLER_VERSION }}'
           labels: no-changelog,skip-sync
           body: |
             ### Description
