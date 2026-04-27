@@ -319,12 +319,14 @@ class AwsProvider(Provider):
 
         ######## AWS Organizations Metadata
         # Default to the current (post-assume) session so DescribeAccount runs
-        # with the same identity that performs the scan. This matches CLI
-        # behavior and makes delegated administrator scenarios work without
-        # extra configuration: when the scan role itself is in the management
-        # or delegated admin account, it already holds the Organizations
-        # permissions needed. Use `organizations_role_arn` to override when
-        # Organizations lives in a different account than the scan role.
+        # with the same identity that performs the scan. This makes delegated
+        # administrator scenarios work without extra configuration: when the
+        # scan role itself sits in the management or delegated admin account,
+        # it already holds the Organizations permissions needed. The
+        # management-account -> member-account flow is handled by the
+        # original-session fallback below. Use `organizations_role_arn` to
+        # override when Organizations lives in a different account than both
+        # the scan role and the original credentials.
         aws_organizations_session = self._session.current_session
         # Get a new session if the organizations_role_arn is set
         if organizations_role_arn:
@@ -370,6 +372,28 @@ class AwsProvider(Provider):
         self._organizations_metadata = self.get_organizations_info(
             aws_organizations_session, self._identity.account
         )
+
+        # Fallback to the original (pre-assume) session when no explicit
+        # organizations_role_arn is set and the current session could not
+        # retrieve Organizations metadata. This preserves the
+        # management-account -> member-account flow, where DescribeAccount is
+        # only allowed from the management account or a delegated
+        # administrator and the assumed member-account session has no
+        # Organizations permissions.
+        if (
+            not organizations_role_arn
+            and self._session.current_session is not self._session.original_session
+            and (
+                self._organizations_metadata is None
+                or not self._organizations_metadata.organization_id
+            )
+        ):
+            logger.info(
+                "Retrying AWS Organizations metadata retrieval with the original session"
+            )
+            self._organizations_metadata = self.get_organizations_info(
+                self._session.original_session, self._identity.account
+            )
         ########
 
         # Get Enabled Regions
