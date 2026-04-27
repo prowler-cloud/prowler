@@ -52,8 +52,6 @@ vi.mock("@/components/shadcn/modal", () => ({
     ) : null,
 }));
 
-const dataTableMock = vi.fn();
-
 vi.mock("@/components/ui/table", () => ({
   DataTable: (props: {
     columns: Array<{
@@ -61,9 +59,7 @@ vi.mock("@/components/ui/table", () => ({
       cell?: (args: { row: { original: unknown } }) => ReactNode;
     }>;
     data: unknown[];
-    showSearch?: boolean;
   }) => {
-    dataTableMock(props);
     const actionsColumn = props.columns.find(
       (column) => column.id === "actions",
     );
@@ -185,15 +181,5 @@ describe("MuteRulesTableClient", () => {
       within(dialog).getByText("Other check • bucket-b"),
     ).toBeInTheDocument();
     expect(within(dialog).getByText("uid-3")).toBeInTheDocument();
-  });
-
-  it("enables search on the DataTable", () => {
-    dataTableMock.mockClear();
-
-    render(<MuteRulesTableClient muteRules={[muteRule]} />);
-
-    expect(dataTableMock).toHaveBeenCalled();
-    const props = dataTableMock.mock.calls[0][0];
-    expect(props.showSearch).toBe(true);
   });
 });

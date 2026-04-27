@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_enhanced_pre_delivery_scanning_enabled",
+  "CheckTitle": "Enhanced pre-delivery message scanning is enabled",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Enhanced pre-delivery message scanning adds additional security checks for messages identified as potentially suspicious. When enabled, Gmail may slightly delay delivery to perform deeper analysis, improving detection of phishing and malware that might otherwise evade standard filters.",
+  "Risk": "Without enhanced pre-delivery scanning, some **sophisticated phishing and malware** messages may pass through standard filters and be delivered to users. The additional scanning layer catches threats that the first-pass filters miss, reducing the organization's exposure to **zero-day phishing campaigns** and **targeted attacks**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/7380368",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **Spam, phishing, and malware**\n4. Check **Enhanced pre-delivery message scanning** - Enables improved detection of suspicious content prior to delivery\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable enhanced pre-delivery message scanning to improve Gmail's ability to detect and block sophisticated phishing and malware before delivery to users.",
+      "Url": "https://hub.prowler.com/check/gmail_enhanced_pre_delivery_scanning_enabled"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

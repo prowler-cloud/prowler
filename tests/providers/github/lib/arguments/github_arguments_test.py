@@ -12,6 +12,7 @@ class Test_GitHubArguments:
         self.mock_github_parser = MagicMock()
         self.mock_auth_group = MagicMock()
         self.mock_scoping_group = MagicMock()
+        self.mock_actions_group = MagicMock()
 
         # Setup the mock chain
         self.mock_parser.add_subparsers.return_value = self.mock_subparsers
@@ -19,6 +20,7 @@ class Test_GitHubArguments:
         self.mock_github_parser.add_argument_group.side_effect = [
             self.mock_auth_group,
             self.mock_scoping_group,
+            self.mock_actions_group,
         ]
 
     def test_init_parser_creates_subparser(self):
@@ -47,10 +49,11 @@ class Test_GitHubArguments:
         arguments.init_parser(mock_github_args)
 
         # Verify argument groups were created
-        assert self.mock_github_parser.add_argument_group.call_count == 2
+        assert self.mock_github_parser.add_argument_group.call_count == 3
         calls = self.mock_github_parser.add_argument_group.call_args_list
         assert calls[0][0][0] == "Authentication Modes"
         assert calls[1][0][0] == "Scan Scoping"
+        assert calls[2][0][0] == "GitHub Actions Scanning"
 
     def test_init_parser_adds_authentication_arguments(self):
         """Test that init_parser adds all authentication arguments"""

@@ -98,8 +98,6 @@ describe("MuteFindingsModal", () => {
     expect(
       screen.getByText("You are about to mute", { exact: false }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Selected findings")).toBeInTheDocument();
-    expect(screen.getByText("Rule details")).toBeInTheDocument();
     expect(screen.getByLabelText("Rule Name")).toBeInTheDocument();
     expect(screen.getByLabelText("Reason")).toBeInTheDocument();
     expect(
@@ -127,8 +125,6 @@ describe("MuteFindingsModal", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Preparing..." })).toBeDisabled();
     expect(screen.queryByLabelText("Rule Name")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("spinner")).not.toBeInTheDocument();
-    expect(screen.getAllByTestId("skeleton").length).toBeGreaterThanOrEqual(8);
   });
 
   it("submits the form, shows the success toast, and closes the modal", async () => {

@@ -20,11 +20,7 @@ class drive_desktop_access_disabled(Check):
         if drive_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=drive_client.provider.identity,
-                resource_name=drive_client.provider.identity.domain,
-                resource_id=drive_client.provider.identity.customer_id,
-                customer_id=drive_client.provider.identity.customer_id,
-                location="global",
+                resource=drive_client.provider.domain_resource,
             )
 
             allow_desktop = drive_client.policies.allow_drive_for_desktop
