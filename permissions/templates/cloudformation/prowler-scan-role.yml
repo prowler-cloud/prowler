@@ -1,27 +1,24 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-# You can invoke CloudFormation and pass the principal ARN from a command line like this:
-# aws cloudformation create-stack \
-#  --capabilities CAPABILITY_IAM --capabilities CAPABILITY_NAMED_IAM \
-#  --template-body "file://prowler-scan-role.yaml" \
-#  --stack-name "ProwlerScanRole" \
-#  --parameters "ParameterKey=ExternalId,ParameterValue=ProvidedExternalID"
-
 Description: |
-  This template creates the ProwlerScan IAM Role in this account with
-  all read-only permissions to scan your account for security issues.
+  This template creates the ProwlerScan IAM Role either locally in this account or across
+  multiple accounts via StackSets. It can deploy both simultaneously or just one option.
+  The role includes all read-only permissions to scan your accounts for security issues.
   Contains two AWS managed policies (SecurityAudit and ViewOnlyAccess) and an inline policy.
-  It sets the trust policy on that IAM Role to permit Prowler to assume that role.
   This template is designed to be used in Prowler Cloud, but can also be used in other Prowler deployments.
+
   If you are deploying this template to be used in Prowler Cloud please do not edit the AccountId, IAMPrincipal and ExternalId parameters.
+
 Parameters:
+  # Core Prowler IAM Role Parameters
   ExternalId:
     Description: |
-      This is the External ID that Prowler will use to assume the role ProwlerScan IAM Role.
+      This is the External ID that Prowler will use to assume the ProwlerScan IAM Role.
     Type: String
     MinLength: 1
     AllowedPattern: ".+"
     ConstraintDescription: "ExternalId must not be empty."
+
   AccountId:
     Description: |
       AWS Account ID that will assume the role created, if you are deploying this template to be used in Prowler Cloud please do not edit this.
@@ -31,11 +28,13 @@ Parameters:
     MaxLength: 12
     AllowedPattern: "[0-9]{12}"
     ConstraintDescription: "AccountId must be a valid AWS Account ID."
+
   IAMPrincipal:
     Description: |
       The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this.
     Type: String
     Default: role/prowler*
+
   EnableOrganizations:
     Description: |
       Enable AWS Organizations discovery permissions. Set to true only when deploying this role in the management account.
@@ -45,6 +44,7 @@ Parameters:
     AllowedValues:
       - true
       - false
+
   EnableS3Integration:
     Description: |
       Enable S3 integration for storing Prowler scan reports.
@@ -53,25 +53,102 @@ Parameters:
     AllowedValues:
       - true
       - false
+
   S3IntegrationBucketName:
     Description: |
       The S3 bucket name where Prowler will store scan reports for your cloud providers.
     Type: String
     Default: ""
+
   S3IntegrationBucketAccountId:
     Description: |
       The AWS Account ID owner of the S3 Bucket.
     Type: String
     Default: ""
 
+  # Deployment Control Parameters
+  DeployStackSet:
+    Description: |
+      Set to true to deploy the ProwlerScan role across multiple accounts using StackSets.
+      Requires delegated administrator permissions for CloudFormation StackSets.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+  DeployLocalRole:
+    Description: |
+      Set to true to deploy the ProwlerScan role in this account (the account where this template is deployed).
+      Can be used independently or in conjunction with StackSet deployment.
+    Type: String
+    Default: true
+    AllowedValues:
+      - true
+      - false
+
+  # StackSet Configuration Parameters
+  AWSOrganizationalUnitId:
+    Description: |
+      AWS Organizations OU to deploy this stackset to (e.g., ou-xxxx-yyyyyyyy or r-xxxx for root).
+      Only required if DeployStackSet is true.
+    Type: String
+    Default: ""
+    AllowedPattern: '^(ou-[a-z0-9]{4,32}-[a-z0-9]{8,32}|r-[a-z0-9]{4,32})?$'
+
+  RetainStacksOnAccountRemoval:
+    Description: |
+      When an account is removed from the Organization or OU, should the ProwlerScan role remain in that account?
+      False (Recommended for security): Automatically deletes the role when accounts leave, following principle of least privilege.
+      True: Retains the role even after account removal, useful if accounts may temporarily leave and rejoin.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+  DeployFromDelegatedAdmin:
+    Description: |
+      Is this StackSet being deployed from a Delegated Administrator account (not the Organization Management Account)?
+      True: Deploying from a delegated admin account - uses CallAs: DELEGATED_ADMIN.
+      False: Deploying from the Organization Management Account - omits CallAs property.
+      Only required if DeployStackSet is true.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+  FailureTolerancePercentage:
+    Description: |
+      The percentage of accounts in which stack operations can fail before CloudFormation stops the operation.
+      Only applies when DeployStackSet is true.
+    Type: Number
+    Default: 10
+    MinValue: 0
+    MaxValue: 100
+
 Conditions:
   OrganizationsEnabled: !Equals [!Ref EnableOrganizations, true]
   S3IntegrationEnabled: !Equals [!Ref EnableS3Integration, true]
+  DeployStackSetEnabled: !Equals [!Ref DeployStackSet, true]
+  DeployLocalRoleEnabled: !Equals [!Ref DeployLocalRole, true]
+  UseDelegatedAdmin: !Equals [!Ref DeployFromDelegatedAdmin, true]
 
+Rules:
+  S3IntegrationRequiresParams:
+    RuleCondition: !Equals [!Ref EnableS3Integration, "true"]
+    Assertions:
+      - Assert: !Not [!Equals [!Ref S3IntegrationBucketName, ""]]
+        AssertDescription: "S3IntegrationBucketName is required when EnableS3Integration is true."
+      - Assert: !Not [!Equals [!Ref S3IntegrationBucketAccountId, ""]]
+        AssertDescription: "S3IntegrationBucketAccountId is required when EnableS3Integration is true."
 
 Resources:
+  # Local ProwlerScan Role (deployed in this account)
   ProwlerScan:
     Type: AWS::IAM::Role
+    Condition: DeployLocalRoleEnabled
     Properties:
       RoleName: ProwlerScan
       AssumeRolePolicyDocument:
@@ -88,8 +165,8 @@ Resources:
                 "aws:PrincipalArn": !Sub "arn:${AWS::Partition}:iam::${AccountId}:${IAMPrincipal}"
       MaxSessionDuration: 3600
       ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/SecurityAudit"
-        - "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/SecurityAudit"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess"
       Policies:
         - PolicyName: ProwlerScan
           PolicyDocument:
@@ -102,6 +179,7 @@ Resources:
                   - "appstream:Describe*"
                   - "appstream:List*"
                   - "backup:List*"
+                  - "backup:Get*"
                   - "bedrock:List*"
                   - "bedrock:Get*"
                   - "cloudtrail:GetInsightSelectors"
@@ -124,6 +202,7 @@ Resources:
                   - "glue:GetConnections"
                   - "glue:GetSecurityConfiguration*"
                   - "glue:SearchTables"
+                  - "glue:GetMLTransforms"
                   - "lambda:GetFunction*"
                   - "logs:FilterLogEvents"
                   - "lightsail:GetRelationalDatabases"
@@ -132,7 +211,6 @@ Resources:
                   - "s3:GetAccountPublicAccessBlock"
                   - "shield:DescribeProtection"
                   - "shield:GetSubscriptionState"
-                  - "securityhub:BatchImportFindings"
                   - "securityhub:GetFindings"
                   - "servicecatalog:Describe*"
                   - "servicecatalog:List*"
@@ -143,13 +221,18 @@ Resources:
                   - "tag:GetTagKeys"
                   - "wellarchitected:List*"
                 Resource: "*"
+              - Sid: AllowSecurityHubImportFindings
+                Effect: Allow
+                Action:
+                  - "securityhub:BatchImportFindings"
+                Resource: "*"
               - Sid: AllowAPIGatewayReadOnly
                 Effect: Allow
                 Action:
                   - "apigateway:GET"
                 Resource:
-                  - "arn:*:apigateway:*::/restapis/*"
-                  - "arn:*:apigateway:*::/apis/*"
+                  - !Sub "arn:${AWS::Partition}:apigateway:*::/restapis/*"
+                  - !Sub "arn:${AWS::Partition}:apigateway:*::/apis/*"
         - !If
           - OrganizationsEnabled
           - PolicyName: ProwlerOrganizations
@@ -171,8 +254,12 @@ Resources:
                   Effect: Allow
                   Action:
                     - "organizations:RegisterDelegatedAdministrator"
-                    - "iam:CreateServiceLinkedRole"
                   Resource: "*"
+                - Sid: AllowCreateStackSetSLR
+                  Effect: Allow
+                  Action:
+                    - "iam:CreateServiceLinkedRole"
+                  Resource: !Sub "arn:${AWS::Partition}:iam::*:role/aws-service-role/member.org.stacksets.cloudformation.amazonaws.com/*"
           - !Ref AWS::NoValue
         - !If
           - S3IntegrationEnabled
@@ -215,12 +302,285 @@ Resources:
         - Key: "Name"
           Value: "ProwlerScan"
 
+  # StackSet for deploying ProwlerScan role across multiple accounts
+  ProwlerScanStackSet:
+    Type: AWS::CloudFormation::StackSet
+    Condition: DeployStackSetEnabled
+    Properties:
+      StackSetName: !Sub "${AWS::StackName}-ProwlerScan-StackSet"
+      Description: Organizational StackSet to Deploy ProwlerScan IAM Role across accounts
+      PermissionModel: SERVICE_MANAGED
+      CallAs: !If [UseDelegatedAdmin, DELEGATED_ADMIN, !Ref "AWS::NoValue"]
+      Capabilities:
+        - CAPABILITY_NAMED_IAM
+      AutoDeployment:
+        Enabled: True
+        RetainStacksOnAccountRemoval: !Ref RetainStacksOnAccountRemoval
+      OperationPreferences:
+        FailureTolerancePercentage: !Ref FailureTolerancePercentage
+        MaxConcurrentPercentage: 100
+      Parameters:
+        - ParameterKey: ExternalId
+          ParameterValue: !Ref ExternalId
+        - ParameterKey: AccountId
+          ParameterValue: !Ref AccountId
+        - ParameterKey: IAMPrincipal
+          ParameterValue: !Ref IAMPrincipal
+        - ParameterKey: EnableOrganizations
+          ParameterValue: !Ref EnableOrganizations
+        - ParameterKey: EnableS3Integration
+          ParameterValue: !Ref EnableS3Integration
+        - ParameterKey: S3IntegrationBucketName
+          ParameterValue: !Ref S3IntegrationBucketName
+        - ParameterKey: S3IntegrationBucketAccountId
+          ParameterValue: !Ref S3IntegrationBucketAccountId
+      StackInstancesGroup:
+        - DeploymentTargets:
+            OrganizationalUnitIds:
+              - !Ref AWSOrganizationalUnitId
+          Regions:
+            - us-east-1
+      TemplateBody: |
+        AWSTemplateFormatVersion: "2010-09-09"
+
+        Description: |
+          This template creates the ProwlerScan IAM Role in this account with
+          all read-only permissions to scan your account for security issues.
+          Contains two AWS managed policies (SecurityAudit and ViewOnlyAccess) and an inline policy.
+          It sets the trust policy on that IAM Role to permit Prowler to assume that role.
+          This template is designed to be used in Prowler Cloud, but can also be used in other Prowler deployments.
+
+          ** DEPLOYED VIA SERVICE-MANAGED STACKSET **
+          This stack was automatically deployed across your organization using CloudFormation StackSets
+          with SERVICE_MANAGED permissions. It will auto-deploy to new accounts and can be centrally managed.
+
+        Parameters:
+          ExternalId:
+            Description: |
+              This is the External ID that Prowler will use to assume the role ProwlerScan IAM Role.
+            Type: String
+            MinLength: 1
+            AllowedPattern: ".+"
+            ConstraintDescription: "ExternalId must not be empty."
+          AccountId:
+            Description: |
+              AWS Account ID that will assume the role created, if you are deploying this template to be used in Prowler Cloud please do not edit this.
+            Type: String
+            Default: "232136659152"
+            MinLength: 12
+            MaxLength: 12
+            AllowedPattern: "[0-9]{12}"
+            ConstraintDescription: "AccountId must be a valid AWS Account ID."
+          IAMPrincipal:
+            Description: |
+              The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this.
+            Type: String
+            Default: role/prowler*
+          EnableOrganizations:
+            Description: |
+              Enable AWS Organizations discovery permissions. Set to true only when deploying this role in the management account.
+              This adds read-only Organizations permissions (e.g. ListAccounts, DescribeOrganization) and StackSet management permissions.
+            Type: String
+            Default: false
+            AllowedValues:
+              - true
+              - false
+          EnableS3Integration:
+            Description: |
+              Enable S3 integration for storing Prowler scan reports.
+            Type: String
+            Default: false
+            AllowedValues:
+              - true
+              - false
+          S3IntegrationBucketName:
+            Description: |
+              The S3 bucket name where Prowler will store scan reports for your cloud providers.
+            Type: String
+            Default: ""
+          S3IntegrationBucketAccountId:
+            Description: |
+              The AWS Account ID owner of the S3 Bucket.
+            Type: String
+            Default: ""
+
+        Conditions:
+          OrganizationsEnabled: !Equals [!Ref EnableOrganizations, true]
+          S3IntegrationEnabled: !Equals [!Ref EnableS3Integration, true]
+
+        Resources:
+          ProwlerScan:
+            Type: AWS::IAM::Role
+            Properties:
+              RoleName: ProwlerScan
+              AssumeRolePolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  - Effect: Allow
+                    Principal:
+                      AWS: !Sub "arn:${AWS::Partition}:iam::${AccountId}:root"
+                    Action: "sts:AssumeRole"
+                    Condition:
+                      StringEquals:
+                        "sts:ExternalId": !Sub ${ExternalId}
+                      StringLike:
+                        "aws:PrincipalArn": !Sub "arn:${AWS::Partition}:iam::${AccountId}:${IAMPrincipal}"
+              MaxSessionDuration: 3600
+              ManagedPolicyArns:
+                - !Sub "arn:${AWS::Partition}:iam::aws:policy/SecurityAudit"
+                - !Sub "arn:${AWS::Partition}:iam::aws:policy/job-function/ViewOnlyAccess"
+              Policies:
+                - PolicyName: ProwlerScan
+                  PolicyDocument:
+                    Version: "2012-10-17"
+                    Statement:
+                      - Sid: AllowMoreReadOnly
+                        Effect: Allow
+                        Action:
+                          - "account:Get*"
+                          - "appstream:Describe*"
+                          - "appstream:List*"
+                          - "backup:List*"
+                          - "backup:Get*"
+                          - "bedrock:List*"
+                          - "bedrock:Get*"
+                          - "cloudtrail:GetInsightSelectors"
+                          - "codeartifact:List*"
+                          - "codebuild:BatchGet*"
+                          - "codebuild:ListReportGroups"
+                          - "cognito-idp:GetUserPoolMfaConfig"
+                          - "dlm:Get*"
+                          - "drs:Describe*"
+                          - "ds:Get*"
+                          - "ds:Describe*"
+                          - "ds:List*"
+                          - "dynamodb:GetResourcePolicy"
+                          - "ec2:GetEbsEncryptionByDefault"
+                          - "ec2:GetSnapshotBlockPublicAccessState"
+                          - "ec2:GetInstanceMetadataDefaults"
+                          - "ecr:Describe*"
+                          - "ecr:GetRegistryScanningConfiguration"
+                          - "elasticfilesystem:DescribeBackupPolicy"
+                          - "glue:GetConnections"
+                          - "glue:GetSecurityConfiguration*"
+                          - "glue:SearchTables"
+                          - "glue:GetMLTransforms"
+                          - "lambda:GetFunction*"
+                          - "logs:FilterLogEvents"
+                          - "lightsail:GetRelationalDatabases"
+                          - "macie2:GetMacieSession"
+                          - "macie2:GetAutomatedDiscoveryConfiguration"
+                          - "s3:GetAccountPublicAccessBlock"
+                          - "shield:DescribeProtection"
+                          - "shield:GetSubscriptionState"
+                          - "securityhub:GetFindings"
+                          - "servicecatalog:Describe*"
+                          - "servicecatalog:List*"
+                          - "ssm:GetDocument"
+                          - "ssm-incidents:List*"
+                          - "states:ListTagsForResource"
+                          - "support:Describe*"
+                          - "tag:GetTagKeys"
+                          - "wellarchitected:List*"
+                        Resource: "*"
+                      - Sid: AllowSecurityHubImportFindings
+                        Effect: Allow
+                        Action:
+                          - "securityhub:BatchImportFindings"
+                        Resource: "*"
+                      - Sid: AllowAPIGatewayReadOnly
+                        Effect: Allow
+                        Action:
+                          - "apigateway:GET"
+                        Resource:
+                          - !Sub "arn:${AWS::Partition}:apigateway:*::/restapis/*"
+                          - !Sub "arn:${AWS::Partition}:apigateway:*::/apis/*"
+                - !If
+                  - OrganizationsEnabled
+                  - PolicyName: ProwlerOrganizations
+                    PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                        - Sid: AllowOrganizationsReadOnly
+                          Effect: Allow
+                          Action:
+                            - "organizations:DescribeAccount"
+                            - "organizations:DescribeOrganization"
+                            - "organizations:ListAccounts"
+                            - "organizations:ListAccountsForParent"
+                            - "organizations:ListOrganizationalUnitsForParent"
+                            - "organizations:ListRoots"
+                            - "organizations:ListTagsForResource"
+                          Resource: "*"
+                        - Sid: AllowStackSetManagement
+                          Effect: Allow
+                          Action:
+                            - "organizations:RegisterDelegatedAdministrator"
+                          Resource: "*"
+                        - Sid: AllowCreateStackSetSLR
+                          Effect: Allow
+                          Action:
+                            - "iam:CreateServiceLinkedRole"
+                          Resource: !Sub "arn:${AWS::Partition}:iam::*:role/aws-service-role/member.org.stacksets.cloudformation.amazonaws.com/*"
+                  - !Ref AWS::NoValue
+                - !If
+                  - S3IntegrationEnabled
+                  - PolicyName: S3Integration
+                    PolicyDocument:
+                      Version: "2012-10-17"
+                      Statement:
+                        - Effect: Allow
+                          Action:
+                            - "s3:PutObject"
+                          Resource:
+                            - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*"
+                          Condition:
+                            StringEquals:
+                              "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccountId}
+                        - Effect: Allow
+                          Action:
+                            - "s3:ListBucket"
+                          Resource:
+                            - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}"
+                          Condition:
+                            StringEquals:
+                              "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccountId}
+                        - Effect: Allow
+                          Action:
+                            - "s3:DeleteObject"
+                          Resource:
+                            - !Sub "arn:${AWS::Partition}:s3:::${S3IntegrationBucketName}/*test-prowler-connection.txt"
+                          Condition:
+                            StringEquals:
+                              "s3:ResourceAccount": !Sub ${S3IntegrationBucketAccountId}
+                  - !Ref AWS::NoValue
+              Tags:
+                - Key: "Service"
+                  Value: "https://prowler.com"
+                - Key: "Support"
+                  Value: "support@prowler.com"
+                - Key: "CloudFormation"
+                  Value: "true"
+                - Key: "Name"
+                  Value: "ProwlerScan"
+
+        Outputs:
+          ProwlerScanRoleArn:
+            Description: "ARN of the ProwlerScan IAM Role"
+            Value: !GetAtt ProwlerScan.Arn
+            Export:
+              Name: !Sub "${AWS::StackName}-ProwlerScanRoleArn"
+
 Metadata:
-  AWS::CloudFormation::StackName: "Prowler"
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Required
+          default: Deployment Options
+        Parameters:
+          - DeployLocalRole
+          - DeployStackSet
+      - Label:
+          default: Required Prowler Configuration
         Parameters:
           - ExternalId
           - AccountId
@@ -228,14 +588,27 @@ Metadata:
           - EnableOrganizations
           - EnableS3Integration
       - Label:
-          default: Optional
+          default: Optional S3 Integration
         Parameters:
           - S3IntegrationBucketName
           - S3IntegrationBucketAccountId
+      - Label:
+          default: StackSet Configuration (Required if DeployStackSet is true)
+        Parameters:
+          - AWSOrganizationalUnitId
+          - DeployFromDelegatedAdmin
+          - RetainStacksOnAccountRemoval
+          - FailureTolerancePercentage
 
 Outputs:
-  ProwlerScanRoleArn:
-    Description: "ARN of the ProwlerScan IAM Role"
+  LocalProwlerScanRoleArn:
+    Condition: DeployLocalRoleEnabled
+    Description: "ARN of the ProwlerScan IAM Role deployed locally in this account"
     Value: !GetAtt ProwlerScan.Arn
     Export:
       Name: !Sub "${AWS::StackName}-ProwlerScanRoleArn"
+
+  StackSetId:
+    Condition: DeployStackSetEnabled
+    Description: "StackSet ID for the ProwlerScan role deployment across accounts"
+    Value: !Ref ProwlerScanStackSet
