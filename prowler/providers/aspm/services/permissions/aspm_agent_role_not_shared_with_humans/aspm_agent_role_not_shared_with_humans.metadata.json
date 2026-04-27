@@ -1,0 +1,40 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_role_not_shared_with_humans",
+  "CheckTitle": "AI agent role must not be shared with human users",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Verifies that AI agent IAM roles are dedicated machine identities not assumed by human users. When both a human and an agent can assume the same role, CloudTrail cannot distinguish between human-initiated and agent-initiated actions, breaking non-repudiation and making incident investigation significantly harder.",
+  "Risk": "Shared roles blur the audit trail: a malicious insider can perform unauthorized actions while appearing to be the agent, and vice versa. Incident response teams cannot determine whether a suspicious CloudTrail event was caused by the human or the AI agent, slowing forensics and potentially misattributing blame.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#create-iam-users",
+    "https://docs.aws.amazon.com/cloudtrail/latest/userguide/cloudtrail-concepts.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Review the role's trust policy: `aws iam get-role --role-name <role> --query Role.AssumeRolePolicyDocument`.\n2. Identify any `Principal` entries that correspond to human users or federated identities.\n3. Create a dedicated human-equivalent role with the same permissions for the humans.\n4. Update the human users/groups to assume the new human-dedicated role.\n5. Remove human principals from the agent role's trust policy.\n6. Verify CloudTrail logs show distinct principal ARNs for humans and agents going forward.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Provision dedicated IAM roles for AI agents with trust policies that permit only the agent's runtime identity (e.g. EC2 instance profile, Lambda execution role, ECS task role) to assume it. Human operators should use separate human-identity roles. Enforce this separation with an SCP that denies human principals from assuming roles tagged `agent=true`.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_role_not_shared_with_humans"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_identity_fully_tagged"
+  ],
+  "Notes": "ASPM-023 check from the Prowler ASPM check suite."
+}

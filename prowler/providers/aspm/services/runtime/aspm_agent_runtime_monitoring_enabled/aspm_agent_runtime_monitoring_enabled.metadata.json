@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_runtime_monitoring_enabled",
+  "CheckTitle": "AI Agent Must Have Runtime Security Monitoring Enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "runtime",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Runtime Security**. Verifies that each AI agent has a runtime security monitoring solution (such as Falco or Sysdig) enabled. Without runtime monitoring, suspicious system calls, unexpected file writes, network connections to untrusted destinations, and privilege escalation attempts go undetected.",
+  "Risk": "AI agents that interact with external systems and execute code are high-value targets for runtime attacks. Without runtime monitoring, an attacker who gains code execution inside the container can exfiltrate data, pivot to other services, or establish persistence without triggering any alerts.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Deploy Falco, Sysdig Secure, or a cloud-native runtime monitoring agent (AWS GuardDuty ECS/EKS protection, GKE Threat Detection) to each node running agent workloads.\n2. Define rules that alert on shell spawning, sensitive file reads (/etc/shadow, /proc/*/mem), and unexpected outbound connections.\n3. Route alerts to a SIEM or security operations platform with a response SLA of under 15 minutes for critical events.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable a runtime security monitoring tool (Falco, Sysdig, or cloud-native equivalent) for every agent container. Define alerting rules for privilege escalation, shell spawning, and anomalous network activity.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_runtime_monitoring_enabled"
+    }
+  },
+  "Categories": [
+    "infrastructure-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-061 check from the Prowler ASPM check suite."
+}

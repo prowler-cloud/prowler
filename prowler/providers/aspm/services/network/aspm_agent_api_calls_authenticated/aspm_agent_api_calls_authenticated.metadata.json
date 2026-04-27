@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_api_calls_authenticated",
+  "CheckTitle": "AI Agent Internal API Calls Must Be Authenticated",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Network Security**. Verifies that every AI agent enforces authentication on all internal API calls it makes or receives. Unauthenticated API endpoints allow any process with network access to invoke agent functionality without proving identity, bypassing authorization controls entirely.",
+  "Risk": "Unauthenticated API calls allow malicious insiders, compromised workloads, and SSRF-exploiting attackers to invoke agent capabilities without credentials. This can lead to unauthorised data access, privilege escalation, and abuse of external tool integrations.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Set api_calls_authenticated: true in the agent manifest.\n2. Require a signed JWT or mTLS client certificate on every API endpoint exposed by the agent.\n3. Use an API Gateway or service mesh policy to reject unauthenticated requests before they reach the agent process.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce authentication (JWT, API key, or mTLS) on every API endpoint the agent exposes or consumes. Reject unauthenticated requests at the network boundary using an API Gateway or service mesh admission policy.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_api_calls_authenticated"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-038 check from the Prowler ASPM check suite."
+}

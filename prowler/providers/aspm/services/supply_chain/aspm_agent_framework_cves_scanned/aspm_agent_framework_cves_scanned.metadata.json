@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_framework_cves_scanned",
+  "CheckTitle": "AI Agent Frameworks Must Be Scanned for CVEs",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "supply_chain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Supply Chain Security**. Validates that agent frameworks such as LangChain and LlamaIndex are continuously scanned for known CVEs. Unpatched framework vulnerabilities are a primary vector for supply chain attacks against AI agents.",
+  "Risk": "AI agent frameworks are complex, rapidly evolving codebases with frequent security disclosures. An unscanned framework may contain critical RCE, SSRF, or prompt-injection vulnerabilities that attackers can exploit to compromise the entire agent.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Integrate a dependency scanning tool (Dependabot, Snyk, pip-audit) into the CI/CD pipeline.\n2. Configure automated alerts for new CVEs affecting pinned framework versions.\n3. Establish an SLA to apply security patches within 14 days of disclosure.\n4. Pin framework versions and update only after scanning.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable continuous CVE scanning for all agent frameworks using a tool such as pip-audit, Snyk, or GitHub Dependabot. Automate alerts and enforce patching SLAs.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_framework_cves_scanned"
+    }
+  },
+  "Categories": [
+    "software-and-configuration-checks"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-068 check from the Prowler ASPM check suite."
+}

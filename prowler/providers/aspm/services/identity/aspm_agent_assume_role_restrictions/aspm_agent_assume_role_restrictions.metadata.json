@@ -1,0 +1,38 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_assume_role_restrictions",
+  "CheckTitle": "AI Agent Assume-Role Sessions Must Not Exceed 3600 Seconds",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Identity**. Verifies that the maximum session duration for cross-account or assumed-role sessions is set to 3600 seconds (one hour) or less. Shorter session durations limit the window of opportunity for exploiting stolen session tokens during agent-to-cloud or cross-account operations.",
+  "Risk": "An agent with an unlimited or very long session duration produces long-lived temporary credentials (STS tokens, Azure access tokens). If such a token is exfiltrated — through prompt injection, SSRF, or a compromised environment variable — the attacker gains extended, unrevocable cloud access.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. On AWS: Set the MaxSessionDuration on the IAM role to 3600 seconds.\n2. On Azure: Use Managed Identity or configure the token lifetime policy on the service principal to 1 hour.\n3. On GCP: Use short-lived service account tokens (max 1 hour is the platform default).\n4. Add trust policy conditions (aws:RequestedRegion, aws:PrincipalTag) to further restrict assume-role usage.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the maximum session duration for all agent assumed-role sessions to 3600 seconds or less. Add conditional trust policy constraints to restrict when and from where the role can be assumed.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_assume_role_restrictions"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_oidc_workload_identity",
+    "aspm_agent_identity_cross_cloud_registered"
+  ],
+  "Notes": "ASPM-010 check from the Prowler ASPM check suite."
+}

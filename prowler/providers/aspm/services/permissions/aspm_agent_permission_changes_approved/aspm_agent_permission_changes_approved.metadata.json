@@ -1,0 +1,41 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_permission_changes_approved",
+  "CheckTitle": "All AI agent permission changes must be traceable to approved change requests",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Verifies that every permission change applied to an AI agent's IAM role is traceable to an approved change request in the organization's change management system (ITSM ticket, pull request, RFC). Unapproved changes indicate either a process breakdown or potential unauthorized access and privilege escalation.",
+  "Risk": "Unapproved permission changes can silently expand an agent's capabilities without security review. An attacker with IAM write access, or a developer bypassing change controls, can add powerful permissions that persist until the next audit cycle. Without traceability, forensic investigation cannot determine when or why a permission was added, making it impossible to assess the impact of a compromise.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/cloudtrail/latest/userguide/cloudtrail-concepts.html",
+    "https://docs.aws.amazon.com/config/latest/developerguide/iam-policy-no-statements-with-admin-access.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Enable AWS CloudTrail with immutable log storage for all IAM events (`PutRolePolicy`, `AttachRolePolicy`, `CreatePolicyVersion`).\n2. Implement a GitOps workflow: all IAM changes must be made through IaC (Terraform/CDK) in a version-controlled repository.\n3. Require pull-request approval from a security team member before merging IAM changes.\n4. Add a CI/CD step that validates IAM change PRs against the approved-change-request list.\n5. Use AWS Config rule `iam-policy-no-statements-with-admin-access` to catch unauthorized admin grants.\n6. Alert on any direct console or CLI IAM modification (not via CI/CD pipeline) using CloudWatch Events.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce an Infrastructure-as-Code GitOps workflow for all AI agent IAM changes. Require peer review and security team sign-off on any permission modification before it can be applied. Store change records in an immutable audit log linked to the ITSM ticket number. Alert in real time on any IAM change not originating from the authorized CI/CD pipeline principal.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_permission_changes_approved"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_no_inline_policies",
+    "aspm_agent_permissions_recently_reviewed"
+  ],
+  "Notes": "ASPM-025 check from the Prowler ASPM check suite."
+}

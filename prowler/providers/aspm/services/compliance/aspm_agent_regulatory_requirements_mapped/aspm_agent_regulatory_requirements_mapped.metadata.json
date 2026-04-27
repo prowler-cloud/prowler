@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_regulatory_requirements_mapped",
+  "CheckTitle": "AI agent must have all applicable regulatory requirements mapped to controls",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "compliance",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Compliance**. Verifies that each AI agent has a documented mapping of all applicable regulatory requirements (e.g. HIPAA for healthcare data, PCI-DSS for payment processing, SOX for financial controls) to implemented technical and organisational controls, with gap analysis and remediation tracking.",
+  "Risk": "Without regulatory requirement mapping, compliance gaps remain invisible until discovered during audits or incidents. For AI agents operating in regulated industries, undetected gaps can lead to substantial fines, mandatory remediation programmes, and in some cases criminal liability for responsible officers.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Identify all industries and jurisdictions in which the agent operates.\n2. Enumerate applicable regulations (HIPAA, PCI-DSS, SOX, GDPR, CCPA, FedRAMP, etc.).\n3. Create a regulatory control matrix mapping each requirement to implemented controls.\n4. Conduct a gap analysis to identify unmet requirements.\n5. Implement a remediation plan with owners and target dates for all gaps.\n6. Review the mapping at least annually and on regulatory changes.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Maintain a living regulatory control matrix for each AI agent, mapping all applicable regulatory requirements to implemented controls. Conduct regular gap analyses and track remediation to closure.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_regulatory_requirements_mapped"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-092 check from the Prowler ASPM check suite."
+}

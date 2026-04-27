@@ -1,0 +1,41 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_sensitive_actions_have_conditions",
+  "CheckTitle": "High-risk agent permissions must be protected by IAM conditions",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Verifies that high-risk IAM actions granted to the agent — such as `kms:Decrypt`, `secretsmanager:GetSecretValue`, `sts:AssumeRole`, and `s3:GetObject` on sensitive buckets — are accompanied by IAM conditions (e.g. `aws:SourceIp`, `aws:RequestedRegion`, `aws:PrincipalTag`, `DateGreaterThan`) that restrict when and from where these permissions can be exercised.",
+  "Risk": "Unconditional access to high-risk permissions means an attacker who steals the agent's credentials can exercise those permissions from any network, at any time, against any matching resource. IAM conditions provide defence-in-depth that can neutralise stolen credentials when the attacker cannot satisfy the condition constraints.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_condition-key-reference.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Identify all sensitive actions in the agent's policies (KMS, Secrets Manager, STS, S3 on tagged buckets).\n2. For each sensitive action, add a `Condition` block with one or more of: `aws:SourceIp`, `aws:SourceVpc`, `aws:RequestedRegion`, `aws:PrincipalTag/<key>`.\n3. Test conditions using `aws iam simulate-principal-policy` with context keys.\n4. Validate that the agent can still perform its legitimate operations from the expected network.\n5. Monitor CloudTrail for condition-denied events and investigate anomalies.\n6. Review conditions quarterly alongside the permission review cycle.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add IAM conditions to all high-risk permissions granted to AI agents. At minimum, restrict by VPC or source IP for network-bound agents and by principal tag for ABAC-governed environments. Use AWS Config rules to detect permission statements without conditions on sensitive actions. Pair conditions with CloudWatch alarms on condition-denied CloudTrail events.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_sensitive_actions_have_conditions"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_permissions_no_overprivilege",
+    "aspm_agent_no_wildcard_permissions"
+  ],
+  "Notes": "ASPM-019 check from the Prowler ASPM check suite."
+}

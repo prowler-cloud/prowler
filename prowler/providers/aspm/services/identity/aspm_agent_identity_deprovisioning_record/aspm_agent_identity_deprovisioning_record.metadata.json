@@ -1,0 +1,38 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_identity_deprovisioning_record",
+  "CheckTitle": "AI Agent Identity Must Have a Documented Deprovisioning Record",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Identity**. Verifies that each AI agent has a documented deprovisioning record or standard operating procedure (SOP) that describes how the agent's identity, permissions, secrets, and cloud resources will be cleaned up when the agent is retired. Agents without deprovisioning records become orphaned identities.",
+  "Risk": "Retired agents without deprovisioning procedures leave behind active IAM roles, service accounts, API keys, and secrets. Attackers who discover orphaned identities can use them to gain persistent cloud access that is not associated with any known workload, making detection very difficult.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Create a deprovisioning checklist for each agent that includes: deleting IAM roles/service accounts, revoking API keys, deleting secrets, removing DNS records, and archiving logs.\n2. Store the SOP in your ITSM tool (Jira, ServiceNow) and link it to the agent's CMDB record.\n3. Schedule periodic identity reviews to identify and remove identities without deprovisioning records.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Document a deprovisioning SOP for every AI agent as part of the agent onboarding process. Include the SOP as a mandatory field in the agent manifest and enforce it via CI/CD gates.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_identity_deprovisioning_record"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_identity_tagged_and_inventoried",
+    "aspm_agent_identity_owner_linked"
+  ],
+  "Notes": "ASPM-008 check from the Prowler ASPM check suite."
+}

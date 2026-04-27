@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_data_subject_rights_supported",
+  "CheckTitle": "AI Agent Must Support Data Subject Rights",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "data_access",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Data Access**. Verifies that the agent system implements support for data subject rights including the right to access, portability, and erasure as required by GDPR, CCPA, and similar regulations. Agent systems that store personal data must honour these rights.",
+  "Risk": "Failure to support data subject rights exposes the organisation to regulatory fines (up to 4% of global turnover under GDPR), enforcement actions, and reputational damage. It also prevents individuals from exercising their legal rights over their personal data.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Implement a data subject request workflow that can locate, export, and delete personal data associated with an individual across all agent data stores.\n2. Test the deletion workflow to ensure data is purged from all replicas, backups, and caches.\n3. Document the process and train staff on handling data subject requests within regulatory timeframes.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Implement and test data subject rights workflows covering access, portability, and deletion. Ensure the agent's data stores support individual record identification and removal.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_data_subject_rights_supported"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-057 check from the Prowler ASPM check suite."
+}

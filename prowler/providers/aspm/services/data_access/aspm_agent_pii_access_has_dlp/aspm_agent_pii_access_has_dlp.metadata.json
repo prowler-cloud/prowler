@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_pii_access_has_dlp",
+  "CheckTitle": "AI Agents Accessing PII Must Have Data Loss Prevention Controls",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "data_access",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Data Access**. Verifies that any AI agent capable of reading or processing Personally Identifiable Information (PII) has Data Loss Prevention (DLP) controls enforced to prevent accidental or malicious exfiltration.",
+  "Risk": "An agent without DLP controls can silently leak PII through outputs, logs, or third-party API calls. This exposes the organisation to GDPR, CCPA, and HIPAA penalties and reputational harm.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Enable a cloud-native DLP service (e.g., AWS Macie, Google DLP, Azure Purview) on all data stores the agent accesses.\n2. Integrate output scanning into the agent pipeline to redact PII before delivery.\n3. Configure alerting for DLP policy violations.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce DLP controls on all data stores and agent outputs that may contain PII. Validate control effectiveness with regular DLP policy tests.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_pii_access_has_dlp"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-047 check from the Prowler ASPM check suite."
+}

@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_execution_timeout_enforced",
+  "CheckTitle": "AI Agent Must Have Execution Time Limits Enforced",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "runtime",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "medium",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Runtime Security**. Verifies that each AI agent has execution time limits enforced at the process or orchestrator level. Without timeouts, a runaway agent — caused by an infinite reasoning loop, deadlock, or adversarially crafted input — will run until the host is restarted, consuming CPU, memory, and downstream API quotas indefinitely.",
+  "Risk": "Agents without execution timeouts are vulnerable to resource exhaustion attacks driven by adversarial inputs (e.g., prompt injection that triggers recursive tool calls). In multi-tenant environments, an unbounded agent can affect service availability for other tenants. Timeouts also limit the blast radius of a compromised agent that establishes long-running exfiltration connections.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Set a maximum execution timeout in the agent orchestration framework (e.g., LangChain agent max_iterations + timeout, CrewAI task timeout).\n2. Enforce an outer deadline at the platform level: Kubernetes activeDeadlineSeconds for Jobs, AWS Step Functions state machine timeout, Lambda function timeout.\n3. Implement watchdog processes that terminate agents exceeding their allocated time budget.\n4. Log and alert when a timeout is triggered so recurring violations can be investigated.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure execution timeouts both at the agent framework level and at the platform level (e.g., Kubernetes activeDeadlineSeconds). Alert on timeout events to detect adversarial or misconfigured agents.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_execution_timeout_enforced"
+    }
+  },
+  "Categories": [
+    "infrastructure-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-064 check from the Prowler ASPM check suite."
+}

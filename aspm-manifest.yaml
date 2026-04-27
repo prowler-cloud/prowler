@@ -1,0 +1,316 @@
+# Prowler ASPM Agent Manifest
+# ============================================================
+# Describe each AI agent deployment and its security posture.
+# Run:  prowler aspm --manifest-path aspm-manifest.yaml
+#
+# All fields under each section correspond to ASPM checks.
+# Set values that accurately reflect your deployment so that
+# Prowler can generate an accurate posture report.
+# ============================================================
+
+agents:
+
+  # ----------------------------------------------------------
+  # Example 1: A well-configured production LLM agent
+  # ----------------------------------------------------------
+  - id: agent-docrecommender-prod
+    name: agent-docrecommender-prod
+    environment: prod
+    cloud_provider: aws
+    region: us-east-1
+
+    # 1.1 Identity & Authentication (ASPM-001 to ASPM-012)
+    identity:
+      type: iam_role
+      arn: arn:aws:iam::123456789012:role/agent-docrecommender-prod
+      tags:
+        agent: "true"
+        owner: team-ai
+        env: prod
+        purpose: document-recommendation
+        criticality: high
+      created_at: "2025-01-15"
+      last_used: "2026-03-20"
+      uses_oidc: true
+      uses_static_credentials: false
+      credential_age_days: 30
+      rotation_policy_days: 30
+      naming_compliant: true
+      has_owner_tag: true
+      cross_cloud_registered: true
+      jwt_validation_enabled: true
+      session_duration_seconds: 3600
+      has_deprovisioning_record: true
+      oauth_scope_minimal: true
+      unused_secondary_credentials: false
+
+    # 1.2 Permissions & Least Privilege (ASPM-013 to ASPM-025)
+    permissions:
+      has_wildcard_actions: false
+      has_wildcard_resources: false
+      has_admin_policy: false
+      has_inline_policies: false
+      can_escalate_privileges: false
+      cross_account_access: false
+      cross_account_accounts: 0
+      has_permission_boundary: true
+      shares_role_with_human: false
+      session_duration_seconds: 3600
+      permissions_last_reviewed_days: 45
+      data_domains_accessed:
+        - s3
+      has_condition_on_sensitive_actions: true
+      all_resources_tagged: true
+      permission_changes_approved: true
+
+    # 1.3 Credential Management (ASPM-026 to ASPM-036)
+    credentials:
+      has_hardcoded_secrets: false
+      credentials_in_logs: false
+      uses_secrets_manager: true
+      api_key_in_vcs: false
+      rotation_interval_days: 30
+      secrets_in_iac: false
+      database_uses_proxy: true
+      third_party_keys_managed: true
+      credential_access_audit_trail: true
+      credentials_scoped: true
+      credentials_per_environment: true
+
+    # 1.4 Network & Communication Security (ASPM-037 to ASPM-046)
+    network:
+      uses_https_only: true
+      mtls_enforced: true
+      api_calls_authenticated: true
+      has_rate_limiting: true
+      has_egress_filtering: true
+      network_isolated: true
+      api_gateway_enforced: true
+      validates_tls_certificates: true
+      network_calls_logged: true
+      uses_dnssec: true
+      validates_webhooks: true
+
+    # 1.5 Data Access & Privacy (ASPM-047 to ASPM-057)
+    data_access:
+      accesses_pii: false
+      has_dlp_controls: true
+      data_encrypted_at_rest: true
+      data_encrypted_in_transit: true
+      cross_boundary_data_flows_approved: true
+      training_data_integrity_verified: true
+      data_retention_policy_days: 90
+      database_query_audit_enabled: true
+      object_storage_access_logged: true
+      llm_context_sanitized: true
+      has_model_card: true
+      output_validated_for_sensitive_data: true
+      supports_data_subject_rights: true
+
+    # 1.6 Runtime & Sandbox Security (ASPM-058 to ASPM-067)
+    runtime:
+      runs_as_root: false
+      privileged_container: false
+      has_seccomp_profile: true
+      has_apparmor_selinux: true
+      has_resource_limits: true
+      image_scanned_for_cves: true
+      has_runtime_monitoring: true
+      execution_environment_versioned: true
+      secrets_cleared_from_memory: true
+      has_execution_timeout: true
+      behavior_deterministic: true
+      dependencies_integrity_checked: true
+      uses_platform_security_controls: true
+
+    # 1.7 Supply Chain Security (ASPM-068 to ASPM-076)
+    supply_chain:
+      framework_cves_scanned: true
+      llm_model_provenance_verified: true
+      plugins_security_reviewed: true
+      dependencies_version_pinned: true
+      artifacts_signed: true
+      cicd_has_security_gates: true
+      licenses_compliant: true
+      model_update_cadence_days: 30
+      dependency_checksums_verified: true
+
+    # 1.8 Observability & Monitoring (ASPM-077 to ASPM-086)
+    observability:
+      execution_logs_complete: true
+      anomaly_detection_enabled: true
+      prompt_injection_monitoring: true
+      audit_logs_immutable: true
+      metrics_exported: true
+      security_event_alerting: true
+      distributed_tracing_enabled: true
+      centralized_dashboard: true
+      configuration_drift_tracked: true
+      performance_baseline_defined: true
+
+    # 1.9 Compliance & Governance (ASPM-087 to ASPM-095)
+    compliance:
+      owasp_llm_top10_assessed: true
+      eu_ai_act_controls_present: true
+      nist_ai_rmf_assessed: true
+      access_control_policy_enforced: true
+      dpia_completed: true
+      regulatory_requirements_mapped: true
+      incident_response_plan_exists: true
+      third_party_vendors_assessed: true
+      user_consent_and_disclosure: true
+
+    # 1.10 Attack Path Analysis (ASPM-096 to ASPM-101)
+    attack_paths:
+      cross_cloud_escalation_possible: false
+      tool_abuse_escalation_possible: false
+      sensitive_data_enables_downstream_compromise: false
+      lateral_movement_via_shared_infra: false
+      compromise_enables_full_account_takeover: false
+      llm_output_used_in_code_execution: false
+
+  # ----------------------------------------------------------
+  # Example 2: A poorly-configured staging agent (many FAILs)
+  # ----------------------------------------------------------
+  - id: agent-dataprocessor-staging
+    name: agent-dataprocessor-staging
+    environment: staging
+    cloud_provider: aws
+    region: eu-west-1
+
+    identity:
+      type: iam_role
+      arn: arn:aws:iam::123456789012:role/DataProcessorRole
+      tags: {}                          # FAIL: ASPM-001 (no tags)
+      created_at: "2023-06-01"
+      last_used: "2025-12-01"
+      uses_oidc: false                  # FAIL: ASPM-011
+      uses_static_credentials: true     # FAIL: ASPM-011
+      credential_age_days: 660          # FAIL: ASPM-007 (>365 days)
+      rotation_policy_days: null        # FAIL: ASPM-004
+      naming_compliant: false           # FAIL: ASPM-002 (generic name)
+      has_owner_tag: false              # FAIL: ASPM-009
+      cross_cloud_registered: false     # FAIL: ASPM-003
+      jwt_validation_enabled: false     # FAIL: ASPM-006
+      session_duration_seconds: 43200   # FAIL: ASPM-010 (12 hours)
+      has_deprovisioning_record: false  # FAIL: ASPM-008
+      oauth_scope_minimal: false        # FAIL: ASPM-005
+      unused_secondary_credentials: true # FAIL: ASPM-012
+
+    permissions:
+      has_wildcard_actions: true        # FAIL: ASPM-013, ASPM-016
+      has_wildcard_resources: true      # FAIL: ASPM-016
+      has_admin_policy: true            # FAIL: ASPM-013
+      has_inline_policies: true         # FAIL: ASPM-014
+      can_escalate_privileges: true     # FAIL: ASPM-015
+      cross_account_access: true
+      cross_account_accounts: 5         # FAIL: ASPM-017 (>3)
+      has_permission_boundary: false    # FAIL: ASPM-022
+      shares_role_with_human: true      # FAIL: ASPM-023
+      session_duration_seconds: null    # FAIL: ASPM-024
+      permissions_last_reviewed_days: null # FAIL: ASPM-018
+      data_domains_accessed:
+        - s3
+        - rds
+        - redshift                      # FAIL: ASPM-020 (>1 domain)
+      has_condition_on_sensitive_actions: false # FAIL: ASPM-019
+      all_resources_tagged: false       # FAIL: ASPM-021
+      permission_changes_approved: false # FAIL: ASPM-025
+
+    credentials:
+      has_hardcoded_secrets: true       # FAIL: ASPM-026
+      credentials_in_logs: true         # FAIL: ASPM-027
+      uses_secrets_manager: false       # FAIL: ASPM-028
+      api_key_in_vcs: true              # FAIL: ASPM-029
+      rotation_interval_days: null      # FAIL: ASPM-030
+      secrets_in_iac: true              # FAIL: ASPM-031
+      database_uses_proxy: false        # FAIL: ASPM-032
+      third_party_keys_managed: false   # FAIL: ASPM-033
+      credential_access_audit_trail: false # FAIL: ASPM-034
+      credentials_scoped: false         # FAIL: ASPM-035
+      credentials_per_environment: false # FAIL: ASPM-036
+
+    network:
+      uses_https_only: false            # FAIL: ASPM-037
+      mtls_enforced: false              # FAIL: ASPM-037
+      api_calls_authenticated: false    # FAIL: ASPM-038
+      has_rate_limiting: false          # FAIL: ASPM-039
+      has_egress_filtering: false       # FAIL: ASPM-040
+      network_isolated: false           # FAIL: ASPM-041
+      api_gateway_enforced: false       # FAIL: ASPM-042
+      validates_tls_certificates: false # FAIL: ASPM-043
+      network_calls_logged: false       # FAIL: ASPM-044
+      uses_dnssec: false                # FAIL: ASPM-045
+      validates_webhooks: false         # FAIL: ASPM-046
+
+    data_access:
+      accesses_pii: true
+      has_dlp_controls: false           # FAIL: ASPM-047
+      data_encrypted_at_rest: false     # FAIL: ASPM-048
+      data_encrypted_in_transit: false  # FAIL: ASPM-048
+      cross_boundary_data_flows_approved: false # FAIL: ASPM-049
+      training_data_integrity_verified: false  # FAIL: ASPM-050
+      data_retention_policy_days: null  # FAIL: ASPM-051
+      database_query_audit_enabled: false # FAIL: ASPM-052
+      object_storage_access_logged: false # FAIL: ASPM-053
+      llm_context_sanitized: false      # FAIL: ASPM-054
+      has_model_card: false             # FAIL: ASPM-055
+      output_validated_for_sensitive_data: false # FAIL: ASPM-056
+      supports_data_subject_rights: false # FAIL: ASPM-057
+
+    runtime:
+      runs_as_root: true                # FAIL: ASPM-058
+      privileged_container: true        # FAIL: ASPM-058
+      has_seccomp_profile: false        # FAIL: ASPM-058
+      has_apparmor_selinux: false       # FAIL: ASPM-058
+      has_resource_limits: false        # FAIL: ASPM-059
+      image_scanned_for_cves: false     # FAIL: ASPM-060
+      has_runtime_monitoring: false     # FAIL: ASPM-061
+      execution_environment_versioned: false # FAIL: ASPM-062
+      secrets_cleared_from_memory: false # FAIL: ASPM-063
+      has_execution_timeout: false      # FAIL: ASPM-064
+      behavior_deterministic: false     # FAIL: ASPM-065
+      dependencies_integrity_checked: false # FAIL: ASPM-066
+      uses_platform_security_controls: false # FAIL: ASPM-067
+
+    supply_chain:
+      framework_cves_scanned: false     # FAIL: ASPM-068
+      llm_model_provenance_verified: false # FAIL: ASPM-069
+      plugins_security_reviewed: false  # FAIL: ASPM-070
+      dependencies_version_pinned: false # FAIL: ASPM-071
+      artifacts_signed: false           # FAIL: ASPM-072
+      cicd_has_security_gates: false    # FAIL: ASPM-073
+      licenses_compliant: false         # FAIL: ASPM-074
+      model_update_cadence_days: null   # FAIL: ASPM-075
+      dependency_checksums_verified: false # FAIL: ASPM-076
+
+    observability:
+      execution_logs_complete: false    # FAIL: ASPM-077
+      anomaly_detection_enabled: false  # FAIL: ASPM-078
+      prompt_injection_monitoring: false # FAIL: ASPM-079
+      audit_logs_immutable: false       # FAIL: ASPM-080
+      metrics_exported: false           # FAIL: ASPM-081
+      security_event_alerting: false    # FAIL: ASPM-082
+      distributed_tracing_enabled: false # FAIL: ASPM-083
+      centralized_dashboard: false      # FAIL: ASPM-084
+      configuration_drift_tracked: false # FAIL: ASPM-085
+      performance_baseline_defined: false # FAIL: ASPM-086
+
+    compliance:
+      owasp_llm_top10_assessed: false   # FAIL: ASPM-087
+      eu_ai_act_controls_present: false # FAIL: ASPM-088
+      nist_ai_rmf_assessed: false       # FAIL: ASPM-089
+      access_control_policy_enforced: false # FAIL: ASPM-090
+      dpia_completed: false             # FAIL: ASPM-091
+      regulatory_requirements_mapped: false # FAIL: ASPM-092
+      incident_response_plan_exists: false # FAIL: ASPM-093
+      third_party_vendors_assessed: false # FAIL: ASPM-094
+      user_consent_and_disclosure: false # FAIL: ASPM-095
+
+    attack_paths:
+      cross_cloud_escalation_possible: true    # FAIL: ASPM-096
+      tool_abuse_escalation_possible: true     # FAIL: ASPM-097
+      sensitive_data_enables_downstream_compromise: true # FAIL: ASPM-098
+      lateral_movement_via_shared_infra: true  # FAIL: ASPM-099
+      compromise_enables_full_account_takeover: true # FAIL: ASPM-100
+      llm_output_used_in_code_execution: true  # FAIL: ASPM-101

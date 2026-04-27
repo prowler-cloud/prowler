@@ -1,0 +1,37 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_oauth_token_minimal_scope",
+  "CheckTitle": "AI Agent OAuth Tokens Must Request Minimal Required Scopes",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Identity**. Confirms that OAuth access tokens obtained by the AI agent are requested with the minimum set of scopes required for the agent's declared purpose. Excessive OAuth scopes amplify the blast radius of token theft and enable agents to access data beyond their intended function.",
+  "Risk": "If an agent's OAuth token is exfiltrated, overly permissive scopes allow the attacker to access any resource covered by those scopes across the entire organisation. Broad scopes (e.g., openid profile email offline_access https://graph.microsoft.com/.default) may grant read/write access to email, calendar, files, and user directory.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Audit all OAuth scopes requested in the agent's configuration and authentication code.\n2. Remove any scope not strictly required for the agent's declared function.\n3. Use incremental authorisation — request additional scopes only when needed for a specific task.\n4. Implement scope validation at the resource server to reject tokens with unexpected scopes.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Apply the principle of least privilege to OAuth scope requests. Define the minimum required scopes per agent function and enforce scope validation at both the token acquisition and resource server layers.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_oauth_token_minimal_scope"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_jwt_claims_validation"
+  ],
+  "Notes": "ASPM-005 check from the Prowler ASPM check suite."
+}

@@ -1,0 +1,39 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_single_data_domain_access",
+  "CheckTitle": "AI agent must be scoped to a single data domain",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "permissions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Permissions**. Checks that each AI agent is authorized to access only a single data domain (e.g. only S3, or only RDS, or only DynamoDB). Agents that span multiple data domains accumulate a wider blast radius and complicate data-lineage governance, GDPR data-subject access requests, and cross-domain policy enforcement.",
+  "Risk": "An agent with permissions across multiple data domains can be weaponized to exfiltrate data from several systems simultaneously. Cross-domain access also breaks data-classification boundaries — an agent with access to both a public S3 bucket and an encrypted RDS instance can act as a bridge to move data between classification levels.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/identity-and-access-management.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Review the agent manifest `data_domains_accessed` field to identify all domains in use.\n2. For each domain beyond the first, assess whether the agent genuinely needs that access for its declared purpose.\n3. Split the agent into domain-scoped agents (one per domain) if multiple data domains are legitimately required.\n4. Update IAM policies to restrict each agent role to resources within its single data domain.\n5. Add resource-based policies (S3 bucket policies, RDS resource policies) to deny cross-agent access.\n6. Update the agent manifest to reflect the new single-domain scope.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Design AI agents around a single data domain. Where an orchestrator needs to coordinate across domains, use separate sub-agents with narrow data-domain permissions and have the orchestrator aggregate results. Apply resource-based policies (S3 bucket policies, KMS key policies) to enforce domain boundaries in addition to IAM policies.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_single_data_domain_access"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_permissions_no_overprivilege"
+  ],
+  "Notes": "ASPM-020 check from the Prowler ASPM check suite."
+}

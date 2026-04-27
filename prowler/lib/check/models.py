@@ -1279,6 +1279,38 @@ class CheckReportVercel(Check_Report):
         return "global"
 
 
+@dataclass
+class CheckReportASPM(Check_Report):
+    """Contains the ASPM Check's finding information.
+
+    Attributes:
+        resource_name: Human-readable agent name.
+        resource_id: Unique agent identifier.
+        environment: Deployment environment (prod/staging/dev).
+        cloud_provider: Cloud provider (aws/azure/gcp).
+    """
+
+    resource_name: str
+    resource_id: str
+    environment: str
+    cloud_provider: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialise the ASPM Check's finding information.
+
+        Args:
+            metadata: The check metadata.
+            resource: An AgentConfig instance or compatible dict.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.environment = getattr(resource, "environment", "unknown")
+        self.cloud_provider = getattr(resource, "cloud_provider", "unknown")
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
     """

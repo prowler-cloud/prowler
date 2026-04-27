@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_data_encrypted",
+  "CheckTitle": "AI Agent Data Must Be Encrypted at Rest and in Transit",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "data_access",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Data Access**. Ensures that all data stores accessed by the agent use encryption at rest and that all data transmitted by the agent is protected by TLS. Missing encryption in either dimension leaves sensitive data exposed.",
+  "Risk": "Unencrypted data at rest can be accessed directly from storage media or backups. Unencrypted data in transit is susceptible to man-in-the-middle interception. Both scenarios can result in data breaches and regulatory penalties.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Enable encryption at rest on all data stores (e.g., AWS S3 SSE-KMS, Azure Storage Service Encryption, GCS CMEK).\n2. Enforce TLS 1.2+ on all API endpoints and database connections used by the agent.\n3. Audit and remediate any plaintext data channels identified in network flow logs.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable encryption at rest and in transit for all data stores and communication channels used by the agent. Use managed encryption keys where possible.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_data_encrypted"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-048 check from the Prowler ASPM check suite."
+}

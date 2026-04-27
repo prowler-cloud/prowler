@@ -1,0 +1,36 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_no_lateral_movement_via_shared_infra",
+  "CheckTitle": "AI Agent Must Not Be Able to Access Shared Infrastructure Used by Sibling Agents",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "attack_paths",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Attack Path**. Detects whether an AI agent can access infrastructure components — message queues, shared databases, configuration services, secret stores, or file systems — that are also used by sibling agents in the same deployment. Shared infrastructure creates a lateral movement path: compromise of one agent becomes a stepping stone to attacking all agents that share those resources.",
+  "Risk": "In multi-agent systems, shared infrastructure is the primary lateral movement surface. An attacker who compromises a lower-privilege agent can read messages, inject tasks, or overwrite configuration intended for a higher-privilege sibling agent, effectively taking over the entire agent fleet from a single initial breach point.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Assign each agent its own isolated message queue, database schema, and secret store — avoid any shared-resource pattern.\n2. Enforce network-level isolation between agent workloads using security groups, VPC subnet segregation, or Kubernetes NetworkPolicies.\n3. Use separate IAM identities per agent so that an identity compromise cannot access another agent's resources.\n4. Implement cross-agent communication via authenticated and signed API calls rather than shared data stores.\n5. Audit IAM policies and resource policies (SQS, S3, DynamoDB) to ensure no agent can access resources owned by sibling agents.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Eliminate shared infrastructure between agents. Provide each agent with dedicated, isolated resources and enforce network and IAM boundaries that prevent any cross-agent resource access. Use authenticated APIs for legitimate inter-agent communication.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_no_lateral_movement_via_shared_infra"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-099 attack path check from the Prowler ASPM check suite."
+}

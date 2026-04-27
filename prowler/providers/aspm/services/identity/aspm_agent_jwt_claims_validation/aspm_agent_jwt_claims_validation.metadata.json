@@ -1,0 +1,38 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_jwt_claims_validation",
+  "CheckTitle": "AI Agent Must Validate JWT Claims on All Agent-to-Agent Calls",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "identity",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "critical",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Identity**. Verifies that the AI agent validates the full set of standard JWT claims — expiry (exp), issuer (iss), subject (sub), and audience (aud) — on every token received during agent-to-agent communication. Skipping validation opens the agent to confused-deputy and token replay attacks.",
+  "Risk": "An agent that accepts JWTs without validating standard claims can be manipulated by replaying expired tokens, injecting tokens issued by untrusted issuers, or presenting tokens issued for a different audience. This breaks the security boundary between agents and can allow horizontal privilege escalation across a multi-agent system.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Use a well-maintained JWT library (python-jose, PyJWT, jsonwebtoken) that validates claims by default.\n2. Always pass the expected issuer (iss) and audience (aud) to the validation function.\n3. Reject tokens where exp is in the past or nbf is in the future.\n4. Log and alert on JWT validation failures for security monitoring.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce strict JWT validation on every inbound agent-to-agent call. Validate exp, iss, sub, and aud claims using a compliant library and reject any token that fails validation.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_jwt_claims_validation"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aspm_agent_oauth_token_minimal_scope",
+    "aspm_agent_oidc_workload_identity"
+  ],
+  "Notes": "ASPM-006 check from the Prowler ASPM check suite."
+}

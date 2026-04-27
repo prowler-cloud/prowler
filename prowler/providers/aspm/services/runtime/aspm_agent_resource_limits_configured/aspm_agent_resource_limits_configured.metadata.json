@@ -1,0 +1,35 @@
+{
+  "Provider": "aspm",
+  "CheckID": "aspm_agent_resource_limits_configured",
+  "CheckTitle": "AI Agent Container Must Have Resource Limits Configured",
+  "CheckType": [
+    "Software and Configuration Checks/AI Agent Security Best Practices"
+  ],
+  "ServiceName": "runtime",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "aspm-agent-{id}",
+  "Severity": "high",
+  "ResourceType": "AiAgent",
+  "Description": "**AI Agent Runtime Security**. Verifies that every AI agent container has CPU, memory, and disk resource limits configured. Without limits, a runaway or adversarially triggered agent can exhaust shared infrastructure resources and cause a denial-of-service against sibling workloads on the same node.",
+  "Risk": "An agent without resource limits can consume all available CPU and memory on a node, starving other workloads and potentially causing node-level failures. Adversarial inputs (e.g., prompt injection triggering expensive LLM calls in a loop) can weaponise this into a targeted DoS.",
+  "RelatedUrl": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Set resources.limits.cpu and resources.limits.memory in each container spec.\n2. Set resources.requests to match expected usage so the scheduler places the pod correctly.\n3. For disk, use ephemeral-storage limits or mount a size-limited PersistentVolume.\n4. Enable LimitRange objects in the namespace to enforce defaults cluster-wide.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure CPU, memory, and ephemeral storage limits for every agent container. Use LimitRange and ResourceQuota objects to enforce limits namespace-wide and prevent regressions.",
+      "Url": "https://hub.prowler.com/check/aspm_agent_resource_limits_configured"
+    }
+  },
+  "Categories": [
+    "infrastructure-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ASPM-059 check from the Prowler ASPM check suite."
+}
