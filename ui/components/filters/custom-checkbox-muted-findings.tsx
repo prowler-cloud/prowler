@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 
+import { MutedIcon } from "@/components/icons";
 import { Checkbox } from "@/components/shadcn";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { MUTED_FILTER } from "@/lib";
@@ -82,6 +83,7 @@ export const CustomCheckboxMutedFindings = ({
         onCheckedChange={handleMutedChange}
         aria-label="Include muted findings"
       />
+      <MutedIcon className="text-bg-data-muted size-3 shrink-0" />
       <label
         htmlFor="include-muted"
         className="cursor-pointer text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
