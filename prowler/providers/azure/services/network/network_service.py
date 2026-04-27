@@ -23,8 +23,30 @@ class Network(AzureService):
         security_groups = {}
         for subscription, client in self.clients.items():
             try:
+                security_groups_list = []
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                security_groups_list += list(
+                                    client.network_security_groups.list(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    security_groups_list = client.network_security_groups.list_all()
+
                 security_groups.update({subscription: []})
-                security_groups_list = client.network_security_groups.list_all()
                 for security_group in security_groups_list:
                     security_groups[subscription].append(
                         SecurityGroup(
@@ -63,8 +85,29 @@ class Network(AzureService):
         network_watchers = {}
         for subscription, client in self.clients.items():
             try:
+                network_watchers_list = []
+
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                network_watchers_list += list(
+                                    client.network_watchers.list(resource_group_name=rg)
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    network_watchers_list = client.network_watchers.list_all()
+
                 network_watchers.update({subscription: []})
-                network_watchers_list = client.network_watchers.list_all()
                 for network_watcher in network_watchers_list:
                     flow_logs = self._get_flow_logs(
                         subscription, network_watcher.name, network_watcher.id
@@ -132,8 +175,31 @@ class Network(AzureService):
         bastion_hosts = {}
         for subscription, client in self.clients.items():
             try:
+                bastion_hosts_list = []
+
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                bastion_hosts_list += list(
+                                    client.bastion_hosts.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    bastion_hosts_list = client.bastion_hosts.list()
+
                 bastion_hosts.update({subscription: []})
-                bastion_hosts_list = client.bastion_hosts.list()
                 for bastion_host in bastion_hosts_list:
                     bastion_hosts[subscription].append(
                         BastionHost(
@@ -154,8 +220,31 @@ class Network(AzureService):
         public_ip_addresses = {}
         for subscription, client in self.clients.items():
             try:
+                public_ip_addresses_list = []
+
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                public_ip_addresses_list += list(
+                                    client.public_ip_addresses.list(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    public_ip_addresses_list = client.public_ip_addresses.list_all()
+
                 public_ip_addresses.update({subscription: []})
-                public_ip_addresses_list = client.public_ip_addresses.list_all()
                 for public_ip_address in public_ip_addresses_list:
                     public_ip_addresses[subscription].append(
                         PublicIp(

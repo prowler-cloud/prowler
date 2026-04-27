@@ -19,8 +19,30 @@ class ContainerRegistry(AzureService):
         registries = {}
         for subscription, client in self.clients.items():
             try:
-                registries_list = client.registries.list()
+                registries_list = []
                 registries.update({subscription: {}})
+
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                registries_list += list(
+                                    client.registries.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    registries_list = client.registries.list()
 
                 for registry in registries_list:
                     resource_group = self._get_resource_group(registry.id)

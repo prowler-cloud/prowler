@@ -19,8 +19,30 @@ class AKS(AzureService):
 
         for subscription_name, client in self.clients.items():
             try:
-                clusters_list = client.managed_clusters.list()
+                clusters_list = []
                 clusters.update({subscription_name: {}})
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription_name, [])
+
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription_name}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                clusters_list += list(
+                                    client.managed_clusters.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    clusters_list = client.managed_clusters.list()
 
                 for cluster in clusters_list:
                     if getattr(cluster, "kubernetes_version", None):

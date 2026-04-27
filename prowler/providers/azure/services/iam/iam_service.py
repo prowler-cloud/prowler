@@ -22,6 +22,11 @@ class IAM(AzureService):
             try:
                 builtin_roles.update({subscription: {}})
                 custom_roles.update({subscription: {}})
+                if self.resource_groups:
+                    logger.warning(
+                        f"Subscription name: {subscription} -- IAM roles are subscription-scoped and cannot be filtered by resource group. Skipping."
+                    )
+                    continue
                 all_roles = client.role_definitions.list(
                     scope=f"/subscriptions/{self.subscriptions[subscription]}",
                 )
@@ -62,11 +67,17 @@ class IAM(AzureService):
         role_assignments = {}
         for subscription, client in self.clients.items():
             try:
-                role_assignments.update({subscription: {}})
-                all_role_assignments = client.role_assignments.list_for_subscription(
+                role_assignments_list = []
+                if self.resource_groups:
+                    logger.warning(
+                        f"Subscription name: {subscription} -- IAM role assignments cannot be evaluated without role definitions which are subscription-scoped. Skipping."
+                    )
+                    continue
+                role_assignments_list = client.role_assignments.list_for_subscription(
                     filter="atScope()"
                 )
-                for role_assignment in all_role_assignments:
+                role_assignments.update({subscription: {}})
+                for role_assignment in role_assignments_list:
                     role_assignments[subscription].update(
                         {
                             role_assignment.id: RoleAssignment(

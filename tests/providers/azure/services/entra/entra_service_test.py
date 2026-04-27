@@ -284,7 +284,9 @@ def test_azure_entra__get_users_handles_pagination():
             ),
         )
     }
-
+    entra_service.resource_groups = (
+        None  # Here because resource_groups is not set because of __new__
+    )
     users = asyncio.run(entra_service._get_users())
 
     assert len(users["tenant-1"]) == 3

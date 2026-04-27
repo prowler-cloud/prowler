@@ -1,0 +1,50 @@
+---
+title: 'Azure Resource Group Scope'
+---
+
+Prowler supports narrowing security scans to specific resource groups within Azure subscriptions. This is useful when you want to audit only a subset of resources rather than scanning an entire subscription.
+
+By default, Prowler scans all resource groups it has permission to access. Passing `--azure-resource-group` limits the scan to only the specified resource groups across all accessible subscriptions.
+
+## Configuring Resource Group Scoped Scans
+
+To restrict a scan to one or more resource groups, pass them as arguments using the `--azure-resource-group` flag:
+
+```console
+prowler azure --az-cli-auth --azure-resource-group <resource-group-1> <resource-group-2> ... <resource-group-N>
+```
+
+For example, to scan only `rg-production` and `rg-staging`:
+
+```console
+prowler azure --az-cli-auth --azure-resource-group rg-prod1 rg-prod2
+```
+
+This works with all supported authentication methods:
+
+```console
+# Service Principal
+prowler azure --sp-env-auth --azure-resource-group rg-production
+
+# Browser
+prowler azure --browser-auth --tenant-id <tenant-id> --azure-resource-group rg-production
+
+# Managed Identity
+prowler azure --managed-identity-auth --azure-resource-group rg-production
+```
+
+## How It Works
+
+When `--azure-resource-group` is provided, Prowler validates each specified resource group against all accessible subscriptions. A resource group is included in the scan if it exists in **at least one** subscription.
+
+- If a resource group is found in one or more subscriptions, it will be scanned in those subscriptions only.
+- If a resource group is **not found in any** subscription, Prowler logs a warning and skips it.
+- If **none** of the provided resource groups are found across any subscription, Prowler logs a warning and no resource group scoped checks will run.
+
+<Warning>
+Resource group names are case-sensitive. Ensure the names passed to `--azure-resource-group` exactly match those defined in Azure.
+</Warning>
+
+<Warning>
+Even if no resource groups are found, passing the --azure-resource-group flag disables subscription-only scoped scans.
+</Warning>

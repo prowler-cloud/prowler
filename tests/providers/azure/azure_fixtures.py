@@ -29,6 +29,7 @@ def set_mocked_azure_provider(
     audit_config: dict = None,
     azure_region_config: AzureRegionConfig = AzureRegionConfig(),
     locations: list = None,
+    resource_groups: dict = None,
 ) -> AzureProvider:
 
     provider = MagicMock()
@@ -38,5 +39,6 @@ def set_mocked_azure_provider(
     provider.identity = identity
     provider.audit_config = audit_config
     provider.region_config = azure_region_config
+    provider.resource_groups = resource_groups
 
     return provider
