@@ -1,3 +1,4 @@
+import importlib.metadata
 import os
 import pathlib
 from datetime import datetime, timezone
@@ -77,13 +78,38 @@ EXTERNAL_TOOL_PROVIDERS = frozenset({"iac", "llm", "image"})
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
 
+def _get_ep_compliance_dirs() -> dict:
+    """Discover compliance directories from entry points. Returns {provider: path}."""
+    dirs = {}
+    for ep in importlib.metadata.entry_points(group="prowler.compliance"):
+        try:
+            module = ep.load()
+            if hasattr(module, "__path__"):
+                dirs[ep.name] = module.__path__[0]
+            elif hasattr(module, "__file__"):
+                dirs[ep.name] = os.path.dirname(module.__file__)
+        except Exception as error:
+            logger.warning(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+    return dirs
+
+
 def get_available_compliance_frameworks(provider=None):
     available_compliance_frameworks = []
-    providers = [p.value for p in Provider]
+    # Built-in compliance
+    compliance_base = f"{actual_directory}/../compliance"
     if provider:
         providers = [provider]
-    for provider in providers:
-        compliance_dir = f"{actual_directory}/../compliance/{provider}"
+    else:
+        # Scan compliance directory for all provider subdirectories
+        providers = []
+        if os.path.isdir(compliance_base):
+            for entry in os.scandir(compliance_base):
+                if entry.is_dir():
+                    providers.append(entry.name)
+    for prov in providers:
+        compliance_dir = f"{compliance_base}/{prov}"
         if not os.path.isdir(compliance_dir):
             continue
         with os.scandir(compliance_dir) as files:
@@ -92,7 +118,8 @@ def get_available_compliance_frameworks(provider=None):
                     available_compliance_frameworks.append(
                         file.name.removesuffix(".json")
                     )
-    # Also scan top-level compliance/ for multi-provider JSONs
+    # Built-in multi-provider frameworks at top-level compliance/ directory.
+    # Placed before external entry points so built-ins win on name collisions.
     compliance_root = f"{actual_directory}/../compliance"
     if os.path.isdir(compliance_root):
         with os.scandir(compliance_root) as files:
@@ -107,6 +134,18 @@ def get_available_compliance_frameworks(provider=None):
                             continue
                     if name not in available_compliance_frameworks:
                         available_compliance_frameworks.append(name)
+    # External compliance via entry points.
+    # Multi-provider support for external plug-ins is tracked in PROWLER-1444.
+    ep_dirs = _get_ep_compliance_dirs()
+    for prov, path in ep_dirs.items():
+        if provider and prov != provider:
+            continue
+        if os.path.isdir(path):
+            for file in os.scandir(path):
+                if file.is_file() and file.name.endswith(".json"):
+                    available_compliance_frameworks.append(
+                        file.name.removesuffix(".json")
+                    )
     return available_compliance_frameworks
 
 
@@ -218,18 +257,26 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
         with open(config_file_path, "r", encoding=encoding_format_utf_8) as f:
             config_file = yaml.safe_load(f)
 
-            # Not to introduce a breaking change, allow the old format config file without any provider keys
-            # and a new format with a key for each provider to include their configuration values within.
-            if any(
-                key in config_file
-                for key in ["aws", "gcp", "azure", "kubernetes", "m365"]
+            # Namespaced format: each provider has its own top-level key.
+            # Works for every built-in and every external plugin without a hardcoded list.
+            # Flat legacy format is AWS-only (historical, pre-multicloud). We identify it
+            # by the absence of nested-dict top-level values (namespaced files always
+            # have dict values; the legacy AWS format only has primitives/lists).
+            if (
+                isinstance(config_file, dict)
+                and provider in config_file
+                and isinstance(config_file[provider], dict)
             ):
-                config = config_file.get(provider, {})
+                config = config_file.get(provider, {}) or {}
+            elif (
+                isinstance(config_file, dict)
+                and config_file
+                and provider == "aws"
+                and not any(isinstance(v, dict) for v in config_file.values())
+            ):
+                config = config_file
             else:
-                config = config_file if config_file else {}
-                # Not to break Azure, K8s and GCP does not support or use the old config format
-                if provider in ["azure", "gcp", "kubernetes", "m365"]:
-                    config = {}
+                config = {}
 
             return config
 

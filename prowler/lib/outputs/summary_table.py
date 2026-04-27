@@ -108,6 +108,9 @@ def display_summary_table(
                 )
             else:
                 audited_entities = provider.identity.username or "Personal Account"
+        else:
+            # Dynamic fallback: any external/custom provider
+            entity_type, audited_entities = provider.get_summary_entity()
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

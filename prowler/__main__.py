@@ -10,7 +10,6 @@ from colorama import Fore, Style
 from colorama import init as colorama_init
 
 from prowler.config.config import (
-    EXTERNAL_TOOL_PROVIDERS,
     cloud_api_base_url,
     csv_file_suffix,
     get_available_compliance_frameworks,
@@ -235,7 +234,7 @@ def prowler():
     logger.debug("Loading compliance frameworks from .json files")
 
     # Skip compliance frameworks for external-tool providers
-    if provider not in EXTERNAL_TOOL_PROVIDERS:
+    if not Provider.is_tool_wrapper_provider(provider):
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -300,7 +299,7 @@ def prowler():
         sys.exit()
 
     # Skip service and check loading for external-tool providers
-    if provider not in EXTERNAL_TOOL_PROVIDERS:
+    if not Provider.is_tool_wrapper_provider(provider):
         # Import custom checks from folder
         if checks_folder:
             custom_checks = parse_checks_from_folder(global_provider, checks_folder)
@@ -411,6 +410,9 @@ def prowler():
         output_options = VercelOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    else:
+        # Dynamic fallback: any external/custom provider
+        output_options = global_provider.get_output_options(args, bulk_checks_metadata)
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -420,7 +422,7 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider in EXTERNAL_TOOL_PROVIDERS:
+    if Provider.is_tool_wrapper_provider(provider):
         # For external-tool providers, run the scan directly
         if provider == "llm":
 
@@ -1284,6 +1286,30 @@ def prowler():
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
             else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+    else:
+        # Dynamic fallback: any external/custom provider
+        try:
+            global_provider.generate_compliance_output(
+                finding_outputs,
+                bulk_compliance_frameworks,
+                input_compliance_frameworks,
+                output_options,
+                generated_outputs,
+            )
+        except NotImplementedError:
+            # Last resort: generic compliance
+            for compliance_name in input_compliance_frameworks:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"

@@ -473,6 +473,11 @@ class Finding(BaseModel):
                     check_output, "fixed_version", ""
                 )
 
+            else:
+                # Dynamic fallback: any external/custom provider
+                provider_data = provider.get_finding_output_data(check_output)
+                output_data.update(provider_data)
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name

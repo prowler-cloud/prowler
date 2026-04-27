@@ -1,3 +1,4 @@
+import importlib.metadata
 import json
 import os
 import sys
@@ -391,26 +392,55 @@ class Compliance(BaseModel):
         """Bulk load all compliance frameworks specification into a dict"""
         try:
             bulk_compliance_frameworks = {}
+            # Built-in compliance from prowler/compliance/{provider}/
             available_compliance_framework_modules = list_compliance_modules()
             for compliance_framework in available_compliance_framework_modules:
                 if provider in compliance_framework.name:
                     compliance_specification_dir_path = (
                         f"{compliance_framework.module_finder.path}/{provider}"
                     )
-                    # for compliance_framework in available_compliance_framework_modules:
                     for filename in os.listdir(compliance_specification_dir_path):
                         file_path = os.path.join(
                             compliance_specification_dir_path, filename
                         )
-                        # Check if it is a file and ti size is greater than 0
                         if os.path.isfile(file_path) and os.stat(file_path).st_size > 0:
-                            # Open Compliance file in JSON
-                            # cis_v1.4_aws.json --> cis_v1.4_aws
                             compliance_framework_name = filename.split(".json")[0]
-                            # Store the compliance info
                             bulk_compliance_frameworks[compliance_framework_name] = (
                                 load_compliance_framework(file_path)
                             )
+
+            # External compliance via entry points
+            for ep in importlib.metadata.entry_points(group="prowler.compliance"):
+                if ep.name == provider:
+                    try:
+                        module = ep.load()
+                        compliance_dir = (
+                            module.__path__[0]
+                            if hasattr(module, "__path__")
+                            else os.path.dirname(module.__file__)
+                        )
+                        for filename in os.listdir(compliance_dir):
+                            if filename.endswith(".json"):
+                                file_path = os.path.join(compliance_dir, filename)
+                                if (
+                                    os.path.isfile(file_path)
+                                    and os.stat(file_path).st_size > 0
+                                ):
+                                    compliance_framework_name = filename.split(".json")[
+                                        0
+                                    ]
+                                    if (
+                                        compliance_framework_name
+                                        not in bulk_compliance_frameworks
+                                    ):
+                                        bulk_compliance_frameworks[
+                                            compliance_framework_name
+                                        ] = load_compliance_framework(file_path)
+                    except Exception as error:
+                        logger.warning(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
         except Exception as e:
             logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
 

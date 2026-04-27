@@ -1417,11 +1417,13 @@ class HTML(Output):
             # Azure_provider --> azure
             # Kubernetes_provider --> kubernetes
 
-            # Dynamically get the Provider quick inventory handler
-            provider_html_assessment_summary_function = (
-                f"get_{provider.type}_assessment_summary"
-            )
-            return getattr(HTML, provider_html_assessment_summary_function)(provider)
+            # Try static method first, fall back to provider method
+            method_name = f"get_{provider.type}_assessment_summary"
+            if hasattr(HTML, method_name):
+                return getattr(HTML, method_name)(provider)
+            else:
+                # Dynamic fallback: any external/custom provider
+                return provider.get_html_assessment_summary()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

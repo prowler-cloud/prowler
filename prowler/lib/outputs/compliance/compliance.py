@@ -115,14 +115,37 @@ def display_compliance_table(
                 compliance_overview,
             )
         else:
-            get_generic_compliance_table(
-                findings,
-                bulk_checks_metadata,
-                compliance_framework,
-                output_filename,
-                output_directory,
-                compliance_overview,
-            )
+            # Try provider-specific table first, fall back to generic
+            from prowler.providers.common.provider import Provider
+
+            provider = Provider.get_global_provider()
+            try:
+                handled = provider.display_compliance_table(
+                    findings,
+                    bulk_checks_metadata,
+                    compliance_framework,
+                    output_filename,
+                    output_directory,
+                    compliance_overview,
+                )
+                if not handled:
+                    get_generic_compliance_table(
+                        findings,
+                        bulk_checks_metadata,
+                        compliance_framework,
+                        output_filename,
+                        output_directory,
+                        compliance_overview,
+                    )
+            except NotImplementedError:
+                get_generic_compliance_table(
+                    findings,
+                    bulk_checks_metadata,
+                    compliance_framework,
+                    output_filename,
+                    output_directory,
+                    compliance_overview,
+                )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
