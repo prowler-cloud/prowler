@@ -18,11 +18,7 @@ class gmail_external_image_scanning_enabled(Check):
         if gmail_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=gmail_client.provider.identity,
-                resource_name=gmail_client.provider.identity.domain,
-                resource_id=gmail_client.provider.identity.customer_id,
-                customer_id=gmail_client.provider.identity.customer_id,
-                location="global",
+                resource=gmail_client.provider.domain_resource,
             )
 
             scanning_enabled = gmail_client.policies.enable_external_image_scanning
