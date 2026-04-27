@@ -33,7 +33,27 @@ STALE_TMP_OUTPUT_MAX_AGE_HOURS = 48
 STALE_TMP_OUTPUT_MAX_DELETIONS_PER_RUN = 50
 STALE_TMP_OUTPUT_THROTTLE_SECONDS = 60 * 60
 STALE_TMP_OUTPUT_LOCK_FILE_NAME = ".stale_tmp_cleanup.lock"
-STALE_TMP_OUTPUT_SAFE_ROOT = Path("/tmp/prowler_api_output").resolve()
+
+# Refuse to ever run rmtree against shared system roots; the configured
+# DJANGO_TMP_OUTPUT_DIRECTORY must be a dedicated subdirectory.
+_FORBIDDEN_CLEANUP_ROOTS = frozenset(
+    Path(p).resolve()
+    for p in ("/", "/tmp", "/var", "/var/tmp", "/home", "/root", "/etc", "/usr")
+)
+
+
+def _resolve_stale_tmp_safe_root() -> Path | None:
+    """Resolve the configured tmp output directory, rejecting unsafe roots."""
+    try:
+        configured_root = Path(DJANGO_TMP_OUTPUT_DIRECTORY).resolve()
+    except OSError:
+        return None
+    if configured_root in _FORBIDDEN_CLEANUP_ROOTS:
+        return None
+    return configured_root
+
+
+STALE_TMP_OUTPUT_SAFE_ROOT = _resolve_stale_tmp_safe_root()
 
 # Matches CIS compliance_ids like "cis_1.4_aws", "cis_5.0_azure",
 # "cis_1.10_kubernetes", "cis_3.0.1_aws". Requires at least one dotted
@@ -190,7 +210,6 @@ def _cleanup_stale_tmp_output_directories(
     tmp_output_root: str,
     max_age_hours: int = STALE_TMP_OUTPUT_MAX_AGE_HOURS,
     exclude_scan: tuple[str, str] | None = None,
-    tenant_scope: str | None = None,
     max_deletions_per_run: int = STALE_TMP_OUTPUT_MAX_DELETIONS_PER_RUN,
 ) -> int:
     """
@@ -199,11 +218,14 @@ def _cleanup_stale_tmp_output_directories(
     Expected directory layout:
         <tmp_output_root>/<tenant_id>/<scan_id>/...
 
+    Each run that wins the per-host throttle sweeps every tenant directory so
+    leftover artifacts cannot pile up for tenants whose own tasks happen to
+    lose the throttle race.
+
     Args:
         tmp_output_root: Base tmp output path.
         max_age_hours: Directory max age before deletion.
         exclude_scan: Optional (tenant_id, scan_id) that must never be deleted.
-        tenant_scope: Optional tenant directory name to scope cleanup.
         max_deletions_per_run: Max number of scan directories deleted per run.
 
     Returns:
@@ -223,7 +245,10 @@ def _cleanup_stale_tmp_output_directories(
             )
             return 0
 
-        if root_path != STALE_TMP_OUTPUT_SAFE_ROOT:
+        if (
+            STALE_TMP_OUTPUT_SAFE_ROOT is None
+            or root_path != STALE_TMP_OUTPUT_SAFE_ROOT
+        ):
             logger.warning(
                 "Skipping stale tmp cleanup: unsupported root %s (allowed: %s)",
                 root_path,
@@ -243,19 +268,15 @@ def _cleanup_stale_tmp_output_directories(
         cutoff_timestamp = time.time() - (max_age_hours * 60 * 60)
         deleted_scan_dirs = 0
 
-        if tenant_scope:
-            tenant_path = root_path / tenant_scope
-            tenant_dirs = [tenant_path] if tenant_path.exists() else []
-        else:
-            try:
-                tenant_dirs = list(root_path.iterdir())
-            except OSError as error:
-                logger.warning(
-                    "Skipping stale tmp cleanup: unable to list %s (%s)",
-                    root_path,
-                    error,
-                )
-                return 0
+        try:
+            tenant_dirs = list(root_path.iterdir())
+        except OSError as error:
+            logger.warning(
+                "Skipping stale tmp cleanup: unable to list %s (%s)",
+                root_path,
+                error,
+            )
+            return 0
 
         for tenant_dir in tenant_dirs:
             if deleted_scan_dirs >= max_deletions_per_run:
@@ -686,7 +707,6 @@ def generate_compliance_reports(
             DJANGO_TMP_OUTPUT_DIRECTORY,
             max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
             exclude_scan=(tenant_id, scan_id),
-            tenant_scope=tenant_id,
         )
     except Exception as error:
         logger.warning(

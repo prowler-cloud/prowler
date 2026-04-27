@@ -449,7 +449,6 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
             DJANGO_TMP_OUTPUT_DIRECTORY,
             max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
             exclude_scan=(tenant_id, scan_id),
-            tenant_scope=tenant_id,
         )
     except Exception as error:
         logger.warning(

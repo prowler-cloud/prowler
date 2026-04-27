@@ -568,6 +568,78 @@ class TestCleanupStaleTmpOutputDirectories:
         assert removed == 0
         assert stale_scan_dir.exists()
 
+    def test_safe_root_follows_custom_tmp_output_directory(self, tmp_path, monkeypatch):
+        """Custom DJANGO_TMP_OUTPUT_DIRECTORY must be honored as the safe root."""
+        from tasks.jobs import report as report_module
+
+        custom_root = tmp_path / "custom_tmp_output"
+        custom_root.mkdir(parents=True)
+
+        monkeypatch.setattr(
+            report_module, "DJANGO_TMP_OUTPUT_DIRECTORY", str(custom_root)
+        )
+
+        resolved_root = report_module._resolve_stale_tmp_safe_root()
+        assert resolved_root == custom_root.resolve()
+
+        stale_scan_dir = custom_root / "tenant-a" / "scan-old"
+        stale_scan_dir.mkdir(parents=True)
+        (stale_scan_dir / "artifact.txt").write_text("old")
+
+        stale_ts = time.time() - ((STALE_TMP_OUTPUT_MAX_AGE_HOURS + 1) * 60 * 60)
+        os.utime(stale_scan_dir, (stale_ts, stale_ts))
+
+        monkeypatch.setattr(report_module, "STALE_TMP_OUTPUT_SAFE_ROOT", resolved_root)
+        monkeypatch.setattr(
+            "tasks.jobs.report._should_run_stale_cleanup", lambda *_: True
+        )
+        monkeypatch.setattr(
+            "tasks.jobs.report._is_scan_directory_protected", lambda **_: False
+        )
+
+        removed = _cleanup_stale_tmp_output_directories(
+            str(custom_root), max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS
+        )
+
+        assert removed == 1
+        assert not stale_scan_dir.exists()
+
+    @pytest.mark.parametrize(
+        "forbidden_root",
+        ["/", "/tmp", "/var", "/var/tmp", "/home", "/root", "/etc", "/usr"],
+    )
+    def test_safe_root_rejects_forbidden_system_roots(
+        self, forbidden_root, monkeypatch
+    ):
+        """Cleanup must refuse to operate against shared system roots."""
+        from tasks.jobs import report as report_module
+
+        monkeypatch.setattr(
+            report_module, "DJANGO_TMP_OUTPUT_DIRECTORY", forbidden_root
+        )
+
+        assert report_module._resolve_stale_tmp_safe_root() is None
+
+    def test_skips_cleanup_when_safe_root_is_none(self, tmp_path, monkeypatch):
+        """A None safe root (forbidden config) must short-circuit the cleanup."""
+        root_dir = tmp_path / "prowler_api_output"
+        root_dir.mkdir(parents=True)
+
+        monkeypatch.setattr("tasks.jobs.report.STALE_TMP_OUTPUT_SAFE_ROOT", None)
+
+        def _fail_should_run(*_args, **_kwargs):
+            raise AssertionError("_should_run_stale_cleanup should not be called")
+
+        monkeypatch.setattr(
+            "tasks.jobs.report._should_run_stale_cleanup", _fail_should_run
+        )
+
+        removed = _cleanup_stale_tmp_output_directories(
+            str(root_dir), max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS
+        )
+
+        assert removed == 0
+
 
 class TestStaleCleanupProtectionHelpers:
     """Unit tests for stale cleanup helper guard logic."""

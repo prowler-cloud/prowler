@@ -255,7 +255,6 @@ class TestGenerateOutputs:
                 DJANGO_TMP_OUTPUT_DIRECTORY,
                 max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
                 exclude_scan=(self.tenant_id, self.scan_id),
-                tenant_scope=self.tenant_id,
             )
 
     @patch(
@@ -279,7 +278,6 @@ class TestGenerateOutputs:
                 DJANGO_TMP_OUTPUT_DIRECTORY,
                 max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
                 exclude_scan=(self.tenant_id, self.scan_id),
-                tenant_scope=self.tenant_id,
             )
 
     @patch("tasks.tasks._upload_to_s3")
