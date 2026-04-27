@@ -13,6 +13,8 @@ from tasks.jobs.lighthouse_providers import (
     _extract_bedrock_credentials,
 )
 from tasks.tasks import (
+    DJANGO_TMP_OUTPUT_DIRECTORY,
+    STALE_TMP_OUTPUT_MAX_AGE_HOURS,
     _cleanup_orphan_scheduled_scans,
     _perform_scan_complete_tasks,
     check_integrations_task,
@@ -236,7 +238,8 @@ class TestGenerateOutputs:
         self.provider_id = str(uuid.uuid4())
         self.tenant_id = str(uuid.uuid4())
 
-    def test_no_findings_returns_early(self):
+    @patch("tasks.tasks._cleanup_stale_tmp_output_directories")
+    def test_no_findings_returns_early(self, mock_cleanup_stale_tmp_output_directories):
         with patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter:
             mock_filter.return_value.exists.return_value = False
 
@@ -248,6 +251,34 @@ class TestGenerateOutputs:
 
             assert result == {"upload": False}
             mock_filter.assert_called_once_with(scan_id=self.scan_id)
+            mock_cleanup_stale_tmp_output_directories.assert_called_once_with(
+                DJANGO_TMP_OUTPUT_DIRECTORY,
+                max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+                exclude_scan=(self.tenant_id, self.scan_id),
+            )
+
+    @patch(
+        "tasks.tasks._cleanup_stale_tmp_output_directories",
+        side_effect=RuntimeError("cleanup boom"),
+    )
+    def test_cleanup_exception_does_not_break_no_findings_flow(
+        self, mock_cleanup_stale_tmp_output_directories
+    ):
+        with patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter:
+            mock_filter.return_value.exists.return_value = False
+
+            result = generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+
+            assert result == {"upload": False}
+            mock_cleanup_stale_tmp_output_directories.assert_called_once_with(
+                DJANGO_TMP_OUTPUT_DIRECTORY,
+                max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+                exclude_scan=(self.tenant_id, self.scan_id),
+            )
 
     @patch("tasks.tasks._upload_to_s3")
     @patch("tasks.tasks._compress_output_files")
@@ -309,7 +340,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                {"aws": [(lambda x: True, MagicMock(name="CSVCompliance"))]},
+                {"aws": [(lambda _x: True, MagicMock(name="CSVCompliance"))]},
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
@@ -361,7 +392,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                {"aws": [(lambda x: True, MagicMock())]},
+                {"aws": [(lambda _x: True, MagicMock())]},
             ),
             patch("tasks.tasks._compress_output_files", return_value="/tmp/compressed"),
             patch("tasks.tasks._upload_to_s3", return_value=None),
@@ -441,7 +472,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                {"aws": [(lambda x: True, mock_compliance_class)]},
+                {"aws": [(lambda _x: True, mock_compliance_class)]},
             ),
         ):
             mock_filter.return_value.exists.return_value = True
@@ -470,6 +501,10 @@ class TestGenerateOutputs:
 
         class TrackingWriter:
             def __init__(self, findings, file_path, file_extension, from_cli):
+                self.findings = findings
+                self.file_path = file_path
+                self.file_extension = file_extension
+                self.from_cli = from_cli
                 self.transform_called = 0
                 self.batch_write_data_to_file = MagicMock()
                 self._data = []
@@ -578,13 +613,13 @@ class TestGenerateOutputs:
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch(
                 "tasks.tasks.FindingOutput.transform_api_finding",
-                side_effect=lambda f, prov: f,
+                side_effect=lambda f, _prov: f,
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
             patch(
                 "tasks.tasks.Scan.all_objects.filter",
-                return_value=MagicMock(update=lambda **kw: None),
+                return_value=MagicMock(update=lambda **_kw: None),
             ),
             patch("tasks.tasks.batched", return_value=two_batches),
             patch("tasks.tasks.OUTPUT_FORMATS_MAPPING", {}),
@@ -666,7 +701,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                {"aws": [(lambda x: True, mock_compliance_class)]},
+                {"aws": [(lambda _x: True, mock_compliance_class)]},
             ),
         ):
             mock_filter.return_value.exists.return_value = True
@@ -748,7 +783,7 @@ class TestScanCompleteTasks:
     @patch("tasks.tasks.can_provider_run_attack_paths_scan", return_value=False)
     def test_scan_complete_tasks(
         self,
-        mock_can_run_attack_paths,
+        _mock_can_run_attack_paths,
         mock_attack_paths_task,
         mock_check_integrations_task,
         mock_compliance_reports_task,
@@ -994,7 +1029,7 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.rmtree")
     def test_generate_outputs_with_asff_for_aws_with_security_hub(
         self,
-        mock_rmtree,
+        _mock_rmtree,
         mock_scan_update,
         mock_upload,
         mock_compress,
@@ -1122,7 +1157,7 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.rmtree")
     def test_generate_outputs_no_asff_for_aws_without_security_hub(
         self,
-        mock_rmtree,
+        _mock_rmtree,
         mock_scan_update,
         mock_upload,
         mock_compress,
@@ -1245,7 +1280,7 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.rmtree")
     def test_generate_outputs_no_asff_for_non_aws_provider(
         self,
-        mock_rmtree,
+        _mock_rmtree,
         mock_scan_update,
         mock_upload,
         mock_compress,
@@ -2361,6 +2396,9 @@ class TestReaggregateAllFindingGroupSummaries:
 
     @patch("tasks.tasks.chain")
     @patch("tasks.tasks.group")
+    @patch("tasks.tasks.aggregate_attack_surface_task")
+    @patch("tasks.tasks.aggregate_scan_category_summaries_task")
+    @patch("tasks.tasks.aggregate_scan_resource_group_summaries_task")
     @patch("tasks.tasks.aggregate_finding_group_summaries_task")
     @patch("tasks.tasks.aggregate_daily_severity_task")
     @patch("tasks.tasks.perform_scan_summary_task")
@@ -2371,6 +2409,9 @@ class TestReaggregateAllFindingGroupSummaries:
         mock_scan_summary_task,
         mock_daily_severity_task,
         mock_finding_group_task,
+        mock_resource_group_task,
+        mock_category_task,
+        mock_attack_surface_task,
         mock_group,
         mock_chain,
     ):
@@ -2383,8 +2424,8 @@ class TestReaggregateAllFindingGroupSummaries:
         yesterday = today - timedelta(days=1)
 
         mock_outer_group_result = MagicMock()
-        # The first `group()` call wraps the inner (severity, finding-group)
-        # parallel step; subsequent calls wrap the outer per-scan generator.
+        # The first `group()` call wraps the inner parallel step; subsequent
+        # calls wrap the outer per-scan generator.
         mock_group.side_effect = lambda *args, **kwargs: (
             list(args[0]) if args and hasattr(args[0], "__iter__") else None,
             mock_outer_group_result,
@@ -2420,6 +2461,9 @@ class TestReaggregateAllFindingGroupSummaries:
             mock_scan_summary_task,
             mock_daily_severity_task,
             mock_finding_group_task,
+            mock_resource_group_task,
+            mock_category_task,
+            mock_attack_surface_task,
         ):
             assert task_mock.si.call_count == 3
             dispatched = {
@@ -2433,6 +2477,9 @@ class TestReaggregateAllFindingGroupSummaries:
 
     @patch("tasks.tasks.chain")
     @patch("tasks.tasks.group")
+    @patch("tasks.tasks.aggregate_attack_surface_task")
+    @patch("tasks.tasks.aggregate_scan_category_summaries_task")
+    @patch("tasks.tasks.aggregate_scan_resource_group_summaries_task")
     @patch("tasks.tasks.aggregate_finding_group_summaries_task")
     @patch("tasks.tasks.aggregate_daily_severity_task")
     @patch("tasks.tasks.perform_scan_summary_task")
@@ -2443,6 +2490,9 @@ class TestReaggregateAllFindingGroupSummaries:
         mock_scan_summary_task,
         mock_daily_severity_task,
         mock_finding_group_task,
+        mock_resource_group_task,
+        mock_category_task,
+        mock_attack_surface_task,
         mock_group,
         mock_chain,
     ):
@@ -2481,6 +2531,9 @@ class TestReaggregateAllFindingGroupSummaries:
             mock_scan_summary_task,
             mock_daily_severity_task,
             mock_finding_group_task,
+            mock_resource_group_task,
+            mock_category_task,
+            mock_attack_surface_task,
         ):
             task_mock.si.assert_called_once_with(
                 tenant_id=self.tenant_id, scan_id=str(latest_scan_today)

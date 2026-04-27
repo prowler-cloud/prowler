@@ -22,6 +22,7 @@ class GoogleWorkspaceIdentityInfo(BaseModel):
     domain: str
     customer_id: str
     delegated_user: str
+    root_org_unit_id: Optional[str] = None
     profile: Optional[str] = "default"
 
 

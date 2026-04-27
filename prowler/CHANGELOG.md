@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - Alibaba Cloud CS service SDK compatibility, harden other services and improve documentation [(#10871)](https://github.com/prowler-cloud/prowler/pull/10871)
+- `admincenter_groups_not_public_visibility` check for M365 provider evaluating Security and Distribution groups, now restricted to Microsoft 365 (Unified) groups per CIS M365 Foundations 1.2.1 [(#10899)](https://github.com/prowler-cloud/prowler/pull/10899)
 
 ---
 
@@ -72,6 +73,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `prowler image --registry-list` crashes with `AttributeError` because `ImageProvider.__init__` returns early before registering the global provider [(#10691)](https://github.com/prowler-cloud/prowler/pull/10691)
 - Vercel firewall config handling for team-scoped projects and current API response shapes [(#10695)](https://github.com/prowler-cloud/prowler/pull/10695)
+- 9 Gmail checks for Google Workspace provider (`gmail_mail_delegation_disabled`, `gmail_shortener_scanning_enabled`, `gmail_external_image_scanning_enabled`, `gmail_untrusted_link_warnings_enabled`, `gmail_pop_imap_access_disabled`, `gmail_auto_forwarding_disabled`, `gmail_per_user_outbound_gateway_disabled`, `gmail_enhanced_pre_delivery_scanning_enabled`, `gmail_comprehensive_mail_storage_enabled`) using the Cloud Identity Policy API [(#10683)](https://github.com/prowler-cloud/prowler/pull/10683)
 
 ---
 
