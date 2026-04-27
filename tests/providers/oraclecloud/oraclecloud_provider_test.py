@@ -6,7 +6,7 @@ from prowler.providers.oraclecloud.exceptions.exceptions import (
     OCIAuthenticationError,
     OCIInvalidConfigError,
 )
-from prowler.providers.oraclecloud.models import OCIIdentityInfo, OCIRegion, OCISession 
+from prowler.providers.oraclecloud.models import OCIIdentityInfo, OCIRegion, OCISession
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
 

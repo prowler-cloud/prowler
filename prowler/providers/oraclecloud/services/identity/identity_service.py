@@ -457,7 +457,9 @@ class Identity(OCIService):
                 # List all domains in the tenancy
                 for compartment in self.audited_compartments:
 
-                    existing = next((d for d in self.domains if d.id == domain.id), None)
+                    existing = next(
+                        (d for d in self.domains if d.id == domain.id), None
+                    )
                     if existing is not None:
                         # Prefer the entry from the domain's home region
                         if domain.home_region == regional_client.region:

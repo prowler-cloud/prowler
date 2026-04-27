@@ -49,8 +49,11 @@ class TestIdentityService:
                 MagicMock(id="ocid1.compartment.oc1..aaaaaaaexample")
             ]
             identity_client.domains = []
-            regional_client = MagicMock()
-            regional_client.region = "us-ashburn-1"
+            regional_client_ash = MagicMock()
+            regional_client_ash.region = "us-ashburn-1"
+            regional_client_chi = MagicMock()
+            regional_client_chi.region = "us-chicago-1"
+
             domains = []
             for region in ["us-phoenix-1", "us-ashburn-1", "us-chicago-1"]:
                 domain = MagicMock()
@@ -77,15 +80,18 @@ class TestIdentityService:
                     return_value=MagicMock(data=domains),
                 ),
             ):
-                identity_client.__list_domains__(regional_client)
+                identity_client.__list_domains__(regional_client_ash)
+                identity_client.__list_domains__(regional_client_chi)
             assert (
-                len(identity_client.domains) == 2
+                len(identity_client.domains) == 3
                 and any(
                     domain.home_region == "us-ashburn-1"
+                    and domain.region == "us-ashburn-1"
                     for domain in identity_client.domains
                 )
                 and any(
                     domain.home_region == "us-chicago-1"
+                    and domain.region == "us-chicago-1"
                     for domain in identity_client.domains
                 )
             )
