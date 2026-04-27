@@ -459,17 +459,17 @@ class TestAWSProvider:
     def test_aws_provider_organizations_uses_assumed_role_session_by_default(self):
         # Regression test for issue #10215.
         # When only `role_arn` is provided (no `organizations_role_arn`),
-        # Organizations metadata must be fetched using the assumed role
-        # session (current_session), not the pre-assume credentials.
-        # This mirrors the CLI: `aws sts assume-role` followed by
-        # `aws organizations describe-account` uses the assumed identity.
+        # the FIRST attempt to fetch Organizations metadata must use the
+        # assumed role session (current_session), not the pre-assume
+        # credentials. This mirrors the CLI: `aws sts assume-role` followed
+        # by `aws organizations describe-account` uses the assumed identity.
         role_arn = create_role(AWS_REGION_EU_WEST_1)
 
-        captured = {}
+        captured_sessions = []
         original_get_organizations_info = AwsProvider.get_organizations_info
 
         def capture(self, organizations_session, aws_account_id):
-            captured["session"] = organizations_session
+            captured_sessions.append(organizations_session)
             return original_get_organizations_info(
                 self, organizations_session, aws_account_id
             )
@@ -477,8 +477,32 @@ class TestAWSProvider:
         with patch.object(AwsProvider, "get_organizations_info", capture):
             aws_provider = AwsProvider(role_arn=role_arn, session_duration=900)
 
-        assert captured["session"] is aws_provider.session.current_session
-        assert captured["session"] is not aws_provider.session.original_session
+        assert captured_sessions[0] is aws_provider.session.current_session
+        assert captured_sessions[0] is not aws_provider.session.original_session
+
+    @mock_aws
+    def test_aws_provider_organizations_falls_back_to_original_session(self):
+        # When `role_arn` is provided and the assumed role session cannot
+        # retrieve Organizations metadata (e.g. management-account ->
+        # member-account flow where the member account has no Organizations
+        # permissions), retry with the original (pre-assume) session.
+        role_arn = create_role(AWS_REGION_EU_WEST_1)
+
+        captured_sessions = []
+        original_get_organizations_info = AwsProvider.get_organizations_info
+
+        def capture(self, organizations_session, aws_account_id):
+            captured_sessions.append(organizations_session)
+            return original_get_organizations_info(
+                self, organizations_session, aws_account_id
+            )
+
+        with patch.object(AwsProvider, "get_organizations_info", capture):
+            aws_provider = AwsProvider(role_arn=role_arn, session_duration=900)
+
+        assert len(captured_sessions) == 2
+        assert captured_sessions[0] is aws_provider.session.current_session
+        assert captured_sessions[1] is aws_provider.session.original_session
 
     @mock_aws
     def test_aws_provider_session_with_mfa(self):
