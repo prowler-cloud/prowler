@@ -10,6 +10,13 @@ import yaml
 from packaging import version
 
 from prowler.lib.check.compliance_models import load_compliance_framework_universal
+
+# Re-exported from a leaf module so prowler.lib.check.utils can import the
+# constant without participating in the config <-> compliance_models <-> utils
+# import cycle. Existing consumers continue to import from this module.
+from prowler.lib.check.external_tool_providers import (  # noqa: F401
+    EXTERNAL_TOOL_PROVIDERS,
+)
 from prowler.lib.logger import logger
 
 
@@ -68,10 +75,6 @@ class Provider(str, Enum):
     IMAGE = "image"
     VERCEL = "vercel"
 
-
-# Providers that delegate scanning to an external tool (e.g. Trivy, promptfoo)
-# and bypass standard check/service loading.
-EXTERNAL_TOOL_PROVIDERS = frozenset({"iac", "llm", "image"})
 
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -152,7 +155,7 @@ def set_output_timestamp(
     Override the global output timestamps so generated artifacts reflect a specific scan.
     Returns the previous values so callers can restore them afterwards.
     """
-    global timestamp, timestamp_utc, output_file_timestamp, timestamp_iso
+    global output_file_timestamp, timestamp_iso
 
     previous_values = (
         timestamp.value,
