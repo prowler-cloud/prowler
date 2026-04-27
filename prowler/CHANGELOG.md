@@ -263,6 +263,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `unmapped.provider_uid` field in OCSF output to match CLI scan results with API provider entities during ingestion [(#10231)](https://github.com/prowler-cloud/prowler/pull/10231)
 - `unmapped.provider` field in OCSF output for provider name availability in non-cloud providers like Kubernetes [(#10240)](https://github.com/prowler-cloud/prowler/pull/10240)
 
+### 🐛 Fixed
+
+- Use single-quoted PowerShell strings for M365 client secrets to prevent silent corruption of secrets containing `$`, `!`, `#` characters [(#9997)](https://github.com/prowler-cloud/prowler/pull/9997)
+
 ### 🔄 Changed
 
 - Update Azure Monitor service metadata to new format [(#9622)](https://github.com/prowler-cloud/prowler/pull/9622)
