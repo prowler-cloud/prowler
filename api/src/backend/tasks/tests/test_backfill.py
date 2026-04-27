@@ -183,6 +183,10 @@ class TestBackfillComplianceSummaries:
     def test_backfill_creates_compliance_summaries(
         self, tenants_fixture, scans_fixture, compliance_requirements_overviews_fixture
     ):
+        # Fixture seeds compliance rows the backfill aggregates over; pytest
+        # injects it by parameter name, so we reference it explicitly here
+        # to keep static analysers from flagging it as unused.
+        del compliance_requirements_overviews_fixture
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
 
@@ -267,6 +271,35 @@ class TestBackfillScanCategorySummaries:
 
         assert first_ids == second_ids
         assert len(first_ids) == 2  # 2 categories x 1 severity
+
+    def test_rerun_reflects_mute_between_runs(self, findings_with_categories_fixture):
+        """Muting a finding between two backfill runs must move counters:
+        `failed_findings` and `new_failed_findings` drop to zero (muted
+        findings are excluded from those totals). Guards against a
+        regression where the upsert keeps stale counts from the first run."""
+        finding = findings_with_categories_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        aggregate_scan_category_summaries(tenant_id, scan_id)
+        before = list(
+            ScanCategorySummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+        assert all(s.failed_findings == 1 for s in before)
+        assert all(s.new_failed_findings == 1 for s in before)
+        assert all(s.total_findings == 1 for s in before)
+
+        Finding.all_objects.filter(pk=finding.pk).update(muted=True)
+
+        aggregate_scan_category_summaries(tenant_id, scan_id)
+        after = list(
+            ScanCategorySummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+
+        assert {s.id for s in after} == {s.id for s in before}
+        assert all(s.failed_findings == 0 for s in after)
+        assert all(s.new_failed_findings == 0 for s in after)
+        assert all(s.total_findings == 0 for s in after)
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:
@@ -386,6 +419,36 @@ class TestBackfillScanGroupSummaries:
 
         assert first_ids == second_ids
         assert len(first_ids) == 1  # 1 resource group x 1 severity
+
+    def test_rerun_reflects_mute_between_runs(self, findings_with_group_fixture):
+        """Muting a finding between two backfill runs must move counters:
+        `failed_findings` and `new_failed_findings` drop to zero (muted
+        findings are excluded from those totals). Guards against a
+        regression where the upsert keeps stale counts from the first run."""
+        finding = findings_with_group_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+        before = list(
+            ScanGroupSummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+        assert len(before) == 1
+        assert before[0].failed_findings == 1
+        assert before[0].new_failed_findings == 1
+        assert before[0].total_findings == 1
+
+        Finding.all_objects.filter(pk=finding.pk).update(muted=True)
+
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+        after = list(
+            ScanGroupSummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+
+        assert {s.id for s in after} == {s.id for s in before}
+        assert after[0].failed_findings == 0
+        assert after[0].new_failed_findings == 0
+        assert after[0].total_findings == 0
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:

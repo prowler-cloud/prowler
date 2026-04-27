@@ -3414,6 +3414,41 @@ class TestAggregateFindings:
         assert second_run_rows == first_run_rows
         assert first_run_ids == second_run_ids
 
+    def test_aggregate_findings_reflects_mute_between_runs(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        findings_fixture,
+    ):
+        """Re-running `aggregate_findings` after a finding is muted between
+        runs must move counters: the matching ScanSummary row's `fail`
+        decrements and `muted` increments. Guards against a regression where
+        upsert silently keeps stale values from the first run."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        finding1, _ = findings_fixture  # finding1 is FAIL and not muted.
+
+        aggregate_findings(str(tenant.id), str(scan.id))
+        before = ScanSummary.all_objects.get(
+            tenant_id=tenant.id,
+            scan_id=scan.id,
+            check_id=finding1.check_id,
+            service="ec2",
+            severity=finding1.severity,
+            region="us-east-1",
+        )
+        assert before.fail == 1
+        assert before.muted == 0
+
+        Finding.all_objects.filter(pk=finding1.pk).update(muted=True)
+
+        aggregate_findings(str(tenant.id), str(scan.id))
+        after = ScanSummary.all_objects.get(pk=before.pk)
+
+        assert after.fail == 0
+        assert after.muted == 1
+        assert after.total == before.total
+
 
 @pytest.mark.django_db
 class TestAggregateFindingsByRegion:
