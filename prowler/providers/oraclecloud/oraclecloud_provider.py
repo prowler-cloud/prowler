@@ -163,7 +163,7 @@ class OraclecloudProvider(Provider):
         self._regions = self.get_regions_to_audit(region)
         self._home_region = next(
             (region.key for region in self._regions if region.is_home_region),
-            self._regions[0],
+            self._regions[0].key,
         )
         logger.info(f"Home region is: {self._home_region}")
 
