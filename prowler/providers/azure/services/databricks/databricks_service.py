@@ -62,10 +62,21 @@ class Databricks(AzureService):
                     else:
                         managed_disk_encryption = None
 
+                    enable_no_public_ip = getattr(
+                        workspace_parameters, "enable_no_public_ip", None
+                    )
                     workspaces[subscription][workspace.id] = DatabricksWorkspace(
                         id=workspace.id,
                         name=workspace.name,
                         location=workspace.location,
+                        public_network_access=getattr(
+                            workspace, "public_network_access", None
+                        ),
+                        no_public_ip_enabled=(
+                            getattr(enable_no_public_ip, "value", False)
+                            if enable_no_public_ip
+                            else False
+                        ),
                         custom_managed_vnet_id=(
                             getattr(
                                 workspace_parameters, "custom_virtual_network_id", None
@@ -114,5 +125,7 @@ class DatabricksWorkspace(BaseModel):
     id: str
     name: str
     location: str
+    public_network_access: Optional[str] = None
+    no_public_ip_enabled: bool = False
     custom_managed_vnet_id: Optional[str] = None
     managed_disk_encryption: Optional[ManagedDiskEncryption] = None

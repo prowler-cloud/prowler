@@ -1,0 +1,34 @@
+{
+  "Provider": "azure",
+  "CheckID": "postgresql_flexible_server_high_availability_enabled",
+  "CheckTitle": "PostgreSQL flexible server has high availability enabled",
+  "CheckType": [],
+  "ServiceName": "postgresql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Azure PostgreSQL Flexible Server** is evaluated for **high availability** mode. Zone-redundant or same-zone HA provides automatic failover to a standby replica.",
+  "Risk": "Without HA, a server failure causes **downtime** until manual recovery. Critical databases require automated failover for business continuity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://hub.prowler.com/check/postgresql_flexible_server_high_availability_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
