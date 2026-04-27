@@ -945,7 +945,7 @@ class CheckReportGoogleWorkspace(Check_Report):
         resource_name: str = None,
         resource_id: str = None,
         customer_id: str = None,
-        location: str = None,
+        location: str = "global",
     ) -> None:
         """Initialize the Google Workspace Check's finding information.
 
@@ -960,17 +960,12 @@ class CheckReportGoogleWorkspace(Check_Report):
         super().__init__(metadata, resource)
         self.resource_name = (
             resource_name
-            or getattr(resource, "name", "")
             or getattr(resource, "email", "")
-            or getattr(resource, "resource_name", "")
+            or getattr(resource, "name", "")
         )
-        self.resource_id = (
-            resource_id
-            or getattr(resource, "id", "")
-            or getattr(resource, "resource_id", "")
-        )
+        self.resource_id = resource_id or getattr(resource, "id", "")
         self.customer_id = customer_id or getattr(resource, "customer_id", "")
-        self.location = location or getattr(resource, "location", "global")
+        self.location = location
 
 
 @dataclass
