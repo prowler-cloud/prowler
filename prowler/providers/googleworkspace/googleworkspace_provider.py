@@ -31,6 +31,7 @@ from prowler.providers.googleworkspace.lib.mutelist.mutelist import (
 )
 from prowler.providers.googleworkspace.models import (
     GoogleWorkspaceIdentityInfo,
+    GoogleWorkspaceResource,
     GoogleWorkspaceSession,
 )
 
@@ -55,6 +56,7 @@ class GoogleworkspaceProvider(Provider):
     _type: str = "googleworkspace"
     _session: GoogleWorkspaceSession
     _identity: GoogleWorkspaceIdentityInfo
+    _domain_resource: GoogleWorkspaceResource
     _audit_config: dict
     _mutelist: GoogleWorkspaceMutelist
     audit_metadata: Audit_Metadata
@@ -112,6 +114,7 @@ class GoogleworkspaceProvider(Provider):
             self._session,
             resolved_delegated_user,
         )
+        self._domain_resource = GoogleWorkspaceResource.from_identity(self._identity)
 
         # Audit Config
         if config_content:
@@ -152,6 +155,12 @@ class GoogleworkspaceProvider(Provider):
     def type(self):
         """Returns the type of the Google Workspace provider."""
         return self._type
+
+    @property
+    def domain_resource(self) -> GoogleWorkspaceResource:
+        """Returns the domain-level resource for account-wide checks."""
+
+        return self._domain_resource
 
     @property
     def audit_config(self):

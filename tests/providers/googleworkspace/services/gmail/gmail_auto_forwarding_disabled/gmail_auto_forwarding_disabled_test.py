@@ -36,7 +36,9 @@ class TestGmailAutoForwardingDisabled:
             assert findings[0].status == "PASS"
             assert "disabled" in findings[0].status_extended
             assert findings[0].resource_name == DOMAIN
+            assert findings[0].resource_id == CUSTOMER_ID
             assert findings[0].customer_id == CUSTOMER_ID
+            assert findings[0].resource == mock_provider.domain_resource.dict()
 
     def test_fail_disabled(self):
         mock_provider = set_mocked_googleworkspace_provider()

@@ -13,6 +13,7 @@ class GoogleWorkspaceService:
         provider: GoogleworkspaceProvider,
     ):
         self.provider = provider
+        self.domain_resource = provider.domain_resource
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
         self.credentials = provider.session.credentials

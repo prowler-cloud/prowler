@@ -18,11 +18,7 @@ class gmail_per_user_outbound_gateway_disabled(Check):
         if gmail_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=gmail_client.provider.identity,
-                resource_name=gmail_client.provider.identity.domain,
-                resource_id=gmail_client.provider.identity.customer_id,
-                customer_id=gmail_client.provider.identity.customer_id,
-                location="global",
+                resource=gmail_client.provider.domain_resource,
             )
 
             gateway_allowed = gmail_client.policies.allow_per_user_outbound_gateway
