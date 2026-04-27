@@ -2,12 +2,12 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.26.0] (Prowler UNRELEASED)
+## [1.26.0] (Prowler v5.25.0)
 
 ### 🚀 Added
 
-- CIS Benchmark PDF report generation for scans, exposing the latest CIS version per provider via `GET /scans/{id}/cis/{name}/` and picking the variant dynamically via `_pick_latest_cis_variant` (no hard-coded provider → version mapping) [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
-- Install zizmor v1.24.1 in API Docker image for GitHub Actions workflow scanning [(#10607)](https://github.com/prowler-cloud/prowler/pull/10607)
+- CIS Benchmark PDF report generation for scans, exposing the latest CIS version per provider via `GET /scans/{id}/cis/{name}/` [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
+- Install `zizmor` v1.24.1 in API Docker image for GitHub Actions workflow scanning [(#10607)](https://github.com/prowler-cloud/prowler/pull/10607)
 
 ### 🔄 Changed
 
