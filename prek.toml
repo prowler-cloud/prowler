@@ -1,0 +1,224 @@
+# Priority tiers (lower = runs first, same priority = concurrent):
+#   P0  — fast file fixers
+#   P10 — validators and guards
+#   P20 — auto-formatters
+#   P30 — linters
+#   P40 — security scanners
+#   P50 — dependency validation
+
+default_install_hook_types = ["pre-commit", "pre-push"]
+
+## GENERAL (prek built-in — no external repo needed)
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "check-merge-conflict", priority = 10 },
+  { id = "check-yaml", args = ["--allow-multiple-documents"], exclude = "(prowler/config/llm_config.yaml|contrib/)", priority = 10 },
+  { id = "check-json", priority = 10 },
+  { id = "end-of-file-fixer", priority = 0 },
+  { id = "trailing-whitespace", priority = 0 },
+  { id = "no-commit-to-branch", priority = 10 },
+  { id = "pretty-format-json", args = ["--autofix", "--no-sort-keys", "--no-ensure-ascii"], priority = 10 },
+]
+
+## TOML
+[[repos]]
+repo = "https://github.com/macisamuele/language-formatters-pre-commit-hooks"
+rev = "v2.16.0"
+hooks = [
+  { id = "pretty-format-toml", args = ["--autofix"], files = "pyproject.toml", priority = 20 },
+]
+
+## GITHUB ACTIONS
+[[repos]]
+repo = "https://github.com/zizmorcore/zizmor-pre-commit"
+rev = "v1.24.1"
+hooks = [
+  { id = "zizmor", files = '^\.github/', priority = 30 },
+]
+
+## BASH
+[[repos]]
+repo = "https://github.com/koalaman/shellcheck-precommit"
+rev = "v0.11.0"
+hooks = [
+  { id = "shellcheck", exclude = "contrib", priority = 30 },
+]
+
+## PYTHON — SDK (prowler/, tests/, dashboard/, util/, scripts/)
+[[repos]]
+repo = "https://github.com/myint/autoflake"
+rev = "v2.3.3"
+hooks = [
+  {
+    id = "autoflake",
+    name = "SDK - autoflake",
+    files = { glob = ["{prowler,tests,dashboard,util,scripts}/**/*.py"] },
+    args = ["--in-place", "--remove-all-unused-imports", "--remove-unused-variable"],
+    priority = 20,
+  },
+]
+
+[[repos]]
+repo = "https://github.com/pycqa/isort"
+rev = "8.0.1"
+hooks = [
+  {
+    id = "isort",
+    name = "SDK - isort",
+    files = { glob = ["{prowler,tests,dashboard,util,scripts}/**/*.py"] },
+    args = ["--profile", "black"],
+    priority = 20,
+  },
+]
+
+[[repos]]
+repo = "https://github.com/psf/black"
+rev = "26.3.1"
+hooks = [
+  {
+    id = "black",
+    name = "SDK - black",
+    files = { glob = ["{prowler,tests,dashboard,util,scripts}/**/*.py"] },
+    priority = 20,
+  },
+]
+
+[[repos]]
+repo = "https://github.com/pycqa/flake8"
+rev = "7.3.0"
+hooks = [
+  {
+    id = "flake8",
+    name = "SDK - flake8",
+    files = { glob = ["{prowler,tests,dashboard,util,scripts}/**/*.py"] },
+    args = ["--ignore=E266,W503,E203,E501,W605"],
+    priority = 30,
+  },
+]
+
+## PYTHON — API + MCP Server (ruff)
+[[repos]]
+repo = "https://github.com/astral-sh/ruff-pre-commit"
+rev = "v0.15.11"
+hooks = [
+  {
+    id = "ruff",
+    name = "API + MCP - ruff check",
+    files = { glob = ["{api,mcp_server}/**/*.py"] },
+    args = ["--fix"],
+    priority = 30,
+  },
+  {
+    id = "ruff-format",
+    name = "API + MCP - ruff format",
+    files = { glob = ["{api,mcp_server}/**/*.py"] },
+    priority = 20,
+  },
+]
+
+## PYTHON — Poetry
+[[repos]]
+repo = "https://github.com/python-poetry/poetry"
+rev = "2.3.4"
+hooks = [
+  {
+    id = "poetry-check",
+    name = "API - poetry-check",
+    args = ["--directory=./api"],
+    files = { glob = ["api/{pyproject.toml,poetry.lock}"] },
+    pass_filenames = false,
+    priority = 50,
+  },
+  {
+    id = "poetry-lock",
+    name = "API - poetry-lock",
+    args = ["--directory=./api"],
+    files = { glob = ["api/{pyproject.toml,poetry.lock}"] },
+    pass_filenames = false,
+    priority = 50,
+  },
+  {
+    id = "poetry-check",
+    name = "SDK - poetry-check",
+    args = ["--directory=./"],
+    files = { glob = ["{pyproject.toml,poetry.lock}"] },
+    pass_filenames = false,
+    priority = 50,
+  },
+  {
+    id = "poetry-lock",
+    name = "SDK - poetry-lock",
+    args = ["--directory=./"],
+    files = { glob = ["{pyproject.toml,poetry.lock}"] },
+    pass_filenames = false,
+    priority = 50,
+  },
+]
+
+## CONTAINERS
+[[repos]]
+repo = "https://github.com/hadolint/hadolint"
+rev = "v2.14.0"
+hooks = [
+  { id = "hadolint", args = ["--ignore=DL3013"], priority = 30 },
+]
+
+## LOCAL HOOKS
+[[repos]]
+repo = "local"
+hooks = [
+  {
+    id = "pylint",
+    name = "SDK - pylint",
+    entry = "pylint --disable=W,C,R,E -j 0 -rn -sn",
+    language = "system",
+    types = ["python"],
+    files = { glob = ["{prowler,tests,dashboard,util,scripts}/**/*.py"] },
+    priority = 30,
+  },
+  {
+    id = "trufflehog",
+    name = "TruffleHog",
+    description = "Detect secrets in your data.",
+    entry = "bash -c 'trufflehog --no-update git file://. --since-commit HEAD --only-verified --fail'",
+    # For running trufflehog in docker, use the following entry instead:
+    # entry = "bash -c 'docker run -v \"$(pwd):/workdir\" -i --rm trufflesecurity/trufflehog:latest git file:///workdir --only-verified --fail'"
+    language = "system",
+    pass_filenames = false,
+    stages = ["pre-commit", "pre-push"],
+    priority = 40,
+  },
+  {
+    id = "bandit",
+    name = "bandit",
+    description = "Bandit is a tool for finding common security issues in Python code",
+    entry = "bandit -q -lll",
+    language = "system",
+    types = ["python"],
+    files = '.*\.py',
+    exclude = { glob = ["{contrib,skills}/**", "**/.venv/**", "**/*_test.py"] },
+    priority = 40,
+  },
+  # Accepted CVEs, severity threshold, and ignore expirations live in .safety-policy.yml
+  {
+    id = "safety",
+    name = "safety",
+    description = "Safety is a tool that checks your installed dependencies for known security vulnerabilities",
+    entry = "safety check --policy-file .safety-policy.yml",
+    language = "system",
+    pass_filenames = false,
+    files = { glob = ["**/pyproject.toml", "**/poetry.lock", "**/requirements*.txt", ".safety-policy.yml"] },
+    priority = 40,
+  },
+  {
+    id = "vulture",
+    name = "vulture",
+    description = "Vulture finds unused code in Python programs.",
+    entry = "vulture --min-confidence 100",
+    language = "system",
+    types = ["python"],
+    files = '.*\.py',
+    priority = 40,
+  },
+]

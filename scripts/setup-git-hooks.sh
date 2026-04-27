@@ -33,7 +33,7 @@ fi
 echo ""
 
 # Full setup requires Poetry for system hooks (pylint, bandit, safety, vulture, trufflehog)
-# These are installed as Python dev dependencies and used by local hooks in .pre-commit-config.yaml
+# These are installed as Python dev dependencies and used by local hooks in prek.toml
 if command -v poetry &>/dev/null && [ -f "pyproject.toml" ]; then
   if poetry run prek --version &>/dev/null 2>&1; then
     echo -e "${GREEN}✓${NC} prek and dependencies found via Poetry"

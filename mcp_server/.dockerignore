@@ -61,7 +61,7 @@ LICENSE
 docs/
 tests/
 examples/
-.pre-commit-config.yaml
+prek.toml
 Makefile
 docker-compose.yml
 docker-compose.yaml
