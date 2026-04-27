@@ -19,6 +19,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Added knip for dead code detection with `lint:knip` and `lint:knip:fix` scripts [(#10654)](https://github.com/prowler-cloud/prowler/pull/10654)
 - Table pagination controls now keep their arrows visible on hover in light theme, and more UI improvements [(#10862)](https://github.com/prowler-cloud/prowler/pull/10862)
 
+### 🐞 Fixed
+
+- Finding detail drawer now shows a "View CVE" action when the recommendation URL points to an external CVE advisory [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
+
 ---
 
 ## [1.24.4] (Prowler 5.24.4)
