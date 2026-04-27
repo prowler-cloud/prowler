@@ -13,7 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - Alibaba Cloud CS service SDK compatibility, harden other services and improve documentation [(#10871)](https://github.com/prowler-cloud/prowler/pull/10871)
-- `admincenter_groups_not_public_visibility` check for M365 provider evaluating Security and Distribution groups, now restricted to Microsoft 365 (Unified) groups per CIS M365 Foundations 1.2.1 [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+- `admincenter_groups_not_public_visibility` check for M365 provider evaluating Security and Distribution groups, now restricted to Microsoft 365 (Unified) groups per CIS M365 Foundations 1.2.1 [(#10899)](https://github.com/prowler-cloud/prowler/pull/10899)
 
 ---
 
