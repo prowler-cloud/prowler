@@ -46,7 +46,11 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
-from tasks.jobs.report import generate_compliance_reports_job
+from tasks.jobs.report import (
+    STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    _cleanup_stale_tmp_output_directories,
+    generate_compliance_reports_job,
+)
 from tasks.jobs.scan import (
     aggregate_attack_surface,
     aggregate_daily_severity,
@@ -440,6 +444,19 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         scan_id (str): The scan identifier.
         provider_id (str): The provider_id id to be used in generating outputs.
     """
+    try:
+        _cleanup_stale_tmp_output_directories(
+            DJANGO_TMP_OUTPUT_DIRECTORY,
+            max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+            exclude_scan=(tenant_id, scan_id),
+        )
+    except Exception as error:
+        logger.warning(
+            "Skipping stale tmp cleanup before output generation for scan %s: %s",
+            scan_id,
+            error,
+        )
+
     # Check if the scan has findings
     if not ScanSummary.objects.filter(scan_id=scan_id).exists():
         logger.info(f"No findings found for scan {scan_id}")
