@@ -22,6 +22,13 @@ vi.mock("@/components/shadcn", () => ({
       {children}
     </span>
   ),
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: React.ReactNode }) => (
+    <span>{children}</span>
+  ),
+  TooltipTrigger: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
 vi.mock("@/lib/utils", () => ({

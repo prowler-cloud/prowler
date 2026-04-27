@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -106,6 +106,8 @@ describe("MuteFindingsModal", () => {
     expect(
       screen.getByText("Explain why these findings are being muted"),
     ).toBeInTheDocument();
+    expect(screen.getByText("0/500 characters")).toBeInTheDocument();
+    expect(screen.getByLabelText("Reason")).toHaveAttribute("maxLength", "500");
   });
 
   it("renders the preparing state and blocks submission", () => {
@@ -119,7 +121,7 @@ describe("MuteFindingsModal", () => {
     );
 
     expect(
-      screen.getByText("Preparing findings to mute...", { exact: false }),
+      screen.getByText("Preparing mute rule", { exact: false }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Preparing..." })).toBeDisabled();
     expect(screen.queryByLabelText("Rule Name")).not.toBeInTheDocument();
@@ -161,5 +163,24 @@ describe("MuteFindingsModal", () => {
       expect(onComplete).toHaveBeenCalledTimes(1);
       expect(onOpenChange).toHaveBeenCalledWith(false);
     });
+  });
+
+  it("clamps oversized reason input and shows a local validation error", () => {
+    render(
+      <MuteFindingsModal
+        isOpen
+        onOpenChange={vi.fn()}
+        findingIds={["finding-1"]}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Reason"), {
+      target: { value: "a".repeat(501) },
+    });
+
+    expect(screen.getByText("500/500 characters")).toBeInTheDocument();
+    expect(
+      screen.getByText("Reason must be 500 characters or fewer"),
+    ).toBeInTheDocument();
   });
 });
