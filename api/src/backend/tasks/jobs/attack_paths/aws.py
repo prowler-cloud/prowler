@@ -264,8 +264,8 @@ def resolve_aws_regions(
             f"partition {partition!r}"
         )
 
-    excluded = getattr(prowler_sdk_provider, "_excluded_regions", None) or set()
-    return list(regions - excluded)
+    excluded = set(getattr(prowler_sdk_provider, "_excluded_regions", None) or ())
+    return sorted(regions - excluded)
 
 
 def get_aioboto3_session(boto3_session: boto3.Session) -> aioboto3.Session:

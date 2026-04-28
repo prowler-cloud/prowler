@@ -2732,3 +2732,146 @@ class TestCleanupStaleAttackPathsScans:
         assert result["cleaned_up_count"] == 2
         # Worker should be pinged exactly once — cache prevents second ping
         mock_alive.assert_called_once_with("shared-worker@host")
+
+    # ---------------------------------------------------------------------
+    # SCHEDULED-state cleanup
+    # ---------------------------------------------------------------------
+
+    def _create_scheduled_scan(
+        self,
+        tenant,
+        provider,
+        *,
+        age_minutes,
+        parent_state,
+        with_task=True,
+    ):
+        """Create a SCHEDULED AttackPathsScan with a parent Scan in `parent_state`.
+
+        `age_minutes` controls how far in the past `started_at` is set, so
+        callers can place rows safely past the cleanup cutoff.
+        """
+        parent_scan = Scan.objects.create(
+            name="Parent Prowler scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=parent_state,
+            tenant_id=tenant.id,
+        )
+
+        ap_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=parent_scan,
+            state=StateChoices.SCHEDULED,
+            started_at=datetime.now(tz=timezone.utc) - timedelta(minutes=age_minutes),
+        )
+
+        task_result = None
+        if with_task:
+            task_result = TaskResult.objects.create(
+                task_id=str(ap_scan.id),
+                task_name="attack-paths-scan-perform",
+                status="PENDING",
+            )
+            task = Task.objects.create(
+                id=task_result.task_id,
+                task_runner_task=task_result,
+                tenant_id=tenant.id,
+            )
+            ap_scan.task = task
+            ap_scan.save(update_fields=["task_id"])
+
+        return ap_scan, task_result
+
+    @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
+    @patch(
+        "tasks.jobs.attack_paths.cleanup.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    @patch("tasks.jobs.attack_paths.cleanup._revoke_task")
+    def test_cleans_up_scheduled_scan_when_parent_is_terminal(
+        self,
+        mock_revoke,
+        mock_drop_db,
+        mock_recover,
+        tenants_fixture,
+        providers_fixture,
+    ):
+        from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+
+        ap_scan, task_result = self._create_scheduled_scan(
+            tenant,
+            provider,
+            age_minutes=24 * 60 * 3,  # 3 days, safely past any threshold
+            parent_state=StateChoices.FAILED,
+        )
+
+        result = cleanup_stale_attack_paths_scans()
+
+        assert result["cleaned_up_count"] == 1
+        assert str(ap_scan.id) in result["scan_ids"]
+
+        ap_scan.refresh_from_db()
+        assert ap_scan.state == StateChoices.FAILED
+        assert ap_scan.progress == 100
+        assert ap_scan.completed_at is not None
+        assert ap_scan.ingestion_exceptions == {
+            "global_error": "Scan never started — cleaned up by periodic task"
+        }
+
+        # SCHEDULED revoke must NOT terminate a running worker
+        mock_revoke.assert_called_once()
+        assert mock_revoke.call_args.kwargs == {"terminate": False}
+
+        # Temp DB never created for SCHEDULED, so no drop attempted
+        mock_drop_db.assert_not_called()
+        # Tenant Neo4j data is untouched in this path
+        mock_recover.assert_not_called()
+
+        task_result.refresh_from_db()
+        assert task_result.status == "FAILURE"
+        assert task_result.date_done is not None
+
+    @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
+    @patch(
+        "tasks.jobs.attack_paths.cleanup.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    @patch("tasks.jobs.attack_paths.cleanup._revoke_task")
+    def test_skips_scheduled_scan_when_parent_still_in_flight(
+        self,
+        mock_revoke,
+        mock_drop_db,
+        mock_recover,
+        tenants_fixture,
+        providers_fixture,
+    ):
+        from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+
+        ap_scan, _ = self._create_scheduled_scan(
+            tenant,
+            provider,
+            age_minutes=24 * 60 * 3,
+            parent_state=StateChoices.EXECUTING,
+        )
+
+        result = cleanup_stale_attack_paths_scans()
+
+        assert result["cleaned_up_count"] == 0
+
+        ap_scan.refresh_from_db()
+        assert ap_scan.state == StateChoices.SCHEDULED
+        mock_revoke.assert_not_called()

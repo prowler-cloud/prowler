@@ -112,9 +112,9 @@ def _cleanup_stale_scheduled_scans(cutoff: datetime) -> list[str]:
       running.
 
     For each match: revoke the queued task (best-effort; harmless if already
-    consumed), atomically flip to `FAILED`, mark the `TaskResult`, and run
-    `recover_graph_data_ready`. The temp Neo4j database is never created
-    while `SCHEDULED`, so no drop is needed.
+    consumed), atomically flip to `FAILED`, and mark the `TaskResult`. The
+    temp Neo4j database is never created while `SCHEDULED`, so no drop is
+    needed.
     """
     scheduled_scans = list(
         AttackPathsScan.all_objects.using(MainRouter.admin_db)
