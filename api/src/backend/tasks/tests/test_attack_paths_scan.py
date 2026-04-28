@@ -135,7 +135,7 @@ class TestAttackPathsRun:
         assert result == ingestion_result
         mock_retrieve_scan.assert_called_once_with(str(tenant.id), str(scan.id))
         mock_starting.assert_called_once()
-        config = mock_starting.call_args[0][2]
+        config = mock_starting.call_args[0][1]
         assert config.neo4j_database == "tenant-db"
         mock_get_db_name.assert_has_calls(
             [call(attack_paths_scan.id, temporary=True), call(provider.tenant_id)]
