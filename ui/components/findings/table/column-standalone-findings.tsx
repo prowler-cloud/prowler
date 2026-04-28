@@ -1,15 +1,15 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Database } from "lucide-react";
+import { Container } from "lucide-react";
 
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import {
   DataTableColumnHeader,
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/ui/table";
+import { getRegionFlag } from "@/lib/region-flags";
 import { FindingProps, ProviderType } from "@/types";
 
 import { FindingDetailDrawer } from "./finding-detail-drawer";
@@ -85,6 +85,7 @@ export function getStandaloneFindingColumns({
             isMuted={finding.attributes.muted}
             mutedReason={finding.attributes.muted_reason}
             showDeltaWhenMuted
+            reserveMutedSlot
           />
         );
       },
@@ -126,18 +127,25 @@ export function getStandaloneFindingColumns({
         <DataTableColumnHeader column={column} title="Resource name" />
       ),
       cell: ({ row }) => {
-        const resourceName = getResourceData(row, "name");
-
-        if (resourceName === "-") {
-          return <p className="text-text-neutral-primary text-sm">-</p>;
-        }
+        const name = getResourceData(row, "name");
+        const uid = getResourceData(row, "uid");
+        const entityAlias =
+          typeof name === "string" && name.trim().length > 0 && name !== "-"
+            ? name
+            : undefined;
+        const entityId =
+          typeof uid === "string" && uid.trim().length > 0 && uid !== "-"
+            ? uid
+            : undefined;
 
         return (
-          <CodeSnippet
-            value={resourceName as string}
-            formatter={(value: string) => `...${value.slice(-10)}`}
-            icon={<Database size={16} />}
-          />
+          <div className="max-w-[240px]">
+            <EntityInfo
+              nameIcon={<Container className="size-4" />}
+              entityAlias={entityAlias}
+              entityId={entityId}
+            />
+          </div>
         );
       },
       enableSorting: false,
@@ -161,12 +169,17 @@ export function getStandaloneFindingColumns({
     {
       accessorKey: "provider",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Provider" />
+        <DataTableColumnHeader column={column} title="Cloud Provider" />
       ),
       cell: ({ row }) => {
         const provider = getProviderData(row, "provider");
 
-        return <ProviderIconCell provider={provider as ProviderType} />;
+        return (
+          <ProviderIconCell
+            provider={provider as ProviderType}
+            className="size-8"
+          />
+        );
       },
       enableSorting: false,
     },
@@ -193,10 +206,17 @@ export function getStandaloneFindingColumns({
       cell: ({ row }) => {
         const region = getResourceData(row, "region");
         const regionText = typeof region === "string" ? region : "-";
+        const regionFlag =
+          typeof region === "string" ? getRegionFlag(region) : "";
         return (
-          <p className="text-text-neutral-primary max-w-[120px] truncate text-sm">
-            {regionText}
-          </p>
+          <span className="text-text-neutral-primary flex max-w-[140px] items-center gap-1.5 truncate text-sm">
+            {regionFlag && (
+              <span className="translate-y-px text-base leading-none">
+                {regionFlag}
+              </span>
+            )}
+            <span className="truncate">{regionText}</span>
+          </span>
         );
       },
       enableSorting: false,

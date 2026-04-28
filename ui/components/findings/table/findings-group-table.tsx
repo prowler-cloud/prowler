@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
+import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
 import { DataTable } from "@/components/ui/table";
+import { canDrillDownFindingGroup } from "@/lib/findings-groups";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
@@ -140,7 +142,7 @@ export function FindingsGroupTable({
 
   const handleDrillDown = (checkId: string, group: FindingGroupRow) => {
     // No resources in the group → nothing to show, skip drill-down
-    if (group.resourcesTotal === 0) return;
+    if (!canDrillDownFindingGroup(group)) return;
 
     // Toggle: same group = collapse, different = switch
     if (expandedCheckId === checkId) {
@@ -219,6 +221,7 @@ export function FindingsGroupTable({
             ? { label: expandedGroup.checkTitle, onDismiss: handleCollapse }
             : undefined
         }
+        toolbarRightContent={<CustomCheckboxMutedFindings />}
         renderAfterRow={renderAfterRow}
       />
 

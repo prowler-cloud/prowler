@@ -313,3 +313,16 @@ def sync_aws_account(
             )
 
     return failed_syncs
+
+
+def extract_short_uid(uid: str) -> str:
+    """Return the short identifier from an AWS ARN or resource ID.
+
+    Supported inputs end in one of:
+      - `<type>/<id>`        (e.g. `instance/i-xxx`)
+      - `<type>:<id>`        (e.g. `function:name`)
+      - `<id>`               (e.g. `bucket-name` or `i-xxx`)
+
+    If `uid` is already a short resource ID, it is returned unchanged.
+    """
+    return uid.rsplit("/", 1)[-1].rsplit(":", 1)[-1]
