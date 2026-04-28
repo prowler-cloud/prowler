@@ -1,7 +1,7 @@
 {
   "Provider": "m365",
   "CheckID": "entra_conditional_access_policy_p1_license_utilization",
-  "CheckTitle": "P1 license entitlements ensure sufficient coverage for Conditional Access users",
+  "CheckTitle": "Premium (P1/P2) license entitlements ensure sufficient coverage for Conditional Access users",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
@@ -14,7 +14,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
-    "https://learn.microsoft.com/en-us/entra/fundamentals/concept-license-utilization"
+    "https://learn.microsoft.com/en-us/graph/api/resources/azureadpremiumlicenseinsight?view=graph-rest-beta",
+    "https://learn.microsoft.com/en-us/entra/fundamentals/licensing"
   ],
   "Remediation": {
     "Code": {
