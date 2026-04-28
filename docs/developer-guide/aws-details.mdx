@@ -73,6 +73,58 @@ The best reference to understand how to implement a new service is following the
 - AWS API calls are wrapped in try/except blocks, with specific handling for `ClientError` and generic exceptions, always logging errors.
 - If ARN is not present for some resource, it can be constructed using string interpolation, always including partition, service, region, account, and resource ID.
 - Tags and additional attributes that cannot be retrieved from the default call, should be collected and stored for each resource using dedicated methods and threading using the resource object list as iterator.
+- When accessing dictionary values from AWS API responses, always use `.get()` with a default value instead of direct dictionary access (e.g., `response.get("Policies", {})` instead of `response["Policies"]`). AWS API responses may not always include all keys, and direct access can cause `KeyError` exceptions that break the entire scan for that service.
+
+### Extending an Existing Service with New Attributes
+
+When adding a new check that requires data not yet collected by an existing service, you need to extend the service by adding new attributes to its resource models and updating the data collection methods. This is a common contributor task that follows a consistent pattern:
+
+1. **Identify the missing data**: Determine which AWS API call provides the data you need and whether it's already being called by the service.
+
+2. **Add new attributes to the resource model**: Extend the Pydantic `BaseModel` class for the resource with the new fields. Use `Optional` types with `None` as the default value to maintain backward compatibility with existing checks.
+
+3. **Update the data collection method**: Modify the existing method that fetches resource details to also extract and store the new attributes. If no existing method fetches the data, add a new method and call it in the constructor using `self.__threading_call__`.
+
+4. **Use safe dictionary access**: When extracting values from API responses, always use `.get()` with appropriate defaults to prevent `KeyError` exceptions when the API doesn't return certain fields.
+
+#### Example: Adding DKIM Status to SES Identities
+
+```python
+# Step 1 & 2: Add new fields to the resource model
+class Identity(BaseModel):
+    name: str
+    arn: str
+    region: str
+    type: Optional[str]
+    policy: Optional[dict] = None
+    tags: Optional[list] = []
+    # New attributes for DKIM check
+    dkim_status: Optional[str] = None
+    dkim_signing_attributes_origin: Optional[str] = None
+
+# Step 3: Update the data collection method
+def _get_email_identities(self, identity):
+    try:
+        regional_client = self.regional_clients[identity.region]
+        identity_attributes = regional_client.get_email_identity(
+            EmailIdentity=identity.name
+        )
+        # Step 4: Use .get() for safe dictionary access
+        for _, content in identity_attributes.get("Policies", {}).items():
+            identity.policy = loads(content)
+        identity.tags = identity_attributes.get("Tags", [])
+        # Extract new DKIM attributes
+        identity.dkim_status = identity_attributes.get("DkimStatus")
+        identity.dkim_signing_attributes_origin = (
+            identity_attributes.get("DkimSigningAttributesOrigin")
+        )
+    except Exception as error:
+        logger.error(
+            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+```
+
+5. **Update the service tests**: Add the new attributes to the test mock data and assertions to verify correct data extraction.
 
 ## Specific Patterns in AWS Checks
 
