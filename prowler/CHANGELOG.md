@@ -10,6 +10,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.25.1] (Prowler v5.25.1)
+
+### 🐞 Fixed
+
+- `KeyError` when generating compliance outputs after the CLI scan [#XXXXX](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
+---
+
 ## [5.25.0] (Prowler v5.25.0)
 
 ### 🚀 Added
