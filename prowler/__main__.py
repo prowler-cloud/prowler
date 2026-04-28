@@ -624,8 +624,14 @@ def prowler():
                 )
 
     # Compliance Frameworks
+    # Source the framework listing from `bulk_compliance_frameworks.keys()`
+    # so it is by construction a subset of what the bulk loader can resolve.
+    # `get_available_compliance_frameworks(provider)` also discovers top-level
+    # multi-provider universal JSONs (e.g. `prowler/compliance/csa_ccm_4.0.json`)
+    # which `Compliance.get_bulk(provider)` does not load, and which the legacy
+    # output handlers below cannot consume — using it as the source produced
     input_compliance_frameworks = set(output_options.output_modes).intersection(
-        get_available_compliance_frameworks(provider)
+        bulk_compliance_frameworks.keys()
     )
     if provider == "aws":
         for compliance_name in input_compliance_frameworks:
