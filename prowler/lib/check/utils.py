@@ -46,8 +46,14 @@ def recover_checks_from_provider(
     Returns a list of tuples with the following format (check_name, check_path)
     """
     try:
-        # Bypass check loading for IAC, LLM, and Image providers since they use external tools directly
-        if provider in ("iac", "llm", "image"):
+        # Bypass check loading for tool-wrapper providers — they delegate
+        # scanning to an external tool and have no checks to recover.
+        # Single source of truth: combines the EXTERNAL_TOOL_PROVIDERS
+        # frozenset (built-ins) with the per-provider `is_external_tool_provider`
+        # class attribute (so external plug-ins opt in via the contract).
+        from prowler.providers.common.provider import Provider
+
+        if Provider.is_tool_wrapper_provider(provider):
             return []
 
         checks = []
@@ -115,8 +121,14 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
     Returns a set of checks from the given services
     """
     try:
-        # Bypass check loading for IAC provider since it uses Trivy directly
-        if provider == "iac":
+        # Bypass check loading for tool-wrapper providers — symmetric with
+        # `recover_checks_from_provider` above, using the same source of truth.
+        # NOTE: master gated this on `provider in EXTERNAL_TOOL_PROVIDERS`
+        # (covering iac/llm/image). The PR temporarily narrowed it to `== "iac"`;
+        # restoring the full set via the helper.
+        from prowler.providers.common.provider import Provider
+
+        if Provider.is_tool_wrapper_provider(provider):
             return set()
 
         checks = set()
