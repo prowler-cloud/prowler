@@ -2733,10 +2733,7 @@ class TestCleanupStaleAttackPathsScans:
         # Worker should be pinged exactly once — cache prevents second ping
         mock_alive.assert_called_once_with("shared-worker@host")
 
-    # ---------------------------------------------------------------------
-    # SCHEDULED-state cleanup
-    # ---------------------------------------------------------------------
-
+    # `SCHEDULED` state cleanup
     def _create_scheduled_scan(
         self,
         tenant,
