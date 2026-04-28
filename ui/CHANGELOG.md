@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.26.0] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Compliance card export menu repositioned to the card's top-right corner with a lighter, `rounded-md` ghost trigger so it scales naturally on small screens [(#10918)](https://github.com/prowler-cloud/prowler/pull/10918)
+
+---
+
 ## [1.25.0] (Prowler v5.25.0)
 
 ### 🚀 Added
