@@ -4,7 +4,7 @@ import os
 import sys
 from pkgutil import walk_packages
 
-from prowler.lib.check.external_tool_providers import EXTERNAL_TOOL_PROVIDERS
+from prowler.lib.check.tool_wrapper import is_tool_wrapper_provider
 from prowler.lib.logger import logger
 
 
@@ -52,9 +52,7 @@ def recover_checks_from_provider(
         # Single source of truth: combines the EXTERNAL_TOOL_PROVIDERS
         # frozenset (built-ins) with the per-provider `is_external_tool_provider`
         # class attribute (so external plug-ins opt in via the contract).
-        from prowler.providers.common.provider import Provider
-
-        if Provider.is_tool_wrapper_provider(provider):
+        if is_tool_wrapper_provider(provider):
             return []
 
         checks = []
@@ -124,12 +122,7 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
     try:
         # Bypass check loading for tool-wrapper providers — symmetric with
         # `recover_checks_from_provider` above, using the same source of truth.
-        # NOTE: master gated this on `provider in EXTERNAL_TOOL_PROVIDERS`
-        # (covering iac/llm/image). The PR temporarily narrowed it to `== "iac"`;
-        # restoring the full set via the helper.
-        from prowler.providers.common.provider import Provider
-
-        if Provider.is_tool_wrapper_provider(provider):
+        if is_tool_wrapper_provider(provider):
             return set()
 
         checks = set()

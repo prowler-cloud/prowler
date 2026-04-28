@@ -9,10 +9,7 @@ from argparse import Namespace
 from importlib import import_module
 from typing import Any, Optional
 
-from prowler.config.config import (
-    EXTERNAL_TOOL_PROVIDERS,
-    load_and_validate_config_file,
-)
+from prowler.config.config import load_and_validate_config_file
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 
@@ -592,16 +589,15 @@ class Provider(ABC):
     def is_tool_wrapper_provider(provider: str) -> bool:
         """Return True if the provider delegates scanning to an external tool.
 
-        Combines the built-in EXTERNAL_TOOL_PROVIDERS frozenset (fast path for
-        iac/llm/image) with the `is_external_tool_provider` class attribute of
-        external plug-in providers registered via entry points. This is the
-        single source of truth consulted by the execution flow and the
-        CheckMetadata validators.
+        Delegates to `prowler.lib.check.tool_wrapper.is_tool_wrapper_provider`,
+        the leaf module that holds the actual logic. Kept on `Provider` as a
+        convenience entry point for callers that already import `Provider`.
         """
-        if provider in EXTERNAL_TOOL_PROVIDERS:
-            return True
-        ep_cls = Provider._load_ep_provider(provider)
-        return bool(ep_cls and getattr(ep_cls, "is_external_tool_provider", False))
+        from prowler.lib.check.tool_wrapper import (
+            is_tool_wrapper_provider as _impl,
+        )
+
+        return _impl(provider)
 
     @staticmethod
     def is_builtin(provider: str) -> bool:
