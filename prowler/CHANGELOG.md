@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - Alibaba Cloud CS service SDK compatibility, harden other services and improve documentation [(#10871)](https://github.com/prowler-cloud/prowler/pull/10871)
+- `entra_users_mfa_capable` and `entra_break_glass_account_fido2_security_key_registered` report a single descriptive FAIL when the M365 service principal lacks `AuditLog.Read.All`, instead of mass false positives [(#10907)](https://github.com/prowler-cloud/prowler/pull/10907)
 
 ---
 
