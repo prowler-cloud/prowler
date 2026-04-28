@@ -2,18 +2,24 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.25.0] (Prowler UNRELEASED)
+## [5.25.0] (Prowler v5.25.0)
 
 ### 🚀 Added
 
-- GitHub Actions service for scanning workflow security issues using zizmor [(#10607)](https://github.com/prowler-cloud/prowler/pull/10607)
+- `--repo-list-file` CLI flag for GitHub provider to load repositories from a file [(#10501)](https://github.com/prowler-cloud/prowler/pull/10501)
 - SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
 - `repository_default_branch_dismisses_stale_reviews` check for GitHub provider to ensure stale pull request approvals are dismissed when new commits are pushed [(#10569)](https://github.com/prowler-cloud/prowler/pull/10569)
 - Official Prowler GitHub Action (`prowler-cloud/prowler@5.25`) for running scans in GitHub workflows with optional `--push-to-cloud` and SARIF upload to GitHub Code Scanning [(#10872)](https://github.com/prowler-cloud/prowler/pull/10872)
+- GitHub Actions service for scanning workflow security issues using zizmor [(#10607)](https://github.com/prowler-cloud/prowler/pull/10607)
+- `secretsmanager_has_restrictive_resource_policy` check for AWS provider [(#6985)](https://github.com/prowler-cloud/prowler/pull/6985)
 
 ### 🐞 Fixed
 
 - Alibaba Cloud CS service SDK compatibility, harden other services and improve documentation [(#10871)](https://github.com/prowler-cloud/prowler/pull/10871)
+- AWS Organizations metadata retrieval for delegated administrator scans by using the assumed role session instead of the pre-assume credentials [(#10894)](https://github.com/prowler-cloud/prowler/pull/10894)
+- `admincenter_groups_not_public_visibility` check for M365 provider evaluating Security and Distribution groups, now restricted to Microsoft 365 (Unified) groups per CIS M365 Foundations 1.2.1 [(#10899)](https://github.com/prowler-cloud/prowler/pull/10899)
+- Google Workspace check reports now store the actual domain or account resource subject instead of `provider.identity` [(#10901)](https://github.com/prowler-cloud/prowler/pull/10901)
+- `entra_users_mfa_capable` evaluating disabled guest accounts; CIS 5.2.3.4 only targets enabled member users [(#10785)](https://github.com/prowler-cloud/prowler/pull/10785)
 - `entra_users_mfa_capable` and `entra_break_glass_account_fido2_security_key_registered` report a single descriptive FAIL when the M365 service principal lacks `AuditLog.Read.All`, instead of mass false positives [(#10907)](https://github.com/prowler-cloud/prowler/pull/10907)
 
 ---
@@ -28,10 +34,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ---
 
 ## [5.24.1] (Prowler v5.24.1)
-
-### 🚀 Added
-
-- `--repo-list-file` CLI flag for GitHub provider to load repositories from a file [(#10501)](https://github.com/prowler-cloud/prowler/pull/10501)
 
 ### 🔄 Changed
 
@@ -73,6 +75,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `prowler image --registry-list` crashes with `AttributeError` because `ImageProvider.__init__` returns early before registering the global provider [(#10691)](https://github.com/prowler-cloud/prowler/pull/10691)
 - Vercel firewall config handling for team-scoped projects and current API response shapes [(#10695)](https://github.com/prowler-cloud/prowler/pull/10695)
+- 9 Gmail checks for Google Workspace provider (`gmail_mail_delegation_disabled`, `gmail_shortener_scanning_enabled`, `gmail_external_image_scanning_enabled`, `gmail_untrusted_link_warnings_enabled`, `gmail_pop_imap_access_disabled`, `gmail_auto_forwarding_disabled`, `gmail_per_user_outbound_gateway_disabled`, `gmail_enhanced_pre_delivery_scanning_enabled`, `gmail_comprehensive_mail_storage_enabled`) using the Cloud Identity Policy API [(#10683)](https://github.com/prowler-cloud/prowler/pull/10683)
 
 ---
 
