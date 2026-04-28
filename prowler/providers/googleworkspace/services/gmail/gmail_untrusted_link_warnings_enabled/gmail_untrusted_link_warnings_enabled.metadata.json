@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_untrusted_link_warnings_enabled",
+  "CheckTitle": "Warning prompt for clicks on untrusted domain links is enabled",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Gmail can display a warning prompt when users click on links to domains that are not trusted. This gives users an opportunity to reconsider before navigating to a potentially malicious website.",
+  "Risk": "Without untrusted link warnings, users may click on **phishing links** or links to **malware distribution sites** without any warning. This significantly increases the success rate of **social engineering attacks** targeting the organization.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/7676854",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **Safety** > **Links and external images**\n4. Check **Show warning prompt for any click on links to untrusted domains**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable warning prompts for clicks on untrusted domain links so users are alerted before navigating to potentially malicious websites from email links.",
+      "Url": "https://hub.prowler.com/check/gmail_untrusted_link_warnings_enabled"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "gmail_shortener_scanning_enabled",
+    "gmail_external_image_scanning_enabled"
+  ],
+  "Notes": ""
+}

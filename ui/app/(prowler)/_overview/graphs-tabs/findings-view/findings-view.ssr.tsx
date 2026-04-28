@@ -6,6 +6,7 @@ import { LinkToFindings } from "@/components/overview";
 import { ColumnLatestFindings } from "@/components/overview/new-findings-table/table";
 import { CardTitle } from "@/components/shadcn";
 import { DataTable } from "@/components/ui/table";
+import { FINDINGS_FILTERED_SORT } from "@/lib";
 import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
 
@@ -17,7 +18,7 @@ interface FindingsViewSSRProps {
 
 export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
   const page = 1;
-  const sort = "severity,-inserted_at";
+  const sort = FINDINGS_FILTERED_SORT;
 
   const defaultFilters = {
     "filter[status]": "FAIL",

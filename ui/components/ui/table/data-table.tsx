@@ -112,6 +112,8 @@ interface DataTableProviderProps<TData, TValue> {
   onRowClick?: (row: Row<TData>) => void;
   /** Optional header rendered inside the table container, above the toolbar. */
   header?: ReactNode;
+  /** Optional content rendered in the toolbar before the total entries count. */
+  toolbarRightContent?: ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -143,6 +145,7 @@ export function DataTable<TData, TValue>({
   searchBadge,
   onRowClick,
   header,
+  toolbarRightContent,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -215,7 +218,7 @@ export function DataTable<TData, TValue>({
   // Format total entries count
   const totalEntries = metadata?.pagination?.count ?? 0;
   const formattedTotal = totalEntries.toLocaleString();
-  const showToolbar = showSearch || metadata;
+  const showToolbar = showSearch || metadata || toolbarRightContent;
 
   const rows = table.getRowModel().rows;
 
@@ -241,8 +244,11 @@ export function DataTable<TData, TValue>({
       {header && <div className="w-full">{header}</div>}
       {/* Table Toolbar */}
       {showToolbar && (
-        <div className="flex items-center justify-between">
-          <div>
+        <div
+          data-testid="data-table-toolbar"
+          className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between"
+        >
+          <div className="w-full md:w-auto">
             {showSearch && (
               <DataTableSearch
                 paramPrefix={paramPrefix}
@@ -254,11 +260,17 @@ export function DataTable<TData, TValue>({
               />
             )}
           </div>
-          {metadata && (
-            <span className="text-text-neutral-secondary text-sm">
-              {formattedTotal} Total Entries
-            </span>
-          )}
+          <div
+            data-testid="data-table-toolbar-right"
+            className="flex w-full flex-col items-start gap-2 md:ml-auto md:w-auto md:flex-row md:items-center md:gap-4"
+          >
+            {toolbarRightContent}
+            {metadata && (
+              <span className="text-text-neutral-secondary text-sm whitespace-nowrap">
+                {formattedTotal} Total Entries
+              </span>
+            )}
+          </div>
         </div>
       )}
       <Table className={getSubRows ? "table-fixed" : undefined}>
