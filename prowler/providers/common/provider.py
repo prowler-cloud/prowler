@@ -297,14 +297,26 @@ class Provider(ABC):
                 raise ImportError(
                     f"Provider '{arguments.provider}' not found as built-in or entry point"
                 )
-            provider_class_name = f"{arguments.provider.capitalize()}Provider"
+
+            # Kept for downstream forks that may extend the dispatch below
+            # with their own custom built-in branches and reference this name.
+            # The upstream chain dispatches by `arguments.provider` directly.
+            provider_class_name = (
+                f"{arguments.provider.capitalize()}Provider"  # noqa: F841
+            )
 
             fixer_config = load_and_validate_config_file(
                 arguments.provider, arguments.fixer_config
             )
 
+            # Dispatch by exact provider name (equality, not substring) so
+            # external plug-ins whose names contain a built-in substring
+            # (e.g. `awsx`, `azure_gov`, `iac_v2`) cannot be silently routed
+            # to the wrong built-in branch. Anything that doesn't match a
+            # built-in falls through to the dynamic else and uses the
+            # contract's `from_cli_args`.
             if not isinstance(Provider._global, provider_class):
-                if "aws" in provider_class_name.lower():
+                if arguments.provider == "aws":
                     excluded_regions = (
                         set(arguments.excluded_region)
                         if getattr(arguments, "excluded_region", None)
@@ -328,7 +340,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "azure" in provider_class_name.lower():
+                elif arguments.provider == "azure":
                     provider_class(
                         az_cli_auth=arguments.az_cli_auth,
                         sp_env_auth=arguments.sp_env_auth,
@@ -341,7 +353,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "gcp" in provider_class_name.lower():
+                elif arguments.provider == "gcp":
                     provider_class(
                         retries_max_attempts=arguments.gcp_retries_max_attempts,
                         organization_id=arguments.organization_id,
@@ -355,7 +367,7 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                         skip_api_check=arguments.skip_api_check,
                     )
-                elif "kubernetes" in provider_class_name.lower():
+                elif arguments.provider == "kubernetes":
                     provider_class(
                         kubeconfig_file=arguments.kubeconfig_file,
                         context=arguments.context,
@@ -365,7 +377,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "m365" in provider_class_name.lower():
+                elif arguments.provider == "m365":
                     provider_class(
                         region=arguments.region,
                         config_path=arguments.config_file,
@@ -379,7 +391,7 @@ class Provider(ABC):
                         init_modules=arguments.init_modules,
                         fixer_config=fixer_config,
                     )
-                elif "nhn" in provider_class_name.lower():
+                elif arguments.provider == "nhn":
                     provider_class(
                         username=arguments.nhn_username,
                         password=arguments.nhn_password,
@@ -388,7 +400,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "github" in provider_class_name.lower():
+                elif arguments.provider == "github":
                     orgs = []
                     repos = []
 
@@ -415,13 +427,13 @@ class Provider(ABC):
                         repo_list_file=getattr(arguments, "repo_list_file", None),
                         organizations=orgs,
                     )
-                elif "googleworkspace" in provider_class_name.lower():
+                elif arguments.provider == "googleworkspace":
                     provider_class(
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "cloudflare" in provider_class_name.lower():
+                elif arguments.provider == "cloudflare":
                     provider_class(
                         filter_zones=arguments.region,
                         filter_accounts=arguments.account_id,
@@ -429,7 +441,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "iac" in provider_class_name.lower():
+                elif arguments.provider == "iac":
                     provider_class(
                         scan_path=arguments.scan_path,
                         scan_repository_url=arguments.scan_repository_url,
@@ -442,13 +454,13 @@ class Provider(ABC):
                         oauth_app_token=arguments.oauth_app_token,
                         provider_uid=arguments.provider_uid,
                     )
-                elif "llm" in provider_class_name.lower():
+                elif arguments.provider == "llm":
                     provider_class(
                         max_concurrency=arguments.max_concurrency,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
                     )
-                elif "image" in provider_class_name.lower():
+                elif arguments.provider == "image":
                     provider_class(
                         images=arguments.images,
                         image_list_file=arguments.image_list_file,
@@ -466,7 +478,7 @@ class Provider(ABC):
                         registry_insecure=arguments.registry_insecure,
                         registry_list_images=arguments.registry_list_images,
                     )
-                elif "mongodbatlas" in provider_class_name.lower():
+                elif arguments.provider == "mongodbatlas":
                     provider_class(
                         atlas_public_key=arguments.atlas_public_key,
                         atlas_private_key=arguments.atlas_private_key,
@@ -475,7 +487,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "oraclecloud" in provider_class_name.lower():
+                elif arguments.provider == "oraclecloud":
                     provider_class(
                         oci_config_file=arguments.oci_config_file,
                         profile=arguments.profile,
@@ -486,7 +498,7 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                         use_instance_principal=arguments.use_instance_principal,
                     )
-                elif "openstack" in provider_class_name.lower():
+                elif arguments.provider == "openstack":
                     provider_class(
                         clouds_yaml_file=getattr(arguments, "clouds_yaml_file", None),
                         clouds_yaml_content=getattr(
@@ -511,7 +523,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "alibabacloud" in provider_class_name.lower():
+                elif arguments.provider == "alibabacloud":
                     provider_class(
                         role_arn=arguments.role_arn,
                         role_session_name=arguments.role_session_name,
@@ -523,7 +535,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "vercel" in provider_class_name.lower():
+                elif arguments.provider == "vercel":
                     provider_class(
                         projects=getattr(arguments, "project", None),
                         config_path=arguments.config_file,

@@ -595,6 +595,53 @@ class TestProviderInitialization:
         assert isinstance(Provider._global, FakePureContractProvider)
         Provider._global = None
 
+    @pytest.mark.parametrize(
+        "plugin_name",
+        [
+            "awsx",
+            "aws_lite",
+            "azure_gov",
+            "gcp_org",
+            "github_enterprise",
+            "iac_v2",
+        ],
+    )
+    @patch("prowler.providers.common.provider.load_and_validate_config_file")
+    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    @patch("prowler.providers.common.provider.import_module")
+    def test_init_global_provider_external_with_builtin_substring_uses_from_cli_args(
+        self, mock_import, mock_load_ep, mock_config, plugin_name
+    ):
+        """Regression guard for the substring footgun in the dispatch chain.
+
+        An external plug-in whose name contains a built-in substring
+        (e.g. `awsx`, `aws_lite`, `azure_gov`, `gcp_org`, `github_enterprise`,
+        `iac_v2`) MUST be routed to the dynamic else and instantiated via
+        `from_cli_args` — not silently captured by the built-in branch whose
+        name happens to be a substring of the plug-in name. See PR #10700
+        review.
+        """
+        mock_import.side_effect = ImportError("No built-in")
+        mock_load_ep.return_value = FakeExternalProvider
+        mock_config.return_value = {}
+
+        # Namespace deliberately omits the kwargs of any built-in branch
+        # (no `aws_retries_max_attempts`, `az_cli_auth`, `personal_access_token`,
+        # etc.). If equality dispatch is broken and the plug-in is misrouted to
+        # a built-in branch, attribute access will raise and the global never
+        # gets wired.
+        args = Namespace(
+            provider=plugin_name,
+            fixer_config="config.yaml",
+            config_file="config.yaml",
+        )
+
+        Provider._global = None
+        Provider.init_global_provider(args)
+
+        assert isinstance(Provider._global, FakeExternalProvider)
+        Provider._global = None
+
 
 # ===========================================================================
 # 3. Check Discovery
