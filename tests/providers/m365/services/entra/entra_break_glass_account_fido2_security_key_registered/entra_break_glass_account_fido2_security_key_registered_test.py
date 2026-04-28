@@ -67,6 +67,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -104,6 +105,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -142,6 +144,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -178,6 +181,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -228,6 +232,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -275,6 +280,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -321,6 +327,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -368,6 +375,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -422,6 +430,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -457,6 +466,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -500,3 +510,52 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_name == "BreakGlass1"
+
+    def test_user_registration_details_permission_error(self):
+        """Test FAIL when there's a permission error reading user registration details."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
+            )
+
+            policy_id = str(uuid4())
+            bg_user_id = str(uuid4())
+
+            entra_client.conditional_access_policies = {
+                policy_id: _make_policy(policy_id, excluded_users=[bg_user_id]),
+            }
+            entra_client.users = {
+                bg_user_id: User(
+                    id=bg_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+
+            check = entra_break_glass_account_fido2_security_key_registered()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                "Cannot verify FIDO2 security key registration"
+                in result[0].status_extended
+            )
+            assert "AuditLog.Read.All" in result[0].status_extended
+            assert result[0].resource_name == "Break Glass Accounts"
+            assert result[0].resource_id == "breakGlassAccounts"

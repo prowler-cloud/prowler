@@ -10,7 +10,9 @@ class entra_users_mfa_capable(Check):
 
     This check verifies if users are MFA capable.
 
-    The check fails if any user is not MFA capable.
+    - PASS: The user is MFA capable.
+    - FAIL: The user is not MFA capable, or MFA capability cannot be verified
+      due to insufficient permissions to read user registration details.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -24,6 +26,19 @@ class entra_users_mfa_capable(Check):
             List[CheckReportM365]: A list containing a single report with the result of the check.
         """
         findings = []
+
+        # Check if there was an error retrieving user registration details
+        if entra_client.user_registration_details_error:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="User Registration Details",
+                resource_id="userRegistrationDetails",
+            )
+            report.status = "FAIL"
+            report.status_extended = f"Cannot verify MFA capability for users: {entra_client.user_registration_details_error}."
+            findings.append(report)
+            return findings
 
         for user in entra_client.users.values():
             if user.account_enabled:
