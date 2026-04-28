@@ -54,6 +54,16 @@ class TestIdentityService:
             regional_client_chi = MagicMock()
             regional_client_chi.region = "us-chicago-1"
 
+            policy = MagicMock()
+            policy.id = 123
+            policy.name = "Test Policy"
+            policy.description = "This is a test policy"
+            policy.min_length = 8
+            policy.password_expires_after = 90
+            policy.num_passwords_in_history = 5
+            policy.password_expire_warning = 7
+            policy.min_password_age = 1
+
             domains = []
             for region in ["us-phoenix-1", "us-ashburn-1", "us-chicago-1"]:
                 domain = MagicMock()
@@ -79,9 +89,16 @@ class TestIdentityService:
                     "prowler.providers.oraclecloud.services.identity.identity_service.oci.pagination.list_call_get_all_results",
                     return_value=MagicMock(data=domains),
                 ),
+                patch(
+                    "oci.identity_domains.IdentityDomainsClient",
+                    return_value=MagickMock(list_password_policies=lambda: policy),
+                ),
             ):
                 identity_client.__list_domains__(regional_client_ash)
                 identity_client.__list_domains__(regional_client_chi)
+                identity_client.__list_password_policies__(regional_client_ash)
+                identity_client.__list_password_policies__(reginoal_client_chi)
+
             assert (
                 len(identity_client.domains) == 2
                 and any(
@@ -94,4 +111,5 @@ class TestIdentityService:
                     and domain.region == "us-chicago-1"
                     for domain in identity_client.domains
                 )
+                and len(domain.password_policies) == 2
             )
