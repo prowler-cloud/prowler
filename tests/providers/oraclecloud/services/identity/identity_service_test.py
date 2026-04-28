@@ -91,7 +91,7 @@ class TestIdentityService:
                 ),
                 patch(
                     "oci.identity_domains.IdentityDomainsClient",
-                    return_value=MagicMock(list_password_policies=lambda: policy),
+                    return_value=MagicMock(__list_domain_password_policies__=lambda: policy),
                 ),
             ):
                 identity_client.__list_domains__(regional_client_ash)
