@@ -7,7 +7,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - Support for external/custom providers, checks, and compliance frameworks without modifying core code [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
+- `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
 
+---
 
 ## [5.25.0] (Prowler v5.25.0)
 
