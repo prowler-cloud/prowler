@@ -207,8 +207,7 @@ class Test_bedrock_guardrails_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Bedrock has 1 guardrail(s) available in region {AWS_REGION_US_EAST_1}: test-guardrail. "
-                "This check only verifies guardrail existence; it does not confirm that guardrails are attached to agents or used on model invocations."
+                == f"Bedrock has 1 guardrail(s) available in region {AWS_REGION_US_EAST_1}: test-guardrail. This does not confirm that guardrails are attached to agents or used on model invocations."
             )
             assert result[0].resource_id == "bedrock-guardrails"
             assert (
@@ -269,8 +268,7 @@ class Test_bedrock_guardrails_configured:
             assert us_result.status == "PASS"
             assert (
                 us_result.status_extended
-                == f"Bedrock has 1 guardrail(s) available in region {AWS_REGION_US_EAST_1}: test-guardrail. "
-                "This check only verifies guardrail existence; it does not confirm that guardrails are attached to agents or used on model invocations."
+                == f"Bedrock has 1 guardrail(s) available in region {AWS_REGION_US_EAST_1}: test-guardrail. This does not confirm that guardrails are attached to agents or used on model invocations."
             )
             assert us_result.resource_id == "bedrock-guardrails"
             assert (
