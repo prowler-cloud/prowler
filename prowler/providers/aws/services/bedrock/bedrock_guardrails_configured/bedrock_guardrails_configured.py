@@ -34,7 +34,7 @@ class bedrock_guardrails_configured(Check):
             if regional_guardrails:
                 guardrail_names = ", ".join(g.name for g in regional_guardrails)
                 report.status = "PASS"
-                report.status_extended = f"Bedrock has {len(regional_guardrails)} guardrail(s) configured in region {region}: {guardrail_names}."
+                report.status_extended = f"Bedrock has {len(regional_guardrails)} guardrail(s) available in region {region}: {guardrail_names}. This does not confirm that guardrails are attached to agents or used on model invocations."
             else:
                 report.status = "FAIL"
                 report.status_extended = (
