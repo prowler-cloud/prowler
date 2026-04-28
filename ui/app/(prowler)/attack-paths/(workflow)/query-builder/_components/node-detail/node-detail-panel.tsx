@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, Card, CardContent } from "@/components/shadcn";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
   Sheet,
   SheetContent,
@@ -18,6 +19,8 @@ interface NodeDetailPanelProps {
   node: GraphNode | null;
   allNodes?: GraphNode[];
   onClose?: () => void;
+  onViewFinding?: (findingId: string) => void;
+  viewFindingLoading?: boolean;
 }
 
 /**
@@ -26,9 +29,13 @@ interface NodeDetailPanelProps {
 export const NodeDetailContent = ({
   node,
   allNodes = [],
+  onViewFinding,
+  viewFindingLoading = false,
 }: {
   node: GraphNode;
   allNodes?: GraphNode[];
+  onViewFinding?: (findingId: string) => void;
+  viewFindingLoading?: boolean;
 }) => {
   const isProwlerFinding = node?.labels.some((label) =>
     label.toLowerCase().includes("finding"),
@@ -56,7 +63,12 @@ export const NodeDetailContent = ({
             <div className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
               Findings connected to this node
             </div>
-            <NodeFindings node={node} allNodes={allNodes} />
+            <NodeFindings
+              node={node}
+              allNodes={allNodes}
+              onViewFinding={onViewFinding}
+              viewFindingLoading={viewFindingLoading}
+            />
           </CardContent>
         </Card>
       )}
@@ -88,12 +100,15 @@ export const NodeDetailPanel = ({
   node,
   allNodes = [],
   onClose,
+  onViewFinding,
+  viewFindingLoading = false,
 }: NodeDetailPanelProps) => {
   const isOpen = node !== null;
 
   const isProwlerFinding = node?.labels.some((label) =>
     label.toLowerCase().includes("finding"),
   );
+  const findingId = node ? String(node.properties?.id || node.id) : "";
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose?.()}>
@@ -107,15 +122,19 @@ export const NodeDetailPanel = ({
               </SheetDescription>
             </div>
             {node && isProwlerFinding && (
-              <Button asChild variant="default" size="sm" className="mt-1">
-                <a
-                  href={`/findings?id=${String(node.properties?.id || node.id)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`View finding ${String(node.properties?.id || node.id)}`}
-                >
-                  View Finding →
-                </a>
+              <Button
+                variant="default"
+                size="sm"
+                className="mt-1"
+                onClick={() => onViewFinding?.(findingId)}
+                disabled={viewFindingLoading}
+                aria-label={`View finding ${findingId}`}
+              >
+                {viewFindingLoading ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  "View Finding →"
+                )}
               </Button>
             )}
           </div>
@@ -123,7 +142,12 @@ export const NodeDetailPanel = ({
 
         {node && (
           <div className="pt-6">
-            <NodeDetailContent node={node} allNodes={allNodes} />
+            <NodeDetailContent
+              node={node}
+              allNodes={allNodes}
+              onViewFinding={onViewFinding}
+              viewFindingLoading={viewFindingLoading}
+            />
           </div>
         )}
       </SheetContent>

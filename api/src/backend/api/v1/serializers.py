@@ -4225,10 +4225,11 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     Serializer for Finding Group Resources - resources within a finding group.
 
     Returns individual resources with their current status, severity,
-    and timing information.
+    and timing information. Orphan findings (without any resource) expose the
+    finding id as `id` so the row stays identifiable in the UI.
     """
 
-    id = serializers.UUIDField(source="resource_id")
+    id = serializers.UUIDField(source="row_id")
     resource = serializers.SerializerMethodField()
     provider = serializers.SerializerMethodField()
     finding_id = serializers.UUIDField()

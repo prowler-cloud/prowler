@@ -55,6 +55,7 @@ exception propagates to Celery.
 
 import logging
 import time
+
 from typing import Any
 
 from cartography.config import Config as CartographyConfig
@@ -144,6 +145,12 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         attack_paths_scan, task_id, tenant_cartography_config
     )
 
+    scan_t0 = time.perf_counter()
+    logger.info(
+        f"Starting Attack Paths scan ({attack_paths_scan.id}) for "
+        f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
+    )
+
     subgraph_dropped = False
     sync_completed = False
     provider_gated = False
@@ -169,6 +176,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
 
             # The real scan, where iterates over cloud services
+            t0 = time.perf_counter()
             ingestion_exceptions = utils.call_within_event_loop(
                 cartography_ingestion_function,
                 tmp_neo4j_session,
@@ -177,19 +185,23 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
                 prowler_sdk_provider,
                 attack_paths_scan,
             )
+            logger.info(
+                f"Cartography ingestion completed in {time.perf_counter() - t0:.3f}s "
+                f"(failed_syncs={len(ingestion_exceptions)})"
+            )
 
             # Post-processing: Just keeping it to be more Cartography compliant
             logger.info(
                 f"Syncing Cartography ontology for AWS account {prowler_api_provider.uid}"
             )
             cartography_ontology.run(tmp_neo4j_session, tmp_cartography_config)
-            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 94)
 
             logger.info(
                 f"Syncing Cartography analysis for AWS account {prowler_api_provider.uid}"
             )
             cartography_analysis.run(tmp_neo4j_session, tmp_cartography_config)
-            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 96)
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
 
             # Creating Internet node and CAN_ACCESS relationships
             logger.info(
@@ -198,13 +210,19 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             internet.analysis(
                 tmp_neo4j_session, prowler_api_provider, tmp_cartography_config
             )
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 96)
 
             # Adding Prowler Finding nodes and relationships
             logger.info(
                 f"Syncing Prowler analysis for AWS account {prowler_api_provider.uid}"
             )
-            findings.analysis(
+            t0 = time.perf_counter()
+            labeled_nodes, findings_loaded = findings.analysis(
                 tmp_neo4j_session, prowler_api_provider, scan_id, tmp_cartography_config
+            )
+            logger.info(
+                f"Prowler analysis completed in {time.perf_counter() - t0:.3f}s "
+                f"(findings={findings_loaded}, labeled_nodes={labeled_nodes})"
             )
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 97)
 
@@ -227,9 +245,15 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.info(f"Deleting existing provider graph in {tenant_database_name}")
         db_utils.set_provider_graph_data_ready(attack_paths_scan, False)
         provider_gated = True
-        graph_database.drop_subgraph(
+
+        t0 = time.perf_counter()
+        deleted_nodes = graph_database.drop_subgraph(
             database=tenant_database_name,
             provider_id=str(prowler_api_provider.id),
+        )
+        logger.info(
+            f"Deleted existing provider graph in {time.perf_counter() - t0:.3f}s "
+            f"(deleted_nodes={deleted_nodes})"
         )
         subgraph_dropped = True
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 98)
@@ -237,11 +261,16 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.info(
             f"Syncing graph from {tmp_database_name} into {tenant_database_name}"
         )
-        sync.sync_graph(
+        t0 = time.perf_counter()
+        sync_result = sync.sync_graph(
             source_database=tmp_database_name,
             target_database=tenant_database_name,
             tenant_id=str(prowler_api_provider.tenant_id),
             provider_id=str(prowler_api_provider.id),
+        )
+        logger.info(
+            f"Synced graph in {time.perf_counter() - t0:.3f}s "
+            f"(nodes={sync_result['nodes']}, relationships={sync_result['relationships']})"
         )
         sync_completed = True
         db_utils.set_graph_data_ready(attack_paths_scan, True)
@@ -250,16 +279,15 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.info(f"Clearing Neo4j cache for database {tenant_database_name}")
         graph_database.clear_cache(tenant_database_name)
 
-        logger.info(
-            f"Completed Cartography ({attack_paths_scan.id}) for "
-            f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
-        )
-
         logger.info(f"Dropping temporary Neo4j database {tmp_database_name}")
         graph_database.drop_database(tmp_database_name)
 
         db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.COMPLETED, ingestion_exceptions
+        )
+        logger.info(
+            f"Attack Paths scan completed in {time.perf_counter() - scan_t0:.3f}s "
+            f"(state=completed, failed_syncs={len(ingestion_exceptions)})"
         )
         return ingestion_exceptions
 

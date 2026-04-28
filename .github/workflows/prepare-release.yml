@@ -17,6 +17,8 @@ concurrency:
 env:
   PROWLER_VERSION: ${{ inputs.prowler_version }}
 
+permissions: {}
+
 jobs:
   prepare-release:
     if: github.event_name == 'workflow_dispatch' && github.repository == 'prowler-cloud/prowler'
@@ -38,15 +40,12 @@ jobs:
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
         persist-credentials: false
 
-    - name: Set up Python
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    - name: Setup Python with Poetry
+      uses: ./.github/actions/setup-python-poetry
       with:
         python-version: '3.12'
-
-    - name: Install Poetry
-      run: |
-        python3 -m pip install --user poetry==2.1.1
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        install-dependencies: 'false'
+        enable-cache: 'false'
 
     - name: Configure Git
       run: |

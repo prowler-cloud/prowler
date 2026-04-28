@@ -5,6 +5,7 @@ import {
   getComplianceAttributes,
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
+  getCompliancesOverview,
 } from "@/actions/compliances";
 import { getThreatScore } from "@/actions/overview";
 import { getScan } from "@/actions/scans";
@@ -25,7 +26,10 @@ import {
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
-import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
+import {
+  getReportTypeForCompliance,
+  pickLatestCisPerProvider,
+} from "@/lib/compliance/compliance-report-types";
 import { cn } from "@/lib/utils";
 import {
   AttributesData,
@@ -78,27 +82,60 @@ export default async function ComplianceDetail({
     await Promise.all([
       getComplianceOverviewMetadataInfo({
         filters: {
-          "filter[scan_id]": selectedScanId,
+          "filter[scan_id]": selectedScanId ?? undefined,
         },
       }),
       getComplianceAttributes(complianceId),
-      selectedScanId ? getScan(selectedScanId) : Promise.resolve(null),
+      selectedScanId
+        ? getScan(selectedScanId, { include: "provider" })
+        : Promise.resolve(null),
     ]);
 
   if (selectedScanResponse?.data) {
     const scan = selectedScanResponse.data;
-    selectedScan = {
-      id: scan.id,
-      providerInfo: {
-        provider: scan.providerInfo?.provider || "aws",
-        alias: scan.providerInfo?.alias,
-        uid: scan.providerInfo?.uid,
-      },
-      attributes: {
-        name: scan.attributes.name,
-        completed_at: scan.attributes.completed_at,
-      },
-    };
+    const providerId = scan.relationships?.provider?.data?.id;
+    const providerData = providerId
+      ? selectedScanResponse.included?.find(
+          (item: { type: string; id: string }) =>
+            item.type === "providers" && item.id === providerId,
+        )
+      : undefined;
+
+    if (providerData) {
+      selectedScan = {
+        id: scan.id,
+        providerInfo: {
+          provider: providerData.attributes.provider,
+          alias: providerData.attributes.alias,
+          uid: providerData.attributes.uid,
+        },
+        attributes: {
+          name: scan.attributes.name,
+          completed_at: scan.attributes.completed_at,
+        },
+      };
+    }
+  }
+
+  // Only CIS variants need the "is this the latest version per provider?"
+  // check to gate the PDF download button. Every other framework either
+  // always has a PDF (ENS/NIS2/CSA/ThreatScore) or none at all, so we skip
+  // the extra compliance-overview roundtrip for non-CIS detail pages.
+  const needsCisLatestCheck =
+    typeof complianceId === "string" && complianceId.startsWith("cis_");
+  let latestCisIds: Set<string> = new Set<string>();
+  if (needsCisLatestCheck && selectedScanId) {
+    const scanCompliancesData = await getCompliancesOverview({
+      scanId: selectedScanId,
+    });
+    const scanComplianceIds: string[] = Array.isArray(scanCompliancesData?.data)
+      ? scanCompliancesData.data
+          .map((c: { id?: string }) => c?.id)
+          .filter(
+            (id: string | undefined): id is string => typeof id === "string",
+          )
+      : [];
+    latestCisIds = pickLatestCisPerProvider(scanComplianceIds);
   }
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
@@ -146,8 +183,10 @@ export default async function ComplianceDetail({
             <ComplianceDownloadContainer
               scanId={selectedScanId}
               complianceId={complianceId}
-              reportType={getReportTypeForFramework(
+              reportType={getReportTypeForCompliance(
                 attributesData?.data?.[0]?.attributes?.framework,
+                complianceId,
+                latestCisIds.has(complianceId),
               )}
             />
           </div>

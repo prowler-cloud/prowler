@@ -17,6 +17,8 @@ env:
   BACKPORT_LABEL_PREFIX: backport-to-
   BACKPORT_LABEL_IGNORE: was-backported
 
+permissions: {}
+
 jobs:
   backport:
     if: github.event.pull_request.merged == true && !(contains(github.event.pull_request.labels.*.name, 'backport')) && !(contains(github.event.pull_request.labels.*.name, 'was-backported'))
@@ -33,6 +35,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            github.com:443
 
       - name: Check labels
         id: label_check

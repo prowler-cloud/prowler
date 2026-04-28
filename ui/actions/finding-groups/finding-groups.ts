@@ -2,9 +2,20 @@
 
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import {
+  apiBaseUrl,
+  composeSort,
+  FG_FAIL_FIRST,
+  FG_RECENT_LAST_SEEN,
+  FG_SEVERITY_HIGH_FIRST,
+  FINDING_GROUP_RESOURCES_DEFAULT_SORT,
+  getAuthHeaders,
+  includesMutedFindings,
+  splitCsvFilterValues,
+} from "@/lib";
 import { appendSanitizedProviderFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import { FilterParam } from "@/types/filters";
 
 /**
  * Maps filter[search] to filter[check_title__icontains] for finding-groups.
@@ -23,28 +34,30 @@ function mapSearchFilter(
   return mapped;
 }
 
-function splitCsvFilterValues(value: string | string[] | undefined): string[] {
-  if (Array.isArray(value)) {
-    return value
-      .flatMap((item) => item.split(","))
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  if (typeof value === "string") {
-    return value
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [];
-}
+/**
+ * Filters that belong to finding-groups but are NOT valid for the
+ * finding-group resources sub-endpoint. These must be stripped before
+ * calling the resources API to avoid empty results.
+ */
+const FINDING_GROUP_RESOURCE_UNSUPPORTED_FILTERS: FilterParam[] = [
+  "filter[service__in]",
+  "filter[scan__in]",
+  "filter[scan_id]",
+  "filter[scan_id__in]",
+];
 
 function normalizeFindingGroupResourceFilters(
   filters: Record<string, string | string[] | undefined>,
 ): Record<string, string | string[] | undefined> {
-  const normalized = { ...filters };
+  const normalized = Object.fromEntries(
+    Object.entries(filters).filter(
+      ([key]) =>
+        !FINDING_GROUP_RESOURCE_UNSUPPORTED_FILTERS.includes(
+          key as FilterParam,
+        ),
+    ),
+  );
+
   const exactStatusFilter = normalized["filter[status]"];
 
   if (exactStatusFilter !== undefined) {
@@ -61,11 +74,34 @@ function normalizeFindingGroupResourceFilters(
   return normalized;
 }
 
-const DEFAULT_FINDING_GROUPS_SORT =
-  "-status,-severity,-delta,-fail_count,-last_seen_at";
+// Composite sorts for finding-groups (Family B in lib/findings-sort.ts).
+// The `-status,-severity,...,-last_seen_at` shape is required by the API:
+// these endpoints map status/severity to weighted integer columns where
+// DESC = FAIL/critical first. The intermediate `*_count` tokens are
+// finding-group-specific impact tiebreakers and have no Family A analogue.
+const DEFAULT_FINDING_GROUPS_SORT = composeSort(
+  FG_FAIL_FIRST,
+  FG_SEVERITY_HIGH_FIRST,
+  "-new_fail_count",
+  "-changed_fail_count",
+  "-fail_count",
+  FG_RECENT_LAST_SEEN,
+);
+
+const DEFAULT_FINDING_GROUPS_SORT_WITH_MUTED = composeSort(
+  FG_FAIL_FIRST,
+  FG_SEVERITY_HIGH_FIRST,
+  "-new_fail_count",
+  "-changed_fail_count",
+  "-new_fail_muted_count",
+  "-changed_fail_muted_count",
+  "-fail_count",
+  "-fail_muted_count",
+  FG_RECENT_LAST_SEEN,
+);
 
 const DEFAULT_FINDING_GROUP_RESOURCES_SORT =
-  "-status,-delta,-severity,-last_seen_at";
+  FINDING_GROUP_RESOURCES_DEFAULT_SORT;
 
 interface FetchFindingGroupsParams {
   page?: number;
@@ -74,16 +110,20 @@ interface FetchFindingGroupsParams {
   filters?: Record<string, string | string[] | undefined>;
 }
 
+function getDefaultFindingGroupsSort(
+  filters: Record<string, string | string[] | undefined>,
+): string {
+  return includesMutedFindings(filters)
+    ? DEFAULT_FINDING_GROUPS_SORT_WITH_MUTED
+    : DEFAULT_FINDING_GROUPS_SORT;
+}
+
 async function fetchFindingGroupsEndpoint(
   endpoint: string,
-  {
-    page = 1,
-    pageSize = 10,
-    sort = DEFAULT_FINDING_GROUPS_SORT,
-    filters = {},
-  }: FetchFindingGroupsParams,
+  { page = 1, pageSize = 10, sort, filters = {} }: FetchFindingGroupsParams,
 ) {
   const headers = await getAuthHeaders({ contentType: false });
+  const resolvedSort = sort ?? getDefaultFindingGroupsSort(filters);
 
   if (isNaN(Number(page)) || page < 1) redirect("/findings");
 
@@ -91,7 +131,7 @@ async function fetchFindingGroupsEndpoint(
 
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
-  if (sort) url.searchParams.append("sort", sort);
+  if (resolvedSort) url.searchParams.append("sort", resolvedSort);
 
   appendSanitizedProviderFilters(url, mapSearchFilter(filters));
 

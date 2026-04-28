@@ -35,11 +35,13 @@ from django.db.models import (
     CharField,
     Count,
     DecimalField,
+    Exists,
     ExpressionWrapper,
     F,
     IntegerField,
     Max,
     Min,
+    OuterRef,
     Prefetch,
     Q,
     QuerySet,
@@ -81,6 +83,10 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api import filters as jsonapi_filters
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
@@ -167,6 +173,7 @@ from api.models import (
     FindingGroupDailySummary,
     Integration,
     Invitation,
+    InvitationRoleRelationship,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -415,7 +422,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.24.0"
+        spectacular_settings.VERSION = "1.27.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1328,9 +1335,11 @@ class MembershipViewSet(BaseTenantViewset):
     ),
     destroy=extend_schema(
         summary="Delete tenant memberships",
-        description="Delete the membership details of users in a tenant. You need to be one of the owners to delete a "
-        "membership that is not yours. If you are the last owner of a tenant, you cannot delete your own "
-        "membership.",
+        description="Delete a user's membership from a tenant. This action: (1) removes the membership, "
+        "(2) revokes all refresh tokens for the expelled user, (3) removes their role grants for this tenant, "
+        "(4) cleans up orphaned roles, and (5) deletes the user account if this was their last membership. "
+        "You must be a tenant owner to delete another user's membership. The last owner of a tenant cannot "
+        "delete their own membership.",
         tags=["Tenant"],
     ),
 )
@@ -1339,6 +1348,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     http_method_names = ["get", "delete"]
     serializer_class = MembershipSerializer
     queryset = Membership.objects.none()
+    filterset_class = MembershipFilter
     # Authorization is handled by get_requesting_membership (owner/member checks),
     # not by RBAC, since the target tenant differs from the JWT tenant.
     required_permissions = []
@@ -1396,7 +1406,84 @@ class TenantMembersViewSet(BaseTenantViewset):
                     "You do not have permission to delete this membership."
                 )
 
-        membership_to_delete.delete()
+        user_to_check_id = membership_to_delete.user_id
+        tenant_id = membership_to_delete.tenant_id
+        # All writes run on the admin connection so that the uncommitted
+        # membership delete is visible to the subsequent "other memberships"
+        # check. Splitting the delete and the check across the default
+        # (prowler_user, RLS) and admin connections caused the admin side to
+        # miss the just-deleted row and leave the User row orphaned.
+        with transaction.atomic(using=MainRouter.admin_db):
+            Membership.objects.using(MainRouter.admin_db).filter(
+                id=membership_to_delete.id
+            ).delete()
+
+            # Remove role grants for this user in this tenant to prevent
+            # orphaned permissions that could allow access after expulsion
+            deleted_role_relationships = UserRoleRelationship.objects.using(
+                MainRouter.admin_db
+            ).filter(user_id=user_to_check_id, tenant_id=tenant_id)
+
+            # Collect role IDs that might become orphaned after deletion
+            role_ids_to_check = list(
+                deleted_role_relationships.values_list("role_id", flat=True)
+            )
+
+            # Delete the user role relationships for this tenant
+            deleted_role_relationships.delete()
+
+            # Clean up orphaned roles that have no remaining user or invitation relationships
+            if role_ids_to_check:
+                for role_id in role_ids_to_check:
+                    has_user_relationships = (
+                        UserRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(role_id=role_id)
+                        .exists()
+                    )
+
+                    has_invitation_relationships = (
+                        InvitationRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(role_id=role_id)
+                        .exists()
+                    )
+
+                    if not has_user_relationships and not has_invitation_relationships:
+                        Role.objects.using(MainRouter.admin_db).filter(
+                            id=role_id
+                        ).delete()
+
+            # Revoke any refresh tokens the expelled user still holds so they
+            # cannot mint fresh access tokens. This must happen before the
+            # User row is deleted, because OutstandingToken.user is
+            # on_delete=SET_NULL in djangorestframework-simplejwt 5.5.1
+            # (see rest_framework_simplejwt/token_blacklist/models.py): once
+            # the user row is gone, user_id becomes NULL and we can no longer
+            # look up that user's outstanding tokens. Access tokens already
+            # issued remain valid until SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]
+            # expires.
+            outstanding_token_ids = list(
+                OutstandingToken.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_to_check_id)
+                .values_list("id", flat=True)
+            )
+            if outstanding_token_ids:
+                BlacklistedToken.objects.using(MainRouter.admin_db).bulk_create(
+                    [
+                        BlacklistedToken(token_id=token_id)
+                        for token_id in outstanding_token_ids
+                    ],
+                    ignore_conflicts=True,
+                )
+
+            has_other_memberships = (
+                Membership.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_to_check_id)
+                .exists()
+            )
+            if not has_other_memberships:
+                User.objects.using(MainRouter.admin_db).filter(
+                    id=user_to_check_id
+                ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1839,6 +1926,27 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             ),
         },
     ),
+    cis=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve CIS Benchmark compliance report",
+        description="Download the CIS Benchmark compliance report as a PDF file. "
+        "When a provider ships multiple CIS versions, the report is generated "
+        "for the highest available version.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the CIS compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no CIS reports, or the CIS report generation task has not started yet"
+            ),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1905,6 +2013,9 @@ class ScanViewSet(BaseRLSViewSet):
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
         elif self.action == "csa":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+        elif self.action == "cis":
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
         return super().get_serializer_class()
@@ -2148,6 +2259,45 @@ class ScanViewSet(BaseRLSViewSet):
 
         content, filename = loader
         return self._serve_file(content, filename, "text/csv")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="cis",
+    )
+    def cis(self, request, pk=None):
+        scan = self.get_object()
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the CIS report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "cis",
+                "*_cis_report.pdf",
+            )
+            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "cis", "*_cis_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
 
     @action(
         detail=True,
@@ -7125,17 +7275,16 @@ class FindingGroupViewSet(BaseRLSViewSet):
             output_field=IntegerField(),
         )
 
-        # `pass_count`, `fail_count` and `manual_count` count *every* finding
-        # for the check (muted or not) so the aggregated `status` reflects the
-        # underlying check outcome regardless of mute state. Whether the group
-        # is actionable is signalled by the orthogonal `muted` flag below.
+        # `pass_count`, `fail_count` and `manual_count` only count non-muted
+        # findings. Muted findings are tracked separately via the
+        # `*_muted_count` fields.
         return (
             queryset.values("check_id")
             .annotate(
                 severity_order=Max(severity_case),
-                pass_count=Count("id", filter=Q(status="PASS")),
-                fail_count=Count("id", filter=Q(status="FAIL")),
-                manual_count=Count("id", filter=Q(status="MANUAL")),
+                pass_count=Count("id", filter=Q(status="PASS", muted=False)),
+                fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                manual_count=Count("id", filter=Q(status="MANUAL", muted=False)),
                 pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
                 fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
                 manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),
@@ -7280,12 +7429,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
             # finding-level aggregation path.
             row.pop("nonmuted_count", None)
 
-            # Compute aggregated status. Counts are inclusive of muted findings,
-            # so the underlying check outcome surfaces even when the group is
-            # fully muted.
+            # Muted findings are treated as resolved/accepted, so they do not
+            # contribute to a failing status. A group is FAIL only when there
+            # is at least one non-muted FAIL; otherwise any pass (muted or
+            # not) or any muted fail makes the group PASS. Only groups whose
+            # findings are exclusively MANUAL fall through to MANUAL.
             if row.get("fail_count", 0) > 0:
                 row["status"] = "FAIL"
-            elif row.get("pass_count", 0) > 0:
+            elif (
+                row.get("pass_count", 0) > 0
+                or row.get("pass_muted_count", 0) > 0
+                or row.get("fail_muted_count", 0) > 0
+            ):
                 row["status"] = "PASS"
             else:
                 row["status"] = "MANUAL"
@@ -7311,8 +7466,23 @@ class FindingGroupViewSet(BaseRLSViewSet):
         "pass_count": "pass_count",
         "manual_count": "manual_count",
         "muted_count": "muted_count",
+        "pass_muted_count": "pass_muted_count",
+        "fail_muted_count": "fail_muted_count",
+        "manual_muted_count": "manual_muted_count",
         "new_count": "new_count",
+        "new_fail_count": "new_fail_count",
+        "new_fail_muted_count": "new_fail_muted_count",
+        "new_pass_count": "new_pass_count",
+        "new_pass_muted_count": "new_pass_muted_count",
+        "new_manual_count": "new_manual_count",
+        "new_manual_muted_count": "new_manual_muted_count",
         "changed_count": "changed_count",
+        "changed_fail_count": "changed_fail_count",
+        "changed_fail_muted_count": "changed_fail_muted_count",
+        "changed_pass_count": "changed_pass_count",
+        "changed_pass_muted_count": "changed_pass_muted_count",
+        "changed_manual_count": "changed_manual_count",
+        "changed_manual_muted_count": "changed_manual_muted_count",
         "resources_total": "resources_total",
         "resources_fail": "resources_fail",
         "first_seen_at": "agg_first_seen_at",
@@ -7373,6 +7543,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 aggregated_status=Case(
                     When(fail_count__gt=0, then=Value("FAIL")),
                     When(pass_count__gt=0, then=Value("PASS")),
+                    When(pass_muted_count__gt=0, then=Value("PASS")),
+                    When(fail_muted_count__gt=0, then=Value("PASS")),
                     default=Value("MANUAL"),
                     output_field=CharField(),
                 )
@@ -7392,6 +7564,25 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         return filterset.qs
 
+    def _resolve_finding_ids(self, filtered_queryset):
+        """
+        Materialize and request-cache the finding_ids list used to anchor
+        RFM lookups.
+
+        Turning `finding_id__in=Subquery(findings_qs)` into `finding_id__in=
+        [uuid, ...]` nudges PostgreSQL out of a Merge Semi Join that ends up
+        reading hundreds of thousands of RFM index entries just to post-
+        filter tenant_id. Caching on the ViewSet instance (one instance per
+        request) avoids duplicating the findings round-trip when several
+        helpers build different RFM querysets from the same filtered set.
+        """
+        cached = getattr(self, "_finding_ids_cache", None)
+        if cached is not None and cached[0] is filtered_queryset:
+            return cached[1]
+        finding_ids = list(filtered_queryset.order_by().values_list("id", flat=True))
+        self._finding_ids_cache = (filtered_queryset, finding_ids)
+        return finding_ids
+
     def _build_resource_mapping_queryset(
         self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
     ):
@@ -7401,10 +7592,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
         Starting from ResourceFindingMapping avoids scanning all mappings
         before applying check_id/date filters on findings.
         """
-        finding_ids = filtered_queryset.order_by().values("id")
+        finding_ids = self._resolve_finding_ids(filtered_queryset)
 
         mapping_queryset = ResourceFindingMapping.objects.filter(
-            finding_id__in=Subquery(finding_ids)
+            finding_id__in=finding_ids
         )
         if tenant_id:
             mapping_queryset = mapping_queryset.filter(tenant_id=tenant_id)
@@ -7563,6 +7754,53 @@ class FindingGroupViewSet(BaseRLSViewSet):
             .order_by(*ordering)
         )
 
+    def _orphan_findings_queryset(self, filtered_queryset, finding_ids=None):
+        """Findings in the filtered set with no ResourceFindingMapping entries."""
+        orphan_qs = filtered_queryset.filter(
+            ~Exists(ResourceFindingMapping.objects.filter(finding_id=OuterRef("pk")))
+        )
+        if finding_ids is not None:
+            orphan_qs = orphan_qs.filter(id__in=finding_ids)
+        return orphan_qs
+
+    def _has_orphan_findings(self, filtered_queryset) -> bool:
+        """Return True if any finding in the filtered set has no resource mapping."""
+        return self._orphan_findings_queryset(filtered_queryset).exists()
+
+    def _orphan_aggregation_values(self, orphan_queryset):
+        """Raw rows for orphan findings; resource payload synthesized from metadata.
+
+        check_metadata is stored with lowercase keys (see
+        `prowler.lib.outputs.finding.Finding.get_metadata`) and
+        `Finding.resource_groups` is already denormalized at ingest time.
+        """
+        return orphan_queryset.annotate(
+            _provider_type=F("scan__provider__provider"),
+            _provider_uid=F("scan__provider__uid"),
+            _provider_alias=F("scan__provider__alias"),
+            _svc=KeyTextTransform("servicename", "check_metadata"),
+            _region=KeyTextTransform("region", "check_metadata"),
+            _rtype=KeyTextTransform("resourcetype", "check_metadata"),
+            _rgroup=F("resource_groups"),
+        ).values(
+            "id",
+            "uid",
+            "status",
+            "severity",
+            "delta",
+            "muted",
+            "muted_reason",
+            "first_seen_at",
+            "inserted_at",
+            "_provider_type",
+            "_provider_uid",
+            "_provider_alias",
+            "_svc",
+            "_region",
+            "_rtype",
+            "_rgroup",
+        )
+
     def _post_process_resources(self, resource_data):
         """Convert resource aggregation rows to API output."""
         results = []
@@ -7584,9 +7822,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
             else:
                 delta = None
 
+            resource_id = row["resource_id"]
+            finding_id = str(row["finding_id"]) if row.get("finding_id") else None
+
             results.append(
                 {
-                    "resource_id": row["resource_id"],
+                    "row_id": resource_id,
+                    "resource_id": resource_id,
                     "resource_uid": row["resource_uid"],
                     "resource_name": row["resource_name"],
                     "resource_service": row["resource_service"],
@@ -7605,9 +7847,46 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     "muted": bool(row.get("muted", False)),
                     "muted_reason": row.get("muted_reason"),
                     "resource_group": row.get("resource_group", ""),
-                    "finding_id": (
-                        str(row["finding_id"]) if row.get("finding_id") else None
-                    ),
+                    "finding_id": finding_id,
+                }
+            )
+
+        return results
+
+    def _post_process_orphans(self, orphan_rows):
+        """Convert orphan finding rows into the same API shape as mapping rows."""
+        results = []
+        for row in orphan_rows:
+            status_val = row["status"]
+            status = status_val if status_val in ("FAIL", "PASS") else "MANUAL"
+
+            muted = bool(row["muted"])
+            delta_val = row.get("delta")
+            delta = delta_val if delta_val in ("new", "changed") and not muted else None
+
+            finding_id = str(row["id"])
+
+            results.append(
+                {
+                    "row_id": finding_id,
+                    "resource_id": None,
+                    "resource_uid": row["uid"],
+                    "resource_name": row["uid"],
+                    "resource_service": row["_svc"] or "",
+                    "resource_region": row["_region"] or "",
+                    "resource_type": row["_rtype"] or "",
+                    "provider_type": row["_provider_type"],
+                    "provider_uid": row["_provider_uid"],
+                    "provider_alias": row["_provider_alias"],
+                    "status": status,
+                    "severity": row["severity"],
+                    "delta": delta,
+                    "first_seen_at": row["first_seen_at"],
+                    "last_seen_at": row["inserted_at"],
+                    "muted": muted,
+                    "muted_reason": row.get("muted_reason"),
+                    "resource_group": row["_rgroup"] or "",
+                    "finding_id": finding_id,
                 }
             )
 
@@ -7668,26 +7947,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 sort_param, self._FINDING_GROUP_SORT_MAP
             )
             if ordering:
-                # status_order is annotated on demand so groups can be sorted by
-                # their aggregated status (FAIL > PASS > MANUAL), mirroring the
-                # priority used in _post_process_aggregation. Counts are
-                # inclusive of muted findings, so the underlying check outcome
-                # surfaces even for fully muted groups.
                 if any(field.lstrip("-") == "status_order" for field in ordering):
                     aggregated_queryset = aggregated_queryset.annotate(
                         status_order=Case(
                             When(fail_count__gt=0, then=Value(3)),
                             When(pass_count__gt=0, then=Value(2)),
+                            When(pass_muted_count__gt=0, then=Value(2)),
+                            When(fail_muted_count__gt=0, then=Value(2)),
                             default=Value(1),
                             output_field=IntegerField(),
                         )
                     )
 
-                # delta_order is a virtual sort field: expand it to a
-                # lexicographic ordering by (new_count, changed_count) so groups
-                # with more new findings rank higher, with changed_count as the
-                # tie-breaker (preserves the "new > changed" priority used by
-                # the resources endpoint, but driven by the actual counters).
                 expanded_ordering = []
                 for field in ordering:
                     if field.lstrip("-") == "delta_order":
@@ -7721,41 +7992,65 @@ class FindingGroupViewSet(BaseRLSViewSet):
     def _paginated_resource_response(
         self, request, filtered_queryset, resource_ids, tenant_id
     ):
-        """Paginate and return resources.
+        """Paginate and return resources, appending orphan findings when present.
 
-        Without sort: paginate lightweight resource IDs first, aggregate only the page.
-        With sort: build a lightweight ordering subquery (resource_id + sort keys),
-        paginate that, then aggregate full details only for the page.
+        Hot path (no orphans, or resource filter applied): resources come from
+        ResourceFindingMapping aggregation. Untouched pre-existing behaviour.
+
+        Orphan fallback: findings without a mapping (e.g. IaC) are appended
+        after mapping rows as synthesised resource-like rows so they remain
+        visible in the UI without paying the aggregation cost on the hot path.
         """
         sort_param = request.query_params.get("sort")
-
+        ordering = None
         if sort_param:
-            ordering = self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
-            if ordering:
-                if "resource_id" not in {field.lstrip("-") for field in ordering}:
-                    ordering.append("resource_id")
+            validated = self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
+            ordering = validated if validated else None
 
-                # Phase 1: lightweight aggregation with only sort keys, paginate
-                ordering_qs = self._build_resource_ordering_queryset(
-                    filtered_queryset,
-                    resource_ids=resource_ids,
-                    tenant_id=tenant_id,
-                    ordering=ordering,
-                )
-                page = self.paginate_queryset(ordering_qs)
-                if page is not None:
-                    page_ids = [row["resource_id"] for row in page]
-                    resource_data = self._build_resource_aggregation(
-                        filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
-                    )
-                    # Re-sort to match the page ordering
-                    id_order = {rid: idx for idx, rid in enumerate(page_ids)}
-                    results = self._post_process_resources(resource_data)
-                    results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
-                    serializer = FindingGroupResourceSerializer(results, many=True)
-                    return self.get_paginated_response(serializer.data)
+        # Resource filters can only match findings with resources; skip orphan
+        # detection entirely when they are present.
+        if resource_ids is not None:
+            return self._mapping_paginated_response(
+                request, filtered_queryset, resource_ids, tenant_id, ordering
+            )
 
-                page_ids = [row["resource_id"] for row in ordering_qs]
+        # Serve the mapping response directly and piggyback on the paginator
+        # count to detect orphan-only groups, instead of paying a separate
+        # has_mappings.exists() semi-join over ResourceFindingMapping on
+        # every non-IaC request. TODO: once the ephemeral resources strategy
+        # is decided, mixed groups should route to _combined_paginated_response.
+        response = self._mapping_paginated_response(
+            request, filtered_queryset, resource_ids, tenant_id, ordering
+        )
+
+        page = getattr(self.paginator, "page", None)
+        mapping_total = page.paginator.count if page is not None else None
+        if mapping_total == 0:
+            # Pure orphan group (e.g. IaC): synthesize resource-like rows.
+            return self._combined_paginated_response(
+                request, filtered_queryset, tenant_id, ordering
+            )
+
+        return response
+
+    def _mapping_paginated_response(
+        self, request, filtered_queryset, resource_ids, tenant_id, ordering
+    ):
+        """Mapping-only paginated response (original fast path)."""
+        if ordering:
+            if "resource_id" not in {field.lstrip("-") for field in ordering}:
+                ordering.append("resource_id")
+
+            # Phase 1: lightweight aggregation with only sort keys, paginate
+            ordering_qs = self._build_resource_ordering_queryset(
+                filtered_queryset,
+                resource_ids=resource_ids,
+                tenant_id=tenant_id,
+                ordering=ordering,
+            )
+            page = self.paginate_queryset(ordering_qs)
+            if page is not None:
+                page_ids = [row["resource_id"] for row in page]
                 resource_data = self._build_resource_aggregation(
                     filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
                 )
@@ -7763,10 +8058,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 results = self._post_process_resources(resource_data)
                 results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
                 serializer = FindingGroupResourceSerializer(results, many=True)
-                return Response(serializer.data)
+                return self.get_paginated_response(serializer.data)
 
-        # No sort (or only empty sort fragments): paginate lightweight resource IDs
-        # first, aggregate only the page.
+            page_ids = [row["resource_id"] for row in ordering_qs]
+            resource_data = self._build_resource_aggregation(
+                filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
+            )
+            id_order = {rid: idx for idx, rid in enumerate(page_ids)}
+            results = self._post_process_resources(resource_data)
+            results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
+            serializer = FindingGroupResourceSerializer(results, many=True)
+            return Response(serializer.data)
+
         mapping_qs = self._build_resource_mapping_queryset(
             filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
         )
@@ -7792,6 +8095,95 @@ class FindingGroupViewSet(BaseRLSViewSet):
         ).order_by("resource_id")
         results = self._post_process_resources(resource_data)
         serializer = FindingGroupResourceSerializer(results, many=True)
+        return Response(serializer.data)
+
+    def _combined_paginated_response(
+        self, request, filtered_queryset, tenant_id, ordering
+    ):
+        """Mapping rows + orphan findings appended at end.
+
+        Orphans sit after mapping rows regardless of sort. This keeps the
+        mapping-only code path intact for checks that have no orphans (the
+        common case) and avoids paying UNION/coalesce costs there.
+        """
+        mapping_qs = self._build_resource_mapping_queryset(
+            filtered_queryset, resource_ids=None, tenant_id=tenant_id
+        )
+        mapping_count = mapping_qs.values("resource_id").distinct().count()
+
+        orphan_ids = list(
+            self._orphan_findings_queryset(filtered_queryset)
+            .order_by("id")
+            .values_list("id", flat=True)
+        )
+        orphan_count = len(orphan_ids)
+        total = mapping_count + orphan_count
+
+        # Paginate a simple [0..total) index sequence so DRF produces proper
+        # links/meta; then slice mapping / orphan sources accordingly.
+        page = self.paginate_queryset(range(total))
+        page_indices = list(page) if page is not None else list(range(total))
+
+        mapping_indices = [i for i in page_indices if i < mapping_count]
+        orphan_positions = [
+            i - mapping_count for i in page_indices if i >= mapping_count
+        ]
+
+        mapping_results = []
+        if mapping_indices:
+            start = mapping_indices[0]
+            stop = mapping_indices[-1] + 1
+            if ordering:
+                ordering_fields = list(ordering)
+                if "resource_id" not in {
+                    field.lstrip("-") for field in ordering_fields
+                }:
+                    ordering_fields.append("resource_id")
+                ordered_qs = self._build_resource_ordering_queryset(
+                    filtered_queryset,
+                    resource_ids=None,
+                    tenant_id=tenant_id,
+                    ordering=ordering_fields,
+                )
+                slice_rids = [row["resource_id"] for row in ordered_qs[start:stop]]
+            else:
+                slice_rids = list(
+                    mapping_qs.values_list("resource_id", flat=True)
+                    .distinct()
+                    .order_by("resource_id")[start:stop]
+                )
+            if slice_rids:
+                resource_data = self._build_resource_aggregation(
+                    filtered_queryset,
+                    resource_ids=slice_rids,
+                    tenant_id=tenant_id,
+                )
+                rows_by_rid = {row["resource_id"]: row for row in resource_data}
+                ordered_rows = [
+                    rows_by_rid[rid] for rid in slice_rids if rid in rows_by_rid
+                ]
+                mapping_results = self._post_process_resources(ordered_rows)
+
+        orphan_results = []
+        if orphan_positions:
+            slice_fids = [orphan_ids[pos] for pos in orphan_positions]
+            raw_rows = list(
+                self._orphan_aggregation_values(
+                    self._orphan_findings_queryset(
+                        filtered_queryset, finding_ids=slice_fids
+                    )
+                )
+            )
+            rows_by_fid = {row["id"]: row for row in raw_rows}
+            ordered_rows = [
+                rows_by_fid[fid] for fid in slice_fids if fid in rows_by_fid
+            ]
+            orphan_results = self._post_process_orphans(ordered_rows)
+
+        results = mapping_results + orphan_results
+        serializer = FindingGroupResourceSerializer(results, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
         return Response(serializer.data)
 
     def list(self, request, *args, **kwargs):
@@ -7923,10 +8315,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
         tenant_id = request.tenant_id
         queryset = self._get_finding_queryset()
 
-        # Get latest completed scan for each provider
+        # Order by -completed_at (matching the /latest summary path and the
+        # daily summary upsert keyed on midnight(completed_at)) so that
+        # overlapping scans do not make /resources and /latest read from
+        # different scans and report diverging counts.
         latest_scan_ids = (
             Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
+            .order_by("provider_id", "-completed_at", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )

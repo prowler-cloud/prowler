@@ -55,7 +55,9 @@ class TestDirectorySuperAdminCount:
             assert "2 super administrator(s)" in findings[0].status_extended
             assert "within the recommended range" in findings[0].status_extended
             assert findings[0].resource_name == DOMAIN
+            assert findings[0].resource_id == CUSTOMER_ID
             assert findings[0].customer_id == CUSTOMER_ID
+            assert findings[0].resource == mock_provider.domain_resource.dict()
 
     def test_directory_super_admin_count_pass_4_admins(self):
         """Test PASS when there are 4 super admins (within range)"""

@@ -222,7 +222,7 @@ class Test_entra_conditional_access_policy_approved_client_app_required_for_mobi
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' reports the requirement of approved client apps or app protection for mobile devices but does not enforce it."
+                == f"Conditional Access Policy {display_name} reports the requirement of approved client apps or app protection for mobile devices but does not enforce it."
             )
             assert (
                 result[0].resource
@@ -312,7 +312,7 @@ class Test_entra_conditional_access_policy_approved_client_app_required_for_mobi
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' requires approved client apps or app protection for mobile devices."
+                == f"Conditional Access Policy {display_name} requires approved client apps or app protection for mobile devices."
             )
             assert (
                 result[0].resource
@@ -738,7 +738,7 @@ class Test_entra_conditional_access_policy_approved_client_app_required_for_mobi
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' requires approved client apps or app protection for mobile devices."
+                == f"Conditional Access Policy {display_name} requires approved client apps or app protection for mobile devices."
             )
             assert (
                 result[0].resource
@@ -827,7 +827,7 @@ class Test_entra_conditional_access_policy_approved_client_app_required_for_mobi
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' requires approved client apps or app protection for mobile devices."
+                == f"Conditional Access Policy {display_name} requires approved client apps or app protection for mobile devices."
             )
             assert (
                 result[0].resource
@@ -963,7 +963,7 @@ class Test_entra_conditional_access_policy_approved_client_app_required_for_mobi
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{enabled_name}' requires approved client apps or app protection for mobile devices."
+                == f"Conditional Access Policy {enabled_name} requires approved client apps or app protection for mobile devices."
             )
             assert (
                 result[0].resource
@@ -1052,7 +1052,7 @@ class Test_entra_conditional_access_policy_approved_client_app_required_for_mobi
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Conditional Access Policy '{display_name}' requires approved client apps or app protection for mobile devices."
+                == f"Conditional Access Policy {display_name} requires approved client apps or app protection for mobile devices."
             )
             assert (
                 result[0].resource
