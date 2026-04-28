@@ -132,7 +132,7 @@ class Test_bedrock_guardrails_configured:
             assert result[0].resource_id == "bedrock-guardrails"
             assert (
                 result[0].resource_arn
-                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:guardrail/summary"
+                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:guardrails"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
@@ -207,13 +207,10 @@ class Test_bedrock_guardrails_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Bedrock has 1 guardrail(s) available in region {AWS_REGION_US_EAST_1}: test-guardrail. This does not confirm that guardrails are attached to agents or used on model invocations."
+                == f"Bedrock guardrail test-guardrail is available in region {AWS_REGION_US_EAST_1}. This does not confirm that the guardrail is attached to agents or used on model invocations."
             )
-            assert result[0].resource_id == "bedrock-guardrails"
-            assert (
-                result[0].resource_arn
-                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:guardrail/summary"
-            )
+            assert result[0].resource_id == "test-id"
+            assert result[0].resource_arn == GUARDRAIL_ARN
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
@@ -260,7 +257,7 @@ class Test_bedrock_guardrails_configured:
             assert eu_result.resource_id == "bedrock-guardrails"
             assert (
                 eu_result.resource_arn
-                == f"arn:aws:bedrock:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:guardrail/summary"
+                == f"arn:aws:bedrock:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:guardrails"
             )
             assert eu_result.resource_tags == []
 
@@ -268,13 +265,10 @@ class Test_bedrock_guardrails_configured:
             assert us_result.status == "PASS"
             assert (
                 us_result.status_extended
-                == f"Bedrock has 1 guardrail(s) available in region {AWS_REGION_US_EAST_1}: test-guardrail. This does not confirm that guardrails are attached to agents or used on model invocations."
+                == f"Bedrock guardrail test-guardrail is available in region {AWS_REGION_US_EAST_1}. This does not confirm that the guardrail is attached to agents or used on model invocations."
             )
-            assert us_result.resource_id == "bedrock-guardrails"
-            assert (
-                us_result.resource_arn
-                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:guardrail/summary"
-            )
+            assert us_result.resource_id == "test-id"
+            assert us_result.resource_arn == GUARDRAIL_ARN
             assert us_result.resource_tags == []
 
     @mock.patch(

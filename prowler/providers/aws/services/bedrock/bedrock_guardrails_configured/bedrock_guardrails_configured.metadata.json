@@ -13,7 +13,7 @@
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
   "Description": "**Amazon Bedrock guardrails** provide reusable safety policies for filtering harmful or unwanted content in model inputs and outputs.\n\nThis evaluation checks whether at least one guardrail exists in each successfully scanned region. It does **not** verify that guardrails are attached to agents or passed on individual model invocation API calls.",
-  "Risk": "Without any configured Bedrock guardrails in a region, teams lack a native reusable policy object for content filtering and safety controls. Applications may invoke models without standardized protections against harmful content, prompt injection, or sensitive-data exposure unless equivalent controls are enforced elsewhere.",
+  "Risk": "Without any configured **Bedrock guardrails** in a region, teams lack a native reusable policy object for **content filtering** and **safety controls**. Applications may invoke models without standardized protections against **harmful content**, **prompt injection**, or **sensitive-data exposure** unless equivalent controls are enforced elsewhere.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",

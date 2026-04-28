@@ -19,28 +19,32 @@ class bedrock_guardrails_configured(Check):
         """
         findings = []
         for region in sorted(bedrock_client.guardrails_scanned_regions):
-            report = Check_Report_AWS(metadata=self.metadata(), resource={})
-            report.region = region
-            report.resource_id = "bedrock-guardrails"
-            report.resource_arn = f"arn:{bedrock_client.audited_partition}:bedrock:{region}:{bedrock_client.audited_account}:guardrail/summary"
-
-            regional_guardrails = [
-                guardrail
-                for guardrail in bedrock_client.guardrails.values()
-                if guardrail.region == region
-            ]
-            regional_guardrails.sort(key=lambda guardrail: guardrail.name)
+            regional_guardrails = sorted(
+                (
+                    guardrail
+                    for guardrail in bedrock_client.guardrails.values()
+                    if guardrail.region == region
+                ),
+                key=lambda guardrail: guardrail.name,
+            )
 
             if regional_guardrails:
-                guardrail_names = ", ".join(g.name for g in regional_guardrails)
-                report.status = "PASS"
-                report.status_extended = f"Bedrock has {len(regional_guardrails)} guardrail(s) available in region {region}: {guardrail_names}. This does not confirm that guardrails are attached to agents or used on model invocations."
+                for guardrail in regional_guardrails:
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(), resource=guardrail
+                    )
+                    report.status = "PASS"
+                    report.status_extended = f"Bedrock guardrail {guardrail.name} is available in region {region}. This does not confirm that the guardrail is attached to agents or used on model invocations."
+                    findings.append(report)
             else:
+                report = Check_Report_AWS(metadata=self.metadata(), resource={})
+                report.region = region
+                report.resource_id = "bedrock-guardrails"
+                report.resource_arn = f"arn:{bedrock_client.audited_partition}:bedrock:{region}:{bedrock_client.audited_account}:guardrails"
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Bedrock has no guardrails configured in region {region}."
                 )
-
-            findings.append(report)
+                findings.append(report)
 
         return findings
