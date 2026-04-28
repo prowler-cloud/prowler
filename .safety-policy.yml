@@ -1,0 +1,58 @@
+# Safety policy for `safety check` (Safety CLI 3.x, v2 schema).
+# Applied in: .pre-commit-config.yaml, .github/workflows/api-security.yml,
+# .github/workflows/sdk-security.yml via `--policy-file`.
+#
+# Validate: poetry run safety validate policy_file --path .safety-policy.yml
+
+security:
+  # Scan unpinned requirements too. Prowler pins via poetry.lock, so this is
+  # defensive against accidental unpinned entries.
+  ignore-unpinned-requirements: False
+
+  # CVSS severity filter. 7 = report only HIGH (7.0–8.9) and CRITICAL (9.0–10.0).
+  # Reference: 9=CRITICAL only, 7=CRITICAL+HIGH, 4=CRITICAL+HIGH+MEDIUM.
+  ignore-cvss-severity-below: 7
+
+  # Unknown severity is unrated, not safe. Keep False so unrated CVEs still fail
+  # the build and get a human eye. Flip to True only if noise is unmanageable.
+  ignore-cvss-unknown-severity: False
+
+  # Fail the build when a non-ignored vulnerability is found.
+  continue-on-vulnerability-error: False
+
+  # Explicit accepted vulnerabilities. Each entry MUST have a reason and an
+  # expiry. Expired entries fail the scan, forcing re-audit.
+  ignore-vulnerabilities:
+    77744:
+      reason: "Botocore requires urllib3 1.X. Remove once upgraded to urllib3 2.X."
+      expires: '2026-10-22'
+    77745:
+      reason: "Botocore requires urllib3 1.X. Remove once upgraded to urllib3 2.X."
+      expires: '2026-10-22'
+    79023:
+      reason: "knack ReDoS; blocked until azure-cli-core (via cartography) allows knack >=0.13.0."
+      expires: '2026-10-22'
+    79027:
+      reason: "knack ReDoS; blocked until azure-cli-core (via cartography) allows knack >=0.13.0."
+      expires: '2026-10-22'
+    86217:
+      reason: "alibabacloud-tea-openapi==0.4.3 blocks upgrade to cryptography >=46.0.0."
+      expires: '2026-10-22'
+    71600:
+      reason: "CVE-2024-1135 false positive. Fixed in gunicorn 22.0.0; project uses 23.0.0."
+      expires: '2026-10-22'
+    70612:
+      reason: "TBD - audit required. Reason not documented in prior --ignore list."
+      expires: '2026-07-22'
+    66963:
+      reason: "TBD - audit required. Reason not documented in prior --ignore list."
+      expires: '2026-07-22'
+    74429:
+      reason: "TBD - audit required. Reason not documented in prior --ignore list."
+      expires: '2026-07-22'
+    76352:
+      reason: "TBD - audit required. Reason not documented in prior --ignore list."
+      expires: '2026-07-22'
+    76353:
+      reason: "TBD - audit required. Reason not documented in prior --ignore list."
+      expires: '2026-07-22'

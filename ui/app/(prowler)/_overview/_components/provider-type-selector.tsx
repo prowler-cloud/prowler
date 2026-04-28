@@ -7,6 +7,7 @@ import {
   MultiSelect,
   MultiSelectContent,
   MultiSelectItem,
+  type MultiSelectSearchProp,
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
@@ -83,6 +84,11 @@ const GoogleWorkspaceProviderBadge = lazy(() =>
     default: m.GoogleWorkspaceProviderBadge,
   })),
 );
+const VercelProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.VercelProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -150,24 +156,71 @@ const PROVIDER_DATA: Record<
     label: "OpenStack",
     icon: OpenStackProviderBadge,
   },
+  vercel: {
+    label: "Vercel",
+    icon: VercelProviderBadge,
+  },
 };
 
-type ProviderTypeSelectorProps = {
+/** Common props shared by both batch and instant modes. */
+interface ProviderTypeSelectorBaseProps {
   providers: ProviderProps[];
-};
+  search?: MultiSelectSearchProp;
+}
+
+/** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
+interface ProviderTypeSelectorBatchProps extends ProviderTypeSelectorBaseProps {
+  /**
+   * Called instead of navigating immediately.
+   * Use this on pages that batch filter changes (e.g. Findings).
+   *
+   * @param filterKey - The raw filter key without "filter[]" wrapper, e.g. "provider_type__in"
+   * @param values - The selected values array
+   */
+  onBatchChange: (filterKey: string, values: string[]) => void;
+  /**
+   * Pending selected values controlled by the parent.
+   * Reflects pending state before Apply is clicked.
+   */
+  selectedValues: string[];
+}
+
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface ProviderTypeSelectorInstantProps
+  extends ProviderTypeSelectorBaseProps {
+  onBatchChange?: never;
+  selectedValues?: never;
+}
+
+type ProviderTypeSelectorProps =
+  | ProviderTypeSelectorBatchProps
+  | ProviderTypeSelectorInstantProps;
 
 export const ProviderTypeSelector = ({
   providers,
+  onBatchChange,
+  selectedValues,
+  search = {
+    placeholder: "Search providers...",
+    emptyMessage: "No providers found.",
+  },
 }: ProviderTypeSelectorProps) => {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
 
   const currentProviders = searchParams.get("filter[provider_type__in]") || "";
-  const selectedTypes = currentProviders
+  const urlSelectedTypes = currentProviders
     ? currentProviders.split(",").filter(Boolean)
     : [];
 
+  // In batch mode, use the parent-controlled pending values; otherwise, use URL state.
+  const selectedTypes = onBatchChange ? selectedValues : urlSelectedTypes;
+
   const handleMultiValueChange = (values: string[]) => {
+    if (onBatchChange) {
+      onBatchChange("provider_type__in", values);
+      return;
+    }
     navigateWithParams((params) => {
       // Update provider_type__in
       if (values.length > 0) {
@@ -175,10 +228,6 @@ export const ProviderTypeSelector = ({
       } else {
         params.delete("filter[provider_type__in]");
       }
-
-      // Clear account selection when changing provider types
-      // User should manually select accounts if they want to filter by specific accounts
-      params.delete("filter[provider_id__in]");
     });
   };
 
@@ -188,7 +237,11 @@ export const ProviderTypeSelector = ({
         // .filter((p) => p.attributes.connection?.connected)
         .map((p) => p.attributes.provider),
     ),
-  ).filter((type): type is ProviderType => type in PROVIDER_DATA);
+  )
+    .filter((type): type is ProviderType => type in PROVIDER_DATA)
+    .sort((a, b) =>
+      PROVIDER_DATA[a].label.localeCompare(PROVIDER_DATA[b].label),
+    );
 
   const renderIcon = (providerType: ProviderType) => {
     const IconComponent = PROVIDER_DATA[providerType].icon;
@@ -237,7 +290,7 @@ export const ProviderTypeSelector = ({
         >
           {selectedLabel() || <MultiSelectValue placeholder="All providers" />}
         </MultiSelectTrigger>
-        <MultiSelectContent search={false}>
+        <MultiSelectContent search={search}>
           {availableTypes.length > 0 ? (
             <>
               <div
@@ -261,6 +314,7 @@ export const ProviderTypeSelector = ({
                   key={providerType}
                   value={providerType}
                   badgeLabel={PROVIDER_DATA[providerType].label}
+                  keywords={[providerType, PROVIDER_DATA[providerType].label]}
                   aria-label={`${PROVIDER_DATA[providerType].label} provider`}
                 >
                   <span aria-hidden="true">{renderIcon(providerType)}</span>

@@ -13,6 +13,7 @@ export const PROVIDER_TYPES = [
   "alibabacloud",
   "cloudflare",
   "openstack",
+  "vercel",
 ] as const;
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];
@@ -32,6 +33,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   alibabacloud: "Alibaba Cloud",
   cloudflare: "Cloudflare",
   openstack: "OpenStack",
+  vercel: "Vercel",
 };
 
 export function getProviderDisplayName(providerId: string): string {

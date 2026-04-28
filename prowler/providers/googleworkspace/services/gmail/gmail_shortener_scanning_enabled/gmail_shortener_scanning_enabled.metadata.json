@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_shortener_scanning_enabled",
+  "CheckTitle": "Identification of links behind shortened URLs is enabled",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Gmail can identify and expand links behind shortened URLs (e.g., bit.ly, goo.gl) to check if the destination is malicious. URL shorteners are commonly used in phishing campaigns to obscure the true destination of a link.",
+  "Risk": "Without shortened URL scanning, attackers can use **URL shortening services** to hide malicious destinations in phishing emails. Users cannot visually verify where the link leads, increasing the success rate of **phishing and credential harvesting** attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/7676854",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **Safety** > **Links and external images**\n4. Check **Identify links behind shortened URLs**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable identification of links behind shortened URLs so that Gmail can expand and scan shortened links for malicious content before users interact with them.",
+      "Url": "https://hub.prowler.com/check/gmail_shortener_scanning_enabled"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "gmail_external_image_scanning_enabled",
+    "gmail_untrusted_link_warnings_enabled"
+  ],
+  "Notes": ""
+}

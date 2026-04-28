@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.23.0
+  version: 1.27.0
   description: |-
     Prowler API specification.
 
@@ -372,6 +372,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -387,6 +388,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -409,6 +411,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -426,6 +429,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -1351,6 +1355,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1366,6 +1371,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1827,6 +1833,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1842,6 +1849,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1864,6 +1872,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -1881,6 +1890,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -2429,6 +2439,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2444,6 +2455,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2466,6 +2478,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -2483,6 +2496,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -2939,6 +2953,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2954,6 +2969,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2976,6 +2992,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -2993,6 +3010,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -3447,6 +3465,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -3462,6 +3481,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3484,6 +3504,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -3501,6 +3522,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -3943,6 +3965,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -3958,6 +3981,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3980,6 +4004,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -3997,6 +4022,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -5780,6 +5806,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5795,6 +5822,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5817,6 +5845,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -5834,6 +5863,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - name: filter[search]
@@ -5955,6 +5985,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5970,6 +6001,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5992,6 +6024,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -6009,6 +6042,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - name: filter[search]
@@ -6119,6 +6153,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6134,6 +6169,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6155,6 +6191,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -6172,6 +6209,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - name: filter[search]
@@ -6314,6 +6352,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6329,6 +6368,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6351,6 +6391,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -6368,6 +6409,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -6523,6 +6565,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6538,6 +6581,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6560,6 +6604,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -6577,6 +6622,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -6726,6 +6772,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6741,6 +6788,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6762,6 +6810,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -6779,6 +6828,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - name: filter[search]
@@ -6970,6 +7020,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6985,6 +7036,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7007,6 +7059,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -7024,6 +7077,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -7144,6 +7198,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7159,6 +7214,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7181,6 +7237,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -7198,6 +7255,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -7342,6 +7400,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7357,6 +7416,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7379,6 +7439,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -7396,6 +7457,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -8181,6 +8243,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8196,6 +8259,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider__in]
         schema:
@@ -8218,6 +8282,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -8235,6 +8300,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -8257,6 +8323,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8272,6 +8339,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -8294,6 +8362,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -8311,6 +8380,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - name: filter[search]
@@ -8980,6 +9050,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8995,6 +9066,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -9017,6 +9089,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -9034,6 +9107,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -9527,6 +9601,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -9542,6 +9617,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -9564,6 +9640,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -9581,6 +9658,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -9887,6 +9965,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -9902,6 +9981,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -9924,6 +10004,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -9941,6 +10022,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -10253,6 +10335,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -10268,6 +10351,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -10290,6 +10374,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -10307,6 +10392,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -11129,6 +11215,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -11144,6 +11231,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -11166,6 +11254,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -11183,6 +11272,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -18463,6 +18553,15 @@ components:
                     required:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
+                  - type: object
+                    title: Vercel API Token
+                    properties:
+                      api_token:
+                        type: string
+                        description: Vercel API token for authentication. Can be scoped
+                          to a specific team.
+                    required:
+                    - api_token
                   writeOnly: true
               required:
               - secret
@@ -19465,6 +19564,7 @@ components:
               - openstack
               - image
               - googleworkspace
+              - vercel
               type: string
               description: |-
                 * `aws` - AWS
@@ -19481,6 +19581,7 @@ components:
                 * `openstack` - OpenStack
                 * `image` - Image
                 * `googleworkspace` - Google Workspace
+                * `vercel` - Vercel
               x-spec-enum-id: c0d56cad8ab9abe5
             uid:
               type: string
@@ -19601,6 +19702,7 @@ components:
               - openstack
               - image
               - googleworkspace
+              - vercel
               type: string
               x-spec-enum-id: c0d56cad8ab9abe5
               description: |-
@@ -19620,6 +19722,7 @@ components:
                 * `openstack` - OpenStack
                 * `image` - Image
                 * `googleworkspace` - Google Workspace
+                * `vercel` - Vercel
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -19671,6 +19774,7 @@ components:
                   - openstack
                   - image
                   - googleworkspace
+                  - vercel
                   type: string
                   x-spec-enum-id: c0d56cad8ab9abe5
                   description: |-
@@ -19690,6 +19794,7 @@ components:
                     * `openstack` - OpenStack
                     * `image` - Image
                     * `googleworkspace` - Google Workspace
+                    * `vercel` - Vercel
                 uid:
                   type: string
                   minLength: 3
@@ -20539,6 +20644,15 @@ components:
                 required:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
+              - type: object
+                title: Vercel API Token
+                properties:
+                  api_token:
+                    type: string
+                    description: Vercel API token for authentication. Can be scoped
+                      to a specific team.
+                required:
+                - api_token
               writeOnly: true
           required:
           - secret_type
@@ -20955,6 +21069,15 @@ components:
                     required:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
+                  - type: object
+                    title: Vercel API Token
+                    properties:
+                      api_token:
+                        type: string
+                        description: Vercel API token for authentication. Can be scoped
+                          to a specific team.
+                    required:
+                    - api_token
                   writeOnly: true
               required:
               - secret_type
@@ -21381,6 +21504,15 @@ components:
                 required:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
+              - type: object
+                title: Vercel API Token
+                properties:
+                  api_token:
+                    type: string
+                    description: Vercel API token for authentication. Can be scoped
+                      to a specific team.
+                required:
+                - api_token
               writeOnly: true
           required:
           - secret

@@ -40,6 +40,7 @@ class TestCheckLoader:
             ResourceIdTemplate="arn:partition:s3:::bucket_name",
             Severity=S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_SEVERITY,
             ResourceType="AwsS3Bucket",
+            ResourceGroup="storage",
             Description="Check S3 Bucket Level Public Access Block.",
             Risk="Public access policies may be applied to sensitive data buckets.",
             RelatedUrl="",
@@ -76,6 +77,7 @@ class TestCheckLoader:
             ResourceIdTemplate="arn:partition:iam::account-id:user/user_name",
             Severity=IAM_USER_NO_MFA_SEVERITY,
             ResourceType="AwsIamUser",
+            ResourceGroup="IAM",
             Description="Check IAM User No MFA.",
             Risk="IAM users should have Multi-Factor Authentication (MFA) enabled.",
             RelatedUrl="",
@@ -533,3 +535,143 @@ class TestCheckLoader:
                 provider=self.provider,
             )
         assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_resource_groups(self):
+        """Test that checks are filtered by resource group"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            IAM_USER_NO_MFA_NAME: self.get_custom_check_iam_metadata(),
+        }
+        resource_groups = {"storage"}
+
+        assert {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME} == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            resource_groups=resource_groups,
+            provider=self.provider,
+        )
+
+    def test_load_checks_to_execute_with_multiple_resource_groups(self):
+        """Test that checks are filtered by multiple resource groups"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            IAM_USER_NO_MFA_NAME: self.get_custom_check_iam_metadata(),
+        }
+        resource_groups = {"storage", "IAM"}
+
+        assert {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
+            IAM_USER_NO_MFA_NAME,
+        } == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            resource_groups=resource_groups,
+            provider=self.provider,
+        )
+
+    def test_load_checks_to_execute_with_resource_group_case_insensitive(self):
+        """Test that resource group matching is case-insensitive"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            IAM_USER_NO_MFA_NAME: self.get_custom_check_iam_metadata(),
+        }
+        # "iam" lowercase should match metadata "IAM", "Storage" mixed case should match "storage"
+        resource_groups = {"iam", "Storage"}
+
+        assert {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME,
+            IAM_USER_NO_MFA_NAME,
+        } == load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            resource_groups=resource_groups,
+            provider=self.provider,
+        )
+
+    def test_load_checks_to_execute_with_invalid_resource_group(self):
+        """Test that invalid resource group names cause sys.exit(1)"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        resource_groups = {"invalid_resource_group"}
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metadata,
+                resource_groups=resource_groups,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_multiple_invalid_resource_groups(self):
+        """Test that multiple invalid resource group names cause sys.exit(1)"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        resource_groups = {"invalid_rg_1", "invalid_rg_2"}
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metadata,
+                resource_groups=resource_groups,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_load_checks_to_execute_with_mixed_valid_invalid_resource_groups(self):
+        """Test that mix of valid and invalid resource groups cause sys.exit(1)"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        resource_groups = {"storage", "invalid_resource_group"}
+
+        with pytest.raises(SystemExit) as exc_info:
+            load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metadata,
+                resource_groups=resource_groups,
+                provider=self.provider,
+            )
+        assert exc_info.value.code == 1
+
+    def test_list_checks_includes_threat_detection(self):
+        """Test that list_checks=True includes threat-detection checks (fixes #10576)"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata(),
+        }
+
+        result = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            provider=self.provider,
+            list_checks=True,
+        )
+        assert CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME in result
+        assert S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME in result
+
+    def test_list_checks_with_service_includes_threat_detection(self):
+        """Test that list_checks=True with service filter includes threat-detection checks (fixes #10576)"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata(),
+        }
+        service_list = ["cloudtrail"]
+
+        result = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            service_list=service_list,
+            provider=self.provider,
+            list_checks=True,
+        )
+        assert CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME in result
+        assert S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME not in result
+
+    def test_scan_still_excludes_threat_detection_by_default(self):
+        """Test that without list_checks, threat-detection checks are still excluded"""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata(),
+            CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata(),
+        }
+
+        result = load_checks_to_execute(
+            bulk_checks_metadata=bulk_checks_metadata,
+            provider=self.provider,
+        )
+        assert CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME not in result
+        assert S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME in result

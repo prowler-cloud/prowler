@@ -243,6 +243,11 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.IMAGE_FILTER]: "",
           [ProviderCredentialFields.TAG_FILTER]: "",
         };
+      case "vercel":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.VERCEL_API_TOKEN]: "",
+        };
       default:
         return baseDefaults;
     }
