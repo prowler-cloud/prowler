@@ -1240,6 +1240,7 @@
       "Checks": [
         "autoscaling_group_capacity_rebalance_enabled",
         "autoscaling_group_multiple_az",
+        "bedrock_prompt_have_multiple_variants",
         "cloudfront_distributions_multiple_origin_failover_configured",
         "directconnect_connection_redundancy",
         "directconnect_virtual_interface_redundancy",

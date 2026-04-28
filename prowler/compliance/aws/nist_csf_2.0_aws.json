@@ -1389,6 +1389,7 @@
         "elb_cross_zone_load_balancing_enabled",
         "autoscaling_group_capacity_rebalance_enabled",
         "autoscaling_group_multiple_az",
+        "bedrock_prompt_have_multiple_variants",
         "vpc_vpn_connection_tunnels_up",
         "cloudfront_distributions_multiple_origin_failover_configured",
         "s3_bucket_cross_region_replication"
