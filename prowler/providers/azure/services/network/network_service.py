@@ -222,8 +222,8 @@ class FlowLog:
     id: str
     name: str
     enabled: bool
-    target_resource_id: Optional[str]
     retention_policy: RetentionPolicy
+    target_resource_id: Optional[str] = None
     traffic_analytics_enabled: bool = False
     workspace_resource_id: Optional[str] = None
 

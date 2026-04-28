@@ -177,6 +177,113 @@ class Test_network_flow_log_captured_sent:
                 == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
             )
 
+    def test_network_network_watchers_traffic_analytics_without_workspace(self):
+        network_client = mock.MagicMock
+        network_watcher_name = "Network Watcher Name"
+        network_watcher_id = str(uuid4())
+
+        network_client.network_watchers = {
+            AZURE_SUBSCRIPTION_ID: [
+                NetworkWatcher(
+                    id=network_watcher_id,
+                    name=network_watcher_name,
+                    location="location",
+                    flow_logs=[
+                        FlowLog(
+                            id=str(uuid4()),
+                            name="ta-without-workspace",
+                            enabled=True,
+                            target_resource_id="/subscriptions/test-sub/resourceGroups/rg/providers/Microsoft.Network/virtualNetworks/test-vnet",
+                            retention_policy=RetentionPolicy(days=90),
+                            traffic_analytics_enabled=True,
+                            workspace_resource_id=None,
+                        )
+                    ],
+                )
+            ]
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
+        ):
+            from prowler.providers.azure.services.network.network_flow_log_captured_sent.network_flow_log_captured_sent import (
+                network_flow_log_captured_sent,
+            )
+
+            check = network_flow_log_captured_sent()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
+            )
+
+    def test_network_network_watchers_mixed_flow_logs_fails(self):
+        network_client = mock.MagicMock
+        network_watcher_name = "Network Watcher Name"
+        network_watcher_id = str(uuid4())
+
+        network_client.network_watchers = {
+            AZURE_SUBSCRIPTION_ID: [
+                NetworkWatcher(
+                    id=network_watcher_id,
+                    name=network_watcher_name,
+                    location="location",
+                    flow_logs=[
+                        FlowLog(
+                            id=str(uuid4()),
+                            name="vnet-flow-log-workspace-backed",
+                            enabled=True,
+                            target_resource_id="/subscriptions/test-sub/resourceGroups/rg/providers/Microsoft.Network/virtualNetworks/test-vnet",
+                            retention_policy=RetentionPolicy(days=90),
+                            traffic_analytics_enabled=True,
+                            workspace_resource_id="/subscriptions/test-sub/resourceGroups/rg/providers/Microsoft.OperationalInsights/workspaces/test-law",
+                        ),
+                        FlowLog(
+                            id=str(uuid4()),
+                            name="nsg-flow-log-storage-only",
+                            enabled=True,
+                            target_resource_id="/subscriptions/test-sub/resourceGroups/rg/providers/Microsoft.Network/networkSecurityGroups/test-nsg",
+                            retention_policy=RetentionPolicy(days=90),
+                            traffic_analytics_enabled=False,
+                            workspace_resource_id=None,
+                        ),
+                    ],
+                )
+            ]
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
+        ):
+            from prowler.providers.azure.services.network.network_flow_log_captured_sent.network_flow_log_captured_sent import (
+                network_flow_log_captured_sent,
+            )
+
+            check = network_flow_log_captured_sent()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
+            )
+
     def test_network_network_watchers_vnet_flow_logs_well_configured(self):
         network_client = mock.MagicMock
         network_watcher_name = "Network Watcher Name"

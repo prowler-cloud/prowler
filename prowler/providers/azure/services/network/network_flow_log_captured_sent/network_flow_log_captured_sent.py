@@ -11,28 +11,26 @@ class network_flow_log_captured_sent(Check):
                     metadata=self.metadata(), resource=network_watcher
                 )
                 report.subscription = subscription
-                report.status = "FAIL"
-                report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has no flow logs"
                 if network_watcher.flow_logs:
-                    has_enabled_flow_logs = any(
-                        flow_log.enabled for flow_log in network_watcher.flow_logs
-                    )
-                    has_workspace_backed_flow_logs = any(
-                        flow_log.enabled
-                        and flow_log.traffic_analytics_enabled
-                        and flow_log.workspace_resource_id
-                        for flow_log in network_watcher.flow_logs
-                    )
-
-                    if has_workspace_backed_flow_logs:
-                        report.status = "PASS"
-                        report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has flow logs that are captured and sent to Log Analytics workspace"
-                    elif has_enabled_flow_logs:
-                        report.status = "FAIL"
-                        report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
-                    else:
-                        report.status = "FAIL"
-                        report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has flow logs disabled"
+                    report.status = "PASS"
+                    report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has flow logs that are captured and sent to Log Analytics workspace"
+                    has_failed = False
+                    for flow_log in network_watcher.flow_logs:
+                        if not has_failed:
+                            if not flow_log.enabled:
+                                report.status = "FAIL"
+                                report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has flow logs disabled"
+                                has_failed = True
+                            elif not (
+                                flow_log.traffic_analytics_enabled
+                                and flow_log.workspace_resource_id
+                            ):
+                                report.status = "FAIL"
+                                report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
+                                has_failed = True
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"Network Watcher {network_watcher.name} from subscription {subscription} has no flow logs"
 
                 findings.append(report)
 
