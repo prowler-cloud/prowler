@@ -1,9 +1,10 @@
-import type { FindingGroupRow } from "@/types";
-
-type FindingGroupMutedState = Pick<
-  FindingGroupRow,
-  "muted" | "mutedCount" | "resourcesFail" | "resourcesTotal"
->;
+import {
+  FINDING_DELTA,
+  FINDING_STATUS,
+  type FindingDelta,
+  type FindingGroupRow,
+  type FindingStatus,
+} from "@/types";
 
 type FindingGroupDeltaState = Pick<
   FindingGroupRow,
@@ -23,7 +24,18 @@ type FindingGroupDeltaState = Pick<
   | "changedManualMutedCount"
 >;
 
-export function isFindingGroupMuted(group: FindingGroupMutedState): boolean {
+type FindingGroupDelta = Exclude<FindingDelta, null>;
+
+type FindingGroupStatus = FindingStatus;
+
+const FINDING_GROUP_STATUSES = Object.values(FINDING_STATUS);
+
+export function isFindingGroupMuted(
+  group: Pick<
+    FindingGroupRow,
+    "muted" | "mutedCount" | "resourcesFail" | "resourcesTotal"
+  >,
+): boolean {
   if (typeof group.muted === "boolean") {
     return group.muted;
   }
@@ -36,6 +48,54 @@ export function isFindingGroupMuted(group: FindingGroupMutedState): boolean {
   return (
     mutedCount === group.resourcesFail || mutedCount === group.resourcesTotal
   );
+}
+
+export function getFindingGroupImpactedCounts(
+  group: Pick<
+    FindingGroupRow,
+    | "resourcesTotal"
+    | "resourcesFail"
+    | "passCount"
+    | "failCount"
+    | "manualCount"
+    | "passMutedCount"
+    | "failMutedCount"
+    | "manualMutedCount"
+    | "muted"
+    | "mutedCount"
+  >,
+): { impacted: number; total: number } {
+  if (group.resourcesTotal > 0) {
+    return {
+      impacted: group.resourcesFail,
+      total: group.resourcesTotal,
+    };
+  }
+
+  const total =
+    (group.passCount ?? 0) + (group.failCount ?? 0) + (group.manualCount ?? 0);
+
+  if (!isFindingGroupMuted(group)) {
+    return {
+      impacted: group.failCount ?? 0,
+      total,
+    };
+  }
+
+  return {
+    impacted: group.failCount ?? 0,
+    total:
+      total +
+      (group.passMutedCount ?? 0) +
+      (group.failMutedCount ?? 0) +
+      (group.manualMutedCount ?? 0),
+  };
+}
+
+export function canDrillDownFindingGroup(
+  group: Pick<FindingGroupRow, "resourcesTotal">,
+): boolean {
+  return group.resourcesTotal > 0;
 }
 
 function getNewDeltaTotal(group: FindingGroupDeltaState): number {
@@ -64,20 +124,17 @@ function getChangedDeltaTotal(group: FindingGroupDeltaState): number {
 
 export function getFindingGroupDelta(
   group: FindingGroupDeltaState,
-): "new" | "changed" | "none" {
+): FindingGroupDelta {
   if (getNewDeltaTotal(group) > 0) {
-    return "new";
+    return FINDING_DELTA.NEW;
   }
 
   if (getChangedDeltaTotal(group) > 0) {
-    return "changed";
+    return FINDING_DELTA.CHANGED;
   }
 
-  return "none";
+  return FINDING_DELTA.NONE;
 }
-
-const FINDING_GROUP_STATUSES = ["FAIL", "PASS", "MANUAL"] as const;
-type FindingGroupStatus = (typeof FINDING_GROUP_STATUSES)[number];
 
 type FindingGroupFiltersRecord = Record<string, string | string[] | undefined>;
 
@@ -142,13 +199,13 @@ function getNewDeltaForStatuses(
   statuses: Set<FindingGroupStatus>,
 ): number {
   let total = 0;
-  if (statuses.has("FAIL")) {
+  if (statuses.has(FINDING_STATUS.FAIL)) {
     total += (group.newFailCount ?? 0) + (group.newFailMutedCount ?? 0);
   }
-  if (statuses.has("PASS")) {
+  if (statuses.has(FINDING_STATUS.PASS)) {
     total += (group.newPassCount ?? 0) + (group.newPassMutedCount ?? 0);
   }
-  if (statuses.has("MANUAL")) {
+  if (statuses.has(FINDING_STATUS.MANUAL)) {
     total += (group.newManualCount ?? 0) + (group.newManualMutedCount ?? 0);
   }
   return total;
@@ -159,13 +216,13 @@ function getChangedDeltaForStatuses(
   statuses: Set<FindingGroupStatus>,
 ): number {
   let total = 0;
-  if (statuses.has("FAIL")) {
+  if (statuses.has(FINDING_STATUS.FAIL)) {
     total += (group.changedFailCount ?? 0) + (group.changedFailMutedCount ?? 0);
   }
-  if (statuses.has("PASS")) {
+  if (statuses.has(FINDING_STATUS.PASS)) {
     total += (group.changedPassCount ?? 0) + (group.changedPassMutedCount ?? 0);
   }
-  if (statuses.has("MANUAL")) {
+  if (statuses.has(FINDING_STATUS.MANUAL)) {
     total +=
       (group.changedManualCount ?? 0) + (group.changedManualMutedCount ?? 0);
   }
@@ -182,7 +239,7 @@ function getChangedDeltaForStatuses(
 export function getFilteredFindingGroupDelta(
   group: FindingGroupDeltaState,
   filters: FindingGroupFiltersRecord,
-): "new" | "changed" | "none" {
+): FindingGroupDelta {
   const activeStatuses = getActiveStatusFilter(filters);
 
   if (!activeStatuses || !hasAnyDeltaBreakdown(group)) {
@@ -190,12 +247,12 @@ export function getFilteredFindingGroupDelta(
   }
 
   if (getNewDeltaForStatuses(group, activeStatuses) > 0) {
-    return "new";
+    return FINDING_DELTA.NEW;
   }
 
   if (getChangedDeltaForStatuses(group, activeStatuses) > 0) {
-    return "changed";
+    return FINDING_DELTA.CHANGED;
   }
 
-  return "none";
+  return FINDING_DELTA.NONE;
 }

@@ -19,11 +19,7 @@ class drive_warn_sharing_with_allowlisted_domains(Check):
         if drive_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=drive_client.provider.identity,
-                resource_name=drive_client.provider.identity.domain,
-                resource_id=drive_client.provider.identity.customer_id,
-                customer_id=drive_client.provider.identity.customer_id,
-                location="global",
+                resource=drive_client.provider.domain_resource,
             )
 
             warn_enabled = (
@@ -36,21 +32,20 @@ class drive_warn_sharing_with_allowlisted_domains(Check):
                     f"Users are warned when sharing files with allowlisted "
                     f"domains in domain {drive_client.provider.identity.domain}."
                 )
+            elif warn_enabled is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Warning when sharing with allowlisted domains uses Google's "
+                    f"secure default configuration (enabled) "
+                    f"in domain {drive_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if warn_enabled is None:
-                    report.status_extended = (
-                        f"Warning when sharing with allowlisted domains is not "
-                        f"explicitly configured in domain "
-                        f"{drive_client.provider.identity.domain}. "
-                        f"Users should be warned when sharing files with users in allowlisted domains."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Warning when sharing with allowlisted domains is disabled "
-                        f"in domain {drive_client.provider.identity.domain}. "
-                        f"Users should be warned when sharing files with users in allowlisted domains."
-                    )
+                report.status_extended = (
+                    f"Warning when sharing with allowlisted domains is disabled "
+                    f"in domain {drive_client.provider.identity.domain}. "
+                    f"Users should be warned when sharing files with users in allowlisted domains."
+                )
 
             findings.append(report)
 

@@ -70,6 +70,14 @@ export type RolePermissionAttributes = Pick<
   PermissionKey
 >;
 
+export const TENANT_MEMBERSHIP_ROLE = {
+  Owner: "owner",
+  Member: "member",
+} as const;
+
+export type TenantMembershipRole =
+  (typeof TENANT_MEMBERSHIP_ROLE)[keyof typeof TENANT_MEMBERSHIP_ROLE];
+
 export interface RoleDetail {
   id: string;
   type: "roles";

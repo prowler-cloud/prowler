@@ -24,6 +24,10 @@ import {
   ProviderProps,
 } from "@/types/providers";
 
+function isNonEmptyString(value: string | null | undefined): value is string {
+  return Boolean(value);
+}
+
 interface ProvidersFiltersProps {
   filters: FilterOption[];
   providers: ProviderProps[];
@@ -37,6 +41,14 @@ export const ProvidersFilters = ({
 }: ProvidersFiltersProps) => {
   const { updateFilter } = useUrlFilters();
   const searchParams = useSearchParams();
+
+  const buildSearchConfig = (filter: FilterOption) => {
+    const label = filter.labelCheckboxGroup.toLowerCase();
+    return {
+      placeholder: `Search ${label}...`,
+      emptyMessage: `No ${label} found.`,
+    };
+  };
 
   const sortedFilters = [...filters].sort((a, b) => {
     if (a.index !== undefined && b.index !== undefined)
@@ -107,6 +119,35 @@ export const ProvidersFilters = ({
     );
   };
 
+  const getSearchKeywords = (
+    entity: FilterEntity | undefined,
+    value: string,
+    displayLabel: string,
+  ): string[] => {
+    if (!entity) {
+      return [displayLabel, value];
+    }
+
+    if (isConnectionStatus(entity)) {
+      return [displayLabel, value, (entity as ProviderConnectionStatus).label];
+    }
+
+    if (isGroupFilterEntity(entity)) {
+      return [displayLabel, value, (entity as GroupFilterEntity).name].filter(
+        isNonEmptyString,
+      );
+    }
+
+    const providerEntity = entity as ProviderEntity;
+    return [
+      displayLabel,
+      value,
+      providerEntity.alias,
+      providerEntity.uid,
+      providerEntity.provider,
+    ].filter(isNonEmptyString);
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-4">
       <div className="min-w-[200px] flex-1 md:max-w-[280px]">
@@ -125,7 +166,10 @@ export const ProvidersFilters = ({
                   placeholder={`All ${filter.labelCheckboxGroup}`}
                 />
               </MultiSelectTrigger>
-              <MultiSelectContent search={false}>
+              <MultiSelectContent
+                search={buildSearchConfig(filter)}
+                width={filter.width ?? "default"}
+              >
                 <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
                 <MultiSelectSeparator />
                 {filter.values.map((value) => {
@@ -138,6 +182,7 @@ export const ProvidersFilters = ({
                       key={value}
                       value={value}
                       badgeLabel={getBadgeLabel(entity, displayLabel)}
+                      keywords={getSearchKeywords(entity, value, displayLabel)}
                     >
                       {entity ? renderEntityContent(entity) : displayLabel}
                     </MultiSelectItem>

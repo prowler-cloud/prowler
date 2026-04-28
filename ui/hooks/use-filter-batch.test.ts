@@ -61,6 +61,43 @@ describe("useFilterBatch", () => {
       });
       expect(result.current.hasChanges).toBe(false);
     });
+
+    it("should expose filter[delta]=new under the FilterType.DELTA key so the dropdown shows it selected", async () => {
+      // Given — URL from LinkToFindings uses `filter[delta]` (singular), matching the API.
+      setSearchParams({
+        "filter[status__in]": "FAIL",
+        "filter[delta]": "new",
+      });
+
+      const { FilterType } = await import("@/types/filters");
+
+      // When
+      const { result } = renderHook(() => useFilterBatch());
+
+      // Then — the Delta dropdown reads via getFilterValue(`filter[${FilterType.DELTA}]`).
+      // For the checkbox of "new" to appear checked, that lookup must return ["new"].
+      expect(
+        result.current.getFilterValue(`filter[${FilterType.DELTA}]`),
+      ).toEqual(["new"]);
+    });
+
+    it("should include both filter[status__in] and filter[delta] from the overview deep link", () => {
+      // Given — URL produced by LinkToFindings: /findings?...&filter[status__in]=FAIL&filter[delta]=new
+      setSearchParams({
+        "filter[status__in]": "FAIL",
+        "filter[delta]": "new",
+      });
+
+      // When
+      const { result } = renderHook(() => useFilterBatch());
+
+      // Then — the singular `filter[delta]` key must be captured in pendingFilters
+      // so FindingsFilters can render a chip for it (same as filter[status__in]).
+      expect(result.current.pendingFilters).toEqual({
+        "filter[status__in]": ["FAIL"],
+        "filter[delta]": ["new"],
+      });
+    });
   });
 
   // ── Excluded keys ──────────────────────────────────────────────────────────
@@ -459,6 +496,26 @@ describe("useFilterBatch", () => {
       // The pushed URL must NOT contain severity or status
       expect(calledUrl).not.toContain("severity");
       expect(calledUrl).not.toContain("status");
+    });
+
+    it("should not expose cleared URL filters as pending changes while navigation updates", () => {
+      // Given
+      setSearchParams({
+        "filter[severity__in]": "critical",
+        "filter[status__in]": "FAIL",
+      });
+      const { result } = renderHook(() => useFilterBatch());
+
+      // When
+      act(() => {
+        result.current.clearAndApply();
+      });
+
+      // Then — the UI should not render the pending-filter row after clearing.
+      expect(result.current.appliedFilters).toEqual({});
+      expect(result.current.changedFilters).toEqual({});
+      expect(result.current.hasChanges).toBe(false);
+      expect(result.current.changeCount).toBe(0);
     });
 
     it("should apply defaultParams when clearing", () => {

@@ -1,23 +1,11 @@
 "use client";
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
-import {
-  Check,
-  Container,
-  Copy,
-  CornerDownRight,
-  ExternalLink,
-  Link,
-  Loader2,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Container, CornerDownRight, ExternalLink, Link } from "lucide-react";
+import { useState } from "react";
 
-import { getFindingById, getLatestFindings } from "@/actions/findings";
-import { listOrganizationsSafe } from "@/actions/organizations/organizations";
-import { getResourceById } from "@/actions/resources";
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
-import { FindingDetail } from "@/components/findings/table/finding-detail";
+import { FindingDetailDrawer } from "@/components/findings/table";
 import {
   Card,
   Tabs,
@@ -32,56 +20,27 @@ import {
   InfoField,
   InfoTooltip,
 } from "@/components/shadcn/info-field/info-field";
+import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import {
+  QUERY_EDITOR_LANGUAGE,
+  QueryCodeEditor,
+} from "@/components/shared/query-code-editor";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable } from "@/components/ui/table";
-import { createDict } from "@/lib";
 import { getGroupLabel } from "@/lib/categories";
 import { buildGitFileUrl } from "@/lib/iac-utils";
 import { getRegionFlag } from "@/lib/region-flags";
-import {
-  FindingProps,
-  MetaDataProps,
-  ProviderType,
-  ResourceProps,
-} from "@/types";
-import { OrganizationResource } from "@/types/organizations";
+import { ProviderType, ResourceProps } from "@/types";
 
 import {
   getResourceFindingsColumns,
   ResourceFinding,
 } from "./resource-findings-columns";
-
-function useProviderOrganization(
-  providerId: string,
-  providerType: string,
-): OrganizationResource | null {
-  const [org, setOrg] = useState<OrganizationResource | null>(null);
-  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
-
-  useEffect(() => {
-    if (!isCloudEnv || providerType !== "aws") {
-      setOrg(null);
-      return;
-    }
-
-    const loadOrg = async () => {
-      const response = await listOrganizationsSafe();
-      const found = response.data.find((o: OrganizationResource) =>
-        o.relationships?.providers?.data?.some(
-          (p: { id: string }) => p.id === providerId,
-        ),
-      );
-      setOrg(found ?? null);
-    };
-
-    loadOrg();
-  }, [isCloudEnv, providerType, providerId]);
-
-  return org;
-}
+import { useFindingDetails } from "./use-finding-details";
+import { useResourceDrawerBootstrap } from "./use-resource-drawer-bootstrap";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -146,175 +105,58 @@ interface ResourceDetailContentProps {
 export const ResourceDetailContent = ({
   resourceDetails,
 }: ResourceDetailContentProps) => {
-  const [findingsData, setFindingsData] = useState<ResourceFinding[]>([]);
-  const [findingsMetadata, setFindingsMetadata] =
-    useState<MetaDataProps | null>(null);
-  const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
-  const [findingsLoading, setFindingsLoading] = useState(true);
-  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
   const [findingsReloadNonce, setFindingsReloadNonce] = useState(0);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
     null,
   );
-  const [findingDetails, setFindingDetails] = useState<FindingProps | null>(
-    null,
-  );
-  const [findingDetailLoading, setFindingDetailLoading] = useState(false);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [activeTab, setActiveTab] = useState("findings");
-  const [metadataCopied, setMetadataCopied] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
-  const findingFetchRef = useRef<AbortController | null>(null);
-  const router = useRouter();
 
   const resource = resourceDetails;
   const resourceId = resource.id;
   const attributes = resource.attributes;
   const providerData = resource.relationships.provider.data.attributes;
   const providerId = resource.relationships.provider.data.id;
-  const providerOrg = useProviderOrganization(
+  const {
+    findingsData,
+    findingsMetadata,
+    findingsLoading,
+    hasInitiallyLoaded,
+    providerOrg,
+    resourceTags,
+  } = useResourceDrawerBootstrap({
+    resourceId,
+    resourceUid: attributes.uid,
     providerId,
-    providerData.provider,
-  );
-
-  // Reset to overview tab when switching resources
-  useEffect(() => {
-    setActiveTab("findings");
-  }, [resourceId]);
-
-  // Cleanup abort controller on unmount
-  useEffect(() => {
-    return () => {
-      findingFetchRef.current?.abort();
-    };
-  }, []);
+    providerType: providerData.provider,
+    currentPage,
+    pageSize,
+    searchQuery,
+    findingsReloadNonce,
+  });
+  const {
+    findingDetails,
+    findingDetailLoading,
+    navigateToFinding: loadFindingDetails,
+    resetFindingDetails,
+  } = useFindingDetails();
 
   const copyResourceUrl = () => {
     const url = `${window.location.origin}/resources?resourceId=${resourceId}`;
     navigator.clipboard.writeText(url);
   };
 
-  const copyMetadata = async (metadata: Record<string, unknown>) => {
-    await navigator.clipboard.writeText(JSON.stringify(metadata, null, 2));
-    setMetadataCopied(true);
-    setTimeout(() => setMetadataCopied(false), 2000);
-  };
-
-  // Load resource tags on mount
-  useEffect(() => {
-    const loadResourceTags = async () => {
-      try {
-        const resourceData = await getResourceById(resourceId, {
-          fields: ["tags"],
-        });
-        if (resourceData?.data) {
-          setResourceTags(resourceData.data.attributes.tags || {});
-        }
-      } catch (err) {
-        console.error("Error loading resource tags:", err);
-        setResourceTags({});
-      }
-    };
-
-    if (resourceId) {
-      loadResourceTags();
-    }
-  }, [resourceId]);
-
-  // Load findings with server-side pagination and search
-  useEffect(() => {
-    const loadFindings = async () => {
-      setFindingsLoading(true);
-
-      try {
-        const findingsResponse = await getLatestFindings({
-          page: currentPage,
-          pageSize,
-          query: searchQuery,
-          sort: "severity,-inserted_at",
-          filters: {
-            "filter[resource_uid]": attributes.uid,
-            "filter[status]": "FAIL",
-          },
-        });
-
-        if (findingsResponse?.data) {
-          setFindingsMetadata(findingsResponse.meta || null);
-          setFindingsData(findingsResponse.data as ResourceFinding[]);
-        } else {
-          setFindingsData([]);
-          setFindingsMetadata(null);
-        }
-      } catch (err) {
-        console.error("Error loading findings:", err);
-        setFindingsData([]);
-        setFindingsMetadata(null);
-      } finally {
-        setFindingsLoading(false);
-        setHasInitiallyLoaded(true);
-      }
-    };
-
-    if (attributes.uid) {
-      loadFindings();
-    }
-  }, [attributes.uid, currentPage, pageSize, searchQuery, findingsReloadNonce]);
-
   const navigateToFinding = async (findingId: string) => {
-    if (findingFetchRef.current) {
-      findingFetchRef.current.abort();
-    }
-    findingFetchRef.current = new AbortController();
-
     setSelectedFindingId(findingId);
-    setFindingDetailLoading(true);
-
-    try {
-      const findingData = await getFindingById(
-        findingId,
-        "resources,scan.provider",
-      );
-
-      if (findingFetchRef.current?.signal.aborted) {
-        return;
-      }
-
-      if (findingData?.data) {
-        const resourceDict = createDict("resources", findingData);
-        const scanDict = createDict("scans", findingData);
-        const providerDict = createDict("providers", findingData);
-
-        const finding = findingData.data;
-        const scan = scanDict[finding.relationships?.scan?.data?.id];
-        const foundResource =
-          resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        const provider = providerDict[scan?.relationships?.provider?.data?.id];
-
-        const expandedFinding = {
-          ...finding,
-          relationships: { scan, resource: foundResource, provider },
-        };
-
-        setFindingDetails(expandedFinding);
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        return;
-      }
-      console.error("Error fetching finding:", error);
-    } finally {
-      if (!findingFetchRef.current?.signal.aborted) {
-        setFindingDetailLoading(false);
-      }
-    }
+    await loadFindingDetails(findingId);
   };
 
   const handleBackToResource = () => {
     setSelectedFindingId(null);
-    setFindingDetails(null);
-    setFindingDetailLoading(false);
+    resetFindingDetails();
   };
 
   const handleMuteComplete = (_findingIds?: string[]) => {
@@ -323,7 +165,6 @@ export const ResourceDetailContent = ({
 
     setRowSelection({});
     if (ids.length > 0) setFindingsReloadNonce((v) => v + 1);
-    router.refresh();
   };
 
   const failedFindings = findingsData;
@@ -331,11 +172,6 @@ export const ResourceDetailContent = ({
   const selectableRowCount = failedFindings.filter(
     (f) => !f.attributes.muted,
   ).length;
-
-  // Reset selection when page changes
-  useEffect(() => {
-    setRowSelection({});
-  }, [currentPage, pageSize]);
 
   const totalFindings = findingsMetadata?.pagination?.count || 0;
 
@@ -396,14 +232,16 @@ export const ResourceDetailContent = ({
         />
 
         {findingDetailLoading ? (
-          <div className="flex items-center justify-center gap-2 py-8">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <p className="text-text-neutral-secondary text-sm">
-              Loading finding details...
-            </p>
-          </div>
+          <LoadingState label="Loading finding details..." />
         ) : (
-          findingDetails && <FindingDetail findingDetails={findingDetails} />
+          findingDetails && (
+            <FindingDetailDrawer
+              key={findingDetails.id}
+              finding={findingDetails}
+              inline
+              onMuteComplete={handleMuteComplete}
+            />
+          )
         )}
       </div>
     );
@@ -543,12 +381,7 @@ export const ResourceDetailContent = ({
           <div className="minimal-scrollbar min-h-0 flex-1 overflow-y-auto">
             <TabsContent value="findings" className="flex flex-col gap-4">
               {findingsLoading && !hasInitiallyLoaded ? (
-                <div className="flex items-center justify-center gap-2 py-8">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <p className="text-text-neutral-secondary text-sm">
-                    Loading findings...
-                  </p>
-                </div>
+                <LoadingState label="Loading findings..." />
               ) : (
                 <>
                   <DataTable
@@ -563,13 +396,21 @@ export const ResourceDetailContent = ({
                     getRowCanSelect={getRowCanSelect}
                     controlledSearch={searchQuery}
                     onSearchChange={(value) => {
+                      setRowSelection({});
                       setSearchQuery(value);
                       setCurrentPage(1);
                     }}
                     controlledPage={currentPage}
                     controlledPageSize={pageSize}
-                    onPageChange={setCurrentPage}
-                    onPageSizeChange={setPageSize}
+                    onPageChange={(page) => {
+                      setRowSelection({});
+                      setCurrentPage(page);
+                    }}
+                    onPageSizeChange={(size) => {
+                      setRowSelection({});
+                      setCurrentPage(1);
+                      setPageSize(size);
+                    }}
                     isLoading={findingsLoading}
                   />
                   {selectedFindingIds.length > 0 && (
@@ -598,30 +439,17 @@ export const ResourceDetailContent = ({
               )}
 
               {hasMetadata && parsedMetadata && (
-                <Card variant="inner">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-sm font-semibold">
-                      Metadata:
-                    </span>
-                    <div className="border-border-neutral-secondary bg-bg-neutral-secondary relative w-full rounded-lg border">
-                      <button
-                        type="button"
-                        onClick={() => copyMetadata(parsedMetadata)}
-                        className="text-text-neutral-secondary hover:text-text-neutral-primary absolute top-2 right-2 z-10 cursor-pointer transition-colors"
-                        aria-label="Copy metadata to clipboard"
-                      >
-                        {metadataCopied ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </button>
-                      <pre className="minimal-scrollbar mr-10 max-h-[200px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
-                        {JSON.stringify(parsedMetadata, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                </Card>
+                <QueryCodeEditor
+                  ariaLabel="Resource metadata"
+                  visibleLabel={null}
+                  language={QUERY_EDITOR_LANGUAGE.JSON}
+                  value={JSON.stringify(parsedMetadata, null, 2)}
+                  copyValue={JSON.stringify(parsedMetadata, null, 2)}
+                  editable={false}
+                  minHeight={220}
+                  showCopyButton
+                  onChange={() => {}}
+                />
               )}
 
               {!attributes.details?.trim() && !hasMetadata && (
@@ -633,20 +461,13 @@ export const ResourceDetailContent = ({
 
             <TabsContent value="tags" className="flex flex-col gap-4">
               {hasTags ? (
-                <Card variant="inner">
-                  <div className="flex flex-col gap-3">
-                    <span className="text-text-neutral-secondary text-sm font-semibold">
-                      Tags:
-                    </span>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      {tagEntries.map(([key, value]) => (
-                        <InfoField key={key} label={key} variant="compact">
-                          {renderValue(value)}
-                        </InfoField>
-                      ))}
-                    </div>
-                  </div>
-                </Card>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {tagEntries.map(([key, value]) => (
+                    <InfoField key={key} label={key} variant="compact">
+                      {renderValue(value)}
+                    </InfoField>
+                  ))}
+                </div>
               ) : (
                 <p className="text-text-neutral-tertiary py-8 text-center text-sm">
                   No tags available for this resource.
@@ -655,10 +476,12 @@ export const ResourceDetailContent = ({
             </TabsContent>
 
             <TabsContent value="events" className="flex flex-col gap-4">
-              <EventsTimeline
-                resourceId={resourceId}
-                isAwsProvider={providerData.provider === "aws"}
-              />
+              {activeTab === "events" && (
+                <EventsTimeline
+                  resourceId={resourceId}
+                  isAwsProvider={providerData.provider === "aws"}
+                />
+              )}
             </TabsContent>
           </div>
         </Tabs>

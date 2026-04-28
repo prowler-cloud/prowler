@@ -20,8 +20,8 @@ from tasks.jobs.backfill import (
     backfill_finding_group_summaries,
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
-    backfill_scan_category_summaries,
-    backfill_scan_resource_group_summaries,
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
 )
 from tasks.jobs.connection import (
     check_integration_connection,
@@ -46,7 +46,11 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
-from tasks.jobs.report import generate_compliance_reports_job
+from tasks.jobs.report import (
+    STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    _cleanup_stale_tmp_output_directories,
+    generate_compliance_reports_job,
+)
 from tasks.jobs.scan import (
     aggregate_attack_surface,
     aggregate_daily_severity,
@@ -440,6 +444,19 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         scan_id (str): The scan identifier.
         provider_id (str): The provider_id id to be used in generating outputs.
     """
+    try:
+        _cleanup_stale_tmp_output_directories(
+            DJANGO_TMP_OUTPUT_DIRECTORY,
+            max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+            exclude_scan=(tenant_id, scan_id),
+        )
+    except Exception as error:
+        logger.warning(
+            "Skipping stale tmp cleanup before output generation for scan %s: %s",
+            scan_id,
+            error,
+        )
+
     # Check if the scan has findings
     if not ScanSummary.objects.filter(scan_id=scan_id).exists():
         logger.info(f"No findings found for scan {scan_id}")
@@ -659,9 +676,9 @@ def backfill_finding_group_summaries_task(tenant_id: str, days: int = None):
     return backfill_finding_group_summaries(tenant_id=tenant_id, days=days)
 
 
-@shared_task(name="backfill-scan-category-summaries", queue="backfill")
+@shared_task(name="scan-category-summaries", queue="overview")
 @handle_provider_deletion
-def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
+def aggregate_scan_category_summaries_task(tenant_id: str, scan_id: str):
     """
     Backfill ScanCategorySummary for a completed scan.
 
@@ -671,12 +688,12 @@ def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
         tenant_id (str): The tenant identifier.
         scan_id (str): The scan identifier.
     """
-    return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
+    return aggregate_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(name="backfill-scan-resource-group-summaries", queue="backfill")
+@shared_task(name="scan-resource-group-summaries", queue="overview")
 @handle_provider_deletion
-def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
+def aggregate_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
     """
     Backfill ScanGroupSummary for a completed scan.
 
@@ -686,7 +703,7 @@ def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
         tenant_id (str): The tenant identifier.
         scan_id (str): The scan identifier.
     """
-    return backfill_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
+    return aggregate_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(name="backfill-provider-compliance-scores", queue="backfill")
@@ -771,15 +788,26 @@ def aggregate_finding_group_summaries_task(tenant_id: str, scan_id: str):
 )
 @set_tenant(keep_tenant=True)
 def reaggregate_all_finding_group_summaries_task(tenant_id: str):
-    """Reaggregate finding group summaries for every (provider, day) combination.
+    """Reaggregate every pre-aggregated summary table for this tenant.
 
     Mirrors the unbounded scope of `mute_historical_findings_task`: that task
     rewrites every Finding row whose UID matches a mute rule, with no time
-    limit. To keep the daily summaries consistent with that update, this task
-    re-runs the aggregator on the latest completed scan of every (provider,
-    day) pair that exists in the database. Tasks are dispatched in parallel
-    via a Celery group so the wallclock scales with the worker pool, not with
-    the number of pairs.
+    limit. To keep the pre-aggregated tables consistent with that update,
+    this task re-runs the same per-scan aggregation pipeline that scan
+    completion runs on the latest completed scan of every (provider, day)
+    pair, rebuilding the tables that power the read endpoints:
+
+      - `ScanSummary` and `DailySeveritySummary` -> `/overviews/findings`,
+        `/overviews/findings-severity`, `/overviews/services`.
+      - `FindingGroupDailySummary` -> `/finding-groups` and
+        `/finding-groups/latest`.
+      - `ScanGroupSummary` -> `/overviews/resource-groups` (resource
+        inventory).
+      - `ScanCategorySummary` -> `/overviews/categories`.
+      - `AttackSurfaceOverview` -> `/overviews/attack-surfaces`.
+
+    Per-scan pipelines are dispatched in parallel via a Celery group so
+    wallclock scales with the worker pool.
     """
     completed_scans = list(
         Scan.objects.filter(
@@ -804,12 +832,32 @@ def reaggregate_all_finding_group_summaries_task(tenant_id: str):
     scan_ids = list(latest_scans.values())
     if scan_ids:
         logger.info(
-            "Reaggregating finding group summaries for %d scans (provider x day)",
+            "Reaggregating overview/finding summaries for %d scans (provider x day)",
             len(scan_ids),
         )
+        # DailySeveritySummary reads from ScanSummary, so ScanSummary must be
+        # recomputed first; the other aggregators read Finding directly and
+        # can run in parallel with the severity step.
         group(
-            aggregate_finding_group_summaries_task.si(
-                tenant_id=tenant_id, scan_id=scan_id
+            chain(
+                perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
+                group(
+                    aggregate_daily_severity_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_finding_group_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_scan_resource_group_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_scan_category_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_attack_surface_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                ),
             )
             for scan_id in scan_ids
         ).apply_async()
@@ -982,12 +1030,16 @@ def jira_integration_task(
 @handle_provider_deletion
 def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Optimized task to generate ThreatScore, ENS, NIS2, and CSA CCM reports with shared queries.
+    Optimized task to generate ThreatScore, ENS, NIS2, CSA CCM and CIS reports with shared queries.
 
     This task is more efficient than running separate report tasks because it reuses database queries:
     - Provider object fetched once (instead of multiple times)
     - Requirement statistics aggregated once (instead of multiple times)
     - Can reduce database load by up to 50-70%
+
+    CIS emits a single PDF per run: the one matching the highest CIS version
+    available for the scan's provider, picked dynamically from
+    ``Compliance.get_bulk`` (no hard-coded provider → version mapping).
 
     Args:
         tenant_id (str): The tenant identifier.
@@ -1005,6 +1057,7 @@ def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: 
         generate_ens=True,
         generate_nis2=True,
         generate_csa=True,
+        generate_cis=True,
     )
 
 

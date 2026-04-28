@@ -51,10 +51,33 @@ def init_parser(self):
         metavar="REPOSITORY",
     )
     github_scoping_subparser.add_argument(
+        "--repo-list-file",
+        dest="repo_list_file",
+        default=None,
+        help="Path to a file containing a list of repositories to scan (one per line in 'owner/repo-name' format). Lines starting with # are treated as comments.",
+    )
+    github_scoping_subparser.add_argument(
         "--organization",
         "--organizations",
         nargs="*",
         help="Organization or user name(s) to scan repositories for",
         default=None,
         metavar="ORGANIZATION",
+    )
+
+    github_actions_subparser = github_parser.add_argument_group(
+        "GitHub Actions Scanning"
+    )
+    github_actions_subparser.add_argument(
+        "--no-github-actions",
+        action="store_true",
+        default=False,
+        help="Disable GitHub Actions workflow security scanning",
+    )
+    github_actions_subparser.add_argument(
+        "--exclude-workflows",
+        nargs="+",
+        default=[],
+        help="Workflow files or glob patterns to exclude from GitHub Actions scanning",
+        metavar="PATTERN",
     )

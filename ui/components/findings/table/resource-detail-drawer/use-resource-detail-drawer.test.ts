@@ -6,14 +6,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ---------------------------------------------------------------------------
 
 const {
+  getFindingByIdMock,
   getLatestFindingsByResourceUidMock,
   adaptFindingsByResourceResponseMock,
 } = vi.hoisted(() => ({
+  getFindingByIdMock: vi.fn(),
   getLatestFindingsByResourceUidMock: vi.fn(),
   adaptFindingsByResourceResponseMock: vi.fn(),
 }));
 
 vi.mock("@/actions/findings", () => ({
+  getFindingById: getFindingByIdMock,
   getLatestFindingsByResourceUid: getLatestFindingsByResourceUidMock,
   adaptFindingsByResourceResponse: adaptFindingsByResourceResponseMock,
 }));
@@ -109,6 +112,7 @@ describe("useResourceDetailDrawer — unmount cleanup", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.restoreAllMocks();
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
   });
 
   it("should abort the in-flight fetch controller when the hook unmounts", async () => {
@@ -116,9 +120,7 @@ describe("useResourceDetailDrawer — unmount cleanup", () => {
     const abortSpy = vi.spyOn(AbortController.prototype, "abort");
 
     // never-resolving fetch to simulate in-flight request
-    getLatestFindingsByResourceUidMock.mockImplementation(
-      () => new Promise(() => {}),
-    );
+    getFindingByIdMock.mockImplementation(() => new Promise(() => {}));
     adaptFindingsByResourceResponseMock.mockReturnValue([]);
 
     const resources = [makeResource()];
@@ -126,7 +128,6 @@ describe("useResourceDetailDrawer — unmount cleanup", () => {
     const { result, unmount } = renderHook(() =>
       useResourceDetailDrawer({
         resources,
-        checkId: "s3_check",
       }),
     );
 
@@ -136,7 +137,7 @@ describe("useResourceDetailDrawer — unmount cleanup", () => {
     });
 
     // Verify a fetch was started
-    expect(getLatestFindingsByResourceUidMock).toHaveBeenCalledTimes(1);
+    expect(getFindingByIdMock).toHaveBeenCalledTimes(1);
 
     // Reset spy count to detect only the unmount abort
     abortSpy.mockClear();
@@ -158,7 +159,6 @@ describe("useResourceDetailDrawer — unmount cleanup", () => {
     const { unmount } = renderHook(() =>
       useResourceDetailDrawer({
         resources,
-        checkId: "s3_check",
       }),
     );
 
@@ -173,40 +173,59 @@ describe("useResourceDetailDrawer — unmount cleanup", () => {
 describe("useResourceDetailDrawer — other findings filtering", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
   });
 
-  it("should exclude the current finding from otherFindings and preserve API order", async () => {
+  it("should load other findings from the current resource uid and exclude only the current finding (status is filtered server-side)", async () => {
     const resources = [makeResource()];
 
-    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
-    adaptFindingsByResourceResponseMock.mockReturnValue([
-      makeDrawerFinding({
-        id: "current",
-        checkId: "s3_check",
-        checkTitle: "Current",
-        status: "FAIL",
-        severity: "critical",
-      }),
-      makeDrawerFinding({
-        id: "other-1",
-        checkId: "check-other-1",
-        checkTitle: "Other 1",
-        status: "PASS",
-        severity: "critical",
-      }),
-      makeDrawerFinding({
-        id: "other-2",
-        checkId: "check-other-2",
-        checkTitle: "Other 2",
-        status: "FAIL",
-        severity: "medium",
-      }),
-    ]);
+    // Given — the API call applies filter[status]=FAIL server-side, so the
+    // mock returns only FAIL rows. The hook's only client-side job is to
+    // drop the row already shown above the table.
+    getFindingByIdMock.mockResolvedValue({ data: ["detail"] });
+    getLatestFindingsByResourceUidMock.mockResolvedValue({
+      data: ["resource"],
+    });
+    adaptFindingsByResourceResponseMock.mockImplementation(
+      (response: { data: string[] }) => {
+        if (response.data[0] === "detail") {
+          return [
+            makeDrawerFinding({
+              id: "finding-1",
+              checkId: "s3_check",
+              checkTitle: "Current",
+              status: "FAIL",
+              severity: "informational",
+            }),
+          ];
+        }
+
+        return [
+          makeDrawerFinding({
+            id: "finding-3",
+            checkTitle: "First other finding",
+            status: "FAIL",
+            severity: "high",
+          }),
+          makeDrawerFinding({
+            id: "finding-1",
+            checkTitle: "Current finding duplicate from resource fetch",
+            status: "FAIL",
+            severity: "critical",
+          }),
+          makeDrawerFinding({
+            id: "finding-5",
+            checkTitle: "Second other finding",
+            status: "FAIL",
+            severity: "medium",
+          }),
+        ];
+      },
+    );
 
     const { result } = renderHook(() =>
       useResourceDetailDrawer({
         resources,
-        checkId: "s3_check",
       }),
     );
 
@@ -215,10 +234,90 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
       await Promise.resolve();
     });
 
+    // Then
+    expect(getFindingByIdMock).toHaveBeenCalledWith(
+      "finding-1",
+      "resources,scan.provider",
+      { source: "resource-detail-drawer" },
+    );
+    expect(getLatestFindingsByResourceUidMock).toHaveBeenCalledWith({
+      resourceUid: "arn:aws:s3:::my-bucket",
+      pageSize: 50,
+      includeMuted: false,
+    });
+    expect(result.current.currentFinding?.id).toBe("finding-1");
     expect(result.current.otherFindings.map((finding) => finding.id)).toEqual([
-      "other-1",
-      "other-2",
+      "finding-3",
+      "finding-5",
     ]);
+  });
+
+  it("should skip loading other findings for synthetic IaC resources and keep the current detail on findingId", async () => {
+    const resources = [
+      makeResource({
+        findingId: "synthetic-finding",
+        resourceUid: "synthetic://iac-resource",
+      }),
+    ];
+
+    // Given
+    getFindingByIdMock.mockResolvedValue({ data: ["detail"] });
+    adaptFindingsByResourceResponseMock.mockReturnValue([
+      makeDrawerFinding({
+        id: "synthetic-finding",
+        checkId: "s3_check",
+        status: "MANUAL",
+        severity: "informational",
+      }),
+    ]);
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+        canLoadOtherFindings: false,
+      }),
+    );
+
+    await act(async () => {
+      // When
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    // Then
+    expect(getFindingByIdMock).toHaveBeenCalledWith(
+      "synthetic-finding",
+      "resources,scan.provider",
+      { source: "resource-detail-drawer" },
+    );
+    expect(getLatestFindingsByResourceUidMock).not.toHaveBeenCalled();
+    expect(result.current.currentFinding?.id).toBe("synthetic-finding");
+    expect(result.current.otherFindings).toEqual([]);
+  });
+
+  it("should request muted findings only when explicitly enabled", async () => {
+    const resources = [makeResource()];
+
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
+    adaptFindingsByResourceResponseMock.mockReturnValue([makeDrawerFinding()]);
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+        includeMutedInOtherFindings: true,
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(getLatestFindingsByResourceUidMock).toHaveBeenCalledWith({
+      resourceUid: "arn:aws:s3:::my-bucket",
+      pageSize: 50,
+      includeMuted: true,
+    });
   });
 
   it("should keep isNavigating true for a cached resource long enough to render skeletons", async () => {
@@ -239,19 +338,19 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
       }),
     ];
 
-    getLatestFindingsByResourceUidMock.mockImplementation(
-      async ({ resourceUid }: { resourceUid: string }) => ({
-        data: [resourceUid],
-      }),
-    );
+    getFindingByIdMock.mockImplementation(async (findingId: string) => ({
+      data: [findingId],
+    }));
     adaptFindingsByResourceResponseMock.mockImplementation(
       (response: { data: string[] }) => [
         makeDrawerFinding({
-          id: response.data[0].includes("first") ? "finding-1" : "finding-2",
-          resourceUid: response.data[0],
-          resourceName: response.data[0].includes("first")
-            ? "first-bucket"
-            : "second-bucket",
+          id: response.data[0],
+          resourceUid:
+            response.data[0] === "finding-1"
+              ? "arn:aws:s3:::first-bucket"
+              : "arn:aws:s3:::second-bucket",
+          resourceName:
+            response.data[0] === "finding-1" ? "first-bucket" : "second-bucket",
         }),
       ],
     );
@@ -259,7 +358,6 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     const { result } = renderHook(() =>
       useResourceDetailDrawer({
         resources,
-        checkId: "s3_check",
       }),
     );
 
@@ -284,6 +382,8 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(result.current.isNavigating).toBe(true);
 
     await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
       vi.runAllTimers();
       await Promise.resolve();
     });
@@ -313,19 +413,19 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
       }),
     ];
 
-    getLatestFindingsByResourceUidMock.mockImplementation(
-      async ({ resourceUid }: { resourceUid: string }) => ({
-        data: [resourceUid],
-      }),
-    );
+    getFindingByIdMock.mockImplementation(async (findingId: string) => ({
+      data: [findingId],
+    }));
     adaptFindingsByResourceResponseMock.mockImplementation(
       (response: { data: string[] }) => [
         makeDrawerFinding({
-          id: response.data[0].includes("first") ? "finding-1" : "finding-2",
-          resourceUid: response.data[0],
-          resourceName: response.data[0].includes("first")
-            ? "first-bucket"
-            : "second-bucket",
+          id: response.data[0],
+          resourceUid:
+            response.data[0] === "finding-1"
+              ? "arn:aws:s3:::first-bucket"
+              : "arn:aws:s3:::second-bucket",
+          resourceName:
+            response.data[0] === "finding-1" ? "first-bucket" : "second-bucket",
         }),
       ],
     );
@@ -333,7 +433,6 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     const { result } = renderHook(() =>
       useResourceDetailDrawer({
         resources,
-        checkId: "s3_check",
       }),
     );
 
@@ -378,6 +477,154 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     vi.useRealTimers();
   });
 
+  it("should update checkMeta when navigating to a resource with a different check", async () => {
+    // Given
+    const resources = [
+      makeResource({
+        id: "row-1",
+        findingId: "finding-1",
+        checkId: "s3_check",
+      }),
+      makeResource({
+        id: "row-2",
+        findingId: "finding-2",
+        checkId: "ec2_check",
+        resourceUid: "arn:aws:ec2:::instance/i-123",
+        resourceName: "instance-1",
+        service: "ec2",
+      }),
+    ];
+
+    getFindingByIdMock.mockImplementation(async (findingId: string) => ({
+      data: [findingId],
+    }));
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
+    adaptFindingsByResourceResponseMock.mockImplementation(
+      (response: { data: string[] }) => [
+        response.data[0] === "finding-1"
+          ? makeDrawerFinding({
+              id: "finding-1",
+              checkId: "s3_check",
+              checkTitle: "S3 Check",
+              description: "s3 description",
+            })
+          : makeDrawerFinding({
+              id: "finding-2",
+              checkId: "ec2_check",
+              checkTitle: "EC2 Check",
+              description: "ec2 description",
+            }),
+      ],
+    );
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+      }),
+    );
+
+    // When
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(result.current.checkMeta?.checkTitle).toBe("S3 Check");
+
+    await act(async () => {
+      result.current.navigateNext();
+      await Promise.resolve();
+    });
+
+    // Then
+    expect(result.current.checkMeta?.checkTitle).toBe("EC2 Check");
+    expect(result.current.checkMeta?.description).toBe("ec2 description");
+  });
+
+  it("should keep the previous check metadata cached while reopening until the new finding arrives", async () => {
+    // Given
+    const resources = [
+      makeResource({
+        id: "row-1",
+        findingId: "finding-1",
+        checkId: "s3_check",
+      }),
+      makeResource({
+        id: "row-2",
+        findingId: "finding-2",
+        checkId: "ec2_check",
+        resourceUid: "arn:aws:ec2:::instance/i-123",
+        resourceName: "instance-1",
+        service: "ec2",
+      }),
+    ];
+
+    let resolveSecondFinding: ((value: { data: string[] }) => void) | null =
+      null;
+
+    getFindingByIdMock.mockImplementation((findingId: string) => {
+      if (findingId === "finding-2") {
+        return new Promise((resolve) => {
+          resolveSecondFinding = resolve;
+        });
+      }
+
+      return Promise.resolve({ data: [findingId] });
+    });
+    getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
+    adaptFindingsByResourceResponseMock.mockImplementation(
+      (response: { data: string[] }) => [
+        response.data[0] === "finding-1"
+          ? makeDrawerFinding({
+              id: "finding-1",
+              checkId: "s3_check",
+              checkTitle: "S3 Check",
+              description: "s3 description",
+            })
+          : makeDrawerFinding({
+              id: "finding-2",
+              checkId: "ec2_check",
+              checkTitle: "EC2 Check",
+              description: "ec2 description",
+            }),
+      ],
+    );
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(result.current.checkMeta?.checkTitle).toBe("S3 Check");
+
+    // When
+    act(() => {
+      result.current.closeDrawer();
+      result.current.openDrawer(1);
+    });
+
+    // Then
+    expect(result.current.isOpen).toBe(true);
+    expect(result.current.currentIndex).toBe(1);
+    expect(result.current.currentFinding).toBeNull();
+    expect(result.current.checkMeta?.checkTitle).toBe("S3 Check");
+
+    await act(async () => {
+      resolveSecondFinding?.({ data: ["finding-2"] });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.checkMeta?.checkTitle).toBe("EC2 Check");
+    expect(result.current.checkMeta?.description).toBe("ec2 description");
+  });
+
   it("should clear the previous resource findings when navigation to the next resource fails", async () => {
     // Given
     const resources = [
@@ -395,24 +642,24 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
       }),
     ];
 
-    getLatestFindingsByResourceUidMock.mockImplementation(
-      async ({ resourceUid }: { resourceUid: string }) => {
-        if (resourceUid.includes("second")) {
-          throw new Error("Fetch failed");
-        }
+    getFindingByIdMock.mockImplementation(async (findingId: string) => {
+      if (findingId === "finding-2") {
+        throw new Error("Fetch failed");
+      }
 
-        return { data: [resourceUid] };
-      },
-    );
+      return { data: [findingId] };
+    });
 
     adaptFindingsByResourceResponseMock.mockImplementation(
       (response: { data: string[] }) => [
         makeDrawerFinding({
-          id: response.data[0].includes("first") ? "finding-1" : "finding-2",
-          resourceUid: response.data[0],
-          resourceName: response.data[0].includes("first")
-            ? "first-bucket"
-            : "second-bucket",
+          id: response.data[0],
+          resourceUid:
+            response.data[0] === "finding-1"
+              ? "arn:aws:s3:::first-bucket"
+              : "arn:aws:s3:::second-bucket",
+          resourceName:
+            response.data[0] === "finding-1" ? "first-bucket" : "second-bucket",
         }),
       ],
     );
@@ -420,7 +667,6 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     const { result } = renderHook(() =>
       useResourceDetailDrawer({
         resources,
-        checkId: "s3_check",
       }),
     );
 
@@ -432,6 +678,7 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(result.current.currentFinding?.resourceUid).toBe(
       "arn:aws:s3:::first-bucket",
     );
+    expect(result.current.checkMeta?.checkTitle).toBe("S3 Check");
 
     // When
     await act(async () => {
@@ -443,5 +690,123 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(result.current.currentIndex).toBe(1);
     expect(result.current.currentFinding).toBeNull();
     expect(result.current.otherFindings).toEqual([]);
+    expect(result.current.checkMeta).toBeNull();
+  });
+
+  it("should clear other findings immediately while the next resource is loading", async () => {
+    // Given
+    const resources = [
+      makeResource({
+        id: "row-1",
+        findingId: "finding-1",
+        resourceUid: "arn:aws:s3:::first-bucket",
+        resourceName: "first-bucket",
+      }),
+      makeResource({
+        id: "row-2",
+        findingId: "finding-2",
+        resourceUid: "arn:aws:s3:::second-bucket",
+        resourceName: "second-bucket",
+      }),
+    ];
+
+    let resolveSecondFinding: ((value: { data: string[] }) => void) | null =
+      null;
+    let resolveSecondResource: ((value: { data: string[] }) => void) | null =
+      null;
+
+    getFindingByIdMock.mockImplementation((findingId: string) => {
+      if (findingId === "finding-2") {
+        return new Promise((resolve) => {
+          resolveSecondFinding = resolve;
+        });
+      }
+
+      return Promise.resolve({ data: [findingId] });
+    });
+
+    getLatestFindingsByResourceUidMock.mockImplementation(
+      ({ resourceUid }: { resourceUid: string }) => {
+        if (resourceUid === "arn:aws:s3:::second-bucket") {
+          return new Promise((resolve) => {
+            resolveSecondResource = resolve;
+          });
+        }
+
+        return Promise.resolve({ data: ["resource-1"] });
+      },
+    );
+
+    adaptFindingsByResourceResponseMock.mockImplementation(
+      (response: { data: string[] }) => {
+        if (response.data[0] === "finding-1") {
+          return [makeDrawerFinding({ id: "finding-1" })];
+        }
+
+        if (response.data[0] === "finding-2") {
+          return [
+            makeDrawerFinding({
+              id: "finding-2",
+              resourceUid: "arn:aws:s3:::second-bucket",
+              resourceName: "second-bucket",
+            }),
+          ];
+        }
+
+        if (response.data[0] === "resource-1") {
+          return [
+            makeDrawerFinding({
+              id: "finding-3",
+              checkTitle: "First bucket other finding",
+              resourceUid: "arn:aws:s3:::first-bucket",
+            }),
+          ];
+        }
+
+        return [
+          makeDrawerFinding({
+            id: "finding-4",
+            checkTitle: "Second bucket other finding",
+            resourceUid: "arn:aws:s3:::second-bucket",
+          }),
+        ];
+      },
+    );
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    expect(result.current.otherFindings.map((finding) => finding.id)).toEqual([
+      "finding-3",
+    ]);
+
+    // When
+    act(() => {
+      result.current.navigateNext();
+    });
+
+    // Then
+    expect(result.current.currentIndex).toBe(1);
+    expect(result.current.currentFinding).toBeNull();
+    expect(result.current.otherFindings).toEqual([]);
+
+    await act(async () => {
+      resolveSecondFinding?.({ data: ["finding-2"] });
+      resolveSecondResource?.({ data: ["resource-2"] });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.otherFindings.map((finding) => finding.id)).toEqual([
+      "finding-4",
+    ]);
   });
 });
