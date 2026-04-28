@@ -1057,7 +1057,11 @@ OAuthAppInfo
                 data = json.loads(response)
                 p1 = int(data.get("entitledP1LicenseCount", 0) or 0)
                 p2 = int(data.get("entitledP2LicenseCount", 0) or 0)
+                total_licenses = int(
+                    data.get("entitledTotalLicenseCount", p1 + p2) or (p1 + p2)
+                )
                 p1_features = data.get("p1FeatureUtilizations") or {}
+                p2_features = data.get("p2FeatureUtilizations") or {}
                 ca_users = int(
                     (p1_features.get("conditionalAccess") or {}).get("userCount", 0)
                     or 0
@@ -1068,16 +1072,25 @@ OAuthAppInfo
                     )
                     or 0
                 )
-                total_licenses = int(
-                    data.get("entitledTotalLicenseCount", p1 + p2) or (p1 + p2)
+                rb_ca_users = int(
+                    (p2_features.get("riskBasedConditionalAccess") or {}).get(
+                        "userCount", 0
+                    )
+                    or 0
+                )
+                rb_ca_guest_users = int(
+                    (
+                        p2_features.get("riskBasedConditionalAccessGuestUsers")
+                        or {}
+                    ).get("userCount", 0)
+                    or 0
                 )
                 return PremiumLicenseInsight(
                     entitled_p1_license_count=p1,
                     entitled_p2_license_count=p2,
-                    conditional_access_user_count=ca_users,
-                    conditional_access_guest_user_count=ca_guest_users,
-                    total_license_count=total_licenses,
-                    conditional_access_users_count=ca_users + ca_guest_users,
+                    entitled_total_license_count=total_licenses,
+                    p1_licenses_utilized=ca_users + ca_guest_users,
+                    p2_licenses_utilized=rb_ca_users + rb_ca_guest_users,
                 )
         except Exception as error:
             # 403 missingLicense is expected for tenants without P1/P2.
@@ -1554,25 +1567,31 @@ class OAuthApp(BaseModel):
 
 
 class PremiumLicenseInsight(BaseModel):
-    """Model representing Azure AD Premium license utilization insight.
+    """Mirror of Microsoft Graph beta ``reports/azureADPremiumLicenseInsight``.
 
-    Mirrors the four counters returned by Microsoft Graph beta
-    ``reports/azureADPremiumLicenseInsight`` plus two derived totals
-    consumed by the licence-utilization check (P2 entitlements include P1,
-    and guest Conditional Access users still consume premium licences).
+    Stores entitled license counts (P1, P2, total) and per-feature
+    utilisation totals already aggregated across regular and guest users:
+
+    - **P1 features** (Conditional Access): ``p1_licenses_utilized`` =
+      ``conditionalAccess.userCount`` + ``conditionalAccessGuestUsers.userCount``.
+    - **P2 features** (risk-based Conditional Access): ``p2_licenses_utilized`` =
+      ``riskBasedConditionalAccess.userCount`` +
+      ``riskBasedConditionalAccessGuestUsers.userCount``.
+
+    P2 entitlements include P1; the P1 utilisation check therefore compares
+    against ``entitled_total_license_count`` (P1 + P2), while the P2 check
+    compares against ``entitled_p2_license_count`` alone.
 
     Attributes:
         entitled_p1_license_count: Tenant-wide entitled Microsoft Entra ID P1 licenses.
         entitled_p2_license_count: Tenant-wide entitled Microsoft Entra ID P2 licenses.
-        conditional_access_user_count: Users actively utilising Conditional Access.
-        conditional_access_guest_user_count: Guest users actively utilising Conditional Access.
-        total_license_count: Total premium licenses entitled (P1 + P2).
-        conditional_access_users_count: Total Conditional Access utilization (regular + guest).
+        entitled_total_license_count: Total premium licenses entitled (P1 + P2).
+        p1_licenses_utilized: Users consuming P1 features (regular + guest CA).
+        p2_licenses_utilized: Users consuming P2 features (regular + guest risk-based CA).
     """
 
     entitled_p1_license_count: int = 0
     entitled_p2_license_count: int = 0
-    conditional_access_user_count: int = 0
-    conditional_access_guest_user_count: int = 0
-    total_license_count: int = 0
-    conditional_access_users_count: int = 0
+    entitled_total_license_count: int = 0
+    p1_licenses_utilized: int = 0
+    p2_licenses_utilized: int = 0

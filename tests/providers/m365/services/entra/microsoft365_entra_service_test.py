@@ -637,10 +637,9 @@ class Test_Entra_get_premium_license_insight:
         assert isinstance(insight, PremiumLicenseInsight)
         assert insight.entitled_p1_license_count == 100
         assert insight.entitled_p2_license_count == 50
-        assert insight.total_license_count == 150
-        assert insight.conditional_access_user_count == 85
-        assert insight.conditional_access_guest_user_count == 12
-        assert insight.conditional_access_users_count == 97
+        assert insight.entitled_total_license_count == 150
+        assert insight.p1_licenses_utilized == 97
+        assert insight.p2_licenses_utilized == 35
 
     def test_returns_none_on_403(self):
         """Returns None when the API raises (e.g. 403 missingLicense)."""
@@ -666,11 +665,12 @@ class Test_Entra_get_premium_license_insight:
 
     def test_handles_missing_feature_utilizations(self):
         """Falls back to P1+P2 sum when entitledTotalLicenseCount is missing
-        and tolerates a null p1FeatureUtilizations object."""
+        and tolerates null feature-utilization objects."""
         payload = {
             "entitledP1LicenseCount": 10,
             "entitledP2LicenseCount": 0,
             "p1FeatureUtilizations": None,
+            "p2FeatureUtilizations": None,
         }
         adapter = MagicMock()
         adapter.send_primitive_async = AsyncMock(
@@ -681,7 +681,6 @@ class Test_Entra_get_premium_license_insight:
         insight = asyncio.run(entra._get_premium_license_insight())
 
         assert insight is not None
-        assert insight.total_license_count == 10
-        assert insight.conditional_access_users_count == 0
-        assert insight.conditional_access_user_count == 0
-        assert insight.conditional_access_guest_user_count == 0
+        assert insight.entitled_total_license_count == 10
+        assert insight.p1_licenses_utilized == 0
+        assert insight.p2_licenses_utilized == 0

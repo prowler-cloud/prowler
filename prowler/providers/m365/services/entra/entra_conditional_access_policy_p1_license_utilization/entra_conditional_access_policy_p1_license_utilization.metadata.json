@@ -1,7 +1,7 @@
 {
   "Provider": "m365",
   "CheckID": "entra_conditional_access_policy_p1_license_utilization",
-  "CheckTitle": "Premium (P1/P2) license entitlements ensure sufficient coverage for Conditional Access users",
+  "CheckTitle": "P1 license entitlements ensure sufficient coverage for Conditional Access users",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",
@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Verifies that the total number of entitled Microsoft Entra ID Premium licenses (**P1 plus P2**, since P2 includes P1) is sufficient to cover all users actively utilizing **Conditional Access** (regular plus guest users). Unlicensed Conditional Access usage may violate Microsoft licensing terms and indicates gaps in license governance.",
-  "Risk": "When more users consume Conditional Access than the organization has premium licenses for, it creates a **licensing compliance gap**. Microsoft may flag the tenant during audits, leading to retroactive charges or service restrictions. Additionally, unlicensed users may lose Conditional Access protection if Microsoft enforces entitlements.",
+  "Description": "Verifies that the entitled premium license count (P1 + P2, since P2 includes P1) covers all users actively using **P1-level Conditional Access** (regular plus guest). Unlicensed Conditional Access usage may violate Microsoft licensing terms. For risk-based (P2) Conditional Access, see `entra_conditional_access_policy_p2_license_utilization`.",
+  "Risk": "When more users consume P1-level Conditional Access than the organization has premium licenses for, it creates a **licensing compliance gap**. Microsoft may flag the tenant during audits, leading to retroactive charges or service restrictions. Additionally, unlicensed users may lose Conditional Access protection if Microsoft enforces entitlements.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/overview",
@@ -35,5 +35,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Uses Microsoft Graph beta reports/azureADPremiumLicenseInsight. Requires Reports.Read.All. Returns MANUAL when the tenant has no Microsoft Entra ID P1 or P2 license (Graph returns 403 missingLicense). The check sums P1 + P2 entitlements against regular plus guest Conditional Access users."
+  "Notes": "Uses Microsoft Graph beta reports/azureADPremiumLicenseInsight. Requires Reports.Read.All. Returns MANUAL when the tenant has no Microsoft Entra ID P1 or P2 license (Graph returns 403 missingLicense). Compares P1 Conditional Access utilization (regular + guest) against the combined P1 + P2 entitled license count, since P2 includes P1."
 }
