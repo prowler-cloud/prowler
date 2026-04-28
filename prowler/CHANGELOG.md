@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.26.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
+
+---
+
 ## [5.25.0] (Prowler v5.25.0)
 
 ### 🚀 Added
