@@ -12,6 +12,7 @@ from prowler.lib.check.models import (
     Code,
     Recommendation,
     Remediation,
+    Severity,
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import Status, fill_common_finding_data
@@ -556,47 +557,73 @@ class Finding(BaseModel):
             finding.zone_name = getattr(resource, "zone_name", resource.name)
             finding.account_id = getattr(finding, "account_id", "")
 
-        finding.check_metadata = CheckMetadata(
-            Provider=finding.check_metadata["provider"],
-            CheckID=finding.check_metadata["checkid"],
-            CheckTitle=finding.check_metadata["checktitle"],
-            CheckType=finding.check_metadata["checktype"],
-            ServiceName=finding.check_metadata["servicename"],
-            SubServiceName=finding.check_metadata["subservicename"],
-            Severity=finding.check_metadata["severity"],
-            ResourceType=finding.check_metadata["resourcetype"],
-            Description=finding.check_metadata["description"],
-            Risk=finding.check_metadata["risk"],
-            RelatedUrl=finding.check_metadata["relatedurl"],
-            Remediation=Remediation(
-                Recommendation=Recommendation(
-                    Text=finding.check_metadata["remediation"]["recommendation"][
-                        "text"
-                    ],
-                    Url=finding.check_metadata["remediation"]["recommendation"]["url"],
-                ),
-                Code=Code(
-                    NativeIaC=finding.check_metadata["remediation"]["code"][
-                        "nativeiac"
-                    ],
-                    Terraform=finding.check_metadata["remediation"]["code"][
-                        "terraform"
-                    ],
-                    CLI=finding.check_metadata["remediation"]["code"]["cli"],
-                    Other=finding.check_metadata["remediation"]["code"]["other"],
-                ),
-            ),
-            ResourceIdTemplate=finding.check_metadata["resourceidtemplate"],
-            Categories=finding.check_metadata["categories"],
-            DependsOn=finding.check_metadata["dependson"],
-            RelatedTo=finding.check_metadata["relatedto"],
-            Notes=finding.check_metadata["notes"],
-        )
+        metadata_kwargs = cls._get_api_check_metadata_kwargs(finding.check_metadata)
+        try:
+            finding.check_metadata = CheckMetadata(**metadata_kwargs)
+        except ValidationError as validation_error:
+            check_id = metadata_kwargs.get("CheckID", getattr(finding, "check_id", ""))
+            logger.warning(
+                "Legacy persisted check metadata failed validation during API finding transformation "
+                f"for {check_id}. Falling back to compatibility mode. Errors: {validation_error.errors()}"
+            )
+            finding.check_metadata = cls._construct_legacy_check_metadata(
+                metadata_kwargs
+            )
         finding.resource_tags = unroll_tags(
             [{"key": tag.key, "value": tag.value} for tag in resource.tags.all()]
         )
 
         return cls.generate_output(provider, finding, SimpleNamespace())
+
+    @staticmethod
+    def _get_api_check_metadata_kwargs(check_metadata: dict) -> dict:
+        remediation = check_metadata["remediation"]
+        remediation_code = remediation["code"]
+        remediation_recommendation = remediation["recommendation"]
+
+        return {
+            "Provider": check_metadata["provider"],
+            "CheckID": check_metadata["checkid"],
+            "CheckTitle": check_metadata["checktitle"],
+            "CheckType": check_metadata["checktype"],
+            "CheckAliases": check_metadata.get("checkaliases", []),
+            "ServiceName": check_metadata["servicename"],
+            "SubServiceName": check_metadata["subservicename"],
+            "Severity": check_metadata["severity"],
+            "ResourceType": check_metadata["resourcetype"],
+            "ResourceGroup": check_metadata.get("resourcegroup", ""),
+            "Description": check_metadata["description"],
+            "Risk": check_metadata["risk"],
+            "RelatedUrl": check_metadata["relatedurl"],
+            "Remediation": Remediation(
+                Recommendation=Recommendation(
+                    Text=remediation_recommendation["text"],
+                    Url=remediation_recommendation["url"],
+                ),
+                Code=Code(
+                    NativeIaC=remediation_code["nativeiac"],
+                    Terraform=remediation_code["terraform"],
+                    CLI=remediation_code["cli"],
+                    Other=remediation_code["other"],
+                ),
+            ),
+            "ResourceIdTemplate": check_metadata["resourceidtemplate"],
+            "AdditionalURLs": check_metadata.get("additionalurls", []),
+            "Categories": check_metadata["categories"],
+            "DependsOn": check_metadata["dependson"],
+            "RelatedTo": check_metadata["relatedto"],
+            "Notes": check_metadata["notes"],
+            "Compliance": check_metadata.get("compliance", []),
+        }
+
+    @staticmethod
+    def _construct_legacy_check_metadata(metadata_kwargs: dict) -> CheckMetadata:
+        severity = metadata_kwargs["Severity"]
+        if not isinstance(severity, Severity):
+            severity = Severity(severity)
+
+        legacy_metadata_kwargs = {**metadata_kwargs, "Severity": severity}
+        return CheckMetadata.construct(**legacy_metadata_kwargs)
 
     def _transform_findings_stats(scan_summaries: list[dict]) -> dict:
         """

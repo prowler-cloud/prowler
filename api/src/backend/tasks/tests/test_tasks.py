@@ -366,6 +366,172 @@ class TestGenerateOutputs:
                 output_location="s3://bucket/zipped.zip"
             )
 
+    @patch("tasks.tasks._upload_to_s3")
+    @patch("tasks.tasks._compress_output_files")
+    @patch("tasks.tasks.get_compliance_frameworks")
+    @patch("tasks.tasks.Compliance.get_bulk")
+    @patch("tasks.tasks.initialize_prowler_provider")
+    @patch("tasks.tasks.Provider.objects.get")
+    @patch("tasks.tasks.ScanSummary.objects.filter")
+    @patch("tasks.tasks.Finding.all_objects.filter")
+    def test_generate_outputs_accepts_legacy_persisted_check_metadata(
+        self,
+        mock_finding_filter,
+        mock_scan_summary_filter,
+        mock_provider_get,
+        mock_initialize_provider,
+        mock_compliance_get_bulk,
+        mock_get_available_frameworks,
+        mock_compress,
+        mock_upload,
+    ):
+        mock_scan_summary_filter.return_value.exists.return_value = True
+
+        mock_provider = MagicMock()
+        mock_provider.uid = "azure-subscription-123"
+        mock_provider.provider = "azure"
+        mock_provider_get.return_value = mock_provider
+
+        prowler_provider = MagicMock()
+        prowler_provider.type = "azure"
+        prowler_provider.identity.identity_type = "mock_identity_type"
+        prowler_provider.identity.identity_id = "mock_identity_id"
+        prowler_provider.identity.subscriptions = {
+            "legacy-subscription": "legacy-sub-id"
+        }
+        prowler_provider.identity.tenant_ids = ["test-ing-432a-a828-d9c965196f87"]
+        prowler_provider.identity.tenant_domain = "mock_tenant_domain"
+        prowler_provider.region_config.name = "AzureCloud"
+        mock_initialize_provider.return_value = prowler_provider
+
+        mock_compliance_get_bulk.return_value = {}
+        mock_get_available_frameworks.return_value = []
+
+        resource = MagicMock()
+        resource.uid = (
+            "/subscriptions/legacy-sub-id/providers/Microsoft.Authorization/"
+            "policyAssignments/legacy"
+        )
+        resource.name = "legacy-policy"
+        resource.region = "global"
+        resource.metadata = "{}"
+        resource.details = ""
+        resource.tags.all.return_value = [MagicMock(key="env", value="prod")]
+
+        dummy_finding = MagicMock()
+        dummy_finding.uid = "finding-uid-legacy"
+        dummy_finding.status = "FAIL"
+        dummy_finding.status_extended = "Legacy metadata finding"
+        dummy_finding.muted = False
+        dummy_finding.compliance = {}
+        dummy_finding.raw_result = {}
+        dummy_finding.check_id = (
+            "entra_conditional_access_policy_require_mfa_for_management_api"
+        )
+        dummy_finding.check_metadata = {
+            "provider": "azure",
+            "checkid": "entra_conditional_access_policy_require_mfa_for_management_api",
+            "checktitle": "Ensure Multifactor Authentication is Required for Windows Azure Service Management API",
+            "checktype": [],
+            "servicename": "entra",
+            "subservicename": "",
+            "severity": "medium",
+            "resourcetype": "#microsoft.graph.conditionalAccess",
+            "resourcegroup": "IAM",
+            "description": "Legacy description",
+            "risk": "Legacy risk",
+            "relatedurl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-azure-management",
+            "additionalurls": [
+                "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps"
+            ],
+            "remediation": {
+                "code": {
+                    "cli": "",
+                    "other": "",
+                    "nativeiac": "",
+                    "terraform": "",
+                },
+                "recommendation": {
+                    "text": "Legacy remediation",
+                    "url": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps",
+                },
+            },
+            "resourceidtemplate": "",
+            "categories": [],
+            "dependson": [],
+            "relatedto": [],
+            "notes": "Legacy notes",
+        }
+        dummy_finding.resources.first.return_value = resource
+
+        mock_finding_filter.return_value.order_by.return_value.iterator.return_value = [
+            dummy_finding
+        ]
+
+        writer_instances = []
+
+        def writer_factory(*args, **kwargs):
+            writer = MagicMock()
+            writer._data = []
+            writer.transform = MagicMock()
+            writer.batch_write_data_to_file = MagicMock()
+            writer.findings = kwargs["findings"]
+            writer_instances.append(writer)
+            return writer
+
+        with (
+            patch(
+                "tasks.tasks.FindingOutput._transform_findings_stats",
+                return_value={"some": "stats"},
+            ),
+            patch(
+                "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+                {
+                    "json": {
+                        "class": writer_factory,
+                        "suffix": ".json",
+                        "kwargs": {},
+                    }
+                },
+            ),
+            patch(
+                "tasks.tasks._generate_output_directory",
+                return_value=(
+                    "/tmp/test/out-dir",
+                    "/tmp/test/comp-dir",
+                ),
+            ),
+            patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
+            patch("tasks.tasks.rmtree"),
+        ):
+            mock_compress.return_value = "/tmp/zipped.zip"
+            mock_upload.return_value = "s3://bucket/zipped.zip"
+
+            result = generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+
+            assert result == {"upload": True}
+            assert len(writer_instances) == 1
+
+            transformed_finding = writer_instances[0].findings[0]
+            assert transformed_finding.metadata.CheckTitle.startswith("Ensure")
+            assert (
+                transformed_finding.metadata.RelatedUrl
+                == "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-azure-management"
+            )
+            assert (
+                transformed_finding.metadata.Remediation.Recommendation.Url
+                == "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps"
+            )
+            assert transformed_finding.metadata.Severity.value == "medium"
+
+            mock_scan_update.return_value.update.assert_called_once_with(
+                output_location="s3://bucket/zipped.zip"
+            )
+
     def test_generate_outputs_fails_upload(self):
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
