@@ -1,5 +1,50 @@
+import contextvars
 import logging
 from os import environ
+
+# Core context — set by provider service base classes (Layer 1)
+prowler_provider_var: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "prowler_provider", default=""
+)
+prowler_region_var: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "prowler_region", default=""
+)
+prowler_service_var: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "prowler_service", default=""
+)
+
+# App context — set by API layer only (Layer 2)
+prowler_tenant_id_var: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "prowler_tenant_id", default=""
+)
+prowler_scan_id_var: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "prowler_scan_id", default=""
+)
+prowler_provider_uid_var: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "prowler_provider_uid", default=""
+)
+
+_PROWLER_CONTEXT_VARS = {
+    "prowler_provider": prowler_provider_var,
+    "prowler_region": prowler_region_var,
+    "prowler_service": prowler_service_var,
+    "prowler_tenant_id": prowler_tenant_id_var,
+    "prowler_scan_id": prowler_scan_id_var,
+    "prowler_provider_uid": prowler_provider_uid_var,
+}
+
+
+class ProwlerContextFilter(logging.Filter):
+    """Injects prowler context from contextvars into every LogRecord."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        for attr, var in _PROWLER_CONTEXT_VARS.items():
+            if not hasattr(record, attr):
+                value = var.get()
+                if value:
+                    setattr(record, attr, value)
+        return True
+
 
 # Logging levels
 logging_levels = {
@@ -53,6 +98,8 @@ def set_logging_config(log_level: str, log_file: str = None, only_logs: bool = F
         handlers=logging_handlers,
         datefmt="%m/%d/%Y %I:%M:%S %p",
     )
+
+    logging.getLogger().addFilter(ProwlerContextFilter())
 
 
 # Retrieve the logger instance

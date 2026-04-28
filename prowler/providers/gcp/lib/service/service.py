@@ -1,3 +1,4 @@
+import contextvars
 import threading
 
 import google_auth_httplib2
@@ -6,7 +7,12 @@ from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 from googleapiclient.discovery import Resource
 
-from prowler.lib.logger import logger
+from prowler.lib.logger import (
+    logger,
+    prowler_provider_var,
+    prowler_region_var,
+    prowler_service_var,
+)
 from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 
@@ -38,13 +44,18 @@ class GCPService:
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
 
+        prowler_provider_var.set("gcp")
+        prowler_service_var.set(self.service)
+        prowler_region_var.set(self.region)
+
     def _get_client(self):
         return self.client
 
     def __threading_call__(self, call, iterator):
         threads = []
         for value in iterator:
-            threads.append(threading.Thread(target=call, args=(value,)))
+            ctx = contextvars.copy_context()
+            threads.append(threading.Thread(target=ctx.run, args=(call, value)))
         for t in threads:
             t.start()
         for t in threads:

@@ -1,6 +1,12 @@
+import contextvars
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from prowler.lib.logger import logger
+from prowler.lib.logger import (
+    logger,
+    prowler_provider_var,
+    prowler_region_var,
+    prowler_service_var,
+)
 from prowler.providers.aws.aws_provider import AwsProvider
 
 # TODO: review the following code
@@ -66,6 +72,10 @@ class AWSService:
         )
         self.client = self.session.client(self.service, self.region)
 
+        # Set Sentry context for this provider/service
+        prowler_provider_var.set("aws")
+        prowler_service_var.set(self.service)
+
         # Thread pool for __threading_call__
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
@@ -93,8 +103,26 @@ class AWSService:
                 f"{self.service.upper()} - Starting threads for '{call_name}' function to process {item_count} items..."
             )
 
-        # Submit tasks to the thread pool
-        futures = [self.thread_pool.submit(call, item) for item in items]
+        # Submit tasks to the thread pool with context propagation.
+        # copy_context() gives each thread an isolated snapshot of the
+        # current contextvars so prowler_region_var can be set per-thread
+        # without races (required for Python <3.12).
+        futures = []
+        for item in items:
+            ctx = contextvars.copy_context()
+            region = getattr(item, "region", None) or (
+                getattr(item, "_client_config", None)
+                and item._client_config.region_name
+            )
+
+            def _call_with_region(fn, arg, rgn):
+                if rgn:
+                    prowler_region_var.set(rgn)
+                return fn(arg)
+
+            futures.append(
+                self.thread_pool.submit(ctx.run, _call_with_region, call, item, region)
+            )
 
         # Wait for all tasks to complete
         for future in as_completed(futures):

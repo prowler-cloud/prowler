@@ -853,6 +853,22 @@ def perform_prowler_scan(
         scan_instance.started_at = datetime.now(tz=timezone.utc)
         scan_instance.save()
 
+    # Enrich Sentry context for all downstream errors (Layer 2: app-only tags)
+    from prowler.lib.logger import (
+        prowler_provider_uid_var,
+        prowler_scan_id_var,
+        prowler_tenant_id_var,
+    )
+
+    prowler_tenant_id_var.set(str(tenant_id))
+    prowler_scan_id_var.set(str(scan_id))
+    prowler_provider_uid_var.set(str(provider_instance.uid))
+
+    sentry_sdk.set_tag("provider", str(provider_instance.provider))
+    sentry_sdk.set_tag("tenant_id", str(tenant_id))
+    sentry_sdk.set_tag("scan_id", str(scan_id))
+    sentry_sdk.set_tag("provider_uid", str(provider_instance.uid))
+
     # Find the mutelist processor if it exists
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         try:

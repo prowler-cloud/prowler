@@ -1,6 +1,7 @@
+import contextvars
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from prowler.lib.logger import logger
+from prowler.lib.logger import logger, prowler_provider_var, prowler_service_var
 from prowler.providers.azure.azure_provider import AzureProvider
 
 MAX_WORKERS = 10
@@ -24,13 +25,19 @@ class AzureService:
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
 
+        prowler_provider_var.set("azure")
+        prowler_service_var.set(self.__class__.__name__.lower())
+
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
     def __threading_call__(self, call, iterator):
         """Execute a function across multiple items using threading."""
         items = list(iterator) if not isinstance(iterator, list) else iterator
 
-        futures = {self.thread_pool.submit(call, item): item for item in items}
+        futures = {}
+        for item in items:
+            ctx = contextvars.copy_context()
+            futures[self.thread_pool.submit(ctx.run, call, item)] = item
         results = []
 
         for future in as_completed(futures):

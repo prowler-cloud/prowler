@@ -1,6 +1,14 @@
 import sentry_sdk
-
 from config.env import env
+
+_SENTRY_TAG_FIELDS = {
+    "prowler_provider": "provider",
+    "prowler_region": "region",
+    "prowler_service": "service",
+    "prowler_tenant_id": "tenant_id",
+    "prowler_scan_id": "scan_id",
+    "prowler_provider_uid": "provider_uid",
+}
 
 IGNORED_EXCEPTIONS = [
     # Provider is not connected due to credentials errors
@@ -81,7 +89,10 @@ IGNORED_EXCEPTIONS = [
 
 def before_send(event, hint):
     """
-    before_send handles the Sentry events in order to send them or not
+    before_send handles the Sentry events in order to send them or not.
+
+    It also promotes prowler context fields (injected by ProwlerContextFilter)
+    from the LogRecord into Sentry event tags so they become searchable.
     """
     # Ignore logs with the ignored_exceptions
     # https://docs.python.org/3/library/logging.html#logrecord-objects
@@ -104,6 +115,16 @@ def before_send(event, hint):
         # Handle Error and Critical events and discard the rest
         if log_lvl <= 40 and any(ignored in log_msg for ignored in IGNORED_EXCEPTIONS):
             return None  # Explicitly return None to drop the event
+
+        # Promote prowler context fields to Sentry tags
+        for record_attr, tag_name in _SENTRY_TAG_FIELDS.items():
+            value = getattr(log_record, record_attr, None)
+            if value:
+                event.setdefault("tags", {})
+                if isinstance(event["tags"], dict):
+                    event["tags"][tag_name] = str(value)
+                elif isinstance(event["tags"], list):
+                    event["tags"].append([tag_name, str(value)])
 
     # Ignore exceptions with the ignored_exceptions
     if "exc_info" in hint and hint["exc_info"]:
