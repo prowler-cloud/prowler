@@ -1197,11 +1197,39 @@ def aggregate_findings(tenant_id: str, scan_id: str):
                 muted_changed=agg["muted_changed"],
             )
             for agg in aggregation
+            if agg["resources__service"] is not None
+            and agg["resources__region"] is not None
         }
-        # Delete first so re-runs (e.g. post-mute reaggregation) don't hit
-        # the `unique_scan_summary` constraint.
-        ScanSummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id).delete()
-        ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
+        # Upsert so re-runs (post-mute reaggregation) don't trip
+        # `unique_scan_summary`; race-safe under concurrent writers.
+        ScanSummary.objects.bulk_create(
+            scan_aggregations,
+            batch_size=3000,
+            update_conflicts=True,
+            unique_fields=[
+                "tenant",
+                "scan",
+                "check_id",
+                "service",
+                "severity",
+                "region",
+            ],
+            update_fields=[
+                "_pass",
+                "fail",
+                "muted",
+                "total",
+                "new",
+                "changed",
+                "unchanged",
+                "fail_new",
+                "fail_changed",
+                "pass_new",
+                "pass_changed",
+                "muted_new",
+                "muted_changed",
+            ],
+        )
 
 
 def _aggregate_findings_by_region(
@@ -1546,13 +1574,24 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
             )
         )
 
-    # Bulk create overview records
     if overview_objects:
         with rls_transaction(tenant_id):
-            AttackSurfaceOverview.objects.bulk_create(overview_objects, batch_size=500)
-            logger.info(
-                f"Created {len(overview_objects)} attack surface overview records for scan {scan_id}"
+            # Upsert so re-runs (post-mute reaggregation) don't trip
+            # `unique_attack_surface_per_scan`; race-safe under concurrent writers.
+            AttackSurfaceOverview.objects.bulk_create(
+                overview_objects,
+                batch_size=500,
+                update_conflicts=True,
+                unique_fields=["tenant_id", "scan_id", "attack_surface_type"],
+                update_fields=[
+                    "total_findings",
+                    "failed_findings",
+                    "muted_failed_findings",
+                ],
             )
+        logger.info(
+            f"Upserted {len(overview_objects)} attack surface overview records for scan {scan_id}"
+        )
     else:
         logger.info(f"No attack surface overview records created for scan {scan_id}")
 

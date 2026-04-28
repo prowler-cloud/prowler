@@ -71,7 +71,7 @@ class ProwlerArgumentParser:
             usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image,llm{extra_providers_csv}}} ...",
             epilog=f"""
 Available Cloud Providers:
-  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel{extra_providers_csv}}}
+  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image,llm{extra_providers_csv}}}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -83,12 +83,12 @@ Available Cloud Providers:
     oraclecloud         Oracle Cloud Infrastructure Provider
     openstack           OpenStack Provider
     alibabacloud        Alibaba Cloud Provider
-    iac                 IaC Provider (Beta)
+    iac                 IaC Provider
     llm                 LLM Provider (Beta)
     image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
-    mongodbatlas        MongoDB Atlas Provider (Beta)
-    vercel              Vercel Provider{extra_providers_text}
+    mongodbatlas        MongoDB Atlas Provider
+    vercel              Vercel Provider
 
 Available components:
     dashboard           Local dashboard

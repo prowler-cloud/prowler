@@ -22,7 +22,42 @@ class GoogleWorkspaceIdentityInfo(BaseModel):
     domain: str
     customer_id: str
     delegated_user: str
+    root_org_unit_id: Optional[str] = None
     profile: Optional[str] = "default"
+
+
+class GoogleWorkspaceResource(BaseModel):
+    """Generic Google Workspace resource used by findings."""
+
+    id: str
+    customer_id: str
+    location: str = "global"
+    name: Optional[str] = None
+    email: Optional[str] = None
+
+    @classmethod
+    def from_identity(
+        cls, identity: "GoogleWorkspaceIdentityInfo"
+    ) -> "GoogleWorkspaceResource":
+        """Build the domain-level resource from provider identity."""
+
+        return cls(
+            id=identity.customer_id,
+            name=identity.domain,
+            customer_id=identity.customer_id,
+        )
+
+    @classmethod
+    def from_user(
+        cls, user: BaseModel | object, customer_id: str
+    ) -> "GoogleWorkspaceResource":
+        """Build a user-level resource from a Google Workspace user object."""
+
+        return cls(
+            id=getattr(user, "id", ""),
+            email=getattr(user, "email", ""),
+            customer_id=customer_id,
+        )
 
 
 class GoogleWorkspaceOutputOptions(ProviderOutputOptions):

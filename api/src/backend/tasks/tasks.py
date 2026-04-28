@@ -20,8 +20,8 @@ from tasks.jobs.backfill import (
     backfill_finding_group_summaries,
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
-    backfill_scan_category_summaries,
-    backfill_scan_resource_group_summaries,
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
 )
 from tasks.jobs.connection import (
     check_integration_connection,
@@ -46,7 +46,11 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
-from tasks.jobs.report import generate_compliance_reports_job
+from tasks.jobs.report import (
+    STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    _cleanup_stale_tmp_output_directories,
+    generate_compliance_reports_job,
+)
 from tasks.jobs.scan import (
     aggregate_attack_surface,
     aggregate_daily_severity,
@@ -440,6 +444,19 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         scan_id (str): The scan identifier.
         provider_id (str): The provider_id id to be used in generating outputs.
     """
+    try:
+        _cleanup_stale_tmp_output_directories(
+            DJANGO_TMP_OUTPUT_DIRECTORY,
+            max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+            exclude_scan=(tenant_id, scan_id),
+        )
+    except Exception as error:
+        logger.warning(
+            "Skipping stale tmp cleanup before output generation for scan %s: %s",
+            scan_id,
+            error,
+        )
+
     # Check if the scan has findings
     if not ScanSummary.objects.filter(scan_id=scan_id).exists():
         logger.info(f"No findings found for scan {scan_id}")
@@ -659,9 +676,9 @@ def backfill_finding_group_summaries_task(tenant_id: str, days: int = None):
     return backfill_finding_group_summaries(tenant_id=tenant_id, days=days)
 
 
-@shared_task(name="backfill-scan-category-summaries", queue="backfill")
+@shared_task(name="scan-category-summaries", queue="overview")
 @handle_provider_deletion
-def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
+def aggregate_scan_category_summaries_task(tenant_id: str, scan_id: str):
     """
     Backfill ScanCategorySummary for a completed scan.
 
@@ -671,12 +688,12 @@ def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
         tenant_id (str): The tenant identifier.
         scan_id (str): The scan identifier.
     """
-    return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
+    return aggregate_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(name="backfill-scan-resource-group-summaries", queue="backfill")
+@shared_task(name="scan-resource-group-summaries", queue="overview")
 @handle_provider_deletion
-def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
+def aggregate_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
     """
     Backfill ScanGroupSummary for a completed scan.
 
@@ -686,7 +703,7 @@ def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
         tenant_id (str): The tenant identifier.
         scan_id (str): The scan identifier.
     """
-    return backfill_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
+    return aggregate_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(name="backfill-provider-compliance-scores", queue="backfill")
@@ -778,12 +795,16 @@ def reaggregate_all_finding_group_summaries_task(tenant_id: str):
     limit. To keep the pre-aggregated tables consistent with that update,
     this task re-runs the same per-scan aggregation pipeline that scan
     completion runs on the latest completed scan of every (provider, day)
-    pair, rebuilding the three tables that power the read endpoints:
+    pair, rebuilding the tables that power the read endpoints:
 
       - `ScanSummary` and `DailySeveritySummary` -> `/overviews/findings`,
         `/overviews/findings-severity`, `/overviews/services`.
       - `FindingGroupDailySummary` -> `/finding-groups` and
         `/finding-groups/latest`.
+      - `ScanGroupSummary` -> `/overviews/resource-groups` (resource
+        inventory).
+      - `ScanCategorySummary` -> `/overviews/categories`.
+      - `AttackSurfaceOverview` -> `/overviews/attack-surfaces`.
 
     Per-scan pipelines are dispatched in parallel via a Celery group so
     wallclock scales with the worker pool.
@@ -815,8 +836,8 @@ def reaggregate_all_finding_group_summaries_task(tenant_id: str):
             len(scan_ids),
         )
         # DailySeveritySummary reads from ScanSummary, so ScanSummary must be
-        # recomputed first; FindingGroupDailySummary reads from Finding
-        # directly and can run in parallel with the severity step.
+        # recomputed first; the other aggregators read Finding directly and
+        # can run in parallel with the severity step.
         group(
             chain(
                 perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
@@ -825,6 +846,15 @@ def reaggregate_all_finding_group_summaries_task(tenant_id: str):
                         tenant_id=tenant_id, scan_id=scan_id
                     ),
                     aggregate_finding_group_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_scan_resource_group_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_scan_category_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_attack_surface_task.si(
                         tenant_id=tenant_id, scan_id=scan_id
                     ),
                 ),

@@ -4,6 +4,7 @@ import os
 import sys
 from pkgutil import walk_packages
 
+from prowler.lib.check.external_tool_providers import EXTERNAL_TOOL_PROVIDERS
 from prowler.lib.logger import logger
 
 
