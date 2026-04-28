@@ -88,7 +88,7 @@ Available Cloud Providers:
     image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
     mongodbatlas        MongoDB Atlas Provider
-    vercel              Vercel Provider
+    vercel              Vercel Provider{extra_providers_text}
 
 Available components:
     dashboard           Local dashboard
