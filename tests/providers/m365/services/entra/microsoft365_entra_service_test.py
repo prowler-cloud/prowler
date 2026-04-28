@@ -1,4 +1,5 @@
 import asyncio
+import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -24,6 +25,7 @@ from prowler.providers.m365.services.entra.entra_service import (
     InvitationsFrom,
     Organization,
     PersistentBrowser,
+    PremiumLicenseInsight,
     SessionControls,
     SignInFrequency,
     SignInFrequencyInterval,
@@ -593,3 +595,93 @@ class Test_Entra_Service:
         registration_builder.get.assert_awaited()
         registration_builder.with_url.assert_called_once_with("next-link")
         registration_builder_next.get.assert_awaited()
+
+
+class Test_Entra_get_premium_license_insight:
+    """Validate the raw JSON parsing of the Microsoft Graph beta endpoint
+    `reports/azureADPremiumLicenseInsight`. These tests bypass full Entra
+    initialisation and exercise the parser directly via a stand-alone
+    instance with a mocked `request_adapter`.
+    """
+
+    @staticmethod
+    def _build_entra_with_adapter(adapter):
+        entra = Entra.__new__(Entra)
+        entra.client = MagicMock(request_adapter=adapter)
+        return entra
+
+    def test_parses_realistic_response(self):
+        """Parses the canonical Microsoft Graph response and exposes derived totals."""
+        payload = {
+            "id": "00000000-0000-0000-0000-000000000000",
+            "entitledP1LicenseCount": 100,
+            "entitledP2LicenseCount": 50,
+            "entitledTotalLicenseCount": 150,
+            "p1FeatureUtilizations": {
+                "conditionalAccess": {"userCount": 85},
+                "conditionalAccessGuestUsers": {"userCount": 12},
+            },
+            "p2FeatureUtilizations": {
+                "riskBasedConditionalAccess": {"userCount": 30},
+                "riskBasedConditionalAccessGuestUsers": {"userCount": 5},
+            },
+        }
+        adapter = MagicMock()
+        adapter.send_primitive_async = AsyncMock(
+            return_value=json.dumps(payload).encode("utf-8")
+        )
+        entra = self._build_entra_with_adapter(adapter)
+
+        insight = asyncio.run(entra._get_premium_license_insight())
+
+        assert isinstance(insight, PremiumLicenseInsight)
+        assert insight.entitled_p1_license_count == 100
+        assert insight.entitled_p2_license_count == 50
+        assert insight.total_license_count == 150
+        assert insight.conditional_access_user_count == 85
+        assert insight.conditional_access_guest_user_count == 12
+        assert insight.conditional_access_users_count == 97
+
+    def test_returns_none_on_403(self):
+        """Returns None when the API raises (e.g. 403 missingLicense)."""
+        adapter = MagicMock()
+        adapter.send_primitive_async = AsyncMock(
+            side_effect=Exception("403 Forbidden: missingLicense")
+        )
+        entra = self._build_entra_with_adapter(adapter)
+
+        insight = asyncio.run(entra._get_premium_license_insight())
+
+        assert insight is None
+
+    def test_returns_none_on_empty_response(self):
+        """Returns None when the API returns empty bytes."""
+        adapter = MagicMock()
+        adapter.send_primitive_async = AsyncMock(return_value=b"")
+        entra = self._build_entra_with_adapter(adapter)
+
+        insight = asyncio.run(entra._get_premium_license_insight())
+
+        assert insight is None
+
+    def test_handles_missing_feature_utilizations(self):
+        """Falls back to P1+P2 sum when entitledTotalLicenseCount is missing
+        and tolerates a null p1FeatureUtilizations object."""
+        payload = {
+            "entitledP1LicenseCount": 10,
+            "entitledP2LicenseCount": 0,
+            "p1FeatureUtilizations": None,
+        }
+        adapter = MagicMock()
+        adapter.send_primitive_async = AsyncMock(
+            return_value=json.dumps(payload).encode("utf-8")
+        )
+        entra = self._build_entra_with_adapter(adapter)
+
+        insight = asyncio.run(entra._get_premium_license_insight())
+
+        assert insight is not None
+        assert insight.total_license_count == 10
+        assert insight.conditional_access_users_count == 0
+        assert insight.conditional_access_user_count == 0
+        assert insight.conditional_access_guest_user_count == 0

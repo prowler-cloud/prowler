@@ -1027,9 +1027,14 @@ OAuthAppInfo
     async def _get_premium_license_insight(self) -> Optional["PremiumLicenseInsight"]:
         """Retrieve Azure AD Premium license insight from the Microsoft Graph beta API.
 
-        Fetches the premium license utilization report which includes the total
-        number of entitled P1 licenses and the number of users actively utilizing
-        Conditional Access (a P1 feature).
+        Fetches the premium license utilization report which exposes entitled
+        P1/P2 license counts and per-feature utilization (Conditional Access
+        regular and guest users).
+
+        Tenants without any P1/P2 license receive HTTP 403 with the
+        ``missingLicense`` error code; this is surfaced as ``None`` so the
+        consuming check can distinguish "not applicable" from a real
+        coverage gap.
 
         Returns:
             Optional[PremiumLicenseInsight]: The premium license insight data,
@@ -1050,14 +1055,36 @@ OAuthAppInfo
             )
             if response:
                 data = json.loads(response)
+                p1 = int(data.get("entitledP1LicenseCount", 0) or 0)
+                p2 = int(data.get("entitledP2LicenseCount", 0) or 0)
+                p1_features = data.get("p1FeatureUtilizations") or {}
+                ca_users = int(
+                    (p1_features.get("conditionalAccess") or {}).get("userCount", 0)
+                    or 0
+                )
+                ca_guest_users = int(
+                    (p1_features.get("conditionalAccessGuestUsers") or {}).get(
+                        "userCount", 0
+                    )
+                    or 0
+                )
+                total_licenses = int(
+                    data.get("entitledTotalLicenseCount", p1 + p2) or (p1 + p2)
+                )
                 return PremiumLicenseInsight(
-                    p1_license_count=data.get("p1LicenseCount", 0),
-                    conditional_access_users_count=data.get(
-                        "conditionalAccessUsersCount", 0
-                    ),
+                    entitled_p1_license_count=p1,
+                    entitled_p2_license_count=p2,
+                    conditional_access_user_count=ca_users,
+                    conditional_access_guest_user_count=ca_guest_users,
+                    total_license_count=total_licenses,
+                    conditional_access_users_count=ca_users + ca_guest_users,
                 )
         except Exception as error:
-            logger.error(
+            # 403 missingLicense is expected for tenants without P1/P2.
+            logger.warning(
+                f"Entra - Could not retrieve Azure AD Premium license insight. "
+                f"Requires Reports.Read.All and a tenant with at least one "
+                f"Microsoft Entra ID P1 or P2 license. "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return None
@@ -1529,13 +1556,23 @@ class OAuthApp(BaseModel):
 class PremiumLicenseInsight(BaseModel):
     """Model representing Azure AD Premium license utilization insight.
 
-    Contains the total number of entitled P1 licenses and the number
-    of users actively utilizing Conditional Access, a P1-gated feature.
+    Mirrors the four counters returned by Microsoft Graph beta
+    ``reports/azureADPremiumLicenseInsight`` plus two derived totals
+    consumed by the licence-utilization check (P2 entitlements include P1,
+    and guest Conditional Access users still consume premium licences).
 
     Attributes:
-        p1_license_count: Total number of entitled P1 (or P2) licenses.
-        conditional_access_users_count: Number of users utilizing Conditional Access.
+        entitled_p1_license_count: Tenant-wide entitled Microsoft Entra ID P1 licenses.
+        entitled_p2_license_count: Tenant-wide entitled Microsoft Entra ID P2 licenses.
+        conditional_access_user_count: Users actively utilising Conditional Access.
+        conditional_access_guest_user_count: Guest users actively utilising Conditional Access.
+        total_license_count: Total premium licenses entitled (P1 + P2).
+        conditional_access_users_count: Total Conditional Access utilization (regular + guest).
     """
 
-    p1_license_count: int = 0
+    entitled_p1_license_count: int = 0
+    entitled_p2_license_count: int = 0
+    conditional_access_user_count: int = 0
+    conditional_access_guest_user_count: int = 0
+    total_license_count: int = 0
     conditional_access_users_count: int = 0
