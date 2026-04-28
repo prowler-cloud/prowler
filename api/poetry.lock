@@ -6754,8 +6754,8 @@ uuid6 = "2024.7.10"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-reference = "master"
-resolved_reference = "ca29e354b622198ff6a70e2ea5eb04e4a44a0903"
+reference = "v5.25"
+resolved_reference = "e252058af491b41608dbaaba2975acd7c1728174"
 
 [[package]]
 name = "psutil"
@@ -9424,4 +9424,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "a3ab982d11a87d951ff15694d2ca7fd51f1f51a451abb0baa067ccf6966367a8"
+content-hash = "7446e89a46709f976a572231862072de86e7bf01ed90a72bea526b9ab05a82b3"
