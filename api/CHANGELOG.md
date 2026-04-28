@@ -18,6 +18,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🐞 Fixed
 
+- `rls_transaction` to retry mid-query read replica failures with primary DB fallback via `execute_wrapper`, preventing scan crashes during replica recovery [(#10379)](https://github.com/prowler-cloud/prowler/pull/10379)
 - `generate_outputs_task` crashing with `KeyError` for compliance frameworks listed by `get_compliance_frameworks` but not loadable by `Compliance.get_bulk` [(#10903)](https://github.com/prowler-cloud/prowler/pull/10903)
 
 ---
@@ -147,7 +148,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🐞 Fixed
 
-- `rls_transaction` to retry mid-query read replica failures with primary DB fallback via `execute_wrapper`, preventing scan crashes during replica recovery [(#10379)](https://github.com/prowler-cloud/prowler/pull/10379)
 - Finding groups latest endpoint now aggregates the latest snapshot per provider before check-level totals, keeping impacted resources aligned across providers [(#10419)](https://github.com/prowler-cloud/prowler/pull/10419)
 - Mute rule creation now triggers finding-group summary re-aggregation after historical muting, keeping stats in sync after mute operations [(#10419)](https://github.com/prowler-cloud/prowler/pull/10419)
 - Attack Paths: Deduplicate nodes before ProwlerFinding lookup in Attack Paths Cypher queries, reducing execution time [(#10424)](https://github.com/prowler-cloud/prowler/pull/10424)
