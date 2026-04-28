@@ -91,13 +91,13 @@ class TestIdentityService:
                 ),
                 patch(
                     "oci.identity_domains.IdentityDomainsClient",
-                    return_value=MagickMock(list_password_policies=lambda: policy),
+                    return_value=MagicMock(list_password_policies=lambda: policy),
                 ),
             ):
                 identity_client.__list_domains__(regional_client_ash)
                 identity_client.__list_domains__(regional_client_chi)
                 identity_client.__list_password_policies__(regional_client_ash)
-                identity_client.__list_password_policies__(reginoal_client_chi)
+                identity_client.__list_password_policies__(regional_client_chi)
 
             assert (
                 len(identity_client.domains) == 2
