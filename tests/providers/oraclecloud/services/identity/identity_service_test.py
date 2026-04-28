@@ -113,5 +113,5 @@ class TestIdentityService:
                     and domain.region == "us-chicago-1"
                     for domain in identity_client.domains
                 )
-                and len(domain.password_policies) == 2
+                and len(identity_client.password_policies) == 2
             )
