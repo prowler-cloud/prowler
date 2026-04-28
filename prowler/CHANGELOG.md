@@ -19,6 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - AWS Organizations metadata retrieval for delegated administrator scans by using the assumed role session instead of the pre-assume credentials [(#10894)](https://github.com/prowler-cloud/prowler/pull/10894)
 - `admincenter_groups_not_public_visibility` check for M365 provider evaluating Security and Distribution groups, now restricted to Microsoft 365 (Unified) groups per CIS M365 Foundations 1.2.1 [(#10899)](https://github.com/prowler-cloud/prowler/pull/10899)
 - Google Workspace check reports now store the actual domain or account resource subject instead of `provider.identity` [(#10901)](https://github.com/prowler-cloud/prowler/pull/10901)
+- `entra_users_mfa_capable` evaluating disabled guest accounts; CIS 5.2.3.4 only targets enabled member users [(#10785)](https://github.com/prowler-cloud/prowler/pull/10785)
 
 ---
 
@@ -44,7 +45,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Google Workspace Calendar checks false FAIL on unconfigured settings with secure Google defaults [(#10726)](https://github.com/prowler-cloud/prowler/pull/10726)
 - Google Workspace Drive checks false FAIL on unconfigured settings with secure Google defaults [(#10727)](https://github.com/prowler-cloud/prowler/pull/10727)
 - Cloudflare `validate_credentials` can hang in an infinite pagination loop when the SDK repeats accounts, blocking connection tests [(#10771)](https://github.com/prowler-cloud/prowler/pull/10771)
-- `entra_users_mfa_capable` evaluating disabled guest accounts; CIS 5.2.3.4 only targets enabled member users [(#10785)](https://github.com/prowler-cloud/prowler/pull/10785)
 
 ---
 
