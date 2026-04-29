@@ -1,4 +1,3 @@
-import { Tooltip } from "@heroui/tooltip";
 import { Icon } from "@iconify/react";
 
 import type { LatestRelease, ReleaseComponent } from "@/actions/releases/types";
@@ -90,38 +89,6 @@ export const AuthReleaseHighlights = ({
           <p className="text-sm leading-6 text-slate-700 dark:text-white/90">
             {formatPatchMessage(release.components)}
           </p>
-        )}
-
-        {release.contributors.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-white/70">
-              Community contributors
-            </p>
-            <ul className="flex flex-wrap items-center">
-              {release.contributors.map((handle) => (
-                <li key={handle} className="-ml-2 first:ml-0">
-                  <Tooltip content={`@${handle}`} placement="top" shadow="sm">
-                    <a
-                      href={`https://github.com/${handle}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`@${handle} on GitHub`}
-                      className="block rounded-full ring-2 ring-white/80 transition-transform hover:z-10 hover:scale-110 focus-visible:z-10 focus-visible:ring-emerald-400/80 focus-visible:outline-none dark:ring-black/60"
-                    >
-                      <img
-                        src={`https://github.com/${handle}.png?size=80`}
-                        alt=""
-                        width={32}
-                        height={32}
-                        loading="lazy"
-                        className="h-8 w-8 rounded-full bg-slate-200 object-cover dark:bg-white/10"
-                      />
-                    </a>
-                  </Tooltip>
-                </li>
-              ))}
-            </ul>
-          </div>
         )}
 
         <div className="flex flex-wrap items-center gap-4">

@@ -11,7 +11,7 @@ const cspHeader = `
   default-src 'self';
   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://browser.sentry-cdn.com;
   connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com https://js.stripe.com https://www.googletagmanager.com https://*.sentry.io https://*.ingest.sentry.io;
-  img-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://github.com https://avatars.githubusercontent.com;
+  img-src 'self' https://www.google-analytics.com https://www.googletagmanager.com;
   font-src 'self';
   style-src 'self' 'unsafe-inline';
   frame-src 'self' https://js.stripe.com https://www.googletagmanager.com;

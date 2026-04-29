@@ -6,7 +6,6 @@ interface LatestReleaseBase {
   version: string;
   url: string;
   repoUrl: string;
-  contributors: string[];
 }
 
 export interface CuratedRelease extends LatestReleaseBase {
