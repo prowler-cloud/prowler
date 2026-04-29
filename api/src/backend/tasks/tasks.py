@@ -402,7 +402,8 @@ class AttackPathsScanRLSTask(RLSTask):
     SDK initialization, or Neo4j configuration errors during setup).
     """
 
-    def on_failure(self, exc, task_id, _args, kwargs, _einfo):
+    def on_failure(self, exc, task_id, args, kwargs, _einfo):  # noqa: ARG002
+        del args  # Required by Celery's Task.on_failure signature; not used.
         tenant_id = kwargs.get("tenant_id")
         scan_id = kwargs.get("scan_id")
 
