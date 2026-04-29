@@ -1,10 +1,7 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportVercel
-from prowler.providers.vercel.lib.billing import (
-    plan_reason_suffix,
-    resolve_scope_billing_plan,
-)
+from prowler.providers.vercel.lib.billing import plan_reason_suffix
 from prowler.providers.vercel.services.project.project_client import project_client
 
 
@@ -39,11 +36,10 @@ class project_production_deployment_protection_enabled(Check):
                 )
             else:
                 report.status = "FAIL"
-                billing_plan = resolve_scope_billing_plan(project.team_id)
                 report.status_extended = (
                     f"Project {project.name} does not have deployment protection "
                     f"enabled on production deployments."
-                    f"{plan_reason_suffix(billing_plan, {'hobby'}, 'protecting production deployments is not available on the Vercel Hobby plan.')}"
+                    f"{plan_reason_suffix(project.billing_plan, {'hobby'}, 'protecting production deployments is not available on the Vercel Hobby plan.')}"
                 )
 
             findings.append(report)

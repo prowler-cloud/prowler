@@ -57,10 +57,13 @@ class Project(VercelService):
                 pwd_protection = proj.get("passwordProtection")
                 security = proj.get("security", {}) or {}
 
+                project_team_id = proj.get("accountId") or self.provider.session.team_id
+
                 self.projects[project_id] = VercelProject(
                     id=project_id,
                     name=project_name,
-                    team_id=proj.get("accountId") or self.provider.session.team_id,
+                    team_id=project_team_id,
+                    billing_plan=self._resolve_billing_plan(project_team_id),
                     framework=proj.get("framework"),
                     node_version=proj.get("nodeVersion"),
                     auto_expose_system_envs=proj.get("autoExposeSystemEnvs", False),
@@ -95,6 +98,34 @@ class Project(VercelService):
                 f"Project - Error listing projects: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _resolve_billing_plan(self, scope_id: Optional[str] = None) -> Optional[str]:
+        """Resolve the billing plan for the project scope from provider identity."""
+        identity = getattr(self.provider, "identity", None)
+        if not identity:
+            return None
+
+        if scope_id:
+            if (
+                identity.team
+                and identity.team.id == scope_id
+                and identity.team.billing_plan
+            ):
+                return identity.team.billing_plan
+
+            for team in identity.teams:
+                if team.id == scope_id and team.billing_plan:
+                    return team.billing_plan
+
+            if identity.user_id == scope_id:
+                return identity.billing_plan
+
+            return None
+
+        if identity.team and identity.team.billing_plan:
+            return identity.team.billing_plan
+
+        return identity.billing_plan
 
     def _fetch_env_vars(self, project: "VercelProject"):
         """Fetch environment variables for a single project."""
@@ -160,6 +191,7 @@ class VercelProject(BaseModel):
     id: str
     name: str
     team_id: Optional[str] = None
+    billing_plan: Optional[str] = None
     framework: Optional[str] = None
     node_version: Optional[str] = None
     auto_expose_system_envs: bool = False

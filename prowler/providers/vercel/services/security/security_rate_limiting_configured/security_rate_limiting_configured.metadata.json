@@ -28,11 +28,11 @@
     }
   },
   "Categories": [
-    "internet-exposed"
+    "vercel_pro_plan"
   ],
   "DependsOn": [],
   "RelatedTo": [
     "security_waf_enabled"
   ],
-  "Notes": ""
+  "Notes": "Required billing plan: Pro or Enterprise."
 }

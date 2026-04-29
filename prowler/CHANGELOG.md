@@ -7,7 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
-- Update Vercel checks to return personalized finding status extended depending on billing plan [(#10663)](https://github.com/prowler-cloud/prowler/pull/10663)
+- Update Vercel checks to return personalized finding status extended depending on billing plan and classify them with billing-plan categories [(#10663)](https://github.com/prowler-cloud/prowler/pull/10663)
 
 ### 🔄 Changed
 

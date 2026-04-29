@@ -113,6 +113,7 @@ class Test_project_skew_protection_enabled:
                 id=PROJECT_ID,
                 name=PROJECT_NAME,
                 team_id=TEAM_ID,
+                billing_plan="hobby",
                 skew_protection=False,
             )
         }

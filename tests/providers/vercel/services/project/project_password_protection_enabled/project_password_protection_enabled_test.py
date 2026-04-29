@@ -150,6 +150,7 @@ class Test_project_password_protection_enabled:
                 id=PROJECT_ID,
                 name=PROJECT_NAME,
                 team_id=TEAM_ID,
+                billing_plan="hobby",
                 password_protection=None,
             )
         }

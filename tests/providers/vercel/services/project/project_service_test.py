@@ -43,3 +43,25 @@ class TestProjectService:
             "ai_bots": {"active": False, "action": "deny"},
         }
         assert project.bot_id_enabled is True
+
+    def test_list_projects_uses_scoped_team_billing_plan(self):
+        service = Project.__new__(Project)
+        service.provider = set_mocked_vercel_provider(
+            billing_plan="enterprise",
+            team_billing_plan="hobby",
+        )
+        service.projects = {}
+        service._paginate = mock.MagicMock(
+            return_value=[
+                {
+                    "id": PROJECT_ID,
+                    "name": PROJECT_NAME,
+                    "accountId": TEAM_ID,
+                }
+            ]
+        )
+
+        service._list_projects()
+
+        project = service.projects[PROJECT_ID]
+        assert project.billing_plan == "hobby"

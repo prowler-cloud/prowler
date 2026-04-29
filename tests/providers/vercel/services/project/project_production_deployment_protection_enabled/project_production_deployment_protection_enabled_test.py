@@ -157,6 +157,7 @@ class Test_project_production_deployment_protection_enabled:
                 id=PROJECT_ID,
                 name=PROJECT_NAME,
                 team_id=TEAM_ID,
+                billing_plan="hobby",
                 production_deployment_protection=None,
             )
         }

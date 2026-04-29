@@ -85,7 +85,7 @@ class VercelService:
 
                 if response.status_code == 403:
                     # Endpoint unavailable for this token/scope; let checks handle it gracefully
-                    logger.warning(
+                    logger.info(
                         f"{self.service} - Access denied for {path} (403). "
                         "This may be caused by plan or permission restrictions."
                     )
