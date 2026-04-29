@@ -22,7 +22,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Finding detail drawer now shows a "View CVE" action when the recommendation URL points to an external CVE advisory [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
+- Finding detail drawer now labels the remediation action by destination: "View CVE" for cve.org, "View in Prowler Hub" for Prowler Hub, "View Advisory" for GitHub Security Advisories [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
 
 ---
 

@@ -806,6 +806,53 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
     );
     expect(screen.queryByText(/avd\.aquasec\.com/)).not.toBeInTheDocument();
   });
+
+  it("should render View Advisory when the recommendation URL points to GitHub Security Advisories", () => {
+    const advisoryUrl = "https://github.com/advisories/GHSA-abcd-1234-efgh";
+    const advisoryCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: advisoryUrl,
+        },
+      },
+    };
+    const advisoryFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: advisoryUrl,
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={advisoryCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={advisoryFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "View Advisory" })).toHaveAttribute(
+      "href",
+      advisoryUrl,
+    );
+    expect(
+      screen.queryByRole("link", { name: "View CVE" }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 // ---------------------------------------------------------------------------

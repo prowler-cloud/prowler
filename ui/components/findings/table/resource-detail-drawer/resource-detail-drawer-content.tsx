@@ -91,12 +91,40 @@ function isProwlerHubUrl(url: string): boolean {
   return url.startsWith("https://hub.prowler.com/");
 }
 
+function isCveOrgUrl(url: string): boolean {
+  try {
+    return new URL(url).hostname.toLowerCase() === "www.cve.org";
+  } catch {
+    return false;
+  }
+}
+
+function isGitHubAdvisoryUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return (
+      parsed.hostname.toLowerCase() === "github.com" &&
+      parsed.pathname.startsWith("/advisories/")
+    );
+  } catch {
+    return false;
+  }
+}
+
 function getRecommendationLinkLabel(url: string): string {
+  if (isCveOrgUrl(url)) {
+    return "View CVE";
+  }
+
   if (isProwlerHubUrl(url)) {
     return "View in Prowler Hub";
   }
 
-  return "View CVE";
+  if (isGitHubAdvisoryUrl(url)) {
+    return "View Advisory";
+  }
+
+  return "View Reference";
 }
 
 function resolveNativeIacConfig(providerType: string | undefined): {
