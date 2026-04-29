@@ -92,7 +92,9 @@ class TestIdentityService:
                 patch(
                     "oci.identity_domains.IdentityDomainsClient",
                     return_value=MagicMock(
-                        list_password_policies=lambda: {"data": {"resources": [policy]}}
+                        list_password_policies=lambda: MagicMock(
+                            data=MagicMock(resources=[policy])
+                        )
                     ),
                 ),
             ):
