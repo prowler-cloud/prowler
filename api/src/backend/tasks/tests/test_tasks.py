@@ -842,6 +842,72 @@ class TestScanCompleteTasks:
         # Attack Paths task should be skipped when provider cannot run it
         mock_attack_paths_task.assert_not_called()
 
+    @pytest.mark.parametrize(
+        "row_pre_existing",
+        [True, False],
+        ids=["row-pre-existing", "row-missing-fallback"],
+    )
+    @patch("tasks.tasks.aggregate_attack_surface_task.apply_async")
+    @patch("tasks.tasks.chain")
+    @patch("tasks.tasks.create_compliance_requirements_task.si")
+    @patch("tasks.tasks.update_provider_compliance_scores_task.si")
+    @patch("tasks.tasks.perform_scan_summary_task.si")
+    @patch("tasks.tasks.generate_outputs_task.si")
+    @patch("tasks.tasks.generate_compliance_reports_task.si")
+    @patch("tasks.tasks.check_integrations_task.si")
+    @patch("tasks.tasks.attack_paths_db_utils.set_attack_paths_scan_task_id")
+    @patch("tasks.tasks.attack_paths_db_utils.create_attack_paths_scan")
+    @patch("tasks.tasks.attack_paths_db_utils.retrieve_attack_paths_scan")
+    @patch("tasks.tasks.perform_attack_paths_scan_task.apply_async")
+    @patch("tasks.tasks.can_provider_run_attack_paths_scan", return_value=True)
+    def test_scan_complete_dispatches_attack_paths_scan(
+        self,
+        _mock_can_run_attack_paths,
+        mock_attack_paths_task,
+        mock_retrieve,
+        mock_create,
+        mock_set_task_id,
+        mock_check_integrations_task,
+        mock_compliance_reports_task,
+        mock_outputs_task,
+        mock_scan_summary_task,
+        mock_update_compliance_scores_task,
+        mock_compliance_requirements_task,
+        mock_chain,
+        mock_attack_surface_task,
+        row_pre_existing,
+    ):
+        """When a provider can run Attack Paths, dispatch must:
+        1. Reuse the existing row or create one if missing.
+        2. Call apply_async on the Attack Paths task.
+        3. Persist the returned Celery task id on the row.
+        """
+        existing_row = MagicMock(id="ap-scan-id")
+        if row_pre_existing:
+            mock_retrieve.return_value = existing_row
+        else:
+            mock_retrieve.return_value = None
+            mock_create.return_value = existing_row
+
+        async_result = MagicMock(task_id="celery-task-id")
+        mock_attack_paths_task.return_value = async_result
+
+        _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
+
+        mock_retrieve.assert_called_once_with("tenant-id", "scan-id")
+        if row_pre_existing:
+            mock_create.assert_not_called()
+        else:
+            mock_create.assert_called_once_with("tenant-id", "scan-id", "provider-id")
+
+        mock_attack_paths_task.assert_called_once_with(
+            kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"}
+        )
+
+        mock_set_task_id.assert_called_once_with(
+            "tenant-id", "ap-scan-id", "celery-task-id"
+        )
+
 
 class TestAttackPathsTasks:
     @staticmethod
