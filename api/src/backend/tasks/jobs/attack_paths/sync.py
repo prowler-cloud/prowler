@@ -5,13 +5,13 @@ This module handles syncing graph data from temporary scan databases
 to the tenant database, adding provider isolation labels and properties.
 """
 
+import time
+
 from collections import defaultdict
 from typing import Any
 
 import neo4j
 from celery.utils.log import get_task_logger
-
-from api.attack_paths import database as graph_database
 from tasks.jobs.attack_paths.config import (
     PROVIDER_ISOLATION_PROPERTIES,
     PROVIDER_RESOURCE_LABEL,
@@ -19,7 +19,6 @@ from tasks.jobs.attack_paths.config import (
     get_provider_label,
     get_tenant_label,
 )
-from tasks.jobs.attack_paths.indexes import IndexType, create_indexes
 from tasks.jobs.attack_paths.queries import (
     NODE_FETCH_QUERY,
     NODE_SYNC_TEMPLATE,
@@ -28,12 +27,9 @@ from tasks.jobs.attack_paths.queries import (
     render_cypher_template,
 )
 
+from api.attack_paths import database as graph_database
+
 logger = get_task_logger(__name__)
-
-
-def create_sync_indexes(neo4j_session) -> None:
-    """Create indexes for provider resource sync operations."""
-    create_indexes(neo4j_session, IndexType.SYNC)
 
 
 def sync_graph(
@@ -81,12 +77,13 @@ def sync_nodes(
     """
     Sync nodes from source to target database.
 
-    Adds `_ProviderResource` label and `_provider_id` property to all nodes.
-    Also adds dynamic `_Tenant_{id}` and `_Provider_{id}` isolation labels.
+    Adds `_ProviderResource` label and dynamic `_Tenant_{id}` and `_Provider_{id}`
+    isolation labels to all nodes.
 
     Source and target sessions are opened sequentially per batch to avoid
     holding two Bolt connections simultaneously for the entire sync duration.
     """
+    t0 = time.perf_counter()
     last_id = -1
     total_synced = 0
 
@@ -119,17 +116,11 @@ def sync_nodes(
                 query = render_cypher_template(
                     NODE_SYNC_TEMPLATE, {"__NODE_LABELS__": node_labels}
                 )
-                target_session.run(
-                    query,
-                    {
-                        "rows": batch,
-                        "provider_id": provider_id,
-                    },
-                )
+                target_session.run(query, {"rows": batch})
 
         total_synced += batch_count
         logger.info(
-            f"Synced {total_synced} nodes from {source_database} to {target_database}"
+            f"Synced {total_synced} nodes from {source_database} to {target_database} in {time.perf_counter() - t0:.3f}s"
         )
 
     return total_synced
@@ -143,11 +134,12 @@ def sync_relationships(
     """
     Sync relationships from source to target database.
 
-    Adds `_provider_id` property to all relationships.
+    Matches source and target nodes by `_provider_element_id` in the tenant database.
 
     Source and target sessions are opened sequentially per batch to avoid
     holding two Bolt connections simultaneously for the entire sync duration.
     """
+    t0 = time.perf_counter()
     last_id = -1
     total_synced = 0
 
@@ -174,17 +166,11 @@ def sync_relationships(
                 query = render_cypher_template(
                     RELATIONSHIP_SYNC_TEMPLATE, {"__REL_TYPE__": rel_type}
                 )
-                target_session.run(
-                    query,
-                    {
-                        "rows": batch,
-                        "provider_id": provider_id,
-                    },
-                )
+                target_session.run(query, {"rows": batch})
 
         total_synced += batch_count
         logger.info(
-            f"Synced {total_synced} relationships from {source_database} to {target_database}"
+            f"Synced {total_synced} relationships from {source_database} to {target_database} in {time.perf_counter() - t0:.3f}s"
         )
 
     return total_synced

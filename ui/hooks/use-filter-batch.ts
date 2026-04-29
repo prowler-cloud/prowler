@@ -16,8 +16,12 @@ export interface PendingFilters {
 }
 
 export interface UseFilterBatchReturn {
+  /** Current applied filter values — URL-backed state */
+  appliedFilters: PendingFilters;
   /** Current pending filter values — local state, not yet in URL */
   pendingFilters: PendingFilters;
+  /** Pending filter keys whose selected values differ from the applied URL state */
+  changedFilters: PendingFilters;
   /** Update a single pending filter. Does NOT touch the URL. */
   setPending: (key: string, values: string[]) => void;
   /** Apply all pending filters to URL in a single router.push */
@@ -25,26 +29,13 @@ export interface UseFilterBatchReturn {
   /** Discard all pending changes, reset pending to the current URL state */
   discardAll: () => void;
   /**
-   * Clear all pending filters to an empty state (no filters selected).
-   * Unlike `discardAll`, this does NOT reset to the URL state — it sets
-   * pending to `{}` (truly empty). The user must click Apply to push
-   * the empty state to the URL.
-   * Includes provider/account keys and all batch-managed filter keys.
-   */
-  clearAll: () => void;
-  /**
    * Clear all batch-managed filters and immediately navigate (router.push)
-   * with defaultParams applied. Equivalent to clearAll() + applyAll() but
-   * avoids the async state gap between the two calls.
+   * with defaultParams applied. Resets pending state to empty and pushes
+   * the resulting URL in one step.
    */
   clearAndApply: () => void;
-  /**
-   * Clear only the specified filter keys from pending state and immediately
-   * navigate (router.push) with the remaining pending filters + defaultParams.
-   * Used by "Clear all" in the pills strip to remove only pill-visible filters
-   * without touching provider/account selectors.
-   */
-  clearKeys: (keys: string[]) => void;
+  /** Remove one applied URL-backed filter value and immediately navigate */
+  removeAppliedAndApply: (key: string, value?: string) => void;
   /** Remove a single filter key from pending state */
   removePending: (key: string) => void;
   /** Whether pending state differs from the current URL */
@@ -122,6 +113,37 @@ function countChanges(
   return count;
 }
 
+function getChangedFilters(
+  pending: PendingFilters,
+  applied: PendingFilters,
+): PendingFilters {
+  const pendingKeys = Object.keys(pending).filter((key) => {
+    const values = pending[key];
+    return values.length > 0;
+  });
+  const appliedKeys = Object.keys(applied).filter((key) => {
+    const values = applied[key];
+    return values.length > 0;
+  });
+  const allKeys = Array.from(new Set([...pendingKeys, ...appliedKeys]));
+
+  return allKeys.reduce<PendingFilters>((changed, key) => {
+    const pendingValues = pending[key] ?? [];
+    const appliedValues = applied[key] ?? [];
+    const sortedPending = [...pendingValues].sort();
+    const sortedApplied = [...appliedValues].sort();
+    const isChanged =
+      sortedPending.length !== sortedApplied.length ||
+      !sortedPending.every((value, index) => value === sortedApplied[index]);
+
+    if (isChanged && pendingValues.length > 0) {
+      changed[key] = pendingValues;
+    }
+
+    return changed;
+  }, {});
+}
+
 export interface UseFilterBatchOptions {
   /**
    * Default URL params to apply when applyAll() is called and they are not
@@ -147,6 +169,9 @@ export const useFilterBatch = (
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(() =>
+    deriveAppliedFromUrl(new URLSearchParams(searchParams.toString())),
+  );
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(() =>
     deriveAppliedFromUrl(new URLSearchParams(searchParams.toString())),
   );
@@ -157,6 +182,7 @@ export const useFilterBatch = (
     const applied = deriveAppliedFromUrl(
       new URLSearchParams(searchParams.toString()),
     );
+    setAppliedFilters(applied);
     setPendingFilters(applied);
   }, [searchParams]);
 
@@ -179,6 +205,7 @@ export const useFilterBatch = (
 
   /** Private helper — builds URLSearchParams from a pending state and pushes. */
   const buildAndPush = (nextPending: PendingFilters) => {
+    setAppliedFilters(nextPending);
     const params = new URLSearchParams(searchParams.toString());
 
     // Remove all batch-managed filter params
@@ -227,56 +254,35 @@ export const useFilterBatch = (
   };
 
   /**
-   * Clears ALL pending batch filters to an empty state (no filters selected).
-   *
-   * Unlike `discardAll`, this resets pending to `{}` — not to the current URL
-   * state. This covers both:
-   * - Keys that are already in `pendingFilters` (pending-only or URL-loaded)
-   * - Keys that are in the applied (URL) state but were removed from pending
-   *   via `removePending` (edge case: diverged state)
-   *
-   * The user must click Apply to push the empty state to the URL.
-   * `applyAll()` removes all batch-managed URL params first, so even keys
-   * absent from `pendingFilters` will be removed from the URL on apply.
-   */
-  const clearAll = () => {
-    // Return a truly empty object — no filters pending at all.
-    // `getFilterValue` normalises missing keys to [] so selectors will show
-    // their "all selected" / placeholder state immediately.
-    setPendingFilters({});
-  };
-
-  /**
    * Clears ALL batch-managed filters and immediately navigates (router.push).
    *
-   * Works around the async gap between clearAll() + applyAll(): instead of
-   * setting pending to `{}` and then calling applyAll() (which would still
-   * read the old pendingFilters from the closure), this function builds the
-   * target URL directly from an empty pending state and pushes it in one step.
-   * defaultParams (e.g. filter[muted]=false) are applied as usual.
+   * Builds the target URL directly from an empty pending state and pushes it
+   * in one step. defaultParams (e.g. filter[muted]=false) are applied as usual.
    */
   const clearAndApply = () => {
     setPendingFilters({});
     buildAndPush({});
   };
 
-  /**
-   * Removes only the specified filter keys from pending state and immediately
-   * navigates (router.push) with the remaining filters + defaultParams.
-   *
-   * Used by the pills strip "Clear all" to remove pill-visible filters (severity,
-   * status, delta, region, service, etc.) without touching provider/account selectors.
-   */
-  const clearKeys = (keys: string[]) => {
-    const normalizedKeys = keys.map((k) =>
-      k.startsWith("filter[") ? k : `filter[${k}]`,
+  const removeAppliedAndApply = (key: string, value?: string) => {
+    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+    const applied = deriveAppliedFromUrl(
+      new URLSearchParams(searchParams.toString()),
     );
-    const nextPending: PendingFilters = { ...pendingFilters };
-    normalizedKeys.forEach((k) => {
-      delete nextPending[k];
-    });
-    setPendingFilters(nextPending);
-    buildAndPush(nextPending);
+    const nextValues =
+      value === undefined
+        ? []
+        : (applied[filterKey] ?? []).filter((item) => item !== value);
+    const nextApplied = { ...applied };
+
+    if (nextValues.length > 0) {
+      nextApplied[filterKey] = nextValues;
+    } else {
+      delete nextApplied[filterKey];
+    }
+
+    setPendingFilters(nextApplied);
+    buildAndPush(nextApplied);
   };
 
   const getFilterValue = (key: string): string[] => {
@@ -284,22 +290,23 @@ export const useFilterBatch = (
     return pendingFilters[filterKey] ?? [];
   };
 
-  const appliedFilters = deriveAppliedFromUrl(
-    new URLSearchParams(searchParams.toString()),
-  );
   const hasChanges = !areFiltersEqual(pendingFilters, appliedFilters);
   const changeCount = hasChanges
     ? countChanges(pendingFilters, appliedFilters)
     : 0;
+  const changedFilters = hasChanges
+    ? getChangedFilters(pendingFilters, appliedFilters)
+    : {};
 
   return {
+    appliedFilters,
     pendingFilters,
+    changedFilters,
     setPending,
     applyAll,
     discardAll,
-    clearAll,
     clearAndApply,
-    clearKeys,
+    removeAppliedAndApply,
     removePending,
     hasChanges,
     changeCount,

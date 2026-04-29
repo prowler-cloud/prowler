@@ -3,8 +3,8 @@
 /**
  * Setup Git Hooks for Prowler UI
  *
- * This script checks if Python pre-commit is managing git hooks.
- * If not, it runs the repository's setup script to install pre-commit.
+ * This script checks if prek is managing git hooks.
+ * If not, it runs the repository's setup script to install prek.
  */
 
 const { execSync } = require('child_process');
@@ -12,16 +12,16 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Check if Python pre-commit framework is managing git hooks
+ * Check if prek framework is managing git hooks
  */
-function isPreCommitInstalled(gitRoot) {
+function isPrekInstalled(gitRoot) {
   const hookPath = path.join(gitRoot, '.git', 'hooks', 'pre-commit');
 
   try {
     if (!fs.existsSync(hookPath)) return false;
 
     const content = fs.readFileSync(hookPath, 'utf8');
-    return content.includes('pre-commit') || content.includes('INSTALL_PYTHON');
+    return content.includes('prek') || content.includes('pre-commit') || content.includes('INSTALL_PYTHON');
   } catch {
     return false;
   }
@@ -72,23 +72,24 @@ if (!gitRoot) {
   process.exit(0);
 }
 
-if (isPreCommitInstalled(gitRoot)) {
-  console.log('✅ Git hooks managed by Python pre-commit framework');
-  console.log('   Husky hooks will be called automatically for UI files');
+if (isPrekInstalled(gitRoot)) {
+  console.log('✅ Git hooks managed by prek framework');
+  console.log('   UI hooks will be called automatically for UI files');
   process.exit(0);
 }
 
-// Pre-commit not installed - set it up
-console.log('⚠️  Pre-commit hooks not installed');
-console.log('📦 Installing pre-commit hooks from project dependencies...');
+// Prek not installed - set it up
+console.log('⚠️  Prek hooks not installed');
+console.log('📦 Installing prek hooks...');
 console.log('');
 
 try {
   runSetupScript(gitRoot);
   console.log('');
-  console.log('✅ Pre-commit hooks installed successfully');
+  console.log('✅ Prek hooks installed successfully');
 } catch (error) {
   console.error('❌ Failed to setup git hooks');
   console.error('   Please run manually from repo root: ./scripts/setup-git-hooks.sh');
+  console.error('   Or install prek manually: https://prek.j178.dev/installation/');
   process.exit(1);
 }

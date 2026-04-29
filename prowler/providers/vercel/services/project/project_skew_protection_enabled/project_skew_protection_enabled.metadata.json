@@ -1,0 +1,36 @@
+{
+  "Provider": "vercel",
+  "CheckID": "project_skew_protection_enabled",
+  "CheckTitle": "Vercel project has skew protection enabled to prevent version mismatches during deployments",
+  "CheckType": [],
+  "ServiceName": "project",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "compute",
+  "Description": "**Vercel projects** are assessed for **skew protection**, which ensures clients always communicate with the correct deployment version during rollouts. Without it, clients may fetch assets or call APIs against a different version than the one that served the initial page, causing hydration errors or broken functionality.",
+  "Risk": "Without **skew protection**, users may experience **version mismatches** during deployment rollouts where the HTML is served from one deployment version but subsequent client-side navigation or API calls hit a newer version. This can cause broken user interfaces, failed client-side transitions, or **data corruption** from incompatible API contract changes.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/deployments/skew-protection"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > General\n3. Locate the 'Skew Protection' section\n4. Enable Skew Protection\n5. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable skew protection to ensure that all client requests during a deployment rollout are routed to the same deployment version that served the initial page. This prevents version mismatch errors and ensures a consistent user experience during deployments.",
+      "Url": "https://hub.prowler.com/check/project_skew_protection_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

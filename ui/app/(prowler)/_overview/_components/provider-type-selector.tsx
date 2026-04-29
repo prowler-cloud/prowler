@@ -7,6 +7,7 @@ import {
   MultiSelect,
   MultiSelectContent,
   MultiSelectItem,
+  type MultiSelectSearchProp,
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
@@ -83,6 +84,11 @@ const GoogleWorkspaceProviderBadge = lazy(() =>
     default: m.GoogleWorkspaceProviderBadge,
   })),
 );
+const VercelProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.VercelProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -150,11 +156,16 @@ const PROVIDER_DATA: Record<
     label: "OpenStack",
     icon: OpenStackProviderBadge,
   },
+  vercel: {
+    label: "Vercel",
+    icon: VercelProviderBadge,
+  },
 };
 
 /** Common props shared by both batch and instant modes. */
 interface ProviderTypeSelectorBaseProps {
   providers: ProviderProps[];
+  search?: MultiSelectSearchProp;
 }
 
 /** Batch mode: caller controls both pending state and notification callback (all-or-nothing). */
@@ -189,6 +200,10 @@ export const ProviderTypeSelector = ({
   providers,
   onBatchChange,
   selectedValues,
+  search = {
+    placeholder: "Search providers...",
+    emptyMessage: "No providers found.",
+  },
 }: ProviderTypeSelectorProps) => {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
@@ -222,7 +237,11 @@ export const ProviderTypeSelector = ({
         // .filter((p) => p.attributes.connection?.connected)
         .map((p) => p.attributes.provider),
     ),
-  ).filter((type): type is ProviderType => type in PROVIDER_DATA);
+  )
+    .filter((type): type is ProviderType => type in PROVIDER_DATA)
+    .sort((a, b) =>
+      PROVIDER_DATA[a].label.localeCompare(PROVIDER_DATA[b].label),
+    );
 
   const renderIcon = (providerType: ProviderType) => {
     const IconComponent = PROVIDER_DATA[providerType].icon;
@@ -271,7 +290,7 @@ export const ProviderTypeSelector = ({
         >
           {selectedLabel() || <MultiSelectValue placeholder="All providers" />}
         </MultiSelectTrigger>
-        <MultiSelectContent search={false}>
+        <MultiSelectContent search={search}>
           {availableTypes.length > 0 ? (
             <>
               <div
@@ -295,6 +314,7 @@ export const ProviderTypeSelector = ({
                   key={providerType}
                   value={providerType}
                   badgeLabel={PROVIDER_DATA[providerType].label}
+                  keywords={[providerType, PROVIDER_DATA[providerType].label]}
                   aria-label={`${PROVIDER_DATA[providerType].label} provider`}
                 >
                   <span aria-hidden="true">{renderIcon(providerType)}</span>

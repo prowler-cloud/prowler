@@ -1,0 +1,38 @@
+{
+  "Provider": "vercel",
+  "CheckID": "security_custom_rules_configured",
+  "CheckTitle": "Vercel project has custom firewall rules configured",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Vercel projects** are assessed for **custom firewall rule** configuration. Custom rules allow fine-grained control over traffic based on request attributes such as path, headers, user agent, and geographic location, providing application-specific protection beyond managed rulesets.",
+  "Risk": "Without **custom firewall rules**, the application lacks application-specific traffic filtering. Generic managed rulesets may not cover all threat vectors unique to the application. Custom rules are needed to block **known attack patterns**, restrict access to sensitive paths, and enforce application-level security policies.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/vercel-firewall/custom-rules"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > Security > Firewall\n3. Add custom rules to protect sensitive endpoints\n4. Configure conditions based on path, headers, geographic location, or other request attributes\n5. Set appropriate actions (block, challenge, or allow) for each rule",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure custom firewall rules to protect application-specific endpoints and enforce security policies. Focus on protecting admin panels, API routes, authentication endpoints, and any paths that handle sensitive data.",
+      "Url": "https://hub.prowler.com/check/security_custom_rules_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "security_waf_enabled"
+  ],
+  "Notes": ""
+}

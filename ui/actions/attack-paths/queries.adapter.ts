@@ -1,7 +1,7 @@
+import { DOCS_URLS } from "@/lib/external-urls";
 import { MetaDataProps } from "@/types";
 import {
   ATTACK_PATH_QUERY_IDS,
-  type AttackPathCartographySchemaAttributes,
   AttackPathQueriesResponse,
   AttackPathQuery,
   QUERY_PARAMETER_INPUT_TYPES,
@@ -61,15 +61,12 @@ const CUSTOM_QUERY_PLACEHOLDER = `MATCH (n)
 RETURN n
 LIMIT 25`;
 
-const formatSchemaDocumentationLinkText = (
-  schema: AttackPathCartographySchemaAttributes,
-): string => {
-  return `Cartography schema used by Prowler for ${schema.provider.toUpperCase()} graphs`;
-};
+const CUSTOM_QUERY_DOCUMENTATION_LINK = {
+  text: "Learn how to write custom openCypher queries",
+  link: DOCS_URLS.ATTACK_PATHS_CUSTOM_QUERIES,
+} as const;
 
-const createCustomQuery = (
-  schema?: AttackPathCartographySchemaAttributes,
-): AttackPathQuery => ({
+const createCustomQuery = (): AttackPathQuery => ({
   type: "attack-paths-scans",
   id: ATTACK_PATH_QUERY_IDS.CUSTOM,
   attributes: {
@@ -79,12 +76,7 @@ const createCustomQuery = (
       "Run a read-only openCypher query against the selected Attack Paths scan. Results are automatically scoped to the selected provider.",
     provider: "custom",
     attribution: null,
-    documentation_link: schema
-      ? {
-          text: formatSchemaDocumentationLinkText(schema),
-          link: schema.schema_url,
-        }
-      : null,
+    documentation_link: { ...CUSTOM_QUERY_DOCUMENTATION_LINK },
     parameters: [
       {
         name: "query",
@@ -93,7 +85,9 @@ const createCustomQuery = (
         description: "",
         placeholder: CUSTOM_QUERY_PLACEHOLDER,
         required: true,
-        input_type: QUERY_PARAMETER_INPUT_TYPES.TEXTAREA,
+        input_type: QUERY_PARAMETER_INPUT_TYPES.CODE_EDITOR,
+        editor_language: "openCypher",
+        requirement_badge: "Read-only*",
       },
     ],
   },
@@ -101,7 +95,6 @@ const createCustomQuery = (
 
 export const buildAttackPathQueries = (
   queries: AttackPathQuery[],
-  schema?: AttackPathCartographySchemaAttributes,
 ): AttackPathQuery[] => {
-  return [createCustomQuery(schema), ...queries];
+  return [createCustomQuery(), ...queries];
 };

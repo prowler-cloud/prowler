@@ -1,0 +1,39 @@
+{
+  "Provider": "vercel",
+  "CheckID": "security_waf_enabled",
+  "CheckTitle": "Vercel project has the Web Application Firewall enabled",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "**Vercel projects** are assessed for **Web Application Firewall (WAF)** enablement. The WAF provides protection against common web attacks including **SQL injection**, **cross-site scripting (XSS)**, and other OWASP Top 10 threats.",
+  "Risk": "Without the **Web Application Firewall** enabled, the application is directly exposed to common web attacks including **SQL injection**, **cross-site scripting**, request smuggling, and other exploits. Attackers can exploit these vulnerabilities to steal data, deface the application, or gain unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/vercel-firewall"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > Security\n3. Enable the Web Application Firewall\n4. Configure appropriate rules and managed rulesets\n5. Monitor firewall logs for false positives and adjust rules accordingly",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable the Vercel Web Application Firewall to protect your application against common web attacks. Start with managed rulesets for baseline protection and add custom rules as needed based on your application's threat model.",
+      "Url": "https://hub.prowler.com/check/security_waf_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "security_managed_rulesets_enabled",
+    "security_custom_rules_configured"
+  ],
+  "Notes": ""
+}

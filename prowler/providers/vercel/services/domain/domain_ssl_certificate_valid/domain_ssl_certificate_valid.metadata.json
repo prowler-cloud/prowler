@@ -1,0 +1,39 @@
+{
+  "Provider": "vercel",
+  "CheckID": "domain_ssl_certificate_valid",
+  "CheckTitle": "Vercel domains have a valid, non-expired SSL certificate",
+  "CheckType": [],
+  "ServiceName": "domain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Vercel domains** are assessed for **SSL certificate validity** including provisioning, expiration, and upcoming expiry. Vercel automatically provisions and renews SSL certificates for properly configured domains. A missing, expired, or soon-to-expire certificate indicates a configuration issue that may leave traffic unencrypted.",
+  "Risk": "Without an **SSL certificate**, traffic between users and the domain is transmitted in **plain text**. This exposes sensitive data such as authentication tokens, form submissions, and personal information to interception via **man-in-the-middle attacks**. Search engines also penalize non-HTTPS sites, reducing visibility.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/security/encryption"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > Domains\n3. Verify the domain's DNS records point to Vercel correctly\n4. Vercel will automatically provision an SSL certificate once DNS is properly configured\n5. If issues persist, remove and re-add the domain",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure domain DNS records are properly configured to point to Vercel. Once DNS is validated, Vercel automatically provisions and renews SSL/TLS certificates. Check the domain configuration in the Vercel dashboard if the certificate is not being issued.",
+      "Url": "https://hub.prowler.com/check/domain_ssl_certificate_valid"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "domain_verified",
+    "domain_dns_properly_configured"
+  ],
+  "Notes": ""
+}

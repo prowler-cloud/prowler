@@ -33,7 +33,7 @@ class VPC(AlibabaCloudService):
 
         try:
             request = vpc_models.DescribeVpcsRequest()
-            response = regional_client.describe_vpcs(request)
+            response = self._call_with_retries(regional_client.describe_vpcs, request)
 
             if response and response.body and response.body.vpcs:
                 for vpc_data in response.body.vpcs.vpc:
@@ -70,7 +70,9 @@ class VPC(AlibabaCloudService):
                 request = vpc_models.DescribeFlowLogsRequest()
                 request.resource_id = vpc_id
                 request.resource_type = "VPC"
-                response = regional_client.describe_flow_logs(request)
+                response = self._call_with_retries(
+                    regional_client.describe_flow_logs, request
+                )
 
                 if response and response.body and response.body.flow_logs:
                     flow_logs = response.body.flow_logs.flow_log

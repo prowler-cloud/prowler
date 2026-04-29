@@ -1,5 +1,10 @@
 import { format, parseISO } from "date-fns";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 
 interface DateWithTimeProps {
@@ -33,23 +38,52 @@ export const DateWithTime = ({
         ?.substring(0, 3)
         .toUpperCase() || "";
 
-    return (
+    const fullText = showTime
+      ? `${formattedDate} ${formattedTime} ${timezone}`
+      : formattedDate;
+
+    const content = (
       <div
         className={cn(
           "gap-1",
-          inline ? "inline-flex flex-row items-center" : "flex flex-col",
+          inline
+            ? "inline-flex flex-row items-center overflow-hidden"
+            : "flex flex-col",
         )}
       >
-        <span className="text-text-neutral-primary text-sm whitespace-nowrap">
+        <span
+          className={cn(
+            "text-text-neutral-primary text-sm whitespace-nowrap",
+            inline && "truncate",
+          )}
+        >
           {formattedDate}
         </span>
         {showTime && (
-          <span className="text-text-neutral-tertiary text-xs font-medium whitespace-nowrap">
+          <span
+            className={cn(
+              "text-text-neutral-tertiary text-xs font-medium whitespace-nowrap",
+              inline && "truncate",
+            )}
+          >
             {formattedTime} {timezone}
           </span>
         )}
       </div>
     );
+
+    if (inline) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="min-w-0 overflow-hidden">{content}</div>
+          </TooltipTrigger>
+          <TooltipContent>{fullText}</TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return content;
   } catch {
     return <span>-</span>;
   }

@@ -24,6 +24,19 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => navigationState.searchParams,
 }));
 
+vi.mock("@/components/shadcn/tooltip", () => ({
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({
+    children,
+  }: {
+    children: ReactNode;
+    asChild?: boolean;
+  }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: ReactNode }) => (
+    <span data-testid="tooltip-content">{children}</span>
+  ),
+}));
+
 vi.mock("@/components/ui/entities/entity-info", () => ({
   EntityInfo: ({
     entityAlias,
@@ -156,10 +169,157 @@ describe("ScanListTable", () => {
     expect(screen.getByText("12 Total Entries")).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
 
-    await user.click(screen.getAllByRole("button", { name: "Select scan" })[0]);
+    await user.click(screen.getAllByRole("radio", { name: "Select scan" })[0]);
 
     expect(pushMock).toHaveBeenCalledWith(
       "/attack-paths?scanPage=1&scanPageSize=5&scanId=scan-1",
     );
+  });
+
+  it("enables the radio button for a failed scan when graph data is ready", async () => {
+    const user = userEvent.setup();
+    const failedScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "failed",
+        graph_data_ready: true,
+      },
+    };
+
+    render(<ScanListTable scans={[failedScan]} />);
+
+    const radio = screen.getByRole("radio", { name: "Select scan" });
+    expect(radio).toBeEnabled();
+    expect(radio).toHaveAttribute("aria-checked", "false");
+
+    await user.click(radio);
+
+    expect(pushMock).toHaveBeenCalledWith(
+      "/attack-paths?scanPage=1&scanPageSize=5&scanId=scan-1",
+    );
+  });
+
+  it("disables the radio button for a failed scan when graph data is not ready", () => {
+    const failedScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "failed",
+        graph_data_ready: false,
+      },
+    };
+
+    render(<ScanListTable scans={[failedScan]} />);
+
+    const radio = screen.getByRole("radio", { name: "Scan not available" });
+    expect(radio).toBeDisabled();
+  });
+
+  it("shows a disabled radio button for a scheduled scan without graph data", () => {
+    const scheduledScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "scheduled",
+        progress: 0,
+        graph_data_ready: false,
+        completed_at: null,
+        duration: null,
+      },
+    };
+
+    render(<ScanListTable scans={[scheduledScan]} />);
+
+    const radio = screen.getByRole("radio", { name: "Scan not available" });
+    expect(radio).toBeDisabled();
+  });
+
+  it("shows a disabled radio button for an executing scan without graph data", () => {
+    const executingScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "executing",
+        progress: 45,
+        graph_data_ready: false,
+        completed_at: null,
+        duration: null,
+      },
+    };
+
+    render(<ScanListTable scans={[executingScan]} />);
+
+    const radio = screen.getByRole("radio", { name: "Scan not available" });
+    expect(radio).toBeDisabled();
+  });
+
+  it("enables the radio button for a scheduled scan when graph data is ready from a previous cycle", async () => {
+    const user = userEvent.setup();
+    const scheduledWithGraph: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "scheduled",
+        progress: 0,
+        graph_data_ready: true,
+      },
+    };
+
+    render(<ScanListTable scans={[scheduledWithGraph]} />);
+
+    const radio = screen.getByRole("radio", { name: "Select scan" });
+    expect(radio).toBeEnabled();
+    expect(radio).toHaveAttribute("aria-checked", "false");
+
+    await user.click(radio);
+
+    expect(pushMock).toHaveBeenCalledWith(
+      "/attack-paths?scanPage=1&scanPageSize=5&scanId=scan-1",
+    );
+  });
+
+  it("exposes an accessible label in the Graph column when graph data is ready", () => {
+    render(<ScanListTable scans={[createScan(1)]} />);
+
+    expect(screen.getByLabelText("Graph available")).toHaveClass(
+      "text-text-success-primary",
+    );
+  });
+
+  it("exposes an accessible label in the Graph column when graph data is not ready", () => {
+    const noGraphScan: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        graph_data_ready: false,
+      },
+    };
+
+    render(<ScanListTable scans={[noGraphScan]} />);
+
+    expect(screen.getByLabelText("Graph not available")).toHaveClass(
+      "text-text-neutral-secondary",
+    );
+  });
+
+  it("renders a tooltip explaining a completed scan without graph data", () => {
+    const completedNoGraph: AttackPathScan = {
+      ...createScan(1),
+      attributes: {
+        ...createScan(1).attributes,
+        state: "completed",
+        graph_data_ready: false,
+      },
+    };
+
+    render(<ScanListTable scans={[completedNoGraph]} />);
+
+    expect(
+      screen.getByRole("radio", { name: "Scan not available" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText("This scan completed without producing graph data."),
+    ).toBeInTheDocument();
   });
 });

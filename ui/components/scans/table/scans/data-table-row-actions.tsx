@@ -4,8 +4,6 @@ import { Row } from "@tanstack/react-table";
 import { Download, Pencil } from "lucide-react";
 import { useState } from "react";
 
-import { VerticalDotsIcon } from "@/components/icons";
-import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownItem,
@@ -44,13 +42,7 @@ export function DataTableRowActions<ScanProps>({
       </Modal>
 
       <div className="relative flex items-center justify-end gap-2">
-        <ActionDropdown
-          trigger={
-            <Button variant="ghost" size="icon-sm" className="rounded-full">
-              <VerticalDotsIcon className="text-slate-400" />
-            </Button>
-          }
-        >
+        <ActionDropdown>
           <ActionDropdownItem
             icon={<Download />}
             label="Download .zip"

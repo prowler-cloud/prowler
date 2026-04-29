@@ -11,8 +11,8 @@ from config.env import env
 from django.conf import settings
 from tasks.jobs.attack_paths.config import (
     BATCH_SIZE,
-    PROVIDER_ID_PROPERTY,
     PROVIDER_RESOURCE_LABEL,
+    get_provider_label,
 )
 
 from api.attack_paths.retryable_session import RetryableSession
@@ -28,6 +28,7 @@ READ_QUERY_TIMEOUT_SECONDS = env.int(
     "ATTACK_PATHS_READ_QUERY_TIMEOUT_SECONDS", default=30
 )
 MAX_CUSTOM_QUERY_NODES = env.int("ATTACK_PATHS_MAX_CUSTOM_QUERY_NODES", default=250)
+CONN_ACQUISITION_TIMEOUT = env.int("NEO4J_CONN_ACQUISITION_TIMEOUT", default=15)
 READ_EXCEPTION_CODES = [
     "Neo.ClientError.Statement.AccessMode",
     "Neo.ClientError.Procedure.ProcedureNotFound",
@@ -62,7 +63,7 @@ def init_driver() -> neo4j.Driver:
                 auth=(config["USER"], config["PASSWORD"]),
                 keep_alive=True,
                 max_connection_lifetime=7200,
-                connection_acquisition_timeout=120,
+                connection_acquisition_timeout=CONN_ACQUISITION_TIMEOUT,
                 max_connection_pool_size=50,
             )
             _driver.verify_connectivity()
@@ -163,11 +164,8 @@ def drop_subgraph(database: str, provider_id: str) -> int:
     Uses batched deletion to avoid memory issues with large graphs.
     Silently returns 0 if the database doesn't exist.
     """
+    provider_label = get_provider_label(provider_id)
     deleted_nodes = 0
-    parameters = {
-        "provider_id": provider_id,
-        "batch_size": BATCH_SIZE,
-    }
 
     try:
         with get_session(database) as session:
@@ -175,12 +173,12 @@ def drop_subgraph(database: str, provider_id: str) -> int:
             while deleted_count > 0:
                 result = session.run(
                     f"""
-                    MATCH (n:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ID_PROPERTY}: $provider_id}})
+                    MATCH (n:{PROVIDER_RESOURCE_LABEL}:`{provider_label}`)
                     WITH n LIMIT $batch_size
                     DETACH DELETE n
                     RETURN COUNT(n) AS deleted_nodes_count
                     """,
-                    parameters,
+                    {"batch_size": BATCH_SIZE},
                 )
                 deleted_count = result.single().get("deleted_nodes_count", 0)
                 deleted_nodes += deleted_count
@@ -199,15 +197,12 @@ def has_provider_data(database: str, provider_id: str) -> bool:
 
     Returns `False` if the database doesn't exist.
     """
-    query = (
-        f"MATCH (n:{PROVIDER_RESOURCE_LABEL} "
-        f"{{{PROVIDER_ID_PROPERTY}: $provider_id}}) "
-        "RETURN 1 LIMIT 1"
-    )
+    provider_label = get_provider_label(provider_id)
+    query = f"MATCH (n:{PROVIDER_RESOURCE_LABEL}:`{provider_label}`) RETURN 1 LIMIT 1"
 
     try:
         with get_session(database, default_access_mode=neo4j.READ_ACCESS) as session:
-            result = session.run(query, {"provider_id": provider_id})
+            result = session.run(query)
             return result.single() is not None
 
     except GraphDatabaseQueryException as exc:

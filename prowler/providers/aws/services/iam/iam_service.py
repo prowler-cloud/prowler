@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from time import sleep
 from typing import Optional
 
 from botocore.client import ClientError
@@ -92,6 +93,12 @@ class IAM(AWSService):
         self._get_access_keys_metadata()
         self.last_accessed_services = {}
         self._get_last_accessed_services()
+        self.role_last_accessed_services = {}
+        if (
+            "iam_role_access_not_stale_to_bedrock"
+            in provider.audit_metadata.expected_checks
+        ):
+            self._get_role_last_accessed_services()
         self.user_temporary_credentials_usage = {}
         self._get_user_temporary_credentials_usage()
         self.organization_features = []
@@ -112,8 +119,8 @@ class IAM(AWSService):
 
     def _get_roles(self):
         logger.info("IAM - List Roles...")
+        roles = []
         try:
-            roles = []
             get_roles_paginator = self.client.get_paginator("list_roles")
             for page in get_roles_paginator.paginate():
                 for role in page["Roles"]:
@@ -142,8 +149,7 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return roles
+        return roles
 
     def _get_credential_report(self):
         logger.info("IAM - Get Credential Report...")
@@ -175,13 +181,12 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return credential_list
+        return credential_list
 
     def _get_groups(self):
         logger.info("IAM - Get Groups...")
+        groups = []
         try:
-            groups = []
             get_groups_paginator = self.client.get_paginator("list_groups")
             for page in get_groups_paginator.paginate():
                 for group in page["Groups"]:
@@ -194,25 +199,23 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return groups
+        return groups
 
     def _get_account_summary(self):
         logger.info("IAM - Get Account Summary...")
+        account_summary = None
         try:
             account_summary = self.client.get_account_summary()
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            account_summary = None
-        finally:
-            return account_summary
+        return account_summary
 
     def _get_password_policy(self):
         logger.info("IAM - Get Password Policy...")
+        stored_password_policy = None
         try:
-            stored_password_policy = None
             password_policy = self.client.get_account_password_policy()[
                 "PasswordPolicy"
             ]
@@ -274,14 +277,13 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        finally:
-            return stored_password_policy
+        return stored_password_policy
 
     def _get_users(self):
         logger.info("IAM - Get Users...")
+        users = []
         try:
             get_users_paginator = self.client.get_paginator("list_users")
-            users = []
             for page in get_users_paginator.paginate():
                 for user in page["Users"]:
                     if not self.audit_resources or (
@@ -311,13 +313,12 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return users
+        return users
 
     def _list_virtual_mfa_devices(self):
         logger.info("IAM - List Virtual MFA Devices...")
+        mfa_devices = []
         try:
-            mfa_devices = []
             list_virtual_mfa_devices_paginator = self.client.get_paginator(
                 "list_virtual_mfa_devices"
             )
@@ -329,8 +330,7 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return mfa_devices
+        return mfa_devices
 
     def _list_attached_group_policies(self):
         logger.info("IAM - List Attached Group Policies...")
@@ -677,12 +677,11 @@ class IAM(AWSService):
 
     def _list_entities_role_for_policy(self, policy_arn):
         logger.info("IAM - List Entities Role For Policy...")
+        roles = []
         try:
-            roles = []
             roles = self.client.list_entities_for_policy(
                 PolicyArn=policy_arn, EntityFilter="Role"
             )["PolicyRoles"]
-            return roles
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDenied":
                 logger.error(
@@ -697,18 +696,16 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return roles
+        return roles
 
     def _list_entities_for_policy(self, policy_arn):
         logger.info("IAM - List Entities For Policy...")
+        entities = {
+            "Users": [],
+            "Groups": [],
+            "Roles": [],
+        }
         try:
-            entities = {
-                "Users": [],
-                "Groups": [],
-                "Roles": [],
-            }
-
             paginator = self.client.get_paginator("list_entities_for_policy")
             for response in paginator.paginate(PolicyArn=policy_arn):
                 entities["Users"].extend(
@@ -720,7 +717,6 @@ class IAM(AWSService):
                 entities["Roles"].extend(
                     role["RoleName"] for role in response.get("PolicyRoles", [])
                 )
-            return entities
         except ClientError as error:
             if error.response["Error"]["Code"] == "AccessDenied":
                 logger.error(
@@ -735,13 +731,12 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return entities
+        return entities
 
     def _list_policies(self, scope):
         logger.info("IAM - List Policies...")
+        policies = {}
         try:
-            policies = {}
             list_policies_paginator = self.client.get_paginator("list_policies")
             for page in list_policies_paginator.paginate(
                 Scope=scope, OnlyAttached=False if scope == "Local" else True
@@ -762,8 +757,7 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return policies
+        return policies
 
     def _list_policies_version(self, policies):
         logger.info("IAM - List Policies Version...")
@@ -817,8 +811,8 @@ class IAM(AWSService):
 
     def _list_server_certificates(self) -> list:
         logger.info("IAM - List Server Certificates...")
+        server_certificates = []
         try:
-            server_certificates = []
             for certificate in self.client.list_server_certificates()[
                 "ServerCertificateMetadataList"
             ]:
@@ -837,8 +831,7 @@ class IAM(AWSService):
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return server_certificates
+        return server_certificates
 
     def _list_tags(self, resource: any):
         logger.info("IAM - List Tags...")
@@ -905,6 +898,74 @@ class IAM(AWSService):
                         logger.error(
                             f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_role_last_accessed_services(self):
+        """Retrieve service last accessed details for all IAM roles.
+
+        Uses a fire-all-then-collect pattern: all generate calls are
+        submitted first so the jobs run server-side in parallel, then
+        results are collected in a second pass.
+        """
+        logger.info("IAM - Getting Role Last Accessed Services ...")
+        try:
+            if self.roles is None:
+                return
+
+            # Phase 1: fire all generate requests
+            pending_jobs = []
+            for role in self.roles:
+                try:
+                    details = self.client.generate_service_last_accessed_details(
+                        Arn=role.arn
+                    )
+                    pending_jobs.append((role.name, role.arn, details["JobId"]))
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+            # Phase 2: collect results
+            max_retries = 60
+            for role_name, role_arn, job_id in pending_jobs:
+                try:
+                    retries = 0
+                    response = self.client.get_service_last_accessed_details(
+                        JobId=job_id
+                    )
+                    while response["JobStatus"] == "IN_PROGRESS":
+                        retries += 1
+                        if retries > max_retries:
+                            logger.warning(
+                                f"{self.region} -- Timeout waiting for service last accessed details for role {role_name}"
+                            )
+                            break
+                        sleep(1)
+                        response = self.client.get_service_last_accessed_details(
+                            JobId=job_id
+                        )
+                    if response["JobStatus"] == "COMPLETED":
+                        self.role_last_accessed_services[(role_name, role_arn)] = (
+                            response.get("ServicesLastAccessed", [])
+                        )
+
                 except Exception as error:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

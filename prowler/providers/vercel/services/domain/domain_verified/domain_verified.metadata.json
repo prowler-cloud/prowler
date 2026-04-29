@@ -1,0 +1,39 @@
+{
+  "Provider": "vercel",
+  "CheckID": "domain_verified",
+  "CheckTitle": "Vercel domains are verified",
+  "CheckType": [],
+  "ServiceName": "domain",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Vercel domains** are assessed for **ownership verification** status. Unverified domains may not serve traffic correctly and could indicate a pending or incomplete domain setup. Domain verification confirms that the domain owner has authorized Vercel to manage the domain.",
+  "Risk": "**Unverified domains** may fail to resolve or serve content, causing **downtime** for users. An unverified domain could also indicate a stale or orphaned configuration, or a domain that was added but never properly transferred, creating potential for **domain takeover** if the ownership verification is left incomplete.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/projects/domains"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Vercel dashboard\n2. Navigate to the project Settings > Domains\n3. For any unverified domain, follow the verification steps shown\n4. Add the required DNS records (CNAME or A record) at your domain registrar\n5. Wait for DNS propagation and verify the domain",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Complete domain verification by configuring the required DNS records at your domain registrar. Remove any domains that are no longer needed to reduce the attack surface. Regularly audit domain configurations to ensure all domains remain verified.",
+      "Url": "https://hub.prowler.com/check/domain_verified"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "domain_dns_properly_configured",
+    "domain_ssl_certificate_valid"
+  ],
+  "Notes": ""
+}

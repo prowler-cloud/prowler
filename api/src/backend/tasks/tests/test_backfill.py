@@ -7,8 +7,8 @@ from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
-    backfill_scan_category_summaries,
-    backfill_scan_resource_group_summaries,
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
 )
 
 from api.models import (
@@ -183,6 +183,10 @@ class TestBackfillComplianceSummaries:
     def test_backfill_creates_compliance_summaries(
         self, tenants_fixture, scans_fixture, compliance_requirements_overviews_fixture
     ):
+        # Fixture seeds compliance rows the backfill aggregates over; pytest
+        # injects it by parameter name, so we reference it explicitly here
+        # to keep static analysers from flagging it as unused.
+        del compliance_requirements_overviews_fixture
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
 
@@ -227,22 +231,86 @@ class TestBackfillComplianceSummaries:
 
 @pytest.mark.django_db
 class TestBackfillScanCategorySummaries:
-    def test_already_backfilled(self, scan_category_summary_fixture):
+    def test_rerun_with_no_findings_is_noop(self, scan_category_summary_fixture):
+        """When the scan has no findings, the backfill is a no-op: it
+        reports `no categories to backfill` and leaves the table
+        untouched. The upsert path cannot drop rows it does not produce,
+        so any pre-existing row survives (matching the scan-completion
+        writer that used `ignore_conflicts=True`)."""
         tenant_id = scan_category_summary_fixture.tenant_id
         scan_id = scan_category_summary_fixture.scan_id
 
-        result = backfill_scan_category_summaries(str(tenant_id), str(scan_id))
+        result = aggregate_scan_category_summaries(str(tenant_id), str(scan_id))
 
-        assert result == {"status": "already backfilled"}
+        assert result == {"status": "no categories to backfill"}
+        assert ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id, category="existing-category"
+        ).exists()
+
+    def test_rerun_upserts_without_duplicating(self, findings_with_categories_fixture):
+        """Calling the backfill twice upserts rather than raising on
+        `unique_category_severity_per_scan`; rows are updated in place
+        (same primary keys)."""
+        finding = findings_with_categories_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        aggregate_scan_category_summaries(tenant_id, scan_id)
+        first_ids = set(
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        aggregate_scan_category_summaries(tenant_id, scan_id)
+        second_ids = set(
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        assert first_ids == second_ids
+        assert len(first_ids) == 2  # 2 categories x 1 severity
+
+    def test_rerun_reflects_mute_between_runs(self, findings_with_categories_fixture):
+        """Muting a finding between two backfill runs must move counters:
+        `failed_findings` and `new_failed_findings` drop to zero (muted
+        findings are excluded from those totals). Guards against a
+        regression where the upsert keeps stale counts from the first run."""
+        finding = findings_with_categories_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        aggregate_scan_category_summaries(tenant_id, scan_id)
+        before = list(
+            ScanCategorySummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+        assert all(s.failed_findings == 1 for s in before)
+        assert all(s.new_failed_findings == 1 for s in before)
+        assert all(s.total_findings == 1 for s in before)
+
+        Finding.all_objects.filter(pk=finding.pk).update(muted=True)
+
+        aggregate_scan_category_summaries(tenant_id, scan_id)
+        after = list(
+            ScanCategorySummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+
+        assert {s.id for s in after} == {s.id for s in before}
+        assert all(s.failed_findings == 0 for s in after)
+        assert all(s.new_failed_findings == 0 for s in after)
+        assert all(s.total_findings == 0 for s in after)
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:
-            result = backfill_scan_category_summaries(str(scan.tenant_id), str(scan.id))
+            result = aggregate_scan_category_summaries(
+                str(scan.tenant_id), str(scan.id)
+            )
             assert result == {"status": "scan is not completed"}
 
     def test_no_categories_to_backfill(self, scans_fixture):
         scan = scans_fixture[1]  # Failed scan with no findings
-        result = backfill_scan_category_summaries(str(scan.tenant_id), str(scan.id))
+        result = aggregate_scan_category_summaries(str(scan.tenant_id), str(scan.id))
         assert result == {"status": "no categories to backfill"}
 
     def test_successful_backfill(self, findings_with_categories_fixture):
@@ -250,7 +318,7 @@ class TestBackfillScanCategorySummaries:
         tenant_id = str(finding.tenant_id)
         scan_id = str(finding.scan_id)
 
-        result = backfill_scan_category_summaries(tenant_id, scan_id)
+        result = aggregate_scan_category_summaries(tenant_id, scan_id)
 
         # 2 categories × 1 severity = 2 rows
         assert result == {"status": "backfilled", "categories_count": 2}
@@ -311,24 +379,87 @@ def scan_resource_group_summary_fixture(scans_fixture):
 
 @pytest.mark.django_db
 class TestBackfillScanGroupSummaries:
-    def test_already_backfilled(self, scan_resource_group_summary_fixture):
+    def test_rerun_with_no_findings_is_noop(self, scan_resource_group_summary_fixture):
+        """When the scan has no findings, the backfill is a no-op: it
+        reports `no resource groups to backfill` and leaves the table
+        untouched. The upsert path cannot drop rows it does not produce,
+        so any pre-existing row survives (matching the scan-completion
+        writer that used `ignore_conflicts=True`)."""
         tenant_id = scan_resource_group_summary_fixture.tenant_id
         scan_id = scan_resource_group_summary_fixture.scan_id
 
-        result = backfill_scan_resource_group_summaries(str(tenant_id), str(scan_id))
+        result = aggregate_scan_resource_group_summaries(str(tenant_id), str(scan_id))
 
-        assert result == {"status": "already backfilled"}
+        assert result == {"status": "no resource groups to backfill"}
+        assert ScanGroupSummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id, resource_group="existing-group"
+        ).exists()
+
+    def test_rerun_upserts_without_duplicating(self, findings_with_group_fixture):
+        """Calling the backfill twice upserts rather than raising on
+        `unique_resource_group_severity_per_scan`; rows are updated in
+        place (same primary keys)."""
+        finding = findings_with_group_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+        first_ids = set(
+            ScanGroupSummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+        second_ids = set(
+            ScanGroupSummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        assert first_ids == second_ids
+        assert len(first_ids) == 1  # 1 resource group x 1 severity
+
+    def test_rerun_reflects_mute_between_runs(self, findings_with_group_fixture):
+        """Muting a finding between two backfill runs must move counters:
+        `failed_findings` and `new_failed_findings` drop to zero (muted
+        findings are excluded from those totals). Guards against a
+        regression where the upsert keeps stale counts from the first run."""
+        finding = findings_with_group_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+        before = list(
+            ScanGroupSummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+        assert len(before) == 1
+        assert before[0].failed_findings == 1
+        assert before[0].new_failed_findings == 1
+        assert before[0].total_findings == 1
+
+        Finding.all_objects.filter(pk=finding.pk).update(muted=True)
+
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+        after = list(
+            ScanGroupSummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+
+        assert {s.id for s in after} == {s.id for s in before}
+        assert after[0].failed_findings == 0
+        assert after[0].new_failed_findings == 0
+        assert after[0].total_findings == 0
 
     def test_not_completed_scan(self, get_not_completed_scans):
         for scan in get_not_completed_scans:
-            result = backfill_scan_resource_group_summaries(
+            result = aggregate_scan_resource_group_summaries(
                 str(scan.tenant_id), str(scan.id)
             )
             assert result == {"status": "scan is not completed"}
 
     def test_no_resource_groups_to_backfill(self, scans_fixture):
         scan = scans_fixture[1]  # Failed scan with no findings
-        result = backfill_scan_resource_group_summaries(
+        result = aggregate_scan_resource_group_summaries(
             str(scan.tenant_id), str(scan.id)
         )
         assert result == {"status": "no resource groups to backfill"}
@@ -338,7 +469,7 @@ class TestBackfillScanGroupSummaries:
         tenant_id = str(finding.tenant_id)
         scan_id = str(finding.scan_id)
 
-        result = backfill_scan_resource_group_summaries(tenant_id, scan_id)
+        result = aggregate_scan_resource_group_summaries(tenant_id, scan_id)
 
         # 1 resource group × 1 severity = 1 row
         assert result == {"status": "backfilled", "resource_groups_count": 1}

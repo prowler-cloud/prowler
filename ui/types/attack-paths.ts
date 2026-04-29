@@ -67,9 +67,21 @@ export interface PaginationLinks {
   prev: string | null;
 }
 
+export interface AttackPathScansResponsePagination {
+  page: number;
+  pages: number;
+  count: number;
+}
+
+export interface AttackPathScansResponseMeta {
+  pagination: AttackPathScansResponsePagination;
+  version?: string;
+}
+
 export interface AttackPathScansResponse {
   data: AttackPathScan[];
   links: PaginationLinks;
+  meta?: AttackPathScansResponseMeta;
 }
 
 // Data type constants
@@ -84,6 +96,7 @@ type DataType = (typeof DATA_TYPES)[keyof typeof DATA_TYPES];
 export const QUERY_PARAMETER_INPUT_TYPES = {
   TEXT: "text",
   TEXTAREA: "textarea",
+  CODE_EDITOR: "code-editor",
 } as const;
 
 export type QueryParameterInputType =
@@ -102,6 +115,8 @@ export interface AttackPathQueryParameter {
   placeholder?: string;
   required?: boolean;
   input_type?: QueryParameterInputType;
+  editor_language?: "openCypher";
+  requirement_badge?: string;
 }
 
 export interface AttackPathQueryAttribution {

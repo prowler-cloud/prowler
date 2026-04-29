@@ -5,13 +5,11 @@ import {
   ChevronRight,
   Clock,
   Download,
-  Loader2,
   Server,
   Shield,
 } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useState } from "react";
 
-import { getResourceEvents } from "@/actions/resources";
 import {
   Alert,
   AlertDescription,
@@ -21,9 +19,12 @@ import {
   Checkbox,
   InfoField,
 } from "@/components/shadcn";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { cn } from "@/lib/utils";
 import { ResourceEventProps } from "@/types";
+
+import { useResourceEventsTimeline } from "./use-resource-events-timeline";
 
 interface EventsTimelineProps {
   resourceId?: string;
@@ -34,58 +35,16 @@ export const EventsTimeline = ({
   resourceId,
   isAwsProvider,
 }: EventsTimelineProps) => {
-  const [events, setEvents] = useState<ResourceEventProps[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [includeReadEvents, setIncludeReadEvents] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (!isAwsProvider || !resourceId) return;
-
-    let cancelled = false;
-
-    setError(null);
-    setErrorStatus(null);
-    setHasFetched(false);
-
-    startTransition(async () => {
-      try {
-        const response = await getResourceEvents(resourceId, {
-          includeReadEvents,
-        });
-
-        if (cancelled) return;
-
-        if (!response) {
-          setError("Failed to fetch events. Please try again.");
-          return;
-        }
-
-        if (response.error) {
-          setError(response.error);
-          setErrorStatus(response.status || null);
-          return;
-        }
-
-        setEvents(response.data || []);
-        setExpandedRows(new Set());
-      } catch (err) {
-        if (cancelled) return;
-        console.error("Error fetching events:", err);
-        setError("An unexpected error occurred.");
-      } finally {
-        if (!cancelled) setHasFetched(true);
-      }
+  const { events, error, errorStatus, hasFetched, isPending } =
+    useResourceEventsTimeline({
+      resourceId,
+      isAwsProvider,
+      includeReadEvents,
+      retryCount,
     });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [resourceId, includeReadEvents, isAwsProvider, retryCount]);
 
   const toggleRow = (eventId: string) => {
     setExpandedRows((prev) => {
@@ -128,7 +87,7 @@ export const EventsTimeline = ({
   if (isPending && !hasFetched) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-12">
-        <Loader2 className="size-6 animate-spin" />
+        <Spinner className="size-6" />
         <p className="text-text-neutral-secondary text-sm">
           Fetching CloudTrail events...
         </p>
@@ -181,7 +140,7 @@ export const EventsTimeline = ({
           </span>
         </label>
         <div className="flex items-center gap-2">
-          {isPending && <Loader2 className="size-4 animate-spin" />}
+          {isPending && <Spinner className="size-4" />}
           <span className="text-text-neutral-tertiary text-xs">
             {events.length} event{events.length !== 1 && "s"}
           </span>
