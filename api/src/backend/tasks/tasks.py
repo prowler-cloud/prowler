@@ -74,9 +74,20 @@ from api.decorators import handle_provider_deletion, set_tenant
 from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
+from config.django.base import DJANGO_SILK_ENABLED
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
+
+if DJANGO_SILK_ENABLED:
+    from silk.profiling.profiler import silk_profile
+else:
+    from contextlib import contextmanager
+
+    @contextmanager
+    def silk_profile(*_args, **_kwargs):
+        yield
+
 
 logger = get_task_logger(__name__)
 
@@ -151,13 +162,6 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
     )
     chain(
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
-        # reset_ephemeral_resource_findings_count_task MUST run only after
-        # perform_scan_summary_task, since it diffs Resource against
-        # ResourceScanSummary to find ephemeral resources. Running it before
-        # would risk wiping valid failed_findings_count values.
-        reset_ephemeral_resource_findings_count_task.si(
-            tenant_id=tenant_id, scan_id=scan_id
-        ),
         group(
             aggregate_daily_severity_task.si(tenant_id=tenant_id, scan_id=scan_id),
             aggregate_finding_group_summaries_task.si(
@@ -165,6 +169,13 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             ),
             generate_outputs_task.si(
                 scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+            ),
+            # Cosmetic-only post-scan task — runs in the parallel group so a
+            # failure cannot cascade into reports or integrations. Its only
+            # prerequisite is that perform_prowler_scan has committed
+            # ResourceScanSummary, which is true by the time this chain fires.
+            reset_ephemeral_resource_findings_count_task.si(
+                tenant_id=tenant_id, scan_id=scan_id
             ),
         ),
         group(
