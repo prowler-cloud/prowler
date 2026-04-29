@@ -53,7 +53,7 @@ from django.db.models import (
 )
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast, Coalesce, RowNumber
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
@@ -2082,12 +2082,15 @@ class ScanViewSet(BaseRLSViewSet):
 
     def _load_file(self, path_pattern, s3=False, bucket=None, list_objects=False):
         """
-        Loads a binary file (e.g., ZIP or CSV) and returns its content and filename.
+        Resolve a report file location and return the bytes (filesystem) or a redirect (S3).
 
         Depending on the input parameters, this method supports loading:
-        - From S3 using a direct key.
-        - From S3 by listing objects under a prefix and matching suffix.
-        - From the local filesystem using glob pattern matching.
+        - From S3 using a direct key — returns a 302 to a short-lived presigned URL.
+        - From S3 by listing objects under a prefix and matching suffix — returns a 302 to a short-lived presigned URL.
+        - From the local filesystem using glob pattern matching — returns the file bytes.
+
+        The S3 branch never streams bytes through the worker; this prevents gunicorn
+        worker timeouts on large reports.
 
         Args:
             path_pattern (str): The key or glob pattern representing the file location.
@@ -2096,8 +2099,9 @@ class ScanViewSet(BaseRLSViewSet):
             list_objects (bool, optional): If True and `s3=True`, list objects by prefix to find the file. Defaults to False.
 
         Returns:
-            tuple[bytes, str]: A tuple containing the file content as bytes and the filename if successful.
-            Response: A DRF `Response` object with an appropriate status and error detail if an error occurs.
+            tuple[bytes, str]: For the filesystem branch, the file content and filename.
+            Response: For the S3 branch on success, a 302 redirect to a presigned `GetObject` URL.
+                For any error path, a DRF `Response` with an appropriate status and detail.
         """
         if s3:
             try:
@@ -2144,25 +2148,35 @@ class ScanViewSet(BaseRLSViewSet):
                 # path_pattern here is prefix, but in compliance we build correct suffix check before
                 key = keys[0]
             else:
-                # path_pattern is exact key
+                # path_pattern is exact key; HEAD before presigning to preserve the 404 contract.
                 key = path_pattern
-            try:
-                s3_obj = client.get_object(Bucket=bucket, Key=key)
-            except ClientError as e:
-                code = e.response.get("Error", {}).get("Code")
-                if code == "NoSuchKey":
+                try:
+                    client.head_object(Bucket=bucket, Key=key)
+                except ClientError as e:
+                    code = e.response.get("Error", {}).get("Code")
+                    if code in ("NoSuchKey", "404"):
+                        return Response(
+                            {
+                                "detail": "The scan has no reports, or the report generation task has not started yet."
+                            },
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
                     return Response(
-                        {
-                            "detail": "The scan has no reports, or the report generation task has not started yet."
-                        },
-                        status=status.HTTP_404_NOT_FOUND,
+                        {"detail": "There is a problem with credentials."},
+                        status=status.HTTP_403_FORBIDDEN,
                     )
-                return Response(
-                    {"detail": "There is a problem with credentials."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-            content = s3_obj["Body"].read()
+
             filename = os.path.basename(key)
+            url = client.generate_presigned_url(
+                "get_object",
+                Params={
+                    "Bucket": bucket,
+                    "Key": key,
+                    "ResponseContentDisposition": f'attachment; filename="{filename}"',
+                },
+                ExpiresIn=300,
+            )
+            return HttpResponseRedirect(url)
         else:
             files = glob.glob(path_pattern)
             if not files:
@@ -2210,7 +2224,7 @@ class ScanViewSet(BaseRLSViewSet):
         else:
             loader = self._load_file(scan.output_location, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2254,7 +2268,7 @@ class ScanViewSet(BaseRLSViewSet):
             pattern = os.path.join(base, "compliance", f"*_{name}.csv")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2293,7 +2307,7 @@ class ScanViewSet(BaseRLSViewSet):
             pattern = os.path.join(base, "cis", "*_cis_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2333,7 +2347,7 @@ class ScanViewSet(BaseRLSViewSet):
             pattern = os.path.join(base, "threatscore", "*_threatscore_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2373,7 +2387,7 @@ class ScanViewSet(BaseRLSViewSet):
             pattern = os.path.join(base, "ens", "*_ens_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2412,7 +2426,7 @@ class ScanViewSet(BaseRLSViewSet):
             pattern = os.path.join(base, "nis2", "*_nis2_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2451,7 +2465,7 @@ class ScanViewSet(BaseRLSViewSet):
             pattern = os.path.join(base, "csa", "*_csa_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
