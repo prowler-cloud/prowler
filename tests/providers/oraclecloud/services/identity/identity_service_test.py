@@ -31,7 +31,7 @@ class TestIdentityService:
             assert identity_client.service == "identity"
             assert identity_client.provider == oraclecloud_provider
 
-    def test_list_domains_skipped_outside_home(self):
+    def test_list_domains_passwords_skipped_outside_home(self):
         """Domains should be skipped when not in home region."""
         with patch(
             "prowler.providers.oraclecloud.services.identity.identity_service.Identity.__init__",
