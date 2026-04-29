@@ -26,6 +26,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🔄 Changed
 
+- AWS CodeBuild service now batches `BatchGetProjects` and `BatchGetBuilds` calls per region (up to 100 items per call) to reduce API call volume and prevent throttling-induced false positives in `codebuild_project_not_publicly_accessible` [(#10639)](https://github.com/prowler-cloud/prowler/pull/10639)
 - Added `internet-exposed` category to 13 AWS checks (CloudFront, CodeArtifact, EC2, EFS, RDS, SageMaker, Shield, VPC) [(#10502)](https://github.com/prowler-cloud/prowler/pull/10502)
 - Minimum Python version from 3.9 to 3.10 and updated classifiers to reflect supported versions (3.10, 3.11, 3.12) [(#10464)](https://github.com/prowler-cloud/prowler/pull/10464)
 - Pin direct SDK dependencies to exact versions and rely on `poetry.lock` artifact hashes for reproducible installs [(#10593)](https://github.com/prowler-cloud/prowler/pull/10593)

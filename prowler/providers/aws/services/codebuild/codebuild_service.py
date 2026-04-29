@@ -1,8 +1,7 @@
 import datetime
-import time
+from concurrent.futures import as_completed
 from typing import List, Optional
 
-from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -46,35 +45,47 @@ class Codebuild(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _fetch_project_last_build(self, regional_client, project):
+        try:
+            build_ids = regional_client.list_builds_for_project(
+                projectName=project.name
+            ).get("ids", [])
+            if len(build_ids) > 0:
+                project.last_build = Build(id=build_ids[0])
+        except Exception as error:
+            # Catch broadly so a failure on a single project (API error,
+            # connection timeout, etc.) does not stop processing the
+            # remaining projects in this region. Throttling is handled
+            # by the shared botocore standard retry policy configured
+            # at the provider level.
+            logger.error(
+                f"{project.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_builds_for_project(self, regional_client):
         logger.info("Codebuild - Listing builds...")
         try:
-            for project in self.projects.values():
-                if project.region != regional_client.region:
-                    continue
+            regional_projects = [
+                project
+                for project in self.projects.values()
+                if project.region == regional_client.region
+            ]
+
+            # list_builds_for_project has no batch API equivalent, so reuse the
+            # shared thread pool to issue per-project calls in parallel within
+            # this region — preserving the wall-clock performance of the
+            # previous implementation.
+            futures = [
+                self.thread_pool.submit(
+                    self._fetch_project_last_build, regional_client, project
+                )
+                for project in regional_projects
+            ]
+            for future in as_completed(futures):
                 try:
-                    build_ids = regional_client.list_builds_for_project(
-                        projectName=project.name
-                    ).get("ids", [])
-                    if len(build_ids) > 0:
-                        project.last_build = Build(id=build_ids[0])
-                except ClientError as error:
-                    if error.response["Error"]["Code"] == "ThrottlingException":
-                        time.sleep(1)
-                        try:
-                            build_ids = regional_client.list_builds_for_project(
-                                projectName=project.name
-                            ).get("ids", [])
-                            if len(build_ids) > 0:
-                                project.last_build = Build(id=build_ids[0])
-                        except Exception as retry_error:
-                            logger.error(
-                                f"{project.region}: {retry_error.__class__.__name__}[{retry_error.__traceback__.tb_lineno}]: {retry_error}"
-                            )
-                    else:
-                        logger.error(
-                            f"{project.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                        )
+                    future.result()
+                except Exception:
+                    pass
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
