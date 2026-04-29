@@ -91,22 +91,12 @@ function isProwlerHubUrl(url: string): boolean {
   return url.startsWith("https://hub.prowler.com/");
 }
 
-function isExternalCveRecommendationUrl(url: string): boolean {
-  return Boolean(url) && !isProwlerHubUrl(url) && /CVE-\d{4}-\d+/i.test(url);
-}
-
-function resolveExternalCveUrl({
-  recommendationUrl,
-  additionalUrls,
-}: {
-  recommendationUrl: string;
-  additionalUrls: string[];
-}): string {
-  if (isExternalCveRecommendationUrl(recommendationUrl)) {
-    return recommendationUrl;
+function getRecommendationLinkLabel(url: string): string {
+  if (isProwlerHubUrl(url)) {
+    return "View in Prowler Hub";
   }
 
-  return additionalUrls.find(isExternalCveRecommendationUrl) ?? "";
+  return "View CVE";
 }
 
 function resolveNativeIacConfig(providerType: string | undefined): {
@@ -441,24 +431,12 @@ export function ResourceDetailDrawerContent({
   const recommendationUrl =
     f?.remediation.recommendation.url ||
     checkMeta.remediation.recommendation.url;
-  const externalCveUrl = resolveExternalCveUrl({
-    recommendationUrl,
-    additionalUrls: checkMeta.additionalUrls,
-  });
-  const showProwlerHubRecommendationLink =
-    Boolean(recommendationUrl) && isProwlerHubUrl(recommendationUrl);
-  const showExternalCveRecommendationLink = Boolean(externalCveUrl);
-  const recommendationLink = showProwlerHubRecommendationLink
+  const recommendationLink = recommendationUrl
     ? {
         href: recommendationUrl,
-        label: "View in Prowler Hub",
+        label: getRecommendationLinkLabel(recommendationUrl),
       }
-    : showExternalCveRecommendationLink
-      ? {
-          href: externalCveUrl,
-          label: "View CVE",
-        }
-      : null;
+    : null;
   const overviewStatusExtended = f?.statusExtended;
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
 

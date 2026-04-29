@@ -594,7 +594,7 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
 describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
   const statusExtendedWithFixVersions =
     "framework.security.spring-security-web@5.8.7 (fix available: 5.7.13, 5.8.15, 6.2.7, 6.0.13, 6.1.11, 6.3.4)";
-  const externalCveUrl = "https://nvd.nist.gov/vuln/detail/CVE-2026-12345";
+  const externalCveUrl = "https://www.cve.org/CVERecord?id=CVE-2026-12345";
 
   it("should render a View CVE button when the recommendation URL points to an external CVE advisory and keep status extended as plain text", () => {
     const cveCheckMeta: CheckMeta = {
@@ -696,39 +696,39 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
     );
   });
 
-  it("should render View CVE when the advisory only exists in references", () => {
-    const referencedCveCheckMeta: CheckMeta = {
+  it("should render the official CVE reference without Aqua URLs", () => {
+    const cveCheckMeta: CheckMeta = {
       ...mockCheckMeta,
       remediation: {
         ...mockCheckMeta.remediation,
         recommendation: {
-          text: "",
-          url: "",
+          text: "Review the advisory",
+          url: externalCveUrl,
         },
       },
-      additionalUrls: [externalCveUrl, "https://example.com/reference"],
+      additionalUrls: [externalCveUrl],
     };
-    const referencedCveFinding: ResourceDrawerFinding = {
+    const cveFinding: ResourceDrawerFinding = {
       ...mockFinding,
       statusExtended: statusExtendedWithFixVersions,
       remediation: {
         ...mockFinding.remediation,
         recommendation: {
-          text: "",
-          url: "",
+          text: "Review the advisory",
+          url: externalCveUrl,
         },
       },
-      additionalUrls: [externalCveUrl, "https://example.com/reference"],
+      additionalUrls: [externalCveUrl],
     };
 
     render(
       <ResourceDetailDrawerContent
         isLoading={false}
         isNavigating={false}
-        checkMeta={referencedCveCheckMeta}
+        checkMeta={cveCheckMeta}
         currentIndex={0}
         totalResources={1}
-        currentFinding={referencedCveFinding}
+        currentFinding={cveFinding}
         otherFindings={[]}
         onNavigatePrev={vi.fn()}
         onNavigateNext={vi.fn()}
@@ -740,13 +740,11 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
       "href",
       externalCveUrl,
     );
-    expect(
-      screen.queryByRole("link", { name: "5.7.13" }),
-    ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: externalCveUrl })).toHaveAttribute(
       "href",
       externalCveUrl,
     );
+    expect(screen.queryByText(/avd\.aquasec\.com/)).not.toBeInTheDocument();
   });
 });
 
