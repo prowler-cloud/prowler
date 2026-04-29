@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from prowler.lib.check.models import CheckReportImage
+from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
     ImageInvalidConfigScannerError,
     ImageInvalidNameError,
@@ -20,14 +21,16 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageScanError,
     ImageTrivyBinaryNotFoundError,
 )
-from prowler.providers.common.provider import Provider
 from prowler.providers.image.image_provider import ImageProvider
 from tests.providers.image.image_fixtures import (
+    SAMPLE_CVE_WITHOUT_REFERENCES_FINDING,
     SAMPLE_IMAGE_SHA,
     SAMPLE_MISCONFIGURATION_FINDING,
+    SAMPLE_NON_CVE_VULNERABILITY_FINDING,
     SAMPLE_SECRET_FINDING,
     SAMPLE_UNKNOWN_SEVERITY_FINDING,
     SAMPLE_VULNERABILITY_FINDING,
+    SAMPLE_VULNERABILITY_WITHOUT_CVE_ORG_REFERENCE,
     get_empty_trivy_output,
     get_invalid_trivy_output,
     get_multi_type_trivy_output,
@@ -147,6 +150,77 @@ class TestImageProvider:
         assert report.region == "container"
         assert report.check_metadata.Categories == ["vulnerabilities"]
         assert report.check_metadata.RelatedUrl == ""
+
+    def test_process_finding_vulnerability_prefers_cve_reference_and_filters_aqua(self):
+        """Test CVE findings use cve.org and exclude Aqua references."""
+        provider = _make_provider()
+
+        report = provider._process_finding(
+            SAMPLE_VULNERABILITY_FINDING,
+            "alpine:3.18",
+            "alpine:3.18 (alpine 3.18.0)",
+        )
+
+        assert (
+            report.check_metadata.Remediation.Recommendation.Url
+            == "https://www.cve.org/CVERecord?id=CVE-2024-1234"
+        )
+        assert report.check_metadata.AdditionalURLs == [
+            "https://www.cve.org/CVERecord?id=CVE-2024-1234"
+        ]
+
+    def test_process_finding_vulnerability_builds_cve_org_when_only_nvd_reference(
+        self,
+    ):
+        """Test official CVE URL is built when only NVD is provided."""
+        provider = _make_provider()
+
+        report = provider._process_finding(
+            SAMPLE_VULNERABILITY_WITHOUT_CVE_ORG_REFERENCE,
+            "alpine:3.18",
+            "alpine:3.18 (alpine 3.18.0)",
+        )
+
+        assert (
+            report.check_metadata.Remediation.Recommendation.Url
+            == "https://www.cve.org/CVERecord?id=CVE-2024-5678"
+        )
+        assert report.check_metadata.AdditionalURLs == [
+            "https://www.cve.org/CVERecord?id=CVE-2024-5678"
+        ]
+
+    def test_process_finding_vulnerability_builds_cve_org_when_references_missing(self):
+        """Test CVE URL is built from VulnerabilityID when references are absent."""
+        provider = _make_provider()
+
+        report = provider._process_finding(
+            SAMPLE_CVE_WITHOUT_REFERENCES_FINDING,
+            "alpine:3.18",
+            "alpine:3.18 (alpine 3.18.0)",
+        )
+
+        assert (
+            report.check_metadata.Remediation.Recommendation.Url
+            == "https://www.cve.org/CVERecord?id=CVE-2024-9012"
+        )
+        assert report.check_metadata.AdditionalURLs == [
+            "https://www.cve.org/CVERecord?id=CVE-2024-9012"
+        ]
+
+    def test_process_finding_non_cve_vulnerability_does_not_fallback_to_aqua(self):
+        """Test non-CVE vulnerabilities do not keep Aqua links."""
+        provider = _make_provider()
+
+        report = provider._process_finding(
+            SAMPLE_NON_CVE_VULNERABILITY_FINDING,
+            "alpine:3.18",
+            "alpine:3.18 (alpine 3.18.0)",
+        )
+
+        assert report.check_metadata.Remediation.Recommendation.Url == ""
+        assert report.check_metadata.AdditionalURLs == [
+            "https://github.com/advisories/GHSA-abcd-1234-efgh"
+        ]
 
     def test_process_finding_secret(self):
         """Test processing a secret finding (identified by RuleID)."""
