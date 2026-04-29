@@ -6,7 +6,7 @@
 
 set -e
 
-# The Python pre-commit framework (see prek.toml, hook "ui-checks")
+# The Python pre-commit framework (see .pre-commit-config.yaml, hook "ui-checks")
 # exports GIT_WORK_TREE, GIT_DIR, and GIT_INDEX_FILE pointing to its temp staging
 # area. Unset them so git commands below resolve against the real repo and index.
 # See: https://github.com/prowler-cloud/prowler/pull/10574

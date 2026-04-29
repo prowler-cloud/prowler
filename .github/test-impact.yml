@@ -19,7 +19,7 @@ ignored:
     - .gitignore
     - .gitattributes
     - .editorconfig
-    - prek.toml
+    - .pre-commit-config.yaml
     - .backportrc.json
     - CODEOWNERS
     - LICENSE
