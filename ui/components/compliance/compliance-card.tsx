@@ -122,11 +122,13 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
         <div className="flex w-full flex-col gap-3">
           <div className="flex items-center gap-3 pr-9">
             {getComplianceIcon(title) && (
-              <div className="flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-1">
+              <div className="flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white">
                 <Image
                   src={getComplianceIcon(title)}
                   alt={`${title} logo`}
-                  className="max-h-full max-w-full object-contain"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 object-contain"
                 />
               </div>
             )}
