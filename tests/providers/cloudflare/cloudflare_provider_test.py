@@ -433,6 +433,29 @@ class TestCloudflareValidateCredentials:
         with pytest.raises(CloudflareNoAccountsError):
             CloudflareProvider.validate_credentials(session)
 
+    def test_validate_credentials_breaks_on_repeated_account_ids(self):
+        """Pagination must stop when the SDK repeats account IDs to avoid infinite loops."""
+
+        def repeating_accounts():
+            account = MagicMock()
+            account.id = ACCOUNT_ID
+            while True:
+                yield account
+
+        mock_client = MagicMock()
+        mock_client.user.get.side_effect = Exception("Some other error")
+        mock_client.accounts.list.return_value = repeating_accounts()
+
+        session = CloudflareSession(
+            client=mock_client,
+            api_token=API_TOKEN,
+            api_key=None,
+            api_email=None,
+        )
+
+        # Must return without hanging; repeated IDs break the loop.
+        CloudflareProvider.validate_credentials(session)
+
 
 class TestCloudflareTestConnection:
     """Tests for test_connection method."""

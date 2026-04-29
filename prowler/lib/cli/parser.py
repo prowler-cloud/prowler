@@ -18,6 +18,7 @@ from prowler.providers.common.arguments import (
     init_providers_parser,
     validate_asff_usage,
     validate_provider_arguments,
+    validate_sarif_usage,
 )
 
 
@@ -28,7 +29,7 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image,llm} ...",
             epilog="""
 Available Cloud Providers:
   {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel}
@@ -43,11 +44,11 @@ Available Cloud Providers:
     oraclecloud         Oracle Cloud Infrastructure Provider
     openstack           OpenStack Provider
     alibabacloud        Alibaba Cloud Provider
-    iac                 IaC Provider (Beta)
+    iac                 IaC Provider
     llm                 LLM Provider (Beta)
     image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
-    mongodbatlas        MongoDB Atlas Provider (Beta)
+    mongodbatlas        MongoDB Atlas Provider
     vercel              Vercel Provider
 
 Available components:
@@ -152,6 +153,12 @@ Detailed documentation at https://docs.prowler.com
         )
         if not asff_is_valid:
             self.parser.error(asff_error)
+
+        sarif_is_valid, sarif_error = validate_sarif_usage(
+            args.provider, getattr(args, "output_formats", None)
+        )
+        if not sarif_is_valid:
+            self.parser.error(sarif_error)
 
         return args
 

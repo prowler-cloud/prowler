@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Primary calendars in the Google Workspace domain share **only free/busy information** with external users. When external sharing is set to share full event details, sensitive information such as meeting titles, attendees, locations, and descriptions is exposed to users outside the organization.",
+  "Description": "The domain-wide default for primary calendars shares **only free/busy information** with external users. When external sharing is set to share full event details, sensitive information such as meeting titles, attendees, locations, and descriptions is exposed to users outside the organization.",
   "Risk": "Overly permissive external sharing of primary calendars exposes **sensitive meeting metadata** — titles, attendees, locations, and descriptions — to users outside the organization. This increases the risk of **information disclosure**, **social engineering**, and **targeted phishing** based on insights into organizational activities.",
   "RelatedUrl": "",
   "AdditionalURLs": [

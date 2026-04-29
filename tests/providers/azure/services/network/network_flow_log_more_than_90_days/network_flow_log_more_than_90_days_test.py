@@ -1,9 +1,11 @@
 from unittest import mock
 from uuid import uuid4
 
-from azure.mgmt.network.models import FlowLog, RetentionPolicyParameters
-
-from prowler.providers.azure.services.network.network_service import NetworkWatcher
+from prowler.providers.azure.services.network.network_service import (
+    FlowLog,
+    NetworkWatcher,
+    RetentionPolicy,
+)
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
@@ -101,8 +103,11 @@ class Test_network_flow_log_more_than_90_days:
                     location="location",
                     flow_logs=[
                         FlowLog(
+                            id=str(uuid4()),
+                            name="disabled-flow-log",
                             enabled=False,
-                            retention_policy=RetentionPolicyParameters(days=90),
+                            target_resource_id=None,
+                            retention_policy=RetentionPolicy(days=90),
                         )
                     ],
                 )
@@ -154,8 +159,11 @@ class Test_network_flow_log_more_than_90_days:
                     location="location",
                     flow_logs=[
                         FlowLog(
+                            id=str(uuid4()),
+                            name="retention-80",
                             enabled=True,
-                            retention_policy=RetentionPolicyParameters(days=80),
+                            target_resource_id=None,
+                            retention_policy=RetentionPolicy(days=80),
                         )
                     ],
                 )
@@ -207,8 +215,11 @@ class Test_network_flow_log_more_than_90_days:
                     location="location",
                     flow_logs=[
                         FlowLog(
+                            id=str(uuid4()),
+                            name="retention-0",
                             enabled=True,
-                            retention_policy=RetentionPolicyParameters(days=0),
+                            target_resource_id=None,
+                            retention_policy=RetentionPolicy(days=0),
                         )
                     ],
                 )
@@ -260,8 +271,11 @@ class Test_network_flow_log_more_than_90_days:
                     location="location",
                     flow_logs=[
                         FlowLog(
+                            id=str(uuid4()),
+                            name="vnet-flow-log",
                             enabled=True,
-                            retention_policy=RetentionPolicyParameters(days=90),
+                            target_resource_id="/subscriptions/test-sub/resourceGroups/rg/providers/Microsoft.Network/virtualNetworks/test-vnet",
+                            retention_policy=RetentionPolicy(days=90),
                         )
                     ],
                 )

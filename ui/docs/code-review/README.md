@@ -1,6 +1,6 @@
 # Code Review System Documentation
 
-Complete documentation for the Claude Code-powered pre-commit validation system.
+Complete documentation for the Claude Code-powered commit validation system.
 
 ## Quick Navigation
 

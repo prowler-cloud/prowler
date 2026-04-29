@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_comprehensive_mail_storage_enabled",
+  "CheckTitle": "Comprehensive mail storage is enabled",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Comprehensive mail storage ensures that a copy of all sent and received messages in the domain, including messages sent or received by non-Gmail mailboxes, is stored in users' Gmail mailboxes. This makes all messages accessible to Google Vault for retention, eDiscovery, and compliance purposes.",
+  "Risk": "Without comprehensive mail storage, messages sent through other Google services (Calendar, Drive, etc.) may not be stored in Gmail and therefore **not subject to Vault retention policies**. This creates gaps in **compliance coverage**, **eDiscovery**, and **audit trails** that could violate regulatory requirements.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/3547347",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **Compliance** > **Comprehensive mail storage**\n4. Check **Ensure that a copy of all sent and received mail is stored in associated users' mailboxes**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable comprehensive mail storage to ensure all email is stored in Gmail mailboxes for Vault retention and eDiscovery compliance.",
+      "Url": "https://hub.prowler.com/check/gmail_comprehensive_mail_storage_enabled"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

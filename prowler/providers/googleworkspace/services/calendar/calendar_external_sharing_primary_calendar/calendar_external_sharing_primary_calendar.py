@@ -20,11 +20,7 @@ class calendar_external_sharing_primary_calendar(Check):
         if calendar_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=calendar_client.provider.identity,
-                resource_name=calendar_client.provider.identity.domain,
-                resource_id=calendar_client.provider.identity.customer_id,
-                customer_id=calendar_client.provider.identity.customer_id,
-                location="global",
+                resource=calendar_client.provider.domain_resource,
             )
 
             sharing = calendar_client.policies.primary_calendar_external_sharing
@@ -36,20 +32,20 @@ class calendar_external_sharing_primary_calendar(Check):
                     f"{calendar_client.provider.identity.domain} is restricted to "
                     f"free/busy information only."
                 )
+            elif sharing is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Primary calendar external sharing uses Google's secure default "
+                    f"configuration (free/busy only) "
+                    f"in domain {calendar_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if sharing is None:
-                    report.status_extended = (
-                        f"Primary calendar external sharing is not explicitly configured "
-                        f"in domain {calendar_client.provider.identity.domain}. "
-                        f"External sharing should be restricted to free/busy information only."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Primary calendar external sharing in domain "
-                        f"{calendar_client.provider.identity.domain} is set to {sharing}. "
-                        f"External sharing should be restricted to free/busy information only."
-                    )
+                report.status_extended = (
+                    f"Primary calendar external sharing in domain "
+                    f"{calendar_client.provider.identity.domain} is set to {sharing}. "
+                    f"External sharing should be restricted to free/busy information only."
+                )
 
             findings.append(report)
 

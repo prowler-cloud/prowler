@@ -8,6 +8,9 @@ ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 ARG TRIVY_VERSION=0.69.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
+ARG ZIZMOR_VERSION=1.24.1
+ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
+
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
@@ -22,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     libxslt1-dev \
     python3-dev \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -57,6 +61,22 @@ RUN ARCH=$(uname -m) && \
     mkdir -p /tmp/.cache/trivy && \
     chmod 777 /tmp/.cache/trivy
 
+# Install zizmor for GitHub Actions workflow scanning
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        ZIZMOR_ARCH="x86_64-unknown-linux-gnu" ; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+        ZIZMOR_ARCH="aarch64-unknown-linux-gnu" ; \
+    else \
+        echo "Unsupported architecture for zizmor: $ARCH" && exit 1 ; \
+    fi && \
+    wget --progress=dot:giga "https://github.com/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-${ZIZMOR_ARCH}.tar.gz" -O /tmp/zizmor.tar.gz && \
+    mkdir -p /tmp/zizmor-extract && \
+    tar zxf /tmp/zizmor.tar.gz -C /tmp/zizmor-extract && \
+    mv /tmp/zizmor-extract/zizmor /usr/local/bin/zizmor && \
+    chmod +x /usr/local/bin/zizmor && \
+    rm -rf /tmp/zizmor.tar.gz /tmp/zizmor-extract
+
 # Add prowler user
 RUN addgroup --gid 1000 prowler && \
     adduser --uid 1000 --gid 1000 --disabled-password --gecos "" prowler
@@ -71,7 +91,7 @@ RUN mkdir -p /tmp/prowler_api_output
 COPY pyproject.toml ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir poetry
+    pip install --no-cache-dir poetry==2.3.4
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
