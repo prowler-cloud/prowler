@@ -57,7 +57,7 @@ class TestIdentityService:
             regional_client_chi.region = "us-chicago-1"
 
             policy = MagicMock()
-            policy.id = 123
+            policy.id = "123"
             policy.name = "Test Policy"
             policy.description = "This is a test policy"
             policy.min_length = 8
@@ -99,6 +99,9 @@ class TestIdentityService:
                         )
                     ),
                 ),
+                patch(
+                    "oci.identity_domains"
+                )
             ):
                 identity_client.__list_domains__(regional_client_ash)
                 identity_client.__list_domains__(regional_client_chi)
