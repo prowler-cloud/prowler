@@ -9,7 +9,9 @@ from prowler.providers.azure.services.storage.storage_service import (
     SMBProtocolSettings,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -17,6 +19,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_storage_smb_protocol_version_is_latest:
     def test_no_storage_accounts(self):
         storage_client = mock.MagicMock()
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {}
         with (
             mock.patch(
@@ -40,6 +43,7 @@ class Test_storage_smb_protocol_version_is_latest:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock()
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -92,6 +96,7 @@ class Test_storage_smb_protocol_version_is_latest:
             ),
         )
         storage_client = mock.MagicMock()
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -132,7 +137,7 @@ class Test_storage_smb_protocol_version_is_latest:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
-                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} allows only the latest SMB protocol version (SMB3.1.1) for file shares."
+                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} allows only the latest SMB protocol version (SMB3.1.1) for file shares."
                 in result[0].status_extended
             )
 
@@ -149,6 +154,7 @@ class Test_storage_smb_protocol_version_is_latest:
             ),
         )
         storage_client = mock.MagicMock()
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -189,7 +195,7 @@ class Test_storage_smb_protocol_version_is_latest:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
-                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} allows SMB protocol versions: SMB2.1, SMB3.1.1. Only the latest SMB protocol version (SMB3.1.1) should be allowed."
+                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} allows SMB protocol versions: SMB2.1, SMB3.1.1. Only the latest SMB protocol version (SMB3.1.1) should be allowed."
                 in result[0].status_extended
             )
 
@@ -206,6 +212,7 @@ class Test_storage_smb_protocol_version_is_latest:
             ),
         )
         storage_client = mock.MagicMock()
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -258,6 +265,7 @@ class Test_storage_smb_protocol_version_is_latest:
             ),
         )
         storage_client = mock.MagicMock()
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -298,6 +306,6 @@ class Test_storage_smb_protocol_version_is_latest:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
-                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} allows SMB protocol versions: SMB3.1.1, SMB3.0. Only the latest SMB protocol version (SMB3.1.1) should be allowed."
+                f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} allows SMB protocol versions: SMB3.1.1, SMB3.0. Only the latest SMB protocol version (SMB3.1.1) should be allowed."
                 in result[0].status_extended
             )

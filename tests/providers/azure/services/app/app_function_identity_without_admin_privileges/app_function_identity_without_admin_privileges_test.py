@@ -12,6 +12,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_app_function_identity_without_admin_privileges:
     def test_app_no_subscriptions(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -35,6 +36,7 @@ class Test_app_function_identity_without_admin_privileges:
 
     def test_app_subscription_empty(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -58,6 +60,7 @@ class Test_app_function_identity_without_admin_privileges:
 
     def test_app_function_no_identity(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -99,7 +102,9 @@ class Test_app_function_identity_without_admin_privileges:
 
     def test_app_function_no_admin_roles(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         iam_client = mock.MagicMock
+        iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -185,7 +190,9 @@ class Test_app_function_identity_without_admin_privileges:
 
     def test_app_function_admin_roles(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         iam_client = mock.MagicMock
+        iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(

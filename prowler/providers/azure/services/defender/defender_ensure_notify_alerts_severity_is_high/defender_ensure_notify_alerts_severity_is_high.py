@@ -10,6 +10,9 @@ class defender_ensure_notify_alerts_severity_is_high(Check):
             subscription_id,
             security_contact_configurations,
         ) in defender_client.security_contact_configurations.items():
+            subscription_name = defender_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             for contact_configuration in security_contact_configurations.values():
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=contact_configuration
@@ -21,14 +24,14 @@ class defender_ensure_notify_alerts_severity_is_high(Check):
                 )
                 report.subscription = subscription_id
                 report.status = "FAIL"
-                report.status_extended = f"Notifications are not enabled for alerts with a minimum severity of high or lower in subscription {subscription_id}."
+                report.status_extended = f"Notifications are not enabled for alerts with a minimum severity of high or lower in subscription {subscription_name} ({subscription_id})."
 
                 if (
                     contact_configuration.alert_minimal_severity
                     and contact_configuration.alert_minimal_severity != "Critical"
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"Notifications are enabled for alerts with a minimum severity of high or lower ({contact_configuration.alert_minimal_severity}) in subscription {subscription_id}."
+                    report.status_extended = f"Notifications are enabled for alerts with a minimum severity of high or lower ({contact_configuration.alert_minimal_severity}) in subscription {subscription_name} ({subscription_id})."
 
                 findings.append(report)
 

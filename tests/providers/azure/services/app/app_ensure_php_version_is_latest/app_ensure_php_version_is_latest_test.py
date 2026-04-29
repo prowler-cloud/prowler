@@ -2,7 +2,9 @@ from unittest import mock
 from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -10,6 +12,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_app_ensure_php_version_is_latest:
     def test_app_no_subscriptions(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.apps = {}
 
         with (
@@ -32,6 +35,7 @@ class Test_app_ensure_php_version_is_latest:
 
     def test_app_subscription_empty(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (
@@ -55,6 +59,7 @@ class Test_app_ensure_php_version_is_latest:
     def test_app_configurations_none(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -92,6 +97,7 @@ class Test_app_ensure_php_version_is_latest:
     def test_app_php_version_not_latest(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         app_client.audit_config = {"php_latest_version": "8.2"}
 
@@ -130,7 +136,7 @@ class Test_app_ensure_php_version_is_latest:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"PHP version is set to 'php|8.0', the latest version that you could use is the '8.2' version, for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
+                == f"PHP version is set to 'php|8.0', the latest version that you could use is the '8.2' version, for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"
@@ -140,6 +146,7 @@ class Test_app_ensure_php_version_is_latest:
     def test_app_php_version_latest(self):
         resource_id = f"/subscriptions/{uuid4()}"
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         app_client.audit_config = {"php_latest_version": "8.2"}
 
@@ -178,7 +185,7 @@ class Test_app_ensure_php_version_is_latest:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"PHP version is set to '8.2' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_ID}'."
+                == f"PHP version is set to '8.2' for app 'app_id-1' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "app_id-1"

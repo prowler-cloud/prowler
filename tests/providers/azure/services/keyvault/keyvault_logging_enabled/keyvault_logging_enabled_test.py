@@ -3,7 +3,9 @@ from unittest import mock
 from azure.mgmt.keyvault.v2023_07_01.models import VaultProperties
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_keyvault_logging_enabled:
     def test_no_key_vaults(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_client.key_vaults = {}
 
         with (
@@ -37,6 +40,7 @@ class Test_keyvault_logging_enabled:
 
     def test_no_diagnostic_settings(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -83,13 +87,14 @@ class Test_keyvault_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_ID} does not have a diagnostic setting with audit logging."
+                == f"Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_DISPLAY} does not have a diagnostic setting with audit logging."
             )
             assert result[0].resource_name == "name_keyvault"
             assert result[0].resource_id == "id"
 
     def test_diagnostic_setting_without_audit_logging(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -158,13 +163,14 @@ class Test_keyvault_logging_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_ID} does not have a diagnostic setting with audit logging."
+                == f"Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_DISPLAY} does not have a diagnostic setting with audit logging."
             )
             assert result[0].resource_name == "name_keyvault"
             assert result[0].resource_id == "id"
 
     def test_diagnostic_setting_with_audit_logging(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -233,13 +239,14 @@ class Test_keyvault_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_ID} has a diagnostic setting with audit logging."
+                == f"Key Vault name_keyvault in subscription {AZURE_SUBSCRIPTION_DISPLAY} has a diagnostic setting with audit logging."
             )
             assert result[0].resource_name == "name_keyvault"
             assert result[0].resource_id == "id"
 
     def test_multiple_diagnostic_settings_one_compliant(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -329,6 +336,7 @@ class Test_keyvault_logging_enabled:
 
     def test_multiple_vaults_mixed(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(

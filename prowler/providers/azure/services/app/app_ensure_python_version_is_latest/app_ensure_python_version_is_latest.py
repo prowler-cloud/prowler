@@ -10,6 +10,9 @@ class app_ensure_python_version_is_latest(Check):
             subscription_id,
             apps,
         ) in app_client.apps.items():
+            subscription_name = app_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             for app in apps.values():
                 framework = getattr(app.configurations, "linux_fx_version", "")
 
@@ -22,7 +25,7 @@ class app_ensure_python_version_is_latest(Check):
                     python_latest_version = app_client.audit_config.get(
                         "python_latest_version", "3.12"
                     )
-                    report.status_extended = f"Python version is '{framework}', the latest version that you could use is the '{python_latest_version}' version, for app '{app.name}' in subscription '{subscription_id}'."
+                    report.status_extended = f"Python version is '{framework}', the latest version that you could use is the '{python_latest_version}' version, for app '{app.name}' in subscription '{subscription_name} ({subscription_id})'."
 
                     if (
                         python_latest_version in framework
@@ -30,7 +33,7 @@ class app_ensure_python_version_is_latest(Check):
                         == python_latest_version
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"Python version is set to '{python_latest_version}' for app '{app.name}' in subscription '{subscription_id}'."
+                        report.status_extended = f"Python version is set to '{python_latest_version}' for app '{app.name}' in subscription '{subscription_name} ({subscription_id})'."
 
                     findings.append(report)
 

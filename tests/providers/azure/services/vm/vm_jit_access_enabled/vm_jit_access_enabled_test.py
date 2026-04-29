@@ -5,6 +5,7 @@ from prowler.providers.azure.services.defender.defender_service import JITPolicy
 from prowler.providers.azure.services.vm.vm_service import VirtualMachine
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -12,8 +13,10 @@ from tests.providers.azure.azure_fixtures import (
 class Test_vm_jit_access_enabled:
     def test_no_subscriptions(self):
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {}
         defender_client = mock.MagicMock()
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.jit_policies = {}
         with (
             mock.patch(
@@ -39,8 +42,10 @@ class Test_vm_jit_access_enabled:
 
     def test_no_vms(self):
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {}}
         defender_client = mock.MagicMock()
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.jit_policies = {AZURE_SUBSCRIPTION_ID: {}}
         with (
             mock.patch(
@@ -77,8 +82,10 @@ class Test_vm_jit_access_enabled:
             storage_profile=None,
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {vm_id: vm}}
         defender_client = mock.MagicMock()
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         jit_policy = JITPolicy(
             id="policy1",
             name="JITPolicy1",
@@ -128,8 +135,10 @@ class Test_vm_jit_access_enabled:
             storage_profile=None,
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {vm_id: vm}}
         defender_client = mock.MagicMock()
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         # JIT policy does not include this VM
         jit_policy = JITPolicy(
             id="policy1",
@@ -184,8 +193,10 @@ class Test_vm_jit_access_enabled:
             storage_profile=None,
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {upper_vm_id: vm}}
         defender_client = mock.MagicMock()
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         jit_policy = JITPolicy(
             id="policy1",
             name="JITPolicy1",
@@ -240,10 +251,12 @@ class Test_vm_jit_access_enabled:
             storage_profile=None,
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {vm_id_1: vm1, vm_id_2: vm2}
         }
         defender_client = mock.MagicMock()
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         jit_policy_1 = JITPolicy(
             id="policy1",
             name="JITPolicy1",

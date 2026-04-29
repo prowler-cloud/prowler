@@ -10,15 +10,18 @@ class app_ensure_auth_is_set_up(Check):
             subscription_id,
             apps,
         ) in app_client.apps.items():
+            subscription_name = app_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             for app in apps.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                 report.subscription = subscription_id
                 report.status = "PASS"
-                report.status_extended = f"Authentication is set up for app '{app.name}' in subscription '{subscription_id}'."
+                report.status_extended = f"Authentication is set up for app '{app.name}' in subscription '{subscription_name} ({subscription_id})'."
 
                 if not app.auth_enabled:
                     report.status = "FAIL"
-                    report.status_extended = f"Authentication is not set up for app '{app.name}' in subscription '{subscription_id}'."
+                    report.status_extended = f"Authentication is not set up for app '{app.name}' in subscription '{subscription_name} ({subscription_id})'."
 
                 findings.append(report)
 

@@ -14,6 +14,9 @@ class vm_linux_enforce_ssh_authentication(Check):
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
         for subscription_id, vms in vm_client.virtual_machines.items():
+            subscription_name = vm_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             for vm in vms.values():
                 if vm.linux_configuration:
                     report = Check_Report_Azure(metadata=self.metadata(), resource=vm)
@@ -21,9 +24,9 @@ class vm_linux_enforce_ssh_authentication(Check):
 
                     if vm.linux_configuration.disable_password_authentication:
                         report.status = "PASS"
-                        report.status_extended = f"VM {vm.resource_name} in subscription {subscription_id} has password authentication disabled (SSH key authentication enforced)."
+                        report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} ({subscription_id}) has password authentication disabled (SSH key authentication enforced)."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"VM {vm.resource_name} in subscription {subscription_id} has password authentication enabled (password-based SSH allowed)."
+                        report.status_extended = f"VM {vm.resource_name} in subscription {subscription_name} ({subscription_id}) has password authentication enabled (password-based SSH allowed)."
                     findings.append(report)
         return findings

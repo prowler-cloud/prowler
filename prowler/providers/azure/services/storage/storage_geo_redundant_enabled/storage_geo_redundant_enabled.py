@@ -19,6 +19,9 @@ class storage_geo_redundant_enabled(Check):
         """
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
+            subscription_name = storage_client.subscriptions.get(
+                subscription, subscription
+            )
             for storage_account in storage_accounts:
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=storage_account
@@ -32,10 +35,10 @@ class storage_geo_redundant_enabled(Check):
                     or storage_account.replication_settings == "Standard_RAGZRS"
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has Geo-redundant storage {storage_account.replication_settings} enabled."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription_name} ({subscription}) has Geo-redundant storage {storage_account.replication_settings} enabled."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} does not have Geo-redundant storage enabled, it has {storage_account.replication_settings} instead."
+                    report.status_extended = f"Storage account {storage_account.name} from subscription {subscription_name} ({subscription}) does not have Geo-redundant storage enabled, it has {storage_account.replication_settings} instead."
 
                 findings.append(report)
 

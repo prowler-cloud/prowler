@@ -10,24 +10,27 @@ class mysql_flexible_server_minimum_tls_version_12(Check):
             subscription_id,
             servers,
         ) in mysql_client.flexible_servers.items():
+            subscription_name = mysql_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             for server in servers.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=server)
                 report.subscription = subscription_id
                 report.status = "FAIL"
-                report.status_extended = f"TLS version is not configured in server {server.name} in subscription {subscription_id}."
+                report.status_extended = f"TLS version is not configured in server {server.name} in subscription {subscription_name} ({subscription_id})."
 
                 if "tls_version" in server.configurations:
                     report.resource_id = server.configurations[
                         "tls_version"
                     ].resource_id
                     report.status = "PASS"
-                    report.status_extended = f"TLS version is {server.configurations['tls_version'].value} in server {server.name} in subscription {subscription_id}. This version of TLS is considered secure."
+                    report.status_extended = f"TLS version is {server.configurations['tls_version'].value} in server {server.name} in subscription {subscription_name} ({subscription_id}). This version of TLS is considered secure."
 
                     tls_aviable = server.configurations["tls_version"].value.split(",")
 
                     if "TLSv1.0" in tls_aviable or "TLSv1.1" in tls_aviable:
                         report.status = "FAIL"
-                        report.status_extended = f"TLS version is {server.configurations['tls_version'].value} in server {server.name} in subscription {subscription_id}. There is at leat one version of TLS that is considered insecure."
+                        report.status_extended = f"TLS version is {server.configurations['tls_version'].value} in server {server.name} in subscription {subscription_name} ({subscription_id}). There is at leat one version of TLS that is considered insecure."
 
                 findings.append(report)
 

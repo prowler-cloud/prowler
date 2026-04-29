@@ -3,7 +3,9 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,9 @@ from tests.providers.azure.azure_fixtures import (
 class TestContainerRegistryAdminUserDisabled:
     def test_no_container_registries(self):
         containerregistry_client = MagicMock()
+        containerregistry_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         containerregistry_client.registries = {}
 
         with (
@@ -33,6 +38,9 @@ class TestContainerRegistryAdminUserDisabled:
 
     def test_container_registry_admin_user_enabled(self):
         containerregistry_client = MagicMock()
+        containerregistry_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         registry_id = str(uuid4())
 
         with (
@@ -76,7 +84,7 @@ class TestContainerRegistryAdminUserDisabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Container Registry mock_registry from subscription {AZURE_SUBSCRIPTION_ID} has its admin user enabled."
+                == f"Container Registry mock_registry from subscription {AZURE_SUBSCRIPTION_DISPLAY} has its admin user enabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "mock_registry"
@@ -90,6 +98,9 @@ class TestContainerRegistryAdminUserDisabled:
 
     def test_container_registry_admin_user_disabled(self):
         containerregistry_client = mock.MagicMock()
+        containerregistry_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         containerregistry_client.registries = {}
 
         with (
@@ -135,7 +146,7 @@ class TestContainerRegistryAdminUserDisabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Container Registry mock_registry from subscription {AZURE_SUBSCRIPTION_ID} has its admin user disabled."
+                == f"Container Registry mock_registry from subscription {AZURE_SUBSCRIPTION_DISPLAY} has its admin user disabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "mock_registry"

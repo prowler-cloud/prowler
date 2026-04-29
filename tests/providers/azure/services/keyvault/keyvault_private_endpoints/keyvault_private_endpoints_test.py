@@ -7,7 +7,9 @@ from azure.mgmt.keyvault.v2023_07_01.models import (
 )
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -15,6 +17,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_keyvault_private_endpoints:
     def test_no_key_vaults(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_client.key_vaults = {}
 
         with (
@@ -37,6 +40,7 @@ class Test_keyvault_private_endpoints:
 
     def test_key_vaults_no_private_endpoints(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
 
@@ -82,7 +86,7 @@ class Test_keyvault_private_endpoints:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} is not using private endpoints."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} is not using private endpoints."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name
@@ -91,6 +95,7 @@ class Test_keyvault_private_endpoints:
 
     def test_key_vaults_using_private_endpoints(self):
         keyvault_client = mock.MagicMock
+        keyvault_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         keyvault_name = "Keyvault Name"
         keyvault_id = str(uuid4())
         private_endpoint = PrivateEndpointConnectionItem(
@@ -141,7 +146,7 @@ class Test_keyvault_private_endpoints:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_ID} is using private endpoints."
+                == f"Keyvault {keyvault_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} is using private endpoints."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == keyvault_name

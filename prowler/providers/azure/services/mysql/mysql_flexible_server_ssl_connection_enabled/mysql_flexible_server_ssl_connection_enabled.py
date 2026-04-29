@@ -10,11 +10,14 @@ class mysql_flexible_server_ssl_connection_enabled(Check):
             subscription_id,
             servers,
         ) in mysql_client.flexible_servers.items():
+            subscription_name = mysql_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             for server in servers.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=server)
                 report.subscription = subscription_id
                 report.status = "FAIL"
-                report.status_extended = f"SSL connection is disabled for server {server.name} in subscription {subscription_id}."
+                report.status_extended = f"SSL connection is disabled for server {server.name} in subscription {subscription_name} ({subscription_id})."
 
                 if "require_secure_transport" in server.configurations:
                     report.resource_id = server.configurations[
@@ -25,7 +28,7 @@ class mysql_flexible_server_ssl_connection_enabled(Check):
                         == "on"
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"SSL connection is enabled for server {server.name} in subscription {subscription_id}."
+                        report.status_extended = f"SSL connection is enabled for server {server.name} in subscription {subscription_name} ({subscription_id})."
 
                 findings.append(report)
 

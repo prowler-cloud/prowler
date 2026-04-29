@@ -17,6 +17,9 @@ class databricks_workspace_vnet_injection_enabled(Check):
     def execute(self):
         findings = []
         for subscription, workspaces in databricks_client.workspaces.items():
+            subscription_name = databricks_client.subscriptions.get(
+                subscription, subscription
+            )
             for workspace in workspaces.values():
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=workspace
@@ -24,9 +27,9 @@ class databricks_workspace_vnet_injection_enabled(Check):
                 report.subscription = subscription
                 if workspace.custom_managed_vnet_id:
                     report.status = "PASS"
-                    report.status_extended = f"Databricks workspace {workspace.name} in subscription {subscription} is deployed in a customer-managed VNet ({workspace.custom_managed_vnet_id})."
+                    report.status_extended = f"Databricks workspace {workspace.name} in subscription {subscription_name} ({subscription}) is deployed in a customer-managed VNet ({workspace.custom_managed_vnet_id})."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Databricks workspace {workspace.name} in subscription {subscription} is not deployed in a customer-managed VNet (VNet Injection is not enabled)."
+                    report.status_extended = f"Databricks workspace {workspace.name} in subscription {subscription_name} ({subscription}) is not deployed in a customer-managed VNet (VNet Injection is not enabled)."
                 findings.append(report)
         return findings

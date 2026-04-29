@@ -10,6 +10,9 @@ class defender_ensure_system_updates_are_applied(Check):
             subscription_id,
             assessments,
         ) in defender_client.assessments.items():
+            subscription_name = defender_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             if (
                 "Log Analytics agent should be installed on virtual machines"
                 in assessments
@@ -25,7 +28,7 @@ class defender_ensure_system_updates_are_applied(Check):
                 )
                 report.subscription = subscription_id
                 report.status = "PASS"
-                report.status_extended = f"System updates are applied for all the VMs in the subscription {subscription_id}."
+                report.status_extended = f"System updates are applied for all the VMs in the subscription {subscription_name} ({subscription_id})."
 
                 if (
                     assessments[
@@ -42,7 +45,7 @@ class defender_ensure_system_updates_are_applied(Check):
                     == "Unhealthy"
                 ):
                     report.status = "FAIL"
-                    report.status_extended = f"System updates are not applied for all the VMs in the subscription {subscription_id}."
+                    report.status_extended = f"System updates are not applied for all the VMs in the subscription {subscription_name} ({subscription_id})."
 
                 findings.append(report)
 

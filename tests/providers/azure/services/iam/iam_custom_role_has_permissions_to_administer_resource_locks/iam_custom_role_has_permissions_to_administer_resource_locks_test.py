@@ -4,7 +4,9 @@ from azure.mgmt.authorization.v2022_04_01.models import Permission
 
 from prowler.providers.azure.services.iam.iam_service import Role
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -12,6 +14,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
     def test_iam_no_roles(self):
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.custom_roles = {}
 
         with (
@@ -36,6 +39,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         self,
     ):
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         role_name = "test-role"
         defender_client.custom_roles = {
             AZURE_SUBSCRIPTION_ID: {
@@ -76,7 +80,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Role {role_name} from subscription {AZURE_SUBSCRIPTION_ID} has permission to administer resource locks."
+                == f"Role {role_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has permission to administer resource locks."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert (
@@ -91,6 +95,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         self,
     ):
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         role_name = "test-role"
         defender_client.custom_roles = {
             AZURE_SUBSCRIPTION_ID: {
@@ -124,7 +129,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Role {role_name} from subscription {AZURE_SUBSCRIPTION_ID} has no permission to administer resource locks."
+                == f"Role {role_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has no permission to administer resource locks."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert (
@@ -139,6 +144,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         self,
     ):
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         role_name = "test-role"
         role_name2 = "test-role2"
         defender_client.custom_roles = {
@@ -194,7 +200,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Role {role_name} from subscription {AZURE_SUBSCRIPTION_ID} has permission to administer resource locks."
+                == f"Role {role_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has permission to administer resource locks."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert (
@@ -206,6 +212,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
 
     def test_iam_custom_roles_empty_list_but_with_key(self):
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.custom_roles = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (

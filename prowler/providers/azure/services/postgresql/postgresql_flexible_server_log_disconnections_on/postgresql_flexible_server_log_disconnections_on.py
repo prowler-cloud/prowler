@@ -11,14 +11,17 @@ class postgresql_flexible_server_log_disconnections_on(Check):
             subscription,
             flexible_servers,
         ) in postgresql_client.flexible_servers.items():
+            subscription_name = postgresql_client.subscriptions.get(
+                subscription, subscription
+            )
             for server in flexible_servers:
                 report = Check_Report_Azure(metadata=self.metadata(), resource=server)
                 report.subscription = subscription
                 report.status = "FAIL"
-                report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has log_disconnections disabled"
+                report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription_name} ({subscription}) has log_disconnections disabled"
                 if server.log_disconnections == "ON":
                     report.status = "PASS"
-                    report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has log_disconnections enabled"
+                    report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription_name} ({subscription}) has log_disconnections enabled"
                 findings.append(report)
 
         return findings

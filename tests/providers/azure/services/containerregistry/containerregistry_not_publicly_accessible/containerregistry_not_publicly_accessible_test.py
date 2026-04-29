@@ -3,7 +3,9 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_containerregistry_not_publicly_accessible:
     def test_no_container_registries(self):
         containerregistry_client = MagicMock()
+        containerregistry_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         containerregistry_client.registries = {}
 
         with (
@@ -33,6 +38,9 @@ class Test_containerregistry_not_publicly_accessible:
 
     def test_container_registry_network_access_unrestricted(self):
         containerregistry_client = MagicMock()
+        containerregistry_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         registry_id = str(uuid4())
 
         with (
@@ -93,7 +101,7 @@ class Test_containerregistry_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Container Registry {containerregistry_client.registries[AZURE_SUBSCRIPTION_ID][registry_id].name} from subscription {AZURE_SUBSCRIPTION_ID} allows unrestricted network access."
+                == f"Container Registry {containerregistry_client.registries[AZURE_SUBSCRIPTION_ID][registry_id].name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} allows unrestricted network access."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "mock_registry"
@@ -107,6 +115,9 @@ class Test_containerregistry_not_publicly_accessible:
 
     def test_container_registry_network_access_restricted(self):
         containerregistry_client = mock.MagicMock()
+        containerregistry_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         containerregistry_client.registries = {}
 
         with (
@@ -168,7 +179,7 @@ class Test_containerregistry_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Container Registry {containerregistry_client.registries[AZURE_SUBSCRIPTION_ID][registry_id].name} from subscription {AZURE_SUBSCRIPTION_ID} does not allow unrestricted network access."
+                == f"Container Registry {containerregistry_client.registries[AZURE_SUBSCRIPTION_ID][registry_id].name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} does not allow unrestricted network access."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "mock_registry"

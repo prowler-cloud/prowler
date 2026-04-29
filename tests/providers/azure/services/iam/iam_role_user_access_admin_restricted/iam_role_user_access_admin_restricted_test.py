@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.iam.iam_service import Role, RoleAssignment
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
@@ -12,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_iam_role_user_access_admin_restricted:
     def test_iam_no_role_assignments(self):
         iam_client = mock.MagicMock
+        iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         iam_client.role_assignments = {}
         iam_client.roles = {}
 
@@ -88,7 +90,7 @@ class Test_iam_role_user_access_admin_restricted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Role assignment test-assignment in subscription {AZURE_SUBSCRIPTION_ID} grants User Access Administrator role to User {agent_id}."
+                == f"Role assignment test-assignment in subscription {AZURE_SUBSCRIPTION_DISPLAY} grants User Access Administrator role to User {agent_id}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_id == role_assignment_id
@@ -148,7 +150,7 @@ class Test_iam_role_user_access_admin_restricted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Role assignment test-assignment in subscription {AZURE_SUBSCRIPTION_ID} does not grant User Access Administrator role."
+                == f"Role assignment test-assignment in subscription {AZURE_SUBSCRIPTION_DISPLAY} does not grant User Access Administrator role."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_id == role_assignment_id

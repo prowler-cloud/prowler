@@ -12,17 +12,20 @@ class aisearch_service_not_publicly_accessible(Check):
             subscription_id,
             aisearch_services,
         ) in aisearch_client.aisearch_services.items():
+            subscription_name = aisearch_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             for aisearch_service in aisearch_services.values():
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=aisearch_service
                 )
                 report.subscription = subscription_id
                 report.status = "FAIL"
-                report.status_extended = f"AISearch Service {aisearch_service.name} from subscription {subscription_id} allows public access."
+                report.status_extended = f"AISearch Service {aisearch_service.name} from subscription {subscription_name} ({subscription_id}) allows public access."
 
                 if not aisearch_service.public_network_access:
                     report.status = "PASS"
-                    report.status_extended = f"AISearch Service {aisearch_service.name} from subscription {subscription_id} does not allows public access."
+                    report.status_extended = f"AISearch Service {aisearch_service.name} from subscription {subscription_name} ({subscription_id}) does not allows public access."
 
                 findings.append(report)
 
