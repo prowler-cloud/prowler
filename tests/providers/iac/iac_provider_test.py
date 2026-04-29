@@ -60,21 +60,15 @@ class TestIacProvider:
         assert isinstance(report, CheckReportIAC)
         assert report.status == "FAIL"
 
+        # Trivy emits "AVD-AWS-0001"; Hub indexes it without the AVD- prefix.
+        expected_url = "https://hub.prowler.com/check/AWS-0001"
         assert report.check_metadata.Provider == "iac"
         assert report.check_metadata.CheckID == SAMPLE_FAILED_CHECK["ID"]
         assert report.check_metadata.CheckTitle == SAMPLE_FAILED_CHECK["Title"]
         assert report.check_metadata.Severity == "low"
-        assert (
-            report.check_metadata.Remediation.Recommendation.Url
-            == "https://hub.prowler.com/check/AVD-AWS-0001"
-        )
-        assert (
-            report.check_metadata.RelatedUrl
-            == "https://hub.prowler.com/check/AVD-AWS-0001"
-        )
-        assert report.check_metadata.AdditionalURLs == [
-            "https://hub.prowler.com/check/AVD-AWS-0001"
-        ]
+        assert report.check_metadata.Remediation.Recommendation.Url == expected_url
+        assert report.check_metadata.RelatedUrl == expected_url
+        assert report.check_metadata.AdditionalURLs == [expected_url]
 
     def test_iac_provider_process_finding_passed(self):
         """Test processing a passed finding"""
@@ -174,10 +168,10 @@ class TestIacProvider:
             "https://www.cve.org/CVERecord?id=CVE-2023-9012"
         ]
 
-    def test_iac_provider_process_non_cve_vulnerability_does_not_fallback_to_aqua(
+    def test_iac_provider_process_non_cve_vulnerability_falls_back_to_github_advisory(
         self,
     ):
-        """Test non-CVE vulnerabilities do not keep Aqua links."""
+        """Non-CVE vulnerabilities (GHSA-…) point to GitHub Security Advisories."""
         provider = IacProvider()
 
         report = provider._process_finding(
@@ -186,11 +180,13 @@ class TestIacProvider:
             "nodejs",
         )
 
-        assert report.check_metadata.Remediation.Recommendation.Url == ""
-        assert report.check_metadata.RelatedUrl == ""
-        assert report.check_metadata.AdditionalURLs == [
-            "https://github.com/advisories/GHSA-abcd-1234-efgh"
-        ]
+        expected_url = (
+            "https://github.com/advisories/"
+            f"{SAMPLE_TRIVY_NON_CVE_VULNERABILITY['VulnerabilityID'].upper()}"
+        )
+        assert report.check_metadata.Remediation.Recommendation.Url == expected_url
+        assert report.check_metadata.RelatedUrl == expected_url
+        assert report.check_metadata.AdditionalURLs == [expected_url]
 
     @patch("subprocess.run")
     def test_iac_provider_run_scan_success(self, mock_subprocess):

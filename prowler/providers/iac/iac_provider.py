@@ -19,12 +19,11 @@ from prowler.lib.check.models import CheckReportIAC
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.lib.utils.vulnerability_references import (
+    build_finding_reference_url,
     resolve_vulnerability_reference_urls,
 )
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
-
-PROWLER_HUB_CHECK_URL = "https://hub.prowler.com/check/{check_id}"
 
 
 class IacProvider(Provider):
@@ -175,10 +174,6 @@ class IacProvider(Provider):
         """IAC provider doesn't need a session since it uses Trivy directly"""
         return None
 
-    @staticmethod
-    def _build_hub_check_url(check_id: str) -> str:
-        return PROWLER_HUB_CHECK_URL.format(check_id=check_id)
-
     def _process_finding(
         self, finding: dict, file_path: str, type: str
     ) -> CheckReportIAC:
@@ -194,8 +189,6 @@ class IacProvider(Provider):
             CheckReportIAC: The processed check report
         """
         try:
-            recommendation_url = finding.get("PrimaryURL", "")
-            additional_urls: list[str] = []
             if "VulnerabilityID" in finding:
                 finding_id = finding["VulnerabilityID"]
                 finding_description = finding["Description"]
@@ -207,17 +200,20 @@ class IacProvider(Provider):
                         primary_url=finding.get("PrimaryURL", ""),
                     )
                 )
+                if not recommendation_url:
+                    recommendation_url = build_finding_reference_url(finding_id)
+                    additional_urls = [recommendation_url]
             elif "RuleID" in finding:
                 finding_id = finding["RuleID"]
                 finding_description = finding["Title"]
                 finding_status = finding.get("Status", "FAIL")
-                recommendation_url = self._build_hub_check_url(finding_id)
+                recommendation_url = build_finding_reference_url(finding_id)
                 additional_urls = [recommendation_url]
             else:
                 finding_id = finding["ID"]
                 finding_description = finding["Description"]
                 finding_status = finding["Status"]
-                recommendation_url = self._build_hub_check_url(finding_id)
+                recommendation_url = build_finding_reference_url(finding_id)
                 additional_urls = [recommendation_url]
 
             metadata_dict = {
