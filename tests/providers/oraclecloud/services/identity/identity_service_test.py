@@ -99,9 +99,7 @@ class TestIdentityService:
                         )
                     ),
                 ),
-                patch(
-                    "oci.identity_domains"
-                )
+                patch("oci.identity_domains"),
             ):
                 identity_client.__list_domains__(regional_client_ash)
                 identity_client.__list_domains__(regional_client_chi)
