@@ -4484,6 +4484,45 @@ class TestResetEphemeralResourceFindingsCount:
         assert result["status"] == "skipped"
         assert result["reason"] == "scan not found"
 
+    def test_skips_when_newer_scan_completed_for_same_provider(
+        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+    ):
+        # If a newer completed scan exists for the same provider, our
+        # ResourceScanSummary set is stale relative to the resources' current
+        # counts, and applying the diff would corrupt them.
+        from datetime import timedelta
+
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        provider, *_ = providers_fixture
+        _, resource2, _ = resources_fixture
+
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+
+        # Create a newer COMPLETED scan for the same provider, with an
+        # explicit completed_at strictly after scan1's so ordering is
+        # deterministic regardless of clock resolution.
+        newer_completed_at = scan1.completed_at + timedelta(minutes=5)
+        Scan.objects.create(
+            name="Newer Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=newer_completed_at,
+            completed_at=newer_completed_at,
+        )
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "newer scan exists"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 5
+
     def test_does_not_touch_other_providers_resources(
         self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
     ):

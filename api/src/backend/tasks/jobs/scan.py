@@ -2140,6 +2140,30 @@ def reset_ephemeral_resource_findings_count(tenant_id: str, scan_id: str) -> dic
         )
         return {"status": "skipped", "reason": "partial scan scope"}
 
+    # Race protection: if a newer completed full-scope scan exists for this
+    # provider, our ResourceScanSummary set is stale relative to the resources'
+    # current failed_findings_count values (which the newer scan already
+    # refreshed). Wiping based on the older scan would zero counts the newer
+    # scan just set. Skip and let the newer scan's reset task do the work; if
+    # this task was delayed in the queue, that's the correct outcome.
+    with rls_transaction(tenant_id):
+        latest_full_scope_scan_id = (
+            Scan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=scan.provider_id,
+                state=StateChoices.COMPLETED,
+            )
+            .order_by("-completed_at", "-inserted_at")
+            .values_list("id", flat=True)
+            .first()
+        )
+    if latest_full_scope_scan_id != scan.id:
+        logger.info(
+            f"Scan {scan_id} is not the latest completed scan for provider "
+            f"{scan.provider_id}; skipping ephemeral reset"
+        )
+        return {"status": "skipped", "reason": "newer scan exists"}
+
     # Stays on the primary DB intentionally. ResourceScanSummary rows are
     # written by perform_prowler_scan in the same chain that triggered this
     # task, so replica lag could return an empty/partial summary set; a stale

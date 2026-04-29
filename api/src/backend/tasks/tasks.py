@@ -803,8 +803,27 @@ def aggregate_daily_severity_task(tenant_id: str, scan_id: str):
 @shared_task(name="scan-reset-ephemeral-resources", queue="overview")
 @handle_provider_deletion
 def reset_ephemeral_resource_findings_count_task(tenant_id: str, scan_id: str):
-    """Reset failed_findings_count for resources missing from a completed full-scope scan."""
-    return reset_ephemeral_resource_findings_count(tenant_id=tenant_id, scan_id=scan_id)
+    """Reset failed_findings_count for resources missing from a completed full-scope scan.
+
+    Failures are swallowed and returned as a status: this task lives inside the
+    post-scan group, and Celery propagates group-member exceptions into the next
+    chain step — meaning a crash here would block compliance reports and
+    integrations. The reset is purely cosmetic (UI sort optimization), so a
+    bad run is logged and absorbed rather than allowed to cascade.
+    """
+    try:
+        return reset_ephemeral_resource_findings_count(
+            tenant_id=tenant_id, scan_id=scan_id
+        )
+    except Exception as exc:  # noqa: BLE001 — intentionally broad
+        logger.exception(
+            f"reset_ephemeral_resource_findings_count failed for scan {scan_id}: {exc}"
+        )
+        return {
+            "status": "failed",
+            "scan_id": str(scan_id),
+            "reason": str(exc),
+        }
 
 
 @shared_task(base=RLSTask, name="scan-finding-group-summaries", queue="overview")
