@@ -1311,6 +1311,7 @@
         "glue_development_endpoints_job_bookmark_encryption_enabled",
         "glue_ml_transform_encrypted_at_rest",
         "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk",
         "codebuild_project_s3_logs_encrypted",
         "codebuild_report_group_export_encrypted"
       ]
