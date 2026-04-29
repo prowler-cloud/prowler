@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - Alibaba Cloud CS service SDK compatibility, harden other services and improve documentation [(#10871)](https://github.com/prowler-cloud/prowler/pull/10871)
+- Container image CVE findings and IaC findings now use official CVE or Prowler Hub URLs instead of Aqua advisory URLs in remediation and references [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
 
 ---
 
