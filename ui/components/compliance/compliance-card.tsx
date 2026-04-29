@@ -132,18 +132,26 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                 />
               </div>
             )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <h4 className="text-small min-w-0 flex-1 truncate leading-5 font-bold">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <h4 className="text-small truncate leading-5 font-bold">
+                    {formatTitle(title)}
+                    {version ? ` - ${version}` : ""}
+                  </h4>
+                </TooltipTrigger>
+                <TooltipContent>
                   {formatTitle(title)}
                   {version ? ` - ${version}` : ""}
-                </h4>
-              </TooltipTrigger>
-              <TooltipContent>
-                {formatTitle(title)}
-                {version ? ` - ${version}` : ""}
-              </TooltipContent>
-            </Tooltip>
+                </TooltipContent>
+              </Tooltip>
+              <small className="truncate">
+                <span className="mr-1 text-xs font-semibold">
+                  {passingRequirements} / {totalRequirements}
+                </span>
+                Passing Requirements
+              </small>
+            </div>
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3 text-xs">
@@ -163,12 +171,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
               )}
             />
           </div>
-          <small className="text-center">
-            <span className="mr-1 text-xs font-semibold">
-              {passingRequirements} / {totalRequirements}
-            </span>
-            Passing Requirements
-          </small>
         </div>
       </CardContent>
     </Card>
