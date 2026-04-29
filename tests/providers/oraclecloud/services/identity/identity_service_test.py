@@ -92,14 +92,13 @@ class TestIdentityService:
                     return_value=MagicMock(data=domains),
                 ),
                 patch(
-                    "oci.identity_domains.IdentityDomainsClient",
+                    "prowler.providers.oraclecloud.services.identity.identity_service.oci.identity_domains.IdentityDomainsClient",
                     return_value=MagicMock(
                         list_password_policies=lambda: MagicMock(
                             data=MagicMock(resources=[policy])
                         )
                     ),
                 ),
-                patch("oci.identity_domains"),
             ):
                 identity_client.__list_domains__(regional_client_ash)
                 identity_client.__list_domains__(regional_client_chi)
