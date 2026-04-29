@@ -1,5 +1,6 @@
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -13,6 +14,8 @@ class Bedrock(AWSService):
         super().__init__(__class__.__name__, provider)
         self.logging_configurations = {}
         self.guardrails = {}
+        self.guardrails_scanned_regions = set()
+        self.guardrails_scan_errors = {}
         self.__threading_call__(self._get_model_invocation_logging_configuration)
         self.__threading_call__(self._list_guardrails)
         self.__threading_call__(self._get_guardrail, self.guardrails.values())
@@ -67,7 +70,18 @@ class Bedrock(AWSService):
                             arn=guardrail["arn"],
                             region=regional_client.region,
                         )
+            self.guardrails_scanned_regions.add(regional_client.region)
+        except ClientError as error:
+            self.guardrails_scan_errors[regional_client.region] = error.response[
+                "Error"
+            ].get("Code", error.__class__.__name__)
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
+            self.guardrails_scan_errors[regional_client.region] = (
+                error.__class__.__name__
+            )
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
