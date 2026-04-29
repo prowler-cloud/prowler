@@ -3868,6 +3868,7 @@ class TestScanViewSet:
                 "ResponseContentDisposition": (
                     'attachment; filename="prowler-output-123_threatscore_report.pdf"'
                 ),
+                "ResponseContentType": "application/pdf",
             },
             ExpiresIn=300,
         )
