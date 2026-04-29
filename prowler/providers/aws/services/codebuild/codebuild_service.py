@@ -53,11 +53,6 @@ class Codebuild(AWSService):
             if len(build_ids) > 0:
                 project.last_build = Build(id=build_ids[0])
         except Exception as error:
-            # Catch broadly so a failure on a single project (API error,
-            # connection timeout, etc.) does not stop processing the
-            # remaining projects in this region. Throttling is handled
-            # by the shared botocore standard retry policy configured
-            # at the provider level.
             logger.error(
                 f"{project.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
