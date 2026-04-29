@@ -49,6 +49,7 @@ class TestIdentityService:
                 MagicMock(id="ocid1.compartment.oc1..aaaaaaaexample")
             ]
             identity_client.domains = []
+            identity_client.session_signer = None
             regional_client_ash = MagicMock()
             regional_client_ash.region = "us-ashburn-1"
             regional_client_chi = MagicMock()
