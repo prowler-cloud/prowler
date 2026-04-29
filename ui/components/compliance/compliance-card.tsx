@@ -89,12 +89,38 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     <Card
       variant="base"
       padding="md"
-      className="cursor-pointer transition-shadow hover:shadow-md"
+      className="relative cursor-pointer transition-shadow hover:shadow-md"
       onClick={navigateToDetail}
     >
+      <div
+        className="absolute top-2 right-2 z-10"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.stopPropagation();
+          }
+        }}
+        role="group"
+        tabIndex={0}
+      >
+        <ComplianceDownloadContainer
+          compact
+          orientation="column"
+          buttonWidth="icon"
+          presentation="dropdown"
+          scanId={scanId}
+          complianceId={complianceId}
+          reportType={getReportTypeForCompliance(
+            title,
+            complianceId,
+            isLatestCisForProvider,
+          )}
+          disabled={hasRegionFilter}
+        />
+      </div>
       <CardContent className="p-0">
         <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-start">
-          <div className="flex shrink-0 items-center justify-between sm:flex-col sm:items-start sm:gap-2">
+          <div className="flex shrink-0 items-center sm:flex-col sm:items-start sm:gap-2">
             {getComplianceIcon(title) && (
               <Image
                 src={getComplianceIcon(title)}
@@ -102,37 +128,11 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                 className="h-10 w-10 min-w-10 self-start rounded-md border border-gray-300 bg-white object-contain p-1"
               />
             )}
-            <div
-              className="shrink-0"
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.stopPropagation();
-                }
-              }}
-              role="group"
-              tabIndex={0}
-            >
-              <ComplianceDownloadContainer
-                compact
-                orientation="column"
-                buttonWidth="icon"
-                presentation="dropdown"
-                scanId={scanId}
-                complianceId={complianceId}
-                reportType={getReportTypeForCompliance(
-                  title,
-                  complianceId,
-                  isLatestCisForProvider,
-                )}
-                disabled={hasRegionFilter}
-              />
-            </div>
           </div>
           <div className="flex w-full min-w-0 flex-col gap-3">
             <Tooltip>
               <TooltipTrigger asChild>
-                <h4 className="text-small truncate leading-5 font-bold">
+                <h4 className="text-small truncate pr-9 leading-5 font-bold">
                   {formatTitle(title)}
                   {version ? ` - ${version}` : ""}
                 </h4>
