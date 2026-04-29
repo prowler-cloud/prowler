@@ -4336,6 +4336,7 @@ class TestUpdateProviderComplianceScores:
         calls = [str(c) for c in cursor.execute.call_args_list]
         assert any("provider_compliance_scores" in c for c in calls)
         assert any("tenant_compliance_summaries" in c for c in calls)
+        assert any("pg_advisory_xact_lock" in c for c in calls)
 
 
 class TestScanIsFullScope:
@@ -4460,9 +4461,7 @@ class TestResetEphemeralResourceFindingsCount:
         scan1, *_ = scans_fixture
         _, resource2, _ = resources_fixture
 
-        Scan.objects.filter(id=scan1.id).update(
-            scanner_args={"checks_to_execute": ["check1"]}
-        )
+        Scan.objects.filter(id=scan1.id).update(scanner_args={"checks": ["check1"]})
         Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
 
         result = reset_ephemeral_resource_findings_count(
@@ -4525,13 +4524,12 @@ class TestResetEphemeralResourceFindingsCount:
         assert result["reset"] == 0
 
     def test_batches_updates_when_many_ephemeral_resources(
-        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+        self, tenants_fixture, scans_fixture, resources_fixture
     ):
         # Forces multiple batches to confirm the chunked UPDATE path executes
         # cleanly and the count is the sum across batches.
         tenant, *_ = tenants_fixture
         scan1, *_ = scans_fixture
-        provider, *_ = providers_fixture
         resource1, resource2, _ = resources_fixture
 
         Resource.objects.filter(id=resource1.id).update(failed_findings_count=2)

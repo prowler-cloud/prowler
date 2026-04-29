@@ -2146,6 +2146,12 @@ def reset_ephemeral_resource_findings_count(tenant_id: str, scan_id: str) -> dic
     # read here would classify every Resource as ephemeral and wipe valid
     # failed_findings_count values on the primary. Same rationale as
     # update_provider_compliance_scores below in this module.
+    # Materializing the ID list (rather than streaming the iterator into
+    # batched UPDATEs) is intentional: it lets the UPDATEs run in their own
+    # short rls_transactions instead of one long transaction holding row locks
+    # on every batch. At 500k UUIDs the peak memory is ~40 MB — acceptable for
+    # a Celery worker — and is the better trade-off versus a multi-second
+    # write-lock window blocking concurrent scans.
     with rls_transaction(tenant_id):
         in_scan = ResourceScanSummary.objects.filter(
             tenant_id=tenant_id,
@@ -2158,7 +2164,7 @@ def reset_ephemeral_resource_findings_count(tenant_id: str, scan_id: str) -> dic
                 provider_id=scan.provider_id,
                 failed_findings_count__gt=0,
             )
-            .exclude(Exists(in_scan))
+            .filter(~Exists(in_scan))
             .values_list("id", flat=True)
             .iterator(chunk_size=DJANGO_FINDINGS_BATCH_SIZE)
         )
@@ -2174,6 +2180,11 @@ def reset_ephemeral_resource_findings_count(tenant_id: str, scan_id: str) -> dic
 
     total_updated = 0
     for batch, _ in batched(ephemeral_ids, DJANGO_FINDINGS_BATCH_SIZE):
+        # batched() always yields a final tuple, which is empty when the input
+        # length is an exact multiple of the batch size. Skip it so we don't
+        # issue a no-op UPDATE ... WHERE id IN ().
+        if not batch:
+            continue
         with rls_transaction(tenant_id):
             total_updated += Resource.objects.filter(
                 tenant_id=tenant_id,
