@@ -119,20 +119,20 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
         />
       </div>
       <CardContent className="p-0">
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-start">
-          <div className="flex shrink-0 items-center sm:flex-col sm:items-start sm:gap-2">
+        <div className="flex w-full flex-col gap-3">
+          <div className="flex items-center gap-3 pr-9">
             {getComplianceIcon(title) && (
-              <Image
-                src={getComplianceIcon(title)}
-                alt={`${title} logo`}
-                className="h-10 w-10 min-w-10 self-start rounded-md border border-gray-300 bg-white object-contain p-1"
-              />
+              <div className="flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-1">
+                <Image
+                  src={getComplianceIcon(title)}
+                  alt={`${title} logo`}
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
             )}
-          </div>
-          <div className="flex w-full min-w-0 flex-col gap-3">
             <Tooltip>
               <TooltipTrigger asChild>
-                <h4 className="text-small truncate pr-9 leading-5 font-bold">
+                <h4 className="text-small min-w-0 flex-1 truncate leading-5 font-bold">
                   {formatTitle(title)}
                   {version ? ` - ${version}` : ""}
                 </h4>
@@ -142,33 +142,31 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                 {version ? ` - ${version}` : ""}
               </TooltipContent>
             </Tooltip>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between gap-3 text-xs">
-                <span className="text-text-neutral-secondary font-medium tracking-wider">
-                  Score:
-                </span>
-                <span className="text-text-neutral-secondary">
-                  {ratingPercentage}%
-                </span>
-              </div>
-              <Progress
-                aria-label="Compliance score"
-                value={ratingPercentage}
-                className="border-border-neutral-secondary h-3 border drop-shadow-sm"
-                indicatorClassName={getScoreIndicatorClass(
-                  getRatingVariant(ratingPercentage),
-                )}
-              />
-            </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <small className="min-w-0">
-                <span className="mr-1 text-xs font-semibold">
-                  {passingRequirements} / {totalRequirements}
-                </span>
-                Passing Requirements
-              </small>
-            </div>
           </div>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3 text-xs">
+              <span className="text-text-neutral-secondary font-medium tracking-wider">
+                Score:
+              </span>
+              <span className="text-text-neutral-secondary">
+                {ratingPercentage}%
+              </span>
+            </div>
+            <Progress
+              aria-label="Compliance score"
+              value={ratingPercentage}
+              className="border-border-neutral-secondary h-2.5 border drop-shadow-sm"
+              indicatorClassName={getScoreIndicatorClass(
+                getRatingVariant(ratingPercentage),
+              )}
+            />
+          </div>
+          <small className="min-w-0">
+            <span className="mr-1 text-xs font-semibold">
+              {passingRequirements} / {totalRequirements}
+            </span>
+            Passing Requirements
+          </small>
         </div>
       </CardContent>
     </Card>

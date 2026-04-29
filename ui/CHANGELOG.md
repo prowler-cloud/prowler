@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
-- Compliance cards: thicker score progress bar for better visibility
+- Compliance cards: progress bar now spans the full card width below the framework logo and title, and the framework logo image is explicitly centered within its tile
 
 ---
 
