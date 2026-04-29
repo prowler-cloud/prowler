@@ -8,10 +8,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Attack Paths graph: extract shared primitives across `FindingNode`, `ResourceNode`, and `InternetNode` (hidden handles, label truncation, fill/border resolution) without forcing a generic node renderer [(#10705)](https://github.com/prowler-cloud/prowler/pull/10705)
 
-### 🧪 Tests
-
-- Attack Paths graph: add deterministic Vitest coverage for `layoutWithDagre` (node typing, container relationship inversion, finding-edge animation) and the disabled state of the graph Export control [(#10705)](https://github.com/prowler-cloud/prowler/pull/10705)
-
 ---
 
 ## [1.24.1] (Prowler v5.24.1)
