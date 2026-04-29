@@ -2,10 +2,11 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.27.0] (Prowler UNRELEASED)
+## [1.26.1] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
 
+- Attack Paths: AWS scans no longer fail when enabled regions cannot be retrieved, and scans stuck in `scheduled` state are now cleaned up after the stale threshold [(#10917)](https://github.com/prowler-cloud/prowler/pull/10917)
 - Scan report and compliance downloads now redirect to a presigned S3 URL instead of streaming through the API worker, preventing gunicorn timeouts on large files [(#10927)](https://github.com/prowler-cloud/prowler/pull/10927)
 
 ---
