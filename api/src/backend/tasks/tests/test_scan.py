@@ -36,6 +36,7 @@ from api.models import (
     Provider,
     Resource,
     Scan,
+    ScanSummary,
     StateChoices,
     StatusChoices,
 )
@@ -1411,7 +1412,9 @@ class TestProcessFindingMicroBatch:
         assert created_finding.status == StatusChoices.PASS
         assert created_finding.delta == Finding.DeltaChoices.NEW
         assert created_finding.muted is False
-        assert created_finding.check_metadata == finding.metadata
+        expected_metadata = {**finding.metadata, "compliance": finding.compliance}
+        assert created_finding.check_metadata == expected_metadata
+        assert created_finding.check_metadata["compliance"] == finding.compliance
         assert created_finding.resource_regions == [finding.region]
         assert created_finding.resource_services == [finding.service_name]
         assert created_finding.resource_types == [finding.resource_type]
@@ -3355,6 +3358,64 @@ class TestAggregateFindings:
 
         regions = {s.region for s in summaries}
         assert regions == {"us-east-1", "us-west-2"}
+
+    def test_aggregate_findings_is_idempotent_on_rerun(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        findings_fixture,
+    ):
+        """Re-running `aggregate_findings` for the same scan must not violate
+        the `unique_scan_summary` constraint, and the resulting row set for
+        the scan must match the single-run output. This is exercised by the
+        post-mute reaggregation pipeline, which re-dispatches
+        `perform_scan_summary_task` against scans whose summaries already
+        exist."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        aggregate_findings(str(tenant.id), str(scan.id))
+        first_run_ids = set(
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant.id, scan_id=scan.id
+            ).values_list("id", flat=True)
+        )
+        first_run_rows = list(
+            ScanSummary.all_objects.filter(tenant_id=tenant.id, scan_id=scan.id).values(
+                "check_id",
+                "service",
+                "severity",
+                "region",
+                "fail",
+                "_pass",
+                "muted",
+                "total",
+            )
+        )
+
+        # Second invocation must not raise and must replace the rows without
+        # leaving duplicates behind.
+        aggregate_findings(str(tenant.id), str(scan.id))
+        second_run_ids = set(
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant.id, scan_id=scan.id
+            ).values_list("id", flat=True)
+        )
+        second_run_rows = list(
+            ScanSummary.all_objects.filter(tenant_id=tenant.id, scan_id=scan.id).values(
+                "check_id",
+                "service",
+                "severity",
+                "region",
+                "fail",
+                "_pass",
+                "muted",
+                "total",
+            )
+        )
+
+        assert second_run_rows == first_run_rows
+        assert first_run_ids.isdisjoint(second_run_ids)
 
 
 @pytest.mark.django_db

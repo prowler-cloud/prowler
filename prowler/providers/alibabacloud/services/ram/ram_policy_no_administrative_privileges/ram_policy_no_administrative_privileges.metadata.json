@@ -1,33 +1,30 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "ram_policy_no_administrative_privileges",
-  "CheckTitle": "RAM policies that allow full \"*:*\" administrative privileges are not created",
-  "CheckType": [
-    "Abnormal account",
-    "Cloud threat detection"
-  ],
+  "CheckTitle": "RAM policies do not allow full administrative privileges",
+  "CheckType": [],
   "ServiceName": "ram",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:ram::account-id:policy/{policy-name}",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "AlibabaCloudRAMPolicy",
+  "ResourceType": "ALIYUN::RAM::ManagedPolicy",
   "ResourceGroup": "IAM",
-  "Description": "**RAM policies** represent permissions that can be granted to users, groups, or roles. It is recommended to grant **least privilege**—that is, granting only the permissions required to perform tasks.\n\nDetermine what users need to do and then create policies with permissions that only fit those tasks, instead of allowing full administrative privileges.",
-  "Risk": "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary. Providing **full administrative privileges** exposes your resources to potentially unwanted actions.\n\nRAM policies with `\"Effect\": \"Allow\"`, `\"Action\": \"*\"`, and `\"Resource\": \"*\"` should be prohibited.",
+  "Description": "**Alibaba Cloud RAM** policies grant permissions to users, groups, or roles. Follow the principle of **least privilege** by granting only required permissions. Policies with `\"Effect\": \"Allow\"`, `\"Action\": \"*\"`, and `\"Resource\": \"*\"` should be avoided as they grant full administrative access to all resources.",
+  "Risk": "RAM policies granting **full administrative privileges** (`*:*`) expose all cloud resources to potentially unwanted actions. If such a policy is attached to a compromised user, group, or role, an attacker gains unrestricted access to create, modify, or delete any resource, severely impacting the **confidentiality**, **integrity**, and **availability** of the entire Alibaba Cloud environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/doc-detail/93733.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/policies-with-full-administrative-privileges.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/policies-with-full-administrative-privileges.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun ram DetachPolicyFromUser --PolicyName <policy_name> --PolicyType Custom --UserName <ram_user>",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **RAM Console**.\n2. Choose **Permissions** > **Policies**.\n3. From the Policy Type drop-down list, select **Custom Policy**.\n4. In the Policy Name column, click the name of the target policy.\n5. In the Policy Document section, edit the policy to remove the statement with full administrative privileges, or remove the policy from any RAM users, user groups, or roles that have this policy attached.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "1. Log on to the **RAM Console**\n2. Choose **Permissions** > **Policies**\n3. From the Policy Type drop-down list, select **Custom Policy**\n4. In the Policy Name column, click the name of the target policy\n5. In the Policy Document section, edit the policy to remove the statement with full administrative privileges, or remove the policy from any RAM users, user groups, or roles that have this policy attached",
+      "Text": "Remove or modify RAM policies that grant full administrative privileges and replace them with least-privilege policies.",
       "Url": "https://hub.prowler.com/check/ram_policy_no_administrative_privileges"
     }
   },

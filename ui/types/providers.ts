@@ -6,11 +6,14 @@ export const PROVIDER_TYPES = [
   "m365",
   "mongodbatlas",
   "github",
+  "googleworkspace",
   "iac",
+  "image",
   "oraclecloud",
   "alibabacloud",
   "cloudflare",
   "openstack",
+  "vercel",
 ] as const;
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];
@@ -23,11 +26,14 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   m365: "Microsoft 365",
   mongodbatlas: "MongoDB Atlas",
   github: "GitHub",
+  googleworkspace: "Google Workspace",
   iac: "Infrastructure as Code",
+  image: "Container Registry",
   oraclecloud: "Oracle Cloud Infrastructure",
   alibabacloud: "Alibaba Cloud",
   cloudflare: "Cloudflare",
   openstack: "OpenStack",
+  vercel: "Vercel",
 };
 
 export function getProviderDisplayName(providerId: string): string {
@@ -86,6 +92,11 @@ export interface ProviderEntity {
   provider: ProviderType;
   uid: string;
   alias: string | null;
+}
+
+export interface GroupFilterEntity {
+  name: string;
+  uid: string;
 }
 
 export interface ProviderConnectionStatus {

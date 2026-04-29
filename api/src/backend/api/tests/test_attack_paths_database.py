@@ -9,7 +9,10 @@ remain lazy. These tests validate the database module behavior itself.
 import threading
 from unittest.mock import MagicMock, patch
 
+import neo4j
 import pytest
+
+import api.attack_paths.database as db_module
 
 
 class TestLazyInitialization:
@@ -18,8 +21,6 @@ class TestLazyInitialization:
     @pytest.fixture(autouse=True)
     def reset_module_state(self):
         """Reset module-level singleton state before each test."""
-        import api.attack_paths.database as db_module
-
         original_driver = db_module._driver
 
         db_module._driver = None
@@ -30,8 +31,6 @@ class TestLazyInitialization:
 
     def test_driver_not_initialized_at_import(self):
         """Driver should be None after module import (no eager connection)."""
-        import api.attack_paths.database as db_module
-
         assert db_module._driver is None
 
     @patch("api.attack_paths.database.settings")
@@ -40,8 +39,6 @@ class TestLazyInitialization:
         self, mock_driver_factory, mock_settings
     ):
         """init_driver() should create connection only when called."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         mock_driver_factory.return_value = mock_driver
         mock_settings.DATABASES = {
@@ -68,8 +65,6 @@ class TestLazyInitialization:
         self, mock_driver_factory, mock_settings
     ):
         """Subsequent calls should return cached driver without reconnecting."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         mock_driver_factory.return_value = mock_driver
         mock_settings.DATABASES = {
@@ -98,8 +93,6 @@ class TestLazyInitialization:
         self, mock_driver_factory, mock_settings
     ):
         """get_driver() should use init_driver() for lazy initialization."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         mock_driver_factory.return_value = mock_driver
         mock_settings.DATABASES = {
@@ -117,14 +110,50 @@ class TestLazyInitialization:
         mock_driver_factory.assert_called_once()
 
 
+class TestConnectionAcquisitionTimeout:
+    """Test that the connection acquisition timeout is configurable."""
+
+    @pytest.fixture(autouse=True)
+    def reset_module_state(self):
+        original_driver = db_module._driver
+        original_timeout = db_module.CONN_ACQUISITION_TIMEOUT
+
+        db_module._driver = None
+
+        yield
+
+        db_module._driver = original_driver
+        db_module.CONN_ACQUISITION_TIMEOUT = original_timeout
+
+    @patch("api.attack_paths.database.settings")
+    @patch("api.attack_paths.database.neo4j.GraphDatabase.driver")
+    def test_driver_receives_configured_timeout(
+        self, mock_driver_factory, mock_settings
+    ):
+        """init_driver() should pass CONN_ACQUISITION_TIMEOUT to the neo4j driver."""
+        mock_driver_factory.return_value = MagicMock()
+        mock_settings.DATABASES = {
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": 7687,
+                "USER": "neo4j",
+                "PASSWORD": "password",
+            }
+        }
+        db_module.CONN_ACQUISITION_TIMEOUT = 42
+
+        db_module.init_driver()
+
+        _, kwargs = mock_driver_factory.call_args
+        assert kwargs["connection_acquisition_timeout"] == 42
+
+
 class TestAtexitRegistration:
     """Test that atexit cleanup handler is registered correctly."""
 
     @pytest.fixture(autouse=True)
     def reset_module_state(self):
         """Reset module-level singleton state before each test."""
-        import api.attack_paths.database as db_module
-
         original_driver = db_module._driver
 
         db_module._driver = None
@@ -140,8 +169,6 @@ class TestAtexitRegistration:
         self, mock_driver_factory, mock_atexit_register, mock_settings
     ):
         """atexit.register should be called on first initialization."""
-        import api.attack_paths.database as db_module
-
         mock_driver_factory.return_value = MagicMock()
         mock_settings.DATABASES = {
             "neo4j": {
@@ -167,8 +194,6 @@ class TestAtexitRegistration:
         The double-checked locking on _driver ensures the atexit registration
         block only executes once (when _driver is first created).
         """
-        import api.attack_paths.database as db_module
-
         mock_driver_factory.return_value = MagicMock()
         mock_settings.DATABASES = {
             "neo4j": {
@@ -193,8 +218,6 @@ class TestCloseDriver:
     @pytest.fixture(autouse=True)
     def reset_module_state(self):
         """Reset module-level singleton state before each test."""
-        import api.attack_paths.database as db_module
-
         original_driver = db_module._driver
 
         db_module._driver = None
@@ -205,8 +228,6 @@ class TestCloseDriver:
 
     def test_close_driver_closes_and_clears_driver(self):
         """close_driver() should close the driver and set it to None."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         db_module._driver = mock_driver
 
@@ -217,8 +238,6 @@ class TestCloseDriver:
 
     def test_close_driver_handles_none_driver(self):
         """close_driver() should handle case where driver is None."""
-        import api.attack_paths.database as db_module
-
         db_module._driver = None
 
         # Should not raise
@@ -228,8 +247,6 @@ class TestCloseDriver:
 
     def test_close_driver_clears_driver_even_on_close_error(self):
         """Driver should be cleared even if close() raises an exception."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         mock_driver.close.side_effect = Exception("Connection error")
         db_module._driver = mock_driver
@@ -241,14 +258,142 @@ class TestCloseDriver:
         assert db_module._driver is None
 
 
+class TestExecuteReadQuery:
+    """Test read query execution helper."""
+
+    def test_execute_read_query_calls_read_session_and_returns_result(self):
+        tx = MagicMock()
+        expected_graph = MagicMock()
+        run_result = MagicMock()
+        run_result.graph.return_value = expected_graph
+        tx.run.return_value = run_result
+
+        session = MagicMock()
+
+        def execute_read_side_effect(fn):
+            return fn(tx)
+
+        session.execute_read.side_effect = execute_read_side_effect
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = session
+        session_ctx.__exit__.return_value = False
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ) as mock_get_session:
+            result = db_module.execute_read_query(
+                "db-tenant-test-tenant-id",
+                "MATCH (n) RETURN n",
+                {"provider_uid": "123"},
+            )
+
+        mock_get_session.assert_called_once_with(
+            "db-tenant-test-tenant-id",
+            default_access_mode=neo4j.READ_ACCESS,
+        )
+        session.execute_read.assert_called_once()
+        tx.run.assert_called_once_with(
+            "MATCH (n) RETURN n",
+            {"provider_uid": "123"},
+            timeout=db_module.READ_QUERY_TIMEOUT_SECONDS,
+        )
+        run_result.graph.assert_called_once_with()
+        assert result is expected_graph
+
+    def test_execute_read_query_defaults_parameters_to_empty_dict(self):
+        tx = MagicMock()
+        run_result = MagicMock()
+        run_result.graph.return_value = MagicMock()
+        tx.run.return_value = run_result
+
+        session = MagicMock()
+        session.execute_read.side_effect = lambda fn: fn(tx)
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = session
+        session_ctx.__exit__.return_value = False
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            db_module.execute_read_query(
+                "db-tenant-test-tenant-id",
+                "MATCH (n) RETURN n",
+            )
+
+        tx.run.assert_called_once_with(
+            "MATCH (n) RETURN n",
+            {},
+            timeout=db_module.READ_QUERY_TIMEOUT_SECONDS,
+        )
+        run_result.graph.assert_called_once_with()
+
+
+class TestGetSessionReadOnly:
+    """Test that get_session translates Neo4j read-mode errors."""
+
+    @pytest.fixture(autouse=True)
+    def reset_module_state(self):
+        original_driver = db_module._driver
+        db_module._driver = None
+        yield
+        db_module._driver = original_driver
+
+    @pytest.mark.parametrize(
+        "neo4j_code",
+        [
+            "Neo.ClientError.Statement.AccessMode",
+            "Neo.ClientError.Procedure.ProcedureNotFound",
+        ],
+    )
+    def test_get_session_raises_write_query_not_allowed(self, neo4j_code):
+        """Read-mode Neo4j errors should raise `WriteQueryNotAllowedException`."""
+        mock_session = MagicMock()
+        neo4j_error = neo4j.exceptions.Neo4jError._hydrate_neo4j(
+            code=neo4j_code,
+            message="Write operations are not allowed",
+        )
+        mock_session.run.side_effect = neo4j_error
+
+        mock_driver = MagicMock()
+        mock_driver.session.return_value = mock_session
+        db_module._driver = mock_driver
+
+        with pytest.raises(db_module.WriteQueryNotAllowedException):
+            with db_module.get_session(
+                default_access_mode=neo4j.READ_ACCESS
+            ) as session:
+                session.run("CREATE (n) RETURN n")
+
+    def test_get_session_raises_generic_exception_for_other_errors(self):
+        """Non-read-mode Neo4j errors should raise GraphDatabaseQueryException."""
+        mock_session = MagicMock()
+        neo4j_error = neo4j.exceptions.Neo4jError._hydrate_neo4j(
+            code="Neo.ClientError.Statement.SyntaxError",
+            message="Invalid syntax",
+        )
+        mock_session.run.side_effect = neo4j_error
+
+        mock_driver = MagicMock()
+        mock_driver.session.return_value = mock_session
+        db_module._driver = mock_driver
+
+        with pytest.raises(db_module.GraphDatabaseQueryException):
+            with db_module.get_session(
+                default_access_mode=neo4j.READ_ACCESS
+            ) as session:
+                session.run("INVALID CYPHER")
+
+
 class TestThreadSafety:
     """Test thread-safe initialization."""
 
     @pytest.fixture(autouse=True)
     def reset_module_state(self):
         """Reset module-level singleton state before each test."""
-        import api.attack_paths.database as db_module
-
         original_driver = db_module._driver
 
         db_module._driver = None
@@ -263,8 +408,6 @@ class TestThreadSafety:
         self, mock_driver_factory, mock_settings
     ):
         """Multiple threads calling init_driver() should create only one driver."""
-        import api.attack_paths.database as db_module
-
         mock_driver = MagicMock()
         mock_driver_factory.return_value = mock_driver
         mock_settings.DATABASES = {
@@ -301,3 +444,70 @@ class TestThreadSafety:
         # All threads got the same driver instance
         assert all(r is mock_driver for r in results)
         assert len(results) == 10
+
+
+class TestHasProviderData:
+    """Test has_provider_data helper for checking provider nodes in Neo4j."""
+
+    def test_returns_true_when_nodes_exist(self):
+        mock_session = MagicMock()
+        mock_result = MagicMock()
+        mock_result.single.return_value = MagicMock()  # non-None record
+        mock_session.run.return_value = mock_result
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = mock_session
+        session_ctx.__exit__.return_value = False
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            assert db_module.has_provider_data("db-tenant-abc", "provider-123") is True
+
+        mock_session.run.assert_called_once()
+
+    def test_returns_false_when_no_nodes(self):
+        mock_session = MagicMock()
+        mock_result = MagicMock()
+        mock_result.single.return_value = None
+        mock_session.run.return_value = mock_result
+
+        session_ctx = MagicMock()
+        session_ctx.__enter__.return_value = mock_session
+        session_ctx.__exit__.return_value = False
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            assert db_module.has_provider_data("db-tenant-abc", "provider-123") is False
+
+    def test_returns_false_when_database_not_found(self):
+        session_ctx = MagicMock()
+        session_ctx.__enter__.side_effect = db_module.GraphDatabaseQueryException(
+            message="Database does not exist",
+            code="Neo.ClientError.Database.DatabaseNotFound",
+        )
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            assert (
+                db_module.has_provider_data("db-tenant-gone", "provider-123") is False
+            )
+
+    def test_raises_on_other_errors(self):
+        session_ctx = MagicMock()
+        session_ctx.__enter__.side_effect = db_module.GraphDatabaseQueryException(
+            message="Connection refused",
+            code="Neo.TransientError.General.UnknownError",
+        )
+
+        with patch(
+            "api.attack_paths.database.get_session",
+            return_value=session_ctx,
+        ):
+            with pytest.raises(db_module.GraphDatabaseQueryException):
+                db_module.has_provider_data("db-tenant-abc", "provider-123")

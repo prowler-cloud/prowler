@@ -93,6 +93,20 @@ COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL = """
         updated_at = NOW()
 """
 
+# Delete tenant compliance summaries with no remaining provider scores.
+# Parameters: [tenant_id, compliance_ids_array]
+COMPLIANCE_DELETE_EMPTY_TENANT_SUMMARY_SQL = """
+    DELETE FROM tenant_compliance_summaries tcs
+    WHERE tcs.tenant_id = %s
+      AND tcs.compliance_id = ANY(%s)
+      AND NOT EXISTS (
+          SELECT 1
+          FROM provider_compliance_scores pcs
+          WHERE pcs.tenant_id = tcs.tenant_id
+            AND pcs.compliance_id = tcs.compliance_id
+      )
+"""
+
 # Upsert tenant compliance summary for ALL compliance IDs in tenant.
 # Used by backfill when recalculating entire tenant summary.
 # Parameters: [tenant_id, tenant_id]

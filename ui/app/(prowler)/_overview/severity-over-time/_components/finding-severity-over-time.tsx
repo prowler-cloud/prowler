@@ -6,6 +6,7 @@ import { useState } from "react";
 import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
 import { LineChart } from "@/components/graphs/line-chart";
 import { LineConfig, LineDataPoint } from "@/components/graphs/types";
+import { applyFailNonMutedFilters } from "@/lib";
 import {
   SEVERITY_LEVELS,
   SEVERITY_LINE_CONFIGS,
@@ -29,6 +30,25 @@ export const FindingSeverityOverTime = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Sync data when SSR re-delivers filtered results (e.g. provider/account filter change).
+  // Uses the "set state during render" pattern so the update is synchronous — no flash of stale data.
+  const [prevInitialData, setPrevInitialData] = useState(initialData);
+  if (initialData !== prevInitialData) {
+    setPrevInitialData(initialData);
+    setData(initialData);
+    setError(null);
+    setTimeRange(DEFAULT_TIME_RANGE);
+  }
+
+  const getActiveProviderFilters = (): Record<string, string> => {
+    const filters: Record<string, string> = {};
+    const providerType = searchParams.get("filter[provider_type__in]");
+    const providerId = searchParams.get("filter[provider_id__in]");
+    if (providerType) filters["filter[provider_type__in]"] = providerType;
+    if (providerId) filters["filter[provider_id__in]"] = providerId;
+    return filters;
+  };
+
   const handlePointClick = ({
     point,
     dataKey,
@@ -38,11 +58,8 @@ export const FindingSeverityOverTime = ({
   }) => {
     const params = new URLSearchParams();
 
-    // Always filter by FAIL status since this chart shows failed findings
-    params.set("filter[status__in]", "FAIL");
-
-    // Exclude muted findings
-    params.set("filter[muted]", "false");
+    // Show active failing findings only for this chart's drill-down.
+    applyFailNonMutedFilters(params);
 
     // Add scan_ids filter
     if (
@@ -59,14 +76,9 @@ export const FindingSeverityOverTime = ({
     }
 
     // Preserve provider filters from overview
-    const providerType = searchParams.get("filter[provider_type__in]");
-    const providerId = searchParams.get("filter[provider_id__in]");
-
-    if (providerType) {
-      params.set("filter[provider_type__in]", providerType);
-    }
-    if (providerId) {
-      params.set("filter[provider_id__in]", providerId);
+    const providerFilters = getActiveProviderFilters();
+    for (const [key, value] of Object.entries(providerFilters)) {
+      params.set(key, value);
     }
 
     router.push(`/findings?${params.toString()}`);
@@ -80,6 +92,7 @@ export const FindingSeverityOverTime = ({
     try {
       const result = await getSeverityTrendsByTimeRange({
         timeRange: newRange,
+        filters: getActiveProviderFilters(),
       });
 
       if (result.status === "success") {

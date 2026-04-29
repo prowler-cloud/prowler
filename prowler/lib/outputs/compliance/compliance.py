@@ -3,6 +3,7 @@ import sys
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.c5.c5 import get_c5_table
+from prowler.lib.outputs.compliance.ccc.ccc import get_ccc_table
 from prowler.lib.outputs.compliance.cis.cis import get_cis_table
 from prowler.lib.outputs.compliance.csa.csa import get_csa_table
 from prowler.lib.outputs.compliance.ens.ens import get_ens_table
@@ -31,7 +32,7 @@ def process_universal_compliance_frameworks(
     """Process universal compliance frameworks, generating CSV and OCSF outputs.
 
     For each framework in *input_compliance_frameworks* that exists in
-    *universal_frameworks* and has an Outputs.Table_Config, this function
+    *universal_frameworks* and has an outputs.table_config, this function
     creates both a CSV (UniversalComplianceOutput) and an OCSF JSON
     (OCSFComplianceOutput) file.  OCSF is always generated regardless of
     the user's ``--output-formats`` flag.
@@ -50,8 +51,8 @@ def process_universal_compliance_frameworks(
     for compliance_name in input_compliance_frameworks:
         if not (
             compliance_name in universal_frameworks
-            and universal_frameworks[compliance_name].Outputs
-            and universal_frameworks[compliance_name].Outputs.Table_Config
+            and universal_frameworks[compliance_name].outputs
+            and universal_frameworks[compliance_name].outputs.table_config
         ):
             continue
 
@@ -121,7 +122,7 @@ def display_compliance_table(
         # Universal path: if the framework has TableConfig, use the universal renderer
         if universal_frameworks and compliance_framework in universal_frameworks:
             fw = universal_frameworks[compliance_framework]
-            if fw.Outputs and fw.Outputs.Table_Config:
+            if fw.outputs and fw.outputs.table_config:
                 get_universal_table(
                     findings,
                     bulk_checks_metadata,
@@ -191,6 +192,15 @@ def display_compliance_table(
             )
         elif compliance_framework.startswith("c5_"):
             get_c5_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+                compliance_overview,
+            )
+        elif compliance_framework.startswith("ccc_"):
+            get_ccc_table(
                 findings,
                 bulk_checks_metadata,
                 compliance_framework,

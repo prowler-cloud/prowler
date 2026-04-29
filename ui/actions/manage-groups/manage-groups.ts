@@ -22,7 +22,8 @@ export const getProviderGroups = async ({
 }): Promise<ProviderGroupsResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  if (isNaN(Number(page)) || page < 1) redirect("/manage-groups");
+  if (isNaN(Number(page)) || page < 1)
+    redirect("/providers?tab=account-groups");
 
   const url = new URL(`${apiBaseUrl}/provider-groups`);
 
@@ -43,7 +44,7 @@ export const getProviderGroups = async ({
       headers,
     });
 
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching provider groups:", error);
     return undefined;
@@ -60,7 +61,7 @@ export const getProviderGroupInfoById = async (providerGroupId: string) => {
       headers,
     });
 
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }
@@ -111,7 +112,7 @@ export const createProviderGroup = async (formData: FormData) => {
       body,
     });
 
-    return handleApiResponse(response, "/manage-groups");
+    return await handleApiResponse(response, "/providers?tab=account-groups");
   } catch (error) {
     handleApiError(error);
   }
@@ -156,7 +157,7 @@ export const updateProviderGroup = async (
       body: JSON.stringify(payload),
     });
 
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }
@@ -168,7 +169,7 @@ export const deleteProviderGroup = async (formData: FormData) => {
 
   if (!providerGroupId) {
     return {
-      errors: [{ detail: "Provider Group ID is required." }],
+      errors: [{ detail: "Account Group ID is required." }],
     };
   }
 
@@ -196,7 +197,7 @@ export const deleteProviderGroup = async (formData: FormData) => {
       data = await response.json();
     }
 
-    revalidatePath("/manage-groups");
+    revalidatePath("/providers");
     return data || { success: true };
   } catch (error) {
     console.error("Error deleting provider group:", error);

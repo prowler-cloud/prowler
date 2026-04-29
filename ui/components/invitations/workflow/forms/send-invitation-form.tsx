@@ -123,7 +123,7 @@ export const SendInvitationForm = ({
                 onValueChange={field.onChange}
                 disabled={isSelectorDisabled}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label="Select a role">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>

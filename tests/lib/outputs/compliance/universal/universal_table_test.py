@@ -28,13 +28,13 @@ def _make_finding(check_id, status="PASS", muted=False):
 
 def _make_framework(requirements, table_config, provider="AWS"):
     return ComplianceFramework(
-        Framework="TestFW",
-        Name="Test Framework",
-        Provider=provider,
-        Version="1.0",
-        Description="Test",
-        Requirements=requirements,
-        Outputs=OutputsConfig(Table_Config=table_config) if table_config else None,
+        framework="TestFW",
+        name="Test Framework",
+        provider=provider,
+        version="1.0",
+        description="Test",
+        requirements=requirements,
+        outputs=OutputsConfig(table_config=table_config) if table_config else None,
     )
 
 
@@ -42,19 +42,19 @@ class TestBuildRequirementCheckMap:
     def test_basic(self):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks=["check_a", "check_b"],
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a", "check_b"]},
             ),
             UniversalComplianceRequirement(
-                Id="1.2",
-                Description="test2",
-                Attributes={"Section": "IAM"},
-                Checks=["check_b", "check_c"],
+                id="1.2",
+                description="test2",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_b", "check_c"]},
             ),
         ]
-        fw = _make_framework(reqs, TableConfig(GroupBy="Section"))
+        fw = _make_framework(reqs, TableConfig(group_by="Section"))
         check_map = _build_requirement_check_map(fw)
         assert "check_a" in check_map
         assert len(check_map["check_b"]) == 2
@@ -63,13 +63,13 @@ class TestBuildRequirementCheckMap:
     def test_dict_checks_no_provider_filter(self):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks={"aws": ["check_a"], "azure": ["check_b"]},
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"], "azure": ["check_b"]},
             ),
         ]
-        fw = _make_framework(reqs, TableConfig(GroupBy="Section"))
+        fw = _make_framework(reqs, TableConfig(group_by="Section"))
         check_map = _build_requirement_check_map(fw)
         assert "check_a" in check_map
         assert "check_b" in check_map
@@ -77,13 +77,13 @@ class TestBuildRequirementCheckMap:
     def test_dict_checks_filtered_by_provider(self):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks={"aws": ["check_a"], "azure": ["check_b"]},
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"], "azure": ["check_b"]},
             ),
         ]
-        fw = _make_framework(reqs, TableConfig(GroupBy="Section"))
+        fw = _make_framework(reqs, TableConfig(group_by="Section"))
         check_map = _build_requirement_check_map(fw, provider="aws")
         assert "check_a" in check_map
         assert "check_b" not in check_map
@@ -91,13 +91,13 @@ class TestBuildRequirementCheckMap:
     def test_dict_checks_provider_not_present(self):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks={"aws": ["check_a"], "azure": ["check_b"]},
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"], "azure": ["check_b"]},
             ),
         ]
-        fw = _make_framework(reqs, TableConfig(GroupBy="Section"))
+        fw = _make_framework(reqs, TableConfig(group_by="Section"))
         check_map = _build_requirement_check_map(fw, provider="gcp")
         assert len(check_map) == 0
 
@@ -105,20 +105,20 @@ class TestBuildRequirementCheckMap:
 class TestGetGroupKey:
     def test_normal_field(self):
         req = UniversalComplianceRequirement(
-            Id="1.1",
-            Description="test",
-            Attributes={"Section": "IAM"},
-            Checks=[],
+            id="1.1",
+            description="test",
+            attributes={"Section": "IAM"},
+            checks={},
         )
         assert _get_group_key(req, "Section") == ["IAM"]
 
     def test_tactics(self):
         req = UniversalComplianceRequirement(
-            Id="T1190",
-            Description="test",
-            Attributes={},
-            Checks=[],
-            Tactics=["Initial Access", "Execution"],
+            id="T1190",
+            description="test",
+            attributes={},
+            checks={},
+            tactics=["Initial Access", "Execution"],
         )
         assert _get_group_key(req, "_Tactics") == ["Initial Access", "Execution"]
 
@@ -127,19 +127,19 @@ class TestGroupedMode:
     def test_grouped_rendering(self, capsys):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks=["check_a"],
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"]},
             ),
             UniversalComplianceRequirement(
-                Id="2.1",
-                Description="test2",
-                Attributes={"Section": "Logging"},
-                Checks=["check_b"],
+                id="2.1",
+                description="test2",
+                attributes={"Section": "Logging"},
+                checks={"aws": ["check_b"]},
             ),
         ]
-        tc = TableConfig(GroupBy="Section")
+        tc = TableConfig(group_by="Section")
         fw = _make_framework(reqs, tc)
 
         findings = [
@@ -172,21 +172,21 @@ class TestSplitMode:
     def test_split_rendering(self, capsys):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "Storage", "Profile": "Level 1"},
-                Checks=["check_a"],
+                id="1.1",
+                description="test",
+                attributes={"Section": "Storage", "Profile": "Level 1"},
+                checks={"aws": ["check_a"]},
             ),
             UniversalComplianceRequirement(
-                Id="1.2",
-                Description="test2",
-                Attributes={"Section": "Storage", "Profile": "Level 2"},
-                Checks=["check_b"],
+                id="1.2",
+                description="test2",
+                attributes={"Section": "Storage", "Profile": "Level 2"},
+                checks={"aws": ["check_b"]},
             ),
         ]
         tc = TableConfig(
-            GroupBy="Section",
-            SplitBy=SplitByConfig(Field="Profile", Values=["Level 1", "Level 2"]),
+            group_by="Section",
+            split_by=SplitByConfig(field="Profile", values=["Level 1", "Level 2"]),
         )
         fw = _make_framework(reqs, tc)
 
@@ -219,21 +219,21 @@ class TestScoredMode:
     def test_scored_rendering(self, capsys):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM", "LevelOfRisk": 5, "Weight": 100},
-                Checks=["check_a"],
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM", "LevelOfRisk": 5, "Weight": 100},
+                checks={"aws": ["check_a"]},
             ),
             UniversalComplianceRequirement(
-                Id="1.2",
-                Description="test2",
-                Attributes={"Section": "IAM", "LevelOfRisk": 3, "Weight": 50},
-                Checks=["check_b"],
+                id="1.2",
+                description="test2",
+                attributes={"Section": "IAM", "LevelOfRisk": 3, "Weight": 50},
+                checks={"aws": ["check_b"]},
             ),
         ]
         tc = TableConfig(
-            GroupBy="Section",
-            Scoring=ScoringConfig(RiskField="LevelOfRisk", WeightField="Weight"),
+            group_by="Section",
+            scoring=ScoringConfig(risk_field="LevelOfRisk", weight_field="Weight"),
         )
         fw = _make_framework(reqs, tc)
 
@@ -266,25 +266,25 @@ class TestCustomLabels:
     def test_ens_spanish_labels(self, capsys):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Marco": "operacional"},
-                Checks=["check_a"],
+                id="1.1",
+                description="test",
+                attributes={"Marco": "operacional"},
+                checks={"aws": ["check_a"]},
             ),
             UniversalComplianceRequirement(
-                Id="1.2",
-                Description="test2",
-                Attributes={"Marco": "organizativo"},
-                Checks=["check_b"],
+                id="1.2",
+                description="test2",
+                attributes={"Marco": "organizativo"},
+                checks={"aws": ["check_b"]},
             ),
         ]
         tc = TableConfig(
-            GroupBy="Marco",
-            Labels=TableLabels(
-                PassLabel="CUMPLE",
-                FailLabel="NO CUMPLE",
-                ProviderHeader="Proveedor",
-                Title="Estado de Cumplimiento",
+            group_by="Marco",
+            labels=TableLabels(
+                pass_label="CUMPLE",
+                fail_label="NO CUMPLE",
+                provider_header="Proveedor",
+                title="Estado de Cumplimiento",
             ),
         )
         fw = _make_framework(reqs, tc)
@@ -312,28 +312,28 @@ class TestCustomLabels:
 
 class TestMultiProviderDictChecks:
     def test_only_aws_checks_matched(self, capsys):
-        """With dict Checks and provider='aws', only AWS checks match findings."""
+        """With dict checks and provider='aws', only AWS checks match findings."""
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks={"aws": ["check_a"], "azure": ["check_b"]},
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"], "azure": ["check_b"]},
             ),
             UniversalComplianceRequirement(
-                Id="2.1",
-                Description="test2",
-                Attributes={"Section": "Logging"},
-                Checks={"aws": ["check_c"], "gcp": ["check_d"]},
+                id="2.1",
+                description="test2",
+                attributes={"Section": "Logging"},
+                checks={"aws": ["check_c"], "gcp": ["check_d"]},
             ),
         ]
-        tc = TableConfig(GroupBy="Section")
+        tc = TableConfig(group_by="Section")
         fw = ComplianceFramework(
-            Framework="MultiCloud",
-            Name="Multi",
-            Description="Test",
-            Requirements=reqs,
-            Outputs=OutputsConfig(Table_Config=tc),
+            framework="MultiCloud",
+            name="Multi",
+            description="Test",
+            requirements=reqs,
+            outputs=OutputsConfig(table_config=tc),
         )
 
         findings = [
@@ -368,11 +368,11 @@ class TestMultiProviderDictChecks:
 class TestNoTableConfig:
     def test_returns_early_without_table_config(self, capsys):
         fw = ComplianceFramework(
-            Framework="TestFW",
-            Name="Test",
-            Provider="AWS",
-            Description="Test",
-            Requirements=[],
+            framework="TestFW",
+            name="Test",
+            provider="AWS",
+            description="Test",
+            requirements=[],
         )
         get_universal_table([], {}, "test", "out", "/tmp", False, framework=fw)
         captured = capsys.readouterr()

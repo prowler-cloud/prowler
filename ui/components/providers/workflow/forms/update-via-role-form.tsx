@@ -8,9 +8,23 @@ import { BaseCredentialsForm } from "./base-credentials-form";
 export const UpdateViaRoleForm = ({
   searchParams,
   providerUid,
+  via,
+  onSuccess,
+  onBack,
+  formId,
+  hideActions,
+  onLoadingChange,
+  onValidityChange,
 }: {
   searchParams: { type: string; id: string; secretId?: string };
   providerUid?: string;
+  via?: string | null;
+  onSuccess?: () => void;
+  onBack?: () => void;
+  formId?: string;
+  hideActions?: boolean;
+  onLoadingChange?: (isLoading: boolean) => void;
+  onValidityChange?: (isValid: boolean) => void;
 }) => {
   const providerType = searchParams.type as ProviderType;
   const providerId = searchParams.id;
@@ -20,7 +34,7 @@ export const UpdateViaRoleForm = ({
     return await updateCredentialsProvider(providerSecretId, formData);
   };
 
-  const successNavigationUrl = `/providers/test-connection?type=${providerType}&id=${providerId}&updated=true`;
+  const successNavigationUrl = "/providers";
 
   return (
     <BaseCredentialsForm
@@ -29,6 +43,13 @@ export const UpdateViaRoleForm = ({
       providerUid={providerUid}
       onSubmit={handleUpdateCredentials}
       successNavigationUrl={successNavigationUrl}
+      via={via}
+      onSuccess={onSuccess}
+      onBack={onBack}
+      formId={formId}
+      hideActions={hideActions}
+      onLoadingChange={onLoadingChange}
+      onValidityChange={onValidityChange}
       submitButtonText="Next"
     />
   );

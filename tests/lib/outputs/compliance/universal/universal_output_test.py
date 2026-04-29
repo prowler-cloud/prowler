@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from prowler.lib.check.compliance_models import (
     AttributeMetadata,
     ComplianceFramework,
+    OutputFormats,
     OutputsConfig,
     TableConfig,
     UniversalComplianceRequirement,
@@ -36,14 +37,14 @@ def _make_finding(check_id, status="PASS", compliance_map=None):
 
 def _make_framework(requirements, attrs_metadata=None, table_config=None):
     return ComplianceFramework(
-        Framework="TestFW",
-        Name="Test Framework",
-        Provider="AWS",
-        Version="1.0",
-        Description="Test framework",
-        Requirements=requirements,
-        AttributesMetadata=attrs_metadata,
-        Outputs=OutputsConfig(Table_Config=table_config) if table_config else None,
+        framework="TestFW",
+        name="Test Framework",
+        provider="AWS",
+        version="1.0",
+        description="Test framework",
+        requirements=requirements,
+        attributes_metadata=attrs_metadata,
+        outputs=OutputsConfig(table_config=table_config) if table_config else None,
     )
 
 
@@ -51,17 +52,17 @@ class TestDynamicCSVColumns:
     def test_columns_match_metadata(self, tmp_path):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM", "SubSection": "Auth"},
-                Checks=["check_a"],
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM", "SubSection": "Auth"},
+                checks={"aws": ["check_a"]},
             ),
         ]
         metadata = [
-            AttributeMetadata(Key="Section", Type="str"),
-            AttributeMetadata(Key="SubSection", Type="str"),
+            AttributeMetadata(key="Section", type="str"),
+            AttributeMetadata(key="SubSection", type="str"),
         ]
-        fw = _make_framework(reqs, metadata, TableConfig(GroupBy="Section"))
+        fw = _make_framework(reqs, metadata, TableConfig(group_by="Section"))
 
         findings = [
             _make_finding("check_a", "PASS", {"TestFW-1.0": ["1.1"]}),
@@ -86,22 +87,22 @@ class TestManualRequirements:
     def test_manual_status(self, tmp_path):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks=["check_a"],
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"]},
             ),
             UniversalComplianceRequirement(
-                Id="manual-1",
-                Description="manual check",
-                Attributes={"Section": "Governance"},
-                Checks=[],
+                id="manual-1",
+                description="manual check",
+                attributes={"Section": "Governance"},
+                checks={},
             ),
         ]
         metadata = [
-            AttributeMetadata(Key="Section", Type="str"),
+            AttributeMetadata(key="Section", type="str"),
         ]
-        fw = _make_framework(reqs, metadata, TableConfig(GroupBy="Section"))
+        fw = _make_framework(reqs, metadata, TableConfig(group_by="Section"))
 
         findings = [
             _make_finding("check_a", "PASS", {"TestFW-1.0": ["1.1"]}),
@@ -126,17 +127,17 @@ class TestMITREExtraColumns:
     def test_mitre_columns_present(self, tmp_path):
         reqs = [
             UniversalComplianceRequirement(
-                Id="T1190",
-                Description="Exploit",
-                Attributes={},
-                Checks=["check_a"],
-                Tactics=["Initial Access"],
-                SubTechniques=[],
-                Platforms=["IaaS"],
-                TechniqueURL="https://attack.mitre.org/techniques/T1190/",
+                id="T1190",
+                description="Exploit",
+                attributes={},
+                checks={"aws": ["check_a"]},
+                tactics=["Initial Access"],
+                sub_techniques=[],
+                platforms=["IaaS"],
+                technique_url="https://attack.mitre.org/techniques/T1190/",
             ),
         ]
-        fw = _make_framework(reqs, None, TableConfig(GroupBy="_Tactics"))
+        fw = _make_framework(reqs, None, TableConfig(group_by="_Tactics"))
 
         findings = [
             _make_finding("check_a", "PASS", {"TestFW-1.0": ["T1190"]}),
@@ -160,16 +161,16 @@ class TestCSVFileWrite:
     def test_batch_write(self, tmp_path):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks=["check_a"],
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"]},
             ),
         ]
         metadata = [
-            AttributeMetadata(Key="Section", Type="str"),
+            AttributeMetadata(key="Section", type="str"),
         ]
-        fw = _make_framework(reqs, metadata, TableConfig(GroupBy="Section"))
+        fw = _make_framework(reqs, metadata, TableConfig(group_by="Section"))
 
         findings = [
             _make_finding("check_a", "PASS", {"TestFW-1.0": ["1.1"]}),
@@ -195,13 +196,13 @@ class TestNoFindings:
     def test_empty_findings_no_data(self, tmp_path):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks=["check_a"],
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"]},
             ),
         ]
-        fw = _make_framework(reqs, None, TableConfig(GroupBy="Section"))
+        fw = _make_framework(reqs, None, TableConfig(group_by="Section"))
         filepath = str(tmp_path / "test.csv")
 
         output = UniversalComplianceOutput(
@@ -217,23 +218,23 @@ class TestMultiProviderOutput:
         """Only checks for the given provider appear in CSV output."""
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks={"aws": ["check_a"], "azure": ["check_b"]},
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"], "azure": ["check_b"]},
             ),
         ]
         metadata = [
-            AttributeMetadata(Key="Section", Type="str"),
+            AttributeMetadata(key="Section", type="str"),
         ]
         fw = ComplianceFramework(
-            Framework="MultiCloud",
-            Name="Multi",
-            Version="1.0",
-            Description="Test multi-provider",
-            Requirements=reqs,
-            AttributesMetadata=metadata,
-            Outputs=OutputsConfig(Table_Config=TableConfig(GroupBy="Section")),
+            framework="MultiCloud",
+            name="Multi",
+            version="1.0",
+            description="Test multi-provider",
+            requirements=reqs,
+            attributes_metadata=metadata,
+            outputs=OutputsConfig(table_config=TableConfig(group_by="Section")),
         )
 
         findings = [
@@ -258,23 +259,23 @@ class TestMultiProviderOutput:
         """Without provider filter, all checks from all providers are included."""
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM"},
-                Checks={"aws": ["check_a"], "azure": ["check_b"]},
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"], "azure": ["check_b"]},
             ),
         ]
         metadata = [
-            AttributeMetadata(Key="Section", Type="str"),
+            AttributeMetadata(key="Section", type="str"),
         ]
         fw = ComplianceFramework(
-            Framework="MultiCloud",
-            Name="Multi",
-            Version="1.0",
-            Description="Test multi-provider",
-            Requirements=reqs,
-            AttributesMetadata=metadata,
-            Outputs=OutputsConfig(Table_Config=TableConfig(GroupBy="Section")),
+            framework="MultiCloud",
+            name="Multi",
+            version="1.0",
+            description="Test multi-provider",
+            requirements=reqs,
+            attributes_metadata=metadata,
+            outputs=OutputsConfig(table_config=TableConfig(group_by="Section")),
         )
 
         findings = [
@@ -293,26 +294,26 @@ class TestMultiProviderOutput:
         assert len(output.data) == 2
 
     def test_empty_dict_checks_is_manual(self, tmp_path):
-        """Requirement with empty dict Checks is treated as manual."""
+        """Requirement with empty dict checks is treated as manual."""
         reqs = [
             UniversalComplianceRequirement(
-                Id="manual-1",
-                Description="manual check",
-                Attributes={"Section": "Governance"},
-                Checks={},
+                id="manual-1",
+                description="manual check",
+                attributes={"Section": "Governance"},
+                checks={},
             ),
         ]
         metadata = [
-            AttributeMetadata(Key="Section", Type="str"),
+            AttributeMetadata(key="Section", type="str"),
         ]
         fw = ComplianceFramework(
-            Framework="MultiCloud",
-            Name="Multi",
-            Version="1.0",
-            Description="Test",
-            Requirements=reqs,
-            AttributesMetadata=metadata,
-            Outputs=OutputsConfig(Table_Config=TableConfig(GroupBy="Section")),
+            framework="MultiCloud",
+            name="Multi",
+            version="1.0",
+            description="Test",
+            requirements=reqs,
+            attributes_metadata=metadata,
+            outputs=OutputsConfig(table_config=TableConfig(group_by="Section")),
         )
 
         filepath = str(tmp_path / "test.csv")
@@ -333,17 +334,21 @@ class TestCSVExclude:
     def test_csv_false_excludes_column(self, tmp_path):
         reqs = [
             UniversalComplianceRequirement(
-                Id="1.1",
-                Description="test",
-                Attributes={"Section": "IAM", "Internal": "hidden"},
-                Checks=["check_a"],
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM", "Internal": "hidden"},
+                checks={"aws": ["check_a"]},
             ),
         ]
         metadata = [
-            AttributeMetadata(Key="Section", Type="str", CSV=True),
-            AttributeMetadata(Key="Internal", Type="str", CSV=False),
+            AttributeMetadata(
+                key="Section", type="str", output_formats=OutputFormats(csv=True)
+            ),
+            AttributeMetadata(
+                key="Internal", type="str", output_formats=OutputFormats(csv=False)
+            ),
         ]
-        fw = _make_framework(reqs, metadata, TableConfig(GroupBy="Section"))
+        fw = _make_framework(reqs, metadata, TableConfig(group_by="Section"))
 
         findings = [
             _make_finding("check_a", "PASS", {"TestFW-1.0": ["1.1"]}),
@@ -369,18 +374,30 @@ def _make_provider_finding(provider, check_id="check_a", status="PASS"):
 
 
 def _simple_framework():
+    all_providers = [
+        "aws",
+        "azure",
+        "gcp",
+        "kubernetes",
+        "m365",
+        "github",
+        "oraclecloud",
+        "alibabacloud",
+        "nhn",
+        "unknown",
+    ]
     reqs = [
         UniversalComplianceRequirement(
-            Id="1.1",
-            Description="test",
-            Attributes={"Section": "IAM"},
-            Checks=["check_a"],
+            id="1.1",
+            description="test",
+            attributes={"Section": "IAM"},
+            checks={p: ["check_a"] for p in all_providers},
         ),
     ]
     metadata = [
-        AttributeMetadata(Key="Section", Type="str"),
+        AttributeMetadata(key="Section", type="str"),
     ]
-    return _make_framework(reqs, metadata, TableConfig(GroupBy="Section"))
+    return _make_framework(reqs, metadata, TableConfig(group_by="Section"))
 
 
 class TestProviderHeaders:

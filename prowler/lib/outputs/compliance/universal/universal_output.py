@@ -27,7 +27,7 @@ _DEFAULT_HEADERS = ("AccountId", "account_uid", "Region", "region")
 class UniversalComplianceOutput:
     """Universal compliance CSV output driven by ComplianceFramework metadata.
 
-    Dynamically builds a Pydantic row model from AttributesMetadata so that
+    Dynamically builds a Pydantic row model from attributes_metadata so that
     CSV columns match the framework's declared attribute fields.
     """
 
@@ -53,9 +53,9 @@ class UniversalComplianceOutput:
         if findings:
             self._row_model = self._build_row_model(framework)
             compliance_name = (
-                framework.Framework + "-" + framework.Version
-                if framework.Version
-                else framework.Framework
+                framework.framework + "-" + framework.version
+                if framework.version
+                else framework.framework
             )
             self._transform(findings, framework, compliance_name)
             if not self._file_descriptor and file_path:
@@ -66,7 +66,7 @@ class UniversalComplianceOutput:
         return self._data
 
     def _build_row_model(self, framework: ComplianceFramework):
-        """Build a dynamic Pydantic model from AttributesMetadata."""
+        """Build a dynamic Pydantic model from attributes_metadata."""
         acct_header, acct_field, loc_header, loc_field = PROVIDER_HEADER_MAP.get(
             (self._provider or "").lower(), _DEFAULT_HEADERS
         )
@@ -87,11 +87,11 @@ class UniversalComplianceOutput:
         }
 
         # Dynamic attribute columns from metadata
-        if framework.AttributesMetadata:
-            for attr_meta in framework.AttributesMetadata:
-                if not attr_meta.CSV:
+        if framework.attributes_metadata:
+            for attr_meta in framework.attributes_metadata:
+                if not attr_meta.output_formats.csv:
                     continue
-                field_name = f"Requirements_Attributes_{attr_meta.Key}"
+                field_name = f"Requirements_Attributes_{attr_meta.key}"
                 # Map type strings to Python types
                 type_map = {
                     "str": Optional[str],
@@ -101,11 +101,11 @@ class UniversalComplianceOutput:
                     "list_str": Optional[str],  # Serialized as joined string
                     "list_dict": Optional[str],  # Serialized as string
                 }
-                py_type = type_map.get(attr_meta.Type, Optional[str])
+                py_type = type_map.get(attr_meta.type, Optional[str])
                 fields[field_name] = (py_type, None)
 
         # Check if any requirement has MITRE fields
-        has_mitre = any(req.Tactics for req in framework.Requirements if req.Tactics)
+        has_mitre = any(req.tactics for req in framework.requirements if req.tactics)
         if has_mitre:
             fields["Requirements_Tactics"] = (Optional[str], None)
             fields["Requirements_SubTechniques"] = (Optional[str], None)
@@ -138,9 +138,9 @@ class UniversalComplianceOutput:
             "Provider": (
                 finding.provider
                 if not is_manual
-                else (framework.Provider or self._provider or "").lower()
+                else (framework.provider or self._provider or "").lower()
             ),
-            "Description": framework.Description,
+            "Description": framework.description,
             self._acct_header: (
                 getattr(finding, self._acct_field, "") if not is_manual else ""
             ),
@@ -148,35 +148,35 @@ class UniversalComplianceOutput:
                 getattr(finding, self._loc_field, "") if not is_manual else ""
             ),
             "AssessmentDate": str(timestamp),
-            "Requirements_Id": requirement.Id,
-            "Requirements_Description": requirement.Description,
+            "Requirements_Id": requirement.id,
+            "Requirements_Description": requirement.description,
         }
 
         # Add dynamic attribute columns
-        if framework.AttributesMetadata:
-            for attr_meta in framework.AttributesMetadata:
-                if not attr_meta.CSV:
+        if framework.attributes_metadata:
+            for attr_meta in framework.attributes_metadata:
+                if not attr_meta.output_formats.csv:
                     continue
-                field_name = f"Requirements_Attributes_{attr_meta.Key}"
-                raw_val = requirement.Attributes.get(attr_meta.Key)
+                field_name = f"Requirements_Attributes_{attr_meta.key}"
+                raw_val = requirement.attributes.get(attr_meta.key)
                 row[field_name] = (
                     self._serialize_attr_value(raw_val) if raw_val is not None else None
                 )
 
         # MITRE fields
-        if requirement.Tactics:
+        if requirement.tactics:
             row["Requirements_Tactics"] = (
-                " | ".join(requirement.Tactics) if requirement.Tactics else None
+                " | ".join(requirement.tactics) if requirement.tactics else None
             )
             row["Requirements_SubTechniques"] = (
-                " | ".join(requirement.SubTechniques)
-                if requirement.SubTechniques
+                " | ".join(requirement.sub_techniques)
+                if requirement.sub_techniques
                 else None
             )
             row["Requirements_Platforms"] = (
-                " | ".join(requirement.Platforms) if requirement.Platforms else None
+                " | ".join(requirement.platforms) if requirement.platforms else None
             )
-            row["Requirements_TechniqueURL"] = requirement.TechniqueURL
+            row["Requirements_TechniqueURL"] = requirement.technique_url
 
         row["Status"] = finding.status if not is_manual else "MANUAL"
         row["StatusExtended"] = (
@@ -186,8 +186,8 @@ class UniversalComplianceOutput:
         row["ResourceName"] = finding.resource_name if not is_manual else "Manual check"
         row["CheckId"] = finding.check_id if not is_manual else "manual"
         row["Muted"] = finding.muted if not is_manual else False
-        row["Framework"] = framework.Framework
-        row["Name"] = framework.Name
+        row["Framework"] = framework.framework
+        row["Name"] = framework.name
 
         return row
 
@@ -198,26 +198,23 @@ class UniversalComplianceOutput:
         compliance_name: str,
     ) -> None:
         """Transform findings into universal compliance CSV rows."""
-        # Build check -> requirements map (filtered by provider for dict Checks)
+        # Build check -> requirements map (filtered by provider for dict checks)
         check_req_map = {}
-        for req in framework.Requirements:
-            checks = req.Checks
-            if isinstance(checks, dict):
-                if self._provider:
-                    all_checks = checks.get(self._provider.lower(), [])
-                else:
-                    all_checks = []
-                    for check_list in checks.values():
-                        all_checks.extend(check_list)
+        for req in framework.requirements:
+            checks = req.checks
+            if self._provider:
+                all_checks = checks.get(self._provider.lower(), [])
             else:
-                all_checks = checks
+                all_checks = []
+                for check_list in checks.values():
+                    all_checks.extend(check_list)
             for check_id in all_checks:
                 if check_id not in check_req_map:
                     check_req_map[check_id] = []
                 check_req_map[check_id].append(req)
 
         # Process findings using the provider-filtered check_req_map.
-        # This ensures that for multi-provider dict Checks, only the checks
+        # This ensures that for multi-provider dict checks, only the checks
         # belonging to the current provider produce output rows.
         for finding in findings:
             check_id = finding.check_id
@@ -227,18 +224,15 @@ class UniversalComplianceOutput:
                     try:
                         self._data.append(self._row_model(**row))
                     except Exception as e:
-                        logger.debug(f"Skipping row for {req.Id}: {e}")
+                        logger.debug(f"Skipping row for {req.id}: {e}")
 
         # Manual requirements (no checks or empty dict)
-        for req in framework.Requirements:
-            checks = req.Checks
-            if isinstance(checks, dict):
-                if self._provider:
-                    has_checks = bool(checks.get(self._provider.lower(), []))
-                else:
-                    has_checks = any(checks.values())
+        for req in framework.requirements:
+            checks = req.checks
+            if self._provider:
+                has_checks = bool(checks.get(self._provider.lower(), []))
             else:
-                has_checks = bool(checks)
+                has_checks = any(checks.values())
 
             if not has_checks:
                 # Use a dummy finding-like namespace for manual rows
@@ -248,7 +242,7 @@ class UniversalComplianceOutput:
                 try:
                     self._data.append(self._row_model(**row))
                 except Exception as e:
-                    logger.debug(f"Skipping manual row for {req.Id}: {e}")
+                    logger.debug(f"Skipping manual row for {req.id}: {e}")
 
     def _create_file_descriptor(self, file_path: str) -> None:
         try:

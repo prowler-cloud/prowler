@@ -3,13 +3,13 @@
 Validates that the pre-processing step:
  - generates both CSV and OCSF outputs for universal frameworks
  - always generates OCSF (no output-format gate)
- - skips frameworks without Outputs or Table_Config
+ - skips frameworks without outputs or table_config
  - skips frameworks not in universal_frameworks
  - returns the set of processed names for removal from the legacy loop
  - works across different providers
 
 Also validates that print_compliance_frameworks and print_compliance_requirements
-work with universal ComplianceFramework objects (dict Checks, None Provider).
+work with universal ComplianceFramework objects (dict checks, None provider).
 """
 
 import json
@@ -99,28 +99,28 @@ def _make_finding(check_id, status="PASS", provider="aws"):
 
 
 def _make_universal_framework(name="TestFW", version="1.0", with_table_config=True):
-    """Build a ComplianceFramework with optional TableConfig."""
+    """Build a ComplianceFramework with optional table_config."""
     reqs = [
         UniversalComplianceRequirement(
-            Id="1.1",
-            Description="Test requirement",
-            Attributes={"Section": "IAM"},
-            Checks=["check_a"],
+            id="1.1",
+            description="Test requirement",
+            attributes={"Section": "IAM"},
+            checks={"aws": ["check_a"]},
         ),
     ]
-    metadata = [AttributeMetadata(Key="Section", Type="str")]
+    metadata = [AttributeMetadata(key="Section", type="str")]
     outputs = None
     if with_table_config:
-        outputs = OutputsConfig(Table_Config=TableConfig(GroupBy="Section"))
+        outputs = OutputsConfig(table_config=TableConfig(group_by="Section"))
     return ComplianceFramework(
-        Framework=name,
-        Name=f"{name} Framework",
-        Provider="AWS",
-        Version=version,
-        Description="Test framework",
-        Requirements=reqs,
-        AttributesMetadata=metadata,
-        Outputs=outputs,
+        framework=name,
+        name=f"{name} Framework",
+        provider="AWS",
+        version=version,
+        description="Test framework",
+        requirements=reqs,
+        attributes_metadata=metadata,
+        outputs=outputs,
     )
 
 
@@ -250,10 +250,10 @@ class TestSkipConditions:
         assert len(generated["compliance"]) == 0
 
     def test_skips_framework_without_outputs(self, tmp_path):
-        """Frameworks with Outputs=None are skipped."""
+        """Frameworks with outputs=None are skipped."""
         fw = _make_universal_framework(with_table_config=False)
-        # Outputs is None since with_table_config=False
-        assert fw.Outputs is None
+        # outputs is None since with_table_config=False
+        assert fw.outputs is None
         generated = {"compliance": []}
 
         processed = process_universal_compliance_frameworks(
@@ -270,10 +270,10 @@ class TestSkipConditions:
         assert len(generated["compliance"]) == 0
 
     def test_skips_framework_with_outputs_but_no_table_config(self, tmp_path):
-        """Frameworks with Outputs but Table_Config=None are skipped."""
+        """Frameworks with outputs but table_config=None are skipped."""
         fw = _make_universal_framework()
-        # Manually set Table_Config to None while keeping Outputs
-        fw.Outputs = OutputsConfig(Table_Config=None)
+        # Manually set table_config to None while keeping outputs
+        fw.outputs = OutputsConfig(table_config=None)
         generated = {"compliance": []}
 
         processed = process_universal_compliance_frameworks(
@@ -546,7 +546,7 @@ class TestPrintComplianceRequirements:
     """Tests for print_compliance_requirements with universal frameworks."""
 
     def test_list_checks_universal_framework(self, capsys):
-        """Requirements with list Checks are printed correctly."""
+        """Requirements with dict checks are printed correctly."""
         fw = _make_universal_framework()
         all_fw = {"test_fw_1.0": fw}
 
@@ -557,21 +557,21 @@ class TestPrintComplianceRequirements:
         assert "check_a" in captured
 
     def test_dict_checks_universal_framework(self, capsys):
-        """Requirements with dict Checks show provider-prefixed checks."""
+        """Requirements with dict checks show provider-prefixed checks."""
         reqs = [
             UniversalComplianceRequirement(
-                Id="A&A-01",
-                Description="Audit & Assurance",
-                Attributes={"Section": "A&A"},
-                Checks={"aws": ["check_a", "check_b"], "azure": ["check_c"]},
+                id="A&A-01",
+                description="Audit & Assurance",
+                attributes={"Section": "A&A"},
+                checks={"aws": ["check_a", "check_b"], "azure": ["check_c"]},
             ),
         ]
         fw = ComplianceFramework(
-            Framework="CSA_CCM",
-            Name="CSA CCM 4.0",
-            Version="4.0",
-            Description="Cloud Controls Matrix",
-            Requirements=reqs,
+            framework="CSA_CCM",
+            name="CSA CCM 4.0",
+            version="4.0",
+            description="Cloud Controls Matrix",
+            requirements=reqs,
         )
         all_fw = {"csa_ccm_4.0": fw}
 
@@ -584,18 +584,18 @@ class TestPrintComplianceRequirements:
         assert "[azure] check_c" in captured
 
     def test_none_provider_shows_multi_provider(self, capsys):
-        """Frameworks with Provider=None show 'Multi-provider'."""
+        """Frameworks with provider=None show 'Multi-provider'."""
         fw = ComplianceFramework(
-            Framework="CSA_CCM",
-            Name="CSA CCM 4.0",
-            Version="4.0",
-            Description="Cloud Controls Matrix",
-            Requirements=[
+            framework="CSA_CCM",
+            name="CSA CCM 4.0",
+            version="4.0",
+            description="Cloud Controls Matrix",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="test",
-                    Attributes={},
-                    Checks={"aws": ["check_a"]},
+                    id="1.1",
+                    description="test",
+                    attributes={},
+                    checks={"aws": ["check_a"]},
                 ),
             ],
         )

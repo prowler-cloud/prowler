@@ -16,7 +16,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { AnimatePresence } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 import {
   Table,
@@ -90,12 +91,27 @@ interface DataTableProviderProps<TData, TValue> {
    */
   controlledSearch?: string;
   onSearchChange?: (value: string) => void;
+  /**
+   * Called when the user commits a search by pressing Enter.
+   * Use this alongside onSearchChange to implement "search on Enter" behavior.
+   */
+  onSearchCommit?: (value: string) => void;
   controlledPage?: number;
   controlledPageSize?: number;
   onPageChange?: (page: number) => void;
   onPageSizeChange?: (pageSize: number) => void;
   /** Show loading state with opacity overlay (for controlled mode) */
   isLoading?: boolean;
+  /** Custom placeholder text for the search input */
+  searchPlaceholder?: string;
+  /** Render additional content after each row (e.g., inline expansion) */
+  renderAfterRow?: (row: Row<TData>) => ReactNode;
+  /** Badge shown inside the search input (e.g., active drill-down group) */
+  searchBadge?: { label: string; onDismiss: () => void };
+  /** Optional click handler for top-level rows. */
+  onRowClick?: (row: Row<TData>) => void;
+  /** Optional header rendered inside the table container, above the toolbar. */
+  header?: ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -116,11 +132,17 @@ export function DataTable<TData, TValue>({
   paramPrefix = "",
   controlledSearch,
   onSearchChange,
+  onSearchCommit,
   controlledPage,
   controlledPageSize,
   onPageChange,
   onPageSizeChange,
   isLoading = false,
+  searchPlaceholder,
+  renderAfterRow,
+  searchBadge,
+  onRowClick,
+  header,
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -197,6 +219,18 @@ export function DataTable<TData, TValue>({
 
   const rows = table.getRowModel().rows;
 
+  const handleRowClick = (row: Row<TData>, target: HTMLElement | null) => {
+    if (!onRowClick) {
+      return;
+    }
+
+    if (target?.closest("a, button, input, [role=menuitem]")) {
+      return;
+    }
+
+    onRowClick(row);
+  };
+
   return (
     <div
       className={cn(
@@ -204,6 +238,7 @@ export function DataTable<TData, TValue>({
         isPending && "pointer-events-none opacity-60",
       )}
     >
+      {header && <div className="w-full">{header}</div>}
       {/* Table Toolbar */}
       {showToolbar && (
         <div className="flex items-center justify-between">
@@ -213,6 +248,9 @@ export function DataTable<TData, TValue>({
                 paramPrefix={paramPrefix}
                 controlledValue={controlledSearch}
                 onSearchChange={onSearchChange}
+                onSearchCommit={onSearchCommit}
+                placeholder={searchPlaceholder}
+                badge={searchBadge}
               />
             )}
           </div>
@@ -255,21 +293,32 @@ export function DataTable<TData, TValue>({
             {rows?.length ? (
               rows.map((row) =>
                 getSubRows && row.depth > 0 ? (
-                  <DataTableAnimatedRow key={row.id} row={row} />
-                ) : (
-                  <TableRow
+                  <DataTableAnimatedRow
                     key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
+                    row={row}
+                    isSelected={row.getIsSelected()}
+                    isSomeSelected={row.getIsSomeSelected()}
+                  />
+                ) : (
+                  <Fragment key={row.id}>
+                    <TableRow
+                      data-state={row.getIsSelected() && "selected"}
+                      className={cn(onRowClick && "cursor-pointer")}
+                      onClick={(event) =>
+                        handleRowClick(row, event.target as HTMLElement)
+                      }
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {renderAfterRow?.(row)}
+                  </Fragment>
                 ),
               )
             ) : (

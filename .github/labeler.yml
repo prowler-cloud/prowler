@@ -62,6 +62,16 @@ provider/openstack:
       - any-glob-to-any-file: "prowler/providers/openstack/**"
       - any-glob-to-any-file: "tests/providers/openstack/**"
 
+provider/googleworkspace:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/googleworkspace/**"
+      - any-glob-to-any-file: "tests/providers/googleworkspace/**"
+
+provider/vercel:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/vercel/**"
+      - any-glob-to-any-file: "tests/providers/vercel/**"
+
 github_actions:
   - changed-files:
       - any-glob-to-any-file: ".github/workflows/*"
@@ -83,6 +93,7 @@ mutelist:
       - any-glob-to-any-file: "prowler/providers/alibabacloud/lib/mutelist/**"
       - any-glob-to-any-file: "prowler/providers/cloudflare/lib/mutelist/**"
       - any-glob-to-any-file: "prowler/providers/openstack/lib/mutelist/**"
+      - any-glob-to-any-file: "prowler/providers/googleworkspace/lib/mutelist/**"
       - any-glob-to-any-file: "tests/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/aws/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/azure/lib/mutelist/**"
@@ -94,6 +105,10 @@ mutelist:
       - any-glob-to-any-file: "tests/providers/alibabacloud/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/cloudflare/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/openstack/lib/mutelist/**"
+      - any-glob-to-any-file: "prowler/providers/googleworkspace/lib/mutelist/**"
+      - any-glob-to-any-file: "tests/providers/googleworkspace/lib/mutelist/**"
+      - any-glob-to-any-file: "prowler/providers/vercel/lib/mutelist/**"
+      - any-glob-to-any-file: "tests/providers/vercel/lib/mutelist/**"
 
 integration/s3:
   - changed-files:

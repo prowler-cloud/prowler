@@ -2,28 +2,25 @@
   "Provider": "alibabacloud",
   "CheckID": "sls_cloud_firewall_changes_alert_enabled",
   "CheckTitle": "Log monitoring and alerts are set up for Cloud Firewall changes",
-  "CheckType": [
-    "Suspicious network connection",
-    "Cloud threat detection"
-  ],
+  "CheckType": [],
   "ServiceName": "sls",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "It is recommended that a **metric filter and alarm** be established for **Cloud Firewall** rule changes.",
-  "Risk": "Monitoring for **Create** or **Update** firewall rule events gives insight into network access changes and may reduce the time it takes to detect **suspicious activity**.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **Cloud Firewall** rule changes. By directing **ActionTrail** logs to SLS with alert rules, real-time monitoring of firewall modifications is achieved. This ensures creation, update, or deletion of Cloud Firewall control policies is promptly detected and reviewed.",
+  "Risk": "Without monitoring for **Cloud Firewall** changes, unauthorized modifications to firewall rules may go undetected, leading to **network exposure** or blocked legitimate traffic. Failure to detect changes timely increases risk of **data breaches**, **lateral movement**, and **service disruption**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/cloudfirewall-control-policy-changes-alert.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/cloudfirewall-control-policy-changes-alert.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun sls create-alert --project <project-name> --alert-name cloud-firewall-changes --alert-displayname 'Cloud Firewall Changes Alert' --condition 'event.serviceName: CloudFirewall and (event.eventName: CreateControlPolicy or event.eventName: ModifyControlPolicy or event.eventName: DeleteControlPolicy)' --dashboard <dashboard-name> --schedule '{\"type\":\"FixedRate\",\"interval\":\"1m\"}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **SLS Console**.\n2. Ensure **ActionTrail** is enabled and delivering logs to a **Log Service** project.\n3. Navigate to the project receiving ActionTrail logs.\n4. Select **Alerts** and click **Create Alert Rule**.\n5. Configure the query to filter for Cloud Firewall changes: `event.serviceName: CloudFirewall and (event.eventName: CreateControlPolicy or event.eventName: ModifyControlPolicy or event.eventName: DeleteControlPolicy)`.\n6. Set the alert **schedule**, **notification method**, and **severity**.\n7. Save and enable the alert rule.",
       "Terraform": ""
     },
     "Recommendation": {

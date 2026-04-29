@@ -4,7 +4,13 @@ from prowler.providers.aws.lib.service.service import AWSService
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_ARN,
     AWS_ACCOUNT_NUMBER,
+    AWS_CHINA_PARTITION,
     AWS_COMMERCIAL_PARTITION,
+    AWS_GOV_CLOUD_PARTITION,
+    AWS_REGION_CN_NORTH_1,
+    AWS_REGION_CN_NORTHWEST_1,
+    AWS_REGION_EU_WEST_1,
+    AWS_REGION_GOV_CLOUD_US_EAST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
@@ -60,6 +66,46 @@ class TestAWSService:
         assert not hasattr(service, "regional_clients")
         assert service.region == AWS_REGION_US_EAST_1
         assert service.client.__class__.__name__ == "CloudFront"
+
+    def test_AWSService_global_service_uses_global_region_with_profile_region(self):
+        """Global services must use the partition's global region, not the profile region."""
+        service_name = "cloudfront"
+        provider = set_mocked_aws_provider(profile_region=AWS_REGION_EU_WEST_1)
+        service = AWSService(service_name, provider, global_service=True)
+
+        assert service.region == AWS_REGION_US_EAST_1
+
+    def test_AWSService_non_global_service_uses_profile_region(self):
+        """Non-global services should use the profile region when available."""
+        service_name = "s3"
+        provider = set_mocked_aws_provider(
+            audited_regions=[], profile_region=AWS_REGION_EU_WEST_1
+        )
+        service = AWSService(service_name, provider)
+
+        assert service.region == AWS_REGION_EU_WEST_1
+
+    def test_AWSService_global_service_china_partition(self):
+        """Global services in aws-cn partition should use cn-north-1."""
+        service_name = "cloudfront"
+        provider = set_mocked_aws_provider(
+            audited_partition=AWS_CHINA_PARTITION,
+            profile_region=AWS_REGION_CN_NORTHWEST_1,
+        )
+        service = AWSService(service_name, provider, global_service=True)
+
+        assert service.region == AWS_REGION_CN_NORTH_1
+
+    def test_AWSService_global_service_gov_cloud_partition(self):
+        """Global services in aws-us-gov partition should use us-gov-east-1."""
+        service_name = "cloudfront"
+        provider = set_mocked_aws_provider(
+            audited_partition=AWS_GOV_CLOUD_PARTITION,
+            profile_region="us-gov-west-1",
+        )
+        service = AWSService(service_name, provider, global_service=True)
+
+        assert service.region == AWS_REGION_GOV_CLOUD_US_EAST_1
 
     def test_AWSService_set_failed_check(self):
 

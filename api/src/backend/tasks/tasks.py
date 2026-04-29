@@ -11,8 +11,9 @@ from django_celery_beat.models import PeriodicTask
 from tasks.jobs.attack_paths import (
     attack_paths_scan,
     can_provider_run_attack_paths_scan,
-    db_utils as attack_paths_db_utils,
 )
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
@@ -406,6 +407,11 @@ def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
     )
 
 
+@shared_task(name="attack-paths-cleanup-stale-scans", queue="attack-paths-scans")
+def cleanup_stale_attack_paths_scans_task():
+    return cleanup_stale_attack_paths_scans()
+
+
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))
 def delete_tenant_task(tenant_id: str):
     return delete_tenant(pk=tenant_id)
@@ -760,6 +766,74 @@ def aggregate_finding_group_summaries_task(tenant_id: str, scan_id: str):
     return aggregate_finding_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
+@shared_task(
+    base=RLSTask, name="reaggregate-all-finding-group-summaries", queue="overview"
+)
+@set_tenant(keep_tenant=True)
+def reaggregate_all_finding_group_summaries_task(tenant_id: str):
+    """Reaggregate every pre-aggregated summary table for this tenant.
+
+    Mirrors the unbounded scope of `mute_historical_findings_task`: that task
+    rewrites every Finding row whose UID matches a mute rule, with no time
+    limit. To keep the pre-aggregated tables consistent with that update,
+    this task re-runs the same per-scan aggregation pipeline that scan
+    completion runs on the latest completed scan of every (provider, day)
+    pair, rebuilding the three tables that power the read endpoints:
+
+      - `ScanSummary` and `DailySeveritySummary` -> `/overviews/findings`,
+        `/overviews/findings-severity`, `/overviews/services`.
+      - `FindingGroupDailySummary` -> `/finding-groups` and
+        `/finding-groups/latest`.
+
+    Per-scan pipelines are dispatched in parallel via a Celery group so
+    wallclock scales with the worker pool.
+    """
+    completed_scans = list(
+        Scan.objects.filter(
+            tenant_id=tenant_id,
+            state=StateChoices.COMPLETED,
+            completed_at__isnull=False,
+        )
+        .order_by("-completed_at")
+        .values("id", "completed_at", "provider_id")
+    )
+
+    # Keep the latest scan per (provider, day) pair so the daily summary row
+    # the aggregator writes is the most recent snapshot of that day for that
+    # provider. Iterating from most recent to oldest means the first scan we
+    # see for a given key wins.
+    latest_scans: dict[tuple, str] = {}
+    for scan in completed_scans:
+        key = (scan["provider_id"], scan["completed_at"].date())
+        if key not in latest_scans:
+            latest_scans[key] = str(scan["id"])
+
+    scan_ids = list(latest_scans.values())
+    if scan_ids:
+        logger.info(
+            "Reaggregating overview/finding summaries for %d scans (provider x day)",
+            len(scan_ids),
+        )
+        # DailySeveritySummary reads from ScanSummary, so ScanSummary must be
+        # recomputed first; FindingGroupDailySummary reads from Finding
+        # directly and can run in parallel with the severity step.
+        group(
+            chain(
+                perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
+                group(
+                    aggregate_daily_severity_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_finding_group_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                ),
+            )
+            for scan_id in scan_ids
+        ).apply_async()
+    return {"scans_reaggregated": len(scan_ids)}
+
+
 @shared_task(base=RLSTask, name="lighthouse-connection-check")
 @set_tenant
 def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str = None):
@@ -926,12 +1000,16 @@ def jira_integration_task(
 @handle_provider_deletion
 def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Optimized task to generate ThreatScore, ENS, NIS2, and CSA CCM reports with shared queries.
+    Optimized task to generate ThreatScore, ENS, NIS2, CSA CCM and CIS reports with shared queries.
 
     This task is more efficient than running separate report tasks because it reuses database queries:
     - Provider object fetched once (instead of multiple times)
     - Requirement statistics aggregated once (instead of multiple times)
     - Can reduce database load by up to 50-70%
+
+    CIS emits a single PDF per run: the one matching the highest CIS version
+    available for the scan's provider, picked dynamically from
+    ``Compliance.get_bulk`` (no hard-coded provider → version mapping).
 
     Args:
         tenant_id (str): The tenant identifier.
@@ -949,6 +1027,7 @@ def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: 
         generate_ens=True,
         generate_nis2=True,
         generate_csa=True,
+        generate_cis=True,
     )
 
 

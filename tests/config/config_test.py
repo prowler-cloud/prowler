@@ -31,6 +31,7 @@ old_config_aws = {
     "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
     "ec2_allowed_instance_owners": ["amazon-elb"],
     "trusted_account_ids": [],
+    "trusted_ips": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
@@ -95,6 +96,7 @@ config_aws = {
     "fargate_linux_latest_version": "1.4.0",
     "fargate_windows_latest_version": "1.0.0",
     "trusted_account_ids": [],
+    "trusted_ips": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
@@ -392,6 +394,7 @@ class Test_Config:
 
     def test_get_available_compliance_frameworks(self):
         compliance_frameworks = [
+            "csa_ccm_4.0",
             "cisa_aws",
             "soc2_aws",
             "cis_1.4_aws",
@@ -425,6 +428,13 @@ class Test_Config:
         assert (
             get_available_compliance_frameworks().sort() == compliance_frameworks.sort()
         )
+
+    def test_get_available_compliance_frameworks_filters_universal_by_provider(self):
+        aws_frameworks = get_available_compliance_frameworks("aws")
+        kubernetes_frameworks = get_available_compliance_frameworks("kubernetes")
+
+        assert "csa_ccm_4.0" in aws_frameworks
+        assert "csa_ccm_4.0" not in kubernetes_frameworks
 
     def test_load_and_validate_config_file_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))

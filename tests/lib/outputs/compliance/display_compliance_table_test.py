@@ -127,7 +127,6 @@ class TestDispatchStartswith:
             "nist_800_53_revision_4_aws",
             "pci_3.2.1_aws",
             "iso27001_2013_aws",
-            "ccc_aws",
             "aws_well_architected_framework_security_pillar_aws",
             "fedramp_low_revision_4_aws",
             "cisa_aws",
@@ -185,20 +184,20 @@ class TestUniversalEarlyReturn:
     @staticmethod
     def _make_fw():
         return ComplianceFramework(
-            Framework="CIS",
-            Name="CIS",
-            Provider="AWS",
-            Version="5.0",
-            Description="d",
-            Requirements=[
+            framework="CIS",
+            name="CIS",
+            provider="AWS",
+            version="5.0",
+            description="d",
+            requirements=[
                 UniversalComplianceRequirement(
-                    Id="1.1",
-                    Description="d",
-                    Attributes={},
-                    Checks=["check_a"],
+                    id="1.1",
+                    description="d",
+                    attributes={},
+                    checks={"aws": ["check_a"]},
                 ),
             ],
-            Outputs=OutputsConfig(Table_Config=TableConfig(GroupBy="_default")),
+            outputs=OutputsConfig(table_config=TableConfig(group_by="_default")),
         )
 
     @patch(f"{MODULE}.get_universal_table")
@@ -221,7 +220,7 @@ class TestUniversalEarlyReturn:
         """If the universal framework has no TableConfig, fall through
         to the legacy elif chain."""
         fw = self._make_fw()
-        fw.Outputs = None
+        fw.outputs = None
         display_compliance_table(
             compliance_framework="cis_5.0_aws",
             universal_frameworks={"cis_5.0_aws": fw},

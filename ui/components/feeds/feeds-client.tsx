@@ -1,6 +1,5 @@
 "use client";
 
-import { formatDistanceToNow, parseISO } from "date-fns";
 import { BellRing, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -19,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { formatRelativeTime } from "@/lib/date-utils";
 import { hasNewFeeds, markFeedsAsSeen } from "@/lib/feeds-storage";
 import { cn } from "@/lib/utils";
 
@@ -145,9 +145,7 @@ interface FeedTimelineItemProps {
 }
 
 function FeedTimelineItem({ item, isLast }: FeedTimelineItemProps) {
-  const relativeTime = formatDistanceToNow(parseISO(item.pubDate), {
-    addSuffix: true,
-  });
+  const relativeTime = formatRelativeTime(item.pubDate);
 
   // Extract version from title if it's a GitHub release
   const versionMatch = item.title.match(/v?(\d+\.\d+\.\d+)/);

@@ -1,29 +1,26 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "sls_management_console_authentication_failures_alert_enabled",
-  "CheckTitle": "A log monitoring and alerts are set up for Management Console authentication failures",
-  "CheckType": [
-    "Unusual logon",
-    "Abnormal account"
-  ],
+  "CheckTitle": "A log monitoring and alert is set up for Management Console authentication failures",
+  "CheckType": [],
   "ServiceName": "sls",
   "SubServiceName": "",
-  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AlibabaCloudSLSAlert",
+  "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "Real-time monitoring of API calls can be achieved by directing **ActionTrail Logs** to Log Service and establishing corresponding query and alarms.\n\nIt is recommended that a query and alarm be established for **failed console authentication attempts**.",
-  "Risk": "Monitoring **failed console logins** may decrease lead time to detect an attempt to **brute force** a credential, which may provide an indicator (such as source IP) that can be used in other event correlation.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **failed console authentication attempts**. By directing **ActionTrail** logs to SLS with alert rules, repeated login failures are detected promptly, enabling early identification of brute-force or credential stuffing attacks against the Management Console.",
+  "Risk": "Without monitoring for **failed console authentication**, brute-force and credential stuffing attacks may go undetected, increasing the risk of **unauthorized access**. Failed login monitoring provides source IP indicators for **threat correlation** and proactive blocking, reducing time to detect and respond to **account compromise** attempts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/account-continuous-login-failures-alert.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/account-continuous-login-failures-alert.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun sls create-alert --project <project-name> --alert-name console-auth-failures --alert-displayname 'Console Authentication Failures Alert' --condition 'event.eventName: ConsoleSignin and event.errorCode: *' --dashboard <dashboard-name> --schedule '{\"type\":\"FixedRate\",\"interval\":\"1m\"}'",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Log on to the **SLS Console**.\n2. Ensure **ActionTrail** is enabled and delivering logs to a **Log Service** project.\n3. Navigate to the project receiving ActionTrail logs.\n4. Select **Alerts** and click **Create Alert Rule**.\n5. Configure the query to filter for failed console authentication: `event.eventName: ConsoleSignin and event.errorCode: *`.\n6. Set the alert **schedule**, **notification method**, and **severity**.\n7. Save and enable the alert rule.",
       "Terraform": ""
     },
     "Recommendation": {

@@ -17,6 +17,8 @@ concurrency:
 env:
   PROWLER_VERSION: ${{ inputs.prowler_version }}
 
+permissions: {}
+
 jobs:
   prepare-release:
     if: github.event_name == 'workflow_dispatch' && github.repository == 'prowler-cloud/prowler'
@@ -26,21 +28,24 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+      with:
+        egress-policy: audit
+
     - name: Checkout repository
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+        persist-credentials: false
 
-    - name: Set up Python
-      uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+    - name: Setup Python with Poetry
+      uses: ./.github/actions/setup-python-poetry
       with:
         python-version: '3.12'
-
-    - name: Install Poetry
-      run: |
-        python3 -m pip install --user poetry==2.1.1
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        install-dependencies: 'false'
+        enable-cache: 'false'
 
     - name: Configure Git
       run: |
@@ -344,7 +349,7 @@ jobs:
 
     - name: Create PR for API dependency update
       if: ${{ env.PATCH_VERSION == '0' }}
-      uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8.0.0
+      uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
       with:
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
         commit-message: 'chore(api): update prowler dependency to ${{ env.BRANCH_NAME }} for release ${{ env.PROWLER_VERSION }}'
@@ -374,7 +379,7 @@ jobs:
           no-changelog
 
     - name: Create draft release
-      uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+      uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
       with:
         tag_name: ${{ env.PROWLER_VERSION }}
         name: Prowler ${{ env.PROWLER_VERSION }}

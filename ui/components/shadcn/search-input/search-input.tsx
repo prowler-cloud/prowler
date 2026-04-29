@@ -25,7 +25,7 @@ const searchInputVariants = cva(
     variants: {
       variant: {
         default:
-          "border-border-input-primary bg-bg-input-primary dark:bg-input/30 hover:bg-bg-neutral-secondary dark:hover:bg-input/50 focus:border-border-input-primary-press focus:ring-1 focus:ring-border-input-primary-press focus:ring-offset-1",
+          "border-border-input-primary bg-bg-input-primary dark:bg-input/30 hover:bg-bg-neutral-secondary dark:hover:bg-input/50 focus:border-border-input-primary-press focus:ring-1 focus:ring-inset focus:ring-border-input-primary-press",
         ghost:
           "border-transparent bg-transparent hover:bg-bg-neutral-tertiary focus:bg-bg-neutral-tertiary",
       },

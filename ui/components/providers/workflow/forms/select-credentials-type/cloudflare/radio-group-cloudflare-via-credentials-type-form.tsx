@@ -1,9 +1,9 @@
 "use client";
 
-import { RadioGroup } from "@heroui/radio";
 import { Control, Controller } from "react-hook-form";
 
-import { CustomRadio } from "@/components/ui/custom";
+import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupCloudflareViaCredentialsFormProps = {
@@ -26,41 +26,25 @@ export const RadioGroupCloudflareViaCredentialsTypeForm = ({
       render={({ field }) => (
         <>
           <RadioGroup
-            className="flex flex-wrap"
-            isInvalid={isInvalid}
-            {...field}
+            name={field.name}
             value={field.value || ""}
-            onValueChange={(value) => {
+            onValueChange={(value: string) => {
               field.onChange(value);
-              if (onChange) {
-                onChange(value);
-              }
+              onChange?.(value);
             }}
           >
-            <div className="flex flex-col gap-4">
-              <span className="text-default-500 text-sm">
-                Select Authentication Method
-              </span>
-              <CustomRadio
-                description="Connect using a Cloudflare API Token (recommended)"
-                value="api_token"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">API Token</span>
-                </div>
-              </CustomRadio>
-              <CustomRadio
-                description="Connect using Global API Key and Email"
-                value="api_key"
-              >
-                <div className="flex items-center">
-                  <span className="ml-2">API Key + Email</span>
-                </div>
-              </CustomRadio>
-            </div>
+            <span className="text-default-500 text-sm">
+              Select Authentication Method
+            </span>
+            <WizardRadioCard value="api_token" isInvalid={isInvalid}>
+              API Token
+            </WizardRadioCard>
+            <WizardRadioCard value="api_key" isInvalid={isInvalid}>
+              API Key + Email
+            </WizardRadioCard>
           </RadioGroup>
           {errorMessage && (
-            <FormMessage className="text-text-error">
+            <FormMessage className="text-text-error-primary">
               {errorMessage}
             </FormMessage>
           )}

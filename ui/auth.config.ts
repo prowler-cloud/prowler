@@ -15,7 +15,8 @@ import { apiBaseUrl } from "./lib";
 import type { RolePermissionAttributes } from "./types/users";
 
 interface CustomJwtPayload extends JwtPayload {
-  user_id: string;
+  user_id?: string; // Optional - doesn't actually exist in JWT tokens
+  sub: string; // Standard JWT subject field - contains the actual user ID
   tenant_id: string;
 }
 
@@ -90,7 +91,8 @@ const applyDecodedClaims = (
     target.accessTokenExpires = decodedToken.exp
       ? decodedToken.exp * 1000
       : target.accessTokenExpires;
-    target.user_id = decodedToken.user_id ?? target.user_id;
+    // Map standard JWT "sub" field to user_id
+    target.user_id = decodedToken.sub ?? target.user_id;
     target.tenant_id = decodedToken.tenant_id ?? target.tenant_id;
   } catch (decodeError) {
     // eslint-disable-next-line no-console
@@ -281,15 +283,20 @@ export const authConfig = {
       const sessionError = auth?.error;
       const isSignUpPage = nextUrl.pathname === "/sign-up";
       const isSignInPage = nextUrl.pathname === "/sign-in";
+      const isInvitationPage =
+        nextUrl.pathname.startsWith("/invitation/accept");
 
-      // Allow access to sign-up and sign-in pages
-      if (isSignUpPage || isSignInPage) return true;
+      // Allow access to sign-up, sign-in, and invitation pages
+      if (isSignUpPage || isSignInPage || isInvitationPage) return true;
 
       // For all other routes, require authentication
       // Return NextResponse.redirect to preserve callbackUrl for post-login redirect
       if (!isLoggedIn) {
         const signInUrl = new URL("/sign-in", nextUrl.origin);
-        signInUrl.searchParams.set("callbackUrl", nextUrl.pathname);
+        signInUrl.searchParams.set(
+          "callbackUrl",
+          nextUrl.pathname + nextUrl.search,
+        );
         // Include session error if present (e.g., RefreshAccessTokenError)
         if (sessionError) {
           signInUrl.searchParams.set("error", sessionError);
@@ -300,8 +307,16 @@ export const authConfig = {
       return true;
     },
 
-    jwt: async ({ token, account, user }) => {
+    jwt: async ({ token, account, user, trigger, session }) => {
       const authToken = token as AuthToken;
+
+      // Handle tenant switch: update tokens from client-side useSession().update()
+      if (trigger === "update" && session?.accessToken) {
+        authToken.accessToken = session.accessToken;
+        authToken.refreshToken = session.refreshToken;
+        applyDecodedClaims(authToken, authToken.accessToken, "tenant switch");
+        return authToken;
+      }
 
       applyDecodedClaims(authToken, authToken.accessToken);
 

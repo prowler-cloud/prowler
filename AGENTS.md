@@ -46,6 +46,8 @@ Use these skills for detailed patterns on-demand:
 | `prowler-commit` | Professional commits (conventional-commits) | [SKILL.md](skills/prowler-commit/SKILL.md) |
 | `prowler-pr` | Pull request conventions | [SKILL.md](skills/prowler-pr/SKILL.md) |
 | `prowler-docs` | Documentation style guide | [SKILL.md](skills/prowler-docs/SKILL.md) |
+| `django-migration-psql` | Django migration best practices for PostgreSQL | [SKILL.md](skills/django-migration-psql/SKILL.md) |
+| `postgresql-indexing` | PostgreSQL indexing, EXPLAIN, monitoring, maintenance | [SKILL.md](skills/postgresql-indexing/SKILL.md) |
 | `prowler-attack-paths-query` | Create Attack Paths openCypher queries | [SKILL.md](skills/prowler-attack-paths-query/SKILL.md) |
 | `gh-aw` | GitHub Agentic Workflows (gh-aw) | [SKILL.md](skills/gh-aw/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
@@ -85,15 +87,15 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Fixing bug | `tdd` |
 | General Prowler development questions | `prowler` |
 | Implementing JSON:API endpoints | `django-drf` |
-| Importing Copilot Custom Agents into workflows | `gh-aw` |
 | Implementing feature | `tdd` |
+| Importing Copilot Custom Agents into workflows | `gh-aw` |
 | Inspect PR CI checks and gates (.github/workflows/*) | `prowler-ci` |
 | Inspect PR CI workflows (.github/workflows/*): conventional-commit, pr-check-changelog, pr-conflict-checker, labeler | `prowler-pr` |
 | Mapping checks to compliance controls | `prowler-compliance` |
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
 | Modifying API responses | `jsonapi` |
-| Modifying gh-aw workflow frontmatter or safe-outputs | `gh-aw` |
 | Modifying component | `tdd` |
+| Modifying gh-aw workflow frontmatter or safe-outputs | `gh-aw` |
 | Refactoring code | `tdd` |
 | Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
@@ -138,7 +140,7 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 
 | Component | Location | Tech Stack |
 |-----------|----------|------------|
-| SDK | `prowler/` | Python 3.9+, Poetry |
+| SDK | `prowler/` | Python 3.10+, Poetry 2.3+ |
 | API | `api/` | Django 5.1, DRF, Celery |
 | UI | `ui/` | Next.js 15, React 19, Tailwind 4 |
 | MCP Server | `mcp_server/` | FastMCP, Python 3.12+ |
@@ -151,12 +153,12 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 ```bash
 # Setup
 poetry install --with dev
-poetry run pre-commit install
+poetry run prek install
 
 # Code quality
 poetry run make lint
 poetry run make format
-poetry run pre-commit run --all-files
+poetry run prek run --all-files
 ```
 
 ---

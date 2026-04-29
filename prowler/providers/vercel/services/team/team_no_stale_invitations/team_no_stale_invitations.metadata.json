@@ -1,0 +1,36 @@
+{
+  "Provider": "vercel",
+  "CheckID": "team_no_stale_invitations",
+  "CheckTitle": "Vercel team has no stale pending invitations older than 30 days",
+  "CheckType": [],
+  "ServiceName": "team",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "**Vercel team** is assessed for **stale invitations** by checking whether pending invitations have been outstanding for more than 30 days. Stale invitations may indicate abandoned onboarding processes or forgotten invitation links that could be exploited.",
+  "Risk": "**Stale pending invitations** represent unresolved access grants. If invitation links are intercepted or forwarded to unintended recipients, they could be used to gain **unauthorized access** to the team. Old invitations also indicate poor access lifecycle management.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://vercel.com/docs/accounts/team-members-and-roles"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to your Vercel team settings\n2. Go to the Members section\n3. Review all pending invitations\n4. Revoke any invitations that have been pending for more than 30 days\n5. Re-invite members if still needed",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly review and revoke stale team invitations. Establish a process to follow up on pending invitations within a reasonable timeframe and revoke those that are no longer needed to reduce the risk of unauthorized access.",
+      "Url": "https://hub.prowler.com/check/team_no_stale_invitations"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

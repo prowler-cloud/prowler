@@ -250,6 +250,16 @@ export const buildAlibabaCloudSecret = (
   return filterEmptyValues(secret);
 };
 
+export const buildVercelSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.VERCEL_API_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.VERCEL_API_TOKEN,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildOpenStackSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: getFormValue(
@@ -264,6 +274,21 @@ export const buildOpenStackSecret = (formData: FormData) => {
   return filterEmptyValues(secret);
 };
 
+export const buildGoogleWorkspaceSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]:
+      getFormValue(
+        formData,
+        ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT,
+      ),
+    [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: getFormValue(
+      formData,
+      ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildIacSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.REPOSITORY_URL]: getFormValue(
@@ -273,6 +298,32 @@ export const buildIacSecret = (formData: FormData) => {
     [ProviderCredentialFields.ACCESS_TOKEN]: getFormValue(
       formData,
       ProviderCredentialFields.ACCESS_TOKEN,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
+export const buildImageSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.REGISTRY_USERNAME]: getFormValue(
+      formData,
+      ProviderCredentialFields.REGISTRY_USERNAME,
+    ),
+    [ProviderCredentialFields.REGISTRY_PASSWORD]: getFormValue(
+      formData,
+      ProviderCredentialFields.REGISTRY_PASSWORD,
+    ),
+    [ProviderCredentialFields.REGISTRY_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.REGISTRY_TOKEN,
+    ),
+    [ProviderCredentialFields.IMAGE_FILTER]: getFormValue(
+      formData,
+      ProviderCredentialFields.IMAGE_FILTER,
+    ),
+    [ProviderCredentialFields.TAG_FILTER]: getFormValue(
+      formData,
+      ProviderCredentialFields.TAG_FILTER,
     ),
   };
   return filterEmptyValues(secret);
@@ -426,6 +477,10 @@ export const buildSecretConfig = (
       secretType: "static",
       secret: buildIacSecret(formData),
     }),
+    image: () => ({
+      secretType: "static",
+      secret: buildImageSecret(formData),
+    }),
     oraclecloud: () => ({
       secretType: "static",
       secret: buildOracleCloudSecret(formData, providerUid),
@@ -449,6 +504,14 @@ export const buildSecretConfig = (
     openstack: () => ({
       secretType: "static",
       secret: buildOpenStackSecret(formData),
+    }),
+    googleworkspace: () => ({
+      secretType: "static",
+      secret: buildGoogleWorkspaceSecret(formData),
+    }),
+    vercel: () => ({
+      secretType: "static",
+      secret: buildVercelSecret(formData),
     }),
   };
 
