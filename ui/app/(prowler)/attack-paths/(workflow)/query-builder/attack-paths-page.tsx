@@ -334,7 +334,6 @@ export default function AttackPathsPage() {
     void finding.navigateToFinding(findingId);
   };
 
-
   return (
     <div className="flex flex-col gap-6">
       {/* Auto-refresh scans when there's an executing scan */}
