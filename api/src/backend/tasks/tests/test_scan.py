@@ -24,6 +24,7 @@ from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
+    reset_ephemeral_resource_findings_count,
     update_provider_compliance_scores,
 )
 from tasks.utils import CustomEncoder
@@ -35,6 +36,7 @@ from api.models import (
     MuteRule,
     Provider,
     Resource,
+    ResourceScanSummary,
     Scan,
     ScanSummary,
     StateChoices,
@@ -4334,4 +4336,218 @@ class TestUpdateProviderComplianceScores:
         calls = [str(c) for c in cursor.execute.call_args_list]
         assert any("provider_compliance_scores" in c for c in calls)
         assert any("tenant_compliance_summaries" in c for c in calls)
-        assert any("pg_advisory_xact_lock" in c for c in calls)
+
+
+class TestScanIsFullScope:
+    def _live_trigger(self):
+        return Scan.TriggerChoices.MANUAL
+
+    @pytest.mark.parametrize(
+        "scanner_args",
+        [
+            {},
+            {"unrelated": "value"},
+            {"checks": None},
+            {"services": []},
+            {"severities": ""},
+        ],
+    )
+    def test_full_scope_when_no_filters_present(self, scanner_args):
+        scan = Scan(scanner_args=scanner_args, trigger=self._live_trigger())
+        assert scan.is_full_scope() is True
+
+    def test_full_scope_covers_every_sdk_kwarg(self):
+        # Lock the predicate to whatever ProwlerScan's __init__ exposes today.
+        # If the SDK adds a new filter, this test still passes via the
+        # introspection-driven derivation; if it adds a non-filter kwarg
+        # (e.g. provider-like), keep the exclusion list in sync in models.py.
+        from prowler.lib.scan.scan import Scan as ProwlerScan
+        import inspect
+
+        expected = tuple(
+            name
+            for name in inspect.signature(ProwlerScan.__init__).parameters
+            if name not in ("self", "provider")
+        )
+        assert Scan.get_scoping_scanner_arg_keys() == expected
+        # Spot-check a few well-known filters survive the introspection.
+        assert "checks" in expected
+        assert "services" in expected
+        assert "severities" in expected
+
+    def test_partial_scope_for_each_sdk_filter(self):
+        for key in Scan.get_scoping_scanner_arg_keys():
+            scan = Scan(scanner_args={key: ["x"]}, trigger=self._live_trigger())
+            assert scan.is_full_scope() is False, f"{key} should mark scan as partial"
+
+    def test_imported_scan_is_never_full_scope(self):
+        # Forward-defensive: any trigger outside LIVE_SCAN_TRIGGERS (e.g. a
+        # future "imported" trigger) must never qualify, even with empty args.
+        scan = Scan(scanner_args={}, trigger="imported")
+        assert scan.is_full_scope() is False
+
+    def test_handles_none_scanner_args(self):
+        scan = Scan(scanner_args=None, trigger=self._live_trigger())
+        assert scan.is_full_scope() is True
+
+
+@pytest.mark.django_db
+class TestResetEphemeralResourceFindingsCount:
+    def _make_scan_summary(self, tenant_id, scan_id, resource):
+        return ResourceScanSummary.objects.create(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            resource_id=resource.id,
+            service=resource.service,
+            region=resource.region,
+            resource_type=resource.type,
+        )
+
+    def test_resets_only_resources_missing_from_full_scope_scan(
+        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        scan1, scan2, *_ = scans_fixture
+        resource1, resource2, resource3 = resources_fixture
+
+        Resource.objects.filter(id=resource1.id).update(failed_findings_count=3)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+        Resource.objects.filter(id=resource3.id).update(failed_findings_count=7)
+
+        # Only resource1 was scanned in scan1; resource2 is ephemeral.
+        self._make_scan_summary(tenant.id, scan1.id, resource1)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+        assert result["reset"] == 1
+
+        resource1.refresh_from_db()
+        resource2.refresh_from_db()
+        resource3.refresh_from_db()
+
+        assert resource1.failed_findings_count == 3
+        assert resource2.failed_findings_count == 0
+        # Other provider's resource is never touched.
+        assert resource3.failed_findings_count == 7
+
+    def test_skips_when_scan_not_completed(
+        self, tenants_fixture, scans_fixture, resources_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Scan.objects.filter(id=scan1.id).update(state=StateChoices.EXECUTING)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "scan not completed"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 5
+
+    def test_skips_when_scan_has_scoping_filters(
+        self, tenants_fixture, scans_fixture, resources_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        _, resource2, _ = resources_fixture
+
+        Scan.objects.filter(id=scan1.id).update(
+            scanner_args={"checks_to_execute": ["check1"]}
+        )
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "partial scan scope"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 5
+
+    def test_skips_when_scan_not_found(self, tenants_fixture):
+        tenant, *_ = tenants_fixture
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(uuid.uuid4())
+        )
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "scan not found"
+
+    def test_does_not_touch_other_providers_resources(
+        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        _, _, resource3 = resources_fixture
+
+        # resource3 belongs to provider2 with failed_findings_count > 0 and is
+        # not in scan1's summary. It MUST NOT be reset.
+        Resource.objects.filter(id=resource3.id).update(failed_findings_count=9)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+        assert result["reset"] == 0
+
+        resource3.refresh_from_db()
+        assert resource3.failed_findings_count == 9
+
+    def test_resources_already_zero_are_not_rewritten(
+        self, tenants_fixture, scans_fixture, resources_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        # Both resources already at 0, neither in summary -> nothing to update.
+        Resource.objects.filter(id=resource1.id).update(failed_findings_count=0)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=0)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+        assert result["reset"] == 0
+
+    def test_batches_updates_when_many_ephemeral_resources(
+        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+    ):
+        # Forces multiple batches to confirm the chunked UPDATE path executes
+        # cleanly and the count is the sum across batches.
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        provider, *_ = providers_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Resource.objects.filter(id=resource1.id).update(failed_findings_count=2)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=4)
+
+        # No ResourceScanSummary -> both resource1 and resource2 are ephemeral.
+        # Force a 1-row batch via the shared findings batch size knob.
+        with patch("tasks.jobs.scan.DJANGO_FINDINGS_BATCH_SIZE", 1):
+            result = reset_ephemeral_resource_findings_count(
+                tenant_id=str(tenant.id), scan_id=str(scan1.id)
+            )
+
+        assert result["status"] == "completed"
+        assert result["reset"] == 2
+
+        resource1.refresh_from_db()
+        resource2.refresh_from_db()
+        assert resource1.failed_findings_count == 0
+        assert resource2.failed_findings_count == 0

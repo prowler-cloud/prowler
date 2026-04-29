@@ -58,6 +58,7 @@ from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
+    reset_ephemeral_resource_findings_count,
     update_provider_compliance_scores,
 )
 from tasks.utils import (
@@ -150,6 +151,13 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
     )
     chain(
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
+        # reset_ephemeral_resource_findings_count_task MUST run only after
+        # perform_scan_summary_task, since it diffs Resource against
+        # ResourceScanSummary to find ephemeral resources. Running it before
+        # would risk wiping valid failed_findings_count values.
+        reset_ephemeral_resource_findings_count_task.si(
+            tenant_id=tenant_id, scan_id=scan_id
+        ),
         group(
             aggregate_daily_severity_task.si(tenant_id=tenant_id, scan_id=scan_id),
             aggregate_finding_group_summaries_task.si(
@@ -378,7 +386,7 @@ class AttackPathsScanRLSTask(RLSTask):
     SDK initialization, or Neo4j configuration errors during setup).
     """
 
-    def on_failure(self, exc, task_id, args, kwargs, _einfo):
+    def on_failure(self, exc, task_id, _args, kwargs, _einfo):
         tenant_id = kwargs.get("tenant_id")
         scan_id = kwargs.get("scan_id")
 
@@ -773,6 +781,13 @@ def update_provider_compliance_scores_task(tenant_id: str, scan_id: str):
 def aggregate_daily_severity_task(tenant_id: str, scan_id: str):
     """Aggregate scan severity into DailySeveritySummary for findings_severity/timeseries endpoint."""
     return aggregate_daily_severity(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="scan-reset-ephemeral-resources", queue="overview")
+@handle_provider_deletion
+def reset_ephemeral_resource_findings_count_task(tenant_id: str, scan_id: str):
+    """Reset failed_findings_count for resources missing from a completed full-scope scan."""
+    return reset_ephemeral_resource_findings_count(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(base=RLSTask, name="scan-finding-group-summaries", queue="overview")

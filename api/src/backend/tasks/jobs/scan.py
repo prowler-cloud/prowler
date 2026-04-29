@@ -10,16 +10,29 @@ from typing import Any
 
 import sentry_sdk
 from celery.utils.log import get_task_logger
+from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
-from django.db.models import Case, Count, IntegerField, Max, Min, Prefetch, Q, Sum, When
+from django.db.models import (
+    Case,
+    Count,
+    Exists,
+    IntegerField,
+    Max,
+    Min,
+    OuterRef,
+    Prefetch,
+    Q,
+    Sum,
+    When,
+)
 from django.utils import timezone as django_timezone
 from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
     COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
 )
-from tasks.utils import CustomEncoder
+from tasks.utils import CustomEncoder, batched
 
 from api.compliance import PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
 from api.constants import SEVERITY_ORDER
@@ -2068,4 +2081,114 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
         "date": str(summary_timestamp.date()),
         "created": created_count,
         "updated": updated_count,
+    }
+
+
+def reset_ephemeral_resource_findings_count(tenant_id: str, scan_id: str) -> dict:
+    """Zero failed_findings_count for resources missing from a completed full-scope scan.
+
+    Resources that exist in the database for the scan's provider but were not
+    touched by this scan are treated as ephemeral. We keep their historical
+    findings, but reset the denormalized counter that drives the Resources page
+    sort so they stop ranking at the top.
+
+    Skipped (no-op) when:
+        - The scan is not in COMPLETED state.
+        - The scan ran with any scoping filter in scanner_args (partial scope).
+
+    Query design (must scale to 500k+ resources per provider):
+        Phase 1 — collect ephemeral IDs with one anti-join read.
+            Outer filter ``(tenant_id, provider_id, failed_findings_count > 0)``
+            uses ``resources_tenant_provider_idx``. The correlated
+            ``NOT EXISTS`` subquery hits the implicit unique index
+            ``(tenant_id, scan_id, resource_id)`` on ``ResourceScanSummary``.
+            ``NOT EXISTS`` (vs ``NOT IN``) is null-safe and lets the planner
+            choose between hash anti-join and indexed nested-loop anti-join.
+            ``.iterator(chunk_size=...)`` skips the queryset cache so memory
+            stays bounded while streaming UUIDs.
+        Phase 2 — UPDATE in fixed-size batches.
+            One large UPDATE would hold row-exclusive locks for seconds and
+            create a WAL spike. Batched UPDATEs by ``id__in`` (~1k rows each)
+            hit the primary key, keep each lock window ~50ms, bound WAL chunks,
+            and let other writers proceed between batches.
+            ``failed_findings_count__gt=0`` in the UPDATE is idempotent under
+            concurrent scans and skips no-op rewrites.
+        Reads use the primary DB, not the replica: ``ResourceScanSummary`` rows
+        were written by the same scan task that triggered this one, so replica
+        lag could falsely classify scanned resources as ephemeral.
+
+        Scope detection (``Scan.is_full_scope()``) derives the set of scoping
+        scanner_args from ``prowler.lib.scan.scan.Scan.__init__`` via
+        introspection, so the API can never drift from the SDK's filter
+        contract. Imported scans are also rejected by trigger — they may only
+        cover a partial slice of resources.
+    """
+    with rls_transaction(tenant_id):
+        scan = Scan.objects.filter(tenant_id=tenant_id, id=scan_id).first()
+
+    if scan is None:
+        logger.warning(f"Scan {scan_id} not found")
+        return {"status": "skipped", "reason": "scan not found"}
+
+    if scan.state != StateChoices.COMPLETED:
+        logger.info(f"Scan {scan_id} not completed; skipping ephemeral reset")
+        return {"status": "skipped", "reason": "scan not completed"}
+
+    if not scan.is_full_scope():
+        logger.info(
+            f"Scan {scan_id} ran with scoping filters; skipping ephemeral reset"
+        )
+        return {"status": "skipped", "reason": "partial scan scope"}
+
+    # Stays on the primary DB intentionally. ResourceScanSummary rows are
+    # written by perform_prowler_scan in the same chain that triggered this
+    # task, so replica lag could return an empty/partial summary set; a stale
+    # read here would classify every Resource as ephemeral and wipe valid
+    # failed_findings_count values on the primary. Same rationale as
+    # update_provider_compliance_scores below in this module.
+    with rls_transaction(tenant_id):
+        in_scan = ResourceScanSummary.objects.filter(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            resource_id=OuterRef("pk"),
+        )
+        ephemeral_ids = list(
+            Resource.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=scan.provider_id,
+                failed_findings_count__gt=0,
+            )
+            .exclude(Exists(in_scan))
+            .values_list("id", flat=True)
+            .iterator(chunk_size=DJANGO_FINDINGS_BATCH_SIZE)
+        )
+
+    if not ephemeral_ids:
+        logger.info(f"No ephemeral resources for scan {scan_id}")
+        return {
+            "status": "completed",
+            "scan_id": str(scan_id),
+            "provider_id": str(scan.provider_id),
+            "reset": 0,
+        }
+
+    total_updated = 0
+    for batch, _ in batched(ephemeral_ids, DJANGO_FINDINGS_BATCH_SIZE):
+        with rls_transaction(tenant_id):
+            total_updated += Resource.objects.filter(
+                tenant_id=tenant_id,
+                id__in=batch,
+                failed_findings_count__gt=0,
+            ).update(failed_findings_count=0)
+
+    logger.info(
+        f"Ephemeral resource reset for scan {scan_id}: "
+        f"{total_updated} resources zeroed for provider {scan.provider_id}"
+    )
+
+    return {
+        "status": "completed",
+        "scan_id": str(scan_id),
+        "provider_id": str(scan.provider_id),
+        "reset": total_updated,
     }
