@@ -181,9 +181,24 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
     ).apply_async()
 
     if can_provider_run_attack_paths_scan(tenant_id, provider_id):
-        perform_attack_paths_scan_task.apply_async(
+        # Row is normally created upstream, so this is a safeguard so we can attach the task id below
+        attack_paths_scan = attack_paths_db_utils.retrieve_attack_paths_scan(
+            tenant_id, scan_id
+        )
+        if attack_paths_scan is None:
+            attack_paths_scan = attack_paths_db_utils.create_attack_paths_scan(
+                tenant_id, scan_id, provider_id
+            )
+
+        # Persist the Celery task id so the periodic cleanup can revoke scans stuck in SCHEDULED
+        result = perform_attack_paths_scan_task.apply_async(
             kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
         )
+
+        if attack_paths_scan and result:
+            attack_paths_db_utils.set_attack_paths_scan_task_id(
+                tenant_id, attack_paths_scan.id, result.task_id
+            )
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")

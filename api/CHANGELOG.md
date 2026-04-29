@@ -10,6 +10,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.26.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: AWS scans no longer fail when enabled regions cannot be retrieved, and scans stuck in `scheduled` state are now cleaned up after the stale threshold [(#10917)](https://github.com/prowler-cloud/prowler/pull/10917)
+
+---
+
 ## [1.26.0] (Prowler v5.25.0)
 
 ### 🚀 Added
