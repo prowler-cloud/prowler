@@ -29,7 +29,8 @@
     }
   },
   "Categories": [
-    "vercel_pro_plan"
+    "trust-boundaries",
+    "vercel-pro-plan"
   ],
   "DependsOn": [],
   "RelatedTo": [

@@ -28,7 +28,8 @@
     }
   },
   "Categories": [
-    "vercel_pro_plan"
+    "internet-exposed",
+    "vercel-pro-plan"
   ],
   "DependsOn": [],
   "RelatedTo": [

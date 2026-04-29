@@ -28,7 +28,8 @@
     }
   },
   "Categories": [
-    "vercel_hobby_plan"
+    "encryption",
+    "vercel-hobby-plan"
   ],
   "DependsOn": [],
   "RelatedTo": [

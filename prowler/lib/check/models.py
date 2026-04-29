@@ -62,9 +62,9 @@ VALID_CATEGORIES = frozenset(
         "e5",
         "privilege-escalation",
         "ec2-imdsv1",
-        "vercel_hobby_plan",
-        "vercel_pro_plan",
-        "vercel_enterprise_plan",
+        "vercel-hobby-plan",
+        "vercel-pro-plan",
+        "vercel-enterprise-plan",
     }
 )
 
@@ -248,13 +248,13 @@ class CheckMetadata(BaseModel):
     Compliance: Optional[list[Any]] = Field(default_factory=list)
 
     @validator("Categories", each_item=True, pre=True, always=True)
-    def valid_category(value, values):
+    def valid_category(cls, value, values):  # noqa: F841
         if not isinstance(value, str):
             raise ValueError("Categories must be a list of strings")
         value_lower = value.lower()
-        if not re.match("^[a-z0-9_-]+$", value_lower):
+        if not re.match("^[a-z0-9-]+$", value_lower):
             raise ValueError(
-                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers, hyphen '-' and underscore '_'"
+                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers, and hyphen '-'"
             )
         if (
             value_lower not in VALID_CATEGORIES
@@ -282,7 +282,7 @@ class CheckMetadata(BaseModel):
         return resource_type
 
     @validator("ServiceName", pre=True, always=True)
-    def validate_service_name(service_name, values):
+    def validate_service_name(cls, service_name, values):  # noqa: F841
         if not service_name:
             raise ValueError("ServiceName must be a non-empty string")
 
@@ -299,7 +299,7 @@ class CheckMetadata(BaseModel):
         return service_name
 
     @validator("CheckID", pre=True, always=True)
-    def valid_check_id(check_id, values):
+    def valid_check_id(cls, check_id, values):  # noqa: F841
         if not check_id:
             raise ValueError("CheckID must be a non-empty string")
 
@@ -312,7 +312,7 @@ class CheckMetadata(BaseModel):
         return check_id
 
     @validator("CheckTitle", pre=True, always=True)
-    def validate_check_title(check_title, values):
+    def validate_check_title(cls, check_title, values):  # noqa: F841
         if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             if len(check_title) > 150:
                 raise ValueError(
@@ -325,13 +325,13 @@ class CheckMetadata(BaseModel):
         return check_title
 
     @validator("RelatedUrl", pre=True, always=True)
-    def validate_related_url(related_url, values):
+    def validate_related_url(cls, related_url, values):  # noqa: F841
         if related_url and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             raise ValueError("RelatedUrl must be empty. This field is deprecated.")
         return related_url
 
     @validator("Remediation")
-    def validate_recommendation_url(remediation, values):
+    def validate_recommendation_url(cls, remediation, values):  # noqa: F841
         if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             url = remediation.Recommendation.Url
             if url and not url.startswith("https://hub.prowler.com/"):
@@ -341,7 +341,7 @@ class CheckMetadata(BaseModel):
         return remediation
 
     @validator("CheckType", pre=True, always=True)
-    def validate_check_type(check_type, values):
+    def validate_check_type(cls, check_type, values):  # noqa: F841
         provider = values.get("Provider", "").lower()
 
         # Non-AWS providers must have an empty CheckType list
@@ -370,7 +370,7 @@ class CheckMetadata(BaseModel):
         return check_type
 
     @validator("Description", pre=True, always=True)
-    def validate_description(description, values):
+    def validate_description(cls, description, values):  # noqa: F841
         if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             if len(description) > 400:
                 raise ValueError(
@@ -379,7 +379,7 @@ class CheckMetadata(BaseModel):
         return description
 
     @validator("Risk", pre=True, always=True)
-    def validate_risk(risk, values):
+    def validate_risk(cls, risk, values):  # noqa: F841
         if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             if len(risk) > 400:
                 raise ValueError(
@@ -388,7 +388,7 @@ class CheckMetadata(BaseModel):
         return risk
 
     @validator("ResourceGroup", pre=True, always=True)
-    def validate_resource_group(resource_group):
+    def validate_resource_group(cls, resource_group):  # noqa: F841
         if resource_group and resource_group not in VALID_RESOURCE_GROUPS:
             raise ValueError(
                 f"Invalid ResourceGroup: '{resource_group}'. Must be one of: {', '.join(sorted(VALID_RESOURCE_GROUPS))} or empty string."
@@ -396,7 +396,7 @@ class CheckMetadata(BaseModel):
         return resource_group
 
     @validator("AdditionalURLs", pre=True, always=True)
-    def validate_additional_urls(additional_urls):
+    def validate_additional_urls(cls, additional_urls):  # noqa: F841
         if not isinstance(additional_urls, list):
             raise ValueError("AdditionalURLs must be a list")
 

@@ -378,7 +378,7 @@ class TestCheckMetadataValidators:
         assert check_metadata.Categories == ["encryption", "logging", "secrets"]
 
     def test_valid_vercel_plan_categories_success(self):
-        """Test Vercel plan categories are accepted, including underscores."""
+        """Test Vercel plan categories are accepted using hyphen-separated names."""
         valid_metadata = {
             "Provider": "vercel",
             "CheckID": "test_check",
@@ -405,9 +405,9 @@ class TestCheckMetadataValidators:
                 },
             },
             "Categories": [
-                "vercel_hobby_plan",
-                "vercel_pro_plan",
-                "vercel_enterprise_plan",
+                "vercel-hobby-plan",
+                "vercel-pro-plan",
+                "vercel-enterprise-plan",
             ],
             "DependsOn": [],
             "RelatedTo": [],
@@ -416,9 +416,9 @@ class TestCheckMetadataValidators:
 
         check_metadata = CheckMetadata(**valid_metadata)
         assert check_metadata.Categories == [
-            "vercel_hobby_plan",
-            "vercel_pro_plan",
-            "vercel_enterprise_plan",
+            "vercel-hobby-plan",
+            "vercel-pro-plan",
+            "vercel-enterprise-plan",
         ]
 
     def test_valid_category_failure_non_string(self):
@@ -498,7 +498,7 @@ class TestCheckMetadataValidators:
         with pytest.raises(ValidationError) as exc_info:
             CheckMetadata(**invalid_metadata)
         assert (
-            "Categories can only contain lowercase letters, numbers, hyphen '-' and underscore '_'"
+            "Categories can only contain lowercase letters, numbers, and hyphen '-'"
             in str(exc_info.value)
         )
 

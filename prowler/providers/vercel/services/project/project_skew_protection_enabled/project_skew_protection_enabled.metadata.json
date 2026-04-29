@@ -28,7 +28,8 @@
     }
   },
   "Categories": [
-    "vercel_pro_plan"
+    "resilience",
+    "vercel-pro-plan"
   ],
   "DependsOn": [],
   "RelatedTo": [],

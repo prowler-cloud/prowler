@@ -28,7 +28,8 @@
     }
   },
   "Categories": [
-    "vercel_hobby_plan"
+    "internet-exposed",
+    "vercel-hobby-plan"
   ],
   "DependsOn": [],
   "RelatedTo": [
