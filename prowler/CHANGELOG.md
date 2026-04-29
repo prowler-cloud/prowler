@@ -12,10 +12,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Azure Network Watcher flow log checks now require workspace-backed Traffic Analytics for `network_flow_log_captured_sent` and align metadata with VNet-compatible flow log guidance [(#10645)](https://github.com/prowler-cloud/prowler/pull/10645)
 
-### 🐞 Fixed
-
-- Kubernetes OCSF `provider_uid` now uses the cluster name in in-cluster mode (so `--cluster-name` is correctly reflected in findings) and keeps the kubeconfig context in kubeconfig mode [(#10483)](https://github.com/prowler-cloud/prowler/pull/10483)
-
 ---
 
 ## [5.25.1] (Prowler v5.25.1)
@@ -23,6 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - `KeyError` when generating compliance outputs after the CLI scan [#10919](https://github.com/prowler-cloud/prowler/pull/10919)
+- Kubernetes OCSF `provider_uid` now uses the cluster name in in-cluster mode (so `--cluster-name` is correctly reflected in findings) and keeps the kubeconfig context in kubeconfig mode [(#10483)](https://github.com/prowler-cloud/prowler/pull/10483)
 
 ---
 
