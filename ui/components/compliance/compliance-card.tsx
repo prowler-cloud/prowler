@@ -163,7 +163,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
               )}
             />
           </div>
-          <small className="min-w-0">
+          <small className="text-center">
             <span className="mr-1 text-xs font-semibold">
               {passingRequirements} / {totalRequirements}
             </span>
