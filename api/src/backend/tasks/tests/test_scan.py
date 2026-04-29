@@ -4562,6 +4562,67 @@ class TestResetEphemeralResourceFindingsCount:
         assert result["status"] == "completed"
         assert result["reset"] == 0
 
+    def test_skips_when_summaries_missing_for_scan_with_resources(
+        self, tenants_fixture, scans_fixture, resources_fixture
+    ):
+        # Catastrophic guard: if a scan reports unique_resource_count > 0 but
+        # no ResourceScanSummary rows are persisted (e.g. bulk_create silently
+        # failed), the anti-join would classify EVERY resource as ephemeral
+        # and zero their counts. The gate must skip and preserve the data.
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Scan.objects.filter(id=scan1.id).update(unique_resource_count=10)
+        Resource.objects.filter(id=resource1.id).update(failed_findings_count=3)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "summaries missing"
+
+        resource1.refresh_from_db()
+        resource2.refresh_from_db()
+        assert resource1.failed_findings_count == 3
+        assert resource2.failed_findings_count == 5
+
+    def test_ignores_sibling_scan_with_null_completed_at(
+        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+    ):
+        # Postgres orders NULL first in DESC; a sibling COMPLETED scan with a
+        # missing completed_at must not be treated as the latest scan and
+        # cause us to incorrectly skip the reset.
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        provider, *_ = providers_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+        self._make_scan_summary(tenant.id, scan1.id, resource1)
+
+        Scan.objects.create(
+            name="Ghost Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=scan1.completed_at,
+            completed_at=None,
+        )
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+        assert result["reset"] == 1
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 0
+
     def test_batches_updates_when_many_ephemeral_resources(
         self, tenants_fixture, scans_fixture, resources_fixture
     ):

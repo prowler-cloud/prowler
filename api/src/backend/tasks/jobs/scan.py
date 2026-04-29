@@ -2146,12 +2146,16 @@ def reset_ephemeral_resource_findings_count(tenant_id: str, scan_id: str) -> dic
     # refreshed). Wiping based on the older scan would zero counts the newer
     # scan just set. Skip and let the newer scan's reset task do the work; if
     # this task was delayed in the queue, that's the correct outcome.
+    # `completed_at__isnull=False` is required: Postgres orders NULL first in
+    # DESC, so a sibling COMPLETED scan with a missing completed_at would sort
+    # as "newest" and incorrectly cause us to skip.
     with rls_transaction(tenant_id):
         latest_full_scope_scan_id = (
             Scan.objects.filter(
                 tenant_id=tenant_id,
                 provider_id=scan.provider_id,
                 state=StateChoices.COMPLETED,
+                completed_at__isnull=False,
             )
             .order_by("-completed_at", "-inserted_at")
             .values_list("id", flat=True)
@@ -2163,6 +2167,23 @@ def reset_ephemeral_resource_findings_count(tenant_id: str, scan_id: str) -> dic
             f"{scan.provider_id}; skipping ephemeral reset"
         )
         return {"status": "skipped", "reason": "newer scan exists"}
+
+    # Defensive gate: ResourceScanSummary rows are written by perform_prowler_scan
+    # via best-effort bulk_create. If those writes failed silently (or the scan
+    # genuinely produced resources but no summaries were persisted), the
+    # ~Exists(in_scan) anti-join below would classify EVERY resource for this
+    # provider as ephemeral and zero their counts. Bail loudly instead.
+    with rls_transaction(tenant_id):
+        summaries_present = ResourceScanSummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).exists()
+    if scan.unique_resource_count > 0 and not summaries_present:
+        logger.error(
+            f"Scan {scan_id} reports {scan.unique_resource_count} unique "
+            f"resources but no ResourceScanSummary rows are persisted; "
+            f"skipping ephemeral reset to avoid wiping valid counts"
+        )
+        return {"status": "skipped", "reason": "summaries missing"}
 
     # Stays on the primary DB intentionally. ResourceScanSummary rows are
     # written by perform_prowler_scan in the same chain that triggered this

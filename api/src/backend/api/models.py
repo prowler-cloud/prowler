@@ -595,13 +595,6 @@ class Scan(RowLevelSecurityProtectedModel):
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
-    # Trigger values for scans that ran the SDK end-to-end. Imported scans (or
-    # any future trigger) are intentionally NOT in this set — they may carry
-    # only a partial slice of resources, so post-scan logic that depends on a
-    # full-scope sweep (e.g. resetting ephemeral resource findings) must skip
-    # them by default.
-    LIVE_SCAN_TRIGGERS = frozenset(("scheduled", "manual"))
-
     _SCOPING_SCANNER_ARG_KEYS_CACHE: tuple[str, ...] | None = None
 
     @classmethod
@@ -626,6 +619,15 @@ class Scan(RowLevelSecurityProtectedModel):
     class TriggerChoices(models.TextChoices):
         SCHEDULED = "scheduled", _("Scheduled")
         MANUAL = "manual", _("Manual")
+
+    # Trigger values for scans that ran the SDK end-to-end. Imported scans (or
+    # any future trigger) are intentionally NOT in this set — they may carry
+    # only a partial slice of resources, so post-scan logic that depends on a
+    # full-scope sweep (e.g. resetting ephemeral resource findings) must skip
+    # them by default.
+    LIVE_SCAN_TRIGGERS = frozenset(
+        (TriggerChoices.SCHEDULED.value, TriggerChoices.MANUAL.value)
+    )
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     name = models.CharField(
