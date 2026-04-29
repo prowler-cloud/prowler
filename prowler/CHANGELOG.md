@@ -17,7 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- Kubernetes OCSF `provider_uid` now uses the cluster name instead of the context name, so `--cluster-name` is correctly reflected in findings [(#10483)](https://github.com/prowler-cloud/prowler/pull/10483)
+- Kubernetes OCSF `provider_uid` now uses the cluster name in in-cluster mode (so `--cluster-name` is correctly reflected in findings) and keeps the kubeconfig context in kubeconfig mode [(#10483)](https://github.com/prowler-cloud/prowler/pull/10483)
 
 ---
 
