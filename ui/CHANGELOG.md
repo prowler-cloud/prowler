@@ -6,8 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Compliance card export menu repositioned to the card's top-right corner with a lighter, `rounded-md` ghost trigger so it scales naturally on small screens [(#10918)](https://github.com/prowler-cloud/prowler/pull/10918)
-- Compliance page now renders frameworks for the auto-selected scan on first load instead of showing "no compliance data available" until the user re-selects the same scan
+- Compliance page export menu now scales on small screens, and frameworks load on first render without requiring a manual scan re-selection [(#10918)](https://github.com/prowler-cloud/prowler/pull/10918)
 
 ---
 
