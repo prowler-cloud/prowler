@@ -6,6 +6,23 @@ class network_flow_log_captured_sent(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, network_watchers in network_client.network_watchers.items():
+            if network_client.resource_groups:
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
+                report.subscription = subscription
+                report.resource_name = subscription
+                report.resource_id = (
+                    f"/subscriptions/{network_client.subscriptions[subscription]}"
+                )
+                report.location = "global"
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Subscription '{subscription}': flow-log checks require "
+                    f"subscription-wide Network Watcher access. Re-run without "
+                    f"--azure-resource-group, to evaluate flow log coverage."
+                )
+                findings.append(report)
+                continue
+
             for network_watcher in network_watchers:
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=network_watcher

@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from azure.mgmt.sql.models import (
     EncryptionProtector,
@@ -16,6 +16,8 @@ from prowler.providers.azure.services.sqlserver.sqlserver_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -244,4 +246,101 @@ class Test_SqlServer_Service:
                 0
             ].security_alert_policies.state
             == "Disabled"
+        )
+
+
+class Test_SQLServer_get_sql_servers:
+    def test_get_sql_servers_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.servers.list.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.sqlserver.sqlserver_service.SQLServer._get_sql_servers",
+            return_value={},
+        ):
+            sql_server = SQLServer(set_mocked_azure_provider())
+
+        sql_server.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        sql_server.resource_groups = None
+
+        result = sql_server._get_sql_servers()
+
+        mock_client.servers.list.assert_called_once()
+        mock_client.servers.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_sql_servers_with_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.servers.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.sqlserver.sqlserver_service.SQLServer._get_sql_servers",
+            return_value={},
+        ):
+            sql_server = SQLServer(set_mocked_azure_provider())
+
+        sql_server.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        sql_server.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = sql_server._get_sql_servers()
+
+        mock_client.servers.list_by_resource_group.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.servers.list.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_sql_servers_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+
+        with patch(
+            "prowler.providers.azure.services.sqlserver.sqlserver_service.SQLServer._get_sql_servers",
+            return_value={},
+        ):
+            sql_server = SQLServer(set_mocked_azure_provider())
+
+        sql_server.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        sql_server.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        result = sql_server._get_sql_servers()
+
+        mock_client.servers.list_by_resource_group.assert_not_called()
+        mock_client.servers.list.assert_not_called()
+        assert result[AZURE_SUBSCRIPTION_ID] == []
+
+    def test_get_sql_servers_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.servers.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.sqlserver.sqlserver_service.SQLServer._get_sql_servers",
+            return_value={},
+        ):
+            sql_server = SQLServer(set_mocked_azure_provider())
+
+        sql_server.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        sql_server.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = sql_server._get_sql_servers()
+
+        assert mock_client.servers.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_sql_servers_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.servers.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.sqlserver.sqlserver_service.SQLServer._get_sql_servers",
+            return_value={},
+        ):
+            sql_server = SQLServer(set_mocked_azure_provider())
+
+        sql_server.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        sql_server.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        sql_server._get_sql_servers()
+
+        mock_client.servers.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
         )

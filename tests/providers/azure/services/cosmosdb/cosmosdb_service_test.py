@@ -1,8 +1,10 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.azure.services.cosmosdb.cosmosdb_service import Account, CosmosDB
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -133,3 +135,114 @@ class Test_CosmosDB_Service_None_Handling:
             == "Microsoft.Network/privateEndpoints"
         )
         assert account.disable_local_auth is True
+
+
+class Test_CosmosDB_get_accounts:
+    def test_get_accounts_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.database_accounts.list.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.cosmosdb.cosmosdb_service.CosmosDB._get_accounts",
+            return_value={},
+        ):
+            cosmosdb = CosmosDB(set_mocked_azure_provider())
+
+        cosmosdb.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        cosmosdb.resource_groups = None
+
+        result = cosmosdb._get_accounts()
+
+        mock_client.database_accounts.list.assert_called_once()
+        mock_client.database_accounts.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_accounts_with_resource_group(self):
+        mock_account = MagicMock()
+        mock_account.id = "account-id"
+        mock_account.name = "my-cosmos"
+        mock_account.kind = "GlobalDocumentDB"
+        mock_account.location = "eastus"
+        mock_account.type = "Microsoft.DocumentDB/databaseAccounts"
+        mock_account.tags = {}
+        mock_account.is_virtual_network_filter_enabled = False
+        mock_account.private_endpoint_connections = []
+        mock_account.disable_local_auth = False
+
+        mock_client = MagicMock()
+        mock_client.database_accounts.list_by_resource_group.return_value = [
+            mock_account
+        ]
+
+        with patch(
+            "prowler.providers.azure.services.cosmosdb.cosmosdb_service.CosmosDB._get_accounts",
+            return_value={},
+        ):
+            cosmosdb = CosmosDB(set_mocked_azure_provider())
+
+        cosmosdb.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        cosmosdb.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = cosmosdb._get_accounts()
+
+        mock_client.database_accounts.list_by_resource_group.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.database_accounts.list.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+        assert len(result[AZURE_SUBSCRIPTION_ID]) == 1
+
+    def test_get_accounts_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+
+        with patch(
+            "prowler.providers.azure.services.cosmosdb.cosmosdb_service.CosmosDB._get_accounts",
+            return_value={},
+        ):
+            cosmosdb = CosmosDB(set_mocked_azure_provider())
+
+        cosmosdb.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        cosmosdb.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        result = cosmosdb._get_accounts()
+
+        mock_client.database_accounts.list_by_resource_group.assert_not_called()
+        mock_client.database_accounts.list.assert_not_called()
+        assert result[AZURE_SUBSCRIPTION_ID] == []
+
+    def test_get_accounts_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.database_accounts.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.cosmosdb.cosmosdb_service.CosmosDB._get_accounts",
+            return_value={},
+        ):
+            cosmosdb = CosmosDB(set_mocked_azure_provider())
+
+        cosmosdb.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        cosmosdb.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = cosmosdb._get_accounts()
+
+        assert mock_client.database_accounts.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_accounts_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.database_accounts.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.cosmosdb.cosmosdb_service.CosmosDB._get_accounts",
+            return_value={},
+        ):
+            cosmosdb = CosmosDB(set_mocked_azure_provider())
+
+        cosmosdb.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        cosmosdb.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        cosmosdb._get_accounts()
+
+        mock_client.database_accounts.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )

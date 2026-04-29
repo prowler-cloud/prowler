@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.azure.services.databricks.databricks_service import (
     Databricks,
@@ -7,6 +7,8 @@ from prowler.providers.azure.services.databricks.databricks_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -90,3 +92,121 @@ class Test_Databricks_Service_No_Encryption:
         assert workspace.location == "eastus"
         assert workspace.custom_managed_vnet_id == "test-vnet-id"
         assert workspace.managed_disk_encryption is None
+
+
+class Test_Databricks_get_workspaces:
+    def test_get_workspaces_no_resource_groups(self):
+        mock_workspace = MagicMock()
+        mock_workspace.id = "ws-id-1"
+        mock_workspace.name = "my-workspace"
+        mock_workspace.location = "eastus"
+        mock_workspace.parameters = None
+        mock_workspace.encryption = None
+
+        mock_client = MagicMock()
+        mock_client.workspaces = MagicMock()
+        mock_client.workspaces.list_by_subscription.return_value = [mock_workspace]
+
+        with patch(
+            "prowler.providers.azure.services.databricks.databricks_service.Databricks._get_workspaces",
+            return_value={},
+        ):
+            databricks = Databricks(set_mocked_azure_provider())
+
+        databricks.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        databricks.resource_groups = None
+
+        result = databricks._get_workspaces()
+
+        mock_client.workspaces.list_by_subscription.assert_called_once()
+        mock_client.workspaces.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+        assert "ws-id-1" in result[AZURE_SUBSCRIPTION_ID]
+
+    def test_get_workspaces_with_resource_group(self):
+        mock_workspace = MagicMock()
+        mock_workspace.id = "ws-id-1"
+        mock_workspace.name = "my-workspace"
+        mock_workspace.location = "eastus"
+        mock_workspace.parameters = None
+        mock_workspace.encryption = None
+
+        mock_client = MagicMock()
+        mock_client.workspaces = MagicMock()
+        mock_client.workspaces.list_by_resource_group.return_value = [mock_workspace]
+
+        with patch(
+            "prowler.providers.azure.services.databricks.databricks_service.Databricks._get_workspaces",
+            return_value={},
+        ):
+            databricks = Databricks(set_mocked_azure_provider())
+
+        databricks.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        databricks.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = databricks._get_workspaces()
+
+        mock_client.workspaces.list_by_resource_group.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.workspaces.list_by_subscription.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+        assert "ws-id-1" in result[AZURE_SUBSCRIPTION_ID]
+
+    def test_get_workspaces_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+        mock_client.workspaces = MagicMock()
+
+        with patch(
+            "prowler.providers.azure.services.databricks.databricks_service.Databricks._get_workspaces",
+            return_value={},
+        ):
+            databricks = Databricks(set_mocked_azure_provider())
+
+        databricks.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        databricks.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        result = databricks._get_workspaces()
+
+        mock_client.workspaces.list_by_resource_group.assert_not_called()
+        mock_client.workspaces.list_by_subscription.assert_not_called()
+        assert result[AZURE_SUBSCRIPTION_ID] == {}
+
+    def test_get_workspaces_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.workspaces = MagicMock()
+        mock_client.workspaces.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.databricks.databricks_service.Databricks._get_workspaces",
+            return_value={},
+        ):
+            databricks = Databricks(set_mocked_azure_provider())
+
+        databricks.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        databricks.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = databricks._get_workspaces()
+
+        assert mock_client.workspaces.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_workspaces_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.workspaces = MagicMock()
+        mock_client.workspaces.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.databricks.databricks_service.Databricks._get_workspaces",
+            return_value={},
+        ):
+            databricks = Databricks(set_mocked_azure_provider())
+
+        databricks.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        databricks.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        databricks._get_workspaces()
+
+        mock_client.workspaces.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )

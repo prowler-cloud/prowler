@@ -6,6 +6,7 @@ from azure.mgmt.network.models import FlowLog, RetentionPolicyParameters
 from prowler.providers.azure.services.network.network_service import NetworkWatcher
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -13,6 +14,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_network_flow_log_more_than_90_days:
     def test_no_network_watchers(self):
         network_client = mock.MagicMock
+        network_client.resource_groups = None
         network_client.network_watchers = {}
 
         with (
@@ -39,6 +41,7 @@ class Test_network_flow_log_more_than_90_days:
 
     def test_network_network_watchers_no_flow_logs(self):
         network_client = mock.MagicMock
+        network_client.resource_groups = None
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -86,6 +89,7 @@ class Test_network_flow_log_more_than_90_days:
 
     def test_network_network_watchers_flow_logs_disabled(self):
         network_client = mock.MagicMock
+        network_client.resource_groups = None
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -138,6 +142,7 @@ class Test_network_flow_log_more_than_90_days:
 
     def test_network_network_watchers_flow_logs_retention_days_80(self):
         network_client = mock.MagicMock
+        network_client.resource_groups = None
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -190,6 +195,7 @@ class Test_network_flow_log_more_than_90_days:
 
     def test_network_network_watchers_flow_logs_retention_days_0(self):
         network_client = mock.MagicMock
+        network_client.resource_groups = None
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -242,6 +248,7 @@ class Test_network_flow_log_more_than_90_days:
 
     def test_network_network_watchers_flow_logs_well_configured(self):
         network_client = mock.MagicMock
+        network_client.resource_groups = None
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -291,3 +298,39 @@ class Test_network_flow_log_more_than_90_days:
             assert result[0].resource_name == network_watcher_name
             assert result[0].resource_id == network_watcher_id
             assert result[0].location == "location"
+
+    def test_network_flow_log_more_than_90_days_returns_manual_when_resource_groups_set(
+        self,
+    ):
+        network_client_mock = mock.MagicMock
+        network_client_mock.subscriptions = {
+            AZURE_SUBSCRIPTION_NAME: AZURE_SUBSCRIPTION_ID
+        }
+        network_client_mock.network_watchers = {AZURE_SUBSCRIPTION_NAME: []}
+        network_client_mock.resource_groups = {AZURE_SUBSCRIPTION_NAME: ["rg"]}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+                new=network_client_mock,
+            ) as service_client,
+            mock.patch(
+                "prowler.providers.azure.services.network.network_client.network_client",
+                new=service_client,
+            ),
+        ):
+            from importlib import reload
+
+            import prowler.providers.azure.services.network.network_flow_log_more_than_90_days.network_flow_log_more_than_90_days as mod
+
+            reload(mod)
+            check = mod.network_flow_log_more_than_90_days()
+            result = check.execute()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].subscription == AZURE_SUBSCRIPTION_NAME

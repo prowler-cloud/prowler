@@ -11,6 +11,17 @@ class monitor_alert_create_update_nsg(Check):
             subscription_name,
             activity_log_alerts,
         ) in monitor_client.alert_rules.items():
+            if monitor_client.resource_groups:
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
+                report.subscription = subscription_name
+                report.resource_name = subscription_name
+                report.resource_id = (
+                    f"/subscriptions/{monitor_client.subscriptions[subscription_name]}"
+                )
+                report.status = "MANUAL"
+                report.status_extended = f"Subscription '{subscription_name}': alert-rule checks are subscription-scoped and cannot be accurately evaluated with resource group filtering enabled. Re-run without --azure-resource-group to get accurate results."
+                findings.append(report)
+                continue
             for alert_rule in activity_log_alerts:
                 if check_alert_rule(
                     alert_rule, "Microsoft.Network/networkSecurityGroups/write"

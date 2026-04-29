@@ -6,10 +6,11 @@ from prowler.providers.azure.services.aisearch.aisearch_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
-RESOURCE_GROUP = "rg"
 AISEARCH_SERVICE_ID = f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/{RESOURCE_GROUP}/providers/Microsoft.Search/searchServices/search1"
 
 
@@ -140,3 +141,42 @@ class Test_AISearch_Service_get_aisearch_services:
         mock_client.services.list_by_resource_group.assert_not_called()
         mock_client.services.list_by_subscription.assert_not_called()
         assert result[AZURE_SUBSCRIPTION_ID] == {}
+
+    def test_get_aisearch_services_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.services = MagicMock()
+        mock_client.services.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.aisearch.aisearch_service.AISearch._get_aisearch_services",
+            return_value={},
+        ):
+            aisearch = AISearch(set_mocked_azure_provider())
+
+        aisearch.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        aisearch.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = aisearch._get_aisearch_services()
+
+        assert mock_client.services.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_aisearch_services_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.services = MagicMock()
+        mock_client.services.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.aisearch.aisearch_service.AISearch._get_aisearch_services",
+            return_value={},
+        ):
+            aisearch = AISearch(set_mocked_azure_provider())
+
+        aisearch.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        aisearch.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        aisearch._get_aisearch_services()
+
+        mock_client.services.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )

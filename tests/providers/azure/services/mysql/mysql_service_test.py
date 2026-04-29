@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.azure.services.mysql.mysql_service import (
     Configuration,
@@ -7,6 +7,8 @@ from prowler.providers.azure.services.mysql.mysql_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -117,3 +119,131 @@ class Test_MySQL_Service:
         assert configurations["test"].resource_id == "/subscriptions/resource_id"
         assert configurations["test"].description == "description"
         assert configurations["test"].value == "value"
+
+
+class Test_MySQL_get_flexible_servers:
+    def test_get_flexible_servers_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.servers.list.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_flexible_servers",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_configurations",
+                return_value={},
+            ),
+        ):
+            mysql = MySQL(set_mocked_azure_provider())
+
+        mysql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        mysql.resource_groups = None
+
+        result = mysql._get_flexible_servers()
+
+        mock_client.servers.list.assert_called_once()
+        mock_client.servers.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_flexible_servers_with_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.servers.list_by_resource_group.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_flexible_servers",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_configurations",
+                return_value={},
+            ),
+        ):
+            mysql = MySQL(set_mocked_azure_provider())
+
+        mysql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        mysql.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = mysql._get_flexible_servers()
+
+        # MySQL uses positional arg, not keyword
+        mock_client.servers.list_by_resource_group.assert_called_once_with(
+            RESOURCE_GROUP
+        )
+        mock_client.servers.list.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_flexible_servers_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_flexible_servers",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_configurations",
+                return_value={},
+            ),
+        ):
+            mysql = MySQL(set_mocked_azure_provider())
+
+        mysql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        mysql.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        result = mysql._get_flexible_servers()
+
+        mock_client.servers.list_by_resource_group.assert_not_called()
+        mock_client.servers.list.assert_not_called()
+        # MySQL uses `continue` when empty RGs, so the subscription key is not added
+        assert AZURE_SUBSCRIPTION_ID not in result
+
+    def test_get_flexible_servers_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.servers.list_by_resource_group.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_flexible_servers",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_configurations",
+                return_value={},
+            ),
+        ):
+            mysql = MySQL(set_mocked_azure_provider())
+
+        mysql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        mysql.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = mysql._get_flexible_servers()
+
+        assert mock_client.servers.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_flexible_servers_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.servers.list_by_resource_group.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_flexible_servers",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.mysql.mysql_service.MySQL._get_configurations",
+                return_value={},
+            ),
+        ):
+            mysql = MySQL(set_mocked_azure_provider())
+
+        mysql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        mysql.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        mysql._get_flexible_servers()
+
+        # MySQL uses positional arg, not keyword
+        mock_client.servers.list_by_resource_group.assert_called_once_with("RG")

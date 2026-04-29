@@ -14,7 +14,11 @@ from prowler.providers.azure.services.entra.entra_service import (
     SecurityDefault,
     User,
 )
-from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provider
+from tests.providers.azure.azure_fixtures import (
+    DOMAIN,
+    RESOURCE_GROUP,
+    set_mocked_azure_provider,
+)
 
 
 async def mock_entra_get_users(_):
@@ -224,6 +228,87 @@ class Test_Entra_Service:
             ]
             == []
         )
+
+
+class Test_Entra_resource_groups_skipped:
+    def test_get_users_returns_empty_when_resource_groups_set(self):
+        """When resource_groups is set, _get_users() should return {} immediately."""
+        with (
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_users",
+                new=mock_entra_get_users,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_authorization_policy",
+                new=mock_entra_get_authorization_policy,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_group_settings",
+                new=mock_entra_get_group_settings,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_security_default",
+                new=mock_entra_get_security_default,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_named_locations",
+                new=mock_entra_get_named_locations,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_directory_roles",
+                new=mock_entra_get_directory_roles,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_conditional_access_policy",
+                new=mock_entra_get_conditional_access_policy,
+            ),
+        ):
+            entra = Entra(set_mocked_azure_provider())
+
+        # Directly test the _get_users async method when resource_groups is set
+        entra.resource_groups = {DOMAIN: [RESOURCE_GROUP]}
+        result = asyncio.run(entra._get_users())
+        assert result == {}
+
+    def test_get_users_returns_data_when_no_resource_groups(self):
+        """When resource_groups is None, _get_users() should proceed normally."""
+        with (
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_users",
+                new=mock_entra_get_users,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_authorization_policy",
+                new=mock_entra_get_authorization_policy,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_group_settings",
+                new=mock_entra_get_group_settings,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_security_default",
+                new=mock_entra_get_security_default,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_named_locations",
+                new=mock_entra_get_named_locations,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_directory_roles",
+                new=mock_entra_get_directory_roles,
+            ),
+            patch(
+                "prowler.providers.azure.services.entra.entra_service.Entra._get_conditional_access_policy",
+                new=mock_entra_get_conditional_access_policy,
+            ),
+        ):
+            entra = Entra(set_mocked_azure_provider())
+
+        entra.resource_groups = None
+        # Verify the mock returns data when no resource groups are set
+        result = asyncio.run(mock_entra_get_users(entra))
+        assert DOMAIN in result
+        assert "user-1@tenant1.es" in result[DOMAIN]
 
 
 def test_azure_entra__get_users_handles_pagination():

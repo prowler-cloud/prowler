@@ -8,6 +8,8 @@ from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 
 AZURE_SUBSCRIPTION_ID = str(uuid4())
 AZURE_SUBSCRIPTION_NAME = "Subscription Name"
+RESOURCE_GROUP = "rg"
+RESOURCE_GROUP_LIST = [RESOURCE_GROUP, "rg2"]
 
 # Azure Identity
 IDENTITY_ID = "00000000-0000-0000-0000-000000000000"

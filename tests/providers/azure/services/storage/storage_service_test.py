@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.azure.services.storage.storage_service import (
     Account,
@@ -11,6 +11,8 @@ from prowler.providers.azure.services.storage.storage_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -382,3 +384,155 @@ class Test_Storage_Service_Retention_Policy_None_Handling:
             is False
         )
         assert account.file_service_properties.share_delete_retention_policy.days == 0
+
+
+class Test_Storage_get_storage_accounts:
+    def test_get_storage_accounts_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.storage_accounts = MagicMock()
+        mock_client.storage_accounts.list.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_storage_accounts",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_blob_properties",
+                return_value=None,
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_file_share_properties",
+                return_value=None,
+            ),
+        ):
+            storage = Storage(set_mocked_azure_provider())
+
+        storage.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        storage.resource_groups = None
+
+        result = storage._get_storage_accounts()
+
+        mock_client.storage_accounts.list.assert_called_once()
+        mock_client.storage_accounts.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_storage_accounts_with_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.storage_accounts = MagicMock()
+        mock_client.storage_accounts.list_by_resource_group.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_storage_accounts",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_blob_properties",
+                return_value=None,
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_file_share_properties",
+                return_value=None,
+            ),
+        ):
+            storage = Storage(set_mocked_azure_provider())
+
+        storage.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        storage.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = storage._get_storage_accounts()
+
+        mock_client.storage_accounts.list_by_resource_group.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.storage_accounts.list.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_storage_accounts_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+        mock_client.storage_accounts = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_storage_accounts",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_blob_properties",
+                return_value=None,
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_file_share_properties",
+                return_value=None,
+            ),
+        ):
+            storage = Storage(set_mocked_azure_provider())
+
+        storage.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        storage.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        result = storage._get_storage_accounts()
+
+        mock_client.storage_accounts.list_by_resource_group.assert_not_called()
+        mock_client.storage_accounts.list.assert_not_called()
+        assert result[AZURE_SUBSCRIPTION_ID] == []
+
+    def test_get_storage_accounts_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.storage_accounts = MagicMock()
+        mock_client.storage_accounts.list_by_resource_group.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_storage_accounts",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_blob_properties",
+                return_value=None,
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_file_share_properties",
+                return_value=None,
+            ),
+        ):
+            storage = Storage(set_mocked_azure_provider())
+
+        storage.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        storage.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = storage._get_storage_accounts()
+
+        assert mock_client.storage_accounts.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_storage_accounts_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.storage_accounts = MagicMock()
+        mock_client.storage_accounts.list_by_resource_group.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_storage_accounts",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_blob_properties",
+                return_value=None,
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage._get_file_share_properties",
+                return_value=None,
+            ),
+        ):
+            storage = Storage(set_mocked_azure_provider())
+
+        storage.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        storage.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        storage._get_storage_accounts()
+
+        mock_client.storage_accounts.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )

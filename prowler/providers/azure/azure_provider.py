@@ -1098,10 +1098,10 @@ class AzureProvider(Provider):
         for display_name, subscription_id in self._identity.subscriptions.items():
             rg_client = ResourceManagementClient(credentials, subscription_id)
 
-            existing_rgs = {rg.name for rg in rg_client.resource_groups.list()}
+            existing_rgs = {rg.name.lower() for rg in rg_client.resource_groups.list()}
 
             for rg in resource_groups:
-                if rg in existing_rgs:
+                if rg.lower() in existing_rgs:
                     rg_map[display_name].append(rg)
 
         for rg in resource_groups:

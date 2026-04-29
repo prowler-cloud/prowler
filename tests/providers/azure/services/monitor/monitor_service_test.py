@@ -1,5 +1,5 @@
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from azure.mgmt.monitor.models import AlertRuleAnyOfOrLeafCondition
 
@@ -12,6 +12,8 @@ from prowler.providers.azure.services.monitor.monitor_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -174,3 +176,135 @@ class Test_Monitor_Service:
         assert not check_alert_rule(
             alert_rule, "Microsoft.Authorization/policyAssignments/write"
         )
+
+
+class Test_Monitor_get_alert_rules:
+    def test_get_alert_rules_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.activity_log_alerts.list_by_subscription_id.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor._get_diagnostics_settings",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor.get_alert_rules",
+                return_value={},
+            ),
+        ):
+            monitor = Monitor(set_mocked_azure_provider())
+
+        monitor.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        monitor.resource_groups = None
+
+        result = monitor.get_alert_rules()
+
+        mock_client.activity_log_alerts.list_by_subscription_id.assert_called_once()
+        mock_client.activity_log_alerts.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_alert_rules_with_resource_group_still_uses_subscription_scope(self):
+        mock_client = MagicMock()
+        mock_client.activity_log_alerts.list_by_subscription_id.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor._get_diagnostics_settings",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor.get_alert_rules",
+                return_value={},
+            ),
+        ):
+            monitor = Monitor(set_mocked_azure_provider())
+
+        monitor.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        monitor.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = monitor.get_alert_rules()
+
+        # Alert rules are subscription-scoped; RG filter is intentionally ignored here.
+        # The checks themselves emit MANUAL when resource_groups is set.
+        mock_client.activity_log_alerts.list_by_subscription_id.assert_called_once()
+        mock_client.activity_log_alerts.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+
+class Test_Monitor_get_diagnostics_settings_skipped:
+    def test_get_diagnostics_settings_skipped_with_resource_groups(self):
+        mock_client = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor._get_diagnostics_settings",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor.get_alert_rules",
+                return_value={},
+            ),
+        ):
+            monitor = Monitor(set_mocked_azure_provider())
+
+        monitor.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        monitor.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = monitor._get_diagnostics_settings()
+
+        # When resource_groups is set, the method continues (skips) without calling any SDK method
+        mock_client.diagnostic_settings.list.assert_not_called()
+        # Result will be empty since the loop continues past all subscriptions
+        assert result == {}
+
+    def test_get_diagnostics_settings_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.diagnostic_settings.list.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor._get_diagnostics_settings",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor.get_alert_rules",
+                return_value={},
+            ),
+        ):
+            monitor = Monitor(set_mocked_azure_provider())
+
+        monitor.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        monitor.subscriptions = {AZURE_SUBSCRIPTION_ID: "fake-sub-id"}
+        monitor.resource_groups = None
+
+        result = monitor._get_diagnostics_settings()
+
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_alert_rules_always_uses_subscription_scope_regardless_of_rg_filter(
+        self,
+    ):
+        mock_client = MagicMock()
+        mock_client.activity_log_alerts.list_by_subscription_id.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor._get_diagnostics_settings",
+                return_value={},
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor.get_alert_rules",
+                return_value={},
+            ),
+        ):
+            monitor = Monitor(set_mocked_azure_provider())
+
+        monitor.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        monitor.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = monitor.get_alert_rules()
+
+        mock_client.activity_log_alerts.list_by_subscription_id.assert_called_once()
+        mock_client.activity_log_alerts.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result

@@ -42,9 +42,5 @@ When `--azure-resource-group` is provided, Prowler validates each specified reso
 - If **none** of the provided resource groups are found across any subscription, Prowler logs a warning and no resource group scoped checks will run.
 
 <Warning>
-Resource group names are case-sensitive. Ensure the names passed to `--azure-resource-group` exactly match those defined in Azure.
-</Warning>
-
-<Warning>
 Even if no resource groups are found, passing the --azure-resource-group flag disables subscription-only scoped scans.
 </Warning>
