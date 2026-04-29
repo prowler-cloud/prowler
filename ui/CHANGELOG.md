@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Compliance cards: thicker score progress bar for better visibility
+
+---
+
 ## [1.25.1] (Prowler v5.25.1)
 
 ### 🐞 Fixed

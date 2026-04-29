@@ -154,7 +154,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
               <Progress
                 aria-label="Compliance score"
                 value={ratingPercentage}
-                className="border-border-neutral-secondary h-2.5 border drop-shadow-sm"
+                className="border-border-neutral-secondary h-3 border drop-shadow-sm"
                 indicatorClassName={getScoreIndicatorClass(
                   getRatingVariant(ratingPercentage),
                 )}
