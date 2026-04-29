@@ -4185,6 +4185,7 @@ class FindingGroupSerializer(BaseSerializerV1):
     check_description = serializers.CharField(required=False, allow_null=True)
     severity = serializers.CharField()
     status = serializers.CharField()
+    muted = serializers.BooleanField()
     impacted_providers = serializers.ListField(
         child=serializers.CharField(), required=False
     )
@@ -4192,9 +4193,25 @@ class FindingGroupSerializer(BaseSerializerV1):
     resources_total = serializers.IntegerField()
     pass_count = serializers.IntegerField()
     fail_count = serializers.IntegerField()
+    manual_count = serializers.IntegerField()
+    pass_muted_count = serializers.IntegerField()
+    fail_muted_count = serializers.IntegerField()
+    manual_muted_count = serializers.IntegerField()
     muted_count = serializers.IntegerField()
     new_count = serializers.IntegerField()
     changed_count = serializers.IntegerField()
+    new_fail_count = serializers.IntegerField()
+    new_fail_muted_count = serializers.IntegerField()
+    new_pass_count = serializers.IntegerField()
+    new_pass_muted_count = serializers.IntegerField()
+    new_manual_count = serializers.IntegerField()
+    new_manual_muted_count = serializers.IntegerField()
+    changed_fail_count = serializers.IntegerField()
+    changed_fail_muted_count = serializers.IntegerField()
+    changed_pass_count = serializers.IntegerField()
+    changed_pass_muted_count = serializers.IntegerField()
+    changed_manual_count = serializers.IntegerField()
+    changed_manual_muted_count = serializers.IntegerField()
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     failing_since = serializers.DateTimeField(required=False, allow_null=True)
@@ -4208,14 +4225,17 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     Serializer for Finding Group Resources - resources within a finding group.
 
     Returns individual resources with their current status, severity,
-    and timing information.
+    and timing information. Orphan findings (without any resource) expose the
+    finding id as `id` so the row stays identifiable in the UI.
     """
 
-    id = serializers.UUIDField(source="resource_id")
+    id = serializers.UUIDField(source="row_id")
     resource = serializers.SerializerMethodField()
     provider = serializers.SerializerMethodField()
+    finding_id = serializers.UUIDField()
     status = serializers.CharField()
     severity = serializers.CharField()
+    muted = serializers.BooleanField()
     delta = serializers.CharField(required=False, allow_null=True)
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)

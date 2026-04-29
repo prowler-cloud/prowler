@@ -12,6 +12,24 @@
     "dark": "/images/prowler-logo-white.png",
     "light": "/images/prowler-logo-black.png"
   },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      {
+        "title": "Request a feature",
+        "description": "Open a feature request on GitHub",
+        "icon": "plus",
+        "href": "https://github.com/prowler-cloud/prowler/issues/new?template=feature-request.yml"
+      },
+      {
+        "title": "Report an issue",
+        "description": "Open a bug report on GitHub",
+        "icon": "bug",
+        "href": "https://github.com/prowler-cloud/prowler/issues/new?template=bug_report.yml"
+      }
+    ]
+  },
   "navigation": {
     "tabs": [
       {
@@ -98,6 +116,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
+              "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-import-findings",
               {
@@ -132,6 +151,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-attack-paths",
+              "user-guide/tutorials/prowler-app-finding-groups",
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
@@ -142,6 +162,13 @@
                   "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
               }
+            ]
+          },
+          {
+            "group": "CI/CD",
+            "pages": [
+              "user-guide/tutorials/prowler-app-github-action",
+              "user-guide/cookbooks/cicd-pipeline"
             ]
           },
           {

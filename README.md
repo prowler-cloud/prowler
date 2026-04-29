@@ -246,14 +246,7 @@ Some pre-commit hooks require tools installed on your system:
 
 1. **Install [TruffleHog](https://github.com/trufflesecurity/trufflehog#install)** (secret scanning) — see the [official installation options](https://github.com/trufflesecurity/trufflehog#install).
 
-2. **Install [Safety](https://github.com/pyupio/safety)** (dependency vulnerability checking):
-
-    ```console
-    # Requires a Python environment (e.g. via pyenv)
-    pip install safety
-    ```
-
-3. **Install [Hadolint](https://github.com/hadolint/hadolint#install)** (Dockerfile linting) — see the [official installation options](https://github.com/hadolint/hadolint#install).
+2. **Install [Hadolint](https://github.com/hadolint/hadolint#install)** (Dockerfile linting) — see the [official installation options](https://github.com/hadolint/hadolint#install).
 
 ## Prowler CLI
 ### Pip package
@@ -306,6 +299,36 @@ python prowler-cli.py -v
 >
 > If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment.
 > For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
+
+# 🛡️ GitHub Action
+
+The official **Prowler GitHub Action** runs Prowler scans in your GitHub workflows using the official [`prowlercloud/prowler`](https://hub.docker.com/r/prowlercloud/prowler) Docker image. Scans run on any [supported provider](https://docs.prowler.com/user-guide/providers/), with optional [`--push-to-cloud`](https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings) to send findings to Prowler Cloud and optional SARIF upload so findings show up in the repo's **Security → Code scanning** tab and as inline PR annotations.
+
+```yaml
+name: Prowler IaC Scan
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  prowler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prowler-cloud/prowler@5.25
+        with:
+          provider: iac
+          output-formats: sarif json-ocsf
+          upload-sarif: true
+          flags: --severity critical high
+```
+
+Full configuration, per-provider authentication, and SARIF examples: [Prowler GitHub Action tutorial](docs/user-guide/tutorials/prowler-app-github-action.mdx). Marketplace listing: [Prowler Security Scan](https://github.com/marketplace/actions/prowler-security-scan).
 
 # ✏️ High level architecture
 

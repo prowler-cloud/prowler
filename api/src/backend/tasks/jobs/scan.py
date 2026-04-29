@@ -10,16 +10,29 @@ from typing import Any
 
 import sentry_sdk
 from celery.utils.log import get_task_logger
+from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
 from django.db import IntegrityError, OperationalError
-from django.db.models import Case, Count, IntegerField, Max, Min, Prefetch, Q, Sum, When
+from django.db.models import (
+    Case,
+    Count,
+    Exists,
+    IntegerField,
+    Max,
+    Min,
+    OuterRef,
+    Prefetch,
+    Q,
+    Sum,
+    When,
+)
 from django.utils import timezone as django_timezone
 from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
     COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
 )
-from tasks.utils import CustomEncoder
+from tasks.utils import CustomEncoder, batched
 
 from api.compliance import PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
 from api.constants import SEVERITY_ORDER
@@ -752,11 +765,19 @@ def _process_finding_micro_batch(
             )
 
         if mappings_to_create:
-            ResourceFindingMapping.objects.bulk_create(
+            created_mappings = ResourceFindingMapping.objects.bulk_create(
                 mappings_to_create,
                 batch_size=SCAN_DB_BATCH_SIZE,
                 ignore_conflicts=True,
+                unique_fields=["tenant_id", "resource_id", "finding_id"],
             )
+            inserted = sum(1 for m in created_mappings if m.pk)
+            if inserted != len(mappings_to_create):
+                logger.error(
+                    f"scan {scan_instance.id}: expected "
+                    f"{len(mappings_to_create)} ResourceFindingMapping rows, "
+                    f"inserted {inserted}. Rolling back micro-batch."
+                )
 
         # Update finding denormalized arrays
         findings_to_update = []
@@ -1189,8 +1210,39 @@ def aggregate_findings(tenant_id: str, scan_id: str):
                 muted_changed=agg["muted_changed"],
             )
             for agg in aggregation
+            if agg["resources__service"] is not None
+            and agg["resources__region"] is not None
         }
-        ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
+        # Upsert so re-runs (post-mute reaggregation) don't trip
+        # `unique_scan_summary`; race-safe under concurrent writers.
+        ScanSummary.objects.bulk_create(
+            scan_aggregations,
+            batch_size=3000,
+            update_conflicts=True,
+            unique_fields=[
+                "tenant",
+                "scan",
+                "check_id",
+                "service",
+                "severity",
+                "region",
+            ],
+            update_fields=[
+                "_pass",
+                "fail",
+                "muted",
+                "total",
+                "new",
+                "changed",
+                "unchanged",
+                "fail_new",
+                "fail_changed",
+                "pass_new",
+                "pass_changed",
+                "muted_new",
+                "muted_changed",
+            ],
+        )
 
 
 def _aggregate_findings_by_region(
@@ -1535,13 +1587,24 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
             )
         )
 
-    # Bulk create overview records
     if overview_objects:
         with rls_transaction(tenant_id):
-            AttackSurfaceOverview.objects.bulk_create(overview_objects, batch_size=500)
-            logger.info(
-                f"Created {len(overview_objects)} attack surface overview records for scan {scan_id}"
+            # Upsert so re-runs (post-mute reaggregation) don't trip
+            # `unique_attack_surface_per_scan`; race-safe under concurrent writers.
+            AttackSurfaceOverview.objects.bulk_create(
+                overview_objects,
+                batch_size=500,
+                update_conflicts=True,
+                unique_fields=["tenant_id", "scan_id", "attack_surface_type"],
+                update_fields=[
+                    "total_findings",
+                    "failed_findings",
+                    "muted_failed_findings",
+                ],
             )
+        logger.info(
+            f"Upserted {len(overview_objects)} attack surface overview records for scan {scan_id}"
+        )
     else:
         logger.info(f"No attack surface overview records created for scan {scan_id}")
 
@@ -1803,7 +1866,10 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
             output_field=IntegerField(),
         )
 
-        # Aggregate findings by check_id for this scan
+        # Aggregate findings by check_id for this scan.
+        # `pass_count`, `fail_count` and `manual_count` only count non-muted
+        # findings. Muted findings are tracked separately via the
+        # `*_muted_count` fields.
         aggregated = (
             Finding.objects.filter(
                 tenant_id=tenant_id,
@@ -1814,9 +1880,50 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                 severity_order=Max(severity_case),
                 pass_count=Count("id", filter=Q(status="PASS", muted=False)),
                 fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                manual_count=Count("id", filter=Q(status="MANUAL", muted=False)),
+                pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
+                fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
+                manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),
                 muted_count=Count("id", filter=Q(muted=True)),
+                nonmuted_count=Count("id", filter=Q(muted=False)),
                 new_count=Count("id", filter=Q(delta="new", muted=False)),
                 changed_count=Count("id", filter=Q(delta="changed", muted=False)),
+                new_fail_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=False)
+                ),
+                new_fail_muted_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=True)
+                ),
+                new_pass_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=False)
+                ),
+                new_pass_muted_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=True)
+                ),
+                new_manual_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=False)
+                ),
+                new_manual_muted_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=True)
+                ),
+                changed_fail_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=False)
+                ),
+                changed_fail_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=True)
+                ),
+                changed_pass_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=False)
+                ),
+                changed_pass_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=True)
+                ),
+                changed_manual_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=False)
+                ),
+                changed_manual_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=True)
+                ),
                 resources_total=Count("resources__id", distinct=True),
                 resources_fail=Count(
                     "resources__id",
@@ -1895,9 +2002,26 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                     severity_order=row["severity_order"] or 1,
                     pass_count=row["pass_count"],
                     fail_count=row["fail_count"],
+                    manual_count=row["manual_count"],
+                    pass_muted_count=row["pass_muted_count"],
+                    fail_muted_count=row["fail_muted_count"],
+                    manual_muted_count=row["manual_muted_count"],
                     muted_count=row["muted_count"],
+                    muted=row["nonmuted_count"] == 0,
                     new_count=row["new_count"],
                     changed_count=row["changed_count"],
+                    new_fail_count=row["new_fail_count"],
+                    new_fail_muted_count=row["new_fail_muted_count"],
+                    new_pass_count=row["new_pass_count"],
+                    new_pass_muted_count=row["new_pass_muted_count"],
+                    new_manual_count=row["new_manual_count"],
+                    new_manual_muted_count=row["new_manual_muted_count"],
+                    changed_fail_count=row["changed_fail_count"],
+                    changed_fail_muted_count=row["changed_fail_muted_count"],
+                    changed_pass_count=row["changed_pass_count"],
+                    changed_pass_muted_count=row["changed_pass_muted_count"],
+                    changed_manual_count=row["changed_manual_count"],
+                    changed_manual_muted_count=row["changed_manual_muted_count"],
                     resources_total=row["resources_total"],
                     resources_fail=row["resources_fail"],
                     first_seen_at=row["agg_first_seen_at"],
@@ -1917,9 +2041,26 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
                     "severity_order",
                     "pass_count",
                     "fail_count",
+                    "manual_count",
+                    "pass_muted_count",
+                    "fail_muted_count",
+                    "manual_muted_count",
                     "muted_count",
+                    "muted",
                     "new_count",
                     "changed_count",
+                    "new_fail_count",
+                    "new_fail_muted_count",
+                    "new_pass_count",
+                    "new_pass_muted_count",
+                    "new_manual_count",
+                    "new_manual_muted_count",
+                    "changed_fail_count",
+                    "changed_fail_muted_count",
+                    "changed_pass_count",
+                    "changed_pass_muted_count",
+                    "changed_manual_count",
+                    "changed_manual_muted_count",
                     "resources_total",
                     "resources_fail",
                     "first_seen_at",
@@ -1940,4 +2081,170 @@ def aggregate_finding_group_summaries(tenant_id: str, scan_id: str):
         "date": str(summary_timestamp.date()),
         "created": created_count,
         "updated": updated_count,
+    }
+
+
+def reset_ephemeral_resource_findings_count(tenant_id: str, scan_id: str) -> dict:
+    """Zero failed_findings_count for resources missing from a completed full-scope scan.
+
+    Resources that exist in the database for the scan's provider but were not
+    touched by this scan are treated as ephemeral. We keep their historical
+    findings, but reset the denormalized counter that drives the Resources page
+    sort so they stop ranking at the top.
+
+    Skipped (no-op) when:
+        - The scan is not in COMPLETED state.
+        - The scan ran with any scoping filter in scanner_args (partial scope).
+
+    Query design (must scale to 500k+ resources per provider):
+        Phase 1 — collect ephemeral IDs with one anti-join read.
+            Outer filter ``(tenant_id, provider_id, failed_findings_count > 0)``
+            uses ``resources_tenant_provider_idx``. The correlated
+            ``NOT EXISTS`` subquery hits the implicit unique index
+            ``(tenant_id, scan_id, resource_id)`` on ``ResourceScanSummary``.
+            ``NOT EXISTS`` (vs ``NOT IN``) is null-safe and lets the planner
+            choose between hash anti-join and indexed nested-loop anti-join.
+            ``.iterator(chunk_size=...)`` skips the queryset cache so memory
+            stays bounded while streaming UUIDs.
+        Phase 2 — UPDATE in fixed-size batches.
+            One large UPDATE would hold row-exclusive locks for seconds and
+            create a WAL spike. Batched UPDATEs by ``id__in`` (~1k rows each)
+            hit the primary key, keep each lock window ~50ms, bound WAL chunks,
+            and let other writers proceed between batches.
+            ``failed_findings_count__gt=0`` in the UPDATE is idempotent under
+            concurrent scans and skips no-op rewrites.
+        Reads use the primary DB, not the replica: ``ResourceScanSummary`` rows
+        were written by the same scan task that triggered this one, so replica
+        lag could falsely classify scanned resources as ephemeral.
+
+        Scope detection (``Scan.is_full_scope()``) derives the set of scoping
+        scanner_args from ``prowler.lib.scan.scan.Scan.__init__`` via
+        introspection, so the API can never drift from the SDK's filter
+        contract. Imported scans are also rejected by trigger — they may only
+        cover a partial slice of resources.
+    """
+    with rls_transaction(tenant_id):
+        scan = Scan.objects.filter(tenant_id=tenant_id, id=scan_id).first()
+
+    if scan is None:
+        logger.warning(f"Scan {scan_id} not found")
+        return {"status": "skipped", "reason": "scan not found"}
+
+    if scan.state != StateChoices.COMPLETED:
+        logger.info(f"Scan {scan_id} not completed; skipping ephemeral reset")
+        return {"status": "skipped", "reason": "scan not completed"}
+
+    if not scan.is_full_scope():
+        logger.info(
+            f"Scan {scan_id} ran with scoping filters; skipping ephemeral reset"
+        )
+        return {"status": "skipped", "reason": "partial scan scope"}
+
+    # Race protection: if a newer completed full-scope scan exists for this
+    # provider, our ResourceScanSummary set is stale relative to the resources'
+    # current failed_findings_count values (which the newer scan already
+    # refreshed). Wiping based on the older scan would zero counts the newer
+    # scan just set. Skip and let the newer scan's reset task do the work; if
+    # this task was delayed in the queue, that's the correct outcome.
+    # `completed_at__isnull=False` is required: Postgres orders NULL first in
+    # DESC, so a sibling COMPLETED scan with a missing completed_at would sort
+    # as "newest" and incorrectly cause us to skip.
+    with rls_transaction(tenant_id):
+        latest_full_scope_scan_id = (
+            Scan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=scan.provider_id,
+                state=StateChoices.COMPLETED,
+                completed_at__isnull=False,
+            )
+            .order_by("-completed_at", "-inserted_at")
+            .values_list("id", flat=True)
+            .first()
+        )
+    if latest_full_scope_scan_id != scan.id:
+        logger.info(
+            f"Scan {scan_id} is not the latest completed scan for provider "
+            f"{scan.provider_id}; skipping ephemeral reset"
+        )
+        return {"status": "skipped", "reason": "newer scan exists"}
+
+    # Defensive gate: ResourceScanSummary rows are written by perform_prowler_scan
+    # via best-effort bulk_create. If those writes failed silently (or the scan
+    # genuinely produced resources but no summaries were persisted), the
+    # ~Exists(in_scan) anti-join below would classify EVERY resource for this
+    # provider as ephemeral and zero their counts. Bail loudly instead.
+    with rls_transaction(tenant_id):
+        summaries_present = ResourceScanSummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).exists()
+    if scan.unique_resource_count > 0 and not summaries_present:
+        logger.error(
+            f"Scan {scan_id} reports {scan.unique_resource_count} unique "
+            f"resources but no ResourceScanSummary rows are persisted; "
+            f"skipping ephemeral reset to avoid wiping valid counts"
+        )
+        return {"status": "skipped", "reason": "summaries missing"}
+
+    # Stays on the primary DB intentionally. ResourceScanSummary rows are
+    # written by perform_prowler_scan in the same chain that triggered this
+    # task, so replica lag could return an empty/partial summary set; a stale
+    # read here would classify every Resource as ephemeral and wipe valid
+    # failed_findings_count values on the primary. Same rationale as
+    # update_provider_compliance_scores below in this module.
+    # Materializing the ID list (rather than streaming the iterator into
+    # batched UPDATEs) is intentional: it lets the UPDATEs run in their own
+    # short rls_transactions instead of one long transaction holding row locks
+    # on every batch. At 500k UUIDs the peak memory is ~40 MB — acceptable for
+    # a Celery worker — and is the better trade-off versus a multi-second
+    # write-lock window blocking concurrent scans.
+    with rls_transaction(tenant_id):
+        in_scan = ResourceScanSummary.objects.filter(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            resource_id=OuterRef("pk"),
+        )
+        ephemeral_ids = list(
+            Resource.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=scan.provider_id,
+                failed_findings_count__gt=0,
+            )
+            .filter(~Exists(in_scan))
+            .values_list("id", flat=True)
+            .iterator(chunk_size=DJANGO_FINDINGS_BATCH_SIZE)
+        )
+
+    if not ephemeral_ids:
+        logger.info(f"No ephemeral resources for scan {scan_id}")
+        return {
+            "status": "completed",
+            "scan_id": str(scan_id),
+            "provider_id": str(scan.provider_id),
+            "reset": 0,
+        }
+
+    total_updated = 0
+    for batch, _ in batched(ephemeral_ids, DJANGO_FINDINGS_BATCH_SIZE):
+        # batched() always yields a final tuple, which is empty when the input
+        # length is an exact multiple of the batch size. Skip it so we don't
+        # issue a no-op UPDATE ... WHERE id IN ().
+        if not batch:
+            continue
+        with rls_transaction(tenant_id):
+            total_updated += Resource.objects.filter(
+                tenant_id=tenant_id,
+                id__in=batch,
+                failed_findings_count__gt=0,
+            ).update(failed_findings_count=0)
+
+    logger.info(
+        f"Ephemeral resource reset for scan {scan_id}: "
+        f"{total_updated} resources zeroed for provider {scan.provider_id}"
+    )
+
+    return {
+        "status": "completed",
+        "scan_id": str(scan_id),
+        "provider_id": str(scan.provider_id),
+        "reset": total_updated,
     }

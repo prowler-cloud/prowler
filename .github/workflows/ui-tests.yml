@@ -18,6 +18,8 @@ env:
   UI_WORKING_DIR: ./ui
   NODE_VERSION: '24.13.0'
 
+permissions: {}
+
 jobs:
   ui-tests:
     runs-on: ubuntu-latest

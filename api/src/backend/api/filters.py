@@ -330,6 +330,7 @@ class MembershipFilter(FilterSet):
         model = Membership
         fields = {
             "tenant": ["exact"],
+            "user": ["exact"],
             "role": ["exact"],
             "date_joined": ["date", "gte", "lte"],
         }
@@ -1115,13 +1116,14 @@ class FindingGroupAggregatedComputedFilter(FilterSet):
     STATUS_CHOICES = (
         ("FAIL", "Fail"),
         ("PASS", "Pass"),
-        ("MUTED", "Muted"),
+        ("MANUAL", "Manual"),
     )
 
     status = ChoiceFilter(method="filter_status", choices=STATUS_CHOICES)
     status__in = CharInFilter(method="filter_status_in", lookup_expr="in")
     severity = ChoiceFilter(method="filter_severity", choices=SeverityChoices)
     severity__in = CharInFilter(method="filter_severity_in", lookup_expr="in")
+    muted = BooleanFilter(field_name="muted")
     include_muted = BooleanFilter(method="filter_include_muted")
 
     def filter_status(self, queryset, name, value):
@@ -1198,7 +1200,7 @@ class FindingGroupAggregatedComputedFilter(FilterSet):
         if value is True:
             return queryset
         # include_muted=false: exclude fully-muted groups
-        return queryset.exclude(fail_count=0, pass_count=0, muted_count__gt=0)
+        return queryset.exclude(muted=True)
 
 
 class ProviderSecretFilter(FilterSet):

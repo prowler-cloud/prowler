@@ -12,9 +12,31 @@ const { fetchMock, getAuthHeadersMock, handleApiResponseMock } = vi.hoisted(
   }),
 );
 
+// Real helpers/constants pulled from submodules that don't import server-only
+// code, so the mock factory stays free of top-level variable hoisting issues
+// and the vitest runtime doesn't choke on next-auth's `next/server` import.
+import {
+  includesMutedFindings,
+  splitCsvFilterValues,
+} from "@/lib/findings-filters";
+import {
+  composeSort,
+  FG_FAIL_FIRST,
+  FG_RECENT_LAST_SEEN,
+  FG_SEVERITY_HIGH_FIRST,
+  FINDING_GROUP_RESOURCES_DEFAULT_SORT,
+} from "@/lib/findings-sort";
+
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
   getAuthHeaders: getAuthHeadersMock,
+  composeSort,
+  FG_FAIL_FIRST,
+  FG_RECENT_LAST_SEEN,
+  FG_SEVERITY_HIGH_FIRST,
+  FINDING_GROUP_RESOURCES_DEFAULT_SORT,
+  includesMutedFindings,
+  splitCsvFilterValues,
 }));
 
 vi.mock("@/lib/provider-filters", () => ({
@@ -44,12 +66,86 @@ vi.mock("next/navigation", () => ({
 
 import {
   getFindingGroupResources,
+  getFindingGroups,
   getLatestFindingGroupResources,
+  getLatestFindingGroups,
 } from "./finding-groups";
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
+
+describe("getFindingGroups — default sort for muted and non-muted rows", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+  });
+
+  it("should prefer non-muted fail counters when include muted is not active", async () => {
+    // When
+    await getFindingGroups();
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-severity,-new_fail_count,-changed_fail_count,-fail_count,-last_seen_at",
+    );
+  });
+
+  it("should include muted counters when filter[muted]=include is active", async () => {
+    // When
+    await getFindingGroups({
+      filters: { "filter[muted]": "include" },
+    });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-severity,-new_fail_count,-changed_fail_count,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at",
+    );
+  });
+});
+
+describe("getLatestFindingGroups — default sort for muted and non-muted rows", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+  });
+
+  it("should prefer non-muted fail counters when include muted is not active", async () => {
+    // When
+    await getLatestFindingGroups();
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-severity,-new_fail_count,-changed_fail_count,-fail_count,-last_seen_at",
+    );
+  });
+
+  it("should include muted counters when filter[muted]=include is active", async () => {
+    // When
+    await getLatestFindingGroups({
+      filters: { "filter[muted]": "include" },
+    });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-severity,-new_fail_count,-changed_fail_count,-new_fail_muted_count,-changed_fail_muted_count,-fail_count,-fail_muted_count,-last_seen_at",
+    );
+  });
+});
 
 describe("getFindingGroupResources — SSRF path traversal protection", () => {
   beforeEach(() => {
@@ -187,7 +283,9 @@ describe("getFindingGroupResources — Blocker 1: FAIL-first sort", () => {
     // Then — the URL must contain the composite sort
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-severity,-delta,-last_seen_at",
+    );
   });
 
   it("should not force filter[status]=FAIL so PASS resources can also be shown", async () => {
@@ -223,7 +321,9 @@ describe("getLatestFindingGroupResources — Blocker 1: FAIL-first sort", () => 
     // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-severity,-delta,-last_seen_at",
+    );
   });
 
   it("should not force filter[status]=FAIL so PASS resources can also be shown", async () => {
@@ -265,7 +365,9 @@ describe("getFindingGroupResources — triangulation: params coexist", () => {
     const url = new URL(calledUrl);
     expect(url.searchParams.get("page[number]")).toBe("2");
     expect(url.searchParams.get("page[size]")).toBe("50");
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-severity,-delta,-last_seen_at",
+    );
     expect(url.searchParams.get("filter[status]")).toBeNull();
   });
 });
@@ -291,7 +393,9 @@ describe("getLatestFindingGroupResources — triangulation: params coexist", () 
     const url = new URL(calledUrl);
     expect(url.searchParams.get("page[number]")).toBe("3");
     expect(url.searchParams.get("page[size]")).toBe("20");
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-severity,-delta,-last_seen_at",
+    );
     expect(url.searchParams.get("filter[status]")).toBeNull();
   });
 });
@@ -360,9 +464,33 @@ describe("getFindingGroupResources — caller filters are preserved", () => {
     // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-severity,-delta,-last_seen_at",
+    );
     expect(url.searchParams.get("filter[name__icontains]")).toBe("bucket-prod");
     expect(url.searchParams.get("filter[severity__in]")).toBe("high");
+  });
+
+  it("should strip scan filters that the group resources endpoint does not accept", async () => {
+    // Given
+    const checkId = "s3_bucket_public_access";
+    const filters = {
+      "filter[scan__in]": "scan-1",
+      "filter[scan_id]": "scan-1",
+      "filter[scan_id__in]": "scan-1,scan-2",
+      "filter[region__in]": "eu-west-1",
+    };
+
+    // When
+    await getFindingGroupResources({ checkId, filters });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("filter[scan__in]")).toBeNull();
+    expect(url.searchParams.get("filter[scan_id]")).toBeNull();
+    expect(url.searchParams.get("filter[scan_id__in]")).toBeNull();
+    expect(url.searchParams.get("filter[region__in]")).toBe("eu-west-1");
   });
 });
 
@@ -426,10 +554,32 @@ describe("getLatestFindingGroupResources — caller filters are preserved", () =
     // Then
     const calledUrl = fetchMock.mock.calls[0][0] as string;
     const url = new URL(calledUrl);
-    expect(url.searchParams.get("sort")).toBe("-severity,-delta,-last_seen_at");
+    expect(url.searchParams.get("sort")).toBe(
+      "-status,-severity,-delta,-last_seen_at",
+    );
     expect(url.searchParams.get("filter[name__icontains]")).toBe(
       "instance-prod",
     );
     expect(url.searchParams.get("filter[status__in]")).toBe("PASS,FAIL");
+  });
+
+  it("should strip scan filters before calling latest group resources", async () => {
+    // Given
+    const checkId = "iam_user_mfa_enabled";
+    const filters = {
+      "filter[scan__in]": "scan-1",
+      "filter[scan_id]": "scan-1",
+      "filter[region__in]": "us-east-1",
+    };
+
+    // When
+    await getLatestFindingGroupResources({ checkId, filters });
+
+    // Then
+    const calledUrl = fetchMock.mock.calls[0][0] as string;
+    const url = new URL(calledUrl);
+    expect(url.searchParams.get("filter[scan__in]")).toBeNull();
+    expect(url.searchParams.get("filter[scan_id]")).toBeNull();
+    expect(url.searchParams.get("filter[region__in]")).toBe("us-east-1");
   });
 });

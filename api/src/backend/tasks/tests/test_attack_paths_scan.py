@@ -38,11 +38,14 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.finish_attack_paths_scan")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
-    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
+    @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph", return_value=0)
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -132,7 +135,7 @@ class TestAttackPathsRun:
         assert result == ingestion_result
         mock_retrieve_scan.assert_called_once_with(str(tenant.id), str(scan.id))
         mock_starting.assert_called_once()
-        config = mock_starting.call_args[0][2]
+        config = mock_starting.call_args[0][1]
         assert config.neo4j_database == "tenant-db"
         mock_get_db_name.assert_has_calls(
             [call(attack_paths_scan.id, temporary=True), call(provider.tenant_id)]
@@ -188,7 +191,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -287,7 +290,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -390,7 +393,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -489,14 +492,17 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph",
         side_effect=RuntimeError("drop failed"),
     )
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -609,7 +615,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -718,11 +724,14 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_subgraph")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -833,14 +842,17 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.db_utils.set_provider_graph_data_ready")
     @patch("tasks.jobs.attack_paths.scan.db_utils.update_attack_paths_scan_progress")
     @patch("tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan")
-    @patch("tasks.jobs.attack_paths.scan.sync.sync_graph")
+    @patch(
+        "tasks.jobs.attack_paths.scan.sync.sync_graph",
+        return_value={"nodes": 0, "relationships": 0},
+    )
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.drop_subgraph",
         side_effect=RuntimeError("drop failed"),
     )
     @patch("tasks.jobs.attack_paths.scan.indexes.create_sync_indexes")
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
-    @patch("tasks.jobs.attack_paths.scan.findings.analysis")
+    @patch("tasks.jobs.attack_paths.scan.findings.analysis", return_value=(0, 0))
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
@@ -1273,11 +1285,13 @@ class TestAttackPathsFindingsHelpers:
         config = SimpleNamespace(update_tag=12345)
         mock_session = MagicMock()
 
+        first_result = MagicMock()
+        first_result.single.return_value = {"merged_count": 1, "dropped_count": 0}
+        second_result = MagicMock()
+        second_result.single.return_value = {"merged_count": 0, "dropped_count": 1}
+        mock_session.run.side_effect = [first_result, second_result]
+
         with (
-            patch(
-                "tasks.jobs.attack_paths.findings.get_root_node_label",
-                return_value="AWSAccount",
-            ),
             patch(
                 "tasks.jobs.attack_paths.findings.get_node_uid_field",
                 return_value="arn",
@@ -1286,6 +1300,7 @@ class TestAttackPathsFindingsHelpers:
                 "tasks.jobs.attack_paths.findings.get_provider_resource_label",
                 return_value="_AWSResource",
             ),
+            patch("tasks.jobs.attack_paths.findings.logger") as mock_logger,
         ):
             findings_module.load_findings(
                 mock_session, findings_generator(), provider, config
@@ -1294,26 +1309,16 @@ class TestAttackPathsFindingsHelpers:
         assert mock_session.run.call_count == 2
         for call_args in mock_session.run.call_args_list:
             params = call_args.args[1]
-            assert params["provider_uid"] == str(provider.uid)
             assert params["last_updated"] == config.update_tag
             assert "findings_data" in params
 
-    def test_cleanup_findings_runs_batches(self, providers_fixture):
-        provider = providers_fixture[0]
-        config = SimpleNamespace(update_tag=1024)
-        mock_session = MagicMock()
-
-        first_batch = MagicMock()
-        first_batch.single.return_value = {"deleted_findings_count": 3}
-        second_batch = MagicMock()
-        second_batch.single.return_value = {"deleted_findings_count": 0}
-        mock_session.run.side_effect = [first_batch, second_batch]
-
-        findings_module.cleanup_findings(mock_session, provider, config)
-
-        assert mock_session.run.call_count == 2
-        params = mock_session.run.call_args.args[1]
-        assert params["last_updated"] == config.update_tag
+        summary_log = next(
+            call_args.args[0]
+            for call_args in mock_logger.info.call_args_list
+            if call_args.args and "Finished loading" in call_args.args[0]
+        )
+        assert "edges_merged=1" in summary_log
+        assert "edges_dropped=1" in summary_log
 
     def test_stream_findings_with_resources_returns_latest_scan_data(
         self,
@@ -1494,11 +1499,12 @@ class TestAttackPathsFindingsHelpers:
             "default",
         ):
             result = findings_module._enrich_batch_with_resources(
-                [finding_dict], str(tenant.id)
+                [finding_dict], str(tenant.id), lambda uid: f"short:{uid}"
             )
 
         assert len(result) == 1
         assert result[0]["resource_uid"] == resource.uid
+        assert result[0]["resource_short_uid"] == f"short:{resource.uid}"
         assert result[0]["id"] == str(finding.id)
         assert result[0]["status"] == "FAIL"
 
@@ -1582,7 +1588,7 @@ class TestAttackPathsFindingsHelpers:
             "default",
         ):
             result = findings_module._enrich_batch_with_resources(
-                [finding_dict], str(tenant.id)
+                [finding_dict], str(tenant.id), lambda uid: uid
             )
 
         assert len(result) == 3
@@ -1656,7 +1662,7 @@ class TestAttackPathsFindingsHelpers:
             patch("tasks.jobs.attack_paths.findings.logger") as mock_logger,
         ):
             result = findings_module._enrich_batch_with_resources(
-                [finding_dict], str(tenant.id)
+                [finding_dict], str(tenant.id), lambda uid: uid
             )
 
         assert len(result) == 0
@@ -1691,10 +1697,6 @@ class TestAttackPathsFindingsHelpers:
 
         with (
             patch(
-                "tasks.jobs.attack_paths.findings.get_root_node_label",
-                return_value="AWSAccount",
-            ),
-            patch(
                 "tasks.jobs.attack_paths.findings.get_node_uid_field",
                 return_value="arn",
             ),
@@ -1706,6 +1708,63 @@ class TestAttackPathsFindingsHelpers:
             findings_module.load_findings(mock_session, empty_gen(), provider, config)
 
         mock_session.run.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "uid, expected",
+        [
+            (
+                "arn:aws:ec2:us-east-1:552455647653:instance/i-05075b63eb51baacb",
+                "i-05075b63eb51baacb",
+            ),
+            (
+                "arn:aws:ec2:us-east-1:123456789012:volume/vol-0abcd1234ef567890",
+                "vol-0abcd1234ef567890",
+            ),
+            (
+                "arn:aws:ec2:us-east-1:123456789012:security-group/sg-0123abcd",
+                "sg-0123abcd",
+            ),
+            ("arn:aws:s3:::my-bucket-name", "my-bucket-name"),
+            ("arn:aws:iam::123456789012:role/MyRole", "MyRole"),
+            (
+                "arn:aws:lambda:us-east-1:123456789012:function:my-function",
+                "my-function",
+            ),
+            ("i-05075b63eb51baacb", "i-05075b63eb51baacb"),
+        ],
+    )
+    def test_extract_short_uid_aws_variants(self, uid, expected):
+        from tasks.jobs.attack_paths.aws import extract_short_uid
+
+        assert extract_short_uid(uid) == expected
+
+    def test_insert_finding_template_has_short_id_fallback(self):
+        from tasks.jobs.attack_paths.queries import (
+            INSERT_FINDING_TEMPLATE,
+            render_cypher_template,
+        )
+
+        rendered = render_cypher_template(
+            INSERT_FINDING_TEMPLATE,
+            {
+                "__NODE_UID_FIELD__": "arn",
+                "__RESOURCE_LABEL__": "_AWSResource",
+            },
+        )
+
+        assert (
+            "resource_by_uid:_AWSResource {arn: finding_data.resource_uid}" in rendered
+        )
+        assert "resource_by_id:_AWSResource {id: finding_data.resource_uid}" in rendered
+        assert (
+            "resource_by_short:_AWSResource {id: finding_data.resource_short_uid}"
+            in rendered
+        )
+        assert "head(collect(resource_by_short)) AS resource_by_short" in rendered
+        assert (
+            "COALESCE(resource_by_uid, resource_by_id, resource_by_short)" in rendered
+        )
+        assert "RETURN merged_count, dropped_count" in rendered
 
 
 class TestAddResourceLabel:
@@ -2673,3 +2732,143 @@ class TestCleanupStaleAttackPathsScans:
         assert result["cleaned_up_count"] == 2
         # Worker should be pinged exactly once — cache prevents second ping
         mock_alive.assert_called_once_with("shared-worker@host")
+
+    # `SCHEDULED` state cleanup
+    def _create_scheduled_scan(
+        self,
+        tenant,
+        provider,
+        *,
+        age_minutes,
+        parent_state,
+        with_task=True,
+    ):
+        """Create a SCHEDULED AttackPathsScan with a parent Scan in `parent_state`.
+
+        `age_minutes` controls how far in the past `started_at` is set, so
+        callers can place rows safely past the cleanup cutoff.
+        """
+        parent_scan = Scan.objects.create(
+            name="Parent Prowler scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=parent_state,
+            tenant_id=tenant.id,
+        )
+
+        ap_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=parent_scan,
+            state=StateChoices.SCHEDULED,
+            started_at=datetime.now(tz=timezone.utc) - timedelta(minutes=age_minutes),
+        )
+
+        task_result = None
+        if with_task:
+            task_result = TaskResult.objects.create(
+                task_id=str(ap_scan.id),
+                task_name="attack-paths-scan-perform",
+                status="PENDING",
+            )
+            task = Task.objects.create(
+                id=task_result.task_id,
+                task_runner_task=task_result,
+                tenant_id=tenant.id,
+            )
+            ap_scan.task = task
+            ap_scan.save(update_fields=["task_id"])
+
+        return ap_scan, task_result
+
+    @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
+    @patch(
+        "tasks.jobs.attack_paths.cleanup.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    @patch("tasks.jobs.attack_paths.cleanup._revoke_task")
+    def test_cleans_up_scheduled_scan_when_parent_is_terminal(
+        self,
+        mock_revoke,
+        mock_drop_db,
+        mock_recover,
+        tenants_fixture,
+        providers_fixture,
+    ):
+        from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+
+        ap_scan, task_result = self._create_scheduled_scan(
+            tenant,
+            provider,
+            age_minutes=24 * 60 * 3,  # 3 days, safely past any threshold
+            parent_state=StateChoices.FAILED,
+        )
+
+        result = cleanup_stale_attack_paths_scans()
+
+        assert result["cleaned_up_count"] == 1
+        assert str(ap_scan.id) in result["scan_ids"]
+
+        ap_scan.refresh_from_db()
+        assert ap_scan.state == StateChoices.FAILED
+        assert ap_scan.progress == 100
+        assert ap_scan.completed_at is not None
+        assert ap_scan.ingestion_exceptions == {
+            "global_error": "Scan never started — cleaned up by periodic task"
+        }
+
+        # SCHEDULED revoke must NOT terminate a running worker
+        mock_revoke.assert_called_once()
+        assert mock_revoke.call_args.kwargs == {"terminate": False}
+
+        # Temp DB never created for SCHEDULED, so no drop attempted
+        mock_drop_db.assert_not_called()
+        # Tenant Neo4j data is untouched in this path
+        mock_recover.assert_not_called()
+
+        task_result.refresh_from_db()
+        assert task_result.status == "FAILURE"
+        assert task_result.date_done is not None
+
+    @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
+    @patch(
+        "tasks.jobs.attack_paths.cleanup.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    @patch("tasks.jobs.attack_paths.cleanup._revoke_task")
+    def test_skips_scheduled_scan_when_parent_still_in_flight(
+        self,
+        mock_revoke,
+        mock_drop_db,
+        mock_recover,
+        tenants_fixture,
+        providers_fixture,
+    ):
+        from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
+
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+
+        ap_scan, _ = self._create_scheduled_scan(
+            tenant,
+            provider,
+            age_minutes=24 * 60 * 3,
+            parent_state=StateChoices.EXECUTING,
+        )
+
+        result = cleanup_stale_attack_paths_scans()
+
+        assert result["cleaned_up_count"] == 0
+
+        ap_scan.refresh_from_db()
+        assert ap_scan.state == StateChoices.SCHEDULED
+        mock_revoke.assert_not_called()

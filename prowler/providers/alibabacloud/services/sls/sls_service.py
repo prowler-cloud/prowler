@@ -39,7 +39,9 @@ class Sls(AlibabaCloudService):
             try:
                 # List Projects
                 list_project_request = sls_models.ListProjectRequest(offset=0, size=500)
-                projects_resp = client.list_project(list_project_request)
+                projects_resp = self._call_with_retries(
+                    client.list_project, list_project_request
+                )
 
                 if projects_resp.body and projects_resp.body.projects:
                     for project in projects_resp.body.projects:
@@ -50,8 +52,10 @@ class Sls(AlibabaCloudService):
                             offset=0, size=500
                         )
                         try:
-                            alerts_resp = client.list_alerts(
-                                project_name, list_alert_request
+                            alerts_resp = self._call_with_retries(
+                                client.list_alerts,
+                                project_name,
+                                list_alert_request,
                             )
                             if alerts_resp.body and alerts_resp.body.results:
                                 for alert in alerts_resp.body.results:
@@ -90,7 +94,9 @@ class Sls(AlibabaCloudService):
             try:
                 # List Projects
                 list_project_request = sls_models.ListProjectRequest(offset=0, size=500)
-                projects_resp = client.list_project(list_project_request)
+                projects_resp = self._call_with_retries(
+                    client.list_project, list_project_request
+                )
 
                 if projects_resp.body and projects_resp.body.projects:
                     for project in projects_resp.body.projects:
@@ -101,14 +107,18 @@ class Sls(AlibabaCloudService):
                             offset=0, size=500
                         )
                         try:
-                            logstores_resp = client.list_log_stores(
-                                project_name, list_logstores_request
+                            logstores_resp = self._call_with_retries(
+                                client.list_log_stores,
+                                project_name,
+                                list_logstores_request,
                             )
                             if logstores_resp.body and logstores_resp.body.logstores:
                                 for logstore_name in logstores_resp.body.logstores:
                                     try:
-                                        logstore_resp = client.get_log_store(
-                                            project_name, logstore_name
+                                        logstore_resp = self._call_with_retries(
+                                            client.get_log_store,
+                                            project_name,
+                                            logstore_name,
                                         )
                                         if logstore_resp.body:
                                             self.log_stores.append(

@@ -556,7 +556,9 @@
     {
       "Id": "GWS.GMAIL.1.1",
       "Description": "Mail Delegation SHOULD be disabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_mail_delegation_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -725,7 +727,9 @@
     {
       "Id": "GWS.GMAIL.6.1",
       "Description": "Identify links behind shortened URLs SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_shortener_scanning_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -738,7 +742,9 @@
     {
       "Id": "GWS.GMAIL.6.2",
       "Description": "Scan linked images SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_external_image_scanning_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -751,7 +757,9 @@
     {
       "Id": "GWS.GMAIL.6.3",
       "Description": "Show warning prompt for any click on links to untrusted domains SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_untrusted_link_warnings_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -907,7 +915,9 @@
     {
       "Id": "GWS.GMAIL.9.1",
       "Description": "POP and IMAP access SHALL be disabled to protect sensitive agency or organization emails from being accessed through legacy applications or other third-party mail clients",
-      "Checks": [],
+      "Checks": [
+        "gmail_pop_imap_access_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -933,7 +943,9 @@
     {
       "Id": "GWS.GMAIL.11.1",
       "Description": "Automatic forwarding SHOULD be disabled, especially to external domains",
-      "Checks": [],
+      "Checks": [
+        "gmail_auto_forwarding_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -946,7 +958,9 @@
     {
       "Id": "GWS.GMAIL.12.1",
       "Description": "Using a per-user outbound gateway that is a mail server other than the Google Workspace (GWS) mail servers SHALL be disabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_per_user_outbound_gateway_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -985,7 +999,9 @@
     {
       "Id": "GWS.GMAIL.15.1",
       "Description": "Enhanced pre-delivery message scanning SHALL be enabled to prevent phishing",
-      "Checks": [],
+      "Checks": [
+        "gmail_enhanced_pre_delivery_scanning_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -1037,7 +1053,9 @@
     {
       "Id": "GWS.GMAIL.17.1",
       "Description": "Comprehensive mail storage SHOULD be enabled to allow information traceability across applications",
-      "Checks": [],
+      "Checks": [
+        "gmail_comprehensive_mail_storage_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -1089,7 +1107,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.1",
       "Description": "External sharing SHALL be restricted to allowlisted domains",
-      "Checks": [],
+      "Checks": [
+        "drive_sharing_allowlisted_domains"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1115,7 +1135,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.3",
       "Description": "Warnings SHALL be enabled when a user is attempting to share with someone not in allowlisted domains",
-      "Checks": [],
+      "Checks": [
+        "drive_warn_sharing_with_allowlisted_domains"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1141,7 +1163,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.5",
       "Description": "Any OUs that do allow external sharing SHOULD disable making content available to anyone with the link",
-      "Checks": [],
+      "Checks": [
+        "drive_publishing_files_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1154,7 +1178,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.6",
       "Description": "Agencies SHALL set access checking to recipients only",
-      "Checks": [],
+      "Checks": [
+        "drive_access_checker_recipients_only"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1193,7 +1219,9 @@
     {
       "Id": "GWS.DRIVEDOCS.1.9",
       "Description": "Out-of-Domain file-level warnings SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "drive_external_sharing_warn_users"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",
@@ -1232,7 +1260,9 @@
     {
       "Id": "GWS.DRIVEDOCS.2.1",
       "Description": "Agencies SHOULD NOT allow members with manager access to override shared Google Drive creation settings",
-      "Checks": [],
+      "Checks": [
+        "drive_shared_drive_managers_cannot_override"
+      ],
       "Attributes": [
         {
           "Section": "Drive and Docs",

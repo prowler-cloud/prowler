@@ -20,11 +20,7 @@ class calendar_external_invitations_warning(Check):
         if calendar_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=calendar_client.provider.identity,
-                resource_name=calendar_client.provider.identity.domain,
-                resource_id=calendar_client.provider.identity.customer_id,
-                customer_id=calendar_client.provider.identity.customer_id,
-                location="global",
+                resource=calendar_client.provider.domain_resource,
             )
 
             warning_enabled = calendar_client.policies.external_invitations_warning
@@ -35,21 +31,20 @@ class calendar_external_invitations_warning(Check):
                     f"External invitation warnings for Google Calendar are enabled "
                     f"in domain {calendar_client.provider.identity.domain}."
                 )
+            elif warning_enabled is None:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"External invitation warnings for Google Calendar use Google's "
+                    f"secure default configuration (enabled) "
+                    f"in domain {calendar_client.provider.identity.domain}."
+                )
             else:
                 report.status = "FAIL"
-                if warning_enabled is None:
-                    report.status_extended = (
-                        f"External invitation warnings for Google Calendar are not "
-                        f"explicitly configured in domain "
-                        f"{calendar_client.provider.identity.domain}. "
-                        f"Users should be warned when inviting guests outside the organization."
-                    )
-                else:
-                    report.status_extended = (
-                        f"External invitation warnings for Google Calendar are disabled "
-                        f"in domain {calendar_client.provider.identity.domain}. "
-                        f"Users should be warned when inviting guests outside the organization."
-                    )
+                report.status_extended = (
+                    f"External invitation warnings for Google Calendar are disabled "
+                    f"in domain {calendar_client.provider.identity.domain}. "
+                    f"Users should be warned when inviting guests outside the organization."
+                )
 
             findings.append(report)
 

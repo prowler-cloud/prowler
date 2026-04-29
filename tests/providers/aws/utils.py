@@ -116,6 +116,12 @@ def set_mocked_aws_provider(
     status: list[str] = [],
     create_default_organization: bool = True,
 ) -> AwsProvider:
+    if audited_regions is None:
+        raise ValueError(
+            "audited_regions is None, which means all 36 regions will be used. "
+            "Pass an explicit list of regions instead."
+        )
+
     if create_default_organization:
         # Create default AWS Organization
         create_default_aws_organization()
@@ -191,7 +197,13 @@ def create_default_aws_organization():
     mockdomain = "moto-example.org"
     mockemail = "@".join([mockname, mockdomain])
 
-    _ = organizations_client.create_organization(FeatureSet="ALL")["Organization"]["Id"]
+    try:
+        _ = organizations_client.create_organization(FeatureSet="ALL")["Organization"][
+            "Id"
+        ]
+    except organizations_client.exceptions.AlreadyInOrganizationException:
+        return
+
     account_id = organizations_client.create_account(
         AccountName=mockname, Email=mockemail
     )["CreateAccountStatus"]["AccountId"]

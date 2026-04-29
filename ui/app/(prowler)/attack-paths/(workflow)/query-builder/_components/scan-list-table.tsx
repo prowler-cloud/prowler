@@ -1,15 +1,26 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
+import { Check, Minus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRef } from "react";
 
-import { Button } from "@/components/shadcn/button/button";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/shadcn/radio-group/radio-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable, DataTableColumnHeader } from "@/components/ui/table";
 import { formatDuration } from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
 import type { MetaDataProps, ProviderType } from "@/types";
-import type { AttackPathScan, ScanState } from "@/types/attack-paths";
+import type { AttackPathScan } from "@/types/attack-paths";
 import { SCAN_STATES } from "@/types/attack-paths";
 
 import { ScanStatusBadge } from "./scan-status-badge";
@@ -18,14 +29,8 @@ interface ScanListTableProps {
   scans: AttackPathScan[];
 }
 
-const DEFAULT_PAGE_SIZE = 5;
-const PAGE_SIZE_OPTIONS = [2, 5, 10, 15];
-const WAITING_STATES: readonly ScanState[] = [
-  SCAN_STATES.SCHEDULED,
-  SCAN_STATES.AVAILABLE,
-  SCAN_STATES.EXECUTING,
-];
-
+const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 25];
 const parsePageParam = (value: string | null, fallback: number) => {
   if (!value) return fallback;
 
@@ -38,34 +43,32 @@ const formatNullableDuration = (duration: number | null) => {
   return formatDuration(duration);
 };
 
-const isSelectDisabled = (
-  scan: AttackPathScan,
-  selectedScanId: string | null,
-) => {
-  return !scan.attributes.graph_data_ready || selectedScanId === scan.id;
-};
-
-const getSelectButtonLabel = (
-  scan: AttackPathScan,
-  selectedScanId: string | null,
-) => {
-  if (selectedScanId === scan.id) {
-    return "Selected";
-  }
-
+const getDisabledTooltip = (scan: AttackPathScan): string | null => {
   if (scan.attributes.graph_data_ready) {
-    return "Select";
+    return null;
   }
 
-  if (WAITING_STATES.includes(scan.attributes.state)) {
-    return "Waiting...";
+  if (scan.attributes.state === SCAN_STATES.SCHEDULED) {
+    return "Graph will be available once this scan runs and completes.";
+  }
+
+  if (scan.attributes.state === SCAN_STATES.AVAILABLE) {
+    return "This scan is queued. Graph will be available once it completes.";
+  }
+
+  if (scan.attributes.state === SCAN_STATES.EXECUTING) {
+    return "Scan is running. Graph will be available once it completes.";
   }
 
   if (scan.attributes.state === SCAN_STATES.FAILED) {
-    return "Failed";
+    return "This scan failed. No graph data is available.";
   }
 
-  return "Select";
+  if (scan.attributes.state === SCAN_STATES.COMPLETED) {
+    return "This scan completed without producing graph data.";
+  }
+
+  return "Graph data is not available for this scan.";
 };
 
 const getSelectedRowSelection = (
@@ -97,11 +100,54 @@ const buildMetadata = (
 
 const getColumns = ({
   selectedScanId,
-  onSelectScan,
 }: {
   selectedScanId: string | null;
-  onSelectScan: (scanId: string) => void;
 }): ColumnDef<AttackPathScan>[] => [
+  {
+    id: "select",
+    header: () => <span className="text-sm font-medium">Select</span>,
+    cell: ({ row }) => {
+      const isSelected = selectedScanId === row.original.id;
+      const canSelect = row.original.attributes.graph_data_ready;
+      const tooltip = getDisabledTooltip(row.original);
+
+      const radio = (
+        <RadioGroupItem
+          value={row.original.id}
+          checked={isSelected}
+          disabled={!canSelect}
+          className={cn(
+            "size-5",
+            canSelect &&
+              !isSelected &&
+              "border-text-neutral-secondary cursor-pointer",
+            !canSelect && "disabled:opacity-70",
+          )}
+          aria-label={
+            isSelected
+              ? "Selected scan"
+              : canSelect
+                ? "Select scan"
+                : "Scan not available"
+          }
+        />
+      );
+
+      if (!canSelect && !isSelected && tooltip) {
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0}>{radio}</span>
+            </TooltipTrigger>
+            <TooltipContent>{tooltip}</TooltipContent>
+          </Tooltip>
+        );
+      }
+
+      return radio;
+    },
+    enableSorting: false,
+  },
   {
     accessorKey: "provider",
     header: ({ column }) => (
@@ -135,22 +181,32 @@ const getColumns = ({
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => (
-      <ScanStatusBadge
-        status={row.original.attributes.state}
-        progress={row.original.attributes.progress}
-        graphDataReady={row.original.attributes.graph_data_ready}
-      />
+      <div className="flex">
+        <ScanStatusBadge
+          status={row.original.attributes.state}
+          progress={row.original.attributes.progress}
+        />
+      </div>
     ),
     enableSorting: false,
   },
   {
-    accessorKey: "progress",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Progress" />
-    ),
-    cell: ({ row }) => (
-      <span className="text-sm">{row.original.attributes.progress}%</span>
-    ),
+    accessorKey: "graph_data_ready",
+    header: () => <span className="text-sm font-medium">Graph</span>,
+    cell: ({ row }) =>
+      row.original.attributes.graph_data_ready ? (
+        <Check
+          size={16}
+          aria-label="Graph available"
+          className="text-text-success-primary"
+        />
+      ) : (
+        <Minus
+          size={16}
+          aria-label="Graph not available"
+          className="text-text-neutral-secondary"
+        />
+      ),
     enableSorting: false,
   },
   {
@@ -163,29 +219,6 @@ const getColumns = ({
         {formatNullableDuration(row.original.attributes.duration)}
       </span>
     ),
-    enableSorting: false,
-  },
-  {
-    id: "actions",
-    header: () => <span className="sr-only">Actions</span>,
-    cell: ({ row }) => {
-      const isDisabled = isSelectDisabled(row.original, selectedScanId);
-
-      return (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            aria-label="Select scan"
-            disabled={isDisabled}
-            variant={isDisabled ? "secondary" : "default"}
-            onClick={() => onSelectScan(row.original.id)}
-            className="w-full max-w-24"
-          >
-            {getSelectButtonLabel(row.original, selectedScanId)}
-          </Button>
-        </div>
-      );
-    },
     enableSorting: false,
   },
 ];
@@ -211,6 +244,15 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   const endIndex = startIndex + pageSize;
   const paginatedScans = scans.slice(startIndex, endIndex);
 
+  // TODO(#10863): remove this workaround (ref + split handlers + pushWithParams)
+  // once the DataTable unified-pagination-callback refactor in PR #10863 lands.
+  // The underlying issue is that DataTablePagination's controlled mode fires
+  // onPageSizeChange and onPageChange(1) back-to-back in the same tick, so the
+  // second router.push reads a stale searchParams snapshot and silently reverts
+  // the page-size change. Replace both handlers with a single
+  // onPaginationChange handler after that PR merges.
+  const suppressNextPageResetRef = useRef(false);
+
   const pushWithParams = (nextParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -226,10 +268,15 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   };
 
   const handlePageChange = (page: number) => {
+    if (suppressNextPageResetRef.current && page === 1) {
+      suppressNextPageResetRef.current = false;
+      return;
+    }
     pushWithParams({ scanPage: page.toString() });
   };
 
   const handlePageSizeChange = (nextPageSize: number) => {
+    suppressNextPageResetRef.current = true;
     pushWithParams({
       scanPage: "1",
       scanPageSize: nextPageSize.toString(),
@@ -237,19 +284,27 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   };
 
   return (
-    <DataTable
-      columns={getColumns({
-        selectedScanId,
-        onSelectScan: handleSelectScan,
-      })}
-      data={paginatedScans}
-      metadata={buildMetadata(scans.length, currentPage, totalPages)}
-      controlledPage={currentPage}
-      controlledPageSize={pageSize}
-      onPageChange={handlePageChange}
-      onPageSizeChange={handlePageSizeChange}
-      enableRowSelection
-      rowSelection={getSelectedRowSelection(paginatedScans, selectedScanId)}
-    />
+    <RadioGroup
+      value={selectedScanId ?? ""}
+      onValueChange={handleSelectScan}
+      className="gap-0"
+    >
+      <DataTable
+        columns={getColumns({ selectedScanId })}
+        data={paginatedScans}
+        metadata={buildMetadata(scans.length, currentPage, totalPages)}
+        controlledPage={currentPage}
+        controlledPageSize={pageSize}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+        onRowClick={(row) => {
+          if (row.original.attributes.graph_data_ready) {
+            handleSelectScan(row.original.id);
+          }
+        }}
+        enableRowSelection
+        rowSelection={getSelectedRowSelection(paginatedScans, selectedScanId)}
+      />
+    </RadioGroup>
   );
 };

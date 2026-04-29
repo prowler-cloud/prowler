@@ -55,6 +55,7 @@ class Project(VercelService):
 
                 # Parse password protection
                 pwd_protection = proj.get("passwordProtection")
+                security = proj.get("security", {}) or {}
 
                 self.projects[project_id] = VercelProject(
                     id=project_id,
@@ -75,6 +76,16 @@ class Project(VercelService):
                     git_fork_protection=proj.get("gitForkProtection", True),
                     git_repository=proj.get("link"),
                     secure_compute=proj.get("secureCompute"),
+                    firewall_enabled=security.get("firewallEnabled"),
+                    firewall_config_version=(
+                        str(security.get("firewallConfigVersion"))
+                        if security.get("firewallConfigVersion") is not None
+                        else None
+                    ),
+                    managed_rules=security.get(
+                        "managedRules", security.get("managedRulesets")
+                    ),
+                    bot_id_enabled=security.get("botIdEnabled"),
                 )
 
             logger.info(f"Project - Found {len(self.projects)} project(s)")
@@ -160,4 +171,8 @@ class VercelProject(BaseModel):
     git_fork_protection: bool = True
     git_repository: Optional[dict] = None
     secure_compute: Optional[dict] = None
+    firewall_enabled: Optional[bool] = None
+    firewall_config_version: Optional[str] = None
+    managed_rules: Optional[dict] = None
+    bot_id_enabled: Optional[bool] = None
     environment_variables: list[VercelEnvironmentVariable] = Field(default_factory=list)

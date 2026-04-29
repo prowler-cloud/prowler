@@ -4172,6 +4172,7 @@
         }
       ],
       "Checks": [
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "vpc_endpoint_connections_trust_boundaries"
       ]
@@ -6425,9 +6426,9 @@
         }
       ],
       "Checks": [
+        "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_prompt_attack_filter_enabled",
-        "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_guardrail_sensitive_information_filter_enabled"
       ]
     },
     {
@@ -6484,9 +6485,9 @@
         }
       ],
       "Checks": [
+        "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_prompt_attack_filter_enabled",
-        "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_guardrail_sensitive_information_filter_enabled"
       ]
     },
     {
@@ -6545,8 +6546,8 @@
         }
       ],
       "Checks": [
-        "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_agent_guardrail_enabled",
+        "bedrock_guardrail_sensitive_information_filter_enabled"
       ]
     },
     {
@@ -6605,8 +6606,8 @@
         }
       ],
       "Checks": [
-        "bedrock_guardrail_sensitive_information_filter_enabled",
-        "bedrock_agent_guardrail_enabled"
+        "bedrock_agent_guardrail_enabled",
+        "bedrock_guardrail_sensitive_information_filter_enabled"
       ]
     },
     {

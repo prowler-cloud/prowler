@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import type { InputHTMLAttributes, ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+const { notificationIndicatorMock } = vi.hoisted(() => ({
+  notificationIndicatorMock: vi.fn(),
+}));
+
 // ---------------------------------------------------------------------------
 // Hoist mocks for dependencies
 // ---------------------------------------------------------------------------
@@ -56,10 +60,6 @@ vi.mock("./data-table-row-actions", () => ({
   DataTableRowActions: () => null,
 }));
 
-vi.mock("./impacted-providers-cell", () => ({
-  ImpactedProvidersCell: () => null,
-}));
-
 vi.mock("./impacted-resources-cell", () => ({
   ImpactedResourcesCell: ({
     impacted,
@@ -72,7 +72,22 @@ vi.mock("./impacted-resources-cell", () => ({
 
 vi.mock("./notification-indicator", () => ({
   DeltaValues: { NEW: "new", CHANGED: "changed", NONE: "none" },
-  NotificationIndicator: () => null,
+  NotificationIndicator: (props: unknown) => {
+    notificationIndicatorMock(props);
+    return null;
+  },
+}));
+
+vi.mock("@/components/shadcn/tooltip", () => ({
+  Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipContent: ({ children }: { children: ReactNode }) => <>{children}</>,
+  TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("./provider-icon-cell", () => ({
+  ProviderIconCell: ({ provider }: { provider: string }) => (
+    <span data-testid={`provider-icon-${provider}`}>{provider}</span>
+  ),
 }));
 
 // ---------------------------------------------------------------------------
@@ -95,10 +110,23 @@ function makeGroup(overrides?: Partial<FindingGroupRow>): FindingGroupRow {
     checkTitle: "S3 Bucket Public Access",
     severity: "critical",
     status: "FAIL",
+    muted: false,
     resourcesTotal: 5,
     resourcesFail: 3,
     newCount: 0,
     changedCount: 0,
+    newFailCount: 0,
+    newFailMutedCount: 0,
+    newPassCount: 0,
+    newPassMutedCount: 0,
+    newManualCount: 0,
+    newManualMutedCount: 0,
+    changedFailCount: 0,
+    changedFailMutedCount: 0,
+    changedPassCount: 0,
+    changedPassMutedCount: 0,
+    changedManualCount: 0,
+    changedManualMutedCount: 0,
     mutedCount: 0,
     providers: ["aws"],
     updatedAt: "2024-01-01T00:00:00Z",
@@ -132,6 +160,26 @@ function renderFindingCell(
   render(<div>{CellComponent({ row: { original: group } })}</div>);
 }
 
+function renderFindingGroupTitleCell(overrides?: Partial<FindingGroupRow>) {
+  const columns = getColumnFindingGroups({
+    rowSelection: {},
+    selectableRowCount: 1,
+    onDrillDown: vi.fn(),
+  });
+
+  const findingColumn = columns.find(
+    (col) => (col as { accessorKey?: string }).accessorKey === "finding",
+  );
+  if (!findingColumn?.cell) throw new Error("finding column not found");
+
+  const group = makeGroup(overrides);
+  const CellComponent = findingColumn.cell as (props: {
+    row: { original: FindingGroupRow };
+  }) => ReactNode;
+
+  render(<div>{CellComponent({ row: { original: group } })}</div>);
+}
+
 function renderImpactedResourcesCell(overrides?: Partial<FindingGroupRow>) {
   const columns = getColumnFindingGroups({
     rowSelection: {},
@@ -155,11 +203,13 @@ function renderImpactedResourcesCell(overrides?: Partial<FindingGroupRow>) {
 }
 
 function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
+  const onDrillDown =
+    vi.fn<(checkId: string, group: FindingGroupRow) => void>();
   const toggleSelected = vi.fn();
   const columns = getColumnFindingGroups({
     rowSelection: {},
     selectableRowCount: 1,
-    onDrillDown: vi.fn(),
+    onDrillDown,
   });
 
   const selectColumn = columns.find(
@@ -190,7 +240,7 @@ function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
     </div>,
   );
 
-  return { toggleSelected };
+  return { onDrillDown, toggleSelected };
 }
 
 // ---------------------------------------------------------------------------
@@ -198,6 +248,32 @@ function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
 // ---------------------------------------------------------------------------
 
 describe("column-finding-groups — accessibility of check title cell", () => {
+  it("should not expose an impacted providers column", () => {
+    // Given
+    const columns = getColumnFindingGroups({
+      rowSelection: {},
+      selectableRowCount: 1,
+      onDrillDown: vi.fn(),
+    });
+
+    // When
+    const impactedProvidersColumn = columns.find(
+      (col) => (col as { id?: string }).id === "impactedProviders",
+    );
+
+    // Then
+    expect(impactedProvidersColumn).toBeUndefined();
+  });
+
+  it("should render the first provider icon with its provider name", () => {
+    // Given
+    renderFindingGroupTitleCell({ providers: ["iac"] });
+
+    // Then
+    expect(screen.getByTestId("provider-icon-iac")).toBeInTheDocument();
+    expect(screen.getByText("Infrastructure as Code")).toBeInTheDocument();
+  });
+
   it("should render the check title as a button element (not a <p>)", () => {
     // Given
     const onDrillDown =
@@ -299,6 +375,47 @@ describe("column-finding-groups — accessibility of check title cell", () => {
       }),
     );
   });
+
+  it("should keep zero-resource fallback groups non-clickable even when fallback counts are present", () => {
+    // Given
+    const onDrillDown =
+      vi.fn<(checkId: string, group: FindingGroupRow) => void>();
+
+    renderFindingCell("Fallback IaC Check", onDrillDown, {
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 0,
+      passCount: 2,
+      manualCount: 1,
+    });
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Fallback IaC Check" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Fallback IaC Check")).toBeInTheDocument();
+    expect(onDrillDown).not.toHaveBeenCalled();
+  });
+
+  it("should keep fallback groups non-clickable when the displayed total is zero", () => {
+    // Given
+    const onDrillDown =
+      vi.fn<(checkId: string, group: FindingGroupRow) => void>();
+
+    // When
+    renderFindingCell("No failing findings", onDrillDown, {
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 0,
+      passCount: 0,
+    });
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "No failing findings" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("No failing findings")).toBeInTheDocument();
+  });
 });
 
 describe("column-finding-groups — impacted resources count", () => {
@@ -312,6 +429,36 @@ describe("column-finding-groups — impacted resources count", () => {
     // Then
     expect(screen.getByText("3/5")).toBeInTheDocument();
   });
+
+  it("should fall back to finding counts when resources total is zero", () => {
+    // Given/When
+    renderImpactedResourcesCell({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 3,
+      passCount: 2,
+      muted: false,
+    });
+
+    // Then
+    expect(screen.getByText("3/5")).toBeInTheDocument();
+  });
+
+  it("should include muted findings in the denominator when the row is muted", () => {
+    // Given/When
+    renderImpactedResourcesCell({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 3,
+      passCount: 2,
+      failMutedCount: 4,
+      passMutedCount: 1,
+      muted: true,
+    });
+
+    // Then
+    expect(screen.getByText("3/10")).toBeInTheDocument();
+  });
 });
 
 describe("column-finding-groups — group selection", () => {
@@ -323,5 +470,63 @@ describe("column-finding-groups — group selection", () => {
     });
 
     expect(screen.getByRole("checkbox", { name: "Select row" })).toBeDisabled();
+  });
+
+  it("should hide the chevron for zero-resource fallback groups even when fallback counts are present", () => {
+    // Given
+    const { onDrillDown } = renderSelectCell({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 0,
+      passCount: 2,
+      manualCount: 1,
+    });
+
+    // Then
+    expect(
+      screen.queryByRole("button", {
+        name: "Expand S3 Bucket Public Access",
+      }),
+    ).not.toBeInTheDocument();
+    expect(onDrillDown).not.toHaveBeenCalled();
+  });
+
+  it("should hide the chevron for zero-resource groups when the displayed total is zero", () => {
+    // Given/When
+    renderSelectCell({
+      resourcesTotal: 0,
+      resourcesFail: 0,
+      failCount: 0,
+      passCount: 0,
+    });
+
+    // Then
+    expect(
+      screen.queryByRole("button", {
+        name: "Expand S3 Bucket Public Access",
+      }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("column-finding-groups — indicators", () => {
+  it("should prefer the new indicator when the new delta exists only in the breakdown fields", () => {
+    notificationIndicatorMock.mockClear();
+
+    renderSelectCell({
+      muted: true,
+      newCount: 0,
+      changedCount: 0,
+      newFailMutedCount: 1,
+      changedFailCount: 2,
+    });
+
+    expect(notificationIndicatorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        delta: "new",
+        isMuted: true,
+        showDeltaWhenMuted: true,
+      }),
+    );
   });
 });

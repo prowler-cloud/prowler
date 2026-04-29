@@ -32,6 +32,11 @@ from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.attack_paths import (
     AttackPathsQueryDefinition,
@@ -47,6 +52,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    InvitationRoleRelationship,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
     LighthouseTenantConfiguration,
@@ -57,6 +63,7 @@ from api.models import (
     ProviderGroupMembership,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -745,6 +752,39 @@ class TestTenantViewSet:
         # Test user + 2 extra users for tenant 2
         assert len(response.json()["data"]) == 3
 
+    def test_tenants_list_memberships_filter_by_user(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        response = authenticated_client.get(
+            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant2.id}),
+            {"filter[user]": str(user3.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == str(membership3.id)
+
+    def test_tenants_list_memberships_filter_by_user_no_match(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2, _ = tenants_fixture
+        unrelated_user = User.objects.create_user(
+            name="unrelated",
+            password=TEST_PASSWORD,
+            email="unrelated@gmail.com",
+        )
+
+        response = authenticated_client.get(
+            reverse("tenant-membership-list", kwargs={"tenant_pk": tenant2.id}),
+            {"filter[user]": str(unrelated_user.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
     def test_tenants_list_memberships_as_member(
         self, authenticated_client, tenants_fixture, extra_users
     ):
@@ -802,6 +842,7 @@ class TestTenantViewSet:
     ):
         _, tenant2, _ = tenants_fixture
         user_membership = Membership.objects.get(tenant=tenant2, user__email=TEST_USER)
+        user_id = user_membership.user_id
         response = authenticated_client.delete(
             reverse(
                 "tenant-membership-detail",
@@ -810,6 +851,127 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert Membership.objects.filter(id=user_membership.id).exists()
+        assert User.objects.filter(id=user_id).exists()
+
+    def test_expel_user_deletes_account_if_last_membership(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        # TEST_USER is OWNER of tenant2; user3 is MEMBER only in tenant2
+        _, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        assert Membership.objects.filter(user=user3).count() == 1
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Membership.objects.filter(id=membership3.id).exists()
+        assert not User.objects.filter(id=user3.id).exists()
+
+    def test_expel_user_blacklists_refresh_tokens(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        _, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        # Issue two refresh tokens to simulate active sessions
+        RefreshToken.for_user(user3)
+        RefreshToken.for_user(user3)
+        outstanding_ids = list(
+            OutstandingToken.objects.filter(user=user3).values_list("id", flat=True)
+        )
+        assert len(outstanding_ids) == 2
+        assert not BlacklistedToken.objects.filter(
+            token_id__in=outstanding_ids
+        ).exists()
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert (
+            BlacklistedToken.objects.filter(token_id__in=outstanding_ids).count() == 2
+        )
+
+    def test_expel_user_blacklists_refresh_tokens_is_idempotent(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        # Regression test for the bulk blacklisting path: if one of the
+        # user's refresh tokens is already blacklisted when the expel
+        # endpoint runs, the remaining tokens must still be blacklisted
+        # and the already-blacklisted one must not be duplicated.
+        tenant1, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        # Keep the user alive after the expel so the assertions below can
+        # still query OutstandingToken by user_id.
+        Membership.objects.create(
+            user=user3,
+            tenant=tenant1,
+            role=Membership.RoleChoices.MEMBER,
+        )
+
+        RefreshToken.for_user(user3)
+        RefreshToken.for_user(user3)
+        outstanding_ids = list(
+            OutstandingToken.objects.filter(user=user3).values_list("id", flat=True)
+        )
+        assert len(outstanding_ids) == 2
+
+        # Pre-blacklist one of the two tokens to simulate a prior revocation.
+        BlacklistedToken.objects.create(token_id=outstanding_ids[0])
+        assert (
+            BlacklistedToken.objects.filter(token_id__in=outstanding_ids).count() == 1
+        )
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        blacklisted = BlacklistedToken.objects.filter(token_id__in=outstanding_ids)
+        assert blacklisted.count() == 2
+        assert set(blacklisted.values_list("token_id", flat=True)) == set(
+            outstanding_ids
+        )
+
+    def test_expel_user_keeps_account_if_has_other_memberships(
+        self, authenticated_client, tenants_fixture, extra_users
+    ):
+        tenant1, tenant2, _ = tenants_fixture
+        _, user3_membership = extra_users
+        user3, membership3 = user3_membership
+
+        # Give user3 an additional membership in tenant1 so they are not orphaned
+        other_membership = Membership.objects.create(
+            user=user3,
+            tenant=tenant1,
+            role=Membership.RoleChoices.MEMBER,
+        )
+
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership3.id},
+            )
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Membership.objects.filter(id=membership3.id).exists()
+        assert User.objects.filter(id=user3.id).exists()
+        assert Membership.objects.filter(id=other_membership.id).exists()
 
     def test_tenants_delete_another_membership_as_owner(
         self, authenticated_client, tenants_fixture, extra_users
@@ -880,6 +1042,128 @@ class TestTenantViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert Membership.objects.filter(id=other_membership.id).exists()
+
+    def test_delete_membership_cleans_up_orphaned_role_grants(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that deleting a membership removes UserRoleRelationship records
+        for that tenant while preserving grants in other tenants."""
+        tenant1, tenant2, _ = tenants_fixture
+
+        # Create a user with memberships in both tenants
+        user = User.objects.create_user(
+            name="Multi-tenant User",
+            password=TEST_PASSWORD,
+            email="multitenant@test.com",
+        )
+
+        # Create memberships in both tenants
+        Membership.objects.create(
+            user=user, tenant=tenant1, role=Membership.RoleChoices.MEMBER
+        )
+        membership2 = Membership.objects.create(
+            user=user, tenant=tenant2, role=Membership.RoleChoices.MEMBER
+        )
+
+        # Create roles in both tenants
+        role1 = Role.objects.create(
+            name="Test Role 1", tenant=tenant1, manage_providers=True
+        )
+        role2 = Role.objects.create(
+            name="Test Role 2", tenant=tenant2, manage_scans=True
+        )
+
+        # Create user role relationships for both tenants
+        UserRoleRelationship.objects.create(user=user, role=role1, tenant=tenant1)
+        UserRoleRelationship.objects.create(user=user, role=role2, tenant=tenant2)
+
+        # Verify initial state
+        assert UserRoleRelationship.objects.filter(user=user, tenant=tenant1).exists()
+        assert UserRoleRelationship.objects.filter(user=user, tenant=tenant2).exists()
+        assert Role.objects.filter(id=role1.id).exists()
+        assert Role.objects.filter(id=role2.id).exists()
+
+        # Delete membership from tenant2 (authenticated user is owner of tenant2)
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership2.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify the membership was deleted
+        assert not Membership.objects.filter(id=membership2.id).exists()
+
+        # Verify UserRoleRelationship for tenant2 was deleted
+        assert not UserRoleRelationship.objects.filter(
+            user=user, tenant=tenant2
+        ).exists()
+
+        # Verify UserRoleRelationship for tenant1 is preserved
+        assert UserRoleRelationship.objects.filter(user=user, tenant=tenant1).exists()
+
+        # Verify orphaned role2 was deleted (no more user or invitation relationships)
+        assert not Role.objects.filter(id=role2.id).exists()
+
+        # Verify role1 is preserved (still has user relationship)
+        assert Role.objects.filter(id=role1.id).exists()
+
+        # Verify the user still exists (has other memberships)
+        assert User.objects.filter(id=user.id).exists()
+
+    def test_delete_membership_preserves_role_with_invitation_relationship(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that roles are not deleted if they have invitation relationships."""
+        _, tenant2, _ = tenants_fixture
+
+        # Create a user with membership
+        user = User.objects.create_user(
+            name="Test User", password=TEST_PASSWORD, email="testuser@test.com"
+        )
+        membership = Membership.objects.create(
+            user=user, tenant=tenant2, role=Membership.RoleChoices.MEMBER
+        )
+
+        # Create a role and user relationship
+        role = Role.objects.create(
+            name="Shared Role", tenant=tenant2, manage_providers=True
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant=tenant2)
+
+        # Create an invitation with the same role
+        invitation = Invitation.objects.create(email="pending@test.com", tenant=tenant2)
+        InvitationRoleRelationship.objects.create(
+            invitation=invitation, role=role, tenant=tenant2
+        )
+
+        # Verify initial state
+        assert UserRoleRelationship.objects.filter(user=user, role=role).exists()
+        assert InvitationRoleRelationship.objects.filter(
+            invitation=invitation, role=role
+        ).exists()
+        assert Role.objects.filter(id=role.id).exists()
+
+        # Delete the membership
+        response = authenticated_client.delete(
+            reverse(
+                "tenant-membership-detail",
+                kwargs={"tenant_pk": tenant2.id, "pk": membership.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify UserRoleRelationship was deleted
+        assert not UserRoleRelationship.objects.filter(user=user, role=role).exists()
+
+        # Verify role is preserved because invitation relationship exists
+        assert Role.objects.filter(id=role.id).exists()
+        assert InvitationRoleRelationship.objects.filter(
+            invitation=invitation, role=role
+        ).exists()
 
     def test_tenants_list_no_permissions(
         self, authenticated_client_no_permissions_rbac, tenants_fixture
@@ -3557,9 +3841,14 @@ class TestScanViewSet:
             "prowler-output-123_threatscore_report.pdf",
         )
 
+        presigned_url = (
+            "https://test-bucket.s3.amazonaws.com/"
+            "tenant-id/scan-id/threatscore/prowler-output-123_threatscore_report.pdf"
+            "?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300"
+        )
         mock_s3_client = Mock()
         mock_s3_client.list_objects_v2.return_value = {"Contents": [{"Key": pdf_key}]}
-        mock_s3_client.get_object.return_value = {"Body": io.BytesIO(b"pdf-bytes")}
+        mock_s3_client.generate_presigned_url.return_value = presigned_url
 
         mock_env_str.return_value = bucket
         mock_get_s3_client.return_value = mock_s3_client
@@ -3568,19 +3857,26 @@ class TestScanViewSet:
         url = reverse("scan-threatscore", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
 
-        assert response.status_code == status.HTTP_200_OK
-        assert response["Content-Type"] == "application/pdf"
-        assert response["Content-Disposition"].endswith(
-            '"prowler-output-123_threatscore_report.pdf"'
-        )
-        assert response.content == b"pdf-bytes"
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response["Location"] == presigned_url
         mock_s3_client.list_objects_v2.assert_called_once()
-        mock_s3_client.get_object.assert_called_once_with(Bucket=bucket, Key=pdf_key)
+        mock_s3_client.generate_presigned_url.assert_called_once_with(
+            "get_object",
+            Params={
+                "Bucket": bucket,
+                "Key": pdf_key,
+                "ResponseContentDisposition": (
+                    'attachment; filename="prowler-output-123_threatscore_report.pdf"'
+                ),
+                "ResponseContentType": "application/pdf",
+            },
+            ExpiresIn=300,
+        )
 
     def test_report_s3_success(self, authenticated_client, scans_fixture, monkeypatch):
         """
-        When output_location is an S3 URL and the S3 client returns the file successfully,
-        the view should return the ZIP file with HTTP 200 and proper headers.
+        When output_location is an S3 URL and the object exists,
+        the view should return a 302 redirect to a presigned S3 URL.
         """
         scan = scans_fixture[0]
         bucket = "test-bucket"
@@ -3594,22 +3890,33 @@ class TestScanViewSet:
             type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
         )
 
+        presigned_url = (
+            "https://test-bucket.s3.amazonaws.com/report.zip"
+            "?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300"
+        )
+
         class FakeS3Client:
-            def get_object(self, Bucket, Key):
+            def head_object(self, Bucket, Key):
                 assert Bucket == bucket
                 assert Key == key
-                return {"Body": io.BytesIO(b"s3 zip content")}
+                return {}
+
+            def generate_presigned_url(self, ClientMethod, Params, ExpiresIn):
+                assert ClientMethod == "get_object"
+                assert Params["Bucket"] == bucket
+                assert Params["Key"] == key
+                assert Params["ResponseContentDisposition"] == (
+                    'attachment; filename="report.zip"'
+                )
+                assert ExpiresIn == 300
+                return presigned_url
 
         monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
 
         url = reverse("scan-report", kwargs={"pk": scan.id})
         response = authenticated_client.get(url)
-        assert response.status_code == 200
-        expected_filename = os.path.basename("report.zip")
-        content_disposition = response.get("Content-Disposition")
-        assert content_disposition.startswith('attachment; filename="')
-        assert f'filename="{expected_filename}"' in content_disposition
-        assert response.content == b"s3 zip content"
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response["Location"] == presigned_url
 
     def test_report_s3_success_no_local_files(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -3748,23 +4055,31 @@ class TestScanViewSet:
         )
 
         match_key = "path/compliance/mitre_attack_aws.csv"
+        presigned_url = (
+            "https://test-bucket.s3.amazonaws.com/path/compliance/mitre_attack_aws.csv"
+            "?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=300"
+        )
 
         class FakeS3Client:
             def list_objects_v2(self, Bucket, Prefix):
                 return {"Contents": [{"Key": match_key}]}
 
-            def get_object(self, Bucket, Key):
-                return {"Body": io.BytesIO(b"ignored")}
+            def generate_presigned_url(self, ClientMethod, Params, ExpiresIn):
+                assert ClientMethod == "get_object"
+                assert Params["Key"] == match_key
+                assert Params["ResponseContentDisposition"] == (
+                    'attachment; filename="mitre_attack_aws.csv"'
+                )
+                assert ExpiresIn == 300
+                return presigned_url
 
         monkeypatch.setattr("api.v1.views.get_s3_client", lambda: FakeS3Client())
 
         framework = match_key.split("/")[-1].split(".")[0]
         url = reverse("scan-compliance", kwargs={"pk": scan.id, "name": framework})
         resp = authenticated_client.get(url)
-        assert resp.status_code == status.HTTP_200_OK
-        cd = resp["Content-Disposition"]
-        assert cd.startswith('attachment; filename="')
-        assert cd.endswith('filename="mitre_attack_aws.csv"')
+        assert resp.status_code == status.HTTP_302_FOUND
+        assert resp["Location"] == presigned_url
 
     def test_compliance_s3_not_found(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -3825,6 +4140,51 @@ class TestScanViewSet:
             )
             resp = authenticated_client.get(url)
             assert resp.status_code == status.HTTP_200_OK
+            cd = resp["Content-Disposition"]
+            assert cd.startswith('attachment; filename="')
+            assert cd.endswith(f'filename="{fname.name}"')
+
+    def test_cis_no_output(self, authenticated_client, scans_fixture):
+        """CIS PDF endpoint must 404 when the scan has no output_location."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        scan.output_location = ""
+        scan.save()
+
+        url = reverse("scan-cis", kwargs={"pk": scan.id})
+        resp = authenticated_client.get(url)
+        assert resp.status_code == status.HTTP_404_NOT_FOUND
+        assert (
+            resp.json()["errors"]["detail"]
+            == "The scan has no reports, or the CIS report generation task has not started yet."
+        )
+
+    def test_cis_local_file(self, authenticated_client, scans_fixture, monkeypatch):
+        """CIS PDF endpoint must serve the latest generated PDF."""
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            base = tmp_path / "reports"
+            cis_dir = base / "cis"
+            cis_dir.mkdir(parents=True, exist_ok=True)
+            fname = cis_dir / "prowler-output-aws-20260101000000_cis_report.pdf"
+            fname.write_bytes(b"%PDF-1.4 fake pdf")
+
+            scan.output_location = str(base / "scan.zip")
+            scan.save()
+
+            monkeypatch.setattr(
+                glob,
+                "glob",
+                lambda p: [str(fname)] if p.endswith("*_cis_report.pdf") else [],
+            )
+
+            url = reverse("scan-cis", kwargs={"pk": scan.id})
+            resp = authenticated_client.get(url)
+            assert resp.status_code == status.HTTP_200_OK
+            assert resp["Content-Type"] == "application/pdf"
             cd = resp["Content-Disposition"]
             assert cd.startswith('attachment; filename="')
             assert cd.endswith(f'filename="{fname.name}"')
@@ -3922,8 +4282,8 @@ class TestScanViewSet:
         scan.save()
 
         fake_client = MagicMock()
-        fake_client.get_object.side_effect = ClientError(
-            {"Error": {"Code": "NoSuchKey"}}, "GetObject"
+        fake_client.head_object.side_effect = ClientError(
+            {"Error": {"Code": "NoSuchKey"}}, "HeadObject"
         )
         mock_get_s3_client.return_value = fake_client
 
@@ -3946,8 +4306,8 @@ class TestScanViewSet:
         scan.save()
 
         fake_client = MagicMock()
-        fake_client.get_object.side_effect = ClientError(
-            {"Error": {"Code": "AccessDenied"}}, "GetObject"
+        fake_client.head_object.side_effect = ClientError(
+            {"Error": {"Code": "AccessDenied"}}, "HeadObject"
         )
         mock_get_s3_client.return_value = fake_client
 
@@ -15445,10 +15805,16 @@ class TestFindingGroupViewSet:
         # iam_password_policy has only PASS findings
         assert data[0]["attributes"]["status"] == "PASS"
 
-    def test_finding_groups_status_muted_all(
+    def test_finding_groups_fully_muted_group_is_pass(
         self, authenticated_client, finding_groups_fixture
     ):
-        """Test that MUTED status returned when all findings are muted."""
+        """A fully-muted group reports status=PASS and muted=True.
+
+        rds_encryption has 2 muted FAIL findings. Muted findings are treated
+        as resolved/accepted, so the group is no longer actionable and its
+        status must be PASS. The `muted` flag is True because every finding
+        in the group is muted.
+        """
         response = authenticated_client.get(
             reverse("finding-group-list"),
             {"filter[inserted_at]": TODAY, "filter[check_id]": "rds_encryption"},
@@ -15456,8 +15822,98 @@ class TestFindingGroupViewSet:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == 1
-        # rds_encryption has all muted findings
-        assert data[0]["attributes"]["status"] == "MUTED"
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "PASS"
+        assert attrs["muted"] is True
+        assert attrs["fail_count"] == 0
+        assert attrs["fail_muted_count"] == 2
+        assert attrs["pass_muted_count"] == 0
+        assert attrs["manual_muted_count"] == 0
+        assert attrs["muted_count"] == 2
+        # Sanity: the per-status muted counts must add up to muted_count.
+        assert (
+            attrs["pass_muted_count"]
+            + attrs["fail_muted_count"]
+            + attrs["manual_muted_count"]
+            == attrs["muted_count"]
+        )
+
+    def test_finding_groups_status_ignores_muted_failures(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        scans_fixture,
+        resources_fixture,
+    ):
+        """Muted FAIL findings must not drive the aggregated status.
+
+        When a group mixes one non-muted PASS with one muted FAIL, the
+        actionable outcome is PASS: there are no unmuted failures left. The
+        aggregated `status` must reflect that (not FAIL), while `muted`
+        stays False because the group still has a non-muted finding.
+        """
+        tenant = tenants_fixture[0]
+        scan1, *_ = scans_fixture
+        resource1, *_ = resources_fixture
+
+        pass_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid="fg_mixed_muted_pass",
+            scan=scan1,
+            delta=None,
+            status=Status.PASS,
+            severity=Severity.low,
+            impact=Severity.low,
+            check_id="mixed_muted_check",
+            check_metadata={
+                "CheckId": "mixed_muted_check",
+                "checktitle": "Mixed muted check",
+                "Description": "Fixture for muted status aggregation.",
+            },
+            first_seen_at="2024-01-11T00:00:00Z",
+            muted=False,
+        )
+        pass_finding.add_resources([resource1])
+
+        fail_muted_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid="fg_mixed_muted_fail",
+            scan=scan1,
+            delta=None,
+            status=Status.FAIL,
+            severity=Severity.high,
+            impact=Severity.high,
+            check_id="mixed_muted_check",
+            check_metadata={
+                "CheckId": "mixed_muted_check",
+                "checktitle": "Mixed muted check",
+                "Description": "Fixture for muted status aggregation.",
+            },
+            first_seen_at="2024-01-12T00:00:00Z",
+            muted=True,
+        )
+        fail_muted_finding.add_resources([resource1])
+
+        # filter[region] forces finding-level aggregation so we exercise the
+        # raw-findings path without touching the daily summary fixture.
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "mixed_muted_check",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        assert attrs["status"] == "PASS"
+        assert attrs["muted"] is False
+        assert attrs["pass_count"] == 1
+        assert attrs["fail_count"] == 0
+        assert attrs["fail_muted_count"] == 1
+        assert attrs["muted_count"] == 1
 
     def test_finding_groups_status_filter(
         self, authenticated_client, finding_groups_fixture
@@ -15949,7 +16405,7 @@ class TestFindingGroupViewSet:
         "extra_filters",
         [
             {},
-            {"filter[muted]": "include"},
+            {"filter[delta]": "new"},
         ],
         ids=["summary_path", "finding_level_path"],
     )
@@ -15967,7 +16423,8 @@ class TestFindingGroupViewSet:
 
         Parametrized to cover both aggregation paths:
         - summary_path: default, uses _CheckTitleToCheckIdMixin on summaries
-        - finding_level_path: filter[muted]=include forces CommonFindingFilters
+        - finding_level_path: filter[delta]=new forces _aggregate_findings via
+          CommonFindingFilters (delta is finding-level, not summary-level)
         """
         params = {
             "filter[inserted_at]": TODAY,
@@ -16009,6 +16466,36 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         # s3_bucket_public_access has 2 findings with 2 different resources
         assert len(data) == 2
+
+    def test_resources_id_matches_resource_id_for_mapped_findings(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Findings with a resource expose the resource id as row id (hot path contract)."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources", kwargs={"pk": "s3_bucket_public_access"}
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "expected resources in response"
+
+        resource_ids = set(
+            ResourceFindingMapping.objects.filter(
+                finding__check_id="s3_bucket_public_access",
+            ).values_list("resource_id", flat=True)
+        )
+        finding_ids = set(
+            Finding.objects.filter(
+                check_id="s3_bucket_public_access",
+            ).values_list("id", flat=True)
+        )
+
+        returned_ids = {item["id"] for item in data}
+        assert returned_ids <= {str(rid) for rid in resource_ids}
+        assert returned_ids.isdisjoint({str(fid) for fid in finding_ids})
 
     def test_resources_fields(self, authenticated_client, finding_groups_fixture):
         """Test resource fields (uid, name, service, region, type) have valid values."""
@@ -16885,3 +17372,446 @@ class TestFindingGroupViewSet:
         data = response.json()["data"]
         # Should still return data, not filtered by the old date
         assert len(data) == 5
+
+    def test_finding_groups_status_choices_no_muted(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """Every returned group must have status ∈ {FAIL, PASS, MANUAL}."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        statuses = {item["attributes"]["status"] for item in response.json()["data"]}
+        assert statuses, "fixture should produce at least one group"
+        assert statuses <= {"FAIL", "PASS", "MANUAL"}
+        assert "MUTED" not in statuses
+
+    def test_finding_groups_serializer_exposes_muted_and_manual_count(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /finding-groups payload must expose `muted`, `manual_count` and
+        the per-status muted siblings (`pass_muted_count`/`fail_muted_count`/
+        `manual_muted_count`)."""
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {"filter[inserted_at]": TODAY, "filter[check_id]": "iam_password_policy"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attrs = response.json()["data"][0]["attributes"]
+        assert "muted" in attrs and isinstance(attrs["muted"], bool)
+        assert "manual_count" in attrs and isinstance(attrs["manual_count"], int)
+        assert attrs["muted"] is False  # iam_password_policy has only non-muted PASS
+        assert attrs["manual_count"] == 0
+        assert attrs["pass_muted_count"] == 0
+        assert attrs["fail_muted_count"] == 0
+        assert attrs["manual_muted_count"] == 0
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_filter_status_muted_is_rejected(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`filter[status]=MUTED` is no longer a valid status value."""
+        params = {"filter[status]": "MUTED"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_filter_muted_true(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`filter[muted]=true` returns only fully-muted groups."""
+        params = {"filter[muted]": "true"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        # Only rds_encryption is fully muted in the fixture
+        assert check_ids == {"rds_encryption"}
+        assert all(item["attributes"]["muted"] is True for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_filter_muted_false(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`filter[muted]=false` returns only groups with actionable findings."""
+        params = {"filter[muted]": "false"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        check_ids = {item["id"] for item in data}
+        assert "rds_encryption" not in check_ids
+        assert check_ids == {
+            "s3_bucket_public_access",
+            "ec2_instance_public_ip",
+            "iam_password_policy",
+            "cloudtrail_enabled",
+        }
+        assert all(item["attributes"]["muted"] is False for item in data)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_status(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """sort=status orders by aggregated status (FAIL > PASS > MANUAL)."""
+        priority = {"FAIL": 3, "PASS": 2, "MANUAL": 1}
+        params = {"sort": "-status"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "fixture should produce groups"
+
+        desc_keys = [priority[item["attributes"]["status"]] for item in data]
+        assert desc_keys == sorted(desc_keys, reverse=True)
+
+        params["sort"] = "status"
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        asc_keys = [
+            priority[item["attributes"]["status"]] for item in response.json()["data"]
+        ]
+        assert asc_keys == sorted(asc_keys)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_sort_by_muted(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """sort=muted orders by the boolean muted attribute."""
+        # Need include_muted=true so the fully-muted group is part of the result
+        params = {"sort": "-muted", "filter[include_muted]": "true"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "fixture should produce groups"
+
+        muted_values = [item["attributes"]["muted"] for item in data]
+        # Descending boolean: True (1) before False (0)
+        assert muted_values == sorted(muted_values, reverse=True)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    @pytest.mark.parametrize(
+        "sort_field",
+        [
+            "pass_muted_count",
+            "fail_muted_count",
+            "manual_muted_count",
+            "new_fail_count",
+            "new_fail_muted_count",
+            "new_pass_count",
+            "new_pass_muted_count",
+            "new_manual_count",
+            "new_manual_muted_count",
+            "changed_fail_count",
+            "changed_fail_muted_count",
+            "changed_pass_count",
+            "changed_pass_muted_count",
+            "changed_manual_count",
+            "changed_manual_muted_count",
+        ],
+    )
+    def test_finding_groups_sort_by_counter_fields(
+        self,
+        authenticated_client,
+        finding_groups_fixture,
+        endpoint_name,
+        sort_field,
+    ):
+        """All counter fields are accepted as sort parameters (asc and desc)."""
+        params = {"sort": f"-{sort_field}"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) > 0
+
+        desc_values = [item["attributes"][sort_field] for item in data]
+        assert desc_values == sorted(desc_values, reverse=True)
+
+        params["sort"] = sort_field
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        asc_values = [
+            item["attributes"][sort_field] for item in response.json()["data"]
+        ]
+        assert asc_values == sorted(asc_values)
+
+    @pytest.mark.parametrize(
+        "endpoint_name", ["finding-group-list", "finding-group-latest"]
+    )
+    def test_finding_groups_delta_status_breakdown(
+        self, authenticated_client, finding_groups_fixture, endpoint_name
+    ):
+        """`new_*` and `changed_*` counters split by status and mute state.
+
+        s3_bucket_public_access has 1 new FAIL and 1 changed FAIL (both
+        non-muted) so the breakdown must reflect exactly that and the totals
+        must equal the sum of the buckets.
+        """
+        params = {"filter[check_id]": "s3_bucket_public_access"}
+        if endpoint_name == "finding-group-list":
+            params["filter[inserted_at]"] = TODAY
+
+        response = authenticated_client.get(reverse(endpoint_name), params)
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+
+        assert attrs["new_fail_count"] == 1
+        assert attrs["new_fail_muted_count"] == 0
+        assert attrs["new_pass_count"] == 0
+        assert attrs["new_pass_muted_count"] == 0
+        assert attrs["new_manual_count"] == 0
+        assert attrs["new_manual_muted_count"] == 0
+        assert attrs["changed_fail_count"] == 1
+        assert attrs["changed_fail_muted_count"] == 0
+        assert attrs["changed_pass_count"] == 0
+        assert attrs["changed_pass_muted_count"] == 0
+        assert attrs["changed_manual_count"] == 0
+        assert attrs["changed_manual_muted_count"] == 0
+
+        new_total = (
+            attrs["new_fail_count"]
+            + attrs["new_fail_muted_count"]
+            + attrs["new_pass_count"]
+            + attrs["new_pass_muted_count"]
+            + attrs["new_manual_count"]
+            + attrs["new_manual_muted_count"]
+        )
+        changed_total = (
+            attrs["changed_fail_count"]
+            + attrs["changed_fail_muted_count"]
+            + attrs["changed_pass_count"]
+            + attrs["changed_pass_muted_count"]
+            + attrs["changed_manual_count"]
+            + attrs["changed_manual_muted_count"]
+        )
+        # The non-muted variants of the breakdown must sum to the legacy
+        # totals (new_count/changed_count are stored as non-muted).
+        assert (
+            attrs["new_fail_count"]
+            + attrs["new_pass_count"]
+            + attrs["new_manual_count"]
+            == attrs["new_count"]
+        )
+        assert (
+            attrs["changed_fail_count"]
+            + attrs["changed_pass_count"]
+            + attrs["changed_manual_count"]
+            == attrs["changed_count"]
+        )
+        # And the *full* breakdown (including the muted halves) is exposed
+        # so clients can also count muted-only deltas without losing data.
+        assert new_total >= attrs["new_count"]
+        assert changed_total >= attrs["changed_count"]
+
+    def test_finding_groups_resources_serializer_exposes_muted(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /finding-groups/<id>/resources payload must expose `muted`."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources",
+                kwargs={"pk": "rds_encryption"},
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "rds_encryption should expose its resources"
+        for item in data:
+            attrs = item["attributes"]
+            assert "muted" in attrs and isinstance(attrs["muted"], bool)
+            # rds_encryption has all muted findings
+            assert attrs["muted"] is True
+            # Status reflects the underlying check outcome (FAIL), not MUTED
+            assert attrs["status"] == "FAIL"
+
+    def test_finding_groups_resources_exposes_finding_id(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /resources payload exposes the most recent matching finding_id.
+
+        rds_encryption has 2 findings, one per resource. Each resource row must
+        report the UUID of its corresponding Finding (UUIDv7 ordering means
+        Max(finding__id) resolves to the latest snapshot in time).
+        """
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-resources",
+                kwargs={"pk": "rds_encryption"},
+            ),
+            {"filter[inserted_at]": TODAY},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "rds_encryption should expose its resources"
+
+        rds_finding_ids = {
+            str(f.id) for f in finding_groups_fixture if f.check_id == "rds_encryption"
+        }
+        assert rds_finding_ids, "fixture sanity"
+
+        for item in data:
+            attrs = item["attributes"]
+            assert "finding_id" in attrs
+            assert attrs["finding_id"] in rds_finding_ids
+
+    def test_finding_groups_latest_resources_exposes_finding_id(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """The /latest/.../resources payload also exposes finding_id."""
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": "rds_encryption"},
+            ),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data, "rds_encryption should expose its resources via /latest"
+
+        rds_finding_ids = {
+            str(f.id) for f in finding_groups_fixture if f.check_id == "rds_encryption"
+        }
+        for item in data:
+            attrs = item["attributes"]
+            assert "finding_id" in attrs
+            assert attrs["finding_id"] in rds_finding_ids
+
+    def test_latest_resources_picks_scan_by_completed_at_when_overlap(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        resources_fixture,
+    ):
+        """Overlapping scans on the same provider must resolve to the scan
+        with the latest completed_at, matching the /latest summary path and
+        the daily-summary upsert (keyed on midnight(completed_at)). Picking
+        by inserted_at here produced /resources and /latest reading from
+        different scans and reporting diverging delta/new counts.
+        """
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        resource = resources_fixture[0]
+        check_id = "overlap_regression_check"
+
+        t0 = datetime.now(timezone.utc) - timedelta(hours=5)
+        t1 = t0 + timedelta(hours=1)
+        t1_end = t1 + timedelta(minutes=30)
+        t2 = t0 + timedelta(hours=4)
+
+        scan_long = Scan.objects.create(
+            name="long overlap scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=t0,
+            completed_at=t2,
+        )
+        scan_short = Scan.objects.create(
+            name="short overlap scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=t1,
+            completed_at=t1_end,
+        )
+        # inserted_at is auto_now_add so override with .update() to recreate
+        # the overlap shape: short scan inserted later but completed earlier.
+        Scan.all_objects.filter(pk=scan_long.pk).update(inserted_at=t0)
+        Scan.all_objects.filter(pk=scan_short.pk).update(inserted_at=t1)
+        scan_long.refresh_from_db()
+        scan_short.refresh_from_db()
+
+        assert scan_short.inserted_at > scan_long.inserted_at
+        assert scan_long.completed_at > scan_short.completed_at
+
+        long_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid=f"{check_id}_long",
+            scan=scan_long,
+            delta=None,
+            status=Status.FAIL,
+            status_extended="long scan finding",
+            impact=Severity.high,
+            impact_extended="high",
+            severity=Severity.high,
+            raw_result={"status": Status.FAIL, "severity": Severity.high},
+            check_id=check_id,
+            check_metadata={
+                "CheckId": check_id,
+                "checktitle": "Overlap regression",
+                "Description": "Overlapping scan regression.",
+            },
+            first_seen_at=t0,
+            muted=False,
+        )
+        long_finding.add_resources([resource])
+
+        short_finding = Finding.objects.create(
+            tenant_id=tenant.id,
+            uid=f"{check_id}_short",
+            scan=scan_short,
+            delta="new",
+            status=Status.FAIL,
+            status_extended="short scan finding",
+            impact=Severity.high,
+            impact_extended="high",
+            severity=Severity.high,
+            raw_result={"status": Status.FAIL, "severity": Severity.high},
+            check_id=check_id,
+            check_metadata={
+                "CheckId": check_id,
+                "checktitle": "Overlap regression",
+                "Description": "Overlapping scan regression.",
+            },
+            first_seen_at=t1,
+            muted=False,
+        )
+        short_finding.add_resources([resource])
+
+        response = authenticated_client.get(
+            reverse(
+                "finding-group-latest_resources",
+                kwargs={"check_id": check_id},
+            ),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attrs = data[0]["attributes"]
+        assert attrs["finding_id"] == str(long_finding.id)
+        assert attrs["delta"] is None
