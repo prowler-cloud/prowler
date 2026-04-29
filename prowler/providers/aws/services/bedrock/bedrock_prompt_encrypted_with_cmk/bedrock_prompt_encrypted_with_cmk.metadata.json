@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_prompt_encrypted_with_cmk",
+  "CheckTitle": "Bedrock prompt is encrypted at rest with a customer-managed KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "Bedrock prompts should be encrypted at rest with a **customer-managed KMS key (CMK)** rather than the AWS-owned default key. Prompts can contain sensitive instructions, business logic, and references to downstream tooling that warrant tenant-controlled key material and auditable access via AWS KMS.",
+  "Risk": "A prompt encrypted only with the AWS-owned default key offers limited tenant control over key access and lifecycle: no customer KMS key policy to govern decrypt permissions, no control over rotation cadence or scheduled deletion, and gaps against frameworks (ISO 27001 A.8.24, NIST CSF PR.DS, KISA-ISMS-P 2.7.2) that require customer-managed keys for sensitive data at rest.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-management.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_CreatePrompt.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_UpdatePrompt.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws bedrock-agent update-prompt --prompt-identifier <prompt_id> --name <prompt_name> --customer-encryption-key-arn <kms_key_arn>",
+      "NativeIaC": "",
+      "Other": "1. Open the Amazon Bedrock console\n2. Navigate to Prompt management\n3. Select the prompt\n4. Edit the prompt and choose a customer-managed KMS key for encryption\n5. Save the prompt",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Encrypt every Bedrock prompt with a **customer-managed KMS key** to retain control over key access, rotation, and lifecycle. Restrict the key policy to the principals that legitimately need to author or invoke prompts, and align rotation cadence with your encryption policy.",
+      "Url": "https://hub.prowler.com/check/bedrock_prompt_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

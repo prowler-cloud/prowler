@@ -2117,6 +2117,7 @@
       "Checks": [
         "backup_vaults_encrypted",
         "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk",
         "cloudtrail_kms_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",
@@ -2389,7 +2390,6 @@
         "autoscaling_group_multiple_az",
         "autoscaling_group_multiple_instance_types",
         "awslambda_function_vpc_multi_az",
-        "bedrock_prompt_have_multiple_variants",
         "cloudformation_stacks_termination_protection_enabled",
         "cloudfront_distributions_s3_origin_non_existent_bucket",
         "directconnect_connection_redundancy",
