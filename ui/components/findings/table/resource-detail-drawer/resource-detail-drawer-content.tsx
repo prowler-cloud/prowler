@@ -311,6 +311,12 @@ function buildComplianceDetailHref({
   return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
 }
 
+function buildResourceDetailHref(resourceId: string): string {
+  const params = new URLSearchParams();
+  params.set("resourceId", resourceId);
+  return `/resources?${params.toString()}`;
+}
+
 interface ResourceDetailDrawerContentProps {
   isLoading: boolean;
   isNavigating: boolean;
@@ -436,6 +442,9 @@ export function ResourceDetailDrawerContent({
         href: recommendationUrl,
         label: getRecommendationLinkLabel(recommendationUrl),
       }
+    : null;
+  const resourceDetailHref = f?.resourceId
+    ? buildResourceDetailHref(f.resourceId)
     : null;
   const overviewStatusExtended = f?.statusExtended;
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
@@ -778,6 +787,21 @@ export function ResourceDetailDrawerContent({
                 )}
               </div>
             </div>
+
+            {resourceDetailHref && (
+              <div className="border-border-neutral-secondary flex justify-end border-t pt-3">
+                <Button variant="link" size="link-sm" asChild>
+                  <Link
+                    href={resourceDetailHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Resource
+                    <ExternalLink className="size-3" />
+                  </Link>
+                </Button>
+              </div>
+            )}
           </>
         )}
 

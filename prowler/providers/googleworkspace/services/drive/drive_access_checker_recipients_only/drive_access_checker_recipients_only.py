@@ -19,11 +19,7 @@ class drive_access_checker_recipients_only(Check):
         if drive_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=drive_client.provider.identity,
-                resource_name=drive_client.provider.identity.domain,
-                resource_id=drive_client.provider.identity.customer_id,
-                customer_id=drive_client.provider.identity.customer_id,
-                location="global",
+                resource=drive_client.provider.domain_resource,
             )
 
             access_checker = drive_client.policies.access_checker_suggestions

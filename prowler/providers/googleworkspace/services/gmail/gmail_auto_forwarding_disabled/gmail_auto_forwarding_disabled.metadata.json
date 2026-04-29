@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_auto_forwarding_disabled",
+  "CheckTitle": "Automatic forwarding options are disabled",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Automatic email forwarding allows users to automatically forward all incoming email to an external address. Disabling this feature prevents unauthorized data exfiltration through email forwarding rules.",
+  "Risk": "With auto-forwarding enabled, an attacker who gains control of a user account can create **forwarding rules to exfiltrate** all incoming email to an external address. This can persist undetected and provide the attacker with continuous access to sensitive communications even after the account is recovered.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/2491924",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **End User Access** > **Automatic forwarding**\n4. Uncheck **Allow users to automatically forward incoming email to another address**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable automatic email forwarding to prevent users and attackers from setting up rules that exfiltrate email data to external addresses.",
+      "Url": "https://hub.prowler.com/check/gmail_auto_forwarding_disabled"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "gmail_pop_imap_access_disabled",
+    "gmail_per_user_outbound_gateway_disabled"
+  ],
+  "Notes": ""
+}

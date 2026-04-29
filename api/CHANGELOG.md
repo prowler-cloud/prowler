@@ -2,19 +2,31 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.26.0] (Prowler UNRELEASED)
+## [1.26.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: AWS scans no longer fail when enabled regions cannot be retrieved, and scans stuck in `scheduled` state are now cleaned up after the stale threshold [(#10917)](https://github.com/prowler-cloud/prowler/pull/10917)
+
+---
+
+## [1.26.0] (Prowler v5.25.0)
 
 ### 🚀 Added
 
+- CIS Benchmark PDF report generation for scans, exposing the latest CIS version per provider via `GET /scans/{id}/cis/{name}/` [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
 - `/overviews/resource-groups` (resource inventory), `/overviews/categories` and `/overviews/attack-surfaces` now reflect newly-muted findings without waiting for the next scan. The post-mute `reaggregate-all-finding-group-summaries` task now also dispatches `aggregate_scan_resource_group_summaries_task`, `aggregate_scan_category_summaries_task` and `aggregate_attack_surface_task` per latest scan of every `(provider, day)` pair, rebuilding `ScanGroupSummary`, `ScanCategorySummary` and `AttackSurfaceOverview` alongside the tables already covered in #10827 [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
-- CIS Benchmark PDF report generation for scans, exposing the latest CIS version per provider via `GET /scans/{id}/cis/{name}/` and picking the variant dynamically via `_pick_latest_cis_variant` (no hard-coded provider → version mapping) [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
 - Install zizmor v1.24.1 in API Docker image for GitHub Actions workflow scanning [(#10607)](https://github.com/prowler-cloud/prowler/pull/10607)
 
 ### 🔄 Changed
 
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 - `aggregate_findings`, `aggregate_attack_surface`, `aggregate_scan_resource_group_summaries` and `aggregate_scan_category_summaries` now upsert via `bulk_create(update_conflicts=True, ...)` instead of the prior `ignore_conflicts=True` / plain INSERT / `already backfilled` short-circuit. Re-runs triggered by the post-mute reaggregation pipeline no longer trip the `unique_*_per_scan` constraints nor silently drop updates, and are race-safe under concurrent writers (e.g. scan completion overlapping with a fresh mute rule) [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
-- Rename the scan-category and scan-resource-group summary aggregators from `backfill_*` to `aggregate_*` (`backfill_scan_category_summaries` -> `aggregate_scan_category_summaries`, `backfill_scan_resource_group_summaries` -> `aggregate_scan_resource_group_summaries`; Celery task names `backfill-scan-category-summaries` -> `scan-category-summaries`, `backfill-scan-resource-group-summaries` -> `scan-resource-group-summaries`) and move them to the `overview` queue, matching the sibling per-scan aggregators (`perform_scan_summary_task`, `aggregate_daily_severity_task`, `aggregate_finding_group_summaries_task`, `aggregate_attack_surface_task`). The old names had no dispatchers outside the post-mute reaggregation chain, so no task-registry migration is required [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
+- Rename the scan-category and scan-resource-group summary aggregators from `backfill_*` to `aggregate_*` [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
+
+### 🐞 Fixed
+
+- `generate_outputs_task` crashing with `KeyError` for compliance frameworks listed by `get_compliance_frameworks` but not loadable by `Compliance.get_bulk` [(#10903)](https://github.com/prowler-cloud/prowler/pull/10903)
 
 ---
 
