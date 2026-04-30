@@ -675,3 +675,177 @@ class TestCheckLoader:
         )
         assert CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME not in result
         assert S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME in result
+
+    def test_load_checks_to_execute_universal_framework_takes_precedence(self):
+        """When ``--compliance <fw>`` matches a universal framework, the
+        loader must source checks from ``universal_frameworks[fw].requirements[*]
+        .checks[provider]`` and NOT fall through to ``bulk_compliance_frameworks``.
+
+        This is the path added by PR #10301 in checks_loader.py.
+        """
+        from prowler.lib.check.compliance_models import (
+            ComplianceFramework,
+            UniversalComplianceRequirement,
+        )
+
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+
+        universal_framework = ComplianceFramework(
+            framework="csa_ccm",
+            name="CSA CCM 4.0",
+            version="4.0",
+            description="Cloud Controls Matrix",
+            requirements=[
+                UniversalComplianceRequirement(
+                    id="A&A-01",
+                    description="Audit & Assurance",
+                    attributes={},
+                    checks={"aws": [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME]},
+                ),
+            ],
+        )
+
+        with patch(
+            "prowler.lib.check.checks_loader.CheckMetadata.get_bulk",
+            return_value=bulk_checks_metadata,
+        ):
+            result = load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metadata,
+                bulk_compliance_frameworks={},  # legacy empty
+                compliance_frameworks=["csa_ccm_4.0"],
+                provider=self.provider,
+                universal_frameworks={"csa_ccm_4.0": universal_framework},
+            )
+
+        assert result == {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME}
+
+    def test_load_checks_to_execute_universal_filters_by_provider(self):
+        """A universal requirement may declare checks for several
+        providers; the loader must only return those for the active
+        provider key (lowercased)."""
+        from prowler.lib.check.compliance_models import (
+            ComplianceFramework,
+            UniversalComplianceRequirement,
+        )
+
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+
+        # The same requirement maps a different check per provider.
+        # Only the AWS one must be returned for provider="aws".
+        universal_framework = ComplianceFramework(
+            framework="csa_ccm",
+            name="CSA CCM 4.0",
+            version="4.0",
+            description="Cloud Controls Matrix",
+            requirements=[
+                UniversalComplianceRequirement(
+                    id="A&A-02",
+                    description="Multi-provider req",
+                    attributes={},
+                    checks={
+                        "aws": [S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME],
+                        "azure": ["azure_only_check"],
+                        "gcp": ["gcp_only_check"],
+                    },
+                ),
+            ],
+        )
+
+        with patch(
+            "prowler.lib.check.checks_loader.CheckMetadata.get_bulk",
+            return_value=bulk_checks_metadata,
+        ):
+            result = load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metadata,
+                bulk_compliance_frameworks={},
+                compliance_frameworks=["csa_ccm_4.0"],
+                provider=self.provider,  # "aws"
+                universal_frameworks={"csa_ccm_4.0": universal_framework},
+            )
+
+        assert S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME in result
+        assert "azure_only_check" not in result
+        assert "gcp_only_check" not in result
+
+    def test_load_checks_to_execute_universal_no_match_falls_back_to_legacy(self):
+        """If the requested compliance framework is not present in
+        ``universal_frameworks``, the loader must fall back to the
+        legacy ``bulk_compliance_frameworks`` lookup."""
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        bulk_compliance_frameworks = {
+            "soc2_aws": Compliance(
+                Framework="SOC2",
+                Name="SOC2",
+                Provider="aws",
+                Version="2.0",
+                Description="x",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME],
+                        Id="",
+                        Description="",
+                        Attributes=[],
+                    )
+                ],
+            ),
+        }
+
+        with patch(
+            "prowler.lib.check.checks_loader.CheckMetadata.get_bulk",
+            return_value=bulk_checks_metadata,
+        ):
+            result = load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metadata,
+                bulk_compliance_frameworks=bulk_compliance_frameworks,
+                compliance_frameworks=["soc2_aws"],
+                provider=self.provider,
+                universal_frameworks={"some_other_universal_fw": object()},
+            )
+
+        assert result == {S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME}
+
+    def test_load_checks_to_execute_universal_unknown_provider_returns_empty(self):
+        """If the universal requirement has no checks for the active
+        provider, no checks are picked up for that requirement."""
+        from prowler.lib.check.compliance_models import (
+            ComplianceFramework,
+            UniversalComplianceRequirement,
+        )
+
+        bulk_checks_metadata = {
+            S3_BUCKET_LEVEL_PUBLIC_ACCESS_BLOCK_NAME: self.get_custom_check_s3_metadata()
+        }
+        universal_framework = ComplianceFramework(
+            framework="csa_ccm",
+            name="CSA CCM 4.0",
+            version="4.0",
+            description="Cloud Controls Matrix",
+            requirements=[
+                UniversalComplianceRequirement(
+                    id="A&A-03",
+                    description="Only Azure",
+                    attributes={},
+                    checks={"azure": ["azure_only_check"]},
+                ),
+            ],
+        )
+
+        with patch(
+            "prowler.lib.check.checks_loader.CheckMetadata.get_bulk",
+            return_value=bulk_checks_metadata,
+        ):
+            result = load_checks_to_execute(
+                bulk_checks_metadata=bulk_checks_metadata,
+                bulk_compliance_frameworks={},
+                compliance_frameworks=["csa_ccm_4.0"],
+                provider=self.provider,  # "aws" — no checks declared
+                universal_frameworks={"csa_ccm_4.0": universal_framework},
+            )
+
+        assert result == set()

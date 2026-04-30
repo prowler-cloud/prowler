@@ -11,13 +11,11 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 class WAFv2(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
-        super().__init__(__class__.__name__, provider)
+        # AWS WAFv2 is available globally for CloudFront distributions, but you must use the Region US East (N. Virginia) to create your web ACL.
+        region = "us-east-1" if provider.identity.partition == "aws" else None
+        super().__init__(__class__.__name__, provider, region=region)
         self.web_acls = {}
         if self.audited_partition == "aws":
-            # AWS WAFv2 is available globally for CloudFront distributions, but you must use the Region US East (N. Virginia) to create your web ACL.
-            self.region = "us-east-1"
-            self.client = self.session.client(self.service, self.region)
             self._list_web_acls_global()
         self.__threading_call__(self._list_web_acls_regional)
         self.__threading_call__(self._get_web_acl, self.web_acls.values())

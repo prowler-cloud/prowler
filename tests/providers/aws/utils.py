@@ -2,7 +2,6 @@ from argparse import Namespace
 from json import dumps
 
 from boto3 import client, session
-from botocore.config import Config
 from moto import mock_aws
 
 from prowler.config.config import (
@@ -133,10 +132,11 @@ def set_mocked_aws_provider(
     provider = AwsProvider()
 
     # Mock Session
-    provider._session.session_config = None
+    session_config = AwsProvider.set_session_config(None)
+    provider._session.session_config = session_config
     provider._session.original_session = original_session
     provider._session.current_session = audit_session
-    provider._session.session_config = Config()
+    audit_session._session.set_default_client_config(session_config)
     # Mock Identity
     provider._identity.account = audited_account
     provider._identity.account_arn = audited_account_arn
