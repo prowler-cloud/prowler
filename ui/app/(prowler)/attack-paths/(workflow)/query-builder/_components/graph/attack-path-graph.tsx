@@ -11,6 +11,7 @@ import {
   type Rect,
   useReactFlow,
 } from "@xyflow/react";
+import { useTheme } from "next-themes";
 import {
   type MouseEvent,
   type Ref,
@@ -23,7 +24,12 @@ import {
 import { cn } from "@/lib/utils";
 import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
-import { getPathEdges, GRAPH_EDGE_HIGHLIGHT_COLOR } from "../../_lib";
+import {
+  getNodeBorderColor,
+  getNodeColor,
+  getPathEdges,
+  GRAPH_EDGE_HIGHLIGHT_COLOR,
+} from "../../_lib";
 import { computeFilteredSubgraph } from "../../_lib/graph-utils";
 import { isFindingNode, layoutWithDagre } from "../../_lib/layout";
 import { FindingNode } from "./nodes/finding-node";
@@ -130,6 +136,19 @@ const GraphDefs = () => (
 
 type GraphCanvasProps = Omit<AttackPathGraphProps, "className">;
 
+const MINIMAP_COLORS = {
+  light: {
+    bg: "#f8fafc",
+    mask: "rgba(241, 245, 249, 0.6)",
+    maskStroke: "#cbd5e1",
+  },
+  dark: {
+    bg: "#0f172a",
+    mask: "rgba(15, 23, 42, 0.6)",
+    maskStroke: "#475569",
+  },
+} as const;
+
 const GraphCanvas = ({
   data,
   selectedNodeId,
@@ -141,8 +160,12 @@ const GraphCanvas = ({
 }: GraphCanvasProps) => {
   const { zoomIn, zoomOut, fitView, getZoom, getNodes, getNodesBounds } =
     useReactFlow();
+  const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
+
+  const minimapColors =
+    resolvedTheme === "dark" ? MINIMAP_COLORS.dark : MINIMAP_COLORS.light;
 
   // Tier 1 state: which resource nodes have their findings expanded
   const [expandedResources, setExpandedResources] = useState<Set<string>>(
@@ -332,7 +355,26 @@ const GraphCanvas = ({
         proOptions={{ hideAttribution: true }}
       >
         <Background />
-        <MiniMap pannable zoomable ariaLabel="Graph minimap" />
+        <MiniMap
+          pannable
+          zoomable
+          ariaLabel="Graph minimap"
+          bgColor={minimapColors.bg}
+          maskColor={minimapColors.mask}
+          maskStrokeColor={minimapColors.maskStroke}
+          nodeColor={(node) => {
+            const graphNode = (node.data as { graphNode?: GraphNode })
+              .graphNode;
+            if (!graphNode) return MINIMAP_COLORS.light.maskStroke;
+            return getNodeColor(graphNode.labels, graphNode.properties);
+          }}
+          nodeStrokeColor={(node) => {
+            const graphNode = (node.data as { graphNode?: GraphNode })
+              .graphNode;
+            if (!graphNode) return "transparent";
+            return getNodeBorderColor(graphNode.labels, graphNode.properties);
+          }}
+        />
       </ReactFlow>
     </div>
   );
