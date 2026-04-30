@@ -70,21 +70,10 @@ class AWSService:
         self.region = region or provider.get_default_region(
             self.service, global_service=global_service
         )
-        self.client = self._get_client(self.service, self.region)
+        self.client = self.session.client(self.service, self.region)
 
         # Thread pool for __threading_call__
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
-
-    def _get_client(self, service: str, region: str = None):
-        """Create a boto3 client for the given service/region with the
-        provider's session config (user agent + retries) applied.
-
-        Use this in subclasses instead of calling self.session.client() directly
-        so the config is always attached.
-        """
-        return self.session.client(
-            service, region, config=self.provider.session.session_config
-        )
 
     def __get_session__(self):
         return self.session

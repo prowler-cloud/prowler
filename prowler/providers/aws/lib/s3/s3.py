@@ -111,10 +111,10 @@ class S3:
         - None
         """
         if session:
-            self._session = session.client(
-                __class__.__name__.lower(),
-                config=AwsProvider.set_session_config(retries_max_attempts),
+            session._session.set_default_client_config(
+                AwsProvider.set_session_config(retries_max_attempts)
             )
+            self._session = session.client(__class__.__name__.lower())
         else:
             aws_setup_session = AwsSetUpSession(
                 role_arn=role_arn,
@@ -130,8 +130,7 @@ class S3:
                 regions=regions,
             )
             self._session = aws_setup_session._session.current_session.client(
-                __class__.__name__.lower(),
-                config=aws_setup_session._session.session_config,
+                __class__.__name__.lower()
             )
 
         self._bucket_name = bucket_name
@@ -316,10 +315,10 @@ class S3:
                     region_name=aws_region,
                     profile_name=profile,
                 )
-            s3_client = session.client(
-                __class__.__name__.lower(),
-                config=AwsProvider.set_session_config(None),
-            )
+                session._session.set_default_client_config(
+                    AwsProvider.set_session_config(None)
+                )
+            s3_client = session.client(__class__.__name__.lower())
             if "s3://" in bucket_name:
                 bucket_name = bucket_name.removeprefix("s3://")
             # Check bucket location, requires s3:ListBucket permission
@@ -338,7 +337,6 @@ class S3:
                 s3_client = session.client(
                     __class__.__name__.lower(),
                     region_name=bucket_region,
-                    config=AwsProvider.set_session_config(None),
                 )
             # Set a Temp file to upload
             with tempfile.TemporaryFile() as temp_file:

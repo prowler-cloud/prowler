@@ -224,14 +224,25 @@ class Test_AWS_Organizations:
         assert ou_metadata == {}
 
     def test_get_organizations_metadata_uses_user_agent_extra(self):
-        session = MagicMock()
+        # The user agent + retries config is installed on the session via
+        # set_default_client_config, so every client created from it inherits
+        # those settings. This test verifies that contract by checking the
+        # default_client_config on the session and the resulting client.
+        real_session = boto3.Session()
+        from prowler.providers.aws.aws_provider import AwsProvider
 
-        get_organizations_metadata("123456789012", session)
+        real_session._session.set_default_client_config(
+            AwsProvider.set_session_config(None)
+        )
 
-        _, kwargs = session.client.call_args
-        config = kwargs.get("config")
-        assert config is not None
-        assert BOTO3_USER_AGENT_EXTRA in config.user_agent_extra
+        wrapper = MagicMock(wraps=real_session)
+
+        get_organizations_metadata("123456789012", wrapper)
+
+        wrapper.client.assert_called_once()
+        default_config = real_session._session.get_default_client_config()
+        assert default_config is not None
+        assert BOTO3_USER_AGENT_EXTRA in default_config.user_agent_extra
 
     def test_parse_organizations_metadata_with_empty_ou_metadata(self):
         tags = {"Tags": []}

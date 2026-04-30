@@ -578,7 +578,7 @@ class S3Control(AWSService):
         logger.info("S3 - Listing account multi region access points...")
         try:
             region = "us-west-2"
-            client = self._get_client(self.service, region)
+            client = self.session.client(self.service, region)
             list_multi_region_access_points = client.list_multi_region_access_points(
                 AccountId=self.audited_account
             ).get("AccessPoints", [])

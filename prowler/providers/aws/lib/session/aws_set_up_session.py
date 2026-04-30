@@ -74,14 +74,15 @@ class AwsSetUpSession:
             aws_secret_access_key=aws_secret_access_key,
         )
         # Setup the AWS session
+        session_config = AwsProvider.set_session_config(retries_max_attempts)
         aws_session = AwsProvider.setup_session(
             mfa=mfa,
             profile=profile,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
             aws_session_token=aws_session_token,
+            session_config=session_config,
         )
-        session_config = AwsProvider.set_session_config(retries_max_attempts)
         self._session = AWSSession(
             current_session=aws_session,
             session_config=session_config,

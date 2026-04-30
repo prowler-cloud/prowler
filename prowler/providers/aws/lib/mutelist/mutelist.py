@@ -8,7 +8,6 @@ from prowler.lib.check.models import Check_Report_AWS
 from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.lib.outputs.utils import unroll_dict, unroll_tags
-from prowler.providers.aws.config import get_default_session_config
 
 
 class AWSMutelist(Mutelist):
@@ -61,7 +60,7 @@ class AWSMutelist(Mutelist):
         try:
             bucket = self._mutelist_file_path.split("/")[2]
             key = ("/").join(self._mutelist_file_path.split("/")[3:])
-            s3_client = aws_session.client("s3", config=get_default_session_config())
+            s3_client = aws_session.client("s3")
             mutelist = yaml.safe_load(
                 s3_client.get_object(Bucket=bucket, Key=key)["Body"]
             )["Mutelist"]
@@ -78,7 +77,6 @@ class AWSMutelist(Mutelist):
             lambda_client = aws_session.client(
                 "lambda",
                 region_name=lambda_region,
-                config=get_default_session_config(),
             )
             lambda_response = lambda_client.invoke(
                 FunctionName=self._mutelist_file_path, InvocationType="RequestResponse"

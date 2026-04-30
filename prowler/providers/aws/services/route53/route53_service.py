@@ -103,7 +103,7 @@ class Route53(AWSService):
 
         for region in all_regions:
             try:
-                regional_ec2_client = self._get_client("ec2", region)
+                regional_ec2_client = self.session.client("ec2", region)
                 for addr in regional_ec2_client.describe_addresses().get(
                     "Addresses", []
                 ):

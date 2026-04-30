@@ -148,7 +148,12 @@ class SecurityHub:
                 regions=regions,
             )
             self._session = aws_setup_session._session.current_session
-        self._session_config = AwsProvider.set_session_config(retries_max_attempts)
+        # If a session is supplied without our default client config, attach it
+        # so every client created from it picks up the user agent and retries.
+        if aws_session:
+            self._session._session.set_default_client_config(
+                AwsProvider.set_session_config(retries_max_attempts)
+            )
         self._aws_account_id = aws_account_id
         if not aws_partition:
             aws_partition = AwsProvider.validate_credentials(
@@ -165,7 +170,6 @@ class SecurityHub:
                 self._session,
                 aws_account_id,
                 aws_partition,
-                self._session_config,
             )
         if findings:
             if not self._enabled_regions:
@@ -231,17 +235,15 @@ class SecurityHub:
         session: Session,
         aws_account_id: str,
         aws_partition: str,
-        session_config=None,
     ) -> tuple[str, Union[Session, None]]:
         """
         Check if Security Hub is enabled in a specific region and if Prowler integration is active.
 
         Args:
             region (str): AWS region to check.
-            session (Session): AWS session object.
+            session (Session): AWS session object. Expected to carry the Prowler default client config.
             aws_account_id (str): AWS account ID.
             aws_partition (str): AWS partition.
-            session_config (botocore.config.Config): Boto3 client config carrying user agent and retry settings.
 
         Returns:
             tuple: (region, client or None) - Returns client if enabled, None otherwise.
@@ -250,12 +252,8 @@ class SecurityHub:
             logger.info(
                 f"Checking if the {SECURITY_HUB_INTEGRATION_NAME} is enabled in the {region} region."
             )
-            if session_config is None:
-                session_config = AwsProvider.set_session_config(None)
             # Check if security hub is enabled in current region
-            security_hub_client = session.client(
-                "securityhub", region_name=region, config=session_config
-            )
+            security_hub_client = session.client("securityhub", region_name=region)
             security_hub_client.describe_hub()
 
             # Check if Prowler integration is enabled in Security Hub
@@ -268,11 +266,7 @@ class SecurityHub:
                 )
                 return region, None
             else:
-                return region, session.client(
-                    "securityhub",
-                    region_name=region,
-                    config=session_config,
-                )
+                return region, session.client("securityhub", region_name=region)
 
         # Handle all the permissions / configuration errors
         except ClientError as client_error:
@@ -304,21 +298,18 @@ class SecurityHub:
         session: Session,
         aws_account_id: str,
         aws_partition: str,
-        session_config=None,
     ) -> dict[str, Session]:
         """
         Filters the given list of regions where AWS Security Hub is enabled and returns a dictionary containing the region and their boto3 client if the region and the Prowler integration is enabled.
 
         Args:
             aws_security_hub_available_regions (list[str]): List of AWS regions to check for Security Hub integration.
-            session_config (botocore.config.Config): Boto3 client config carrying user agent and retry settings.
+            session (Session): AWS session object. Expected to carry the Prowler default client config.
 
         Returns:
             dict: A dictionary containing enabled regions with SecurityHub clients.
         """
         enabled_regions = {}
-        if session_config is None:
-            session_config = AwsProvider.set_session_config(None)
 
         # Use ThreadPoolExecutor to check regions in parallel
         with ThreadPoolExecutor(
@@ -332,7 +323,6 @@ class SecurityHub:
                     session,
                     aws_account_id,
                     aws_partition,
-                    session_config,
                 ): region
                 for region in aws_security_hub_available_regions
             }
@@ -556,6 +546,9 @@ class SecurityHub:
                     aws_session_token=assumed_role_credentials.aws_session_token,
                     region_name=aws_region,
                     profile_name=profile,
+                )
+                session._session.set_default_client_config(
+                    AwsProvider.set_session_config(None)
                 )
 
             all_regions = AwsProvider.get_available_aws_service_regions(

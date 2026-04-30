@@ -228,14 +228,15 @@ class AwsProvider(Provider):
 
         # TODO: Use AwsSetUpSession ?????
         # Configure the initial AWS Session using the local credentials: profile or environment variables
+        session_config = self.set_session_config(retries_max_attempts)
         aws_session = self.setup_session(
             mfa=mfa,
             profile=profile,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
             aws_session_token=aws_session_token,
+            session_config=session_config,
         )
-        session_config = self.set_session_config(retries_max_attempts)
         # Current session and the original session points to the same session object until we get a new one, if needed
         self._session = AWSSession(
             current_session=aws_session,
@@ -631,6 +632,7 @@ class AwsProvider(Provider):
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
+        session_config: Optional[Config] = None,
     ) -> Session:
         """
         setup_session sets up an AWS session using the provided credentials.
@@ -641,6 +643,9 @@ class AwsProvider(Provider):
             - aws_access_key_id: The AWS access key ID.
             - aws_secret_access_key: The AWS secret access key.
             - aws_session_token: The AWS session token, optional.
+            - session_config: Botocore Config applied as the session's default
+              client config so every client created from the session inherits
+              the Prowler user agent and retry settings.
 
         Returns:
             - Session: The AWS session.
@@ -650,6 +655,9 @@ class AwsProvider(Provider):
         """
         try:
             logger.debug("Creating original session ...")
+
+            if session_config is None:
+                session_config = AwsProvider.set_session_config(None)
 
             session_arguments = {}
             if profile:
@@ -662,7 +670,8 @@ class AwsProvider(Provider):
 
             if mfa:
                 session = Session(**session_arguments)
-                sts_client = session.client("sts", config=get_default_session_config())
+                session._session.set_default_client_config(session_config)
+                sts_client = session.client("sts")
 
                 # TODO: pass values from the input
                 mfa_info = AwsProvider.input_role_mfa_token_and_code()
@@ -674,7 +683,7 @@ class AwsProvider(Provider):
                 session_credentials = sts_client.get_session_token(
                     **get_session_token_arguments
                 )
-                return Session(
+                mfa_session = Session(
                     aws_access_key_id=session_credentials["Credentials"]["AccessKeyId"],
                     aws_secret_access_key=session_credentials["Credentials"][
                         "SecretAccessKey"
@@ -683,8 +692,12 @@ class AwsProvider(Provider):
                         "SessionToken"
                     ],
                 )
+                mfa_session._session.set_default_client_config(session_config)
+                return mfa_session
             else:
-                return Session(**session_arguments)
+                session = Session(**session_arguments)
+                session._session.set_default_client_config(session_config)
+                return session
         except Exception as error:
             logger.critical(
                 f"AWSSetUpSessionError[{error.__traceback__.tb_lineno}]: {error}"
@@ -699,6 +712,7 @@ class AwsProvider(Provider):
         identity: AWSIdentityInfo,
         assumed_role_configuration: AWSAssumeRoleConfiguration,
         session: AWSSession,
+        session_config: Optional[Config] = None,
     ) -> Session:
         """
         Sets up an assumed session using the provided assumed role credentials.
@@ -743,6 +757,13 @@ class AwsProvider(Provider):
             assumed_session = BotocoreSession()
             assumed_session._credentials = assumed_refreshable_credentials
             assumed_session.set_config_variable("region", identity.profile_region)
+            if session_config is None:
+                session_config = (
+                    session.session_config
+                    if session and getattr(session, "session_config", None) is not None
+                    else AwsProvider.set_session_config(None)
+                )
+            assumed_session.set_default_client_config(session_config)
             return Session(
                 profile_name=identity.profile,
                 botocore_session=assumed_session,
@@ -871,7 +892,7 @@ class AwsProvider(Provider):
 
             for region in enabled_regions:
                 regional_client = self._session.current_session.client(
-                    service, region_name=region, config=self._session.session_config
+                    service, region_name=region
                 )
                 regional_client.region = region
                 regional_clients[region] = regional_client
@@ -1235,7 +1256,6 @@ class AwsProvider(Provider):
             ec2_client = current_session.client(
                 service,
                 region_name=default_region,
-                config=self._session.session_config,
             )
 
             enabled_regions = set()
@@ -1426,6 +1446,9 @@ class AwsProvider(Provider):
                     region_name=aws_region,
                     profile_name=profile,
                 )
+                session._session.set_default_client_config(
+                    AwsProvider.set_session_config(None)
+                )
 
             caller_identity = AwsProvider.validate_credentials(session, aws_region)
             # Do an extra validation if the AWS account ID is provided
@@ -1611,7 +1634,6 @@ class AwsProvider(Provider):
                 "sts",
                 aws_region,
                 endpoint_url=sts_endpoint_url,
-                config=get_default_session_config(),
             )
         except Exception as error:
             logger.critical(
