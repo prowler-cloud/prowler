@@ -163,9 +163,7 @@ def load_checks_to_execute(
                 ):
                     fw = universal_frameworks[compliance_framework]
                     for req in fw.requirements:
-                        checks_to_execute.update(
-                            req.checks.get(provider.lower(), [])
-                        )
+                        checks_to_execute.update(req.checks.get(provider.lower(), []))
                 elif compliance_framework in bulk_compliance_frameworks:
                     checks_to_execute.update(
                         CheckMetadata.list(

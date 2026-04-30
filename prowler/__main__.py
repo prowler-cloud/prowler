@@ -269,9 +269,7 @@ def prowler():
         sys.exit()
     if args.list_compliance_requirements:
         all_frameworks = {**bulk_compliance_frameworks, **universal_frameworks}
-        print_compliance_requirements(
-            all_frameworks, args.list_compliance_requirements
-        )
+        print_compliance_requirements(all_frameworks, args.list_compliance_requirements)
         sys.exit()
 
     # Load checks to execute
