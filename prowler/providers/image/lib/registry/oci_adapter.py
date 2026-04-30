@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import base64
-import ipaddress
 import re
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
@@ -42,6 +41,9 @@ class OciRegistryAdapter(RegistryAdapter):
         if not url.startswith(("http://", "https://")):
             url = f"https://{url}"
         return url
+
+    def _origin_url(self) -> str:
+        return self._base_url
 
     def list_repositories(self) -> list[str]:
         self._ensure_auth()
@@ -127,8 +129,9 @@ class OciRegistryAdapter(RegistryAdapter):
                 file=__file__,
                 message=f"Cannot parse token endpoint from registry {self.registry_url}. Www-Authenticate: {www_authenticate[:200]}",
             )
-        realm = match.group(1)
-        self._validate_realm_url(realm)
+        realm = self._validate_outbound_url(match.group(1))
+        if urlparse(realm).scheme == "http":
+            logger.warning(f"Bearer token realm uses HTTP (not HTTPS): {realm}")
         params: dict = {}
         service_match = re.search(r'service="([^"]+)"', www_authenticate)
         if service_match:
@@ -155,27 +158,6 @@ class OciRegistryAdapter(RegistryAdapter):
                 message=f"Token endpoint {realm} returned an empty token. Check REGISTRY_USERNAME and REGISTRY_PASSWORD.",
             )
         return token
-
-    @staticmethod
-    def _validate_realm_url(realm: str) -> None:
-        parsed = urlparse(realm)
-        if parsed.scheme not in ("http", "https"):
-            raise ImageRegistryAuthError(
-                file=__file__,
-                message=f"Bearer token realm has disallowed scheme: {parsed.scheme}. Only http/https are allowed.",
-            )
-        if parsed.scheme == "http":
-            logger.warning(f"Bearer token realm uses HTTP (not HTTPS): {realm}")
-        hostname = parsed.hostname or ""
-        try:
-            addr = ipaddress.ip_address(hostname)
-            if addr.is_private or addr.is_loopback or addr.is_link_local:
-                raise ImageRegistryAuthError(
-                    file=__file__,
-                    message=f"Bearer token realm points to a private/loopback address: {hostname}. This may indicate an SSRF attempt.",
-                )
-        except ValueError:
-            pass
 
     def _resolve_basic_credentials(self) -> tuple[str | None, str | None]:
         """Decode pre-encoded base64 auth tokens (e.g., from aws ecr get-authorization-token).
@@ -206,13 +188,23 @@ class OciRegistryAdapter(RegistryAdapter):
 
     def _do_authed_request(self, method: str, url: str, **kwargs) -> requests.Response:
         headers = kwargs.pop("headers", {})
-        if self._bearer_token:
-            headers["Authorization"] = f"Bearer {self._bearer_token}"
-        elif self.username and self.password:
-            user, pwd = self._resolve_basic_credentials()
-            kwargs.setdefault("auth", (user, pwd))
+        if self._is_same_origin_as_registry(url):
+            if self._bearer_token:
+                headers["Authorization"] = f"Bearer {self._bearer_token}"
+            elif self.username and self.password:
+                user, pwd = self._resolve_basic_credentials()
+                kwargs.setdefault("auth", (user, pwd))
         kwargs["headers"] = headers
         return self._request_with_retry(method, url, **kwargs)
+
+    def _is_same_origin_as_registry(self, url: str) -> bool:
+        target = urlparse(url)
+        origin = urlparse(self._base_url)
+        return (
+            target.scheme == origin.scheme
+            and (target.hostname or "") == (origin.hostname or "")
+            and target.port == origin.port
+        )
 
     def _check_response(self, resp: requests.Response, context: str) -> None:
         if resp.status_code == 200:

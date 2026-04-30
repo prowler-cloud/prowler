@@ -18,6 +18,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - AWS SDK test isolation: autouse `mock_aws` fixture and leak detector in `conftest.py` to prevent tests from hitting real AWS endpoints, with idempotent organization setup for tests calling `set_mocked_aws_provider` multiple times [(#10605)](https://github.com/prowler-cloud/prowler/pull/10605)
 
+### 🔐 Security
+
+- Parser-mismatch SSRF in image provider registry auth where crafted bearer-token realms and pagination links could force requests to internal addresses and leak credentials cross-origin [(#10945)](https://github.com/prowler-cloud/prowler/pull/10945)
+
 ---
 
 ## [5.25.1] (Prowler v5.25.1)
