@@ -4,6 +4,7 @@ from azure.mgmt.monitor.models import AlertRuleAnyOfOrLeafCondition
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -154,3 +155,54 @@ class Test_monitor_alert_create_update_nsg:
             assert result[0].status == "MANUAL"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert "--azure-resource-group" in result[0].status_extended
+
+    def test_alert_rules_manual_when_alert_lives_in_different_rg(self):
+        from prowler.providers.azure.services.monitor.monitor_service import (
+            AlertRule,
+            AlertRuleAllOfCondition,
+        )
+
+        monitor_client = mock.MagicMock()
+        monitor_client.alert_rules = {
+            AZURE_SUBSCRIPTION_NAME: [
+                AlertRule(
+                    id=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/prod-monitoring-rg/providers/microsoft.insights/activityLogAlerts/nsg-write-alert",
+                    name="nsg-write-alert",
+                    condition=AlertRuleAllOfCondition(
+                        all_of=[
+                            AlertRuleAnyOfOrLeafCondition(),
+                            AlertRuleAnyOfOrLeafCondition(
+                                equals="Microsoft.Network/networkSecurityGroups/write",
+                                field="operationName",
+                            ),
+                        ]
+                    ),
+                    enabled=True,
+                    description="Alert for NSG write ops",
+                )
+            ]
+        }
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_NAME: AZURE_SUBSCRIPTION_ID}
+        monitor_client.resource_groups = {AZURE_SUBSCRIPTION_NAME: ["dev-rg"]}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.monitor.monitor_alert_create_update_nsg.monitor_alert_create_update_nsg.monitor_client",
+                new=monitor_client,
+            ),
+        ):
+            from prowler.providers.azure.services.monitor.monitor_alert_create_update_nsg.monitor_alert_create_update_nsg import (
+                monitor_alert_create_update_nsg,
+            )
+
+            check = monitor_alert_create_update_nsg()
+            result = check.execute()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].subscription == AZURE_SUBSCRIPTION_NAME
+        assert "--azure-resource-group" in result[0].status_extended

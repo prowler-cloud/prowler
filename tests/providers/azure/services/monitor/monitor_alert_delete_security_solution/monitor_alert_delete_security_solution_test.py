@@ -63,7 +63,7 @@ class Test_monitor_alert_create_update_security_solution:
             )
 
     def test_alert_rules_configured(self):
-        monitor_client = mock.MagicMock
+        monitor_client = mock.MagicMock()
 
         with (
             mock.patch(

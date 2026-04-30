@@ -155,21 +155,63 @@ class Test_network_watcher_enabled:
             ),
             mock.patch(
                 "prowler.providers.azure.services.network.network_service.Network",
-                new=network_client_mock,
-            ) as service_client,
+            ),
             mock.patch(
-                "prowler.providers.azure.services.network.network_client.network_client",
-                new=service_client,
+                "prowler.providers.azure.services.network.network_watcher_enabled.network_watcher_enabled.network_client",
+                new=network_client_mock,
             ),
         ):
-            from importlib import reload
+            from prowler.providers.azure.services.network.network_watcher_enabled.network_watcher_enabled import (
+                network_watcher_enabled,
+            )
 
-            import prowler.providers.azure.services.network.network_watcher_enabled.network_watcher_enabled as mod
-
-            reload(mod)
-            check = mod.network_watcher_enabled()
+            check = network_watcher_enabled()
             result = check.execute()
 
         assert len(result) == 1
         assert result[0].status == "MANUAL"
         assert result[0].subscription == AZURE_SUBSCRIPTION_NAME
+
+    def test_network_watcher_enabled_returns_manual_when_networkwatcherrg_not_in_filter(
+        self,
+    ):
+        network_client_mock = mock.MagicMock
+        network_client_mock.subscriptions = {
+            AZURE_SUBSCRIPTION_NAME: AZURE_SUBSCRIPTION_ID
+        }
+        network_client_mock.network_watchers = {
+            AZURE_SUBSCRIPTION_NAME: [
+                NetworkWatcher(
+                    id=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/NetworkWatcherRG/providers/Microsoft.Network/networkWatchers/NetworkWatcher_eastus",
+                    name="NetworkWatcher_eastus",
+                    location="eastus",
+                    flow_logs=[],
+                )
+            ]
+        }
+        network_client_mock.resource_groups = {AZURE_SUBSCRIPTION_NAME: ["my-app-rg"]}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.network.network_service.Network",
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.network.network_watcher_enabled.network_watcher_enabled.network_client",
+                new=network_client_mock,
+            ),
+        ):
+            from prowler.providers.azure.services.network.network_watcher_enabled.network_watcher_enabled import (
+                network_watcher_enabled,
+            )
+
+            check = network_watcher_enabled()
+            result = check.execute()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].subscription == AZURE_SUBSCRIPTION_NAME
+        assert "--azure-resource-group" in result[0].status_extended

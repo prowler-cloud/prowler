@@ -4,6 +4,7 @@ from uuid import uuid4
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -213,3 +214,85 @@ class Test_ContainerRegistry_get_registries:
         mock_client.registries.list_by_resource_group.assert_not_called()
         mock_client.registries.list.assert_not_called()
         assert result[AZURE_SUBSCRIPTION_ID] == {}
+
+    def test_get_container_registries_with_multiple_resource_groups(self):
+        from unittest.mock import MagicMock, patch
+
+        mock_client = MagicMock()
+        mock_client.registries.list_by_resource_group.return_value = []
+
+        mock_provider = MagicMock()
+        mock_provider.identity = MagicMock()
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.containerregistry.containerregistry_service.ContainerRegistry._get_container_registries",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.containerregistry.containerregistry_service import (
+                ContainerRegistry,
+            )
+
+            cr = ContainerRegistry(set_mocked_azure_provider())
+
+        cr.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        cr.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        with patch(
+            "prowler.providers.azure.services.containerregistry.containerregistry_service.monitor_client"
+        ):
+            result = cr._get_container_registries()
+
+        assert mock_client.registries.list_by_resource_group.call_count == len(
+            RESOURCE_GROUP_LIST
+        )
+        mock_client.registries.list.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_container_registries_with_mixed_case_resource_group(self):
+        from unittest.mock import MagicMock, patch
+
+        mock_client = MagicMock()
+        mock_client.registries.list_by_resource_group.return_value = []
+
+        mock_provider = MagicMock()
+        mock_provider.identity = MagicMock()
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.containerregistry.containerregistry_service.ContainerRegistry._get_container_registries",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.containerregistry.containerregistry_service import (
+                ContainerRegistry,
+            )
+
+            cr = ContainerRegistry(set_mocked_azure_provider())
+
+        cr.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        cr.resource_groups = {AZURE_SUBSCRIPTION_ID: ["MyRegistry-RG"]}
+
+        with patch(
+            "prowler.providers.azure.services.containerregistry.containerregistry_service.monitor_client"
+        ):
+            cr._get_container_registries()
+
+        mock_client.registries.list_by_resource_group.assert_called_once_with(
+            resource_group_name="MyRegistry-RG"
+        )
