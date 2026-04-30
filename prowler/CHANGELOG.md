@@ -18,6 +18,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - AWS SDK test isolation: autouse `mock_aws` fixture and leak detector in `conftest.py` to prevent tests from hitting real AWS endpoints, with idempotent organization setup for tests calling `set_mocked_aws_provider` multiple times [(#10605)](https://github.com/prowler-cloud/prowler/pull/10605)
 
+### 🔐 Security
+
+- Parser-mismatch SSRF in image provider registry auth where crafted bearer-token realms and pagination links could force requests to internal addresses and leak credentials cross-origin [(#10945)](https://github.com/prowler-cloud/prowler/pull/10945)
+
 ---
 
 ## [5.25.1] (Prowler v5.25.1)
@@ -47,10 +51,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `admincenter_groups_not_public_visibility` check for M365 provider evaluating Security and Distribution groups, now restricted to Microsoft 365 (Unified) groups per CIS M365 Foundations 1.2.1 [(#10899)](https://github.com/prowler-cloud/prowler/pull/10899)
 - Google Workspace check reports now store the actual domain or account resource subject instead of `provider.identity` [(#10901)](https://github.com/prowler-cloud/prowler/pull/10901)
 - `entra_users_mfa_capable` evaluating disabled guest accounts; CIS 5.2.3.4 only targets enabled member users [(#10785)](https://github.com/prowler-cloud/prowler/pull/10785)
-
-### 🔐 Security
-
-- Block parser-mismatch SSRF in image provider registry auth: validate bearer-token realm and pagination URLs against the same parser used by `requests`, resolve hostnames to reject non-public addresses, enforce same registrable-domain origin, and strip `Authorization` on cross-origin requests [(#10945)](https://github.com/prowler-cloud/prowler/pull/10945)
 
 ---
 
