@@ -27,6 +27,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Mutelist improvements: table now supports name/reason search and visual count badges for finding targets [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
 - Resources now use batch-applied filters, render metadata JSON with syntax highlighting, and more [(#10861)](https://github.com/prowler-cloud/prowler/pull/10861)
 - Table pagination controls now keep their arrows visible on hover in light theme, and more UI improvements [(#10862)](https://github.com/prowler-cloud/prowler/pull/10862)
+- Fix rows-per-page selector silently ignoring changes in URL-driven tables by unifying `DataTable` pagination into a single `onPaginationChange` callback [(#10863)](https://github.com/prowler-cloud/prowler/pull/10863)
 
 ---
 
