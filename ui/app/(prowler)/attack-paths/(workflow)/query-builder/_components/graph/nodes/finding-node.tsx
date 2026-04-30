@@ -1,14 +1,11 @@
 "use client";
 
-import { Handle, type NodeProps, Position } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
 
 import type { GraphNode } from "@/types/attack-paths";
 
-import {
-  getNodeBorderColor,
-  getNodeColor,
-  GRAPH_EDGE_HIGHLIGHT_COLOR,
-} from "../../../_lib";
+import { resolveNodeColors, truncateLabel } from "../../../_lib";
+import { HiddenHandles } from "./hidden-handles";
 
 interface FindingNodeData {
   graphNode: GraphNode;
@@ -17,13 +14,15 @@ interface FindingNodeData {
 
 const HEXAGON_WIDTH = 200;
 const HEXAGON_HEIGHT = 55;
+const TITLE_MAX_CHARS = 24;
 
 export const FindingNode = ({ data, selected }: NodeProps) => {
   const { graphNode } = data as FindingNodeData;
-  const fillColor = getNodeColor(graphNode.labels, graphNode.properties);
-  const borderColor = selected
-    ? GRAPH_EDGE_HIGHLIGHT_COLOR
-    : getNodeBorderColor(graphNode.labels, graphNode.properties);
+  const { fillColor, borderColor } = resolveNodeColors({
+    labels: graphNode.labels,
+    properties: graphNode.properties,
+    selected,
+  });
 
   const title = String(
     graphNode.properties?.check_title ||
@@ -31,9 +30,7 @@ export const FindingNode = ({ data, selected }: NodeProps) => {
       graphNode.properties?.id ||
       "Finding",
   );
-  const maxChars = 24;
-  const displayTitle =
-    title.length > maxChars ? title.substring(0, maxChars) + "..." : title;
+  const displayTitle = truncateLabel(title, TITLE_MAX_CHARS);
 
   // Hexagon SVG path
   const w = HEXAGON_WIDTH;
@@ -51,7 +48,7 @@ export const FindingNode = ({ data, selected }: NodeProps) => {
 
   return (
     <>
-      <Handle type="target" position={Position.Left} className="invisible" />
+      <HiddenHandles />
       <svg
         width={w}
         height={h}
@@ -80,7 +77,6 @@ export const FindingNode = ({ data, selected }: NodeProps) => {
           {displayTitle}
         </text>
       </svg>
-      <Handle type="source" position={Position.Right} className="invisible" />
     </>
   );
 };

@@ -1,16 +1,12 @@
 "use client";
 
-import { Handle, type NodeProps, Position } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
 
 import type { GraphNode } from "@/types/attack-paths";
 
-import {
-  getNodeBorderColor,
-  getNodeColor,
-  GRAPH_ALERT_BORDER_COLOR,
-  GRAPH_EDGE_HIGHLIGHT_COLOR,
-} from "../../../_lib";
+import { resolveNodeColors, truncateLabel } from "../../../_lib";
 import { formatNodeLabel } from "../../../_lib/format";
+import { HiddenHandles } from "./hidden-handles";
 
 interface ResourceNodeData {
   graphNode: GraphNode;
@@ -21,19 +17,16 @@ interface ResourceNodeData {
 const NODE_WIDTH = 180;
 const NODE_HEIGHT = 50;
 const NODE_RADIUS = 25;
+const NAME_MAX_CHARS = 22;
 
 export const ResourceNode = ({ data, selected }: NodeProps) => {
   const { graphNode, hasFindings } = data as ResourceNodeData;
-  const fillColor = getNodeColor(graphNode.labels, graphNode.properties);
-  const defaultBorder = getNodeBorderColor(
-    graphNode.labels,
-    graphNode.properties,
-  );
-  const borderColor = hasFindings
-    ? GRAPH_ALERT_BORDER_COLOR
-    : selected
-      ? GRAPH_EDGE_HIGHLIGHT_COLOR
-      : defaultBorder;
+  const { fillColor, borderColor } = resolveNodeColors({
+    labels: graphNode.labels,
+    properties: graphNode.properties,
+    selected,
+    hasFindings,
+  });
   const strokeWidth = selected ? 4 : hasFindings ? 2.5 : 1.5;
 
   const name = String(
@@ -43,16 +36,14 @@ export const ResourceNode = ({ data, selected }: NodeProps) => {
         ? formatNodeLabel(graphNode.labels[0])
         : "Unknown"),
   );
-  const maxChars = 22;
-  const displayName =
-    name.length > maxChars ? name.substring(0, maxChars) + "..." : name;
+  const displayName = truncateLabel(name, NAME_MAX_CHARS);
 
   const typeLabel =
     graphNode.labels.length > 0 ? formatNodeLabel(graphNode.labels[0]) : "";
 
   return (
     <>
-      <Handle type="target" position={Position.Left} className="invisible" />
+      <HiddenHandles />
       <svg width={NODE_WIDTH} height={NODE_HEIGHT} className="overflow-visible">
         <rect
           x={0}
@@ -96,7 +87,6 @@ export const ResourceNode = ({ data, selected }: NodeProps) => {
           )}
         </text>
       </svg>
-      <Handle type="source" position={Position.Right} className="invisible" />
     </>
   );
 };

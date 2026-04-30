@@ -128,6 +128,37 @@ export const getNodeBorderColor = (
   return GRAPH_NODE_BORDER_COLORS.default;
 };
 
+interface ResolveNodeColorsParams {
+  labels: string[];
+  properties?: Record<string, unknown>;
+  selected?: boolean;
+  hasFindings?: boolean;
+}
+
+interface NodeColorResult {
+  fillColor: string;
+  borderColor: string;
+}
+
+/**
+ * Resolve fill and border colors for a graph node, layering selection and
+ * finding-alert state on top of the label/severity defaults.
+ */
+export const resolveNodeColors = ({
+  labels,
+  properties,
+  selected,
+  hasFindings,
+}: ResolveNodeColorsParams): NodeColorResult => {
+  const fillColor = getNodeColor(labels, properties);
+  const borderColor = hasFindings
+    ? GRAPH_ALERT_BORDER_COLOR
+    : selected
+      ? GRAPH_EDGE_HIGHLIGHT_COLOR
+      : getNodeBorderColor(labels, properties);
+  return { fillColor, borderColor };
+};
+
 /**
  * Check if a background color is light (for determining text color)
  */
