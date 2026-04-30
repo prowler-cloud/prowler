@@ -2,11 +2,19 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.26.0] (Prowler UNRELEASED)
+## [1.25.2] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
 
 - Finding detail drawer now labels the remediation action by destination: "View CVE" for cve.org, "View in Prowler Hub" for Prowler Hub, "View Advisory" for GitHub Security Advisories [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
+
+---
+
+## [1.25.1] (Prowler v5.25.1)
+
+### 🐞 Fixed
+
+- Compliance page export menu now scales on small screens, and frameworks load on first render without requiring a manual scan re-selection [(#10918)](https://github.com/prowler-cloud/prowler/pull/10918)
 
 ---
 
@@ -27,6 +35,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Mutelist improvements: table now supports name/reason search and visual count badges for finding targets [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
 - Resources now use batch-applied filters, render metadata JSON with syntax highlighting, and more [(#10861)](https://github.com/prowler-cloud/prowler/pull/10861)
 - Table pagination controls now keep their arrows visible on hover in light theme, and more UI improvements [(#10862)](https://github.com/prowler-cloud/prowler/pull/10862)
+- Fix rows-per-page selector silently ignoring changes in URL-driven tables by unifying `DataTable` pagination into a single `onPaginationChange` callback [(#10863)](https://github.com/prowler-cloud/prowler/pull/10863)
 
 ---
 
