@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## (Prowler UNRELEASED)
+## [1.26.0] (Prowler UNRELEASED)
 
 ### 🔄 Changed
 
