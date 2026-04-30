@@ -18,9 +18,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - AWS SDK test isolation: autouse `mock_aws` fixture and leak detector in `conftest.py` to prevent tests from hitting real AWS endpoints, with idempotent organization setup for tests calling `set_mocked_aws_provider` multiple times [(#10605)](https://github.com/prowler-cloud/prowler/pull/10605)
 - AWS Boto3 user agent extra is now applied to every boto3 client created [(#10944)](https://github.com/prowler-cloud/prowler/pull/10944)
-- AWS S3 and SecurityHub clients now honor the caller's `retries_max_attempts` instead of silently falling back to a hardcoded value [(#10944)](https://github.com/prowler-cloud/prowler/pull/10944)
-- AWS service clients no longer overwrite the parent `client` attribute for forced-region globals (GlobalAccelerator, Route53Domains, TrustedAdvisor, WAF, WAFv2); the region is passed through `AWSService.__init__` instead [(#10944)](https://github.com/prowler-cloud/prowler/pull/10944)
-- AWS quick inventory no longer references a potentially uninitialized `bucket_session` when picking the output bucket session [(#10944)](https://github.com/prowler-cloud/prowler/pull/10944)
 
 ---
 
