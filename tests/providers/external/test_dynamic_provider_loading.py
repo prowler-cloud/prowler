@@ -1437,6 +1437,47 @@ class TestDispatchFallbacks:
         printed = mock_print.call_args[0][0]
         assert "fake-detail" in printed
 
+    def test_report_propagates_provider_to_stdout_report(self):
+        """Regression guard: report() must pass its local `provider` through to
+        stdout_report so the dynamic else does not fall back to the global
+        singleton. With Provider._global cleared, the call chain still has to
+        work for an external provider — proving the argument is being used
+        instead of `Provider.get_global_provider()`. See PR #10700 review
+        (HugoPBrito)."""
+        from prowler.lib.outputs.outputs import report
+        from prowler.providers.common.provider import Provider
+
+        local_provider = FakeExternalProvider.__new__(FakeExternalProvider)
+
+        finding = MagicMock()
+        finding.status = "PASS"
+        finding.muted = False
+        finding.region = "x"
+        finding.check_metadata.Provider = "fakeexternal"
+        finding.status_extended = "test"
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = []
+        output_options.fixer = False
+
+        # Clear the global singleton so any unintended fallback would crash.
+        previous_global = Provider._global
+        Provider._global = None
+        try:
+            with patch("builtins.print") as mock_print:
+                report([finding], local_provider, output_options)
+
+            # report() prints the finding line plus an empty separator when
+            # verbose is set; we only care that the finding was rendered using
+            # the local provider's `get_stdout_detail` ("fake-detail").
+            printed = "".join(
+                call.args[0] for call in mock_print.call_args_list if call.args
+            )
+            assert "fake-detail" in printed
+        finally:
+            Provider._global = previous_global
+
     def test_report_sort_calls_get_finding_sort_key(self, fake_provider):
         """Test 29: report else clause calls provider.get_finding_sort_key."""
         from prowler.lib.outputs.outputs import report

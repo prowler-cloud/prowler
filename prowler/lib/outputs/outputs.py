@@ -85,12 +85,16 @@ def report(check_findings, provider, output_options):
                 if hasattr(output_options, "fixer"):
                     fixer = output_options.fixer
                 color = set_report_color(finding.status, finding.muted)
+                # Pass the local `provider` through so the dynamic else inside
+                # `stdout_report` does not have to consult the global singleton
+                # — defeating the whole purpose of the new parameter.
                 stdout_report(
                     finding,
                     color,
                     verbose,
                     status,
                     fixer,
+                    provider=provider,
                 )
 
         else:  # No service resources in the whole account
