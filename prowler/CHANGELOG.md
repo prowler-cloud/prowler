@@ -8,9 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
 - Universal compliance pipeline integrated into the CLI: `--list-compliance` and `--list-compliance-requirements` show universal frameworks, and CSV plus OCSF outputs are generated for any framework declaring a `TableConfig` [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
-
-### 🚀 Added
-- ASD Essential Eight Maturity Model compliance framework for AWS provider, mapping 64 checks across all 8 controls [(#10808)](https://github.com/prowler-cloud/prowler/pull/10808)
+- ASD Essential Eight Maturity Model compliance framework for AWS (Maturity Level One, Nov 2023) [(#10808)](https://github.com/prowler-cloud/prowler/pull/10808)
 
 ### 🔄 Changed
 
