@@ -1,230 +1,1279 @@
 {
   "Framework": "Essential-Eight",
-  "Name": "ASD Essential Eight Maturity Model - Cloud Controls (AWS)",
-  "Version": "1.0",
+  "Name": "ASD Essential Eight Maturity Model - Maturity Level One (AWS)",
+  "Version": "Nov 2023",
   "Provider": "AWS",
-  "Description": "The Australian Signals Directorate (ASD) Essential Eight is a set of baseline mitigation strategies designed to protect organisations against cyber threats. This compliance mapping applies Essential Eight principles to AWS cloud infrastructure, mapping existing Prowler checks to the eight controls at Maturity Level 1.",
+  "Description": "Literal mapping of the Australian Signals Directorate (ASD) Essential Eight Maturity Model (Last updated November 2023, Appendix A: Maturity Level One) to AWS infrastructure checks. Each Requirement is one literal clause from the ASD document, in canonical document order: (1) Patch applications, (2) Patch operating systems, (3) Multi-factor authentication, (4) Restrict administrative privileges, (5) Application control, (6) Restrict Microsoft Office macros, (7) User application hardening, (8) Regular backups. The Essential Eight is designed to protect internet-connected information technology networks (workstations, internet-facing servers, online services). Several controls are inherently endpoint or procedural and have no AWS infrastructure equivalent - those clauses are flagged with CloudApplicability `non-applicable` and AssessmentStatus `Manual`. ML2 and ML3 are out of scope of this framework.",
   "Requirements": [
     {
-      "Id": "E8-1",
-      "Description": "Application Control - Ensure only approved applications can execute",
+      "Id": "E8-1.1",
+      "Description": "An automated method of asset discovery is used at least fortnightly to support the detection of assets for subsequent vulnerability scanning activities.",
       "Checks": [
-        "apigateway_restapi_waf_acl_attached",
-        "cloudfront_distributions_using_waf",
-        "elbv2_waf_acl_attached",
-        "cognito_user_pool_waf_acl_attached",
-        "ec2_securitygroup_default_restrict_traffic",
-        "ec2_securitygroup_not_used",
-        "awslambda_function_url_public"
+        "ec2_instance_managed_by_ssm",
+        "config_recorder_all_regions_enabled",
+        "inspector2_is_enabled"
       ],
       "Attributes": [
         {
-          "Section": "1 Application Control",
-          "Profile": "Level 1",
+          "Section": "1 Patch applications",
+          "MaturityLevel": "ML1",
           "AssessmentStatus": "Automated",
-          "Description": "Application control restricts the execution of unauthorised software. In cloud environments, this maps to WAF policies, security groups, and Lambda function access controls that limit which applications and services can communicate.",
-          "RationaleStatement": "Preventing unauthorised applications from executing is the most effective mitigation strategy against malware. In AWS, WAF rules and security groups serve as the cloud equivalent of application whitelisting.",
-          "ImpactStatement": "",
-          "RemediationProcedure": "Attach WAF ACLs to all public-facing resources (API Gateway, CloudFront, ALB). Review and restrict security groups to minimum required access. Disable public URLs on Lambda functions unless explicitly required.",
-          "AuditProcedure": "Review WAF ACL attachments on API Gateway, CloudFront, and ELBv2. Verify security groups restrict traffic appropriately. Check Lambda function URL configurations.",
-          "AdditionalInformation": "ASD Essential Eight Control 1 - https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Shadow IT",
+            "Unmanaged vulnerable assets"
+          ],
+          "Description": "Asset discovery in AWS is delivered by AWS Config (resource recorder), SSM Inventory and Inspector v2's continuous coverage. The fortnightly cadence itself is not directly observable from AWS APIs - what is observable is whether the discovery mechanisms are enabled.",
+          "RationaleStatement": "Vulnerability scanning is only as good as the asset coverage it has. Continuous AWS-native discovery is the cloud equivalent of fortnightly asset discovery.",
+          "ImpactStatement": "Cadence verification is procedural - Prowler verifies the discovery mechanism is enabled, not that it ran in the last fortnight.",
+          "RemediationProcedure": "Enable AWS Config recorders in every region. Ensure all EC2 instances are managed by SSM. Enable Inspector v2.",
+          "AuditProcedure": "Verify the listed checks pass.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch applications - clause 1.",
           "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
         }
       ]
     },
     {
-      "Id": "E8-2",
-      "Description": "Patch Applications - Ensure applications are patched within appropriate timeframes",
+      "Id": "E8-1.2",
+      "Description": "A vulnerability scanner with an up-to-date vulnerability database is used for vulnerability scanning activities.",
+      "Checks": [
+        "inspector2_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Patch applications",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Stale vulnerability data",
+            "Missed CVE coverage"
+          ],
+          "Description": "Inspector v2 is AWS's managed vulnerability scanner; AWS keeps its vulnerability database up to date.",
+          "RationaleStatement": "An out-of-date scanner cannot detect newly disclosed vulnerabilities.",
+          "ImpactStatement": "Coverage is limited to AWS-resident workloads (EC2, ECR, Lambda). Endpoints (workstations, browsers, Office) are out of scope.",
+          "RemediationProcedure": "Enable Inspector v2 across all regions and ensure all eligible resources are enrolled.",
+          "AuditProcedure": "Verify Inspector v2 is enabled.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch applications - clause 2.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-1.3",
+      "Description": "A vulnerability scanner is used at least daily to identify missing patches or updates for vulnerabilities in online services.",
+      "Checks": [
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Patch applications",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Late detection of internet-facing vulnerabilities"
+          ],
+          "Description": "Inspector v2 performs continuous scanning of AWS-hosted online services (Lambda, ECR-backed containers, EC2 with internet exposure). The 'at least daily' cadence is implicit in continuous scanning.",
+          "RationaleStatement": "Internet-facing services are weaponised fastest after a vulnerability is disclosed.",
+          "ImpactStatement": "Cadence cannot be evidenced by a single scan; requires Inspector audit history.",
+          "RemediationProcedure": "Enable Inspector v2 with all scan types relevant to the service surface (EC2, ECR, Lambda).",
+          "AuditProcedure": "Verify Inspector v2 enabled and review finding age distribution.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch applications - clause 3.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-1.4",
+      "Description": "A vulnerability scanner is used at least weekly to identify missing patches or updates for vulnerabilities in office productivity suites, web browsers and their extensions, email clients, PDF software, and security products.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1 Patch applications",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Endpoint application exploitation"
+          ],
+          "Description": "This clause targets endpoint-resident applications (Office, browsers, email, PDF, security products). AWS infrastructure scans cannot evidence endpoint vulnerability scanning.",
+          "RationaleStatement": "Endpoint applications are major attack vectors but live outside AWS infrastructure scope.",
+          "ImpactStatement": "Evidence must come from endpoint-management vulnerability scanners (e.g. Defender, Qualys, Tenable).",
+          "RemediationProcedure": "Run an endpoint vulnerability scanner with weekly cadence covering Office, browsers, email, PDF and security products.",
+          "AuditProcedure": "Manual review of endpoint vulnerability scanning evidence.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch applications - clause 4. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-1.5",
+      "Description": "Patches, updates or other vendor mitigations for vulnerabilities in online services are applied within 48 hours of release when vulnerabilities are assessed as critical by vendors or when working exploits exist.",
+      "Checks": [
+        "inspector2_active_findings_exist",
+        "awslambda_function_using_supported_runtimes",
+        "rds_instance_deprecated_engine_version",
+        "rds_instance_extended_support"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Patch applications",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Active exploitation of disclosed CVEs",
+            "N-day exploit kits"
+          ],
+          "Description": "AWS managed services (RDS, ElastiCache, Lambda, ECS Fargate, etc.) consume vendor patches transparently when auto-upgrade is enabled. The 48-hour SLA itself cannot be evidenced from AWS APIs - it requires correlating Inspector v2 first-seen timestamps with remediation timestamps.",
+          "RationaleStatement": "Critical vulnerabilities with working exploits are weaponised within hours.",
+          "ImpactStatement": "Prowler verifies the absence of active critical findings (a proxy outcome) and the absence of unsupported runtimes (a precondition); SLA timing requires manual correlation.",
+          "RemediationProcedure": "Maintain auto-upgrade flags on managed services. Configure Inspector v2 alerting for critical findings on internet-facing resources with 48-hour escalation.",
+          "AuditProcedure": "Manual review of Inspector finding age + remediation timestamps for internet-facing critical findings.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch applications - clause 5. SLA timing out of Prowler scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-1.6",
+      "Description": "Patches, updates or other vendor mitigations for vulnerabilities in online services are applied within two weeks of release when vulnerabilities are assessed as non-critical by vendors and no working exploits exist.",
       "Checks": [
         "ssm_managed_compliant_patching",
-        "ec2_instance_managed_by_ssm",
-        "eks_cluster_uses_a_supported_version",
-        "ecs_service_fargate_latest_platform_version",
-        "dms_instance_minor_version_upgrade_enabled",
-        "elasticache_redis_cluster_auto_minor_version_upgrades",
+        "awslambda_function_using_supported_runtimes",
         "rds_instance_minor_version_upgrade_enabled",
-        "cloudformation_stack_cdktoolkit_bootstrap_version"
+        "rds_cluster_minor_version_upgrade_enabled",
+        "elasticache_redis_cluster_auto_minor_version_upgrades",
+        "memorydb_cluster_auto_minor_version_upgrades",
+        "dms_instance_minor_version_upgrade_enabled",
+        "mq_broker_auto_minor_version_upgrades",
+        "redshift_cluster_automatic_upgrades",
+        "kafka_cluster_uses_latest_version",
+        "opensearch_service_domains_updated_to_the_latest_service_software_version",
+        "ecs_service_fargate_latest_platform_version"
       ],
       "Attributes": [
         {
-          "Section": "2 Patch Applications",
-          "Profile": "Level 1",
-          "AssessmentStatus": "Automated",
-          "Description": "Patches for security vulnerabilities in applications should be applied within an appropriate timeframe. In AWS, this includes ensuring managed services use current versions and auto-upgrade is enabled.",
-          "RationaleStatement": "Unpatched applications are a common entry point for attackers. AWS managed services should be configured to auto-upgrade, and EC2 instances should be managed by SSM for patch compliance.",
-          "ImpactStatement": "",
-          "RemediationProcedure": "Enable SSM management for all EC2 instances. Enable auto minor version upgrades for RDS, ElastiCache, and DMS. Ensure EKS clusters and ECS services use supported/latest versions.",
-          "AuditProcedure": "Check SSM patch compliance status. Verify auto-upgrade settings on managed services. Confirm EKS and ECS versions are current.",
-          "AdditionalInformation": "ASD Essential Eight Control 2",
+          "Section": "1 Patch applications",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Accumulated technical debt",
+            "Eventual exploitation of stale CVEs"
+          ],
+          "Description": "Auto-upgrade flags on AWS managed services (RDS, Aurora, ElastiCache, MemoryDB, DMS, MQ, Redshift, OpenSearch, MSK, Fargate) and SSM Patch Manager for self-managed compute deliver the underlying capability. SLA timing itself is not surfaced.",
+          "RationaleStatement": "Two weeks is the standard ASD cadence for non-critical patching of internet-facing services.",
+          "ImpactStatement": "SLA window evidence requires patch logs / change-management correlation, not in Prowler scope.",
+          "RemediationProcedure": "Enable auto minor version upgrade on all managed data services. Enable SSM Patch Manager on all EC2.",
+          "AuditProcedure": "Run all listed checks. Manually review patch deployment timeline.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch applications - clause 6.",
           "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
         }
       ]
     },
     {
-      "Id": "E8-3",
-      "Description": "Configure Microsoft Office Macro Settings - Restrict macro execution",
-      "Checks": [
-        "ssm_managed_compliant_patching",
-        "ec2_instance_managed_by_ssm",
-        "guardduty_is_enabled"
-      ],
+      "Id": "E8-1.7",
+      "Description": "Patches, updates or other vendor mitigations for vulnerabilities in office productivity suites, web browsers and their extensions, email clients, PDF software, and security products are applied within two weeks of release.",
+      "Checks": [],
       "Attributes": [
         {
-          "Section": "3 Configure Microsoft Office Macro Settings",
-          "Profile": "Level 1",
-          "AssessmentStatus": "Automated",
-          "Description": "Macro settings should be configured to block macros from the internet and only allow vetted macros. In cloud environments, this control maps to ensuring endpoint management and threat detection are in place for workloads that process Office documents.",
-          "RationaleStatement": "While macro configuration is primarily an endpoint control, cloud-hosted workstations and document processing pipelines should be managed via SSM and monitored by GuardDuty for malicious activity.",
-          "ImpactStatement": "",
-          "RemediationProcedure": "Ensure all EC2 instances processing Office documents are managed by SSM with compliant patching. Enable GuardDuty for threat detection.",
-          "AuditProcedure": "Verify SSM management and patch compliance. Confirm GuardDuty is enabled in all regions.",
-          "AdditionalInformation": "ASD Essential Eight Control 3 - Cloud applicability is limited; primary enforcement is at endpoint level.",
+          "Section": "1 Patch applications",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Endpoint application exploitation"
+          ],
+          "Description": "Endpoint-resident applications (Office, browsers, email clients, PDF, security products) are out of AWS infrastructure scope.",
+          "RationaleStatement": "Same as 1.4 - this is endpoint-management territory.",
+          "ImpactStatement": "Evidence must come from endpoint patch-management tooling.",
+          "RemediationProcedure": "Use endpoint patch-management (Intune, SCCM, third-party MDM) to enforce two-week SLA on these application classes.",
+          "AuditProcedure": "Manual review of endpoint patch reports.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch applications - clause 7. Out of AWS infrastructure scope.",
           "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
         }
       ]
     },
     {
-      "Id": "E8-4",
-      "Description": "User Application Hardening - Harden application configurations",
+      "Id": "E8-1.8",
+      "Description": "Online services that are no longer supported by vendors are removed.",
       "Checks": [
-        "apigateway_restapi_logging_enabled",
-        "apigatewayv2_api_access_logging_enabled",
-        "cloudtrail_multi_region_enabled_logging_management_events",
-        "cloudtrail_cloudwatch_logging_enabled",
-        "ec2_instance_imdsv2_enabled",
-        "ec2_instance_public_ip",
-        "s3_bucket_public_access",
-        "rds_snapshots_public_access",
-        "s3_bucket_ssl_requests_only",
-        "elb_ssl_listeners"
-      ],
-      "Attributes": [
-        {
-          "Section": "4 User Application Hardening",
-          "Profile": "Level 1",
-          "AssessmentStatus": "Automated",
-          "Description": "Applications should be hardened to reduce their attack surface. In AWS, this includes enforcing IMDSv2, restricting public access, enabling SSL/TLS, and comprehensive logging.",
-          "RationaleStatement": "Hardening cloud applications reduces the attack surface available to adversaries. Public access restrictions, encryption in transit, and metadata service hardening are critical cloud-specific controls.",
-          "ImpactStatement": "",
-          "RemediationProcedure": "Enable IMDSv2 on all EC2 instances. Block public access on S3 buckets and RDS snapshots. Enforce SSL on all load balancers and S3 buckets. Enable API Gateway and CloudTrail logging.",
-          "AuditProcedure": "Check IMDSv2 enforcement. Verify S3 and RDS public access settings. Confirm SSL/TLS configuration. Review logging status.",
-          "AdditionalInformation": "ASD Essential Eight Control 4",
-          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
-        }
-      ]
-    },
-    {
-      "Id": "E8-5",
-      "Description": "Restrict Administrative Privileges - Limit and secure administrative access",
-      "Checks": [
-        "iam_no_root_access_key",
-        "iam_root_mfa_enabled",
-        "iam_root_hardware_mfa_enabled",
-        "iam_administrator_access_with_mfa",
-        "iam_group_administrator_access_policy",
-        "iam_user_two_active_access_key",
-        "iam_user_accesskey_unused",
-        "iam_user_console_access_unused",
-        "iam_policy_no_full_access_to_kms",
-        "cloudwatch_log_metric_filter_root_usage",
-        "cloudtrail_threat_detection_privilege_escalation"
-      ],
-      "Attributes": [
-        {
-          "Section": "5 Restrict Administrative Privileges",
-          "Profile": "Level 1",
-          "AssessmentStatus": "Automated",
-          "Description": "Administrative privileges should be restricted to only those users who require them. In AWS, this means securing root accounts, enforcing MFA on admin users, monitoring for privilege escalation, and removing unused credentials.",
-          "RationaleStatement": "Compromised administrative credentials provide attackers with unrestricted access. Limiting admin privileges, enforcing MFA, and monitoring root account usage are critical controls.",
-          "ImpactStatement": "",
-          "RemediationProcedure": "Remove root access keys. Enable hardware MFA on root account. Enforce MFA on all IAM users with administrator access. Remove unused access keys and console access. Monitor for privilege escalation via CloudTrail.",
-          "AuditProcedure": "Verify no root access keys exist. Confirm MFA on root and admin accounts. Check for unused credentials. Review CloudTrail for privilege escalation events.",
-          "AdditionalInformation": "ASD Essential Eight Control 5",
-          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
-        }
-      ]
-    },
-    {
-      "Id": "E8-6",
-      "Description": "Patch Operating Systems - Ensure operating systems are patched within appropriate timeframes",
-      "Checks": [
-        "ssm_managed_compliant_patching",
-        "ec2_instance_managed_by_ssm",
+        "awslambda_function_using_supported_runtimes",
+        "rds_instance_deprecated_engine_version",
+        "rds_instance_extended_support",
         "eks_cluster_uses_a_supported_version",
         "ecs_service_fargate_latest_platform_version",
-        "rds_instance_minor_version_upgrade_enabled"
+        "kafka_cluster_uses_latest_version",
+        "opensearch_service_domains_updated_to_the_latest_service_software_version"
       ],
       "Attributes": [
         {
-          "Section": "6 Patch Operating Systems",
-          "Profile": "Level 1",
+          "Section": "1 Patch applications",
+          "MaturityLevel": "ML1",
           "AssessmentStatus": "Automated",
-          "Description": "Operating systems should be patched within an appropriate timeframe. In AWS, EC2 instances should be managed by SSM with compliant patching, and managed services should use supported versions.",
-          "RationaleStatement": "Unpatched operating systems are vulnerable to known exploits. SSM Patch Manager provides automated patching for EC2 instances, and managed services should always run supported versions.",
+          "CloudApplicability": "full",
+          "MitigatedThreats": [
+            "Use of unsupported software",
+            "Long-tail vulnerability accumulation"
+          ],
+          "Description": "Online services in AWS scope: Lambda runtimes, RDS engines, EKS Kubernetes versions, ECS/Fargate platform versions, Kafka, OpenSearch. Prowler can detect deprecated/unsupported versions across all of these.",
+          "RationaleStatement": "Unsupported services no longer receive security patches.",
           "ImpactStatement": "",
-          "RemediationProcedure": "Enable SSM Agent and Patch Manager on all EC2 instances. Configure patch baselines and maintenance windows. Enable auto minor version upgrades on RDS instances.",
-          "AuditProcedure": "Check SSM patch compliance reports. Verify managed service versions are supported. Review maintenance window configurations.",
-          "AdditionalInformation": "ASD Essential Eight Control 6",
+          "RemediationProcedure": "Migrate Lambda functions off deprecated runtimes; remove RDS instances on Extended Support or deprecated engines; upgrade EKS clusters to supported Kubernetes versions; use latest Fargate platform version; keep Kafka and OpenSearch at supported versions.",
+          "AuditProcedure": "Run all listed checks.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch applications - clause 8.",
           "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
         }
       ]
     },
     {
-      "Id": "E8-7",
-      "Description": "Multi-Factor Authentication - Implement MFA for all users",
+      "Id": "E8-1.9",
+      "Description": "Office productivity suites, web browsers and their extensions, email clients, PDF software, Adobe Flash Player, and security products that are no longer supported by vendors are removed.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1 Patch applications",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Endpoint compromise via unsupported applications"
+          ],
+          "Description": "Endpoint-resident applications. Out of AWS infrastructure scope.",
+          "RationaleStatement": "Adobe Flash Player end-of-life is the canonical example - removal must be enforced at the endpoint.",
+          "ImpactStatement": "Evidence must come from endpoint software inventory.",
+          "RemediationProcedure": "Inventory endpoint applications; enforce removal of EOL software via endpoint management.",
+          "AuditProcedure": "Manual review of endpoint inventory.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch applications - clause 9. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-2.1",
+      "Description": "An automated method of asset discovery is used at least fortnightly to support the detection of assets for subsequent vulnerability scanning activities.",
+      "Checks": [
+        "ec2_instance_managed_by_ssm",
+        "config_recorder_all_regions_enabled",
+        "inspector2_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Patch operating systems",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "MitigatedThreats": [
+            "Unmanaged hosts",
+            "OS-level shadow IT"
+          ],
+          "Description": "Same asset-discovery clause as 1.1, applied here to operating systems. AWS Config + SSM Inventory continuously discovers EC2 instances and their OS metadata; Inspector v2 enrols them automatically.",
+          "RationaleStatement": "OS vulnerability scanning depends on asset coverage.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Enable AWS Config in every region; ensure all EC2 are SSM-managed; enable Inspector v2.",
+          "AuditProcedure": "Run all listed checks.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch operating systems - clause 1.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-2.2",
+      "Description": "A vulnerability scanner with an up-to-date vulnerability database is used for vulnerability scanning activities.",
+      "Checks": [
+        "inspector2_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Patch operating systems",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "MitigatedThreats": [
+            "Stale OS vulnerability data"
+          ],
+          "Description": "Inspector v2 is AWS's managed OS vulnerability scanner with continuously updated database.",
+          "RationaleStatement": "Same rationale as 1.2 applied to OS scanning.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Enable Inspector v2 in all regions.",
+          "AuditProcedure": "Verify Inspector v2 is enabled.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch operating systems - clause 2.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-2.3",
+      "Description": "A vulnerability scanner is used at least daily to identify missing patches or updates for vulnerabilities in operating systems of internet-facing servers and internet-facing network devices.",
+      "Checks": [
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Patch operating systems",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Late detection of OS vulnerabilities on exposed hosts"
+          ],
+          "Description": "Internet-facing servers in AWS map to EC2 with public IP / behind public ALB / NLB. Inspector v2 performs continuous OS scanning. Network devices (firewalls, routers) inside customer VPC are typically appliance AMIs - scanned by Inspector when SSM-managed.",
+          "RationaleStatement": "Internet-facing OS surface is the primary entry point for opportunistic attacks.",
+          "ImpactStatement": "Daily cadence implicit in continuous scanning; not directly verifiable.",
+          "RemediationProcedure": "Enable Inspector v2 EC2 scanning. Ensure network appliances are SSM-managed where possible.",
+          "AuditProcedure": "Verify Inspector v2 enabled with EC2 scan type. Manually verify cadence via finding history.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch operating systems - clause 3.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-2.4",
+      "Description": "A vulnerability scanner is used at least fortnightly to identify missing patches or updates for vulnerabilities in operating systems of workstations, non-internet-facing servers and non-internet-facing network devices.",
+      "Checks": [
+        "inspector2_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Patch operating systems",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Lateral movement via unpatched internal hosts"
+          ],
+          "Description": "Workstations are out of AWS infrastructure scope. Non-internet-facing EC2 servers and appliance AMIs are scanned by Inspector v2 when SSM-managed.",
+          "RationaleStatement": "Internal hosts still carry lateral-movement risk.",
+          "ImpactStatement": "Workstation scanning is endpoint-management territory.",
+          "RemediationProcedure": "Ensure internal EC2 are SSM-managed and Inspector v2 covers them. For workstations, use endpoint vulnerability tooling.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch operating systems - clause 4.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-2.5",
+      "Description": "Patches, updates or other vendor mitigations for vulnerabilities in operating systems of internet-facing servers and internet-facing network devices are applied within 48 hours of release when vulnerabilities are assessed as critical by vendors or when working exploits exist.",
+      "Checks": [
+        "inspector2_active_findings_exist"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Patch operating systems",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Active exploitation of OS-level CVEs",
+            "Public-facing intrusion"
+          ],
+          "Description": "SLA for critical OS patches on internet-facing hosts. AWS APIs do not surface time-to-patch.",
+          "RationaleStatement": "Critical OS CVEs on internet-facing surface are weaponised fastest.",
+          "ImpactStatement": "Requires correlation between Inspector finding age and SSM patch logs.",
+          "RemediationProcedure": "Configure Inspector v2 critical-finding alerting; route to a 48-hour remediation queue. Configure SSM Patch Manager with appropriate baselines.",
+          "AuditProcedure": "Manual: review patch deployment timestamps for internet-facing critical OS findings.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch operating systems - clause 5. SLA timing out of Prowler scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-2.6",
+      "Description": "Patches, updates or other vendor mitigations for vulnerabilities in operating systems of internet-facing servers and internet-facing network devices are applied within two weeks of release when vulnerabilities are assessed as non-critical by vendors and no working exploits exist.",
+      "Checks": [
+        "ssm_managed_compliant_patching",
+        "ec2_instance_managed_by_ssm"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Patch operating systems",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Stale OS exposure",
+            "Background CVE accumulation"
+          ],
+          "Description": "Two-week SLA for non-critical OS patches on internet-facing hosts. SSM Patch Manager delivers the capability; SLA evidence is procedural.",
+          "RationaleStatement": "Two-week cadence is the ASD baseline for non-critical OS patching of internet-facing hosts.",
+          "ImpactStatement": "SLA window evidence requires patch logs.",
+          "RemediationProcedure": "Configure SSM Patch Manager with a fortnightly maintenance window for internet-facing EC2.",
+          "AuditProcedure": "Verify SSM patch compliance + manually verify deployment cadence.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch operating systems - clause 6.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-2.7",
+      "Description": "Patches, updates or other vendor mitigations for vulnerabilities in operating systems of workstations, non-internet-facing servers and non-internet-facing network devices are applied within one month of release.",
+      "Checks": [
+        "ssm_managed_compliant_patching",
+        "ec2_instance_managed_by_ssm"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Patch operating systems",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Lateral movement",
+            "Internal compromise"
+          ],
+          "Description": "One-month SLA for OS patches on workstations and non-internet-facing hosts. AWS infrastructure covers non-internet-facing EC2 via SSM Patch Manager. Workstations are endpoint-management territory.",
+          "RationaleStatement": "Internal hosts have a longer SLA but still need regular patching.",
+          "ImpactStatement": "Workstation patch evidence is endpoint-side.",
+          "RemediationProcedure": "Configure SSM Patch Manager with a monthly maintenance window for non-internet-facing EC2.",
+          "AuditProcedure": "Verify SSM patch compliance for non-internet-facing instances.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch operating systems - clause 7.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-2.8",
+      "Description": "Operating systems that are no longer supported by vendors are replaced.",
+      "Checks": [
+        "ec2_instance_with_outdated_ami",
+        "ec2_instance_older_than_specific_days",
+        "ec2_ami_public",
+        "eks_cluster_uses_a_supported_version"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Patch operating systems",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "MitigatedThreats": [
+            "Use of unsupported operating systems",
+            "Loss of security updates"
+          ],
+          "Description": "Detect EC2 instances on outdated AMIs, EKS clusters on unsupported Kubernetes versions, and AMIs that may be unsupported.",
+          "RationaleStatement": "Unsupported OS receives no further security updates.",
+          "ImpactStatement": "Prowler verifies AMI freshness and EKS version; the operator must define the policy threshold for `ec2_instance_older_than_specific_days`.",
+          "RemediationProcedure": "Replace EC2 instances on unsupported AMIs. Upgrade EKS clusters to supported Kubernetes versions.",
+          "AuditProcedure": "Run all listed checks.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Patch operating systems - clause 8.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-3.1",
+      "Description": "Multi-factor authentication is used to authenticate users to their organisation's online services that process, store or communicate their organisation's sensitive data.",
       "Checks": [
         "iam_root_mfa_enabled",
         "iam_root_hardware_mfa_enabled",
         "iam_user_mfa_enabled_console_access",
         "iam_user_hardware_mfa_enabled",
         "iam_administrator_access_with_mfa",
-        "cognito_user_pool_mfa_enabled",
         "directoryservice_supported_mfa_radius_enabled",
-        "cloudwatch_log_metric_filter_sign_in_without_mfa",
-        "s3_bucket_no_mfa_delete",
-        "cloudtrail_bucket_requires_mfa_delete"
+        "cloudwatch_log_metric_filter_sign_in_without_mfa"
       ],
       "Attributes": [
         {
-          "Section": "7 Multi-Factor Authentication",
-          "Profile": "Level 1",
-          "AssessmentStatus": "Automated",
-          "Description": "MFA should be implemented for all users accessing important data repositories and internet-facing services. In AWS, this means enforcing MFA on all IAM users, the root account, Cognito user pools, and directory services.",
-          "RationaleStatement": "MFA provides an additional layer of authentication beyond passwords. Compromised credentials without MFA allow immediate access. AWS provides multiple MFA options including hardware tokens, virtual MFA, and FIDO security keys.",
-          "ImpactStatement": "",
-          "RemediationProcedure": "Enable MFA on root account (hardware MFA recommended). Enable MFA for all IAM users with console access. Configure MFA for Cognito user pools and Directory Service. Set up CloudWatch alarms for sign-ins without MFA.",
-          "AuditProcedure": "Verify MFA status on root account and all IAM users. Check Cognito and Directory Service MFA configuration. Review CloudWatch metric filters for MFA-less sign-ins.",
-          "AdditionalInformation": "ASD Essential Eight Control 7",
+          "Section": "3 Multi-factor authentication",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Credential stuffing",
+            "Password reuse compromise",
+            "Unauthorised access to internal services"
+          ],
+          "Description": "MFA on the organisation's own AWS-hosted online services that handle sensitive data. Prowler verifies MFA on root, IAM users with console access, IAM admins and Directory Service. Whether a given service handles 'sensitive data' is a classification call the operator must make.",
+          "RationaleStatement": "MFA prevents credential-only compromise.",
+          "ImpactStatement": "Sensitive-data classification is procedural; Prowler verifies MFA presence on the underlying identity surface.",
+          "RemediationProcedure": "Enable hardware MFA on root and admin IAM users. Require MFA for all IAM users with console access. Enable MFA on Directory Service. Configure CloudWatch metric filter for non-MFA sign-ins.",
+          "AuditProcedure": "Run the listed checks. Manually classify which services hold sensitive data and confirm MFA coverage.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Multi-factor authentication - clause 1.",
           "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
         }
       ]
     },
     {
-      "Id": "E8-8",
-      "Description": "Regular Backups - Perform and test regular backups of important data",
+      "Id": "E8-3.2",
+      "Description": "Multi-factor authentication is used to authenticate users to third-party online services that process, store or communicate their organisation's sensitive data.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Multi-factor authentication",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Third-party SaaS account compromise",
+            "Sensitive data leakage via SaaS"
+          ],
+          "Description": "Third-party online services (SaaS providers, external platforms) are outside the AWS account. AWS infrastructure scans cannot evidence MFA enforcement on those services.",
+          "RationaleStatement": "Third-party services are a major data-exfiltration vector.",
+          "ImpactStatement": "Evidence must come from each third-party provider's IAM / SSO configuration.",
+          "RemediationProcedure": "Enforce MFA in the third-party service's identity provider or SSO upstream (e.g. via AWS IAM Identity Center or external IdP).",
+          "AuditProcedure": "Manual review of third-party service IdP / SSO configuration.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Multi-factor authentication - clause 2. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-3.3",
+      "Description": "Multi-factor authentication (where available) is used to authenticate users to third-party online services that process, store or communicate their organisation's non-sensitive data.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Multi-factor authentication",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Account compromise on lower-sensitivity SaaS"
+          ],
+          "Description": "Same as 3.2, applied to non-sensitive third-party services. Out of AWS infrastructure scope.",
+          "RationaleStatement": "Defence in depth - even non-sensitive services can be staging ground for further attacks.",
+          "ImpactStatement": "Evidence must come from each third-party provider.",
+          "RemediationProcedure": "Where the third-party service supports it, enforce MFA upstream via SSO.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Multi-factor authentication - clause 3. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-3.4",
+      "Description": "Multi-factor authentication is used to authenticate users to their organisation's online customer services that process, store or communicate their organisation's sensitive customer data.",
       "Checks": [
-        "backup_plans_exist",
-        "backup_recovery_point_encrypted",
-        "backup_reportplans_exist",
-        "backup_vaults_encrypted",
-        "rds_instance_backup_enabled",
-        "rds_instance_protected_by_backup_plan",
-        "rds_cluster_protected_by_backup_plan",
-        "s3_bucket_object_versioning",
-        "dynamodb_tables_pitr_enabled",
-        "efs_have_backup_enabled"
+        "cognito_user_pool_mfa_enabled"
       ],
       "Attributes": [
         {
-          "Section": "8 Regular Backups",
-          "Profile": "Level 1",
+          "Section": "3 Multi-factor authentication",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Customer-data exposure via account takeover"
+          ],
+          "Description": "Online customer services hosted by the organisation in AWS typically use Cognito. Whether a Cognito user pool serves users handling sensitive customer data is an operator classification.",
+          "RationaleStatement": "Insider users of customer-facing services need MFA when they handle sensitive customer data.",
+          "ImpactStatement": "Sensitive-data classification is procedural.",
+          "RemediationProcedure": "Enable MFA on every Cognito user pool that serves users handling sensitive customer data.",
+          "AuditProcedure": "Verify Cognito MFA per pool.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Multi-factor authentication - clause 4.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-3.5",
+      "Description": "Multi-factor authentication is used to authenticate users to third-party online customer services that process, store or communicate their organisation's sensitive customer data.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Multi-factor authentication",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Customer-data exposure via third-party platform"
+          ],
+          "Description": "Third-party customer-facing services. Out of AWS infrastructure scope.",
+          "RationaleStatement": "Sensitive customer data on third-party platforms still needs MFA.",
+          "ImpactStatement": "Evidence must come from the third-party provider.",
+          "RemediationProcedure": "Enforce MFA in the third-party customer service's IdP.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Multi-factor authentication - clause 5. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-3.6",
+      "Description": "Multi-factor authentication is used to authenticate customers to online customer services that process, store or communicate sensitive customer data.",
+      "Checks": [
+        "cognito_user_pool_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Multi-factor authentication",
+          "MaturityLevel": "ML1",
           "AssessmentStatus": "Automated",
-          "Description": "Regular backups of important data should be performed and tested. In AWS, this includes AWS Backup plans, RDS automated backups, S3 versioning, DynamoDB point-in-time recovery, and EFS backups.",
-          "RationaleStatement": "Backups are essential for recovery from ransomware, accidental deletion, and disaster scenarios. AWS Backup provides a centralised service for managing backups across AWS resources.",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Customer account takeover",
+            "Customer-data theft"
+          ],
+          "Description": "Customer-facing AWS-hosted services typically use Cognito user pools. Prowler can verify MFA is enabled on the pool.",
+          "RationaleStatement": "Customers handling sensitive data benefit from MFA the same as employees.",
+          "ImpactStatement": "Cognito MFA can be enforced or optional - the check verifies it is at least configured.",
+          "RemediationProcedure": "Enable MFA on customer-facing Cognito user pools.",
+          "AuditProcedure": "Verify Cognito MFA configuration.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Multi-factor authentication - clause 6.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-3.7",
+      "Description": "Multi-factor authentication uses either: something users have and something users know, or something users have that is unlocked by something users know or are.",
+      "Checks": [
+        "iam_user_hardware_mfa_enabled",
+        "iam_root_hardware_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Multi-factor authentication",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "limited",
+          "MitigatedThreats": [
+            "Single-factor compromise",
+            "Knowledge-only authentication"
+          ],
+          "Description": "MFA factor type. AWS IAM API does not surface the underlying authenticator type granularly, only whether MFA is virtual or hardware. Hardware MFA on root + admin is the strongest signal Prowler can give.",
+          "RationaleStatement": "MFA must combine factor categories - knowledge alone doesn't qualify.",
+          "ImpactStatement": "Prowler cannot universally verify factor type for every identity. Hardware MFA detection is the closest proxy.",
+          "RemediationProcedure": "Prefer hardware MFA on privileged identities.",
+          "AuditProcedure": "Run the listed checks. Manually review IdP audit feed for factor distribution.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Multi-factor authentication - clause 7.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-4.1",
+      "Description": "Requests for privileged access to systems, applications and data repositories are validated when first requested.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Restrict administrative privileges",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Unauthorised privilege grant",
+            "Insider misuse"
+          ],
+          "Description": "Procedural control: privileged-access requests must go through a validation workflow. Prowler does not evaluate change-management workflows.",
+          "RationaleStatement": "Privileged access without validation is a primary insider-risk vector.",
+          "ImpactStatement": "Evidence comes from access-review tickets, change management or AWS IAM Identity Center request workflows.",
+          "RemediationProcedure": "Implement a request/approve workflow for AWS privileged role assumption (e.g. IAM Identity Center permission sets with approval) or rely on an external ITSM workflow.",
+          "AuditProcedure": "Manual review of change-management evidence.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict administrative privileges - clause 1. Procedural.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-4.2",
+      "Description": "Privileged users are assigned a dedicated privileged user account to be used solely for duties requiring privileged access.",
+      "Checks": [
+        "iam_user_administrator_access_policy",
+        "iam_user_two_active_access_key",
+        "iam_user_no_setup_initial_access_key"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 Restrict administrative privileges",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Compromise of dual-purpose accounts",
+            "Privilege accumulation"
+          ],
+          "Description": "Privileged AWS access should be exercised through dedicated identities (separate IAM users / dedicated permission sets), not through a daily-driver identity. Prowler can detect IAM users carrying admin policies but cannot infer whether they are dedicated.",
+          "RationaleStatement": "Dual-purpose accounts (admin + daily) increase blast radius of credential theft.",
+          "ImpactStatement": "Prowler flags admin-bearing identities; the operator must verify each is dedicated to privileged duties.",
+          "RemediationProcedure": "Use IAM Identity Center permission sets or dedicated IAM users with admin policies, separated from daily-driver identities.",
+          "AuditProcedure": "Run listed checks; manually verify each admin identity is dedicated.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict administrative privileges - clause 2.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-4.3",
+      "Description": "Privileged user accounts (excluding those explicitly authorised to access online services) are prevented from accessing the internet, email and web services.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Restrict administrative privileges",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "limited",
+          "MitigatedThreats": [
+            "Drive-by compromise of privileged accounts",
+            "Phishing-driven privileged compromise"
+          ],
+          "Description": "Network-level control: privileged accounts must not browse the internet or access email. In AWS this would map to SCPs / VPC egress controls / dedicated jump-host architecture - none directly verifiable by a posture scan.",
+          "RationaleStatement": "If a privileged account never touches the internet, it cannot be phished or drive-by compromised.",
+          "ImpactStatement": "Evidence comes from network architecture and SCP review.",
+          "RemediationProcedure": "Restrict privileged AWS sessions to a hardened bastion / Cloud Workspace with no general internet egress. Apply SCPs that deny privileged roles from launching workloads with unrestricted internet egress.",
+          "AuditProcedure": "Manual review of SCPs and network architecture.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict administrative privileges - clause 3.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-4.4",
+      "Description": "Privileged user accounts explicitly authorised to access online services are strictly limited to only what is required for users and services to undertake their duties.",
+      "Checks": [
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_policy_allows_privilege_escalation",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_policy_no_full_access_to_kms",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_inline_policy_no_full_access_to_cloudtrail",
+        "iam_inline_policy_no_full_access_to_kms",
+        "iam_role_cross_account_readonlyaccess_policy",
+        "iam_role_cross_service_confused_deputy_prevention",
+        "accessanalyzer_enabled",
+        "accessanalyzer_enabled_without_findings"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 Restrict administrative privileges",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "MitigatedThreats": [
+            "Excessive standing privilege",
+            "Privilege escalation",
+            "Confused deputy"
+          ],
+          "Description": "Least-privilege enforcement on AWS IAM. This is the cleanest cloud-native mapping in the entire framework: Prowler can verify policy scoping, privilege escalation paths and Access Analyzer findings.",
+          "RationaleStatement": "Strictly-scoped privileged access reduces blast radius of compromise.",
           "ImpactStatement": "",
-          "RemediationProcedure": "Create AWS Backup plans covering all critical resources. Enable automated backups on RDS instances. Enable versioning on S3 buckets. Enable PITR on DynamoDB tables. Configure backup report plans for compliance monitoring.",
-          "AuditProcedure": "Verify AWS Backup plans exist and cover critical resources. Check RDS backup configuration. Confirm S3 versioning and DynamoDB PITR status. Review backup report plans.",
-          "AdditionalInformation": "ASD Essential Eight Control 8",
+          "RemediationProcedure": "Audit and tighten managed/inline policies; remove privilege-escalation paths; attach policies only to groups/roles; enable Access Analyzer and resolve findings.",
+          "AuditProcedure": "Run all listed checks.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict administrative privileges - clause 4.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-4.5",
+      "Description": "Privileged users use separate privileged and unprivileged operating environments.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Restrict administrative privileges",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Cross-environment compromise",
+            "Privileged session hijack"
+          ],
+          "Description": "Operating-environment separation is an endpoint / virtualisation control (privileged jump host vs daily workstation). Out of AWS infrastructure scope.",
+          "RationaleStatement": "Operating-environment isolation prevents malware on the unprivileged side from attacking privileged sessions.",
+          "ImpactStatement": "Evidence comes from endpoint architecture (PAW / privileged jump hosts / WorkSpaces partitioning).",
+          "RemediationProcedure": "Provide privileged users with a dedicated PAW or privileged WorkSpaces image.",
+          "AuditProcedure": "Manual review of endpoint architecture.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict administrative privileges - clause 5. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-4.6",
+      "Description": "Unprivileged user accounts cannot logon to privileged operating environments.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Restrict administrative privileges",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Privileged-environment lateral access"
+          ],
+          "Description": "Endpoint logon-policy control. Out of AWS infrastructure scope.",
+          "RationaleStatement": "Even read-only access to a privileged environment is a foothold.",
+          "ImpactStatement": "Evidence comes from endpoint logon policy / Active Directory.",
+          "RemediationProcedure": "Enforce logon restrictions on privileged endpoints.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict administrative privileges - clause 6. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-4.7",
+      "Description": "Privileged user accounts (excluding local administrator accounts) cannot logon to unprivileged operating environments.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Restrict administrative privileges",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Privileged-credential exposure on unprivileged hosts"
+          ],
+          "Description": "Endpoint logon-policy control. Out of AWS infrastructure scope.",
+          "RationaleStatement": "Privileged credentials must never be entered on potentially-compromised unprivileged endpoints.",
+          "ImpactStatement": "Evidence comes from endpoint logon policy / Active Directory.",
+          "RemediationProcedure": "Enforce that privileged accounts can only logon to PAWs / jump hosts.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict administrative privileges - clause 7. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-5.1",
+      "Description": "Application control is implemented on workstations.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "5 Application control",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Malware execution on workstations"
+          ],
+          "Description": "Application control is fundamentally an endpoint allowlist. AWS infrastructure has no direct equivalent for workstation app control.",
+          "RationaleStatement": "Application control on workstations is the highest-impact mitigation against malware.",
+          "ImpactStatement": "Evidence comes from endpoint allowlist tooling (AppLocker, WDAC, third-party EDR).",
+          "RemediationProcedure": "Deploy AppLocker / Windows Defender Application Control / equivalent on every workstation.",
+          "AuditProcedure": "Manual review of endpoint app-control coverage.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Application control - clause 1. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-5.2",
+      "Description": "Application control is applied to user profiles and temporary folders used by operating systems, web browsers and email clients.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "5 Application control",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Drop-and-execute from user profile",
+            "Browser-cache execution",
+            "Email-attachment execution"
+          ],
+          "Description": "Endpoint app-control scope (user profiles, temp folders). Out of AWS infrastructure scope.",
+          "RationaleStatement": "User-writable folders are the most common malware drop locations.",
+          "ImpactStatement": "Evidence comes from endpoint app-control configuration.",
+          "RemediationProcedure": "Configure AppLocker / WDAC rules to cover %APPDATA%, %TEMP%, browser caches, email-client temp folders.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Application control - clause 2. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-5.3",
+      "Description": "Application control restricts the execution of executables, software libraries, scripts, installers, compiled HTML, HTML applications and control panel applets to an organisation-approved set.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "5 Application control",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Unauthorised executable execution",
+            "Library hijacking",
+            "Script-based malware",
+            "HTA / CHM payload execution"
+          ],
+          "Description": "Endpoint allowlisting of executable file types. Out of AWS infrastructure scope.",
+          "RationaleStatement": "An effective allowlist must cover all execution surfaces, not only .exe.",
+          "ImpactStatement": "Evidence comes from endpoint app-control rule set.",
+          "RemediationProcedure": "Define an organisation-approved allowlist covering all listed file types and enforce it in AppLocker / WDAC / equivalent.",
+          "AuditProcedure": "Manual review of allowlist contents.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Application control - clause 3. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-6.1",
+      "Description": "Microsoft Office macros are disabled for users that do not have a demonstrated business requirement.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Restrict Microsoft Office macros",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Macro-based malware delivery"
+          ],
+          "Description": "Endpoint / Microsoft 365 control. Out of AWS infrastructure scope.",
+          "RationaleStatement": "Most users never need Office macros. Disabling by default removes a major delivery vector.",
+          "ImpactStatement": "Evidence comes from Microsoft 365 / Group Policy.",
+          "RemediationProcedure": "Disable macros via Group Policy / Intune / M365 admin policies, with explicit allowlist for business-justified users.",
+          "AuditProcedure": "Manual review of M365 macro policy.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict Microsoft Office macros - clause 1. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-6.2",
+      "Description": "Microsoft Office macros in files originating from the internet are blocked.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Restrict Microsoft Office macros",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Internet-sourced macro malware"
+          ],
+          "Description": "Endpoint / Microsoft 365 control (Mark-of-the-Web macro blocking). Out of AWS infrastructure scope.",
+          "RationaleStatement": "Internet-sourced documents are the primary macro-delivery vector.",
+          "ImpactStatement": "Evidence comes from Microsoft 365 / Group Policy.",
+          "RemediationProcedure": "Enable 'Block macros from running in Office files from the internet' via Group Policy / Intune.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict Microsoft Office macros - clause 2. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-6.3",
+      "Description": "Microsoft Office macro antivirus scanning is enabled.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Restrict Microsoft Office macros",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Macro-borne malware not detected at file-open time"
+          ],
+          "Description": "Endpoint / Microsoft 365 control (AMSI integration with macros). Out of AWS infrastructure scope.",
+          "RationaleStatement": "Antivirus scanning of macros at run-time catches polymorphic payloads that static analysis misses.",
+          "ImpactStatement": "Evidence comes from endpoint AV / AMSI configuration.",
+          "RemediationProcedure": "Enable AMSI macro scanning via Group Policy.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict Microsoft Office macros - clause 3. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-6.4",
+      "Description": "Microsoft Office macro security settings cannot be changed by users.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Restrict Microsoft Office macros",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "User-driven macro policy bypass"
+          ],
+          "Description": "Endpoint / Microsoft 365 control. Out of AWS infrastructure scope.",
+          "RationaleStatement": "If users can change macro security settings, the previous controls become advisory.",
+          "ImpactStatement": "Evidence comes from Group Policy lockdown.",
+          "RemediationProcedure": "Apply Group Policy that prevents users from changing Office macro security settings.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Restrict Microsoft Office macros - clause 4. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-7.1",
+      "Description": "Internet Explorer 11 is disabled or removed.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "7 User application hardening",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Legacy-browser exploitation"
+          ],
+          "Description": "Endpoint browser control. Out of AWS infrastructure scope.",
+          "RationaleStatement": "Internet Explorer 11 is end-of-life and a recurring entry vector.",
+          "ImpactStatement": "Evidence comes from endpoint software inventory.",
+          "RemediationProcedure": "Remove or disable IE 11 via endpoint management.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - User application hardening - clause 1. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-7.2",
+      "Description": "Web browsers do not process Java from the internet.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "7 User application hardening",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Java-applet exploitation"
+          ],
+          "Description": "Endpoint browser control. Out of AWS infrastructure scope.",
+          "RationaleStatement": "Java in browsers is a long-standing exploitation surface.",
+          "ImpactStatement": "Evidence comes from browser policy enforced via endpoint management.",
+          "RemediationProcedure": "Block Java in browsers via Group Policy / browser policy templates.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - User application hardening - clause 2. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-7.3",
+      "Description": "Web browsers do not process web advertisements from the internet.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "7 User application hardening",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Malvertising delivery"
+          ],
+          "Description": "Endpoint browser control. Out of AWS infrastructure scope.",
+          "RationaleStatement": "Malicious advertising is a passive infection vector.",
+          "ImpactStatement": "Evidence comes from browser ad-blocking enforcement.",
+          "RemediationProcedure": "Deploy enterprise ad-blocking via browser policy or upstream DNS filtering.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - User application hardening - clause 3. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-7.4",
+      "Description": "Web browser security settings cannot be changed by users.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "7 User application hardening",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "User-driven browser hardening bypass"
+          ],
+          "Description": "Endpoint browser control. Out of AWS infrastructure scope.",
+          "RationaleStatement": "If users can change browser security settings, the previous controls become advisory.",
+          "ImpactStatement": "Evidence comes from browser policy enforcement.",
+          "RemediationProcedure": "Lock browser security settings via Group Policy / browser policy templates.",
+          "AuditProcedure": "Manual review.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - User application hardening - clause 4. Out of AWS infrastructure scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-8.1",
+      "Description": "Backups of data, applications and settings are performed and retained in accordance with business criticality and business continuity requirements.",
+      "Checks": [
+        "backup_plans_exist",
+        "backup_vaults_exist",
+        "backup_reportplans_exist",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_protected_by_backup_plan",
+        "rds_instance_backup_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "efs_have_backup_enabled",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "ec2_ebs_volume_snapshots_exists",
+        "elasticache_redis_cluster_backup_enabled",
+        "documentdb_cluster_backup_enabled",
+        "neptune_cluster_backup_enabled",
+        "redshift_cluster_automated_snapshot",
+        "dlm_ebs_snapshot_lifecycle_policy_exists"
+      ],
+      "Attributes": [
+        {
+          "Section": "8 Regular backups",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Ransomware",
+            "Data destruction",
+            "Recovery failure"
+          ],
+          "Description": "Backup coverage across AWS data services. Whether the backup frequency and retention align with business criticality is an operator classification.",
+          "RationaleStatement": "Backups must exist and align with the criticality of the data they protect.",
+          "ImpactStatement": "Prowler verifies backup mechanisms exist; criticality alignment is procedural.",
+          "RemediationProcedure": "Define AWS Backup plans + vaults covering critical services; enable engine-native backups on RDS / ElastiCache / DocumentDB / Neptune / Redshift; enable EFS Backup, EBS Backup, DynamoDB PITR; configure DLM lifecycle.",
+          "AuditProcedure": "Run all listed checks. Manually verify cadence and retention match criticality.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Regular backups - clause 1.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-8.2",
+      "Description": "Backups of data, applications and settings are synchronised to enable restoration to a common point in time.",
+      "Checks": [
+        "dynamodb_tables_pitr_enabled",
+        "rds_cluster_backtrack_enabled",
+        "s3_bucket_object_versioning",
+        "rds_instance_backup_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "8 Regular backups",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Inconsistent recovery state",
+            "Application-level corruption from partial restore"
+          ],
+          "Description": "Common-point-in-time recovery is delivered by DynamoDB PITR, Aurora backtrack, RDS automated backups and S3 versioning.",
+          "RationaleStatement": "Without coordinated PIT, restoration produces an inconsistent state across services.",
+          "ImpactStatement": "Coordinated multi-service PIT remains an architectural decision.",
+          "RemediationProcedure": "Enable DynamoDB PITR, Aurora backtrack, RDS automated backups and S3 versioning on all critical data stores.",
+          "AuditProcedure": "Run listed checks.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Regular backups - clause 2.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-8.3",
+      "Description": "Backups of data, applications and settings are retained in a secure and resilient manner.",
+      "Checks": [
+        "backup_vaults_encrypted",
+        "backup_recovery_point_encrypted",
+        "rds_snapshots_encrypted",
+        "rds_snapshots_public_access",
+        "ec2_ebs_public_snapshot",
+        "ec2_ebs_snapshot_account_block_public_access",
+        "documentdb_cluster_public_snapshot",
+        "neptune_cluster_public_snapshot",
+        "neptune_cluster_copy_tags_to_snapshots",
+        "rds_cluster_copy_tags_to_snapshots",
+        "rds_instance_copy_tags_to_snapshots",
+        "s3_bucket_cross_region_replication"
+      ],
+      "Attributes": [
+        {
+          "Section": "8 Regular backups",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Automated",
+          "CloudApplicability": "full",
+          "MitigatedThreats": [
+            "Backup tampering",
+            "Backup exfiltration",
+            "Regional outage destroying backups"
+          ],
+          "Description": "Secure: encryption + no public exposure. Resilient: cross-region replication / multi-AZ vault placement / lifecycle. Prowler covers both.",
+          "RationaleStatement": "A public or unencrypted backup is a data breach in waiting.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Enforce encryption on Backup vaults and recovery points, RDS snapshots. Block public access on EBS / RDS / DocumentDB / Neptune snapshots account-wide. Enable S3 cross-region replication for critical buckets.",
+          "AuditProcedure": "Run all listed checks.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Regular backups - clause 3.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-8.4",
+      "Description": "Restoration of data, applications and settings from backups to a common point in time is tested as part of disaster recovery exercises.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "8 Regular backups",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "non-applicable",
+          "MitigatedThreats": [
+            "Untested recovery path",
+            "Disaster recovery failure"
+          ],
+          "Description": "Restoration testing is a procedural / operational control. AWS APIs do not surface evidence that a restoration test occurred.",
+          "RationaleStatement": "Untested backups are unreliable backups.",
+          "ImpactStatement": "Evidence comes from DR exercise reports.",
+          "RemediationProcedure": "Schedule and execute DR exercises that include backup restoration to a common point in time. Record results.",
+          "AuditProcedure": "Manual review of DR exercise evidence (last 12 months).",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Regular backups - clause 4. Procedural; out of Prowler scope.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-8.5",
+      "Description": "Unprivileged user accounts cannot access backups belonging to other user accounts.",
+      "Checks": [
+        "rds_snapshots_public_access",
+        "ec2_ebs_public_snapshot",
+        "ec2_ebs_snapshot_account_block_public_access",
+        "documentdb_cluster_public_snapshot",
+        "neptune_cluster_public_snapshot"
+      ],
+      "Attributes": [
+        {
+          "Section": "8 Regular backups",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Cross-tenant backup access",
+            "Backup exfiltration via permissive IAM"
+          ],
+          "Description": "Cross-account / cross-user backup isolation. Public-snapshot blocking is the strongest cloud-side signal Prowler surfaces. Fine-grained per-user backup access scoping requires manual IAM/Vault policy review.",
+          "RationaleStatement": "Backups containing other users' data must never be readable by general users.",
+          "ImpactStatement": "Public-access blocks are partial - true 'cannot access other users' backups' requires IAM scoping review.",
+          "RemediationProcedure": "Block public access on EBS / RDS / DocumentDB / Neptune snapshots. Apply IAM policies that restrict backup-read APIs to dedicated backup-operator roles.",
+          "AuditProcedure": "Run listed checks. Manually review backup IAM scoping.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Regular backups - clause 5.",
+          "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
+        }
+      ]
+    },
+    {
+      "Id": "E8-8.6",
+      "Description": "Unprivileged user accounts are prevented from modifying and deleting backups.",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "8 Regular backups",
+          "MaturityLevel": "ML1",
+          "AssessmentStatus": "Manual",
+          "CloudApplicability": "partial",
+          "MitigatedThreats": [
+            "Backup deletion by compromised user",
+            "Ransomware-driven backup destruction"
+          ],
+          "Description": "Backup immutability against unprivileged accounts. Cloud-native delivery: AWS Backup Vault Lock + IAM/SCP scoping. Prowler does not currently surface Vault Lock state, so this clause is largely operator-evidenced.",
+          "RationaleStatement": "Without write protection, ransomware that compromises any user can erase backups.",
+          "ImpactStatement": "Vault Lock is the strongest cloud control here but is not surfaced by Prowler today.",
+          "RemediationProcedure": "Apply AWS Backup Vault Lock with retention enforcement. Use SCPs to deny `backup:Delete*`, `rds:DeleteDB*Snapshot`, `s3:DeleteObjectVersion`, etc. for non-backup-operator principals.",
+          "AuditProcedure": "Manual review of Vault Lock + SCP coverage.",
+          "AdditionalInformation": "ASD Essential Eight ML1 - Regular backups - clause 6.",
           "References": "https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model"
         }
       ]

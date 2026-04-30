@@ -83,6 +83,9 @@ from prowler.lib.outputs.compliance.csa.csa_oraclecloud import OracleCloudCSA
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
+from prowler.lib.outputs.compliance.essential_eight.essential_eight_aws import (
+    EssentialEightAWS,
+)
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_azure import AzureISO27001
@@ -631,6 +634,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            elif compliance_name.startswith("essential_eight"):
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                essential_eight = EssentialEightAWS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(essential_eight)
+                essential_eight.batch_write_data_to_file()
             elif compliance_name == "mitre_attack_aws":
                 # Generate MITRE ATT&CK Finding Object
                 filename = (
