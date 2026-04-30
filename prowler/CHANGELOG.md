@@ -15,6 +15,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Alibaba Cloud CS service SDK compatibility, harden other services and improve documentation [(#10871)](https://github.com/prowler-cloud/prowler/pull/10871)
 
+### 🔐 Security
+
+- Block parser-mismatch SSRF in image provider registry auth: validate bearer-token realm and pagination URLs against the same parser used by `requests`, resolve hostnames to reject non-public addresses, enforce same registrable-domain origin, and strip `Authorization` on cross-origin requests [(#10945)](https://github.com/prowler-cloud/prowler/pull/10945)
+
 ---
 
 ## [5.24.3] (Prowler v5.24.3)
