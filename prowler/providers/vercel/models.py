@@ -34,6 +34,23 @@ class VercelIdentityInfo(BaseModel):
     team: Optional[VercelTeamInfo] = None
     teams: list[VercelTeamInfo] = Field(default_factory=list)
 
+    def get_billing_plan_for(self, scope_id: Optional[str]) -> Optional[str]:
+        """Return the billing plan for an explicit user or team scope."""
+        if not scope_id:
+            return None
+
+        if self.team and self.team.id == scope_id and self.team.billing_plan:
+            return self.team.billing_plan
+
+        for team in self.teams:
+            if team.id == scope_id:
+                return team.billing_plan
+
+        if self.user_id == scope_id:
+            return self.billing_plan
+
+        return None
+
 
 class VercelOutputOptions(ProviderOutputOptions):
     """Customize output filenames for Vercel scans."""
