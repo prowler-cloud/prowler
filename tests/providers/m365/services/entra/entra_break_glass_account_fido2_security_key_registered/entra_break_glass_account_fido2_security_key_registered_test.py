@@ -552,10 +552,69 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert (
-                "Cannot verify FIDO2 security key registration"
-                in result[0].status_extended
-            )
+            assert "Cannot verify FIDO2 security key registration for break glass account BreakGlass1" in result[0].status_extended
             assert "AuditLog.Read.All" in result[0].status_extended
-            assert result[0].resource_name == "Break Glass Accounts"
-            assert result[0].resource_id == "breakGlassAccounts"
+            assert result[0].resource_name == "BreakGlass1"
+            assert result[0].resource_id == bg_user_id
+
+    def test_user_registration_details_permission_error_with_missing_user(self):
+        """Per-user emission and missing-user short-circuit on the error path.
+
+        Two break-glass user IDs are excluded from all CAPs, but only one is
+        present in ``entra_client.users``.  With ``user_registration_details_error``
+        set, the present user must produce one preventive FAIL anchored to the
+        real user; the missing user must be skipped by the existing
+        ``if not user: continue`` guard rather than crash or yield a synthetic
+        finding.
+        """
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_break_glass_account_fido2_security_key_registered.entra_break_glass_account_fido2_security_key_registered import (
+                entra_break_glass_account_fido2_security_key_registered,
+            )
+
+            policy_id = str(uuid4())
+            present_user_id = str(uuid4())
+            missing_user_id = str(uuid4())
+
+            entra_client.conditional_access_policies = {
+                policy_id: _make_policy(
+                    policy_id,
+                    excluded_users=[present_user_id, missing_user_id],
+                ),
+            }
+            entra_client.users = {
+                present_user_id: User(
+                    id=present_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+                # missing_user_id intentionally absent — exercises the
+                # `if not user: continue` short-circuit inside the loop.
+            }
+
+            check = entra_break_glass_account_fido2_security_key_registered()
+            result = check.execute()
+
+            # One finding for the present user; the missing one is skipped.
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "Cannot verify FIDO2 security key registration for break glass account BreakGlass1" in result[0].status_extended
+            assert "AuditLog.Read.All" in result[0].status_extended
+            assert result[0].resource == entra_client.users[present_user_id]
+            assert result[0].resource_name == "BreakGlass1"
+            assert result[0].resource_id == present_user_id
