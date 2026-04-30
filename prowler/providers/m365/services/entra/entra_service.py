@@ -36,6 +36,7 @@ class Entra(M365Service):
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
         authentication_method_configurations (dict): Dictionary of authentication method configurations.
+        pim_alerts (list): List of PIM alerts configured in the tenant.
     """
 
     def __init__(self, provider: M365Provider):
@@ -83,6 +84,7 @@ class Entra(M365Service):
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
+                self._get_pim_alerts(),
             )
         )
 
@@ -98,6 +100,7 @@ class Entra(M365Service):
         self.authentication_method_configurations: Dict[
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
+        self.pim_alerts: List[PIMAlert] = attributes[10]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -1020,6 +1023,45 @@ OAuthAppInfo
 
         return oauth_apps
 
+    async def _get_pim_alerts(self):
+        """Retrieve PIM (Privileged Identity Management) alerts from Microsoft Entra.
+
+        Fetches PIM alerts from the identity governance API to determine which
+        alert policies are configured and active in the tenant, including
+        alerts for unused privileged roles.
+
+        Returns:
+            list[PIMAlert]: A list of PIM alerts configured in the tenant,
+                or an empty list if retrieval fails.
+        """
+        logger.info("Entra - Getting PIM alerts...")
+        pim_alerts = []
+        try:
+            alerts_response = (
+                await self.client.identity_governance.role_management_alerts.alerts.get()
+            )
+            for alert in getattr(alerts_response, "value", []) or []:
+                pim_alerts.append(
+                    PIMAlert(
+                        id=getattr(alert, "id", ""),
+                        alert_definition_id=getattr(
+                            alert, "alert_definition_id", ""
+                        ),
+                        scope_id=getattr(alert, "scope_id", "") or "",
+                        scope_type=getattr(alert, "scope_type", "") or "",
+                        is_active=getattr(alert, "is_active", False) or False,
+                        number_of_affected_items=getattr(
+                            alert, "number_of_affected_items", 0
+                        )
+                        or 0,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return pim_alerts
+
     async def _get_authentication_method_configurations(self):
         """Retrieve authentication method configurations from Microsoft Entra.
 
@@ -1486,3 +1528,23 @@ class OAuthApp(BaseModel):
     is_admin_consented: bool = False
     last_used_time: Optional[str] = None
     app_origin: str = ""
+
+
+class PIMAlert(BaseModel):
+    """Model representing a PIM (Privileged Identity Management) alert.
+
+    Attributes:
+        id: The unique identifier for the alert.
+        alert_definition_id: The identifier of the alert definition type.
+        scope_id: The scope ID (typically the tenant ID).
+        scope_type: The scope type (e.g., 'DirectoryRole').
+        is_active: Whether the alert is currently active/enabled.
+        number_of_affected_items: The number of items affected by the alert.
+    """
+
+    id: str
+    alert_definition_id: str
+    scope_id: str = ""
+    scope_type: str = ""
+    is_active: bool = False
+    number_of_affected_items: int = 0
