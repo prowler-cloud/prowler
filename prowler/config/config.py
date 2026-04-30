@@ -10,6 +10,15 @@ import yaml
 from packaging import version
 
 from prowler.lib.check.compliance_models import load_compliance_framework_universal
+
+# Re-exported from a leaf module so prowler.lib.check.utils can import the
+# constant without participating in the config <-> compliance_models <-> utils
+# import cycle. Existing consumers continue to import from this module.
+# The `as EXTERNAL_TOOL_PROVIDERS` rename is the PEP 484 explicit re-export
+# form so static analyzers (CodeQL, mypy, ruff) treat the name as public.
+from prowler.lib.check.external_tool_providers import (  # noqa: F401
+    EXTERNAL_TOOL_PROVIDERS as EXTERNAL_TOOL_PROVIDERS,
+)
 from prowler.lib.logger import logger
 
 
@@ -39,7 +48,7 @@ class _MutableTimestamp:
 
 timestamp = _MutableTimestamp(datetime.today())
 timestamp_utc = _MutableTimestamp(datetime.now(timezone.utc))
-prowler_version = "5.25.0"
+prowler_version = "5.26.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://raw.githubusercontent.com/prowler-cloud/prowler/dc7d2d5aeb92fdf12e8604f42ef6472cd3e8e889/docs/img/prowler-logo-black.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
@@ -68,10 +77,6 @@ class Provider(str, Enum):
     IMAGE = "image"
     VERCEL = "vercel"
 
-
-# Providers that delegate scanning to an external tool (e.g. Trivy, promptfoo)
-# and bypass standard check/service loading.
-EXTERNAL_TOOL_PROVIDERS = frozenset({"iac", "llm", "image"})
 
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
@@ -154,7 +159,7 @@ def set_output_timestamp(
     Override the global output timestamps so generated artifacts reflect a specific scan.
     Returns the previous values so callers can restore them afterwards.
     """
-    global timestamp, timestamp_utc, output_file_timestamp, timestamp_iso
+    global output_file_timestamp, timestamp_iso
 
     previous_values = (
         timestamp.value,

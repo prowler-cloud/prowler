@@ -2,6 +2,7 @@ import sys
 
 from colorama import Fore, Style
 
+from prowler.config.config import EXTERNAL_TOOL_PROVIDERS
 from prowler.lib.check.check import parse_checks_from_file
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata, Severity
@@ -25,8 +26,8 @@ def load_checks_to_execute(
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
-        # Bypass check loading for providers that use Trivy directly
-        if provider in ("iac", "image"):
+        # Bypass check loading for providers that use external tools directly
+        if provider in EXTERNAL_TOOL_PROVIDERS:
             return set()
 
         # Local subsets

@@ -3,7 +3,6 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Check, Minus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useRef } from "react";
 
 import {
   RadioGroup,
@@ -244,15 +243,6 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   const endIndex = startIndex + pageSize;
   const paginatedScans = scans.slice(startIndex, endIndex);
 
-  // TODO(#10863): remove this workaround (ref + split handlers + pushWithParams)
-  // once the DataTable unified-pagination-callback refactor in PR #10863 lands.
-  // The underlying issue is that DataTablePagination's controlled mode fires
-  // onPageSizeChange and onPageChange(1) back-to-back in the same tick, so the
-  // second router.push reads a stale searchParams snapshot and silently reverts
-  // the page-size change. Replace both handlers with a single
-  // onPaginationChange handler after that PR merges.
-  const suppressNextPageResetRef = useRef(false);
-
   const pushWithParams = (nextParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -267,18 +257,9 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
     pushWithParams({ scanId });
   };
 
-  const handlePageChange = (page: number) => {
-    if (suppressNextPageResetRef.current && page === 1) {
-      suppressNextPageResetRef.current = false;
-      return;
-    }
-    pushWithParams({ scanPage: page.toString() });
-  };
-
-  const handlePageSizeChange = (nextPageSize: number) => {
-    suppressNextPageResetRef.current = true;
+  const handlePaginationChange = (nextPage: number, nextPageSize: number) => {
     pushWithParams({
-      scanPage: "1",
+      scanPage: nextPage.toString(),
       scanPageSize: nextPageSize.toString(),
     });
   };
@@ -295,8 +276,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
         metadata={buildMetadata(scans.length, currentPage, totalPages)}
         controlledPage={currentPage}
         controlledPageSize={pageSize}
-        onPageChange={handlePageChange}
-        onPageSizeChange={handlePageSizeChange}
+        onPaginationChange={handlePaginationChange}
         onRowClick={(row) => {
           if (row.original.attributes.graph_data_ready) {
             handleSelectScan(row.original.id);

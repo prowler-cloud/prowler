@@ -205,7 +205,8 @@ def prowler():
     if compliance_framework:
         args.output_formats.extend(compliance_framework)
     # If no input compliance framework, set all, unless a specific service or check is input
-    elif default_execution:
+    # Skip for IAC and LLM providers that don't use compliance frameworks
+    elif default_execution and provider not in ["iac", "llm"]:
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
@@ -443,14 +444,15 @@ def prowler():
 
             findings = global_provider.run_scan(streaming_callback=streaming_callback)
         else:
-            # Original behavior for IAC or non-verbose LLM
+            # Original behavior for IAC and Image
             try:
                 findings = global_provider.run()
             except ImageBaseException as error:
                 logger.critical(f"{error}")
                 sys.exit(1)
-            # Note: IaC doesn't support granular progress tracking since Trivy runs as a black box
-            # and returns all findings at once. Progress tracking would just be 0% → 100%.
+            # Note: External tool providers don't support granular progress tracking since
+            # they run external tools as a black box and return all findings at once.
+            # Progress tracking would just be 0% → 100%.
 
             # Filter findings by status if specified
             if hasattr(args, "status") and args.status:
@@ -635,8 +637,14 @@ def prowler():
                 )
 
     # Compliance Frameworks
+    # Source the framework listing from `bulk_compliance_frameworks.keys()`
+    # so it is by construction a subset of what the bulk loader can resolve.
+    # `get_available_compliance_frameworks(provider)` also discovers top-level
+    # multi-provider universal JSONs (e.g. `prowler/compliance/csa_ccm_4.0.json`)
+    # which `Compliance.get_bulk(provider)` does not load, and which the legacy
+    # output handlers below cannot consume — using it as the source produced
     input_compliance_frameworks = set(output_options.output_modes).intersection(
-        get_available_compliance_frameworks(provider)
+        bulk_compliance_frameworks.keys()
     )
 
     # ── Universal compliance frameworks (provider-agnostic) ──

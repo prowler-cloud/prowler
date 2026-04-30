@@ -557,7 +557,7 @@ class TestFinding:
         assert finding_output.resource_tags == {}
         assert finding_output.partition is None
         assert finding_output.account_uid == "test_cluster"
-        assert finding_output.provider_uid == "In-Cluster"
+        assert finding_output.provider_uid == "test_cluster"
         assert finding_output.account_name == "context: In-Cluster"
         assert finding_output.account_email is None
         assert finding_output.account_organization_uid is None
@@ -590,6 +590,40 @@ class TestFinding:
         assert finding_output.metadata.RelatedTo == ["check1", "check2"]
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
+
+    def test_generate_output_kubernetes_kubeconfig(self):
+        # Mock provider
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.identity.context = "test-context"
+        provider.identity.cluster = "test_cluster"
+
+        # Mock check result
+        check_output = MagicMock()
+        check_output.resource_name = "test_resource_name"
+        check_output.resource_id = "test_resource_id"
+        check_output.namespace = "test_namespace"
+        check_output.resource_details = "test_resource_details"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="kubernetes")
+        check_output.timestamp = datetime.now()
+        check_output.resource = {}
+        check_output.compliance = {}
+
+        # Mock Output Options
+        output_options = MagicMock()
+        output_options.unix_timestamp = True
+
+        # Generate the finding
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.auth_method == "kubeconfig"
+        assert finding_output.account_uid == "test_cluster"
+        assert finding_output.provider_uid == "test-context"
+        assert finding_output.account_name == "context: test-context"
 
     def test_generate_output_github_personal_access_token(self):
         """Test GitHub output generation with Personal Access Token authentication."""
