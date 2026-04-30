@@ -45,11 +45,12 @@ def mock_make_api_call(self, operation_name, kwarg):
     elif operation_name == "ListBuildsForProject":
         return {"ids": [build_id]}
     elif operation_name == "BatchGetBuilds":
-        return {"builds": [{"endTime": last_invoked_time}]}
+        return {"builds": [{"id": build_id, "endTime": last_invoked_time}]}
     elif operation_name == "BatchGetProjects":
         return {
             "projects": [
                 {
+                    "arn": project_arn,
                     "source": {
                         "type": source_type,
                         "location": bitbucket_url,
@@ -230,3 +231,97 @@ class Test_Codebuild_Service:
         assert (
             codebuild.report_groups[report_group_arn].tags[0]["value"] == project_name
         )
+
+
+# Module-level state and helpers used by the chunking/out-of-order test below.
+# Kept at module level so the API-call mock is a plain function rather than a
+# closure defined inside the test method.
+TOTAL_PROJECTS = 150
+many_project_names = [f"project-{i}" for i in range(TOTAL_PROJECTS)]
+many_project_arns = [
+    f"arn:{AWS_COMMERCIAL_PARTITION}:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:project/{name}"
+    for name in many_project_names
+]
+many_build_ids_for = {name: f"{name}:build-id" for name in many_project_names}
+many_end_times_for = {
+    name: datetime.now() - timedelta(days=i)
+    for i, name in enumerate(many_project_names)
+}
+many_name_by_build_id = {v: k for k, v in many_build_ids_for.items()}
+many_batch_call_sizes = {"BatchGetProjects": [], "BatchGetBuilds": []}
+
+
+def mock_make_api_call_many_projects(self, operation_name, kwarg):
+    if operation_name == "ListProjects":
+        return {"projects": many_project_names}
+    if operation_name == "ListBuildsForProject":
+        return {"ids": [many_build_ids_for[kwarg["projectName"]]]}
+    if operation_name == "BatchGetBuilds":
+        ids = kwarg["ids"]
+        many_batch_call_sizes["BatchGetBuilds"].append(len(ids))
+        # Reverse the response order to verify id->project mapping does not
+        # depend on response ordering.
+        builds = [
+            {"id": bid, "endTime": many_end_times_for[many_name_by_build_id[bid]]}
+            for bid in reversed(ids)
+        ]
+        return {"builds": builds}
+    if operation_name == "BatchGetProjects":
+        names = kwarg["names"]
+        many_batch_call_sizes["BatchGetProjects"].append(len(names))
+        # Reverse the response order to verify arn->project mapping does not
+        # depend on response ordering.
+        projects = [
+            {
+                "arn": f"arn:{AWS_COMMERCIAL_PARTITION}:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:project/{name}",
+                "source": {"type": "NO_SOURCE"},
+                "logsConfig": {},
+                "tags": [],
+                "projectVisibility": "PRIVATE",
+            }
+            for name in reversed(names)
+        ]
+        return {"projects": projects}
+    if operation_name == "ListReportGroups":
+        return {"reportGroups": []}
+    return make_api_call(self, operation_name, kwarg)
+
+
+class Test_Codebuild_Service_Batching:
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_many_projects,
+    )
+    @patch(
+        "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+        new=mock_generate_regional_clients,
+    )
+    @mock_aws
+    def test_codebuild_batches_chunks_over_100_projects_and_maps_out_of_order_responses(
+        self,
+    ):
+        """Verify _batch_get_projects/_batch_get_builds chunk in groups of 100
+        and correctly map out-of-order batch responses back to the right
+        project using `arn`/`id`.
+        """
+        # Reset the per-test recorder (module-level state survives across runs).
+        many_batch_call_sizes["BatchGetProjects"].clear()
+        many_batch_call_sizes["BatchGetBuilds"].clear()
+
+        codebuild = Codebuild(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+
+        # Verify chunking: 150 items -> two batches of 100 and 50.
+        assert sorted(many_batch_call_sizes["BatchGetProjects"]) == [50, 100]
+        assert sorted(many_batch_call_sizes["BatchGetBuilds"]) == [50, 100]
+
+        # Verify all projects were tracked.
+        assert len(codebuild.projects) == TOTAL_PROJECTS
+
+        # Verify out-of-order responses were correctly mapped back to the
+        # right project by `arn` (projects) and `id` (builds).
+        for name, arn in zip(many_project_names, many_project_arns):
+            project = codebuild.projects[arn]
+            assert project.name == name
+            assert project.project_visibility == "PRIVATE"
+            assert project.last_build == Build(id=many_build_ids_for[name])
+            assert project.last_invoked_time == many_end_times_for[name]
