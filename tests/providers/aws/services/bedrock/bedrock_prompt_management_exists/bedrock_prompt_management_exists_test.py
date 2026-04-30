@@ -80,7 +80,7 @@ def mock_make_api_call_no_prompts(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
-class Test_bedrock_prompt_management_in_use:
+class Test_bedrock_prompt_management_exists:
     @mock.patch(
         "botocore.client.BaseClient._make_api_call",
         new=mock_make_api_call_no_prompts,
@@ -98,22 +98,22 @@ class Test_bedrock_prompt_management_in_use:
                 return_value=aws_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use.bedrock_agent_client",
+                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_exists.bedrock_prompt_management_exists.bedrock_agent_client",
                 new=BedrockAgent(aws_provider),
             ),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use import (
-                bedrock_prompt_management_in_use,
+            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_exists.bedrock_prompt_management_exists import (
+                bedrock_prompt_management_exists,
             )
 
-            check = bedrock_prompt_management_in_use()
+            check = bedrock_prompt_management_exists()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Bedrock Prompt Management is not in use in this region."
+                == f"No Bedrock Prompt Management prompts exist in region {AWS_REGION_US_EAST_1}."
             )
             assert result[0].resource_id == "prompt-management"
             assert result[0].region == AWS_REGION_US_EAST_1
@@ -139,29 +139,26 @@ class Test_bedrock_prompt_management_in_use:
                 return_value=aws_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use.bedrock_agent_client",
+                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_exists.bedrock_prompt_management_exists.bedrock_agent_client",
                 new=BedrockAgent(aws_provider),
             ),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use import (
-                bedrock_prompt_management_in_use,
+            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_exists.bedrock_prompt_management_exists import (
+                bedrock_prompt_management_exists,
             )
 
-            check = bedrock_prompt_management_in_use()
+            check = bedrock_prompt_management_exists()
             result = check.execute()
 
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Bedrock Prompt Management is in use with 1 prompt(s) in this region."
+                == f"Bedrock Prompt Management prompt test-prompt exists in region {AWS_REGION_US_EAST_1}."
             )
-            assert result[0].resource_id == "prompt-management"
+            assert result[0].resource_id == "test-prompt-id"
             assert result[0].region == AWS_REGION_US_EAST_1
-            assert (
-                result[0].resource_arn
-                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:prompt-management"
-            )
+            assert result[0].resource_arn == PROMPT_ARN
 
     @mock.patch(
         "botocore.client.BaseClient._make_api_call",
@@ -169,7 +166,7 @@ class Test_bedrock_prompt_management_in_use:
     )
     @mock_aws
     def test_multiple_prompts_exist(self):
-        """Test PASS when multiple prompts exist in the region."""
+        """Test PASS with one finding per prompt when multiple prompts exist."""
         from prowler.providers.aws.services.bedrock.bedrock_service import BedrockAgent
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -180,29 +177,32 @@ class Test_bedrock_prompt_management_in_use:
                 return_value=aws_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use.bedrock_agent_client",
+                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_exists.bedrock_prompt_management_exists.bedrock_agent_client",
                 new=BedrockAgent(aws_provider),
             ),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use import (
-                bedrock_prompt_management_in_use,
+            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_exists.bedrock_prompt_management_exists import (
+                bedrock_prompt_management_exists,
             )
 
-            check = bedrock_prompt_management_in_use()
+            check = bedrock_prompt_management_exists()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == "Bedrock Prompt Management is in use with 3 prompt(s) in this region."
-            )
-            assert result[0].resource_id == "prompt-management"
-            assert result[0].region == AWS_REGION_US_EAST_1
-            assert (
-                result[0].resource_arn
-                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:prompt-management"
-            )
+            assert len(result) == 3
+            for index, finding in enumerate(result, start=1):
+                expected_name = f"test-prompt-{index}"
+                expected_id = f"test-prompt-id-{index}"
+                assert finding.status == "PASS"
+                assert (
+                    finding.status_extended
+                    == f"Bedrock Prompt Management prompt {expected_name} exists in region {AWS_REGION_US_EAST_1}."
+                )
+                assert finding.resource_id == expected_id
+                assert finding.region == AWS_REGION_US_EAST_1
+                assert (
+                    finding.resource_arn
+                    == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:prompt/{expected_id}"
+                )
 
     @mock.patch(
         "botocore.client.BaseClient._make_api_call",
@@ -223,15 +223,15 @@ class Test_bedrock_prompt_management_in_use:
                 return_value=aws_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use.bedrock_agent_client",
+                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_exists.bedrock_prompt_management_exists.bedrock_agent_client",
                 new=BedrockAgent(aws_provider),
             ),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use import (
-                bedrock_prompt_management_in_use,
+            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_exists.bedrock_prompt_management_exists import (
+                bedrock_prompt_management_exists,
             )
 
-            check = bedrock_prompt_management_in_use()
+            check = bedrock_prompt_management_exists()
             result = check.execute()
 
             assert len(result) == 2
@@ -239,7 +239,7 @@ class Test_bedrock_prompt_management_in_use:
                 assert finding.status == "FAIL"
                 assert (
                     finding.status_extended
-                    == "Bedrock Prompt Management is not in use in this region."
+                    == f"No Bedrock Prompt Management prompts exist in region {finding.region}."
                 )
                 assert finding.resource_id == "prompt-management"
                 assert (
@@ -266,15 +266,15 @@ class Test_bedrock_prompt_management_in_use:
                 return_value=aws_provider,
             ),
             mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use.bedrock_agent_client",
+                "prowler.providers.aws.services.bedrock.bedrock_prompt_management_exists.bedrock_prompt_management_exists.bedrock_agent_client",
                 new=BedrockAgent(aws_provider),
             ),
         ):
-            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_in_use.bedrock_prompt_management_in_use import (
-                bedrock_prompt_management_in_use,
+            from prowler.providers.aws.services.bedrock.bedrock_prompt_management_exists.bedrock_prompt_management_exists import (
+                bedrock_prompt_management_exists,
             )
 
-            check = bedrock_prompt_management_in_use()
+            check = bedrock_prompt_management_exists()
             result = check.execute()
 
             assert result == []

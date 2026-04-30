@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
-  "CheckID": "bedrock_prompt_management_in_use",
-  "CheckTitle": "Bedrock Prompt Management is in use in the region",
+  "CheckID": "bedrock_prompt_management_exists",
+  "CheckTitle": "Amazon Bedrock Prompt Management prompts exist in the region",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
@@ -27,7 +27,7 @@
     },
     "Recommendation": {
       "Text": "Adopt **Bedrock Prompt Management** to centralize prompt definitions, enforce versioning, and maintain governance over model interactions.\n\nUse managed prompts with **guardrails** and apply **least privilege** access controls to restrict who can create or modify prompts.",
-      "Url": "https://hub.prowler.com/check/bedrock_prompt_management_in_use"
+      "Url": "https://hub.prowler.com/check/bedrock_prompt_management_exists"
     }
   },
   "Categories": [
