@@ -28,12 +28,14 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/shadcn/dialog";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { useToast } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
@@ -55,10 +57,103 @@ import {
   QuerySelector,
   ScanListTable,
 } from "./_components";
-import type { AttackPathGraphRef } from "./_components/graph/attack-path-graph";
+import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsSVG, formatNodeLabel } from "./_lib";
+import { exportGraphAsPNG } from "./_lib";
+
+const getNodeDisplayTitle = (node: GraphNode): string => {
+  const isFinding = node.labels.some((l) =>
+    l.toLowerCase().includes("finding"),
+  );
+  return String(
+    isFinding
+      ? node.properties?.check_title || node.properties?.id || "Unknown Finding"
+      : node.properties?.name || node.properties?.id || "Unknown Resource",
+  );
+};
+
+interface NodeDetailPanelProps {
+  node: GraphNode;
+  allNodes: GraphNode[];
+  onClose: () => void;
+  headingId: string;
+  compact?: boolean;
+  onViewFinding?: (findingId: string) => void;
+  viewFindingLoading?: boolean;
+}
+
+const NodeDetailPanel = ({
+  node,
+  allNodes,
+  onClose,
+  headingId,
+  compact,
+  onViewFinding,
+  viewFindingLoading = false,
+}: NodeDetailPanelProps) => {
+  const isFinding = node.labels.some((label) =>
+    label.toLowerCase().includes("finding"),
+  );
+  const findingId = String(node.properties?.id || node.id);
+
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <h3
+            id={headingId}
+            className={
+              compact ? "text-sm font-semibold" : "text-lg font-semibold"
+            }
+          >
+            Node Details
+          </h3>
+          <p
+            className={cn(
+              "text-text-neutral-secondary",
+              compact ? "mb-4 text-xs" : "mt-1 text-sm",
+            )}
+          >
+            {getNodeDisplayTitle(node)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {!compact && isFinding && onViewFinding && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onViewFinding(findingId)}
+              disabled={viewFindingLoading}
+              aria-label={`View finding ${findingId}`}
+            >
+              {viewFindingLoading ? (
+                <Spinner className="size-4" />
+              ) : (
+                "View Finding"
+              )}
+            </Button>
+          )}
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            size="sm"
+            className={compact ? "h-6 w-6 p-0" : "h-8 w-8 p-0"}
+            aria-label="Close node details"
+          >
+            <X size={16} />
+          </Button>
+        </div>
+      </div>
+      <NodeDetailContent
+        node={node}
+        allNodes={allNodes}
+        onViewFinding={onViewFinding}
+        viewFindingLoading={viewFindingLoading}
+      />
+    </>
+  );
+};
 
 /**
  * Attack Paths
@@ -76,8 +171,8 @@ export default function AttackPathsPage() {
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-  const graphRef = useRef<AttackPathGraphRef>(null);
-  const fullscreenGraphRef = useRef<AttackPathGraphRef>(null);
+  const graphRef = useRef<GraphHandle>(null);
+  const fullscreenGraphRef = useRef<GraphHandle>(null);
   const hasResetRef = useRef(false);
   const nodeDetailsRef = useRef<HTMLDivElement>(null);
   const graphContainerRef = useRef<HTMLDivElement>(null);
@@ -94,6 +189,11 @@ export default function AttackPathsPage() {
       graphState.resetGraph();
     }
   }, [graphState]);
+
+  // Reset graph state when scan changes
+  useEffect(() => {
+    graphState.resetGraph();
+  }, [scanId]); // eslint-disable-line react-hooks/exhaustive-deps -- reset on scanId change only
 
   // Load available scans on mount
   useEffect(() => {
@@ -188,10 +288,6 @@ export default function AttackPathsPage() {
 
     loadQueries();
   }, [scanId, toast]);
-
-  const handleQueryChange = (queryId: string) => {
-    queryBuilder.handleQueryChange(queryId);
-  };
 
   const showErrorToast = (title: string, description: string) => {
     toast({
@@ -289,14 +385,19 @@ export default function AttackPathsPage() {
   };
 
   const handleNodeClick = (node: GraphNode) => {
-    // Enter filtered view showing only paths containing this node
-    graphState.enterFilteredView(node.id);
+    // Always select the node (opens detail panel)
+    graphState.selectNode(node.id);
 
-    // For findings, also scroll to the details section
     const isFinding = node.labels.some((label) =>
       label.toLowerCase().includes("finding"),
     );
 
+    // Tier 2: clicking a finding node OR any node in filtered view → enter filtered view
+    if (isFinding || graphState.isFilteredView) {
+      graphState.enterFilteredView(node.id);
+    }
+
+    // Scroll to details section for findings
     if (isFinding) {
       setTimeout(() => {
         nodeDetailsRef.current?.scrollIntoView({
@@ -315,33 +416,30 @@ export default function AttackPathsPage() {
     graphState.selectNode(null);
   };
 
-  const getFindingId = (node: GraphNode | null) =>
-    node ? String(node.properties?.id || node.id) : "";
-
   const handleViewFinding = (findingId: string) => {
     if (!findingId) return;
     void finding.navigateToFinding(findingId);
   };
 
-  const handleGraphExport = (svgElement: SVGSVGElement | null) => {
+  const handleGraphExport = async (target: "main" | "fullscreen") => {
+    const ref = target === "fullscreen" ? fullscreenGraphRef : graphRef;
+    const handle = ref.current;
+    if (!handle) return;
+
     try {
-      if (svgElement) {
-        exportGraphAsSVG(svgElement, "attack-path-graph.svg");
-        toast({
-          title: "Success",
-          description: "Graph exported as SVG",
-          variant: "default",
-        });
-      } else {
-        throw new Error("Could not find graph element");
-      }
-    } catch (error) {
+      await exportGraphAsPNG(
+        handle.getContainerElement(),
+        handle.getNodesBounds(),
+      );
       toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to export graph",
-        variant: "destructive",
+        title: "Success",
+        description: "Graph exported",
+        variant: "default",
       });
+    } catch (error) {
+      const description =
+        error instanceof Error ? error.message : "Failed to export graph";
+      showErrorToast("Export failed", description);
     }
   };
 
@@ -423,7 +521,7 @@ export default function AttackPathsPage() {
                     <QuerySelector
                       queries={queries}
                       selectedQueryId={queryBuilder.selectedQuery}
-                      onQueryChange={handleQueryChange}
+                      onQueryChange={queryBuilder.handleQueryChange}
                     />
 
                     {queryBuilder.selectedQueryData && (
@@ -524,11 +622,7 @@ export default function AttackPathsPage() {
                         onZoomIn={() => graphRef.current?.zoomIn()}
                         onZoomOut={() => graphRef.current?.zoomOut()}
                         onFitToScreen={() => graphRef.current?.resetZoom()}
-                        onExport={() =>
-                          handleGraphExport(
-                            graphRef.current?.getSVGElement() || null,
-                          )
-                        }
+                        onExport={() => handleGraphExport("main")}
                       />
 
                       {/* Fullscreen button */}
@@ -550,6 +644,10 @@ export default function AttackPathsPage() {
                           <DialogContent className="flex h-full max-h-screen w-full max-w-full flex-col gap-0 rounded-none border-0 p-0 sm:max-w-full">
                             <DialogHeader className="sr-only">
                               <DialogTitle>Fullscreen graph view</DialogTitle>
+                              <DialogDescription>
+                                Explore the attack path graph at full size. Use
+                                the toolbar to zoom, fit, or export the graph.
+                              </DialogDescription>
                             </DialogHeader>
                             <div className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
                               <GraphControls
@@ -562,15 +660,10 @@ export default function AttackPathsPage() {
                                 onFitToScreen={() =>
                                   fullscreenGraphRef.current?.resetZoom()
                                 }
-                                onExport={() =>
-                                  handleGraphExport(
-                                    fullscreenGraphRef.current?.getSVGElement() ||
-                                      null,
-                                  )
-                                }
+                                onExport={() => handleGraphExport("fullscreen")}
                               />
                             </div>
-                            <div className="flex flex-1 gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6">
+                            <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6 lg:flex-row">
                               <div className="flex flex-1 items-center justify-center">
                                 <AttackPathGraph
                                   ref={fullscreenGraphRef}
@@ -581,57 +674,24 @@ export default function AttackPathsPage() {
                                 />
                               </div>
                               {/* Node Detail Panel - Side by side */}
-                              {graphState.selectedNode && (
-                                <section aria-labelledby="node-details-heading">
-                                  <Card className="w-96 overflow-y-auto">
+                              {graphState.selectedNode && graphState.data && (
+                                <section
+                                  aria-labelledby="fullscreen-node-details-heading"
+                                  className="w-full overflow-y-auto lg:w-96"
+                                >
+                                  <Card>
                                     <CardContent className="p-4">
-                                      <div className="mb-4 flex items-center justify-between">
-                                        <h3
-                                          id="node-details-heading"
-                                          className="text-sm font-semibold"
-                                        >
-                                          Node Details
-                                        </h3>
-                                        <Button
-                                          onClick={handleCloseDetails}
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-6 w-6 p-0"
-                                          aria-label="Close node details"
-                                        >
-                                          <X size={16} />
-                                        </Button>
-                                      </div>
-                                      <p className="text-text-neutral-secondary mb-4 text-xs">
-                                        {graphState.selectedNode?.labels.some(
-                                          (label) =>
-                                            label
-                                              .toLowerCase()
-                                              .includes("finding"),
-                                        )
-                                          ? graphState.selectedNode?.properties
-                                              ?.check_title ||
-                                            graphState.selectedNode?.properties
-                                              ?.id ||
-                                            "Unknown Finding"
-                                          : graphState.selectedNode?.properties
-                                              ?.name ||
-                                            graphState.selectedNode?.properties
-                                              ?.id ||
-                                            "Unknown Resource"}
-                                      </p>
-                                      <div className="flex flex-col gap-4">
-                                        <div>
-                                          <h4 className="mb-2 text-xs font-semibold">
-                                            Type
-                                          </h4>
-                                          <p className="text-text-neutral-secondary text-xs">
-                                            {graphState.selectedNode?.labels
-                                              .map(formatNodeLabel)
-                                              .join(", ")}
-                                          </p>
-                                        </div>
-                                      </div>
+                                      <NodeDetailPanel
+                                        node={graphState.selectedNode}
+                                        allNodes={graphState.data.nodes}
+                                        onClose={handleCloseDetails}
+                                        onViewFinding={handleViewFinding}
+                                        viewFindingLoading={
+                                          finding.findingDetailLoading
+                                        }
+                                        headingId="fullscreen-node-details-heading"
+                                        compact
+                                      />
                                     </CardContent>
                                   </Card>
                                 </section>
@@ -658,7 +718,7 @@ export default function AttackPathsPage() {
                   </div>
 
                   {/* Legend below */}
-                  <div className="hidden justify-center lg:flex">
+                  <div className="flex justify-center overflow-x-auto">
                     <GraphLegend data={graphState.data} />
                   </div>
                 </>
@@ -672,60 +732,13 @@ export default function AttackPathsPage() {
               ref={nodeDetailsRef}
               className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold">Node Details</h3>
-                  <p className="text-text-neutral-secondary mt-1 text-sm">
-                    {String(
-                      graphState.selectedNode.labels.some((label) =>
-                        label.toLowerCase().includes("finding"),
-                      )
-                        ? graphState.selectedNode.properties?.check_title ||
-                            graphState.selectedNode.properties?.id ||
-                            "Unknown Finding"
-                        : graphState.selectedNode.properties?.name ||
-                            graphState.selectedNode.properties?.id ||
-                            "Unknown Resource",
-                    )}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {graphState.selectedNode.labels.some((label) =>
-                    label.toLowerCase().includes("finding"),
-                  ) && (
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() =>
-                        handleViewFinding(getFindingId(graphState.selectedNode))
-                      }
-                      disabled={finding.findingDetailLoading}
-                      aria-label={`View finding ${getFindingId(graphState.selectedNode)}`}
-                    >
-                      {finding.findingDetailLoading ? (
-                        <Spinner className="size-4" />
-                      ) : (
-                        "View Finding"
-                      )}
-                    </Button>
-                  )}
-                  <Button
-                    onClick={handleCloseDetails}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    aria-label="Close node details"
-                  >
-                    <X size={16} />
-                  </Button>
-                </div>
-              </div>
-
-              <NodeDetailContent
+              <NodeDetailPanel
                 node={graphState.selectedNode}
                 allNodes={graphState.data.nodes}
+                onClose={handleCloseDetails}
                 onViewFinding={handleViewFinding}
                 viewFindingLoading={finding.findingDetailLoading}
+                headingId="node-details-heading"
               />
             </div>
           )}
