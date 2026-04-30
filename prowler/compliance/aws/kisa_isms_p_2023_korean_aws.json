@@ -2117,6 +2117,7 @@
       "Checks": [
         "backup_vaults_encrypted",
         "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk",
         "cloudtrail_kms_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",

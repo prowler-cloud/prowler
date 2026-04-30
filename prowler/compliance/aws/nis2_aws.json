@@ -512,6 +512,7 @@
         "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
         "bedrock_model_invocation_logging_enabled",
         "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk",
         "cloudfront_distributions_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_logs_s3_bucket_access_logging_enabled",
@@ -1059,7 +1060,8 @@
         "codebuild_project_s3_logs_encrypted",
         "codebuild_project_source_repo_url_no_sensitive_credentials",
         "cloudfront_distributions_origin_traffic_encrypted",
-        "bedrock_model_invocation_logs_encryption_enabled"
+        "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk"
       ],
       "Attributes": [
         {

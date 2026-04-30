@@ -6852,7 +6852,8 @@
       ],
       "Checks": [
         "bedrock_model_invocation_logging_enabled",
-        "bedrock_model_invocation_logs_encryption_enabled"
+        "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk"
       ]
     },
     {

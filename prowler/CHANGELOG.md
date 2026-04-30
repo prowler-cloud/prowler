@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
+- `bedrock_prompt_encrypted_with_cmk` check for AWS provider [(#10905)](https://github.com/prowler-cloud/prowler/pull/10905)
 
 ### 🔄 Changed
 

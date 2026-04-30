@@ -1767,6 +1767,7 @@
         "backup_recovery_point_encrypted",
         "backup_vaults_encrypted",
         "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk",
         "cloudfront_distributions_field_level_encryption_enabled",
         "cloudfront_distributions_origin_traffic_encrypted",
         "cloudtrail_kms_encryption_enabled",
