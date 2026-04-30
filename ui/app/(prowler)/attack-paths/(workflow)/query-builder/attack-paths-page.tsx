@@ -6,8 +6,6 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
-import { cn } from "@/lib/utils";
-
 import {
   buildAttackPathQueries,
   executeCustomQuery,
@@ -36,6 +34,7 @@ import {
 } from "@/components/shadcn/dialog";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { useToast } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
@@ -102,7 +101,9 @@ const NodeDetailPanel = ({
         <div className="flex-1">
           <h3
             id={headingId}
-            className={compact ? "text-sm font-semibold" : "text-lg font-semibold"}
+            className={
+              compact ? "text-sm font-semibold" : "text-lg font-semibold"
+            }
           >
             Node Details
           </h3>
@@ -286,7 +287,6 @@ export default function AttackPathsPage() {
     loadQueries();
   }, [scanId, toast]);
 
-
   const showErrorToast = (title: string, description: string) => {
     toast({
       title,
@@ -418,7 +418,6 @@ export default function AttackPathsPage() {
     if (!findingId) return;
     void finding.navigateToFinding(findingId);
   };
-
 
   return (
     <div className="flex flex-col gap-6">
@@ -656,6 +655,10 @@ export default function AttackPathsPage() {
                                         node={graphState.selectedNode}
                                         allNodes={graphState.data.nodes}
                                         onClose={handleCloseDetails}
+                                        onViewFinding={handleViewFinding}
+                                        viewFindingLoading={
+                                          finding.findingDetailLoading
+                                        }
                                         headingId="fullscreen-node-details-heading"
                                         compact
                                       />
