@@ -73,7 +73,6 @@ class AwsSetUpSession:
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
         )
-        # Setup the AWS session
         session_config = AwsProvider.set_session_config(retries_max_attempts)
         aws_session = AwsProvider.setup_session(
             mfa=mfa,

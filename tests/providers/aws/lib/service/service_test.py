@@ -191,13 +191,10 @@ class TestAWSService:
         )
 
     def test_AWSService_clients_carry_user_agent_extra(self):
-        # The provider's session has the Prowler default client config installed,
-        # so every client created from it (parent self.client and ad-hoc ones via
-        # _get_client) inherits the user agent without per-call config plumbing.
         provider = set_mocked_aws_provider()
 
         service = AWSService("s3", provider)
-        ad_hoc_client = service._get_client("ec2", AWS_REGION_US_EAST_1)
+        ad_hoc_client = service.session.client("ec2", AWS_REGION_US_EAST_1)
 
         assert BOTO3_USER_AGENT_EXTRA in service.client._client_config.user_agent_extra
         assert BOTO3_USER_AGENT_EXTRA in ad_hoc_client._client_config.user_agent_extra

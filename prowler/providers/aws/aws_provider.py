@@ -25,7 +25,6 @@ from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
     AWS_REGION_US_EAST_1,
     AWS_STS_GLOBAL_ENDPOINT_REGION,
-    BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
     get_default_session_config,
 )
@@ -760,7 +759,7 @@ class AwsProvider(Provider):
             if session_config is None:
                 session_config = (
                     session.session_config
-                    if session and getattr(session, "session_config", None) is not None
+                    if session is not None
                     else AwsProvider.set_session_config(None)
                 )
             assumed_session.set_default_client_config(session_config)
@@ -1162,7 +1161,6 @@ class AwsProvider(Provider):
         Returns:
             - Config: The botocore Config object
         """
-        logger.debug(f"AWS Boto3 user agent extra: {BOTO3_USER_AGENT_EXTRA}")
         default_session_config = get_default_session_config()
         if retries_max_attempts:
             default_session_config = default_session_config.merge(
@@ -1253,10 +1251,7 @@ class AwsProvider(Provider):
             # EC2 Client to check enabled regions
             service = "ec2"
             default_region = self.get_default_region(service)
-            ec2_client = current_session.client(
-                service,
-                region_name=default_region,
-            )
+            ec2_client = current_session.client(service, region_name=default_region)
 
             enabled_regions = set()
             # With AllRegions=False we only get the enabled regions for the account
@@ -1630,11 +1625,7 @@ class AwsProvider(Provider):
                 sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.eu"
             else:
                 sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.com"
-            return session.client(
-                "sts",
-                aws_region,
-                endpoint_url=sts_endpoint_url,
-            )
+            return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

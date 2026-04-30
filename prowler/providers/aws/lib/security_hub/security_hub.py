@@ -148,8 +148,8 @@ class SecurityHub:
                 regions=regions,
             )
             self._session = aws_setup_session._session.current_session
-        # If a session is supplied without our default client config, attach it
-        # so every client created from it picks up the user agent and retries.
+        # When the caller passes its own session, install the Prowler default
+        # client config so retries_max_attempts and user agent extra take effect.
         if aws_session:
             self._session._session.set_default_client_config(
                 AwsProvider.set_session_config(retries_max_attempts)
@@ -304,7 +304,6 @@ class SecurityHub:
 
         Args:
             aws_security_hub_available_regions (list[str]): List of AWS regions to check for Security Hub integration.
-            session (Session): AWS session object. Expected to carry the Prowler default client config.
 
         Returns:
             dict: A dictionary containing enabled regions with SecurityHub clients.

@@ -74,10 +74,7 @@ class AWSMutelist(Mutelist):
     def get_mutelist_file_from_lambda(self, aws_session: Session = None):
         try:
             lambda_region = self._mutelist_file_path.split(":")[3]
-            lambda_client = aws_session.client(
-                "lambda",
-                region_name=lambda_region,
-            )
+            lambda_client = aws_session.client("lambda", region_name=lambda_region)
             lambda_response = lambda_client.invoke(
                 FunctionName=self._mutelist_file_path, InvocationType="RequestResponse"
             )

@@ -28,8 +28,7 @@ def quick_inventory(provider: AwsProvider, args):
         if not provider.identity.audited_regions:
             # EC2 client for describing all regions
             ec2_client = provider.session.current_session.client(
-                "ec2",
-                region_name=provider.identity.profile_region,
+                "ec2", region_name=provider.identity.profile_region
             )
             excluded_regions = getattr(provider, "_excluded_regions", set())
             # Get all the available regions
@@ -64,8 +63,7 @@ def quick_inventory(provider: AwsProvider, args):
                     resources_in_region.extend(get_regional_buckets(provider, region))
 
                     client = provider.session.current_session.client(
-                        "resourcegroupstaggingapi",
-                        region_name=region,
+                        "resourcegroupstaggingapi", region_name=region
                     )
                     # Get all the resources
                     resources_count = 0

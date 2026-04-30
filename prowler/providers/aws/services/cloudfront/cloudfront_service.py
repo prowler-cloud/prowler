@@ -171,7 +171,7 @@ class CloudFront(AWSService):
             # CloudFront delivery sources live in the global region (us-east-1),
             # not the profile's default region.
             global_region = self.provider.get_global_region()
-            logs_client = self.session.client("logs", global_region)
+            logs_client = self.session.client("logs", region_name=global_region)
 
             # Find delivery sources whose resourceArns match a distribution
             matching_sources = {}

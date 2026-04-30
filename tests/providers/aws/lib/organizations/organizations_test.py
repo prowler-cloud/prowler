@@ -4,6 +4,7 @@ import boto3
 from botocore.exceptions import ClientError
 from moto import mock_aws
 
+from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.config import BOTO3_USER_AGENT_EXTRA
 from prowler.providers.aws.lib.organizations.organizations import (
     _get_ou_metadata,
@@ -224,17 +225,10 @@ class Test_AWS_Organizations:
         assert ou_metadata == {}
 
     def test_get_organizations_metadata_uses_user_agent_extra(self):
-        # The user agent + retries config is installed on the session via
-        # set_default_client_config, so every client created from it inherits
-        # those settings. This test verifies that contract by checking the
-        # default_client_config on the session and the resulting client.
         real_session = boto3.Session()
-        from prowler.providers.aws.aws_provider import AwsProvider
-
         real_session._session.set_default_client_config(
             AwsProvider.set_session_config(None)
         )
-
         wrapper = MagicMock(wraps=real_session)
 
         get_organizations_metadata("123456789012", wrapper)

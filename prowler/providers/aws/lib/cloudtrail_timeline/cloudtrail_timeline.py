@@ -126,8 +126,7 @@ class CloudTrailTimeline(TimelineService):
         """Get or create a CloudTrail client for the specified region."""
         if region not in self._clients:
             self._clients[region] = self._session.client(
-                "cloudtrail",
-                region_name=region,
+                "cloudtrail", region_name=region
             )
         return self._clients[region]
 
