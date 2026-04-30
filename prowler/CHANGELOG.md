@@ -17,7 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - AWS SDK test isolation: autouse `mock_aws` fixture and leak detector in `conftest.py` to prevent tests from hitting real AWS endpoints, with idempotent organization setup for tests calling `set_mocked_aws_provider` multiple times [(#10605)](https://github.com/prowler-cloud/prowler/pull/10605)
-- AWS Boto3 user agent extra is now applied to every boto3 client created [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- AWS Boto3 user agent extra is now applied to every boto3 client created [(#10944)](https://github.com/prowler-cloud/prowler/pull/10944)
 
 ---
 
