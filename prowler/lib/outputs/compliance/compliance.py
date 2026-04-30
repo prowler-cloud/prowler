@@ -1,10 +1,12 @@
 import sys
 
-from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 from prowler.lib.outputs.compliance.c5.c5 import get_c5_table
 from prowler.lib.outputs.compliance.ccc.ccc import get_ccc_table
 from prowler.lib.outputs.compliance.cis.cis import get_cis_table
+from prowler.lib.outputs.compliance.compliance_check import (  # noqa: F401 - re-export for backward compatibility
+    get_check_compliance,
+)
 from prowler.lib.outputs.compliance.csa.csa import get_csa_table
 from prowler.lib.outputs.compliance.ens.ens import get_ens_table
 from prowler.lib.outputs.compliance.generic.generic_table import (
@@ -37,6 +39,13 @@ def process_universal_compliance_frameworks(
     (OCSFComplianceOutput) file.  OCSF is always generated regardless of
     the user's ``--output-formats`` flag.
 
+    The function is idempotent: it tracks already-created writers via
+    ``generated_outputs["compliance"]`` keyed by ``file_path``. If invoked
+    again for the same framework (e.g. once per streaming batch), it
+    reuses the existing writer instead of recreating it. This guarantees
+    one output writer per framework for the whole execution and keeps
+    the OCSF JSON array valid across multiple calls.
+
     Returns the set of framework names that were processed so the caller
     can remove them before entering the legacy per-provider output loop.
     """
@@ -46,6 +55,12 @@ def process_universal_compliance_frameworks(
     from prowler.lib.outputs.compliance.universal.universal_output import (
         UniversalComplianceOutput,
     )
+
+    existing_writers = {
+        getattr(out, "file_path", None): out
+        for out in generated_outputs.get("compliance", [])
+        if isinstance(out, (UniversalComplianceOutput, OCSFComplianceOutput))
+    }
 
     processed = set()
     for compliance_name in input_compliance_frameworks:
@@ -62,28 +77,32 @@ def process_universal_compliance_frameworks(
         csv_path = (
             f"{output_directory}/compliance/" f"{output_filename}_{compliance_name}.csv"
         )
-        output = UniversalComplianceOutput(
-            findings=finding_outputs,
-            framework=fw,
-            file_path=csv_path,
-            provider=provider,
-        )
-        generated_outputs["compliance"].append(output)
-        output.batch_write_data_to_file()
+        if csv_path not in existing_writers:
+            output = UniversalComplianceOutput(
+                findings=finding_outputs,
+                framework=fw,
+                file_path=csv_path,
+                provider=provider,
+            )
+            generated_outputs["compliance"].append(output)
+            existing_writers[csv_path] = output
+            output.batch_write_data_to_file()
 
         # OCSF output (always generated for universal frameworks)
         ocsf_path = (
             f"{output_directory}/compliance/"
             f"{output_filename}_{compliance_name}.ocsf.json"
         )
-        ocsf_output = OCSFComplianceOutput(
-            findings=finding_outputs,
-            framework=fw,
-            file_path=ocsf_path,
-            provider=provider,
-        )
-        generated_outputs["compliance"].append(ocsf_output)
-        ocsf_output.batch_write_data_to_file()
+        if ocsf_path not in existing_writers:
+            ocsf_output = OCSFComplianceOutput(
+                findings=finding_outputs,
+                framework=fw,
+                file_path=ocsf_path,
+                provider=provider,
+            )
+            generated_outputs["compliance"].append(ocsf_output)
+            existing_writers[ocsf_path] = ocsf_output
+            ocsf_output.batch_write_data_to_file()
 
         processed.add(compliance_name)
 
@@ -222,49 +241,3 @@ def display_compliance_table(
             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
         )
         sys.exit(1)
-
-
-# TODO: this should be in the Check class
-def get_check_compliance(
-    finding: Check_Report, provider_type: str, bulk_checks_metadata: dict
-) -> dict:
-    """get_check_compliance returns a map with the compliance framework as key and the requirements where the finding's check is present.
-
-        Example:
-
-    {
-        "CIS-1.4": ["2.1.3"],
-        "CIS-1.5": ["2.1.3"],
-    }
-
-    Args:
-        finding (Any): The Check_Report finding
-        provider_type (str): The provider type
-        bulk_checks_metadata (dict): The bulk checks metadata
-
-    Returns:
-        dict: The compliance framework as key and the requirements where the finding's check is present.
-    """
-    try:
-        check_compliance = {}
-        # We have to retrieve all the check's compliance requirements
-        if finding.check_metadata.CheckID in bulk_checks_metadata:
-            for compliance in bulk_checks_metadata[
-                finding.check_metadata.CheckID
-            ].Compliance:
-                compliance_fw = compliance.Framework
-                if compliance.Version:
-                    compliance_fw = f"{compliance_fw}-{compliance.Version}"
-                # compliance.Provider == "Azure" or "Kubernetes"
-                # provider_type == "azure" or "kubernetes"
-                if compliance.Provider.upper() == provider_type.upper():
-                    if compliance_fw not in check_compliance:
-                        check_compliance[compliance_fw] = []
-                    for requirement in compliance.Requirements:
-                        check_compliance[compliance_fw].append(requirement.Id)
-        return check_compliance
-    except Exception as error:
-        logger.error(
-            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-        )
-        return {}

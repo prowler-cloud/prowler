@@ -82,8 +82,8 @@ def get_available_compliance_frameworks(provider=None):
     providers = [p.value for p in Provider]
     if provider:
         providers = [provider]
-    for provider in providers:
-        compliance_dir = f"{actual_directory}/../compliance/{provider}"
+    for current_provider in providers:
+        compliance_dir = f"{actual_directory}/../compliance/{current_provider}"
         if not os.path.isdir(compliance_dir):
             continue
         with os.scandir(compliance_dir) as files:
@@ -92,7 +92,9 @@ def get_available_compliance_frameworks(provider=None):
                     available_compliance_frameworks.append(
                         file.name.removesuffix(".json")
                     )
-    # Also scan top-level compliance/ for multi-provider JSONs
+    # Also scan top-level compliance/ for multi-provider (universal) JSONs.
+    # When a specific provider was requested, only include the framework if it
+    # declares support for that provider; otherwise include all universal frameworks.
     compliance_root = f"{actual_directory}/../compliance"
     if os.path.isdir(compliance_root):
         with os.scandir(compliance_root) as files:

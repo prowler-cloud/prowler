@@ -15,7 +15,7 @@ from prowler.lib.check.models import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import Status, fill_common_finding_data
-from prowler.lib.outputs.compliance.compliance import get_check_compliance
+from prowler.lib.outputs.compliance.compliance_check import get_check_compliance
 from prowler.lib.outputs.utils import unroll_tags
 from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider

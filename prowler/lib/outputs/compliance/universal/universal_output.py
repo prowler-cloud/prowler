@@ -1,14 +1,16 @@
 from csv import DictWriter
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from pydantic.v1 import create_model
 
 from prowler.config.config import timestamp
 from prowler.lib.check.compliance_models import ComplianceFramework
 from prowler.lib.logger import logger
-from prowler.lib.outputs.finding import Finding
 from prowler.lib.utils.utils import open_file
+
+if TYPE_CHECKING:
+    from prowler.lib.outputs.finding import Finding
 
 PROVIDER_HEADER_MAP = {
     "aws": ("AccountId", "account_uid", "Region", "region"),
@@ -193,7 +195,7 @@ class UniversalComplianceOutput:
 
     def _transform(
         self,
-        findings: list[Finding],
+        findings: list["Finding"],
         framework: ComplianceFramework,
         compliance_name: str,
     ) -> None:

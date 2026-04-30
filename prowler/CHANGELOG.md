@@ -9,6 +9,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - SARIF output format for the IaC provider, enabling GitHub Code Scanning integration via `--output-formats sarif` [(#10626)](https://github.com/prowler-cloud/prowler/pull/10626)
 - `repository_default_branch_dismisses_stale_reviews` check for GitHub provider to ensure stale pull request approvals are dismissed when new commits are pushed [(#10569)](https://github.com/prowler-cloud/prowler/pull/10569)
 - Official Prowler GitHub Action (`prowler-cloud/prowler@5.25`) for running scans in GitHub workflows with optional `--push-to-cloud` and SARIF upload to GitHub Code Scanning [(#10872)](https://github.com/prowler-cloud/prowler/pull/10872)
+- Universal compliance pipeline integrated into the CLI: `--list-compliance` and `--list-compliance-requirements` show universal frameworks, and CSV plus OCSF outputs are generated for any framework declaring a `TableConfig` [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
+
+### 🔄 Changed
+
+- `display_compliance_table` dispatch switched from substring `in` checks to `startswith` to prevent false matches between similarly named frameworks (e.g. `cisa` vs `cis`) [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
 
 ### 🐞 Fixed
 
