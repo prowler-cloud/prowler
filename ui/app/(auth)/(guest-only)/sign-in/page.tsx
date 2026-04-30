@@ -1,4 +1,8 @@
+import { Suspense } from "react";
+
 import { AuthForm } from "@/components/auth/oss";
+import { AuthReleaseHighlightsServer } from "@/components/auth/oss/auth-release-highlights-server";
+import { AuthReleaseHighlightsSkeleton } from "@/components/auth/oss/auth-release-highlights-skeleton";
 import {
   getAuthUrl,
   isGithubOAuthEnabled,
@@ -15,6 +19,14 @@ const SignIn = () => {
       githubAuthUrl={GITHUB_AUTH_URL}
       isGoogleOAuthEnabled={isGoogleOAuthEnabled}
       isGithubOAuthEnabled={isGithubOAuthEnabled}
+      releaseHighlights={
+        <Suspense
+          key="auth-release-highlights"
+          fallback={<AuthReleaseHighlightsSkeleton />}
+        >
+          <AuthReleaseHighlightsServer />
+        </Suspense>
+      }
     />
   );
 };

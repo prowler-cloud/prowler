@@ -46,10 +46,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </Suspense>
           {children}
           <Toaster />
-          <GoogleTagManager
-            gtmId={process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID || ""}
-          />
         </Providers>
+        <GoogleTagManager
+          gtmId={process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID || ""}
+        />
       </body>
     </html>
   );
