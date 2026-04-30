@@ -24,6 +24,7 @@ from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
     DELEGATED_USER,
     DOMAIN,
+    ROOT_ORG_UNIT_ID,
     SERVICE_ACCOUNT_CREDENTIALS,
 )
 
@@ -68,6 +69,8 @@ class TestGoogleWorkspaceProvider:
                 delegated_user=DELEGATED_USER,
                 profile="default",
             )
+            assert provider.domain_resource.id == CUSTOMER_ID
+            assert provider.domain_resource.name == DOMAIN
             assert provider._audit_config == {}
 
     def test_googleworkspace_provider_with_credentials_content(self):
@@ -107,6 +110,7 @@ class TestGoogleWorkspaceProvider:
             assert provider.identity.domain == DOMAIN
             assert provider.identity.customer_id == CUSTOMER_ID
             assert provider.identity.delegated_user == DELEGATED_USER
+            assert provider.domain_resource.customer_id == CUSTOMER_ID
 
     def test_googleworkspace_provider_missing_delegated_user(self):
         """Test that missing delegated_user raises exception"""
@@ -343,6 +347,62 @@ class TestGoogleWorkspaceProvider:
                     delegated_user=DELEGATED_USER,
                 )
             assert "is not configured in this Google Workspace" in str(exc_info.value)
+
+    def test_setup_identity_fetches_root_org_unit(self):
+        """Test that setup_identity fetches and stores the root org unit ID"""
+        mock_session = GoogleWorkspaceSession(credentials=MagicMock(spec=Credentials))
+
+        with patch(
+            "prowler.providers.googleworkspace.googleworkspace_provider.build"
+        ) as mock_build:
+            mock_service = MagicMock()
+            mock_build.return_value = mock_service
+            mock_service.customers().get().execute.return_value = {"id": CUSTOMER_ID}
+            mock_service.domains().list().execute.return_value = {
+                "domains": [{"domainName": DOMAIN}]
+            }
+            mock_service.orgunits().list().execute.return_value = {
+                "organizationUnits": [
+                    {
+                        "orgUnitPath": "/",
+                        "orgUnitId": f"id:{ROOT_ORG_UNIT_ID}",
+                        "name": "Test Company",
+                    }
+                ]
+            }
+
+            identity = GoogleworkspaceProvider.setup_identity(
+                session=mock_session,
+                delegated_user=DELEGATED_USER,
+            )
+
+            assert identity.root_org_unit_id == ROOT_ORG_UNIT_ID
+            assert identity.customer_id == CUSTOMER_ID
+
+    def test_setup_identity_root_org_unit_fetch_failure(self):
+        """Test that setup_identity gracefully handles root org unit fetch failure"""
+        mock_session = GoogleWorkspaceSession(credentials=MagicMock(spec=Credentials))
+
+        with patch(
+            "prowler.providers.googleworkspace.googleworkspace_provider.build"
+        ) as mock_build:
+            mock_service = MagicMock()
+            mock_build.return_value = mock_service
+            mock_service.customers().get().execute.return_value = {"id": CUSTOMER_ID}
+            mock_service.domains().list().execute.return_value = {
+                "domains": [{"domainName": DOMAIN}]
+            }
+            mock_service.orgunits().list().execute.side_effect = Exception(
+                "Insufficient permissions"
+            )
+
+            identity = GoogleworkspaceProvider.setup_identity(
+                session=mock_session,
+                delegated_user=DELEGATED_USER,
+            )
+
+            assert identity.root_org_unit_id is None
+            assert identity.customer_id == CUSTOMER_ID
 
     def test_test_connection_raises_exception_when_flag_true(self):
         """Test that test_connection raises exception when raise_on_exception=True"""
