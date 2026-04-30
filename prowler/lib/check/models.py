@@ -247,6 +247,7 @@ class CheckMetadata(BaseModel):
     # store the compliance later if supplied
     Compliance: Optional[list[Any]] = Field(default_factory=list)
 
+    # TODO: Remove noqa and fix cls vulture errors
     @validator("Categories", each_item=True, pre=True, always=True)
     def valid_category(cls, value, values):  # noqa: F841
         if not isinstance(value, str):
