@@ -13,6 +13,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `route53_dangling_ip_subdomain_takeover` now also flags `CNAME` records pointing to S3 website endpoints whose buckets are missing from the account [(#10920)](https://github.com/prowler-cloud/prowler/pull/10920)
 - Azure Network Watcher flow log checks now require workspace-backed Traffic Analytics for `network_flow_log_captured_sent` and align metadata with VNet-compatible flow log guidance [(#10645)](https://github.com/prowler-cloud/prowler/pull/10645)
 
+### 🐞 Fixed
+
+- Container image CVE findings and IaC findings now use official CVE, Prowler Hub, or GitHub Security Advisory URLs instead of Aqua advisory URLs in remediation and references; Trivy rule IDs map to Prowler Hub without the `AVD-` prefix so links resolve [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
+
 ---
 
 ## [5.25.1] (Prowler v5.25.1)
@@ -37,7 +41,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - Alibaba Cloud CS service SDK compatibility, harden other services and improve documentation [(#10871)](https://github.com/prowler-cloud/prowler/pull/10871)
-- Container image CVE findings and IaC findings now use official CVE, Prowler Hub, or GitHub Security Advisory URLs instead of Aqua advisory URLs in remediation and references; Trivy rule IDs map to Prowler Hub without the `AVD-` prefix so links resolve [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
 - AWS Organizations metadata retrieval for delegated administrator scans by using the assumed role session instead of the pre-assume credentials [(#10894)](https://github.com/prowler-cloud/prowler/pull/10894)
 - `admincenter_groups_not_public_visibility` check for M365 provider evaluating Security and Distribution groups, now restricted to Microsoft 365 (Unified) groups per CIS M365 Foundations 1.2.1 [(#10899)](https://github.com/prowler-cloud/prowler/pull/10899)
 - Google Workspace check reports now store the actual domain or account resource subject instead of `provider.identity` [(#10901)](https://github.com/prowler-cloud/prowler/pull/10901)
