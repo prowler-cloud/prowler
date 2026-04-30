@@ -35,19 +35,6 @@ class entra_users_mfa_capable(Check):
         """
         findings = []
 
-        # Check if there was an error retrieving user registration details
-        if entra_client.user_registration_details_error:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource={},
-                resource_name="User Registration Details",
-                resource_id="userRegistrationDetails",
-            )
-            report.status = "FAIL"
-            report.status_extended = f"Cannot verify MFA capability for users: {entra_client.user_registration_details_error}."
-            findings.append(report)
-            return findings
-
         for user in entra_client.users.values():
             if user.user_type == "Guest" or not user.account_enabled:
                 continue
@@ -59,7 +46,13 @@ class entra_users_mfa_capable(Check):
                 resource_id=user.id,
             )
 
-            if not user.is_mfa_capable:
+            if entra_client.user_registration_details_error:
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Cannot verify MFA capability for user {user.name}: "
+                    f"{entra_client.user_registration_details_error}."
+                )
+            elif not user.is_mfa_capable:
                 report.status = "FAIL"
                 report.status_extended = f"User {user.name} is not MFA capable."
             else:
