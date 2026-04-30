@@ -92,7 +92,11 @@ class Codebuild(AWSService):
             # Collect all build IDs for this region
             build_id_to_project = {}
             for project in self.projects.values():
-                if project.region == regional_client.region and project.last_build and project.last_build.id:
+                if (
+                    project.region == regional_client.region
+                    and project.last_build
+                    and project.last_build.id
+                ):
                     build_id_to_project[project.last_build.id] = project
 
             if not build_id_to_project:
@@ -127,9 +131,7 @@ class Codebuild(AWSService):
             if not regional_projects:
                 return
 
-            project_names = [
-                project.name for project in regional_projects.values()
-            ]
+            project_names = [project.name for project in regional_projects.values()]
 
             # batch_get_projects supports up to 100 names per call
             for i in range(0, len(project_names), 100):

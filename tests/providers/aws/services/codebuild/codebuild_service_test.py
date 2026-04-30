@@ -232,6 +232,7 @@ class Test_Codebuild_Service:
             codebuild.report_groups[report_group_arn].tags[0]["value"] == project_name
         )
 
+
 # Module-level state and helpers used by the chunking/out-of-order test below.
 # Kept at module level so the API-call mock is a plain function rather than a
 # closure defined inside the test method.
@@ -324,4 +325,3 @@ class Test_Codebuild_Service_Batching:
             assert project.project_visibility == "PRIVATE"
             assert project.last_build == Build(id=many_build_ids_for[name])
             assert project.last_invoked_time == many_end_times_for[name]
-
