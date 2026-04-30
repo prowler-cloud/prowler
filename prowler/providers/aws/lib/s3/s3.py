@@ -111,9 +111,13 @@ class S3:
         - None
         """
         if session:
-            session._session.set_default_client_config(
-                AwsProvider.set_session_config(retries_max_attempts)
-            )
+            # Preserve the caller's existing default config (and the
+            # retries_max_attempts already baked into it) instead of clobbering
+            # it with a freshly built one.
+            if session._session.get_default_client_config() is None:
+                session._session.set_default_client_config(
+                    AwsProvider.set_session_config(retries_max_attempts)
+                )
             self._session = session.client(__class__.__name__.lower())
         else:
             aws_setup_session = AwsSetUpSession(

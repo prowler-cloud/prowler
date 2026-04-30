@@ -148,9 +148,10 @@ class SecurityHub:
                 regions=regions,
             )
             self._session = aws_setup_session._session.current_session
-        # When the caller passes its own session, install the Prowler default
-        # client config so retries_max_attempts and user agent extra take effect.
-        if aws_session:
+        # Only install the Prowler default config when the caller-supplied
+        # session does not already carry one — overwriting would drop the
+        # provider's retries_max_attempts value.
+        if aws_session and self._session._session.get_default_client_config() is None:
             self._session._session.set_default_client_config(
                 AwsProvider.set_session_config(retries_max_attempts)
             )
