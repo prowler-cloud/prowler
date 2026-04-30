@@ -1,5 +1,5 @@
 export { exportGraphAsJSON, exportGraphAsPNG } from "./export";
-export { formatNodeLabel, formatNodeLabels } from "./format";
+export { formatNodeLabel, formatNodeLabels, truncateLabel } from "./format";
 export {
   getNodeBorderColor,
   getNodeColor,
@@ -10,6 +10,7 @@ export {
   GRAPH_NODE_BORDER_COLORS,
   GRAPH_NODE_COLORS,
   GRAPH_SELECTION_COLOR,
+  resolveNodeColors,
 } from "./graph-colors";
 export { computeFilteredSubgraph, getPathEdges } from "./graph-utils";
 export { layoutWithDagre } from "./layout";

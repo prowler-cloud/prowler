@@ -685,6 +685,10 @@ export default function AttackPathsPage() {
                                         node={graphState.selectedNode}
                                         allNodes={graphState.data.nodes}
                                         onClose={handleCloseDetails}
+                                        onViewFinding={handleViewFinding}
+                                        viewFindingLoading={
+                                          finding.findingDetailLoading
+                                        }
                                         headingId="fullscreen-node-details-heading"
                                         compact
                                       />

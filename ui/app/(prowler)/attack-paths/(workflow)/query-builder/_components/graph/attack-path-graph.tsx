@@ -15,6 +15,7 @@ import { useTheme } from "next-themes";
 import {
   type MouseEvent,
   type Ref,
+  useEffect,
   useImperativeHandle,
   useLayoutEffect,
   useRef,
@@ -173,6 +174,14 @@ const GraphCanvas = ({
   );
   // Path highlight state
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+
+  // Reset interaction state whenever the underlying graph data changes
+  // (e.g. scan switch or new query execution) to avoid leaking stale
+  // expansion / highlight state into the next graph.
+  useEffect(() => {
+    setExpandedResources(new Set());
+    setHoveredNodeId(null);
+  }, [data]);
 
   // --- initialNodeId: synchronous filtered-view derivation on first render ---
   // Compute the effective data: if initialNodeId is set and valid, derive filtered subgraph
