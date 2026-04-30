@@ -9,6 +9,9 @@ from prowler.lib.outputs.compliance.compliance_check import (  # noqa: F401 - re
 )
 from prowler.lib.outputs.compliance.csa.csa import get_csa_table
 from prowler.lib.outputs.compliance.ens.ens import get_ens_table
+from prowler.lib.outputs.compliance.essential_eight.essential_eight import (
+    get_essential_eight_table,
+)
 from prowler.lib.outputs.compliance.generic.generic_table import (
     get_generic_compliance_table,
 )
@@ -223,6 +226,15 @@ def display_compliance_table(
             )
         elif compliance_framework.startswith("ccc_"):
             get_ccc_table(
+                findings,
+                bulk_checks_metadata,
+                compliance_framework,
+                output_filename,
+                output_directory,
+                compliance_overview,
+            )
+        elif "essential_eight" in compliance_framework:
+            get_essential_eight_table(
                 findings,
                 bulk_checks_metadata,
                 compliance_framework,
