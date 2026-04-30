@@ -35,6 +35,7 @@ export default [
       ".next/**",
       "build/**",
       "next-env.d.ts",
+      ".expect/**",
     ],
   },
 
