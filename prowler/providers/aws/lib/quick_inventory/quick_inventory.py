@@ -28,7 +28,9 @@ def quick_inventory(provider: AwsProvider, args):
         if not provider.identity.audited_regions:
             # EC2 client for describing all regions
             ec2_client = provider.session.current_session.client(
-                "ec2", region_name=provider.identity.profile_region
+                "ec2",
+                region_name=provider.identity.profile_region,
+                config=provider.session.session_config,
             )
             excluded_regions = getattr(provider, "_excluded_regions", set())
             # Get all the available regions
@@ -56,16 +58,16 @@ def quick_inventory(provider: AwsProvider, args):
                 try:
                     # Scan IAM only once
                     if not iam_was_scanned:
-                        global_resources.extend(
-                            get_iam_resources(provider.session.current_session)
-                        )
+                        global_resources.extend(get_iam_resources(provider))
                         iam_was_scanned = True
 
                     # Get regional S3 buckets since none-tagged buckets are not supported by the resourcegroupstaggingapi
                     resources_in_region.extend(get_regional_buckets(provider, region))
 
                     client = provider.session.current_session.client(
-                        "resourcegroupstaggingapi", region_name=region
+                        "resourcegroupstaggingapi",
+                        region_name=region,
+                        config=provider.session.session_config,
                     )
                     # Get all the resources
                     resources_count = 0
@@ -317,7 +319,9 @@ def create_output(resources: list, provider: AwsProvider, args):
                 output_bucket = args.output_bucket_no_assume
                 bucket_session = provider.session.original_session
 
-            s3_client = bucket_session.client("s3")
+            s3_client = bucket_session.client(
+                "s3", config=provider.session.session_config
+            )
             # FIXME: Use get_object_path method from S3 class when quick inventory uses S3 class
             bucket_remote_dir = args.output_directory
             if "prowler/" in bucket_remote_dir:  # Check if it is not a custom directory
@@ -342,7 +346,9 @@ def create_output(resources: list, provider: AwsProvider, args):
 
 def get_regional_buckets(provider: AwsProvider, region: str) -> list:
     regional_buckets = []
-    s3_client = provider.session.current_session.client("s3", region_name=region)
+    s3_client = provider.session.current_session.client(
+        "s3", region_name=region, config=provider.session.session_config
+    )
     try:
         buckets = s3_client.list_buckets()
         for bucket in buckets["Buckets"]:
@@ -375,9 +381,11 @@ def get_regional_buckets(provider: AwsProvider, region: str) -> list:
     return regional_buckets
 
 
-def get_iam_resources(session) -> list:
+def get_iam_resources(provider: AwsProvider) -> list:
     iam_resources = []
-    iam_client = session.client("iam")
+    iam_client = provider.session.current_session.client(
+        "iam", config=provider.session.session_config
+    )
     try:
         get_roles_paginator = iam_client.get_paginator("list_roles")
         for page in get_roles_paginator.paginate():

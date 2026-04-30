@@ -1,6 +1,7 @@
 from boto3 import session
 
 from prowler.lib.logger import logger
+from prowler.providers.aws.config import get_default_session_config
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.aws.models import AWSOrganizationsInfo
 
@@ -44,7 +45,9 @@ def get_organizations_metadata(
     session: session.Session,
 ) -> tuple[dict, dict, dict]:
     try:
-        organizations_client = session.client("organizations")
+        organizations_client = session.client(
+            "organizations", config=get_default_session_config()
+        )
 
         organizations_metadata = organizations_client.describe_account(
             AccountId=aws_account_id

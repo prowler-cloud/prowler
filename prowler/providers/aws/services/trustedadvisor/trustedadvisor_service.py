@@ -21,7 +21,7 @@ class TrustedAdvisor(AWSService):
                 support_region = "us-east-1"
             else:
                 support_region = "us-gov-west-1"
-            self.client = self.session.client(self.service, region_name=support_region)
+            self.client = self._get_client(self.service, support_region)
             self.client.region = support_region
             self._describe_services()
             if getattr(self.premium_support, "enabled", False):

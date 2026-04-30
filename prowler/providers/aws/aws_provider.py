@@ -27,6 +27,7 @@ from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
+    get_default_session_config,
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAccessKeyIDInvalidError,
@@ -661,7 +662,7 @@ class AwsProvider(Provider):
 
             if mfa:
                 session = Session(**session_arguments)
-                sts_client = session.client("sts")
+                sts_client = session.client("sts", config=get_default_session_config())
 
                 # TODO: pass values from the input
                 mfa_info = AwsProvider.input_role_mfa_token_and_code()
@@ -1140,21 +1141,17 @@ class AwsProvider(Provider):
         Returns:
             - Config: The botocore Config object
         """
-        # Set the maximum retries for the standard retrier config
-        default_session_config = Config(
-            retries={"max_attempts": 3, "mode": "standard"},
-            user_agent_extra=BOTO3_USER_AGENT_EXTRA,
-        )
+        logger.debug(f"AWS Boto3 user agent extra: {BOTO3_USER_AGENT_EXTRA}")
+        default_session_config = get_default_session_config()
         if retries_max_attempts:
-            # Create the new config
-            config = Config(
-                retries={
-                    "max_attempts": retries_max_attempts,
-                    "mode": "standard",
-                },
+            default_session_config = default_session_config.merge(
+                Config(
+                    retries={
+                        "max_attempts": retries_max_attempts,
+                        "mode": "standard",
+                    },
+                )
             )
-            # Merge the new configuration
-            default_session_config = default_session_config.merge(config)
 
         return default_session_config
 
@@ -1235,7 +1232,11 @@ class AwsProvider(Provider):
             # EC2 Client to check enabled regions
             service = "ec2"
             default_region = self.get_default_region(service)
-            ec2_client = current_session.client(service, region_name=default_region)
+            ec2_client = current_session.client(
+                service,
+                region_name=default_region,
+                config=self._session.session_config,
+            )
 
             enabled_regions = set()
             # With AllRegions=False we only get the enabled regions for the account
@@ -1606,7 +1607,12 @@ class AwsProvider(Provider):
                 sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.eu"
             else:
                 sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.com"
-            return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
+            return session.client(
+                "sts",
+                aws_region,
+                endpoint_url=sts_endpoint_url,
+                config=get_default_session_config(),
+            )
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

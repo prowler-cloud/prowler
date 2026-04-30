@@ -13,6 +13,7 @@ from botocore.exceptions import ClientError
 from prowler.lib.logger import logger
 from prowler.lib.timeline.models import TimelineEvent
 from prowler.lib.timeline.timeline import TimelineService
+from prowler.providers.aws.config import get_default_session_config
 
 
 class CloudTrailTimeline(TimelineService):
@@ -126,7 +127,9 @@ class CloudTrailTimeline(TimelineService):
         """Get or create a CloudTrail client for the specified region."""
         if region not in self._clients:
             self._clients[region] = self._session.client(
-                "cloudtrail", region_name=region
+                "cloudtrail",
+                region_name=region,
+                config=get_default_session_config(),
             )
         return self._clients[region]
 

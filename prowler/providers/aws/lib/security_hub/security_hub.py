@@ -14,6 +14,7 @@ from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     ROLE_SESSION_NAME,
+    get_default_session_config,
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAccessKeyIDInvalidError,
@@ -247,7 +248,9 @@ class SecurityHub:
                 f"Checking if the {SECURITY_HUB_INTEGRATION_NAME} is enabled in the {region} region."
             )
             # Check if security hub is enabled in current region
-            security_hub_client = session.client("securityhub", region_name=region)
+            security_hub_client = session.client(
+                "securityhub", region_name=region, config=get_default_session_config()
+            )
             security_hub_client.describe_hub()
 
             # Check if Prowler integration is enabled in Security Hub
@@ -260,7 +263,11 @@ class SecurityHub:
                 )
                 return region, None
             else:
-                return region, session.client("securityhub", region_name=region)
+                return region, session.client(
+                    "securityhub",
+                    region_name=region,
+                    config=get_default_session_config(),
+                )
 
         # Handle all the permissions / configuration errors
         except ClientError as client_error:

@@ -17,7 +17,7 @@ class GlobalAccelerator(AWSService):
             # but you must specify the US West (Oregon) Region to create, update, or otherwise work with accelerators.
             # That is, for example, specify --region us-west-2 on AWS CLI commands.
             self.region = "us-west-2"
-            self.client = self.session.client(self.service, self.region)
+            self.client = self._get_client(self.service, self.region)
             self._list_accelerators()
             self.__threading_call__(self._list_tags, self.accelerators.values())
 

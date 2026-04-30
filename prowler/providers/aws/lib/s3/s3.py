@@ -13,6 +13,7 @@ from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     ROLE_SESSION_NAME,
+    get_default_session_config,
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAccessKeyIDInvalidError,
@@ -111,7 +112,9 @@ class S3:
         - None
         """
         if session:
-            self._session = session.client(__class__.__name__.lower())
+            self._session = session.client(
+                __class__.__name__.lower(), config=get_default_session_config()
+            )
         else:
             aws_setup_session = AwsSetUpSession(
                 role_arn=role_arn,
@@ -313,7 +316,9 @@ class S3:
                     region_name=aws_region,
                     profile_name=profile,
                 )
-            s3_client = session.client(__class__.__name__.lower())
+            s3_client = session.client(
+                __class__.__name__.lower(), config=get_default_session_config()
+            )
             if "s3://" in bucket_name:
                 bucket_name = bucket_name.removeprefix("s3://")
             # Check bucket location, requires s3:ListBucket permission
@@ -332,6 +337,7 @@ class S3:
                 s3_client = session.client(
                     __class__.__name__.lower(),
                     region_name=bucket_region,
+                    config=get_default_session_config(),
                 )
             # Set a Temp file to upload
             with tempfile.TemporaryFile() as temp_file:

@@ -103,7 +103,7 @@ class Route53(AWSService):
 
         for region in all_regions:
             try:
-                regional_ec2_client = self.session.client("ec2", region_name=region)
+                regional_ec2_client = self._get_client("ec2", region)
                 for addr in regional_ec2_client.describe_addresses().get(
                     "Addresses", []
                 ):
@@ -183,7 +183,7 @@ class Route53Domains(AWSService):
             # Route53Domains is a global service that supports endpoints in multiple AWS Regions
             # but you must specify the US East (N. Virginia) Region to create, update, or otherwise work with domains.
             self.region = "us-east-1"
-            self.client = self.session.client(self.service, self.region)
+            self.client = self._get_client(self.service, self.region)
             self._list_domains()
             self._get_domain_detail()
             self._list_tags_for_domain()
