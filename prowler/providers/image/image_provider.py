@@ -330,11 +330,20 @@ class ImageProvider(Provider):
         return None
 
     @staticmethod
+    def _strip_scheme(value: str) -> str:
+        """Remove a leading http:// or https:// scheme from a registry input."""
+        for prefix in ("https://", "http://"):
+            if value.lower().startswith(prefix):
+                return value[len(prefix) :]
+        return value
+
+    @staticmethod
     def _extract_registry(image: str) -> str | None:
         """Extract registry hostname from an image reference.
 
         Returns None for Docker Hub images (no registry prefix).
         """
+        image = ImageProvider._strip_scheme(image)
         parts = image.split("/")
         if len(parts) >= 2 and ("." in parts[0] or ":" in parts[0]):
             return parts[0]
@@ -348,6 +357,7 @@ class ImageProvider(Provider):
         or "myregistry.com:5000" are registry URLs (dots in host, no slash).
         Image references like "alpine:3.18" or "nginx" are not.
         """
+        image_uid = ImageProvider._strip_scheme(image_uid)
         if "/" not in image_uid:
             host_part = image_uid.split(":")[0]
             if "." in host_part:
@@ -976,6 +986,8 @@ class ImageProvider(Provider):
 
             if not image:
                 return Connection(is_connected=False, error="Image name is required")
+
+            image = ImageProvider._strip_scheme(image)
 
             # Registry URL (bare hostname) → test via OCI catalog
             if ImageProvider._is_registry_url(image):
