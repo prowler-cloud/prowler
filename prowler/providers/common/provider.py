@@ -269,6 +269,19 @@ class Provider(ABC):
             # silently re-routed to the entry-point path.
             provider_class = None
             if Provider.is_builtin(arguments.provider):
+                # Built-in wins on provider-name collision. Plug-ins are
+                # first-class extenders (they can register new provider
+                # names) but cannot override existing built-ins — a security
+                # tool prefers fail-loud predictability over silent
+                # overrides. Surface the override so the user knows their
+                # plug-in is being ignored and can rename it.
+                if Provider._load_ep_provider(arguments.provider) is not None:
+                    logger.warning(
+                        f"Plug-in provider '{arguments.provider}' registered "
+                        f"via entry points is being IGNORED — a built-in with "
+                        f"the same name exists. To use your plug-in, register "
+                        f"it under a different name."
+                    )
                 provider_class_path = f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
                 provider_class_name = f"{arguments.provider.capitalize()}Provider"
                 try:

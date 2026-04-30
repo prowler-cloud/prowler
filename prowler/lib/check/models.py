@@ -435,6 +435,20 @@ class CheckMetadata(BaseModel):
             metadata_file = f"{check_path}/{check_name}.metadata.json"
             # Load metadata
             check_metadata = load_check_metadata(metadata_file)
+            # Built-in wins on CheckID collision. Plug-in entry points are
+            # appended after built-ins by `recover_checks_from_provider`, so
+            # a duplicate CheckID here means an entry-point check is trying
+            # to override a built-in. Ignore the override (the built-in
+            # metadata stays) and surface it via a warning — matching the
+            # precedence enforced by `_resolve_check_module`.
+            if check_metadata.CheckID in bulk_check_metadata:
+                logger.warning(
+                    f"Plug-in check metadata '{check_metadata.CheckID}' "
+                    f"(loaded from '{metadata_file}') is being IGNORED — "
+                    f"a built-in with the same CheckID exists. To use your "
+                    f"plug-in, register it under a different CheckID."
+                )
+                continue
             bulk_check_metadata[check_metadata.CheckID] = check_metadata
 
         return bulk_check_metadata

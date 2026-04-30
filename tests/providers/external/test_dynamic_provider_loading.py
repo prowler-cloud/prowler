@@ -642,6 +642,70 @@ class TestProviderInitialization:
         assert isinstance(Provider._global, FakeExternalProvider)
         Provider._global = None
 
+    @patch("prowler.providers.common.provider.logger")
+    @patch("prowler.providers.common.provider.load_and_validate_config_file")
+    @patch("prowler.providers.common.provider.Provider._load_ep_provider")
+    @patch("prowler.providers.common.provider.import_module")
+    @patch("prowler.providers.common.provider.Provider.is_builtin")
+    def test_init_global_provider_warns_when_plugin_shadowed_by_builtin(
+        self, mock_is_builtin, mock_import, mock_load_ep, mock_config, mock_logger
+    ):
+        """Regression guard: when a plug-in registers a provider name that
+        collides with a built-in, the BUILT-IN wins and a warning is emitted
+        naming the shadowed plug-in. Matches the precedence enforced by
+        `_resolve_check_module` and `CheckMetadata.get_bulk` for checks. See
+        PR #10700 review (HugoPBrito).
+        """
+        # Simulate a built-in `aws` that exists, AND a plug-in registered
+        # under the same `aws` name via entry points.
+        mock_is_builtin.return_value = True
+        mock_load_ep.return_value = FakeExternalProvider  # plug-in shadow
+        mock_import.return_value = MagicMock(
+            AwsProvider=MagicMock(side_effect=lambda **kw: None)
+        )
+        mock_config.return_value = {}
+
+        args = Namespace(
+            provider="aws",
+            fixer_config="config.yaml",
+            config_file="config.yaml",
+            aws_retries_max_attempts=3,
+            role=None,
+            session_duration=None,
+            external_id=None,
+            role_session_name=None,
+            mfa=None,
+            profile=None,
+            region=None,
+            excluded_region=None,
+            organizations_role=None,
+            scan_unused_services=False,
+            resource_tag=None,
+            resource_arn=None,
+            mutelist_file=None,
+        )
+
+        Provider._global = None
+        try:
+            Provider.init_global_provider(args)
+        except BaseException:
+            # The AwsProvider mock is fake and the dispatch may sys.exit on
+            # the simulated failure; we only care about the warning emitted
+            # before the dispatch happens.
+            pass
+        finally:
+            Provider._global = None
+
+        # Warning was emitted naming the shadowed plug-in
+        warning_msgs = [
+            call.args[0]
+            for call in mock_logger.warning.call_args_list
+            if call.args
+            and "Plug-in provider 'aws'" in call.args[0]
+        ]
+        assert warning_msgs, "expected a warning about the shadowed plug-in 'aws'"
+        assert "IGNORED" in warning_msgs[0]
+
 
 # ===========================================================================
 # 3. Check Discovery
@@ -924,6 +988,44 @@ class TestCheckExecution:
         mock_imp.assert_called_with("ext_pkg.checks.my_check")
         mock_import_check.assert_not_called()
 
+    @patch("prowler.lib.check.check.importlib.util.find_spec")
+    @patch("prowler.lib.check.check.import_check")
+    def test_resolve_check_module_builtin_wins_over_entry_point(
+        self, mock_import_check, mock_find_spec
+    ):
+        """Regression guard: when both a built-in and an entry-point check
+        exist with the same CheckID, the BUILT-IN wins. Plug-ins extend
+        Prowler with new checks but cannot silently override existing
+        built-ins — a security tool prefers fail-loud predictability over
+        permissive overrides. CheckMetadata.get_bulk applies the same
+        precedence (first-write-wins) and emits a warning. See PR #10700
+        review (HugoPBrito)."""
+        from prowler.lib.check.check import _resolve_check_module
+
+        mock_find_spec.return_value = MagicMock()  # built-in exists
+        builtin_module = MagicMock()
+        mock_import_check.return_value = builtin_module
+
+        # Plug-in registers same CheckID — must NOT take precedence
+        ep = _make_entry_point(
+            "ec2_instance_public_ip",
+            "plug_pkg.checks.ec2_instance_public_ip",
+            "prowler.checks.aws",
+        )
+
+        with (
+            patch("importlib.metadata.entry_points", return_value=[ep]),
+            patch("importlib.import_module") as mock_imp,
+        ):
+            result = _resolve_check_module("aws", "ec2", "ec2_instance_public_ip")
+
+        assert result is builtin_module
+        mock_import_check.assert_called_once_with(
+            "prowler.providers.aws.services.ec2.ec2_instance_public_ip.ec2_instance_public_ip"
+        )
+        # Plug-in must NOT be loaded when a built-in with the same CheckID exists
+        mock_imp.assert_not_called()
+
     @patch("prowler.lib.check.check.importlib.metadata.entry_points")
     @patch("prowler.lib.check.check.importlib.util.find_spec")
     def test_resolve_check_module_raises_when_not_found(self, mock_find_spec, mock_ep):
@@ -941,29 +1043,20 @@ class TestCheckExecution:
     def test_resolve_check_module_surfaces_error_when_builtin_import_fails(
         self, mock_import_check, mock_find_spec
     ):
-        """Regression guard: a built-in check whose module exists but fails to
-        import (e.g. broken transitive dependency) MUST surface the real error,
-        not be silently replaced by an entry-point plug-in that happens to
-        share the same check name. See PR #10700 review (HugoPBrito)."""
+        """Regression guard: when no plug-in entry-point overrides the
+        check, a built-in whose module exists but fails to import (e.g.
+        broken transitive dependency) MUST surface the real error instead
+        of being silently treated as 'not found'. See PR #10700 review
+        (HugoPBrito)."""
         from prowler.lib.check.check import _resolve_check_module
 
         mock_find_spec.return_value = MagicMock()  # built-in module exists
         mock_import_check.side_effect = ImportError("missing transitive dep: foo")
 
-        # Even if a plug-in registers the same check name, it must NOT hijack
-        ep = _make_entry_point(
-            "ec2_instance_public_ip",
-            "evil_pkg.checks.ec2_instance_public_ip",
-            "prowler.checks.aws",
-        )
-        with (
-            patch("importlib.metadata.entry_points", return_value=[ep]),
-            patch("importlib.import_module") as mock_imp,
-        ):
+        # No plug-in override — the built-in's import failure must propagate
+        with patch("importlib.metadata.entry_points", return_value=[]):
             with pytest.raises(ImportError, match="missing transitive dep"):
                 _resolve_check_module("aws", "ec2", "ec2_instance_public_ip")
-            # Entry-point fallback must not be reached when built-in exists
-            mock_imp.assert_not_called()
 
 
 # ===========================================================================

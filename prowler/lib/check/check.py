@@ -367,16 +367,22 @@ def import_check(check_path: str) -> ModuleType:
 def _resolve_check_module(
     provider_type: str, service: str, check_name: str
 ) -> ModuleType:
-    """Resolve and import a check module — tries built-in path first, then entry points.
+    """Resolve and import a check module.
 
-    Uses find_spec to distinguish "built-in doesn't exist" from "built-in
-    exists but failed to import" (broken transitive dep, etc.). We only fall
-    through to entry points when the built-in module truly isn't there —
-    otherwise the import error propagates and the user sees the real cause,
-    instead of being silently replaced by an entry-point plug-in that
-    happens to share the same check name.
+    Built-in wins on CheckID collision. Plug-ins are first-class extenders
+    (they can add new checks under new CheckIDs) but cannot override
+    existing built-ins — a security tool prefers fail-loud predictability
+    over silent overrides. CheckMetadata.get_bulk() applies the same
+    precedence on the metadata side (first-write-wins) and emits a warning
+    when a plug-in tries to override, so the user knows their plug-in
+    duplicate is being ignored and can rename it.
+
+    Uses find_spec on the built-in path to distinguish "built-in doesn't
+    exist" from "built-in exists but failed to import" (broken transitive
+    dep, etc.). When the built-in is present, an import error propagates
+    instead of being silently swallowed.
     """
-    # Built-in path
+    # Built-in first — built-in wins on CheckID collision
     builtin_path = f"prowler.providers.{provider_type}.services.{service}.{check_name}.{check_name}"
     if importlib.util.find_spec(builtin_path) is not None:
         return import_check(builtin_path)
