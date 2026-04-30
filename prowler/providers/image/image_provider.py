@@ -845,11 +845,9 @@ class ImageProvider(Provider):
                     image_ref = f"{repo}:{tag}"
                 else:
                     # OCI registries need the full host/repo:tag reference
-                    registry_host = self.registry.rstrip("/")
-                    for prefix in ("https://", "http://"):
-                        if registry_host.startswith(prefix):
-                            registry_host = registry_host[len(prefix) :]
-                            break
+                    registry_host = ImageProvider._strip_scheme(
+                        self.registry.rstrip("/")
+                    )
                     image_ref = f"{registry_host}/{repo}:{tag}"
                 discovered_images.append(image_ref)
 

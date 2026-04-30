@@ -677,6 +677,27 @@ class TestImageProviderRegistryAuth:
             assert "Docker login" in output
 
 
+class TestStripScheme:
+    @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ("https://my-registry.example.com", "my-registry.example.com"),
+            ("http://my-registry.example.com", "my-registry.example.com"),
+            ("HTTPS://My-Registry.Example.Com", "My-Registry.Example.Com"),
+            ("Http://localhost:5000", "localhost:5000"),
+            ("my-registry.example.com", "my-registry.example.com"),
+            ("https://", ""),
+            ("https://https://nested.example.com", "https://nested.example.com"),
+            (
+                "ftp://not-a-supported-scheme.example.com",
+                "ftp://not-a-supported-scheme.example.com",
+            ),
+        ],
+    )
+    def test_strip_scheme(self, raw, expected):
+        assert ImageProvider._strip_scheme(raw) == expected
+
+
 class TestExtractRegistry:
     def test_docker_hub_simple(self):
         assert ImageProvider._extract_registry("alpine:3.18") is None
