@@ -314,8 +314,8 @@ def create_output(resources: list, provider: AwsProvider, args):
             if args.output_bucket:
                 output_bucket = args.output_bucket
                 bucket_session = provider.session.current_session
-            # Check if -D was input
-            elif args.output_bucket_no_assume:
+            # The outer condition guarantees -D was input when -B was not
+            else:
                 output_bucket = args.output_bucket_no_assume
                 bucket_session = provider.session.original_session
 

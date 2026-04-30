@@ -32,7 +32,13 @@ class AWSService:
     def is_failed_check(cls, check_id, arn):
         return (check_id.split(".")[-1], arn) in cls.failed_checks
 
-    def __init__(self, service: str, provider: AwsProvider, global_service=False):
+    def __init__(
+        self,
+        service: str,
+        provider: AwsProvider,
+        global_service=False,
+        region: str = None,
+    ):
         # Audit Information
         # Do we need to store the whole provider?
         self.provider = provider
@@ -61,7 +67,7 @@ class AWSService:
         # Get a single region and client if the service needs it (e.g. AWS Global Service)
         # We cannot include this within an else because some services needs both the regional_clients
         # and a single client like S3
-        self.region = provider.get_default_region(
+        self.region = region or provider.get_default_region(
             self.service, global_service=global_service
         )
         self.client = self._get_client(self.service, self.region)
