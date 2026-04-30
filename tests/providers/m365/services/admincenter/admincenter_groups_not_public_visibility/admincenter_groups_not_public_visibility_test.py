@@ -61,7 +61,12 @@ class Test_admincenter_groups_not_public_visibility:
             id_group1 = str(uuid4())
 
             admincenter_client.groups = {
-                id_group1: Group(id=id_group1, name="Group1", visibility="Private"),
+                id_group1: Group(
+                    id=id_group1,
+                    name="Group1",
+                    visibility="Private",
+                    group_types=["Unified"],
+                ),
             }
 
             check = admincenter_groups_not_public_visibility()
@@ -102,7 +107,12 @@ class Test_admincenter_groups_not_public_visibility:
             id_group1 = str(uuid4())
 
             admincenter_client.groups = {
-                id_group1: Group(id=id_group1, name="Group1", visibility="Private"),
+                id_group1: Group(
+                    id=id_group1,
+                    name="Group1",
+                    visibility="Private",
+                    group_types=["Unified"],
+                ),
             }
 
             check = admincenter_groups_not_public_visibility()
@@ -143,7 +153,12 @@ class Test_admincenter_groups_not_public_visibility:
             id_group1 = str(uuid4())
 
             admincenter_client.groups = {
-                id_group1: Group(id=id_group1, name="Group1", visibility="Public"),
+                id_group1: Group(
+                    id=id_group1,
+                    name="Group1",
+                    visibility="Public",
+                    group_types=["Unified"],
+                ),
             }
 
             check = admincenter_groups_not_public_visibility()
@@ -187,7 +202,12 @@ class Test_admincenter_groups_not_public_visibility:
             id_group1 = str(uuid4())
 
             admincenter_client.groups = {
-                id_group1: Group(id=id_group1, name="Group1", visibility=None),
+                id_group1: Group(
+                    id=id_group1,
+                    name="Group1",
+                    visibility=None,
+                    group_types=["Unified"],
+                ),
             }
 
             check = admincenter_groups_not_public_visibility()
@@ -202,3 +222,60 @@ class Test_admincenter_groups_not_public_visibility:
             assert result[0].resource_name == "Group1"
             assert result[0].resource_id == id_group1
             assert result[0].location == "global"
+
+    def test_admincenter_security_group_ignored(self):
+        admincenter_client = mock.MagicMock
+        admincenter_client.audited_tenant = "audited_tenant"
+        admincenter_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility.admincenter_client",
+                new=admincenter_client,
+            ),
+        ):
+            from prowler.providers.m365.services.admincenter.admincenter_groups_not_public_visibility.admincenter_groups_not_public_visibility import (
+                admincenter_groups_not_public_visibility,
+            )
+            from prowler.providers.m365.services.admincenter.admincenter_service import (
+                Group,
+            )
+
+            id_security_group = str(uuid4())
+            id_distribution_group = str(uuid4())
+            id_m365_group = str(uuid4())
+
+            admincenter_client.groups = {
+                id_security_group: Group(
+                    id=id_security_group,
+                    name="SecurityGroup",
+                    visibility=None,
+                    group_types=[],
+                ),
+                id_distribution_group: Group(
+                    id=id_distribution_group,
+                    name="DistributionGroup",
+                    visibility=None,
+                    group_types=[],
+                ),
+                id_m365_group: Group(
+                    id=id_m365_group,
+                    name="M365Group",
+                    visibility="Private",
+                    group_types=["Unified"],
+                ),
+            }
+
+            check = admincenter_groups_not_public_visibility()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == id_m365_group
+            assert result[0].status == "PASS"
+            assert result[0].resource_name == "M365Group"

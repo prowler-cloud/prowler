@@ -10,11 +10,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/shadcn/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { cn } from "@/lib/utils";
 import { FINDING_DELTA, type FindingDelta } from "@/types";
@@ -91,12 +86,17 @@ function DeltaIndicator({
 }: {
   delta: typeof DeltaValues.NEW | typeof DeltaValues.CHANGED;
 }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
           onClick={(e) => e.stopPropagation()}
-          className="flex w-2 shrink-0 cursor-pointer items-center justify-center"
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          className="flex w-2 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
         >
           <div
             className={cn(
@@ -106,9 +106,15 @@ function DeltaIndicator({
                 : "bg-system-severity-low",
             )}
           />
-        </div>
-      </TooltipTrigger>
-      <TooltipContent>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="border-border-neutral-tertiary bg-bg-neutral-tertiary w-auto rounded-lg px-2 py-1.5 shadow-lg"
+        sideOffset={4}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center gap-1 text-xs">
           <span>
             {delta === DeltaValues.NEW
@@ -131,8 +137,8 @@ function DeltaIndicator({
             </a>
           </Button>
         </div>
-      </TooltipContent>
-    </Tooltip>
+      </PopoverContent>
+    </Popover>
   );
 }
 

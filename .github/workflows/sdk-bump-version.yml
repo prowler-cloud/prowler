@@ -113,9 +113,9 @@ jobs:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: master
-          commit-message: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
-          branch: version-bump-to-v${{ env.NEXT_MINOR_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
+          commit-message: 'chore(sdk): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
+          branch: sdk-version-bump-to-v${{ env.NEXT_MINOR_VERSION }}
+          title: 'chore(sdk): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
           labels: no-changelog,skip-sync
           body: |
             ### Description
@@ -165,9 +165,9 @@ jobs:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: ${{ env.VERSION_BRANCH }}
-          commit-message: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
-          branch: version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
+          commit-message: 'chore(sdk): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
+          branch: sdk-version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
+          title: 'chore(sdk): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
           labels: no-changelog,skip-sync
           body: |
             ### Description
@@ -233,9 +233,9 @@ jobs:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: ${{ env.VERSION_BRANCH }}
-          commit-message: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
-          branch: version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
+          commit-message: 'chore(sdk): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
+          branch: sdk-version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
+          title: 'chore(sdk): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
           labels: no-changelog,skip-sync
           body: |
             ### Description

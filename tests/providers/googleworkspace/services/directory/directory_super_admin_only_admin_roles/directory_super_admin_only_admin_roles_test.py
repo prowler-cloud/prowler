@@ -91,7 +91,9 @@ class TestDirectorySuperAdminOnlyAdminRoles:
             assert findings[0].status == "PASS"
             assert "used only for super admin activities" in findings[0].status_extended
             assert findings[0].resource_name == DOMAIN
+            assert findings[0].resource_id == CUSTOMER_ID
             assert findings[0].customer_id == CUSTOMER_ID
+            assert findings[0].resource == mock_provider.domain_resource.dict()
 
     def test_pass_super_admin_with_seed_admin_role(self):
         """Test PASS when a super admin only holds _SEED_ADMIN_ROLE.
@@ -213,7 +215,8 @@ class TestDirectorySuperAdminOnlyAdminRoles:
             assert "Groups Administrator" in findings[0].status_extended
             assert "_GROUPS_ADMIN_ROLE" not in findings[0].status_extended
             assert "used only for super admin activities" in findings[0].status_extended
-            assert findings[0].resource_name == DOMAIN
+            assert findings[0].resource_name == "admin1@test-company.com"
+            assert findings[0].resource_id == "admin1-id"
             assert findings[0].customer_id == CUSTOMER_ID
 
     def test_fail_seed_admin_with_additional_roles(self):
@@ -254,6 +257,8 @@ class TestDirectorySuperAdminOnlyAdminRoles:
             assert "Groups Administrator" in findings[0].status_extended
             assert "_GROUPS_ADMIN_ROLE" not in findings[0].status_extended
             assert "_SEED_ADMIN_ROLE" not in findings[0].status_extended
+            assert findings[0].resource_name == "playground@prowler.cloud"
+            assert findings[0].resource_id == "admin1-id"
 
     def test_fail_multiple_super_admins_with_extra_roles(self):
         """Test FAIL lists all super admins that have additional roles"""
@@ -299,11 +304,12 @@ class TestDirectorySuperAdminOnlyAdminRoles:
             check = directory_super_admin_only_admin_roles()
             findings = check.execute()
 
-            assert len(findings) == 1
-            assert findings[0].status == "FAIL"
-            assert "admin1@test-company.com" in findings[0].status_extended
-            assert "admin2@test-company.com" in findings[0].status_extended
+            assert len(findings) == 2
+            assert all(finding.status == "FAIL" for finding in findings)
+            assert findings[0].resource_name == "admin1@test-company.com"
+            assert findings[1].resource_name == "admin2@test-company.com"
             assert "admin3@test-company.com" not in findings[0].status_extended
+            assert "admin3@test-company.com" not in findings[1].status_extended
 
     def test_no_findings_when_no_users(self):
         """Test no findings when there are no users"""
@@ -444,3 +450,4 @@ class TestDirectorySuperAdminOnlyAdminRoles:
             assert len(findings) == 1
             assert findings[0].status == "FAIL"
             assert "custom-helpdesk-role" in findings[0].status_extended
+            assert findings[0].resource_name == "admin1@test-company.com"

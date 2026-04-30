@@ -137,6 +137,9 @@ def display_compliance_table(
     Returns:
         None
     """
+    # Filter out findings with dynamic CheckIDs not present in bulk_checks_metadata
+    findings = [f for f in findings if f.check_metadata.CheckID in bulk_checks_metadata]
+
     try:
         # Universal path: if the framework has TableConfig, use the universal renderer
         if universal_frameworks and compliance_framework in universal_frameworks:
