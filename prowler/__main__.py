@@ -197,9 +197,10 @@ def prowler():
     # We treat the compliance framework as another output format
     if compliance_framework:
         args.output_formats.extend(compliance_framework)
-    # If no input compliance framework, set all, unless a specific service or check is input
-    # Skip for IAC and LLM providers that don't use compliance frameworks
-    elif default_execution and provider not in ["iac", "llm"]:
+    # If no input compliance framework, set all, unless a specific service or check is input.
+    # Skip for tool-wrapper providers (iac, llm, image, and any external plug-in
+    # declaring `is_external_tool_provider = True`) — they don't use compliance frameworks.
+    elif default_execution and not Provider.is_tool_wrapper_provider(provider):
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
