@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_recommendations_completed",
+  "CheckTitle": "Entra directory recommendations enforce tenant security best practices",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "Microsoft Entra **directory recommendations** are evaluated to confirm each one has been addressed. The check verifies that every recommendation reported by Entra has reached a `completedBySystem` or `completedByUser` status, indicating the tenant follows the suggested security best practices.",
+  "Risk": "Unaddressed Entra recommendations signal gaps in tenant configuration that may weaken **identity protection**, **access controls**, or **authentication policies**. Attackers can exploit these gaps to compromise accounts, escalate privileges, or move laterally, impacting **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/monitoring-health/overview-recommendations",
+    "https://learn.microsoft.com/en-us/graph/api/resources/recommendation"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com)\n2. Navigate to Identity > Overview > Recommendations\n3. Review each active recommendation\n4. Follow the provided action steps to address the recommendation\n5. Verify the recommendation status changes to completed",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly review and address all Entra **directory recommendations**. Prioritize recommendations related to **identity protection**, **conditional access**, and **authentication methods**. Establish a periodic review cadence to ensure new recommendations are evaluated promptly and the tenant maintains a healthy security posture.",
+      "Url": "https://hub.prowler.com/check/entra_recommendations_completed"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check uses the Microsoft Graph beta API endpoint for directory recommendations, as the recommendations endpoint is not yet available in the v1.0 SDK."
+}
