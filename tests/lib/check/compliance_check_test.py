@@ -7,6 +7,8 @@ from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute_Profile,
     Compliance,
     Compliance_Requirement,
+    Generic_Compliance_Requirement_Attribute,
+    load_compliance_framework,
 )
 from prowler.lib.check.models import CheckMetadata
 
@@ -560,3 +562,41 @@ class TestCompliance:
         assert len(result) == 1
         assert "framework1_aws" in result.keys()
         mock_list_modules.assert_called_once()
+
+    def test_load_mitre_d3fend_azure_framework(self):
+        compliance = load_compliance_framework(
+            "prowler/compliance/azure/mitre_d3fend_azure.json"
+        )
+
+        assert compliance.Framework == "MITRE-D3FEND"
+        assert compliance.Provider == "Azure"
+        assert compliance.Name == "MITRE D3FEND compliance framework"
+        assert len(compliance.Requirements) == 18
+
+        # Verify D3-ITF technique exists and has correct structure
+        itf = next(
+            r for r in compliance.Requirements if r.Id == "D3-ITF"
+        )
+        assert itf.Name == "Inbound Traffic Filtering"
+        assert "aks_clusters_public_access_disabled" in itf.Checks
+        assert "storage_blob_public_access_level_is_disabled" in itf.Checks
+        assert isinstance(
+            itf.Attributes[0],
+            Generic_Compliance_Requirement_Attribute,
+        )
+        assert itf.Attributes[0].Type == "Automated"
+
+        # Verify D3-MFA technique
+        mfa = next(
+            r for r in compliance.Requirements if r.Id == "D3-MFA"
+        )
+        assert mfa.Name == "Multi-factor Authentication"
+        assert "entra_privileged_user_has_mfa" in mfa.Checks
+
+        # Verify tactics coverage
+        tactics = set(
+            r.Attributes[0].Section for r in compliance.Requirements
+        )
+        assert tactics == {
+            "Harden", "Detect", "Isolate", "Model", "Restore"
+        }
