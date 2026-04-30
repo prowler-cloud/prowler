@@ -697,14 +697,19 @@ class TestCheckDiscovery:
         assert checks == []
 
     @patch("prowler.lib.check.utils._recover_ep_checks")
-    @patch("prowler.lib.check.utils.list_modules")
+    @patch("prowler.lib.check.utils.importlib.util.find_spec")
     def test_recover_checks_handles_external_provider_without_services(
-        self, mock_list_modules, mock_ep_checks
+        self, mock_find_spec, mock_ep_checks
     ):
-        """Test 13: recover_checks_from_provider doesn't crash for external providers."""
+        """Test 13: recover_checks_from_provider doesn't crash for external providers.
+
+        With find_spec returning None (built-in package doesn't exist), discovery
+        falls through to entry points cleanly — no ModuleNotFoundError catch
+        needed.
+        """
         from prowler.lib.check.utils import recover_checks_from_provider
 
-        mock_list_modules.side_effect = ModuleNotFoundError("No services")
+        mock_find_spec.return_value = None  # not a built-in
         mock_ep_checks.return_value = [("ext_check", "/path/to/check")]
 
         checks = recover_checks_from_provider("fakeexternal")
@@ -714,11 +719,14 @@ class TestCheckDiscovery:
 
     @patch("prowler.lib.check.utils._recover_ep_checks")
     @patch("prowler.lib.check.utils.list_modules")
+    @patch("prowler.lib.check.utils.importlib.util.find_spec")
     def test_recover_checks_combines_builtin_and_entry_points(
-        self, mock_list_modules, mock_ep_checks
+        self, mock_find_spec, mock_list_modules, mock_ep_checks
     ):
         """Test 14: recover_checks_from_provider combines built-in and entry point checks."""
         from prowler.lib.check.utils import recover_checks_from_provider
+
+        mock_find_spec.return_value = MagicMock()  # built-in package exists
 
         # Simulate a built-in module
         builtin_module = MagicMock()
@@ -789,16 +797,16 @@ class TestCheckDiscovery:
         assert len(checks) == 2
 
     @patch("prowler.lib.check.utils._recover_ep_checks")
-    @patch("prowler.lib.check.utils.list_modules")
+    @patch("prowler.lib.check.utils.importlib.util.find_spec")
     def test_recover_checks_external_provider_with_service(
-        self, mock_list_modules, mock_ep_checks
+        self, mock_find_spec, mock_ep_checks
     ):
-        """External provider with --service: built-in lookup fails with
-        ModuleNotFoundError, but entry points are still consulted and return
-        the requested service's checks. No premature sys.exit."""
+        """External provider with --service: built-in package doesn't exist,
+        but entry points are still consulted and return the requested service's
+        checks. No premature sys.exit."""
         from prowler.lib.check.utils import recover_checks_from_provider
 
-        mock_list_modules.side_effect = ModuleNotFoundError("No built-in")
+        mock_find_spec.return_value = None  # not a built-in
         mock_ep_checks.return_value = [("container_check", "/ext/path")]
 
         checks = recover_checks_from_provider("dockerdesktop", service="container")
@@ -808,32 +816,32 @@ class TestCheckDiscovery:
         mock_ep_checks.assert_called_once_with("dockerdesktop", "container")
 
     @patch("prowler.lib.check.utils._recover_ep_checks")
-    @patch("prowler.lib.check.utils.list_modules")
+    @patch("prowler.lib.check.utils.importlib.util.find_spec")
     def test_recover_checks_unknown_service_fails_cleanly(
-        self, mock_list_modules, mock_ep_checks
+        self, mock_find_spec, mock_ep_checks
     ):
         """A typo or unknown service (not in built-ins nor in entry points)
         fails with a clear error message, not a silent empty result."""
         from prowler.lib.check.utils import recover_checks_from_provider
 
-        mock_list_modules.side_effect = ModuleNotFoundError("No built-in")
+        mock_find_spec.return_value = None
         mock_ep_checks.return_value = []
 
         with pytest.raises(SystemExit):
             recover_checks_from_provider("aws", service="typo_service")
 
     @patch("prowler.lib.check.utils._recover_ep_checks")
-    @patch("prowler.lib.check.utils.list_modules")
+    @patch("prowler.lib.check.utils.importlib.util.find_spec")
     def test_recover_checks_builtin_with_new_external_service(
-        self, mock_list_modules, mock_ep_checks
+        self, mock_find_spec, mock_ep_checks
     ):
         """Built-in provider with a new service added via entry points:
-        built-in discovery raises ModuleNotFoundError for the unknown service,
-        but entry points pick it up. The gate `if not service:` that previously
-        skipped entry points when --service was passed is removed."""
+        the built-in package for that specific service doesn't exist (find_spec
+        returns None), but entry points pick it up. The gate `if not service:`
+        that previously skipped entry points when --service was passed is removed."""
         from prowler.lib.check.utils import recover_checks_from_provider
 
-        mock_list_modules.side_effect = ModuleNotFoundError("No built-in service")
+        mock_find_spec.return_value = None  # built-in for new_aws_service doesn't exist
         mock_ep_checks.return_value = [("new_check", "/ext/path")]
 
         checks = recover_checks_from_provider("aws", service="new_aws_service")
@@ -841,6 +849,29 @@ class TestCheckDiscovery:
         assert len(checks) == 1
         assert checks[0][0] == "new_check"
         mock_ep_checks.assert_called_once_with("aws", "new_aws_service")
+
+    @patch("prowler.lib.check.utils._recover_ep_checks")
+    @patch("prowler.lib.check.utils.list_modules")
+    @patch("prowler.lib.check.utils.importlib.util.find_spec")
+    def test_recover_checks_surfaces_error_when_builtin_service_import_fails(
+        self, mock_find_spec, mock_list_modules, mock_ep_checks
+    ):
+        """Regression guard: when a built-in service's package exists but one
+        of its modules fails to import (e.g. a broken transitive dependency),
+        the error must surface via the global exception handler — not be
+        silently swallowed and replaced by an entry-point plug-in that happens
+        to share a name. See PR #10700 review (HugoPBrito)."""
+        from prowler.lib.check.utils import recover_checks_from_provider
+
+        mock_find_spec.return_value = MagicMock()  # built-in service exists
+        mock_list_modules.side_effect = ImportError("missing transitive dep: foo")
+
+        # Even if a plug-in registers checks for the same service, it must NOT
+        # silently take over — the import error wins.
+        mock_ep_checks.return_value = [("evil_check", "/evil/path")]
+
+        with pytest.raises(SystemExit):
+            recover_checks_from_provider("aws", service="ec2")
 
 
 # ===========================================================================
@@ -851,13 +882,15 @@ class TestCheckDiscovery:
 class TestCheckExecution:
     """Tests 15-17: _resolve_check_module."""
 
+    @patch("prowler.lib.check.check.importlib.util.find_spec")
     @patch("prowler.lib.check.check.import_check")
-    def test_resolve_check_module_builtin_first(self, mock_import):
+    def test_resolve_check_module_builtin_first(self, mock_import, mock_find_spec):
         """Test 15: _resolve_check_module resolves built-in checks first."""
         from prowler.lib.check.check import _resolve_check_module
 
         mock_module = MagicMock()
         mock_import.return_value = mock_module
+        mock_find_spec.return_value = MagicMock()  # built-in package exists
 
         result = _resolve_check_module("aws", "ec2", "my_check")
 
@@ -866,12 +899,15 @@ class TestCheckExecution:
             "prowler.providers.aws.services.ec2.my_check.my_check"
         )
 
+    @patch("prowler.lib.check.check.importlib.util.find_spec")
     @patch("prowler.lib.check.check.import_check")
-    def test_resolve_check_module_fallback_to_entry_point(self, mock_import_check):
-        """Test 16: _resolve_check_module falls back to entry point."""
+    def test_resolve_check_module_fallback_to_entry_point(
+        self, mock_import_check, mock_find_spec
+    ):
+        """Test 16: _resolve_check_module falls back to entry point when built-in is absent."""
         from prowler.lib.check.check import _resolve_check_module
 
-        mock_import_check.side_effect = ModuleNotFoundError("Not built-in")
+        mock_find_spec.return_value = None  # built-in does not exist
 
         mock_ext_module = MagicMock()
         ep = _make_entry_point(
@@ -886,18 +922,48 @@ class TestCheckExecution:
 
         assert result is mock_ext_module
         mock_imp.assert_called_with("ext_pkg.checks.my_check")
+        mock_import_check.assert_not_called()
 
     @patch("prowler.lib.check.check.importlib.metadata.entry_points")
-    @patch("prowler.lib.check.check.import_check")
-    def test_resolve_check_module_raises_when_not_found(self, mock_import, mock_ep):
+    @patch("prowler.lib.check.check.importlib.util.find_spec")
+    def test_resolve_check_module_raises_when_not_found(self, mock_find_spec, mock_ep):
         """Test 17: _resolve_check_module raises ModuleNotFoundError when both fail."""
         from prowler.lib.check.check import _resolve_check_module
 
-        mock_import.side_effect = ModuleNotFoundError("Not built-in")
+        mock_find_spec.return_value = None
         mock_ep.return_value = []
 
         with pytest.raises(ModuleNotFoundError, match="not found"):
             _resolve_check_module("fake", "svc", "nonexistent_check")
+
+    @patch("prowler.lib.check.check.importlib.util.find_spec")
+    @patch("prowler.lib.check.check.import_check")
+    def test_resolve_check_module_surfaces_error_when_builtin_import_fails(
+        self, mock_import_check, mock_find_spec
+    ):
+        """Regression guard: a built-in check whose module exists but fails to
+        import (e.g. broken transitive dependency) MUST surface the real error,
+        not be silently replaced by an entry-point plug-in that happens to
+        share the same check name. See PR #10700 review (HugoPBrito)."""
+        from prowler.lib.check.check import _resolve_check_module
+
+        mock_find_spec.return_value = MagicMock()  # built-in module exists
+        mock_import_check.side_effect = ImportError("missing transitive dep: foo")
+
+        # Even if a plug-in registers the same check name, it must NOT hijack
+        ep = _make_entry_point(
+            "ec2_instance_public_ip",
+            "evil_pkg.checks.ec2_instance_public_ip",
+            "prowler.checks.aws",
+        )
+        with (
+            patch("importlib.metadata.entry_points", return_value=[ep]),
+            patch("importlib.import_module") as mock_imp,
+        ):
+            with pytest.raises(ImportError, match="missing transitive dep"):
+                _resolve_check_module("aws", "ec2", "ec2_instance_public_ip")
+            # Entry-point fallback must not be reached when built-in exists
+            mock_imp.assert_not_called()
 
 
 # ===========================================================================

@@ -1,4 +1,6 @@
 import importlib
+import importlib.metadata
+import importlib.util
 import json
 import os
 import re
@@ -365,17 +367,21 @@ def import_check(check_path: str) -> ModuleType:
 def _resolve_check_module(
     provider_type: str, service: str, check_name: str
 ) -> ModuleType:
-    """Resolve and import a check module — tries built-in path first, then entry points."""
+    """Resolve and import a check module — tries built-in path first, then entry points.
+
+    Uses find_spec to distinguish "built-in doesn't exist" from "built-in
+    exists but failed to import" (broken transitive dep, etc.). We only fall
+    through to entry points when the built-in module truly isn't there —
+    otherwise the import error propagates and the user sees the real cause,
+    instead of being silently replaced by an entry-point plug-in that
+    happens to share the same check name.
+    """
     # Built-in path
     builtin_path = f"prowler.providers.{provider_type}.services.{service}.{check_name}.{check_name}"
-    try:
+    if importlib.util.find_spec(builtin_path) is not None:
         return import_check(builtin_path)
-    except ModuleNotFoundError:
-        pass
 
-    # Entry point lookup
-    import importlib.metadata
-
+    # Entry point lookup — only consulted when the built-in truly doesn't exist
     for ep in importlib.metadata.entry_points(group=f"prowler.checks.{provider_type}"):
         if ep.name == check_name:
             return importlib.import_module(ep.value)

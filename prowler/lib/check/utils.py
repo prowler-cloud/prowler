@@ -1,5 +1,6 @@
 import importlib
 import importlib.metadata
+import importlib.util
 import os
 import sys
 from pkgutil import walk_packages
@@ -56,8 +57,18 @@ def recover_checks_from_provider(
             return []
 
         checks = []
-        # Built-in checks from prowler.providers.{provider}.services
-        try:
+        # Built-in checks from prowler.providers.{provider}.services. Use
+        # find_spec to distinguish "service doesn't exist" from "service
+        # exists but failed to import" (broken transitive dep, etc.). We
+        # only fall through to entry points when the built-in package truly
+        # doesn't exist — otherwise the import error propagates and the
+        # user sees the real cause, instead of being silently replaced by
+        # an entry-point plug-in that happens to share a name.
+        service_path = f"prowler.providers.{provider}.services"
+        if service:
+            service_path += f".{service}"
+
+        if importlib.util.find_spec(service_path) is not None:
             modules = list_modules(provider, service)
             for module_name in modules:
                 # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
@@ -72,12 +83,6 @@ def recover_checks_from_provider(
                     check_name = check_module_name.split(".")[-1]
                     check_info = (check_name, check_path)
                     checks.append(check_info)
-        except ModuleNotFoundError:
-            # Not a built-in provider (or the requested service is not built-in).
-            # Fall through to entry points — external providers/services may be
-            # registered there. If nothing matches in either source, we fail
-            # with a clear message below.
-            pass
 
         # External checks registered via entry points — always consulted, with
         # optional service filter. Previously gated by `if not service:`, which
