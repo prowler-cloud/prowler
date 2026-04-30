@@ -605,3 +605,126 @@ class TestPrintComplianceRequirements:
         captured = capsys.readouterr().out
 
         assert "Multi-provider" in captured
+
+
+# ── Idempotency tests ────────────────────────────────────────────────
+
+
+class TestIdempotency:
+    """The function must be safe to invoke multiple times for the same
+    framework. Repeated calls must reuse writers tracked in
+    ``generated_outputs["compliance"]`` instead of recreating them.
+
+    This guards against:
+      - duplicate writer entries in generated_outputs (regular pipeline
+        treats one writer per framework)
+      - the OCSF append-bug where a second writer would emit
+        ``[...]<new>...]`` and break the JSON array.
+    """
+
+    def test_second_call_does_not_duplicate_writers(self, tmp_path):
+        fw = _make_universal_framework()
+        generated = {"compliance": []}
+        kwargs = dict(
+            input_compliance_frameworks={"test_fw_1.0"},
+            universal_frameworks={"test_fw_1.0": fw},
+            finding_outputs=[_make_finding("check_a")],
+            output_directory=str(tmp_path),
+            output_filename="prowler_output",
+            provider="aws",
+            generated_outputs=generated,
+        )
+
+        first = process_universal_compliance_frameworks(**kwargs)
+        first_count = len(generated["compliance"])
+        second = process_universal_compliance_frameworks(**kwargs)
+        second_count = len(generated["compliance"])
+
+        assert first == {"test_fw_1.0"}
+        assert second == {"test_fw_1.0"}  # still reported as processed
+        assert first_count == 2  # CSV + OCSF
+        assert second_count == 2  # NO duplication
+
+    def test_second_call_keeps_ocsf_json_valid(self, tmp_path):
+        """End-to-end: after two calls the OCSF JSON file must still be
+        a single, valid JSON array — not the broken ``[...]...]`` form."""
+        fw = _make_universal_framework()
+        generated = {"compliance": []}
+        kwargs = dict(
+            input_compliance_frameworks={"test_fw_1.0"},
+            universal_frameworks={"test_fw_1.0": fw},
+            finding_outputs=[_make_finding("check_a")],
+            output_directory=str(tmp_path),
+            output_filename="prowler_output",
+            provider="aws",
+            generated_outputs=generated,
+        )
+
+        process_universal_compliance_frameworks(**kwargs)
+        process_universal_compliance_frameworks(**kwargs)
+
+        ocsf_path = tmp_path / "compliance" / "prowler_output_test_fw_1.0.ocsf.json"
+        data = json.loads(ocsf_path.read_text())  # Will raise on invalid JSON
+        assert isinstance(data, list)
+        assert len(data) >= 1
+
+    def test_reuses_existing_writer_object(self, tmp_path):
+        """The CSV/OCSF writer instances appended on first call must be
+        the SAME objects after a second call — not fresh ones."""
+        fw = _make_universal_framework()
+        generated = {"compliance": []}
+        kwargs = dict(
+            input_compliance_frameworks={"test_fw_1.0"},
+            universal_frameworks={"test_fw_1.0": fw},
+            finding_outputs=[_make_finding("check_a")],
+            output_directory=str(tmp_path),
+            output_filename="prowler_output",
+            provider="aws",
+            generated_outputs=generated,
+        )
+
+        process_universal_compliance_frameworks(**kwargs)
+        first_writers = list(generated["compliance"])
+        process_universal_compliance_frameworks(**kwargs)
+        second_writers = list(generated["compliance"])
+
+        # Same identity, same length — reused, not recreated.
+        assert len(first_writers) == len(second_writers)
+        for a, b in zip(first_writers, second_writers):
+            assert a is b
+
+    def test_idempotency_across_mixed_frameworks(self, tmp_path):
+        """When the second call adds a new framework, the new one is
+        created while existing ones are NOT recreated."""
+        fw1 = _make_universal_framework(name="FW1", version="1.0")
+        fw2 = _make_universal_framework(name="FW2", version="2.0")
+        generated = {"compliance": []}
+
+        # First call: only FW1
+        process_universal_compliance_frameworks(
+            input_compliance_frameworks={"fw1_1.0"},
+            universal_frameworks={"fw1_1.0": fw1, "fw2_2.0": fw2},
+            finding_outputs=[_make_finding("check_a")],
+            output_directory=str(tmp_path),
+            output_filename="out",
+            provider="aws",
+            generated_outputs=generated,
+        )
+        first_writers = list(generated["compliance"])
+        assert len(first_writers) == 2
+
+        # Second call: includes both. FW1 must be reused, FW2 created fresh.
+        process_universal_compliance_frameworks(
+            input_compliance_frameworks={"fw1_1.0", "fw2_2.0"},
+            universal_frameworks={"fw1_1.0": fw1, "fw2_2.0": fw2},
+            finding_outputs=[_make_finding("check_a")],
+            output_directory=str(tmp_path),
+            output_filename="out",
+            provider="aws",
+            generated_outputs=generated,
+        )
+        second_writers = list(generated["compliance"])
+        assert len(second_writers) == 4  # 2 (FW1 reused) + 2 new (FW2)
+        # FW1 writer instances unchanged
+        assert second_writers[0] is first_writers[0]
+        assert second_writers[1] is first_writers[1]

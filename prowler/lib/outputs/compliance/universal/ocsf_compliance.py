@@ -57,7 +57,7 @@ def _sanitize_resource_data(resource_details, resource_metadata) -> dict:
     try:
         converted = _make_serializable(resource_metadata)
         sanitized_metadata = json.loads(json.dumps(converted, default=str))
-    except (TypeError, ValueError) as error:
+    except (TypeError, ValueError, RecursionError) as error:
         logger.warning(
             f"Failed to serialize resource metadata, defaulting to empty: {error}"
         )
