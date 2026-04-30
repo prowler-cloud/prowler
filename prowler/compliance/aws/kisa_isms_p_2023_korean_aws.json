@@ -2898,6 +2898,7 @@
         "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_prompt_attack_filter_enabled",
         "bedrock_guardrail_sensitive_information_filter_enabled",
+        "bedrock_guardrails_configured",
         "bedrock_model_invocation_logging_enabled",
         "bedrock_model_invocation_logs_encryption_enabled",
         "bedrock_prompt_management_exists",

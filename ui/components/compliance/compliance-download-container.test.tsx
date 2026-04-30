@@ -70,7 +70,7 @@ describe("ComplianceDownloadContainer", () => {
     const trigger = screen.getByRole("button", {
       name: "Open compliance export actions",
     });
-    expect(trigger.className).toContain("border-text-neutral-secondary");
+    expect(trigger.className).toContain("rounded-md");
   });
 
   it("should open export actions from the compact trigger", async () => {

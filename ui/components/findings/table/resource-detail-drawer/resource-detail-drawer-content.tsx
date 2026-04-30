@@ -69,6 +69,7 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
+import { cn } from "@/lib/utils";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
 
@@ -298,6 +299,12 @@ function buildComplianceDetailHref({
   return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
 }
 
+function buildResourceDetailHref(resourceId: string): string {
+  const params = new URLSearchParams();
+  params.set("resourceId", resourceId);
+  return `/resources?${params.toString()}`;
+}
+
 interface ResourceDetailDrawerContentProps {
   isLoading: boolean;
   isNavigating: boolean;
@@ -415,6 +422,11 @@ export function ResourceDetailDrawerContent({
   const nativeIacConfig = resolveNativeIacConfig(providerType);
   const showOverviewCheckMetaContent = showCheckMetaContent;
   const showOverviewFindingContent = Boolean(f);
+  const resourceDetailHref = f?.resourceId
+    ? buildResourceDetailHref(f.resourceId)
+    : null;
+  const overviewStatusExtended = f?.statusExtended;
+  const showOverviewStatusExtended = Boolean(overviewStatusExtended);
 
   const handleOpenCompliance = async (framework: string) => {
     if (!complianceScanId || resolvingFramework) {
@@ -754,6 +766,21 @@ export function ResourceDetailDrawerContent({
                 )}
               </div>
             </div>
+
+            {resourceDetailHref && (
+              <div className="border-border-neutral-secondary flex justify-end border-t pt-3">
+                <Button variant="link" size="link-sm" asChild>
+                  <Link
+                    href={resourceDetailHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Resource
+                    <ExternalLink className="size-3" />
+                  </Link>
+                </Button>
+              </div>
+            )}
           </>
         )}
 
@@ -794,7 +821,13 @@ export function ResourceDetailDrawerContent({
                       </Card>
                     )}
                     {checkMeta.description && (
-                      <div className="border-default-200 flex flex-col gap-1 border-b pb-4">
+                      <div
+                        className={cn(
+                          "flex flex-col gap-1",
+                          showOverviewStatusExtended &&
+                            "border-default-200 border-b pb-4",
+                        )}
+                      >
                         <span className="text-text-neutral-secondary text-sm font-semibold">
                           Description:
                         </span>
@@ -803,16 +836,17 @@ export function ResourceDetailDrawerContent({
                         </MarkdownContainer>
                       </div>
                     )}
-                    {showOverviewFindingContent && f?.statusExtended && (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-text-neutral-secondary text-sm font-semibold">
-                          Status Extended:
-                        </span>
-                        <p className="text-text-neutral-primary text-sm">
-                          {f.statusExtended}
-                        </p>
-                      </div>
-                    )}
+                    {showOverviewFindingContent &&
+                      showOverviewStatusExtended && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-text-neutral-secondary text-sm font-semibold">
+                            Status Extended:
+                          </span>
+                          <p className="text-text-neutral-primary text-sm">
+                            {overviewStatusExtended}
+                          </p>
+                        </div>
+                      )}
                   </Card>
                 )}
 
