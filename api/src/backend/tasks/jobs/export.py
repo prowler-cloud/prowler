@@ -55,6 +55,7 @@ from prowler.lib.outputs.compliance.iso27001.iso27001_kubernetes import (
 )
 from prowler.lib.outputs.compliance.iso27001.iso27001_m365 import M365ISO27001
 from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws import AWSKISAISMSP
+from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_azure import AzureKISAISMSP
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
@@ -110,6 +111,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
         (lambda name: name == "c5_azure", AzureC5),
         (lambda name: name.startswith("csa_"), AzureCSA),
+        (lambda name: name.startswith("kisa"), AzureKISAISMSP),
     ],
     "gcp": [
         (lambda name: name.startswith("cis_"), GCPCIS),
