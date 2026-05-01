@@ -22,18 +22,21 @@ class rbac_minimize_pv_creation_access(Check):
                         subjects_bound_roles[key] = (subject, set())
                     subjects_bound_roles[key][1].add(crb.roleRef.name)
 
+        cluster_roles_by_name = {
+            cr.metadata.name: cr for cr in rbac_client.cluster_roles.values()
+        }
         for _, (subject, role_names) in subjects_bound_roles.items():
             report = Check_Report_Kubernetes(metadata=self.metadata(), resource=subject)
             report.resource_name = f"{subject.kind}:{subject.name}"
             report.resource_id = f"{subject.kind}/{subject.name}"
             report.status = "PASS"
             report.status_extended = f"User or group '{subject.name}' does not have access to create PersistentVolumes."
-            for cr in rbac_client.cluster_roles.values():
-                if cr.metadata.name in role_names:
-                    if is_rule_allowing_permissions(cr.rules, resources, verbs):
-                        report.status = "FAIL"
-                        report.status_extended = f"User or group '{subject.name}' has access to create PersistentVolumes."
-                        break
+            for role_name in role_names:
+                cr = cluster_roles_by_name.get(role_name)
+                if cr and is_rule_allowing_permissions(cr.rules, resources, verbs):
+                    report.status = "FAIL"
+                    report.status_extended = f"User or group '{subject.name}' has access to create PersistentVolumes."
+                    break
             findings.append(report)
 
         return findings
