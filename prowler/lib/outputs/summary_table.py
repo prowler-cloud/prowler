@@ -9,6 +9,7 @@ from prowler.config.config import (
     json_asff_file_suffix,
     json_ocsf_file_suffix,
     orange_color,
+    sarif_file_suffix,
 )
 from prowler.lib.logger import logger
 from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
@@ -99,6 +100,14 @@ def display_summary_table(
         elif provider.type == "image":
             entity_type = "Image"
             audited_entities = ", ".join(provider.images)
+        elif provider.type == "vercel":
+            entity_type = "Team"
+            if provider.identity.team:
+                audited_entities = (
+                    f"{provider.identity.team.name} ({provider.identity.team.slug})"
+                )
+            else:
+                audited_entities = provider.identity.username or "Personal Account"
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):
@@ -198,6 +207,10 @@ def display_summary_table(
             if "html" in output_options.output_modes:
                 print(
                     f" - HTML: {output_directory}/{output_filename}{html_file_suffix}"
+                )
+            if "sarif" in output_options.output_modes:
+                print(
+                    f" - SARIF: {output_directory}/{output_filename}{sarif_file_suffix}"
                 )
 
         else:

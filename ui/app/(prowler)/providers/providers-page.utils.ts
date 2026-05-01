@@ -1,4 +1,3 @@
-import { getProviderGroups } from "@/actions/manage-groups";
 import {
   listOrganizationsSafe,
   listOrganizationUnitsSafe,
@@ -13,10 +12,8 @@ import {
   FilterEntity,
   FilterOption,
   OrganizationListResponse,
-  OrganizationResource,
   OrganizationUnitListResponse,
   OrganizationUnitResource,
-  ProviderGroupsResponse,
   ProvidersApiResponse,
   SearchParamsProps,
 } from "@/types";
@@ -52,11 +49,6 @@ interface ProvidersAccountsViewInput {
   searchParams: SearchParamsProps;
 }
 
-interface ProvidersTableLocalFilters {
-  organizationIds: string[];
-  providerGroupIds: string[];
-}
-
 function hasActionError(result: unknown): result is {
   error: unknown;
 } {
@@ -86,56 +78,16 @@ async function resolveActionResult<T>(
   }
 }
 
-const createProvidersFilters = ({
-  isCloud,
-  organizations,
-  providerGroups,
-}: {
-  isCloud: boolean;
-  organizations: OrganizationResource[];
-  providerGroups: ProviderGroupsResponse["data"];
-}): FilterOption[] => {
-  // Provider type and account selection are handled by ProviderTypeSelector
-  // and AccountsSelector. These filters go in the expandable "More Filters" section.
-  const filters: FilterOption[] = [];
-
-  if (isCloud && organizations.length > 0) {
-    filters.push({
-      key: PROVIDERS_PAGE_FILTER.ORGANIZATION,
-      labelCheckboxGroup: "Organizations",
-      values: organizations.map((organization) => organization.id),
+const createProvidersFilters = (): FilterOption[] => {
+  return [
+    {
+      key: PROVIDERS_PAGE_FILTER.STATUS,
+      labelCheckboxGroup: "Status",
+      values: ["true", "false"],
+      valueLabelMapping: PROVIDERS_STATUS_MAPPING,
       index: 0,
-      valueLabelMapping: organizations.map((organization) => ({
-        [organization.id]: {
-          name: organization.attributes.name,
-          uid: organization.attributes.external_id,
-        },
-      })),
-    });
-  }
-
-  filters.push({
-    key: PROVIDERS_PAGE_FILTER.ACCOUNT_GROUP,
-    labelCheckboxGroup: "Account Groups",
-    values: providerGroups.map((providerGroup) => providerGroup.id),
-    index: 1,
-    valueLabelMapping: providerGroups.map((providerGroup) => ({
-      [providerGroup.id]: {
-        name: providerGroup.attributes.name,
-        uid: providerGroup.id,
-      },
-    })),
-  });
-
-  filters.push({
-    key: PROVIDERS_PAGE_FILTER.STATUS,
-    labelCheckboxGroup: "Status",
-    values: ["true", "false"],
-    valueLabelMapping: PROVIDERS_STATUS_MAPPING,
-    index: 2,
-  });
-
-  return filters;
+    },
+  ];
 };
 
 const createProviderGroupLookup = (
@@ -191,55 +143,6 @@ const enrichProviders = (
       ) ?? [],
     hasSchedule: scheduledProviderIds?.has(provider.id) ?? false,
   }));
-};
-
-const getFilterValues = (
-  searchParams: SearchParamsProps,
-  key: string,
-): string[] => {
-  const rawValue = searchParams[`filter[${key}]`];
-
-  if (!rawValue) {
-    return [];
-  }
-
-  const filterValue = Array.isArray(rawValue) ? rawValue.join(",") : rawValue;
-  return filterValue
-    .split(",")
-    .map((value) => value.trim())
-    .filter(Boolean);
-};
-
-/**
- * Filters providers client-side by organization and provider group.
- *
- * The API's ProviderFilter does not support `organization_id__in` or
- * `provider_group_id__in`, so these filters must be applied after fetching.
- * TODO: Move to server-side when API adds support for these filter params.
- */
-const applyLocalFilters = ({
-  organizationIds,
-  providerGroupIds,
-  providers,
-}: ProvidersTableLocalFilters & { providers: ProvidersProviderRow[] }) => {
-  return providers.filter((provider) => {
-    const organizationId =
-      provider.relationships.organization?.data?.id ?? null;
-    const matchesOrganization =
-      organizationIds.length === 0 ||
-      organizationIds.includes(organizationId ?? "");
-    const providerGroupIdsForProvider =
-      provider.relationships.provider_groups.data.map(
-        (providerGroup) => providerGroup.id,
-      );
-    const matchesGroup =
-      providerGroupIds.length === 0 ||
-      providerGroupIds.some((providerGroupId) =>
-        providerGroupIdsForProvider.includes(providerGroupId),
-      );
-
-    return matchesOrganization && matchesGroup;
-  });
 };
 
 const createOrganizationRow = ({
@@ -527,17 +430,6 @@ export async function loadProvidersAccountsViewData({
   const { encodedSort } = extractSortAndKey(searchParams);
   const { filters, query } = extractFiltersAndQuery(searchParams);
 
-  const localFilters = {
-    organizationIds: getFilterValues(
-      searchParams,
-      PROVIDERS_PAGE_FILTER.ORGANIZATION,
-    ),
-    providerGroupIds: getFilterValues(
-      searchParams,
-      PROVIDERS_PAGE_FILTER.ACCOUNT_GROUP,
-    ),
-  };
-
   const providerFilters = { ...filters };
 
   // Map provider_type__in (used by ProviderTypeSelector) to provider__in (API param)
@@ -548,12 +440,7 @@ export async function loadProvidersAccountsViewData({
       providerTypeFilter;
   }
 
-  // Remove client-side-only filters before sending to the API.
-  // TODO: Move organization and account group filtering to server-side
-  // when API adds support for `organization_id__in` and `provider_group_id__in`.
   delete providerFilters[`filter[${PROVIDERS_PAGE_FILTER.PROVIDER_TYPE}]`];
-  delete providerFilters[`filter[${PROVIDERS_PAGE_FILTER.ORGANIZATION}]`];
-  delete providerFilters[`filter[${PROVIDERS_PAGE_FILTER.ACCOUNT_GROUP}]`];
 
   const emptyOrganizationsResponse: OrganizationListResponse = {
     data: [],
@@ -565,7 +452,6 @@ export async function loadProvidersAccountsViewData({
   const [
     providersResponse,
     allProvidersResponse,
-    providerGroupsResponse,
     scansResponse,
     organizationsResponse,
     organizationUnitsResponse,
@@ -582,7 +468,6 @@ export async function loadProvidersAccountsViewData({
     // Unfiltered fetch for ProviderTypeSelector — only needs distinct types;
     // TODO: Replace with a dedicated lightweight endpoint when available.
     resolveActionResult(getProviders({ pageSize: 500 })),
-    resolveActionResult(getProviderGroups({ page: 1, pageSize: 500 })),
     // Fetch active scheduled scans to determine daily schedule per provider
     resolveActionResult(
       getScans({
@@ -605,24 +490,19 @@ export async function loadProvidersAccountsViewData({
     scansResponse?.data ?? [],
   );
 
-  const providers = applyLocalFilters({
-    ...localFilters,
-    providers: enrichProviders(providersResponse, scheduledProviderIds),
-  });
+  const orgs = organizationsResponse?.data ?? [];
+  const ous = organizationUnitsResponse?.data ?? [];
+  const providers = enrichProviders(providersResponse, scheduledProviderIds);
 
   const rows = buildProvidersTableRows({
     isCloud,
-    organizations: organizationsResponse?.data ?? [],
-    organizationUnits: organizationUnitsResponse?.data ?? [],
+    organizations: orgs,
+    organizationUnits: ous,
     providers,
   });
 
   return {
-    filters: createProvidersFilters({
-      isCloud,
-      organizations: organizationsResponse?.data ?? [],
-      providerGroups: providerGroupsResponse?.data ?? [],
-    }),
+    filters: createProvidersFilters(),
     metadata: providersResponse?.meta,
     providers: allProvidersResponse?.data ?? [],
     rows,

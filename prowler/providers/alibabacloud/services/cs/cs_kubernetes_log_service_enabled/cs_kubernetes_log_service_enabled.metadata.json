@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "ALIYUN::CS::ManagedKubernetesCluster",
   "ResourceGroup": "container",
-  "Description": "**Alibaba Cloud Log Service** is a real-time data logging service that supports collection, shipping, search, storage, and analysis for container and audit logs in **Kubernetes Engine clusters**. When enabled, Log Service automatically collects `kube-apiserver` audit logs, ingress visiting logs, and standard output/error logs from containerized processes. These logs are stored in a dedicated, persistent datastore and are essential for operational visibility, security monitoring, and compliance auditing.",
-  "Risk": "Without **Log Service** enabled, there is no centralized collection of container logs, audit trails, or cluster events. This severely impairs the ability to perform **incident investigation**, **compliance auditing**, and **security monitoring**. Attackers could operate undetected within the cluster, as there would be no audit trail of API server calls, pod lifecycle events, or container output. The lack of logging directly impacts the **confidentiality** and **integrity** of the cluster by removing a critical detection and forensic capability.",
+  "Description": "**Alibaba Cloud Log Service** supports collection, search, storage, and analysis for container and audit logs in **Kubernetes Engine clusters**. When enabled, it automatically collects `kube-apiserver` audit logs, ingress logs, and stdout/stderr from containers. These logs are stored persistently and are essential for operational visibility, security monitoring, and compliance auditing.",
+  "Risk": "Without **Log Service**, there is no centralized collection of container logs or cluster events, impairing **incident investigation**, **compliance auditing**, and **security monitoring**. Attackers could operate undetected with no audit trail of API server calls or pod events, impacting cluster **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/ack/",

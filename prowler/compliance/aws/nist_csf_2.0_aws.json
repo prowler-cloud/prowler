@@ -705,6 +705,8 @@
         "iam_root_mfa_enabled",
         "iam_no_root_access_key",
         "iam_user_console_access_unused",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
         "iam_user_accesskey_unused",
         "iam_user_two_active_access_key",
         "iam_root_credentials_management_enabled",
@@ -774,6 +776,8 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "iam_administrator_access_with_mfa",
         "iam_group_administrator_access_policy",
         "iam_user_administrator_access_policy",
@@ -784,6 +788,7 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_customer_unattached_policy_no_administrative_privileges",
         "accessanalyzer_enabled_without_findings",
+        "bedrock_full_access_policy_attached",
         "eventbridge_bus_cross_account_access",
         "eventbridge_bus_exposed",
         "iam_policy_no_full_access_to_cloudtrail",
@@ -805,6 +810,7 @@
       "Checks": [
         "vpc_subnet_different_az",
         "vpc_subnet_separate_private_public",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_peering_routing_tables_with_least_privilege",
         "ec2_networkacl_unused",

@@ -18,6 +18,8 @@ env:
   UI_WORKING_DIR: ./ui
   IMAGE_NAME: prowler-ui
 
+permissions: {}
+
 jobs:
   ui-dockerfile-lint:
     if: github.repository == 'prowler-cloud/prowler'
@@ -27,6 +29,13 @@ jobs:
       contents: read
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -35,7 +44,7 @@ jobs:
 
       - name: Check if Dockerfile changed
         id: dockerfile-changed
-        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: ui/Dockerfile
 
@@ -65,6 +74,26 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            registry-1.docker.io:443
+            auth.docker.io:443
+            production.cloudflare.docker.com:443
+            registry.npmjs.org:443
+            dl-cdn.alpinelinux.org:443
+            fonts.googleapis.com:443
+            fonts.gstatic.com:443
+            api.github.com:443
+            mirror.gcr.io:443
+            check.trivy.dev:443
+            get.trivy.dev:443
+            release-assets.githubusercontent.com:443
+            objects.githubusercontent.com:443
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -73,7 +102,7 @@ jobs:
 
       - name: Check for UI changes
         id: check-changes
-        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: ui/**
           files_ignore: |
@@ -83,11 +112,11 @@ jobs:
 
       - name: Set up Docker Buildx
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Build UI container for ${{ matrix.arch }}
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ${{ env.UI_WORKING_DIR }}
           target: prod

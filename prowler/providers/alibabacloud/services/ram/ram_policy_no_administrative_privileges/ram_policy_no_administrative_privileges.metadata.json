@@ -9,7 +9,7 @@
   "Severity": "critical",
   "ResourceType": "ALIYUN::RAM::ManagedPolicy",
   "ResourceGroup": "IAM",
-  "Description": "**Alibaba Cloud RAM** policies represent permissions that can be granted to users, groups, or roles. It is recommended to follow the principle of **least privilege** by granting only the permissions required to perform specific tasks. RAM policies with `\"Effect\": \"Allow\"`, `\"Action\": \"*\"`, and `\"Resource\": \"*\"` should be avoided as they grant full administrative access to all resources and services.",
+  "Description": "**Alibaba Cloud RAM** policies grant permissions to users, groups, or roles. Follow the principle of **least privilege** by granting only required permissions. Policies with `\"Effect\": \"Allow\"`, `\"Action\": \"*\"`, and `\"Resource\": \"*\"` should be avoided as they grant full administrative access to all resources.",
   "Risk": "RAM policies granting **full administrative privileges** (`*:*`) expose all cloud resources to potentially unwanted actions. If such a policy is attached to a compromised user, group, or role, an attacker gains unrestricted access to create, modify, or delete any resource, severely impacting the **confidentiality**, **integrity**, and **availability** of the entire Alibaba Cloud environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [

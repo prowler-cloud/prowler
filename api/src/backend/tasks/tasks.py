@@ -11,16 +11,17 @@ from django_celery_beat.models import PeriodicTask
 from tasks.jobs.attack_paths import (
     attack_paths_scan,
     can_provider_run_attack_paths_scan,
-    db_utils as attack_paths_db_utils,
 )
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
     backfill_finding_group_summaries,
     backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
-    backfill_scan_category_summaries,
-    backfill_scan_resource_group_summaries,
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
 )
 from tasks.jobs.connection import (
     check_integration_connection,
@@ -45,7 +46,11 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
-from tasks.jobs.report import generate_compliance_reports_job
+from tasks.jobs.report import (
+    STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    _cleanup_stale_tmp_output_directories,
+    generate_compliance_reports_job,
+)
 from tasks.jobs.scan import (
     aggregate_attack_surface,
     aggregate_daily_severity,
@@ -53,6 +58,7 @@ from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
+    reset_ephemeral_resource_findings_count,
     update_provider_compliance_scores,
 )
 from tasks.utils import (
@@ -71,6 +77,7 @@ from api.v1.serializers import ScanTaskSerializer
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
+
 
 logger = get_task_logger(__name__)
 
@@ -153,6 +160,13 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             generate_outputs_task.si(
                 scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
             ),
+            # post-scan task — runs in the parallel group so a
+            # failure cannot cascade into reports or integrations. Its only
+            # prerequisite is that perform_prowler_scan has committed
+            # ResourceScanSummary, which is true by the time this chain fires.
+            reset_ephemeral_resource_findings_count_task.si(
+                tenant_id=tenant_id, scan_id=scan_id
+            ),
         ),
         group(
             # Use optimized task that generates both reports with shared queries
@@ -168,9 +182,24 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
     ).apply_async()
 
     if can_provider_run_attack_paths_scan(tenant_id, provider_id):
-        perform_attack_paths_scan_task.apply_async(
+        # Row is normally created upstream, so this is a safeguard so we can attach the task id below
+        attack_paths_scan = attack_paths_db_utils.retrieve_attack_paths_scan(
+            tenant_id, scan_id
+        )
+        if attack_paths_scan is None:
+            attack_paths_scan = attack_paths_db_utils.create_attack_paths_scan(
+                tenant_id, scan_id, provider_id
+            )
+
+        # Persist the Celery task id so the periodic cleanup can revoke scans stuck in SCHEDULED
+        result = perform_attack_paths_scan_task.apply_async(
             kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
         )
+
+        if attack_paths_scan and result:
+            attack_paths_db_utils.set_attack_paths_scan_task_id(
+                tenant_id, attack_paths_scan.id, result.task_id
+            )
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -373,7 +402,8 @@ class AttackPathsScanRLSTask(RLSTask):
     SDK initialization, or Neo4j configuration errors during setup).
     """
 
-    def on_failure(self, exc, task_id, args, kwargs, _einfo):
+    def on_failure(self, exc, task_id, args, kwargs, _einfo):  # noqa: ARG002
+        del args  # Required by Celery's Task.on_failure signature; not used.
         tenant_id = kwargs.get("tenant_id")
         scan_id = kwargs.get("scan_id")
 
@@ -406,6 +436,11 @@ def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
     )
 
 
+@shared_task(name="attack-paths-cleanup-stale-scans", queue="attack-paths-scans")
+def cleanup_stale_attack_paths_scans_task():
+    return cleanup_stale_attack_paths_scans()
+
+
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))
 def delete_tenant_task(tenant_id: str):
     return delete_tenant(pk=tenant_id)
@@ -434,6 +469,19 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         scan_id (str): The scan identifier.
         provider_id (str): The provider_id id to be used in generating outputs.
     """
+    try:
+        _cleanup_stale_tmp_output_directories(
+            DJANGO_TMP_OUTPUT_DIRECTORY,
+            max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+            exclude_scan=(tenant_id, scan_id),
+        )
+    except Exception as error:
+        logger.warning(
+            "Skipping stale tmp cleanup before output generation for scan %s: %s",
+            scan_id,
+            error,
+        )
+
     # Check if the scan has findings
     if not ScanSummary.objects.filter(scan_id=scan_id).exists():
         logger.info(f"No findings found for scan {scan_id}")
@@ -653,9 +701,9 @@ def backfill_finding_group_summaries_task(tenant_id: str, days: int = None):
     return backfill_finding_group_summaries(tenant_id=tenant_id, days=days)
 
 
-@shared_task(name="backfill-scan-category-summaries", queue="backfill")
+@shared_task(name="scan-category-summaries", queue="overview")
 @handle_provider_deletion
-def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
+def aggregate_scan_category_summaries_task(tenant_id: str, scan_id: str):
     """
     Backfill ScanCategorySummary for a completed scan.
 
@@ -665,12 +713,12 @@ def backfill_scan_category_summaries_task(tenant_id: str, scan_id: str):
         tenant_id (str): The tenant identifier.
         scan_id (str): The scan identifier.
     """
-    return backfill_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
+    return aggregate_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(name="backfill-scan-resource-group-summaries", queue="backfill")
+@shared_task(name="scan-resource-group-summaries", queue="overview")
 @handle_provider_deletion
-def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
+def aggregate_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
     """
     Backfill ScanGroupSummary for a completed scan.
 
@@ -680,7 +728,7 @@ def backfill_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
         tenant_id (str): The tenant identifier.
         scan_id (str): The scan identifier.
     """
-    return backfill_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
+    return aggregate_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(name="backfill-provider-compliance-scores", queue="backfill")
@@ -752,12 +800,119 @@ def aggregate_daily_severity_task(tenant_id: str, scan_id: str):
     return aggregate_daily_severity(tenant_id=tenant_id, scan_id=scan_id)
 
 
+@shared_task(name="scan-reset-ephemeral-resources", queue="overview")
+@handle_provider_deletion
+def reset_ephemeral_resource_findings_count_task(tenant_id: str, scan_id: str):
+    """Reset failed_findings_count for resources missing from a completed full-scope scan.
+
+    Failures are swallowed and returned as a status: this task lives inside the
+    post-scan group, and Celery propagates group-member exceptions into the next
+    chain step — meaning a crash here would block compliance reports and
+    integrations. The reset is purely cosmetic (UI sort optimization), so a
+    bad run is logged and absorbed rather than allowed to cascade.
+    """
+    try:
+        return reset_ephemeral_resource_findings_count(
+            tenant_id=tenant_id, scan_id=scan_id
+        )
+    except Exception as exc:  # noqa: BLE001 — intentionally broad
+        logger.exception(
+            f"reset_ephemeral_resource_findings_count failed for scan {scan_id}: {exc}"
+        )
+        return {
+            "status": "failed",
+            "scan_id": str(scan_id),
+            "reason": str(exc),
+        }
+
+
 @shared_task(base=RLSTask, name="scan-finding-group-summaries", queue="overview")
 @set_tenant(keep_tenant=True)
 @handle_provider_deletion
 def aggregate_finding_group_summaries_task(tenant_id: str, scan_id: str):
     """Aggregate findings by check_id into FindingGroupDailySummary for finding-groups endpoint."""
     return aggregate_finding_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(
+    base=RLSTask, name="reaggregate-all-finding-group-summaries", queue="overview"
+)
+@set_tenant(keep_tenant=True)
+def reaggregate_all_finding_group_summaries_task(tenant_id: str):
+    """Reaggregate every pre-aggregated summary table for this tenant.
+
+    Mirrors the unbounded scope of `mute_historical_findings_task`: that task
+    rewrites every Finding row whose UID matches a mute rule, with no time
+    limit. To keep the pre-aggregated tables consistent with that update,
+    this task re-runs the same per-scan aggregation pipeline that scan
+    completion runs on the latest completed scan of every (provider, day)
+    pair, rebuilding the tables that power the read endpoints:
+
+      - `ScanSummary` and `DailySeveritySummary` -> `/overviews/findings`,
+        `/overviews/findings-severity`, `/overviews/services`.
+      - `FindingGroupDailySummary` -> `/finding-groups` and
+        `/finding-groups/latest`.
+      - `ScanGroupSummary` -> `/overviews/resource-groups` (resource
+        inventory).
+      - `ScanCategorySummary` -> `/overviews/categories`.
+      - `AttackSurfaceOverview` -> `/overviews/attack-surfaces`.
+
+    Per-scan pipelines are dispatched in parallel via a Celery group so
+    wallclock scales with the worker pool.
+    """
+    completed_scans = list(
+        Scan.objects.filter(
+            tenant_id=tenant_id,
+            state=StateChoices.COMPLETED,
+            completed_at__isnull=False,
+        )
+        .order_by("-completed_at")
+        .values("id", "completed_at", "provider_id")
+    )
+
+    # Keep the latest scan per (provider, day) pair so the daily summary row
+    # the aggregator writes is the most recent snapshot of that day for that
+    # provider. Iterating from most recent to oldest means the first scan we
+    # see for a given key wins.
+    latest_scans: dict[tuple, str] = {}
+    for scan in completed_scans:
+        key = (scan["provider_id"], scan["completed_at"].date())
+        if key not in latest_scans:
+            latest_scans[key] = str(scan["id"])
+
+    scan_ids = list(latest_scans.values())
+    if scan_ids:
+        logger.info(
+            "Reaggregating overview/finding summaries for %d scans (provider x day)",
+            len(scan_ids),
+        )
+        # DailySeveritySummary reads from ScanSummary, so ScanSummary must be
+        # recomputed first; the other aggregators read Finding directly and
+        # can run in parallel with the severity step.
+        group(
+            chain(
+                perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
+                group(
+                    aggregate_daily_severity_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_finding_group_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_scan_resource_group_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_scan_category_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_attack_surface_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                ),
+            )
+            for scan_id in scan_ids
+        ).apply_async()
+    return {"scans_reaggregated": len(scan_ids)}
 
 
 @shared_task(base=RLSTask, name="lighthouse-connection-check")
@@ -926,12 +1081,16 @@ def jira_integration_task(
 @handle_provider_deletion
 def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Optimized task to generate ThreatScore, ENS, NIS2, and CSA CCM reports with shared queries.
+    Optimized task to generate ThreatScore, ENS, NIS2, CSA CCM and CIS reports with shared queries.
 
     This task is more efficient than running separate report tasks because it reuses database queries:
     - Provider object fetched once (instead of multiple times)
     - Requirement statistics aggregated once (instead of multiple times)
     - Can reduce database load by up to 50-70%
+
+    CIS emits a single PDF per run: the one matching the highest CIS version
+    available for the scan's provider, picked dynamically from
+    ``Compliance.get_bulk`` (no hard-coded provider → version mapping).
 
     Args:
         tenant_id (str): The tenant identifier.
@@ -949,6 +1108,7 @@ def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: 
         generate_ens=True,
         generate_nis2=True,
         generate_csa=True,
+        generate_cis=True,
     )
 
 

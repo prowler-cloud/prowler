@@ -18,9 +18,6 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: read
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -36,6 +33,8 @@ env:
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
   PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-api
 
+permissions: {}
+
 jobs:
   setup:
     if: github.repository == 'prowler-cloud/prowler'
@@ -43,7 +42,14 @@ jobs:
     timeout-minutes: 5
     outputs:
       short-sha: ${{ steps.set-short-sha.outputs.short-sha }}
+    permissions:
+      contents: read
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+
       - name: Calculate short SHA
         id: set-short-sha
         run: echo "short-sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
@@ -55,7 +61,14 @@ jobs:
     timeout-minutes: 5
     outputs:
       message-ts: ${{ steps.slack-notification.outputs.ts }}
+    permissions:
+      contents: read
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -94,24 +107,50 @@ jobs:
       packages: write
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            _http._tcp.deb.debian.org:443
+            aka.ms:443
+            auth.docker.io:443
+            cdn.powershellgallery.com:443
+            dc.services.visualstudio.com:443
+            debian.map.fastlydns.net:80
+            files.pythonhosted.org:443
+            github.com:443
+            powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
+            production.cloudflare.docker.com:443
+            pypi.org:443
+            registry-1.docker.io:443
+            release-assets.githubusercontent.com:443
+            www.powershellgallery.com:443
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
+      - name: Pin prowler SDK to latest master commit
+        if: github.event_name == 'push'
+        run: |
+          LATEST_SHA=$(git ls-remote https://github.com/prowler-cloud/prowler.git refs/heads/master | cut -f1)
+          sed -i "s|prowler-cloud/prowler.git@master|prowler-cloud/prowler.git@${LATEST_SHA}|" api/pyproject.toml
+
       - name: Login to DockerHub
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Build and push API container for ${{ matrix.arch }}
         id: container-push
         if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           push: true
@@ -126,16 +165,25 @@ jobs:
     needs: [setup, container-build-push]
     if: always() && needs.setup.result == 'success' && needs.container-build-push.result == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            release-assets.githubusercontent.com:443
+            registry-1.docker.io:443
+            auth.docker.io:443
+            production.cloudflare.docker.com:443
       - name: Login to DockerHub
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
       - name: Create and push manifests for push event
         if: github.event_name == 'push'
@@ -178,7 +226,14 @@ jobs:
     needs: [setup, notify-release-started, container-build-push, create-manifest]
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -221,6 +276,13 @@ jobs:
       contents: read
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+
       - name: Trigger API deployment
         uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
         with:

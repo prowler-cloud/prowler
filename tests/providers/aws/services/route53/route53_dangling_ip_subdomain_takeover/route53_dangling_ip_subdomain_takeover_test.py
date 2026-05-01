@@ -3,7 +3,12 @@ from unittest import mock
 from boto3 import client, resource
 from moto import mock_aws
 
-from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
+from tests.providers.aws.utils import (
+    AWS_REGION_EU_WEST_1,
+    AWS_REGION_US_EAST_1,
+    AWS_REGION_US_WEST_2,
+    set_mocked_aws_provider,
+)
 
 HOSTED_ZONE_NAME = "testdns.aws.com."
 
@@ -309,7 +314,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1],
+            expected_checks=["route53_dangling_ip_subdomain_takeover"],
+        )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -387,7 +395,10 @@ class Test_route53_dangling_ip_subdomain_takeover:
         from prowler.providers.aws.services.ec2.ec2_service import EC2
         from prowler.providers.aws.services.route53.route53_service import Route53
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1],
+            expected_checks=["route53_dangling_ip_subdomain_takeover"],
+        )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -426,3 +437,342 @@ class Test_route53_dangling_ip_subdomain_takeover:
                         result[0].resource_arn
                         == f"arn:{aws_provider.identity.partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
                     )
+
+    @mock_aws
+    def test_hosted_zone_eip_cross_region(self):
+        """EIP in us-west-2 referenced by Route53 A record should PASS even when auditing us-east-1 only."""
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
+        ec2_west = client("ec2", region_name=AWS_REGION_US_WEST_2)
+
+        address = "17.5.7.3"
+        ec2_west.allocate_address(Domain="vpc", Address=address)
+
+        zone_id = conn.create_hosted_zone(
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
+        )["HostedZone"]["Id"]
+
+        record_set_name = "foo.bar.testdns.aws.com."
+        record_ip = address
+        conn.change_resource_record_sets(
+            HostedZoneId=zone_id,
+            ChangeBatch={
+                "Changes": [
+                    {
+                        "Action": "CREATE",
+                        "ResourceRecordSet": {
+                            "Name": record_set_name,
+                            "Type": "A",
+                            "ResourceRecords": [{"Value": record_ip}],
+                        },
+                    }
+                ]
+            },
+        )
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.route53.route53_service import Route53
+
+        # Audit only us-east-1 but enable both regions so Route53 finds the cross-region EIP
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=[AWS_REGION_US_EAST_1],
+            enabled_regions={AWS_REGION_US_EAST_1, AWS_REGION_US_WEST_2},
+            expected_checks=["route53_dangling_ip_subdomain_takeover"],
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
+                new=Route53(aws_provider),
+            ):
+                with mock.patch(
+                    "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.ec2_client",
+                    new=EC2(aws_provider),
+                ):
+                    from prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover import (
+                        route53_dangling_ip_subdomain_takeover,
+                    )
+
+                    check = route53_dangling_ip_subdomain_takeover()
+                    result = check.execute()
+
+                    assert len(result) == 1
+                    assert result[0].status == "PASS"
+                    assert (
+                        result[0].status_extended
+                        == f"Route53 record {record_ip} (name: {record_set_name}) in Hosted Zone {HOSTED_ZONE_NAME} is not a dangling IP."
+                    )
+
+    @mock_aws
+    def test_hosted_zone_cname_to_existing_s3_website_bucket(self):
+        bucket_name = "my-static-site"
+        s3 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        s3.create_bucket(Bucket=bucket_name)
+
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
+        zone_id = conn.create_hosted_zone(
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
+        )["HostedZone"]["Id"]
+
+        record_set_name = "www.testdns.aws.com."
+        cname_target = f"{bucket_name}.s3-website-us-east-1.amazonaws.com"
+        conn.change_resource_record_sets(
+            HostedZoneId=zone_id,
+            ChangeBatch={
+                "Changes": [
+                    {
+                        "Action": "CREATE",
+                        "ResourceRecordSet": {
+                            "Name": record_set_name,
+                            "Type": "CNAME",
+                            "TTL": 60,
+                            "ResourceRecords": [{"Value": cname_target}],
+                        },
+                    }
+                ]
+            },
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.route53.route53_service import Route53
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
+                new=Route53(aws_provider),
+            ):
+                with mock.patch(
+                    "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.ec2_client",
+                    new=EC2(aws_provider),
+                ):
+                    with mock.patch(
+                        "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.s3_client",
+                        new=S3(aws_provider),
+                    ):
+                        from prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover import (
+                            route53_dangling_ip_subdomain_takeover,
+                        )
+
+                        check = route53_dangling_ip_subdomain_takeover()
+                        result = check.execute()
+
+                        assert len(result) == 1
+                        assert result[0].status == "PASS"
+                        assert (
+                            result[0].status_extended
+                            == f"Route53 CNAME {record_set_name} in Hosted Zone {HOSTED_ZONE_NAME} points to S3 website endpoint of bucket {bucket_name} which exists in the account."
+                        )
+                        assert (
+                            result[0].resource_id
+                            == zone_id.replace("/hostedzone/", "")
+                            + "/"
+                            + record_set_name
+                            + "/"
+                            + cname_target
+                        )
+                        assert (
+                            result[0].resource_arn
+                            == f"arn:{aws_provider.identity.partition}:route53:::hostedzone/{zone_id.replace('/hostedzone/', '')}"
+                        )
+
+    @mock_aws
+    def test_hosted_zone_cname_to_dangling_s3_website_bucket(self):
+        # Bucket name referenced by the CNAME is NOT created in the account
+        # (simulates a deleted bucket whose name is now claimable by anyone)
+        missing_bucket = "deleted-static-site"
+
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
+        zone_id = conn.create_hosted_zone(
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
+        )["HostedZone"]["Id"]
+
+        record_set_name = "www.testdns.aws.com."
+        cname_target = f"{missing_bucket}.s3-website-us-east-1.amazonaws.com"
+        conn.change_resource_record_sets(
+            HostedZoneId=zone_id,
+            ChangeBatch={
+                "Changes": [
+                    {
+                        "Action": "CREATE",
+                        "ResourceRecordSet": {
+                            "Name": record_set_name,
+                            "Type": "CNAME",
+                            "TTL": 60,
+                            "ResourceRecords": [{"Value": cname_target}],
+                        },
+                    }
+                ]
+            },
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.route53.route53_service import Route53
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
+                new=Route53(aws_provider),
+            ):
+                with mock.patch(
+                    "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.ec2_client",
+                    new=EC2(aws_provider),
+                ):
+                    with mock.patch(
+                        "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.s3_client",
+                        new=S3(aws_provider),
+                    ):
+                        from prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover import (
+                            route53_dangling_ip_subdomain_takeover,
+                        )
+
+                        check = route53_dangling_ip_subdomain_takeover()
+                        result = check.execute()
+
+                        assert len(result) == 1
+                        assert result[0].status == "FAIL"
+                        assert (
+                            result[0].status_extended
+                            == f"Route53 CNAME {record_set_name} in Hosted Zone {HOSTED_ZONE_NAME} points to S3 website endpoint of bucket {missing_bucket} which does not exist in the account and can lead to a subdomain takeover attack."
+                        )
+                        assert (
+                            result[0].resource_id
+                            == zone_id.replace("/hostedzone/", "")
+                            + "/"
+                            + record_set_name
+                            + "/"
+                            + cname_target
+                        )
+
+    @mock_aws
+    def test_hosted_zone_cname_to_dangling_s3_website_bucket_dot_format(self):
+        # Newer regions use the dot-style endpoint:
+        # <bucket>.s3-website.<region>.amazonaws.com
+        missing_bucket = "deleted-eu-site"
+
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
+        zone_id = conn.create_hosted_zone(
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
+        )["HostedZone"]["Id"]
+
+        record_set_name = "eu.testdns.aws.com."
+        cname_target = (
+            f"{missing_bucket}.s3-website.{AWS_REGION_EU_WEST_1}.amazonaws.com"
+        )
+        conn.change_resource_record_sets(
+            HostedZoneId=zone_id,
+            ChangeBatch={
+                "Changes": [
+                    {
+                        "Action": "CREATE",
+                        "ResourceRecordSet": {
+                            "Name": record_set_name,
+                            "Type": "CNAME",
+                            "TTL": 60,
+                            "ResourceRecords": [{"Value": cname_target}],
+                        },
+                    }
+                ]
+            },
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.route53.route53_service import Route53
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
+                new=Route53(aws_provider),
+            ):
+                with mock.patch(
+                    "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.ec2_client",
+                    new=EC2(aws_provider),
+                ):
+                    with mock.patch(
+                        "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.s3_client",
+                        new=S3(aws_provider),
+                    ):
+                        from prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover import (
+                            route53_dangling_ip_subdomain_takeover,
+                        )
+
+                        check = route53_dangling_ip_subdomain_takeover()
+                        result = check.execute()
+
+                        assert len(result) == 1
+                        assert result[0].status == "FAIL"
+                        assert missing_bucket in result[0].status_extended
+
+    @mock_aws
+    def test_hosted_zone_cname_to_non_s3_target_is_ignored(self):
+        # CNAMEs that do not target an S3 website endpoint must not yield a finding
+        conn = client("route53", region_name=AWS_REGION_US_EAST_1)
+        zone_id = conn.create_hosted_zone(
+            Name=HOSTED_ZONE_NAME, CallerReference=str(hash("foo"))
+        )["HostedZone"]["Id"]
+
+        conn.change_resource_record_sets(
+            HostedZoneId=zone_id,
+            ChangeBatch={
+                "Changes": [
+                    {
+                        "Action": "CREATE",
+                        "ResourceRecordSet": {
+                            "Name": "blog.testdns.aws.com.",
+                            "Type": "CNAME",
+                            "TTL": 60,
+                            "ResourceRecords": [{"Value": "external-host.example.com"}],
+                        },
+                    }
+                ]
+            },
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.route53.route53_service import Route53
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.route53_client",
+                new=Route53(aws_provider),
+            ):
+                with mock.patch(
+                    "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.ec2_client",
+                    new=EC2(aws_provider),
+                ):
+                    with mock.patch(
+                        "prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover.s3_client",
+                        new=S3(aws_provider),
+                    ):
+                        from prowler.providers.aws.services.route53.route53_dangling_ip_subdomain_takeover.route53_dangling_ip_subdomain_takeover import (
+                            route53_dangling_ip_subdomain_takeover,
+                        )
+
+                        check = route53_dangling_ip_subdomain_takeover()
+                        result = check.execute()
+
+                        assert len(result) == 0

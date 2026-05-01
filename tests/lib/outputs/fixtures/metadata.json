@@ -1,10 +1,10 @@
 {
   "Categories": [
-    "cat-one",
-    "cat-two"
+    "encryption",
+    "logging"
   ],
   "CheckID": "iam_user_accesskey_unused",
-  "CheckTitle": "Ensure Access Keys unused are disabled",
+  "CheckTitle": "Access Keys unused should be disabled",
   "CheckType": [
     "Software and Configuration Checks"
   ],
@@ -25,14 +25,14 @@
     "othercheck1",
     "othercheck2"
   ],
-  "Description": "Ensure Access Keys unused are disabled",
+  "Description": "Access Keys unused should be disabled",
   "Notes": "additional information",
   "Provider": "aws",
   "RelatedTo": [
     "othercheck3",
     "othercheck4"
   ],
-  "RelatedUrl": "https://serviceofficialsiteorpageforthissubject",
+  "RelatedUrl": "",
   "Remediation": {
     "Code": {
       "CLI": "cli command or URL to the cli command location.",
@@ -42,7 +42,7 @@
     },
     "Recommendation": {
       "Text": "Run sudo yum update and cross your fingers and toes.",
-      "Url": "https://myfp.com/recommendations/dangerous_things_and_how_to_fix_them.html"
+      "Url": "https://hub.prowler.com/check/iam_user_accesskey_unused"
     }
   },
   "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",

@@ -5,8 +5,6 @@ import { Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { VerticalDotsIcon } from "@/components/icons";
-import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownDangerZone,
@@ -36,13 +34,7 @@ export function DataTableRowActions<RoleProps>({
         <DeleteRoleForm roleId={roleId} setIsOpen={setIsDeleteOpen} />
       </Modal>
       <div className="relative flex items-center justify-end gap-2">
-        <ActionDropdown
-          trigger={
-            <Button variant="ghost" size="icon-sm" className="rounded-full">
-              <VerticalDotsIcon className="text-slate-400" />
-            </Button>
-          }
-        >
+        <ActionDropdown>
           <ActionDropdownItem
             icon={<Pencil />}
             label="Edit Role"

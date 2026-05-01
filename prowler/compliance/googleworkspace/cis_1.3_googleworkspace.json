@@ -1,0 +1,1930 @@
+{
+  "Framework": "CIS",
+  "Name": "CIS Google Workspace Foundations Benchmark v1.3.0",
+  "Version": "1.3",
+  "Provider": "GoogleWorkspace",
+  "Description": "The CIS Google Workspace Foundations Benchmark provides prescriptive guidance for establishing a secure configuration posture for Google Workspace. This benchmark covers Directory, Devices, Apps, Security, Reporting, and Rules configurations.",
+  "Requirements": [
+    {
+      "Id": "1.1.1",
+      "Description": "Ensure more than one Super Admin account exists",
+      "Checks": [
+        "directory_super_admin_count"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Directory",
+          "SubSection": "1.1 Users",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Having more than one Super Admin account is needed primarily so that a single point of failure can be avoided. Also, for larger organizations, having multiple Super Admins can be useful for workload balancing purposes.",
+          "RationaleStatement": "From a security point of view, having only a single Super Admin Account can be problematic if this user were unavailable for an extended period of time. Also, Super Admin accounts should never be shared amongst multiple users.",
+          "ImpactStatement": "There should be no user impact, but Administrators should have a normal (low privilege) and an Administrative (high privilege) account.",
+          "RemediationProcedure": "Create at least one additional account with a Super Admin role. NOTE: A new account should be created vs adding this role to an existing account since Administration tasks should be done through separate Admin accounts.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Directory and click on Users, this will show a list of all users 3. Click on + Add a filter, select Admin role, check the Super admin box, and then select Apply 4. The list of Users displayed will only be those with the Super Admin role 5. Make sure more than one (1) user is listed",
+          "AdditionalInformation": "",
+          "DefaultValue": "All Google Workspace tenants will have one Super Admin initially.",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "1.1.2",
+      "Description": "Ensure no more than 4 Super Admin accounts exist",
+      "Checks": [
+        "directory_super_admin_count"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Directory",
+          "SubSection": "1.1 Users",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Having more than one Super Admin account is needed primarily so that a single point of failure can be avoided, but having too many should be avoided.",
+          "RationaleStatement": "From a security point of view, having a large number of Super Admin accounts is a bad practice. In general, all users should be assigned the least privileges needed to do their job. This includes Administrators since not everyone that needs to \"Administer Something\" needs to be a Super Admin. Google Workspaces provides many predefined Administration Roles and also allows the creation of Custom Roles with very granular permission selection.",
+          "ImpactStatement": "There should be no user impact, but Administrators should have a normal (low privilege) and an Administrative (high privilege) account.",
+          "RemediationProcedure": "Reduce the number of accounts with a \"Super Admin\" role.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Directory and click on Users, this will show a list of all users 3. Click on + Add a filter, select Admin role, check the Super admin box, and then select Apply 4. The list of Users displayed will only be those with the Super Admin role 5. Make sure no more than four (4) users are listed",
+          "AdditionalInformation": "",
+          "DefaultValue": "All Google Workspace tenants will have one Super Admin initially.",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "1.1.3",
+      "Description": "Ensure super admin accounts are used only for super admin activities",
+      "Checks": [
+        "directory_super_admin_only_admin_roles"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Directory",
+          "SubSection": "1.1 Users",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Super admin accounts have access to all features in the Google Admin console and Admin API and can manage every aspect of your organization's account. Super admins also have full access to all users' calendars and event details. It is recommended to give each super administrator two accounts. One for their super admin account and a second account for daily activities. Users should only sign in to a super admin account to perform super admin tasks, such as setting up 2-Step Verification (2SV), managing billing and user licenses, or helping another admin recover their account. Super administrators should use a separate, non-admin account for day- to-day activities. Super admins should sign in as needed to do specific tasks and then sign out. Leaving super admin accounts sign-in can increase exposure to phishing attacks.",
+          "RationaleStatement": "Use the super admin account only when needed. Delegate administrator tasks to user accounts with limited admin roles. Use the least privilege approach, where each user has access to the resources and tools needed for their typical tasks. For example, you could grant an admin permissions to create user accounts and reset passwords, but not let them delete user accounts.",
+          "ImpactStatement": "Super admin users will have to switch accounts as well as utilize login/logout functionality when performing administrative tasks.",
+          "RemediationProcedure": "For every Super admin that is also a Delegated admin account, either create a Delegated admin account for the user of elevate or their existing non-admin account to a Delegated admin account.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Directory and click on Users, this will show a list of all users 3. Click on + Add a filter, select Admin role, check the Super admin box, and then select Apply 4. The list of Users displayed will only be those with the Super Admin role 5. Click on + Add a filter, select Admin role, check the Delegated admin box, and then select Apply 6. Verify that there are no users in both the Super admin and Delegated admin roles",
+          "AdditionalInformation": "",
+          "DefaultValue": "N/A",
+          "References": "https://support.google.com/a/answer/179832?hl=en"
+        }
+      ]
+    },
+    {
+      "Id": "1.2.1.1",
+      "Description": "Ensure directory data access is externally restricted",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "1 Directory",
+          "SubSection": "1.2 Directory Settings",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configure Google Workspace's external directory sharing to prevent unrestricted directory data access.",
+          "RationaleStatement": "If your organization uses third-party apps that integrate with your Google services, you control how much Directory information the external apps can access. If you allow directory access, your users have a better experience with external apps. For example, when they use a third-party mail app, they want to find domain contacts and have email addresses automatically complete. The app needs access to Directory data to make this happen. However, this has the ability to share ALL domain AND public data with the connected third-party app. Public data and authenticated user basic profile fields - Share publicly visible domain profile data with external apps and APIs. Also share the authenticated user's name, photo, and email address to enable Google Sign-In if the appropriate scopes are granted. Other non-public profile fields for the authenticated user aren't shared. All the non-public profile information of other users in the domain aren't shared. Domain and public data - (Default) Share all Directory information that's shared with your domain and public data. This information includes profile information for users in your domain, shared external contacts, and Google+ profile names and photos.",
+          "ImpactStatement": "The External directory sharing setting applies only to the following APIs and the Apps Scripts or third-party Marketplace apps that use those APIs: Google People API, Google CardDAV API, Google Contacts API v3. The setting applies only to third-party apps, such as iOS Mail and iOS Contacts (when enrolled on an iOS device via Add Account and then Google), third-party Contacts apps (on Android). The setting doesn't apply to Google products, including mobile apps, such as the following: Gmail, Contacts (on Android), Inbox, Meet, and other Google mobile apps; iOS Mail and iOS Contacts using Google Sync (when enrolled on an iOS device through Add Account and then Exchange); Workspace Sync for Microsoft Outlook.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Open the collapsed menu via \"hamburger button \\ 3 horizontal lines\" 3. Under Directory, select Directory settings 4. Under Sharing settings, select External Directory sharing 5. Select Public data and authenticated user basic profile fields",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Open the collapsed menu via \"hamburger button \\ 3 horizontal lines\" 3. Under Directory, select Directory settings 4. Under Sharing settings, select External Directory sharing 5. Ensure Domain and public data is not selected 6. Select Save",
+          "AdditionalInformation": "",
+          "DefaultValue": "• External Directory sharing = Domain and public data",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1.1.1",
+      "Description": "Ensure external sharing options for primary calendars are configured",
+      "Checks": [
+        "calendar_external_sharing_primary_calendar"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.1 Calendar",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Control how much calendar information users in your organization can share externally.",
+          "RationaleStatement": "Prevent data leakage by restricting the amount of information that is externally viewable when a user shares their calendar with someone external to your organization.",
+          "ImpactStatement": "Once you limit external sharing for your organization, users can't exceed these limits when sharing individual events. For example, if you limit your organization's external sharing to Free/Busy, events with Public visibility are only shared as Free/Busy. External mobile users who previously synced events may keep seeing restricted details. That access stops when their device is wiped and re-synced. If you lower the external sharing level, people outside your organization may lose access to calendars they could previously see.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select External sharing options for primary calendars 6. Select Only free/busy information (hide event details) 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select External sharing options for primary calendars 6. Ensure Only free/busy information (hide event details) is selected",
+          "AdditionalInformation": "",
+          "DefaultValue": "External sharing options for primary calendars is Only free/busy information (hide event details)",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1.1.2",
+      "Description": "Ensure internal sharing options for primary calendars are configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.1 Calendar",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Control how much calendar information users in your organization can share internally.",
+          "RationaleStatement": "In general, not everyone in the organization needs to know the schedule details of everyone else (operational security). Free/busy indication is enough for most people.",
+          "ImpactStatement": "This will be the default for the user's primary calendar. The user can override this setting to allow other specific users greater visibility of their calendar.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select Internal sharing options for primary calendars 6. Select Only free/busy information (hide event details) 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select Internal sharing options for primary calendars 6. Ensure Only free/busy information (hide event details) is selected",
+          "AdditionalInformation": "",
+          "DefaultValue": "Internal sharing options for primary calendars is Share all information",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1.1.3",
+      "Description": "Ensure external invitation warnings for Google Calendar are configured",
+      "Checks": [
+        "calendar_external_invitations_warning"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.1 Calendar",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configure Google Calendar to warn users when inviting guest outside your domain.",
+          "RationaleStatement": "When your users create a Google Calendar event that includes one or more guests from outside of your domain, they are prompted to confirm whether it’s OK to include external guests in the event invitation, assisting in the prevention of unintentional data leakage.",
+          "ImpactStatement": "Users will be prompted to allow the inclusion of external guests in an event invitation.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select External Invitations 6. Set Warn users when inviting guests outside of the domain to checked 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Sharing settings, select External invitations 6. Ensure Warn users when inviting guests outside of the domain is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Warn users when inviting guests outside of the domain is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1.2.1",
+      "Description": "Ensure external sharing options for secondary calendars are configured",
+      "Checks": [
+        "calendar_external_sharing_secondary_calendar"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.1 Calendar",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Control how much calendar information users in your organization can share externally.",
+          "RationaleStatement": "Prevent data leakage by restricting the amount of information is externally viewable when a user shares their calendar with someone external to your organization.",
+          "ImpactStatement": "Once you limit external sharing for your organization, users can't exceed these limits when sharing individual events. For example, if you limit your organization's external sharing to Free/Busy, events with Public visibility are only shared as Free/Busy. External mobile users who previously synced events may keep seeing restricted details. That access stops when their device is wiped and re-synced. If you lower the external sharing level, people outside your organization may lose access to calendars they could previously see.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under General settings, select External sharing options for secondary calendars 6. Select Only free/busy information (hide event details) 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under General settings, select External sharing options for secondary calendars 6. Ensure Only free/busy information (hide event details) is selected",
+          "AdditionalInformation": "",
+          "DefaultValue": "External sharing options for secondary calendars is Share all information, but outsiders cannot change calendars",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1.2.2",
+      "Description": "Ensure internal sharing options for secondary calendars are configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.1 Calendar",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Control how much calendar information users in your organization can share internally.",
+          "RationaleStatement": "In general, not everyone in the organization needs to know the schedule details of everyone else (operational security). Free/busy indication is enough for most people.",
+          "ImpactStatement": "This will be the default for the user's secondary calendars. The user can override this setting to allow other specific users greater visibility of their calendars.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under General settings, select Internal sharing options for secondary calendars 6. Select Only free/busy information (hide event details) 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under General settings, select Internal sharing options for secondary calendars 6. Ensure Only free/busy information (hide event details) is selected",
+          "AdditionalInformation": "",
+          "DefaultValue": "Internal sharing options for secondary calendars is Share all information",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1.3.1",
+      "Description": "Ensure calendar web offline is disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.1 Calendar",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Limit who is allowed offline calendar access.",
+          "RationaleStatement": "When enabled, users can turn on offline use for each computer they use. Data is stored on the computer until offline use is turned off by the user. In this case, the organization can lose control of where its data is stored (for this user). Care should be taken regarding which users and groups have this capability enabled.",
+          "ImpactStatement": "Users will not be able to access their calendars offline.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Advanced settings, select Calendar web offline 6. Set Allow using Calendar on the web when offline to unchecked 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Calendar 5. Under Advanced settings, select Calendar web offline 6. Ensure Allow using Calendar on the web when offline is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow using Calendar on the web when offline is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.1.1.1",
+      "Description": "Ensure users are warned when they share a file outside their domain",
+      "Checks": [
+        "drive_external_sharing_warn_users"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Warn the user when they try and share a file and/or shared drive externally.",
+          "RationaleStatement": "The user may not realize the potential account is external to the organization. Providing a warning allows the user an opportunity to know this and possibly reassess this sharing.",
+          "ImpactStatement": "None, except an additional warning. Sharing can still occur.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Drive and Docs 4. Select Sharing Settings 5. Select Sharing Options 6. Under Sharing outside of <Company> 7. Set ON - Files owned by users in <Company> can be shared outside of <Company>. This applies to files in all shared drives as well. to checked. Also, set the sub-setting For files owned by users in <Company> warn when sharing outside of <Company> to checked. 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Drive and Docs 4. Select Sharing Settings 5. Select Sharing Options 6. Under Sharing outside of <Company> 7. Ensure ON - Files owned by users in <Company> can be shared outside of <Company>. This applies to files in all shared drives as well. is checked. Also, ensure the sub-setting For files owned by users in <Company> warn when sharing outside of <Company> is checked.",
+          "AdditionalInformation": "",
+          "DefaultValue": "For files owned by users in <Company> warn when sharing outside of <Company> is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.1.1.2",
+      "Description": "Ensure users cannot publish files to the web or make visible to the world as public or unlisted",
+      "Checks": [
+        "drive_publishing_files_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "You should control the publishing of documents to the web or making them visable to the world as public or unlisted.",
+          "RationaleStatement": "Attackers will often attempt to expose sensitive information to external entities through sharing, and restricting the methods that your users can share documents with will reduce that surface area. This setting is only applicable if ON - Files owned by users in <Company> can be shared outside of <Company>. This applies to files in all shared drives as well is selected, but should be configured as described below to prevent unintentional document publishing.",
+          "ImpactStatement": "Enabling this feature will prevent users from publishing documents on the web or making them visible to the world as public or unlisted files.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Sharing options 6. Under Sharing outside of <Company> - ON - Files owned by users in <Company> can be shared outside of <Company>. This applies to files in all shared drives as well, set When sharing outside of <Company> is allowed, users in <Company> can make files and published web content visible to anyone with the link to unchecked 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Sharing options 6. Under Sharing outside of <Company> - ON - Files owned by users in <Company> can be shared outside of <Company>. This applies to files in all shared drives as well, ensure When sharing outside of <Company> is allowed, users in <Company> can make files and published web content visible to anyone with the link is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "When sharing outside of <Company> is allowed, users in <Company> can make files and published web content visible to anyone with the link is Checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.1.1.3",
+      "Description": "Ensure document sharing is being controlled by domain with allowlists",
+      "Checks": [
+        "drive_sharing_allowlisted_domains"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "You should control sharing of documents to external domains by either blocking domains or only allowing sharing with specific named domains.",
+          "RationaleStatement": "Attackers will often attempt to expose sensitive information to external entities through sharing, and restricting the domains that your users can share documents with will reduce that surface area.",
+          "ImpactStatement": "Enabling this feature will prevent users from sharing documents with domains outside of the organization unless allowed.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Sharing options 6. Under Sharing outside of <Company>, select ALLOWLISTED DOMAINS - Files owned by users in <Company> can be shared with Google Accounts in compatible allowlisted domains. 7. Set Warn when files owned by users or shared drives in <Company> are shared with users in allowlisted domains to checked 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Sharing options 6. Under Sharing outside of <Company>, ensure ALLOWLISTED DOMAINS - Files owned by users in <Company> can be shared with Google Accounts in compatible allowlisted domains. is selected 7. Ensure Warn when files owned by users or shared drives in <Company> are shared with users in allowlisted domains is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Sharing outside of <Company> is ON - Files owned by users in <Company> can be shared outside of <Company>. This applies to files in all shared drives as well.",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.1.1.4",
+      "Description": "Ensure users are warned when they share a file with users in an allowlisted domain",
+      "Checks": [
+        "drive_warn_sharing_with_allowlisted_domains"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Warn the user when they try and share a file and/or shared drive with users in an allowlisted domain.",
+          "RationaleStatement": "The user may not realize the potential account is external to the organization. Providing a warning allows the user an opportunity to know this and possibly reassess this sharing.",
+          "ImpactStatement": "None, except an additional warning. Sharing can still occur.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Drive and Docs 4. Select Sharing Settings 5. Select Sharing Options 6. Under Sharing outside of <Company> 7. Set ALLOWLISTED DOMAINS - Files owned by users or shared drives in BMDT-Group can be shared with Google accounts in compatible allowlisted domains. to checked. Also, set the sub-setting Warn when files owned by users or shared drives in <Company> are shared with users in allowlisted domains to checked. 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Drive and Docs 4. Select Sharing Settings 5. Select Sharing Options 6. Under Sharing outside of <Company> 7. Ensure ALLOWLISTED DOMAINS - Files owned by users or shared drives in BMDT-Group can be shared with Google accounts in compatible allowlisted domains is checked. Also, ensure the sub-setting Warn when files owned by users or shared drives in <Company> are shared with users in allowlisted domains is checked.",
+          "AdditionalInformation": "",
+          "DefaultValue": "For files owned by users in <Company> warn when sharing outside of <Company> is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.1.1.5",
+      "Description": "Ensure Access Checker is configured to limit file access",
+      "Checks": [
+        "drive_access_checker_recipients_only"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "When a user shares a file via a Google product other than Docs or Drive (e.g. by pasting a link in Gmail), Google can check that the recipients have access. If not, when possible, Google will ask the user to pick how they want to share the file.",
+          "RationaleStatement": "In general, access should be restricted to the smallest group possible. In this case recipients only.",
+          "ImpactStatement": "Only recipients can access files. Recipients cannot share access with others by forwarding the email/link.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Drive and Docs 4. Select Sharing Settings 5. Select Sharing Options 6. Under Access Checker 7. Set Recipients only. to checked 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Drive and Docs 4. Select Sharing Settings 5. Select Sharing Options 6. Under Access Checker 7. Ensure Recipients only. is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Recipients only, suggested target audience, or public (no Google account required). is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.1.1.6",
+      "Description": "Ensure only users inside your organization can distribute content externally",
+      "Checks": [
+        "drive_internal_users_distribute_content"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "You should control who is allowed to distribute organizational content to shared drives owned by another organization.",
+          "RationaleStatement": "Sharing and collaboration are key; however, only your users should have the authority over where company content is shared with to prevent unauthorized disclosures of information.",
+          "ImpactStatement": "Only people in your organization with Manager access to a shared drive can move files from that shared drive to a Drive location in a different organization. In addition, users in the selected organizational unit or group can copy content from their My Drive to a shared drive owned by a different organization.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Sharing options 6. Under Distributing content outside of <Company>, select - Only users in <Company> 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Sharing options 6. Under Distributing content outside of <Company>, ensure Only users in <Company> is selected",
+          "AdditionalInformation": "",
+          "DefaultValue": "Distributing content outside of <Company> is Anyone",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.1.2.1",
+      "Description": "Ensure users can create new shared drives",
+      "Checks": [
+        "drive_shared_drive_creation_allowed"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "All users should have the ability to create new shared drives.",
+          "RationaleStatement": "By default, when a user account is deleted all the data in their personal drive is deleted as well. By allowing any user to create new shared drives aids in preventing data loss when user accounts are deleted.",
+          "ImpactStatement": "Disabling this feature will prevent users from creating new shared drives.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Shared drive creation 6. Set Prevent users in <Company> from creating new shared drives to unchecked 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Under Sharing settings, select Shared drive creation 6. Ensure Prevent users in <Company> from creating new shared drives is un-checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Prevent users in <Company> from creating new shared drives is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.1.2.2",
+      "Description": "Ensure manager access members cannot modify shared drive settings",
+      "Checks": [
+        "drive_shared_drive_managers_cannot_override"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Only administrators should be able to modify shared drive settings.",
+          "RationaleStatement": "Allowing manager access members to override or modify shared drive settings can allow intentional and unintentional data access by unauthorized users.",
+          "ImpactStatement": "Disabling this feature will prevent manager access members from modifying shared drive settings, requiring administrators to perform settings modifications as required.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Sharing settings 6. Under Shared drive creation, set Allow members with manager access to override the settings below to unchecked 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Sharing settings 6. Under Shared drive creation, ensure Allow members with manager access to override the settings below is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow members with manager access to override the settings below is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.1.2.3",
+      "Description": "Ensure shared drive file access is restricted to members only",
+      "Checks": [
+        "drive_shared_drive_members_only_access"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Shared drive file access should be restricted to that shared drive's members",
+          "RationaleStatement": "Preventing unauthorized users from access sensitive data is paramount in preventing unauthorized or unintentional information disclosures.",
+          "ImpactStatement": "Disabling this feature will prevent shared drive non-members from accessing content in shared drives where they are not a member.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Sharing settings 6. Under Shared drive creation, set Allow people who aren't shared drive members to be added to files to unchecked 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Sharing settings 6. Under Shared drive creation, ensure Allow people who aren't shared drive members to be added to files is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow people who aren't shared drive members to be added to files is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.1.2.4",
+      "Description": "Ensure viewers and commenters ability to download, print, and copy files is disabled",
+      "Checks": [
+        "drive_shared_drive_disable_download_print_copy"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "limit what viewers/commenters on a shared document can do with it.",
+          "RationaleStatement": "In many cases when sharing a document it might be fine for the users to do what they want with the document on the shared drive (Download, Print, etc.). In more restricted environments these capabilities may need to be prevented (Protected Intellectual property, Personally Identifiable Information, etc.).",
+          "ImpactStatement": "Users of this shared drive will be restricted to only reading and commenting on the existing files.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Sharing settings 6. Under Shared drive creation, set Allow viewers and commenters to download, print, and copy files to unchecked 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Sharing settings 6. Under Shared drive creation, ensure Allow viewers and commenters to download, print, and copy files is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow viewers and commenters to download, print, and copy files is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.2.1",
+      "Description": "Ensure offline access to documents is disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Prevent documents from being locally accessible on an unconnected device.",
+          "RationaleStatement": "This setting prevents an organization's files from being stored locally, thus limiting data loss issues if the device is lost or stolen.",
+          "ImpactStatement": "Copies of recent files are only synced and saved on devices if you've defined a managed policy to do so. NOTE: All users will lose access to offline documents on all devices if managed devices policies are not set. NOTE: Setting up policies to control offline access on individual devices is outside the scope of this Benchmark. Additional information om doing this for various device types can be found here.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Features and Applications 6. Select Offline 7. Set Control offline access using device policies. to checked 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Features and Applications 6. Select Offline 7. Ensure Control offline access using device policies is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Control offline access using device policies is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.2.2",
+      "Description": "Ensure desktop access to Drive is disabled",
+      "Checks": [
+        "drive_desktop_access_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Prevent documents from being locally accessible on an unconnected device.",
+          "RationaleStatement": "This setting prevents an organization's files from being stored locally, thus limiting data loss issues if the device is lost or stolen. NOTE: The Google Drive desktop application has its own way of handling \"Offline\" files and does not obey the Drive and Doc > Offline > Control offline access using divide policies setting. Not allowing Google Drive for desktop on the device will prevent this channel.",
+          "ImpactStatement": "The end user will not be able to use Google Drive for desktop and its convenient integration into the Windows file explorer.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Features and Applications 6. Select Google Drive for desktop 7. Set Allow Google Drive for desktop in your organization to unchecked 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Features and Applications 6. Select Google Drive for desktop 7. Ensure Allow Google Drive for desktop in your organization is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow Google Drive for desktop in your organization is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.2.2.3",
+      "Description": "Ensure Add-Ons is disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.2 Drive and Docs",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Prevent users to install Google Docs add-ons from add-ons store. NOTE: This setting controls add-on access from outside your organization.",
+          "RationaleStatement": "Allowing uses to install unapproved Add-Ons puts the organization at risk. If users need a specific Add-On this can be handled on a case by case basis as the need, and the add-on, is approved.",
+          "ImpactStatement": "The end user will not be able to use Google Drive for desktop and its convenient integration into the Windows file explorer.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Features and Applications 6. Select Add-Ons 7. Set Allow users to install Google Docs add-ons from add-ons store. to unchecked 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Drive and Docs 5. Select Features and Applications 6. Select Add-Ons 7. Ensure Allow users to install Google Docs add-ons from add-ons store. is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow users to install Google Docs add-ons from add-ons store. is checked",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F4530135&assistant_id=generic- unu&product_context=4530135&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.1.1",
+      "Description": "Ensure users cannot delegate access to their mailbox",
+      "Checks": [
+        "gmail_mail_delegation_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Mail delegation allows the delegate to read, send, and delete messages on their behalf. For example, a manager can delegate Gmail access to another person in their organization, such as an administrative assistant.",
+          "RationaleStatement": "Only administrators should be able to delegate access to a user's mailboxes.",
+          "ImpactStatement": "Existing delegations will be hidden, when this feature is disabled.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under User Settings - Mail delegation, set Let users delegate access to their mailbox to other users in the domain to unchecked 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under User Settings - Mail delegation, ensure Let users delegate access to their mailbox to other users in the domain is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Let users delegate access to their mailbox to other users in the domain is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.1.2",
+      "Description": "Ensure offline access to Gmail is disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Disables the user's ability to utilize various Gmail functions (read, write, search, delete, and label email messages) while not connected to the internet.",
+          "RationaleStatement": "Prevents the organization's data (user's email) from being copied to remote computers.",
+          "ImpactStatement": "Users will need internet access to use Gmail.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Gmail 4. Select User Settings 5. SelectGmail web offline 6. Set Enable Gmail web offline to unchecked 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Gmail 4. Select User Settings 5. Under Gmail web offline 6. Ensure Enable Gmail web offline is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Enable Gmail web offline is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.2.1",
+      "Description": "Ensure that DKIM is enabled for all mail enabled domains",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "DKIM adds an encrypted signature to the header of all outgoing messages. Email servers that get signed messages use DKIM to decrypt the message header, and verify the message was not changed after it was sent.",
+          "RationaleStatement": "Spoofing is a common unauthorized use of email, so some email servers require DKIM to prevent email spoofing.",
+          "ImpactStatement": "There should be no impact of setting up DKIM however, organizations should ensure appropriate setup to ensure continuous mail-flow.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Authenticate email, select - Generate new record 6. Under Select DKIM key bit length, select the appropriate key bit length 2048 is recommended if supported 7. Under Prefix selector (optional), enter the appropriate prefix selector 8. Use the text at TXT record value to update the DNS record at your domain host 9. Select Start Authentication",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Authenticate email, ensure a DKIM record exists for each mail enabled domain",
+          "AdditionalInformation": "",
+          "DefaultValue": "None",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.2.2",
+      "Description": "Ensure the SPF record is configured for all mail enabled domains",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "For all the email domains configured in Google Workspace, a corresponding Sender Policy Framework (SPF) record should be created. NOTE: There are a number of ways SPF can be configured, this document presents a most basic method. For more information on setting up SPF for Google Workspace please refer to the Google documentation. • How SPF protects against spoofing and spam • Define your SPF record—Basic setup",
+          "RationaleStatement": "SPF records allow Gmail and other mail systems to know where messages from your domains are allowed to originate. This information can be used by that system to determine how to treat the message based on if it is being spoofed or is valid.",
+          "ImpactStatement": "There should be minimal impact of setting up SPF records however, organizations should ensure proper SPF record setup as email could be flagged as spam if SPF is not set up appropriately.",
+          "RemediationProcedure": "Configure the DNS record for each domain. • If all email in your domain is sent from and received by Google Gmail, add the following TXT record for each domain: v=spf1 include:_spf.google.com ~all NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).",
+          "AuditProcedure": "Check the DNS records for each domain. 1. Use a Domain Name System (DNS) lookup tool to review the current configuration for your domain (DNS Records). This information can be discovered in a variety of ways: o Reviewing the DNS Record information at your domain registrar (GoDaddy, etc.) o Using an OS based nslookup tool on your workstation OS o Using Google Dig tool available from the Google Admin Toolbox site (Link: Dig) 2. Using the chosen tool, enter your email domain name (ex. domain1.com) 3. In the results displayed, ensure that a TXT Record with the value of v=spf1 include:_spf.google.com ~all exists and designates Google Gmail as a authorized sender.",
+          "AdditionalInformation": "",
+          "DefaultValue": "None",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.2.3",
+      "Description": "Ensure the DMARC record is configured for all mail enabled domains",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "For all email domains configured in Google Workspace, a corresponding Domain-Based Message Authentication, Reporting and Conformance (DMARC) record should be created. NOTE: There are a number of ways DMARC can be configured, this document presents a most basic method. For more information on setting up DMARC for Google Workspace please refer to the Google documentation. • Help prevent spoofing and spam with DMARC • Tutorial: Recommended DMARC rollout",
+          "RationaleStatement": "DMARC works with Sender Policy Framework (SPF) and Domain Keys Identified Mail (DKIM) to authenticate mail senders and ensure that destination email systems trust messages sent from your domain. Spammers can spoof your domain or organization to send fake messages that impersonate your organization. DMARC tells receiving mail servers what to do when they get a message that appears to be from your organization, but doesn't pass authentication checks, or doesn’t meet the authentication requirements",
+          "ImpactStatement": "There should be minimal impact of setting up DMARC records however, organizations should ensure proper DMARC record setup as email could be flagged as spam if DMARC is not set up appropriately.",
+          "RemediationProcedure": "Configure the DNS record for each domain. 1. If all email in your domain is sent from and received by Google Gmail, add the following TXT record for the domain: v=DMARC1; p=none; rua=mailto:<report@domain1.com> NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).",
+          "AuditProcedure": "Check the DNS records for each domain. 1. Use a Domain Name System (DNS) lookup tool to review the current configuration for your domain (DNS Records). This information can be discovered in a variety of ways: o Reviewing the DNS Record information at your domain registrar (GoDaddy, etc.) o Using an OS based nslookup tool on your workstation OS o Preferred: Using Google Dig tool available from the Google Admin Toolbox site (Link: Dig) 2. Using the chosen tool, enter your email domain name (ex. domain1.com) 3. In the results displayed, ensure that a TXT Record with the value of v=DMARC1; p=none; rua=mailto:<report@domain1.com> exists. This designates Google Gmail as an authorized sender. NOTE: The p=none sets DMARC to non-enforcing. This is a relaxed DMARC policy that lets you start getting reports without risking messages from your domain being rejected or marked as spam by receiving servers. Start with a none policy that only monitors email flow, and then eventually change to a policy",
+          "AdditionalInformation": "",
+          "DefaultValue": "None",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.3.1",
+      "Description": "Enable quarantine admin notifications for Gmail",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Quarantines can help prevent spam, minimize data loss, and protect confidential information. They can also help moderate message attachments so users don’t send, open, or click something they shouldn’t.",
+          "RationaleStatement": "Admins should be notified periodically when messages are quarantined so they can take the appropriate actions.",
+          "ImpactStatement": "Admins will begin receiving quarantine notifications as emails are quarantined.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Manage quarantines, set Notify periodically when messages are quarantined to checked As required, give appropriate users the Access Admin Quarantine and\\or Access restricted quarantine roles",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Manage quarantines, ensure each quarantine has Notify periodically when messages are quarantined is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Notify periodically when messages are quarantined is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.1.1",
+      "Description": "Ensure protection against encrypted attachments from untrusted senders is enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "As a Google Workspace administrator, you can protect incoming mail against phishing and harmful software (malware). You can also choose what action to take based on the type of threat detected.",
+          "RationaleStatement": "You should protect your users from potentially malicious attachments.",
+          "ImpactStatement": "Users will be warned when they receive an encrypted attachment from an untrusted sender.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Attachments, set Protect against encrypted attachments from untrusted senders to checked 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Attachments, ensure Protect against encrypted attachments from untrusted senders is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Protect against encrypted attachments from untrusted senders is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.1.2",
+      "Description": "Ensure protection against attachments with scripts from untrusted senders is enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "As a Google Workspace administrator, you can protect incoming mail against phishing and harmful software (malware). You can also choose what action to take based on the type of threat detected.",
+          "RationaleStatement": "You should protect your users from potentially malicious attachments.",
+          "ImpactStatement": "Users will be warned when they receive an attachments with scripts from an untrusted sender.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Attachments, set Protect against attachments with scripts from untrusted senders to checked 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Attachments, ensure Protect against attachments with scripts from untrusted senders is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Protect against attachments with scripts from untrusted senders is enabled is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.1.3",
+      "Description": "Ensure protection against anomalous attachment types in emails is enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "As a Google Workspace administrator, you can protect incoming mail against phishing and harmful software (malware). You can also choose what action to take based on the type of threat detected.",
+          "RationaleStatement": "You should protect your users from potentially malicious attachments.",
+          "ImpactStatement": "Users will be warned when they receive an anomalous attachment.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Attachments, set Protect against anomalous attachment types in emails to checked 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Attachments, ensure Protect against anomalous attachment types in emails is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Protect against anomalous attachment types in emails is Unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.2.1",
+      "Description": "Ensure link identification behind shortened URLs is enabled",
+      "Checks": [
+        "gmail_shortener_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Identify links behind short URLs, and display a warning when you click links to untrusted domains.",
+          "RationaleStatement": "You should protect your users from potentially malicious links.",
+          "ImpactStatement": "Users will be warned when they click links to untrusted domains.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Links and external images, set Identify links behind shortened URLs to checked 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Links and external images, ensure Identify links behind shortened URLs is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Identify links behind shortened URLs is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.2.2",
+      "Description": "Ensure scan linked images for malicious content is enabled",
+      "Checks": [
+        "gmail_external_image_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Scan linked images for malicious content, and display a warning when you click links to untrusted domains.",
+          "RationaleStatement": "You should protect your users from potentially malicious links.",
+          "ImpactStatement": "Users will be warned when they click links to untrusted domains.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Links and external images, set Scan linked images to checked 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Links and external images, ensure Scan linked images is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Scan linked images is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.2.3",
+      "Description": "Ensure warning prompt is shown for any click on links to untrusted domains",
+      "Checks": [
+        "gmail_untrusted_link_warnings_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Display a warning when you click links to untrusted domains.",
+          "RationaleStatement": "You should protect your users from potentially malicious links.",
+          "ImpactStatement": "Users will be warned when they click links to untrusted domains.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Links and external images, set Show warning prompt for any click on links to untrusted domains is checked 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Links and external images, ensure Show warning prompt for any click on links to untrusted domains is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Show warning prompt for any click on links to untrusted domains is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.3.1",
+      "Description": "Ensure protection against domain spoofing based on similar domain names is enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Moves domain spoofing emails to spam folder.",
+          "RationaleStatement": "You should protect your users from domain spoofing emails.",
+          "ImpactStatement": "Domain spoofed emails will be moved to a user's spam folder.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against domain spoofing based on similar domain names to checked 6. Set Action to Move email to spam 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, ensure Protect against domain spoofing based on similar domain names is checked 6. Ensure Action is Move email to spam",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Protect against domain spoofing based on similar domain names is checked • Action is Keep email in inbox and show warning (default)",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.3.2",
+      "Description": "Ensure protection against spoofing of employee names is enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Moves employee spoofing emails to spam folder.",
+          "RationaleStatement": "You should protect your users from employee spoofing emails.",
+          "ImpactStatement": "Employee spoofed emails will be moved to a user's spam folder.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against spoofing of employee names to checked 6. Set Action to Move email to spam 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, ensure Protect against spoofing of employee names is checked 6. Ensure Action is Move email to spam",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Protect against spoofing of employee names = checked • Action = Keep email in inbox and show warning (default)",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.3.3",
+      "Description": "Ensure protection against inbound emails spoofing your domain is enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Moves inbound emails spoofing your domain to spam folder.",
+          "RationaleStatement": "You should protect your users from inbound company domain spoofing emails.",
+          "ImpactStatement": "Inbound company domain spoofed emails will be moved to a user's spam folder.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against inbound emails spoofing your domain to checked 6. Set Action to Move email to spam 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, ensure Protect against inbound emails spoofing your domain is checked 6. Ensure Action is Move email to spam",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Protect against inbound emails spoofing your domain = checked • Action = Keep email in inbox and show warning (default)",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.3.4",
+      "Description": "Ensure protection against any unauthenticated emails is enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Displays a warning when any message is not authenticated (SPF or DKIM).",
+          "RationaleStatement": "You should protect your users from any emails that aren't authenticated (SPF or DKIM)",
+          "ImpactStatement": "Emails that aren't authenticated (SPF or DKIM) display a warning message to the recipient.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against any unauthenticated emails to checked 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, ensure Protect against any unauthenticated emails is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Protect against any unauthenticated emails = unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.4.3.5",
+      "Description": "Ensure groups are protected from inbound emails spoofing your domain",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "If a group receives an email that is spoofing your domain it is sent to the spam folder.",
+          "RationaleStatement": "You should protect your groups from any emails that spoofing your domain.",
+          "ImpactStatement": "Emails that are spoofing your domain and are received by a group are sent to the spam folder.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect your Groups from inbound emails spoofing your domain to checked 6. Set Action to Move email to spam 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, ensure Protect your Groups from inbound emails spoofing your domain is checked 6. Ensure Action is set to Move email to spam",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Protect against any unauthenticated emails = unchecked • Action = Keep email in inbox and display warning (default)",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.5.1",
+      "Description": "Ensure POP and IMAP access is disabled for all users",
+      "Checks": [
+        "gmail_pop_imap_access_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "POP and IMAP may allow users to access Gmail using legacy or unapproved email clients that do not support modern authentication mechanisms, such as multifactor authentication.",
+          "RationaleStatement": "Disabling POP and IMAP prevents use of legacy and unapproved email clients with weaker authentication mechanisms that would increase the risk of email account credential compromise.",
+          "ImpactStatement": "If you have Apple iOS or Android device users in your organization and you turn IMAP off, let them know that they’re no longer syncing Google Workspace mail to the iOS or Android Mail app. They might not get a notification on their device. Additionally, new users can’t manually add the Google Account they use for work or school to the device. If your Google Workspace users want to use desktop clients, such as Microsoft Outlook and Apple Mail, to access their Google Workspace mail, you need to en",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - POP and IMAP Access 6. Set Enable IMAP access for all users to unchecked 7. Set Enable POP access for all users to unchecked 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - POP and IMAP Access 6. Ensure Enable IMAP access for all users is unchecked 7. Ensure Enable POP access for all users is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Enable IMAP access for all users is checked • Enable POP access for all users is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.5.2",
+      "Description": "Ensure automatic forwarding options are disabled",
+      "Checks": [
+        "gmail_auto_forwarding_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "You should disable automatic forwarding to prevent users from auto-forwarding mail.",
+          "RationaleStatement": "In the event that an attacker gains control of an end-user account they could create rules to ex-filtrate data from your environment.",
+          "ImpactStatement": "Care should be taken before implementation to ensure there is no business need for case-by-case auto-forwarding. Disabling auto-forwarding to remote domains will affect all users and in an organization.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - Automatic forwarding, set Allow users to automatically forward incoming email to another address to unchecked 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - Automatic forwarding, ensure Allow users to automatically forward incoming email to another address is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow users to automatically forward incoming email to another address is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.5.3",
+      "Description": "Ensure per-user outbound gateways is disabled",
+      "Checks": [
+        "gmail_per_user_outbound_gateway_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "A per-user outbound gateway is a mail server, other than the Google Workspace mail servers, that delivers outgoing mail for a user in your domain.",
+          "RationaleStatement": "Mail sent via external SMTP will circumvent your outbound gateway",
+          "ImpactStatement": "Care should be taken before implementation to ensure there is no business need for mail sent via external SMTP gateway.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - Allow per-user outbound gateways, set Allow users to send mail through an external SMTP server when configuring a \"from\" address hosted outside your email domain to unchecked 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - Allow per-user outbound gateways, ensure Allow users to send mail through an external SMTP server when configuring a \"from\" address hosted outside your email domain is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow users to send mail through an external SMTP server when configuring a \"from\" address hosted outside your email domain is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.5.4",
+      "Description": "Ensure external recipient warnings are enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Gmail adds an image or colored border to external addresses.",
+          "RationaleStatement": "As an admin for your organization, you can turn alerts on or off for messages that include external recipients (people with email addresses outside of your organization). These alerts help people avoid unintentional replies, and remind them to treat external messages with caution.",
+          "ImpactStatement": "When this setting is on, Gmail shows warnings (colored boarder) when: • An email thread includes external recipients (not available on iOS). • Replying to a message from an external recipient. • Composing a new message to an external recipient (not available on iOS). Gmail doesn't show a warning if the external recipient is in your organization's Directory, personal Contacts, or other Contacts. Warnings aren't displayed for secondary domain or domain alias addresses.",
+          "RemediationProcedure": "To configure external recipient warnings are enabled, use the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select End User Access 6. Select Warn for external recipients 7. Set Highlight any external recipients in a conversation. Warn users before they reply to email with external recipients who aren't in their contacts. to checked 8. Select Save",
+          "AuditProcedure": "To verify Ensure external recipient warnings are enabled, use the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select End User Access 6. Under Warn for external recipients, ensure Highlight any external recipients in a conversation. Warn users before they reply to email with external recipients who aren't in their contacts. is ON",
+          "AdditionalInformation": "",
+          "DefaultValue": "Highlight any external recipients in a conversation. Warn users before they reply to email with external recipients who aren't in their contacts. is ON",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.6.1",
+      "Description": "Ensure enhanced pre-delivery message scanning is enabled",
+      "Checks": [
+        "gmail_enhanced_pre_delivery_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Enables improved detection of suspicious content prior to delivery.",
+          "RationaleStatement": "As an administrator, you can increase Gmail's ability to identify suspicious content with enhanced pre-delivery message scanning. Typically, when Gmail identifies a possible phishing message, a warning is displayed and the message might be moved to spam.",
+          "ImpactStatement": "With the Enhanced pre-delivery message scanning option, when Gmail detects suspicious content, message delivery is slightly delayed so that Gmail can do additional security checks on the message.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Spam, phishing, and malware 6. Select Enhanced pre-delivery message scanning. 7. Set Enables improved detection of suspicious content prior to delivery to checked 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Spam, phishing, and malware 6. Ensure Enhanced pre-delivery message scanning. is ON",
+          "AdditionalInformation": "",
+          "DefaultValue": "Enhanced pre-delivery message scanning. is ON",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.6.2",
+      "Description": "Ensure spam filters are not bypased for internal senders",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "You can configure your advanced Gmail settings to bypass, or not bypass, spam filters for messages received from internal senders.",
+          "RationaleStatement": "Turning off this setting reduces the risk of spoofing and phishing/whaling.",
+          "ImpactStatement": "Your users will be better protected by filtering their email for spam and minimizing the chances for spoofing and phishing/whaling attacks.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Spam, phishing, and malware 6. Under Spam, select Configure 7. Set Bypass spam filters for messages received from internal senders. to unchecked 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Spam, phishing, and malware 6. Under Spam, select Configure 7. Ensure Bypass spam filters for messages received from internal senders. is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "Bypass spam filters for messages received from internal senders. is checked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.7.1",
+      "Description": "Ensure comprehensive mail storage is enabled",
+      "Checks": [
+        "gmail_comprehensive_mail_storage_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Comprehensive mail storage ensures messages sent by other core services appear in users' sent folders and are therefore accessible to Vault.",
+          "RationaleStatement": "As an administrator, you can ensure that a copy of all sent or received messages in your domain—including messages sent or received by non-Gmail mailboxes—is stored in the associated users' Gmail mailboxes.",
+          "ImpactStatement": "There are some important considerations to carefully review before enabling comprehensive mail storage: • You should not enable comprehensive mail storage if you have compliance routing rules that change the recipient (and don’t want the original recipient to receive a copy of the email). • When you have the SMTP Relay service enabled, user mailboxes will keep a copy of the message in the sent folder (for example, when sending mail from a scanner) if comprehensive mail storage is enabled. This m",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Compliance 6. Select Comprehensive mail storage 7. Set Ensure that a copy of all sent and received mail is stored in associated users' mailboxes to checked 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Compliance 6. Under Comprehensive mail storage, ensure Ensure that a copy of all sent and received mail is stored in associated users' mailboxes is ON",
+          "AdditionalInformation": "",
+          "DefaultValue": "Copy of all sent and received mail is stored in associated users' mailboxes is OFF",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.3.7.2",
+      "Description": "Ensure 'Send email over a secure TLS connection' Is Enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.3 Gmail",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "The default is that Gmail always tries to send messages over a secure TLS connection. If the receiving server doesn't use TLS, Gmail still sends messages with TLS but the connection isn't secure. This setting allows the option to require a CA-signed certificate, verify the hostname associated with the certificate, and test the TLS connection. A padlock image will appear next to the recipient address if the message will be sent with TLS. The padlock shows only for accounts with a Google Workspace subscription that supports S/MIME encryption. Google Workspace supports TLS versions 1.0, 1.1, 1.2, and 1.3.",
+          "RationaleStatement": "Transport Layer Security (TLS) encrypts email messages for security and privacy and prevents unauthorized access of messages when they're sent over internet connections.",
+          "ImpactStatement": "This should not have an impact on the usage of Gmail.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Compliance 6. Select Secure transport (TLS) compliance 7. Select Configure 8. Set Inbound - all messages and Outbound - all messages to checked 9. Select Save Note: Enabling the Inbound - all messages and Outbound - all messages configurations will also, by default, enable Require CA-signed certificate when delivering outbound messages to the TLS-enabled domains specified above. This is not a required configuration, but it is recommended.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select Compliance 6. Under Secure transport (TLS) compliance, select Configure 7. Under Email messages to affect ensure Inbound - all messages and Outbound - all messages are ON",
+          "AdditionalInformation": "",
+          "DefaultValue": "",
+          "References": "https://support.google.com/a/answer/2520500"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.4.1.1",
+      "Description": "Ensure external filesharing in Google Chat and Hangouts is disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.4 Google Chat",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Control how files are shared externally in Google Chat and Hangouts.",
+          "RationaleStatement": "Files often contain confidential information, and some organizations, particularly in regulated industries, need to control the flow of this information within and outside of their organization.",
+          "ImpactStatement": "Users will not be able to share files via chat externally.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat File Sharing 5. Under Setting, set External filesharing to No files 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat File Sharing 5. Under Setting, verify External filesharing is set to No files",
+          "AdditionalInformation": "",
+          "DefaultValue": "External filesharing is Allow all files",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.4.1.2",
+      "Description": "Ensure internal filesharing in Google Chat and Hangouts is disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.4 Google Chat",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Control how files are shared internally in Google Chat and Hangouts.",
+          "RationaleStatement": "Files often contain confidential information, and some organizations, particularly in regulated industries, need to control the flow of this information within and outside of their organization.",
+          "ImpactStatement": "Users will not be able to share files via chat internally.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat File Sharing 5. Under Setting, set Internal filesharing to No files 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat File Sharing 5. Under Setting, verify Internal filesharing is set to No files",
+          "AdditionalInformation": "",
+          "DefaultValue": "Internal filesharing is Allow all files",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.4.2.1",
+      "Description": "Ensure Google Chat externally is restricted to allowed domains",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.4 Google Chat",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Control how users chat with people outside of your organization. If you allow your users to chat externally, you can also allow them to create and join spaces with people outside your organization.",
+          "RationaleStatement": "Restricting external chat to only approved domains potentially limits the spread of company information.",
+          "ImpactStatement": "Users will not be able to chat with users in any external domain, only approved domains. This will require some admin-level approval and allowlist maintenance.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select External Chat Settings 5. Select Chat externally 6. Set Allow users to send messages outside <company> to ON 7. Set Only allow this for allowlisted domains to checked 8. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select External Chat Settings 5. Select Chat externally 6. Verify Allow users to send messages outside <company> is ON 7. Verify Only allow this for allowlisted domains is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Allow users to send messages outside <company> is set to ON • Only allow this for allowlisted domains is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.4.3.1",
+      "Description": "Ensure external spaces in Google Chat and Hangouts are restricted",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.4 Google Chat",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Control whether users can create or join spaces within your organization that include external people outside of your organization.",
+          "RationaleStatement": "Restricting external spaces to only approved domains potentially limits the spread of company information.",
+          "ImpactStatement": "Users with this setting turned off or who have editions that don't support external spaces can't create these spaces, but they can join existing spaces with external people",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select External Spaces 5. Under Setting, set Allow users at <domain> to create and join spaces with people outside their organization to ON 6. Set Only allow users to add people from allowlisted domains to checked 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select External Spaces 5. Under Setting, verify Allow users at <domain> to create and join spaces with people outside their organization is ON 6. Verify Only allow users to add people from allowlisted domains is checked",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Allow users at <company> to create and join spaces with people outside their organization is ON • Only allow users to add people from allowlisted domains is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.4.4.1",
+      "Description": "Ensure allow users to install Chat apps is disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.4 Google Chat",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Control the use of Chat apps in spaces or direct messages to connect to services in Google Chat and look up information, schedule meetings, or complete tasks. Apps are accounts created by Google, users in your organization, or third parties.",
+          "RationaleStatement": "When a user interacts with an app in Chat, the app can see the user's email address, avatar, other basic user information, user locale, timezone, and interaction information. The app can also see the basic user information of other people in the chat, but it can't see their email address or avatar unless they also interact directly with the app. Chat apps that you install from the Google Workspace Marketplace can be made by developers from outside of your organization. Using these Chat apps need to be carefully controlled (vetted and approved) since a malicious Chat app could allow the exfiltration of company proprietary information.",
+          "ImpactStatement": "By default users will not be able to install Chat apps.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat apps 5. Under Chat apps access settings, set Allow users to install Chat apps to OFF 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat apps 5. Under Chat apps access settings, verify Allow users to install Chat apps is OFF",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow users to install Chat apps is ON",
+          "References": "https://developers.google.com/chat/concepts/apps"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.4.4.2",
+      "Description": "Ensure allow users to add and use incoming webhooks is disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.4 Google Chat",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Allow users to configure incoming webhooks and developers to call incoming webhooks to post content. Incoming webhooks let you send asynchronous messages into Google Chat from applications that aren't Chat apps.",
+          "RationaleStatement": "Webhook usage should be carefully controlled (vetted and approved) since a malicious application could send bogus information to exposed webhooks and ultimately these users.",
+          "ImpactStatement": "By default users will have exposed webhooks.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat apps 5. Under Chat apps access settings, set Allow users to add and use incoming webhooks to OFF",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select Chat apps 5. Under Chat apps access settings, verify Allow users to add and use incoming webhooks is OFF",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow users to add and use incoming webhooks is ON",
+          "References": "https://developers.google.com/chat/concepts/apps"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.6.1",
+      "Description": "Ensure accessing groups from outside this organization is set to private",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.6 Groups for Business",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Choose whether people outside your organization can access your groups. Group owners can further restrict access as needed.",
+          "RationaleStatement": "Who can externally view groups internal to the organization should be carefully controlled and their access vetted as needed.",
+          "ImpactStatement": "No one outside your organization can view or search for your groups. External users can email the group if group settings allow.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options 6. Set Accessing groups from outside this organization to Private 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options 6. Verify Accessing groups from outside this organization is Private",
+          "AdditionalInformation": "",
+          "DefaultValue": "Accessing groups from outside this organization is Private",
+          "References": "https://apps.google.com/supportwidget/articlehome?hl=en&article_url=https%3A %2F%2Fsupport.google.com%2Fa%2Fanswer%2F10308022%3Fhl%3Den&pro duct_context=10308022&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "3.1.6.2",
+      "Description": "Ensure creating groups is restricted",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.6 Groups for Business",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Control who is allowed to create Groups in your organization and if they can have external members.",
+          "RationaleStatement": "The organization should have some control over the organizational groups created and the purpose they are for.",
+          "ImpactStatement": "In a large organization, this may cause too much burden on administrators.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Creating groups 6. Select Only organization admins can create groups 7. Set Group owners can allow external members Organization admins can always add external members to unchecked 8. Set Group owners can allow incoming email from outside the organization to unchecked 9. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Creating groups 6. Verify Only organization admins can create groups is selected 7. Verify Group owners can allow external members Organization admins can always add external members is unchecked 8. Verify Group owners can allow incoming email from outside the organization is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Anyone in the organization can create groups is selected • Group owners can allow external members Organization admins can always add external members is unchecked • Group owners can allow incoming email from outside the organization is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.6.3",
+      "Description": "Ensure default for permission to view conversations is restricted",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.6 Groups for Business",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "By default, only allow group members to view group conversations.",
+          "RationaleStatement": "Conversation viewing can always be expanded by exception for certain groups as needed (Need to know), but by default be restricted.",
+          "ImpactStatement": "No practical impact, since Group members can view conversations in the Group.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options 6. Set Default for permission to view conversations to All group members 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options 6. Verify Default for permission to view conversations is All group members",
+          "AdditionalInformation": "",
+          "DefaultValue": "Default for permission to view conversations is All organization users",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.7.1",
+      "Description": "Ensure service status for Google Sites is set to off",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.7 Sites",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "By default turn off Google Sites for all users.",
+          "RationaleStatement": "There is really no reason for every user within an organization to have access to Google Sites. If this capability is needed, it can be enabled and configured for those users and groups by exception as required by the organization to meet specific needs.",
+          "ImpactStatement": "Users will not be have access to Google Sites.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Sites 5. Select Service status 6. Set Service status to OFF for everyone 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Sites 5. Select Service status 6. Verify Service status is OFF for everyone",
+          "AdditionalInformation": "",
+          "DefaultValue": "Service status is ON for everyone",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.8.1",
+      "Description": "Ensure access to external Google Groups is OFF for Everyone",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.8 Additional Google services",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Control whether users in your organization can access external groups from their Google Workspace account. External groups are created outside your organization and might include a public community group or a group for a club a user belongs to. Control access to external groups by turning on or off the Google Groups additional service — a legacy service in your Admin console that does only one thing: It allows or blocks users from accessing external groups from their Google Workspace account. NOTE: This service has no effect on your organization's internal groups.",
+          "RationaleStatement": "In general, most of the organization's personnel do not need to assess external groups. They can be allowed by exception as needed by the business.",
+          "ImpactStatement": "Users can't access external groups from their Google Workspace account. However, they do continue to receive email digests from groups they're already subscribed to when you turn off the service.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select `Additional Google services 5. Scroll down to Google Groups 6. Set it to OFF for everyone 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select `Additional Google services 5. Scroll down to Google Groups 6. Verify it is OFF for everyone",
+          "AdditionalInformation": "",
+          "DefaultValue": "Google Groups is ON for Everyone",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "3.1.9.1.1",
+      "Description": "Ensure users access to Google Workspace Marketplace apps is restricted",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "3 Apps",
+          "SubSection": "3.1.9 Google Workspace Marketplace",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Restrict what Google Marketplace apps a user can install.",
+          "RationaleStatement": "Users should only be allowed to install approved and vetted apps. This will limit the overall attack surface for the organization.",
+          "ImpactStatement": "Users can only install approved Google Marketplace apps. This list will have to be created and maintained.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace Marketplace apps 4. Select Settings 5. Under Manage Google Workspace Marketplace allowlist access, set Settings to install third-party Google Workspace Marketplace apps: to Allow users to install and run only selected apps from the Marketplace 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace Marketplace apps 4. Select Settings 5. Under Manage Google Workspace Marketplace allowlist access, verify Settings to install third-party Google Workspace Marketplace apps: is set to Allow users to install and run only selected apps from the Marketplace",
+          "AdditionalInformation": "",
+          "DefaultValue": "Settings to install third-party Google Workspace Marketplace apps: is Allow users to install and run any app from the Marketplace",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1.1",
+      "Description": "Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users in administrative roles",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.1 Authentication",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Enforce 2-Step Verification (Multi-Factor Authentication) for all users assigned administrative roles. These include roles such as: • Help Desk Admin • Groups Admin • Super Admin • Services Admin • User Management Admin • Mobile Admin • Android Admin • Custom Admin Roles",
+          "RationaleStatement": "Add an extra layer of security to users accounts by asking users to verify their identity when they enter a username and password. 2-Step Verification (Multi-factor authentication) requires an individual to present a minimum of two separate forms of authentication before access is granted. 2-Step Verification provides additional assurance that the individual attempting to gain access is who they claim to be. With 2- Step Verification, an attacker would need to compromise at least two different a",
+          "ImpactStatement": "Implementation of 2-Step Verification (multi-factor authentication) for all users in administrative roles will necessitate a change to user routine. All users in administrative roles will be required to enroll in 2-Step Verification using using phone, SMS, or an authentication application. After enrollment, use of 2-Step Verification will be required for future access to the environment.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Security and click on 2-Step Verification 3. Select the appropriate group with ALL ADMIN ROLES -- Create this group if needed 4. Under Authentication, set Allow users to turn on 2-Step Verification to checked 5. Set Enforcement to On 6. Set New user enrollment period is set to 2 weeks 7. Under Frequency, set Allow user to trust device to unchecked 8. Under Methods, set Any except verification codes via text, phone call to selected 9. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Security and click on 2-Step Verification 3. Select the appropriate group with ALL ADMIN ROLES -- Create this group if needed 4. Under Authentication, ensure Allow users to turn on 2-Step Verification is checked 5. Ensure Enforcement is set to On 6. Ensure New user enrollment period is set to 2 weeks 7. Under Frequency, ensure Allow user to trust device is unchecked 8. Under Methods, ensure Any except verification codes via text, phone call is selected",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Allow users to turn on 2-Step Verification is checked • Enforcement is Off • New user enrollment period is None • Frequency - Allow user to trust device is checked • Methods is Any",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1.2",
+      "Description": "Ensure hardware security keys are used for all users in administrative roles and other high-value accounts",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.1 Authentication",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "A hardware security key connects to a user's device using USB (A & C), Lightning, NFC, or Bluetooth connection. Also, many Android phones and Apple iPhones have built-in security keys accessible via Bluetooth and that can be assigned to a Google Workspace account. The purpose of a physical security key is to provide an additional security layer to high value accounts; in the event of a compromise of a user's credentials (username and password) without the associated security key, the authentication process cannot be successfully completed.",
+          "RationaleStatement": "The purpose of a physical security key is to provide an additional security layer to high value accounts; in the event of a compromise of a user's credentials (username and password) without the associated security key, the authentication process cannot be successfully completed. Hardware security keys help to protect high value accounts from targeted attacks, including phishing attempts. Adding a hardware security key requirement to your Google privileged accounts adds another layer of depth of",
+          "ImpactStatement": "Users with hardware security keys enabled will need to have physical access to the hardware key in order complete the authentication process and this will force users to adopt a practice of making sure that the physical key is available to them at any point in time that they need to be able to log in. If a hardware security key is lost or stolen, the impacted user can gain access to their Google account by using a backup MFA process and then remove the lost/stolen key and add another one. If a h",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Security and click on Authentication 3. Under Authentication, select 2-Step Verification 4. Select the option to Allow users to turn on 2-Step Verification 5. Under Enforcement, enable either 'On' or else 'On from' and configure a valid date 6. Under Methods, select Only security key to force the use of a security key 7. Under 2-Step Verification policy suspension grace period, select 1 day 8. Under Security codes, select Don't allow users to generate security codes 9. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Security and click on Authentication 3. Under Authentication, select 2-Step Verification 4. Ensure the option to Allow users to turn on 2-Step Verification is checked 5. Ensure that the Enforcement option is set to either 'On' or 'On from' with a valid date present 6. Under Methods ensure that Only security key is selected 7. Under 2-Step Verification policy suspension grace period ensure that 1 day is selected 8. Under Security codes ensure that Don't allow users to generate security codes is selected",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Allow users to turn on 2-Step Verification is checked • Enforcement is Off • New user enrollment period is None • Frequency - Allow user to trust device is checked • Methods is Any",
+          "References": "https://support.google.com/accounts/answer/6103523?hl=En"
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1.3",
+      "Description": "Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.1 Authentication",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Enforce 2-Step Verification (Multi-Factor Authentication) for all users.",
+          "RationaleStatement": "Add an extra layer of security to users accounts by asking users to verify their identity when they enter a username and password. 2-Step Verification (Multi-factor authentication) requires an individual to present a minimum of two separate forms of authentication before access is granted. 2-Step Verification provides additional assurance that the individual attempting to gain access is who they claim to be. With 2- Step Verification, an attacker would need to compromise at least two different a",
+          "ImpactStatement": "Implementation of 2-Step Verification (multi-factor authentication) for all users will necessitate a change to user routine. All users will be required to enroll in 2-Step Verification using using phone, SMS, or an authentication application. After enrollment, use of 2-Step Verification will be required for future access to the environment.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select 2-Step Verification 4. Under Authentication, check - Allow users to turn on 2-Step Verification 5. Set Enforcement to On 6. Set New user enrollment period to 2 weeks 7. Under Frequency, uncheck - Allow user to trust device 8. Under Methods, select - Any except verification codes via text, phone call 9. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select 2-Step Verification 4. Under Authentication, ensure Allow users to turn on 2-Step Verification is checked 5. Ensure Enforcement is set to On 6. Ensure New user enrollment period is set to 2 weeks 7. Under Frequency, ensure Allow user to trust device is not checked 8. Under Methods, ensure Any except verification codes via text, phone call is selected",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Allow users to turn on 2-Step Verification is checked • Enforcement is Off • New user enrollment period is None • Frequency - Allow user to trust device is checked • Methods is Any",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2.1",
+      "Description": "Ensure Super Admin account recovery is disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.1 Authentication",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "This option allows Super Admin users to recover access to their accounts if their password has been forgotten. The option is not available if either Single Sign On or Password Sync is in use.",
+          "RationaleStatement": "Allowing Super Admins to recover access to their accounts when they have forgotten their passwords reduces the number of support tickets generated by users, and reduces the amount of down time spent waiting on the account recovery process to initiate and complete.",
+          "ImpactStatement": "The potential impact to Super Admins being allowed to recover their accounts includes: 1. The Super Admins are now empowered to reset their passwords. 2. The Super Admins will no longer need to call a helpdesk or open a support ticket to regain access to their account. An organization that allows users to recover their account will realize less time spent by administrative staff working on these tasks.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Security. 3. Select Authentication. 4. Under Account recovery select Super admin account recovery. 5. Set Allow super admins to recover their account to unchecked 6. Click Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Security. 3. Select Authentication. 4. Under Account recovery select Super admin account recovery. 5. Ensure Allow super admins to recover their account is unchecked.",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow super admins to recover their account is OFF",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2.2",
+      "Description": "Ensure User account recovery is enabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.1 Authentication",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "This option allows non-Super Admin users to recover access to their accounts if their password has been forgotten. The option is not available if either Single Sign On or Password Sync is in use.",
+          "RationaleStatement": "Allowing users to recover access to their accounts when they have forgotten their passwords reduces the number of support tickets generated by users, and reduces the amount of down time spent waiting on the account recovery process to initiate and complete.",
+          "ImpactStatement": "The potential impact to users being allowed to recover their accounts includes: 1. The user is now empowered to reset their passwords. 2. The user will no longer need to call a helpdesk or open a support ticket to regain access to their account. An organization that allows users to recover their account will realize less time spent by administrative staff working on these tasks.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Security. 3. Select User account recovery 4. Select either the pencil icon or the setting itself. 5. Set Allow users and non-super admins to recover their account to checked. 6. Select Save.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Security. 3. Select User account recovery 4. Verify Allow users and non-super admins to recover their account is checked.",
+          "AdditionalInformation": "",
+          "DefaultValue": "Allow users and non-super admins to recover their account is OFF",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.1.3.1",
+      "Description": "Ensure Advanced Protection Program is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.1 Authentication",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Enable Google's Advanced Protection Platform for all users and prevent the use of security codes where applicable.",
+          "RationaleStatement": "Sophisticated phishing tactics can trick the most savvy users into giving their sign-in credentials to attackers. Advanced Protection requires you to use a security key, which is a hardware device or special software on your phone used to verify your identity, to sign in to your Google Account. Unauthorized users won't be able to sign in without your security key, even if they have your username and password. The Advanced Protection Program includes a curated group of high-security policies that are applied to enrolled accounts. Additional policies may be added to the Advanced Protection Program to ensure the protections are current. Advanced Protection allows you to apply all of these protections at once, and override similar settings you may have configured manually. These policies include: Strong authentication with security keys, Use of security codes with security keys (as needed), Restrictions on third-party access to account data, Deep Gmail scans, Google Safe Browsing protections in Chrome, and Account recovery through admin.",
+          "ImpactStatement": "User Impact • You need your security key when you sign in for the first time on a computer, browser, or device. If you stay signed in, you may not be asked to use your security key the next time you log in. • Limits third-party app access to your data, puts stronger checks on suspicious downloads, and tightens account recovery security to help prevent unauthorized access. Security Keys - 2 Required • Android: With an Android 7.0+ phone, you can enroll in a few",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Advanced Protection Program 4. Under Enrollment - Allow users to enroll in the Advanced Protection Program, set Enable user enrollment to selected for the desired organizational unit or group 5. Under Security Codes, set Do not allow users to generate security codes to selected for the desired organizational unit or group 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Advanced Protection Program 4. Under Enrollment - Allow users to enroll in the Advanced Protection Program, ensure Enable user enrollment is selected for the desired organizational unit or group 5. Under Security Codes, ensure Do not allow users to generate security codes is selected for the desired organizational unit or group",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Allow users to enroll in the Advanced Protection Platform is selected • Security codes is Allow security codes without remote access",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.1.4.1",
+      "Description": "Ensure login challenges are enforced",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.1 Authentication",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Configure Google Workspace to verify a user's identity post-sso.",
+          "RationaleStatement": "Many organizations use third-party identity providers (IdPs) to authenticate users who use single sign on (SSO) through SAML. The third-party IdP authenticates users and no additional risk-based challenges are presented to them. Any Google 2-Step Verification (2SV) configuration is ignored. This is the default behavior. You can set a policy to allow additional risk-based authentication challenges and 2SV if it’s configured. If Google receives a valid SAML assertion (authentication information ab",
+          "ImpactStatement": "The potential impact associated with implementation of this setting is dependent upon the existing 2-Step Verification (2SV) polices. • If you have existing 2SV policies, such as 2SV enforcement, those policies apply immediately. • Users affected by the new policy and who are enrolled in 2SV get a 2SV challenge at sign-in. • Based on Google sign-in risk analysis, users might see risk-based challenges at sign-in.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Login Challenges 4. Under Post-SSO verification, set Logins using SSO are subject to additional verifications (if appropriate) and 2-Step Verification (if configured) is checked 5. Select Save 6. Under Login challenges, set Use employee ID to keep my users more secure to unchecked 7. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Login Challenges 4. Under Post-SSO verification, ensure Logins using SSO are subject to additional verifications (if appropriate) and 2-Step Verification (if configured) is checked 5. Under Login challenges, ensure Use employee ID to keep my users more secure is unchecked",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Post-SSO verification is Logins using SSO bypass additional verifications • Use employee ID to keep my users more secure is unchecked",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.1.5.1",
+      "Description": "Ensure password policy is configured for enhanced security",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.1 Authentication",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configure Google Workspace Password Policy with a more secure length and is enforced upon next sign-in to protect against the use of common password attacks.",
+          "RationaleStatement": "Strong password policies protect an organization by prohibiting the use of weak passwords.",
+          "ImpactStatement": "The potential impact associated with implementation of this setting is dependent upon the existing password policies in place in the environment. For environments that have strong password policies in place, the impact will be minimal. For organizations that do not have strong password policies in place, enhancing the password policy may require users to change passwords, and adhere to more stringent requirements than they have been accustomed to. Configuring passwords to expire at a 1 year mark",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Password management 4. Under Strength, set Enforce strong passwords to checked 5. Under Length, set Minimum Length to 14 or greater 6. Under Strength and Length enforcement, set Enforce password policy at next sign-in is checked 7. Under Reuse, set Allow password reuse to unchecked 8. Under Expiration, set Password reset frequency to 365 Days 9. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Password management 4. Under Strength, ensure Enforce strong passwords is checked 5. Under Length, ensure Minimum Length is set to 14+ 6. Under Strength and Length enforcement, ensure Enforce password policy at next sign-in is set to checked 7. Under Reuse, ensure Allow password reuse is unchecked 8. Under Expiration, ensure Password reset frequency is set to 365 Days",
+          "AdditionalInformation": "",
+          "DefaultValue": "• Enforce strong password is checked • Minimum length is 8 • Maximum length is 100 • Enforce password policy at next sign-in is not checked • Allow password reuse is not checked • Expiration is Never expires",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.2.1.1",
+      "Description": "Ensure application access to Google services is restricted",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.2 Access and Data Control",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Prevent unrestricted application access to Google services.",
+          "RationaleStatement": "You can restrict (or leave unrestricted) access to most Workspace services, including Google Cloud Platform services such as Machine Learning. For Gmail and Google Drive, you can specifically restrict access to high-risk scopes (for example, sending Gmail or deleting files in Drive). While users are prompted to consent to apps, if an app uses restricted scopes and you haven’t specifically trusted it, users can’t add it.",
+          "ImpactStatement": "The potential impact associated with implementation of this setting is that any previously installed apps that you haven’t trusted stop working and tokens are revoked. When a user tries to install an app that has a restricted scope, they’re notified that it’s blocked.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls, then select App access control 5. Under Overview, select MANAGE GOOGLE SERVICES 6. Select ALL applicable Google Services 7. Click Change access 8. Select Restricted: Only trusted apps can access a service",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls, then select App access control 5. Under Overview, select MANAGE GOOGLE SERVICES 6. Ensure ALL applicable Google Services have Restricted in the Access column",
+          "AdditionalInformation": "",
+          "DefaultValue": "Access is Unrestricted",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.2.1.2",
+      "Description": "Review third-party applications periodically",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.2 Access and Data Control",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Weekly review connected applications for potential malicious or unintended access or connections.",
+          "RationaleStatement": "Performing a periodic review of connected applications and their permission scopes ensures only permitted and required applications can access organizational data or resources. Attackers commonly attempt to persuade or trick users to grant their application access to organizational data resources by asking for their consent.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls, then select App access control 5. Under Overview, select MANAGE THIRD-PARTY APP ACCESS 6. Select Change Access for the application you wish to remove 7. Select Blocked: Can't access any Google service 8. Log in to the Google Cloud Platform - Resource Manager https://console.cloud.google.com/cloud-resource-manager as an administrator 9. Now Delete the desired application",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls, then select App access control 5. Under Overview, select MANAGE THIRD-PARTY APP ACCESS 6. Ensure all listed applications have been properly vetted and authorized by the appropriate personnel",
+          "AdditionalInformation": "",
+          "DefaultValue": "None",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.2.1.3",
+      "Description": "Ensure internal apps can access Google Workspace APIs",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.2 Access and Data Control",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Enable access to Google Workspace APIs for customer-owned / developed applications.",
+          "RationaleStatement": "All organization-built internal apps (owned by your organization), can be trusted to access restricted Google Workspace APIs. That way, the organization does not have to trust them all individually.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls, then select App access control 5. Under Settings, select Trust internal, domain-owned apps 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls, then select App access control 5. Under Settings, verify Trust internal, domain-owned apps is selected",
+          "AdditionalInformation": "",
+          "DefaultValue": "Trust internal, domain-owned apps is selected",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.2.1.4",
+      "Description": "Review domain-wide delegation for applications periodically",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.2 Access and Data Control",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Weekly review domain-wide delegations for applications for potentially malicious or unintended access or connections.",
+          "RationaleStatement": "Domain-wide delegation is a powerful feature that allows apps to access users' data across your organization's entire Workspace account. Performing a periodic review of domain-wide delegations for applications and their permission scopes ensures only permitted and required applications can access organizational data or resources.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls 5. Under Domain wide delegation, select MANAGE DOMAIN WIDE DELEGATION 6. Select Change Access for the application you wish to remove 7. Now Delete the desired application",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select API Controls 5. Under Domain wide delegation, select MANAGE DOMAIN WIDE DELEGATION 6. Ensure all listed applications have been properly vetted and authorized by the appropriate personnel",
+          "AdditionalInformation": "",
+          "DefaultValue": "None",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.2.2.1",
+      "Description": "Ensure blocking access from unapproved geographic locations",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.2 Access and Data Control",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Restrict access to selected Google applications by geographic location.",
+          "RationaleStatement": "Restricting access to known/approved geographic locations is a simple way to limit where attacks can originate from. Especially for smaller organizations that do not need global access to applications.",
+          "ImpactStatement": "Valid/approved users traveling to a geographic region outside of those defined in the Access Level will not be able to access their applications.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: Create an appropriate Access Level 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Context-Aware Access 5. Select Access levels 6. Select Create Access Level 7. Under Details - Name the Access Level (Suggested using a clear name - ex. \"Restrict to USA\") 8. Under Conditions - Select Basic 9. Under Condition 1 - Select Meet attributes 10. Under Condition 1 - Select Add Attribute 11. Click on the Add Attribute drop-down box and select Geographic origin 12. Click on the far right drop-down box and select the region, or regions, to be allowed (ex. United States) 13. Click Save Assign the defined Access Level has been assigned to the application(s) that need the restriction 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Context-Aware Access 5. Select Assign access levels 6. For each",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: Verify an appropriate Access Level has been defined 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Context-Aware Access 5. Select Access levels 6. Review the list of Access Levels displayed and determine if there is an appropriate restriction on geographic access Verify the appropriate Access Level has been assigned to the application(s) that need the restriction 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Context-Aware Access 5. Select Assign access levels 6. Review the list of Google Applications displayed and make sure the appropriate access level for geographic access is assigned to each NOTE: CIS recommends geographically restricting access to the following Google applications at minimum: 1. Admin Console 2. Drives and Docs 3. Gmail 4. Google Vault",
+          "AdditionalInformation": "",
+          "DefaultValue": "None",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.2.3.1",
+      "Description": "Ensure DLP policies for Google Drive are configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.2 Access and Data Control",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Enabling Data Loss Prevention (DLP) policies for Google Drive allows organizations to control the content that users can share in Google Drive files outside the organization.",
+          "RationaleStatement": "Enabling DLP policies alerts users and administrators that specific types of data should not be exposed, helping to protect the data from accidental exposure. DLP gives you control over what users can share, and prevents unintended exposure of sensitive information such as credit card numbers or identity numbers",
+          "ImpactStatement": "Configuring a DLP policy for Google Drive will detect or block sensitive information.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Data protection 5. Select Manage Rules 6. Select ADD RULE, then select either New rule or New rule from template New rule Examples can be found here. 1. Set the rule Name 2. Optionally - Set the rule Description 3. Set the Scope as appropriate 4. Select Continue 5. Set Triggers by checking - File modified under Google Drive 6. Select ADD CONDITION and configure values (Field, Comparison Operator, Content to match) - Repeat as appropriate 7. Select Continue 8. Under Actions, select the desired action to take for each incident 9. Under Alerting, select the desired severity level 10. Under Alerting, Select - Send to alert center 11. Select Continue 12. Select Create New rule from template 1. Select the desired rule template 2. Optionally set the Name as desired 3. Optionally set the `Description as desire",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Data protection 5. Select Manage Rules 6. Ensure data protection rules exist and are enabled",
+          "AdditionalInformation": "",
+          "DefaultValue": "No DLP policies for Google Drive are configured by default",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F10846568%3Fvisit_id%3D63805868 5723082013- 4065283876&product_context=10846568&product_name=UnuFlow&trigger_cont ext=a https://workspaceupdates.googleblog.com/2020/10/data-protection-dlp- reports.html"
+        }
+      ]
+    },
+    {
+      "Id": "4.2.4.1",
+      "Description": "Ensure Google session control is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.2 Access and Data Control",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configure Google Workspace's session control to strengthen session expiration.",
+          "RationaleStatement": "As an administrator, you can control how long users can access Google services, such as Gmail on the web, without having to sign in again. For example, for users that work remotely or from untrusted locations, you might want to limit the time that they can access sensitive resources by applying a shorter web session length. If users want to continue accessing a resource when a session ends, they’re prompted to sign in again and start a new session. How the settings work on mobile devices varies by device and app.",
+          "ImpactStatement": "The potential impact associated with implementation of this setting are: When a web session expires for a user, they see the Verify it's you page and must sign in again. When you change the session length, users need to sign out and in again for settings to take effect. If you set the session to never expire, users never have to sign in again. If you need some users to sign in more frequently than others, place them in different organizational units. Then, apply different session lengths to them. That way, certain users won't be interrupted to sign in when it isn't necessary. If a Google Meet meeting starts within 2 hours of a session's scheduled expiration, the user is forced to sign in again before the start of the meeting. This helps avoid an interruption to the meeting while in-progress. If you're using a third-party identity provider (IdP), such as Okta or Ping, and you set web session lengths for your users, you need to set the IdP session length parameter to expire before the Google session expires. That way, your users will be forced to sign in again. If the third-party IdP session is still valid when the Google session expires, the Google session might be renewed automatically without the user signing in again.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Google session control 5. Set Web session duration to 12 hours or less 6. Select Save",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Google session control 5. Verify Web session duration, is 12 hours or less",
+          "AdditionalInformation": "",
+          "DefaultValue": "Web session duration is 14 days",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.2.5.1",
+      "Description": "Ensure Google Cloud session control is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.2 Access and Data Control",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Configure Google cloud session control to strengthen session expiration.",
+          "RationaleStatement": "As an administrator, you can control how long different users can access the Google Cloud console and Cloud SDK without having to re-authenticate. For example, you might want users with elevated privileges, like project owners, billing administrators, or others with administrator roles, to re-authenticate more frequently than regular users. If you set a session length, they’re prompted to sign in again to start a new session.",
+          "ImpactStatement": "The potential impact associated with implementation of this setting are: • When a Google cloud session expires for a user, they see the Verify it's you page and must sign in again. • If you require a security key, users who do not have one cannot use the GCP Console or Cloud SDK until they set it up. Once they have a security key, they can switch to using their password instead if they want. If you’re using a third-party identity provider (IdP): • With the GCP Console—If you require a user to re",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Google Cloud session control 5. Under Reauthentication policy, set Require reauthentication to selected and Exempt Trusted apps is unchecked 6. Set Reauthentication frequency to 16 hours (recommended) 7. Set Reauthentication method to Security key 8. Select Override",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Google Cloud session control 5. Under Reauthentication policy, ensure Require reauthentication is selected and Exempt Trusted apps is unchecked 6. Verify Reauthentication frequency, is16 hours (recommended) 7. Verify Reauthentication method is Security key",
+          "AdditionalInformation": "",
+          "DefaultValue": "Reauthentication policy is Never require reauthentication",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.2.6.1",
+      "Description": "Ensure less secure app access is disabled",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.2 Access and Data Control",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configure Google Workspace security settings to prevent access to less secure apps.",
+          "RationaleStatement": "You can block sign-in attempts from some apps or devices that are less secure. Apps that are less secure don't use modern security standards, such as OAuth. Using apps and devices that don’t use modern security standards increases the risk of accounts being compromised. Blocking these apps and devices helps keep your users and data safe.",
+          "ImpactStatement": "The potential impact associated with implementation of this setting is that users won't be able to turn on access to less secure apps. When you disable access to less secure apps while a less secure app has an open connection with a user account, the app will time out when it tries to refresh the connection. Timeout periods vary per app.",
+          "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Less secure apps 5. Select Disable access to less secure apps (Recommended) 6. Click Save to commit this configuration change.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Less secure apps 5. Ensure Disable access to less secure apps (Recommended) is selected",
+          "AdditionalInformation": "",
+          "DefaultValue": "Disable access to less secure apps (Recommended) is selected",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "4.3.1",
+      "Description": "Ensure the Dashboard is reviewed regularly for anomalies",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.3 Security Center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "As an administrator, you can use the security dashboard to see an overview of different security reports. By default, each security report panel displays data from the last 7 days. You can customize the dashboard to view data from Today, Yesterday, This week, Last week, This month, Last month, or Days ago (up to 180 days). Charts/reports available (Minimum, but could be many more depending on account type): • DLP incidents • Top policy incidents • Failed device password attempts • Compromised device events • Suspicious device activities • OAuth scope grants by product (beta customers only) • OAuth grant activity • OAuth grants to new apps • User login attempts – Challenge method • User login attempts – Failed • User login attempts – Suspicious Details on what each of these charts/reports mean can be found here. This report should be reviewed weekly. NOTE: The availability of each individual report on the security dashboard depends on your Google Workspace edition. See Google documentation for more details. NOTE: In larger organizations reviewing this entire report weekly may not be possible. At a minimum, all Administrator and Super Administrator users should be reviewed, since they are a higher risk. These can be filtered from the overall user list.",
+          "RationaleStatement": "The Security report provides a comprehensive view of how people share and access data and whether they take appropriate security precautions. For example, you can review who installs external apps, shares numerous files, skips 2-Step Verification, and uses security keys.",
+          "ImpactStatement": "No user impact.",
+          "RemediationProcedure": "The remediation for any anomalies in the various fields varies widely (different sections of the Google Workspace Admin UI). Please refer to Google's documentation for specifics (here). NOTE: Many of these settings will be remedied by implementing other sections of this Benchmark. For example, an Admin not enrolled in 2-Step Verification can be remedied by implementing the Remediation procedure for the recommendation Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users in administrative roles.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Reporting 3. Select Reports 4. Select User Reports 5. Select Security, and a table of results will be displayed with the fields listed in the Recommendation description above. 6. Review the displayed users and values for anomalies",
+          "AdditionalInformation": "",
+          "DefaultValue": "The report will display all users and fields.",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F7492330&assistant_id=generic- unu&product_context=7492330&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "4.3.2",
+      "Description": "Ensure the Security health is reviewed regularly for anomalies",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "4 Security",
+          "SubSection": "4.3 Security Center",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "As an administrator, the security health page enables you to monitor the configuration of your Admin console settings from one location. For example, you can check the status of settings like automatic email forwarding, device encryption, Drive sharing settings, and much more. Settings reported (Minimum, but could be many more depending on account type): • Blocking of compromised mobile devices • Mobile management • Mobile password requirements • Device encryption • Mobile inactivity reports • Auto account wipe • Application verification • Installation of mobile applications from unknown sources • External media storage • Two-step verification for users • Two-step verification for admins • Security key enforcement for admins Details on what each of these report entries mean can be found here. This report should be reviewed weekly. NOTE: The availability of each individual report on the security dashboard depends on your Google Workspace edition. See Google documentation for more details.",
+          "RationaleStatement": "The security health page provides visibility into your Admin console settings to help you better understand and manage security risks. If needed, you can make adjustments to your domain’s settings based on general security guidelines and best practices, while balancing these guidelines with your organization’s business needs and risk management policy.",
+          "ImpactStatement": "No user impact.",
+          "RemediationProcedure": "The remediation for any anomalies in the various settings varies widely (different sections of the Google Workspace Admin UI). Please refer to Google's documentation for specifics (here). NOTE: Many of these settings will be remedied by implementing other sections of this Benchmark. For example, an Admin not enrolled in 2-Step Verification can be remedied by implementing the Remediation procedure for the recommendation Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users in administrative roles.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Security 3. Select Security center 4. Select Security health, and a table of results will be displayed with the settings listed in the Recommendation description above. 5. Review the displayed values for anomalies",
+          "AdditionalInformation": "",
+          "DefaultValue": "The report will display the status of a predefined group of settings based on your Google Workspace license.",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F7491656&assistant_id=generic- unu&product_context=7491656&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.1.1",
+      "Description": "Ensure the App Usage Report is reviewed regularly for anomalies",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "5 Reporting",
+          "SubSection": "5.1 Reports",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "As an administrator, you can use Apps usage reports to get an in-depth understanding of how your users use Google Workspace apps. Fields Available: • User • Gmail storage used (MB) • Drive storage used (MB) • Photos storage used (MB) • Total storage used (MB) • Storage used (%) • Classroom - last used time • Classes created • Posts created • Total emails • Emails sent • Emails received • Gmail (IMAP) - last used time • Gmail (POP) - last used time • Gmail (Web) - last used time • Files edited • Files viewed • Drive - last active time • Files added • Other types added • Google Docs added • Google Sheets added • Google Slides added • Google Forms added • Google Drawings added • Posts • +1s • +1s received • Comments • Comments received • Reshares • Reshares received • Search queries • Search queries from web • Search queries from Android • Search queries from iOS Details on what each of these fields mean can be found here. This report should be reviewed weekly. NOTE: In larger organizations reviewing this entire report weekly may not be possible. At a minimum, all Administrator and Super Administrator users should be reviewed, since they are a higher risk. These can be filtered from the overall user list.",
+          "RationaleStatement": "The App usage report can allow administrator to discover user that are potentially using application that they do not have access to and/or using in atypical ways.",
+          "ImpactStatement": "No user impact.",
+          "RemediationProcedure": "The remediation for any anomalies in the various fields varies widely (different sections of the Google Workspace Admin UI). Please refer to Google's documentation for specifics (here). NOTE: Many of these settings will be remedied by implementing other sections of this Benchmark. For example, an Admin showing recent Gmail (IMAP) - last used time and/or Gmail (POP) - last used time can be remedied by implementing the Remediation procedure for the recommendation Ensure POP and IMAP access is disabled for all users.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Reporting 3. Select Reports 4. Select User Reports 5. Select App usage, and a table of results will be displayed with the fields listed in the Recommendation description above. 6. Review the displayed users and values for anomalies",
+          "AdditionalInformation": "",
+          "DefaultValue": "The report will display all users and fields.",
+          "References": "https://apps.google.com/supportwidget/articlehome?hl=en&article_url=https%3A %2F%2Fsupport.google.com%2Fa%2Fanswer%2F4579578%3Fhl%3Den&assis tant_id=generic- unu&product_context=4579578&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "5.1.1.2",
+      "Description": "Ensure the Security Report is reviewed regularly for anomalies",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "5 Reporting",
+          "SubSection": "5.1 Reports",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "As your organization's administrator, you can monitor your users' exposure to data compromise by reviewing the security report. Fields Available: • User • External apps • 2-Step verification enrollment • 2-Step verification enforcement • Password length compliance • Password strength • User account status • Admin status • Security keys enrolled • Less secure apps access • Gmail (IMAP) - last used time • Gmail (POP) - last used time • Gmail (Web) - last used time • External shares • Internal shares • Public • Anyone with link • Outside domain • Anyone in domain shares • Anyone in domain with link shares • Within domain shares • Private shares Details on what each of these fields mean can be found here. This report should be reviewed weekly. NOTE: In larger organizations reviewing this entire report weekly may not be possible. At a minimum, all Administrator and Super Administrator users should be reviewed, since they are a higher risk. These can be filtered from the overall user list.",
+          "RationaleStatement": "The Security report provides a comprehensive view of how people share and access data and whether they take appropriate security precautions. For example, you can review who installs external apps, shares numerous files, skips 2-Step Verification, and uses security keys.",
+          "ImpactStatement": "No user impact.",
+          "RemediationProcedure": "The remediation for any anomalies in the various fields varies widely (different sections of the Google Workspace Admin UI). Please refer to Google's documentation for specifics (here). NOTE: Many of these settings will be remedied by implementing other sections of this Benchmark. For example, an Admin not enrolled in 2-Step Verification can be remedied by implementing the Remediation procedure for the recommendation Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users in administrative roles.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Reporting 3. Select Reports 4. Select User Reports 5. Select Security, and a table of results will be displayed with the fields listed in the Recommendation description above. 6. Review the displayed users and values for anomalies",
+          "AdditionalInformation": "",
+          "DefaultValue": "The report will display all users and fields.",
+          "References": "https://apps.google.com/supportwidget/articlehome?hl=en&article_url=https%3A %2F%2Fsupport.google.com%2Fa%2Fanswer%2F6000269%3Fhl%3Den&assis tant_id=generic- unu&product_context=6000269&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "6.1",
+      "Description": "Ensure User's password changed is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Rules",
+          "SubSection": "6.1",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configuring and enabling the setting that an alert will be generated when a user's password has changed.",
+          "RationaleStatement": "Ensuring that administrators are alerted when user passwords are changed provides organizations with the ability to detect and halt potential attacks involving credential compromise and account takeover.",
+          "ImpactStatement": "This setting should have no impact on the end user but will send emails to super administrators when triggered.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User's password changed and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane. 6. Select Send to alert center (This will result in the alert being set to On). 7. Set the alert severity to Medium 8. To enable emails when this alert condition is met, select Send email notifications. Once enabled, the All super administrators option is selected by default. 9. Click Review to confirm the values. 10. Click Update Rule. 11. Confirm that the User's password changed shows an Alert status of On in the list.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User's password changed and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Medium 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
+          "AdditionalInformation": "",
+          "DefaultValue": "User's password changed is OFF",
+          "References": ""
+        }
+      ]
+    },
+    {
+      "Id": "6.2",
+      "Description": "Ensure Government-backed attacks is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Rules",
+          "SubSection": "6.2",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configuring and enabling the setting that an alert will be generated when Google believes your users are being targeted by a government-backed attack.",
+          "RationaleStatement": "Ensuring that administrators are alerted that they may be being targeted by a government-backed entity allows them time to check their defenses and potentially up their sensitivity for anomalies. NOTE: Google sends these out of an abundance of caution — the notice does not necessarily mean that the account has been compromised or that there is a widespread attack. Rather, the notice reflects Goggle's assessment that a government-backed attacker has likely attempted to access the user’s account o",
+          "ImpactStatement": "This setting should have no impact on the end user but will send emails to super administrators when triggered.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Government-backed attacks and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane. 6. Select Send to alert center (This will result in the alert being set to On). 7. Set the alert severity to High 8. To enable emails when this alert condition is met, select Send email notifications. Once enabled, the All super administrators option is selected by default. 9. Click Review to confirm the values. 10. Click Update Rule. 11. Confirm that the Government-backed attacks shows an Alert status of On in the list.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Government-backed attacks and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to High 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
+          "AdditionalInformation": "",
+          "DefaultValue": "Government-backed attacks is ON",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F3230421&assistant_id=generic- unu&product_context=3230421&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "6.3",
+      "Description": "Ensure User suspended due to suspicious activity is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Rules",
+          "SubSection": "6.3",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configuring and enabling the setting that an alert will be generated when Google suspended a user's account due to a potential compromise detected.",
+          "RationaleStatement": "Ensuring that administrators are alerted when the account was suspended by Google. The reason for this should be investigated ASAP, since it could be a possible indication of malicious activity. In any case, the user's account was suspended and something will need to be done to allow the user to resume work.",
+          "ImpactStatement": "Emails will be sent to all super administrators when triggered. Also, the user's account will be suspended and something will need to be done about that based on company policy (investigated, re-enabled, etc.).",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User suspended due to suspicious activity and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane. 6. Select Send to alert center (This will result in the alert being set to On). 7. Set the alert severity to High 8. To enable emails when this alert condition is met, select Send email notifications. Once enabled, the All super administrators option is selected by default. 9. Click Review to confirm the values. 10. Click Update Rule. 11. Confirm that the User suspended due to suspicious activity shows an Alert status of On in the list.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User suspended due to suspicious activity and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to High 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
+          "AdditionalInformation": "",
+          "DefaultValue": "User suspended due to suspicious activity is ON",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F3230421&assistant_id=generic- unu&product_context=3230421&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "6.4",
+      "Description": "Ensure User granted Admin privilege is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Rules",
+          "SubSection": "6.4",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configuring and enabling the setting that an alert will be generated when a user has been granted an admin privilege.",
+          "RationaleStatement": "Ensuring that administrators are alerted when a user is given increased privileges could be an indication of compromise unless this access has been approved.",
+          "ImpactStatement": "This setting should have no impact on the end user but will send emails to super administrators when triggered.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User granted Admin privilege and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane. 6. Select Send to alert center (This will result in the alert being set to On). 7. Set the alert severity to Medium 8. To enable emails when this alert condition is met, select Send email notifications. Once enabled, the All super administrators option is selected by default. 9. Click Review to confirm the values. 10. Click Update Rule. 11. Confirm that the User granted Admin privilege shows an Alert status of On in the list.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User granted Admin privilege and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Medium 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
+          "AdditionalInformation": "",
+          "DefaultValue": "User granted Admin privilege is OFF",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F3230421&assistant_id=generic- unu&product_context=3230421&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "6.5",
+      "Description": "Ensure Suspicious programmatic login is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Rules",
+          "SubSection": "6.5",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configuring and enabling the setting that an alert will be generated when Google detects suspicious login attempts from applications or computer programs.",
+          "RationaleStatement": "Ensuring that administrators are alerted when suspicious login attempts occur. This could be an indication of an active attack on the company by an adversary using previously obtained credentials.",
+          "ImpactStatement": "This setting should have no impact on the end user but will send emails to super administrators when triggered.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Suspicious programmatic login and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane. 6. Select Send to alert center (This will result in the alert being set to On). 7. Set the alert severity to Low 8. To enable emails when this alert condition is met, select Send email notifications. Once enabled, the All super administrators option is selected by default. 9. Click Review to confirm the values. 10. Click Update Rule. 11. Confirm that the Suspicious programmatic login shows an Alert status of On in the list.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Suspicious programmatic login and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Low 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
+          "AdditionalInformation": "",
+          "DefaultValue": "Suspicious programmatic login is ON",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F3230421&assistant_id=generic- unu&product_context=3230421&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "6.6",
+      "Description": "Ensure Suspicious login is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Rules",
+          "SubSection": "6.6",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configuring and enabling the setting that an alert will be generated when Google detects a sign-in attempt that doesn't match a user's normal behavior, such as a sign-in from an unusual location.",
+          "RationaleStatement": "Ensuring that administrators are alerted when suspicious login attempts occur. This could be an indication of an active attack on the company by an adversary using previously obtained credentials.",
+          "ImpactStatement": "This setting should have no impact on the end user but will send emails to super administrators when triggered.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Suspicious login and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane. 6. Select Send to alert center (This will result in the alert being set to On). 7. Set the alert severity to Low 8. To enable emails when this alert condition is met, select Send email notifications. Once enabled, the All super administrators option is selected by default. 9. Click Review to confirm the values. 10. Click Update Rule. 11. Confirm that the Suspicious login shows an Alert status of On in the list.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Suspicious login and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Low 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
+          "AdditionalInformation": "",
+          "DefaultValue": "Suspicious login is ON",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F3230421&assistant_id=generic- unu&product_context=3230421&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "6.7",
+      "Description": "Ensure Leaked password is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Rules",
+          "SubSection": "6.7",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configuring and enabling the setting that an alert will be generated when Google detects compromised credentials requiring a reset of a user's password.",
+          "RationaleStatement": "Ensuring that administrators are alerted when Google detects that a user's credentials have been compromised due to a publicized breach. This is usually because the user has reused their credentials at another site that was breached.",
+          "ImpactStatement": "Emails will be sent to super administrators when triggered and in these cases, the user's password will need to be changed.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Leaked password and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane. 6. Select Send to alert center (This will result in the alert being set to On). 7. Set the alert severity to High 8. To enable emails when this alert condition is met, select Send email notifications. Once enabled, the All super administrators option is selected by default. 9. Click Review to confirm the values. 10. Click Update Rule. 11. Confirm that the Leaked password shows an Alert status of On in the list.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Leaked password and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Medium 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
+          "AdditionalInformation": "",
+          "DefaultValue": "Leaked password is ON",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F3230421&assistant_id=generic- unu&product_context=3230421&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    },
+    {
+      "Id": "6.8",
+      "Description": "Ensure Gmail potential employee spoofing is configured",
+      "Checks": [],
+      "Attributes": [
+        {
+          "Section": "6 Rules",
+          "SubSection": "6.8",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Configuring and enabling the setting that an alert will be generated when Google detects incoming messages are received where a sender’s name is in your Google Workspace directory, but the mail is not from your company’s domains or domain aliases.",
+          "RationaleStatement": "Ensuring that administrators are alerted when the email is being spoofed since this could be an indication of a phishing attempt.",
+          "ImpactStatement": "This setting should have no impact on the end user but will send emails to super administrators when triggered.",
+          "RemediationProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Gmail potential employee spoofing and select it. 5. Within the Actions pane, click the edit pencil on the right side of the pane. 6. Select Send to alert center (This will result in the alert being set to On). 7. Set the alert severity to Medium 8. To enable emails when this alert condition is met, select Send email notifications. Once enabled, the All super administrators option is selected by default. 9. Click Review to confirm the values. 10. Click Update Rule. 11. Confirm that the Gmail potential employee spoofing shows an Alert status of On in the list.",
+          "AuditProcedure": "To verify this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Gmail potential employee spoofing and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Medium 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
+          "AdditionalInformation": "",
+          "DefaultValue": "Gmail potential employee spoofing is ON",
+          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2 Fsupport.google.com%2Fa%2Fanswer%2F3230421&assistant_id=generic- unu&product_context=3230421&product_name=UnuFlow&trigger_context=a"
+        }
+      ]
+    }
+  ]
+}

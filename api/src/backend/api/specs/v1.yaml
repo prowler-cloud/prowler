@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.22.0
+  version: 1.27.0
   description: |-
     Prowler API specification.
 
@@ -356,7 +356,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -372,6 +372,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -387,13 +388,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -409,6 +411,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -426,6 +429,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -1263,20 +1267,50 @@ paths:
             - check_description
             - severity
             - status
+            - muted
             - impacted_providers
             - resources_fail
             - resources_total
             - pass_count
             - fail_count
+            - manual_count
+            - pass_muted_count
+            - fail_muted_count
+            - manual_muted_count
             - muted_count
             - new_count
             - changed_count
+            - new_fail_count
+            - new_fail_muted_count
+            - new_pass_count
+            - new_pass_muted_count
+            - new_manual_count
+            - new_manual_muted_count
+            - changed_fail_count
+            - changed_fail_muted_count
+            - changed_pass_count
+            - changed_pass_muted_count
+            - changed_manual_count
+            - changed_manual_muted_count
             - first_seen_at
             - last_seen_at
             - failing_since
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -1294,6 +1328,36 @@ paths:
         description: Multiple values may be separated by commas.
         explode: false
         style: form
+      - in: query
+        name: filter[check_title__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
       - in: query
         name: filter[inserted_at]
         schema:
@@ -1317,6 +1381,44 @@ paths:
           format: date
         description: Maximum date range is 7 days.
       - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -1335,7 +1437,6 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -1351,6 +1452,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1366,8 +1468,59 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
         schema:
           type: array
           items:
@@ -1375,12 +1528,166 @@ paths:
         description: Multiple values may be separated by commas.
         explode: false
         style: form
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: filter[region]
         schema:
           type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
       - name: page[number]
         required: false
         in: query
@@ -1414,6 +1721,8 @@ paths:
             - -severity
             - status
             - -status
+            - muted
+            - -muted
             - impacted_providers
             - -impacted_providers
             - resources_fail
@@ -1424,12 +1733,44 @@ paths:
             - -pass_count
             - fail_count
             - -fail_count
+            - manual_count
+            - -manual_count
+            - pass_muted_count
+            - -pass_muted_count
+            - fail_muted_count
+            - -fail_muted_count
+            - manual_muted_count
+            - -manual_muted_count
             - muted_count
             - -muted_count
             - new_count
             - -new_count
             - changed_count
             - -changed_count
+            - new_fail_count
+            - -new_fail_count
+            - new_fail_muted_count
+            - -new_fail_muted_count
+            - new_pass_count
+            - -new_pass_count
+            - new_pass_muted_count
+            - -new_pass_muted_count
+            - new_manual_count
+            - -new_manual_count
+            - new_manual_muted_count
+            - -new_manual_muted_count
+            - changed_fail_count
+            - -changed_fail_count
+            - changed_fail_muted_count
+            - -changed_fail_muted_count
+            - changed_pass_count
+            - -changed_pass_count
+            - changed_pass_muted_count
+            - -changed_pass_muted_count
+            - changed_manual_count
+            - -changed_manual_count
+            - changed_manual_muted_count
+            - -changed_manual_muted_count
             - first_seen_at
             - -first_seen_at
             - last_seen_at
@@ -1470,20 +1811,427 @@ paths:
             - check_description
             - severity
             - status
+            - muted
             - impacted_providers
             - resources_fail
             - resources_total
             - pass_count
             - fail_count
+            - manual_count
+            - pass_muted_count
+            - fail_muted_count
+            - manual_muted_count
             - muted_count
             - new_count
             - changed_count
+            - new_fail_count
+            - new_fail_muted_count
+            - new_pass_count
+            - new_pass_muted_count
+            - new_manual_count
+            - new_manual_muted_count
+            - changed_fail_count
+            - changed_fail_muted_count
+            - changed_pass_count
+            - changed_pass_muted_count
+            - changed_manual_count
+            - changed_manual_muted_count
             - first_seen_at
             - last_seen_at
             - failing_since
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[check_title__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - googleworkspace
+          - iac
+          - image
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - openstack
+          - oraclecloud
+          - vercel
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
       - in: path
         name: id
         schema:
@@ -1491,6 +2239,84 @@ paths:
           format: uuid
         description: A UUID string identifying this finding group daily summary.
         required: true
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - check_id
+            - -check_id
+            - check_title
+            - -check_title
+            - check_description
+            - -check_description
+            - severity
+            - -severity
+            - status
+            - -status
+            - muted
+            - -muted
+            - impacted_providers
+            - -impacted_providers
+            - resources_fail
+            - -resources_fail
+            - resources_total
+            - -resources_total
+            - pass_count
+            - -pass_count
+            - fail_count
+            - -fail_count
+            - manual_count
+            - -manual_count
+            - pass_muted_count
+            - -pass_muted_count
+            - fail_muted_count
+            - -fail_muted_count
+            - manual_muted_count
+            - -manual_muted_count
+            - muted_count
+            - -muted_count
+            - new_count
+            - -new_count
+            - changed_count
+            - -changed_count
+            - new_fail_count
+            - -new_fail_count
+            - new_fail_muted_count
+            - -new_fail_muted_count
+            - new_pass_count
+            - -new_pass_count
+            - new_pass_muted_count
+            - -new_pass_muted_count
+            - new_manual_count
+            - -new_manual_count
+            - new_manual_muted_count
+            - -new_manual_muted_count
+            - changed_fail_count
+            - -changed_fail_count
+            - changed_fail_muted_count
+            - -changed_fail_muted_count
+            - changed_pass_count
+            - -changed_pass_count
+            - changed_pass_muted_count
+            - -changed_pass_muted_count
+            - changed_manual_count
+            - -changed_manual_count
+            - changed_manual_muted_count
+            - -changed_manual_muted_count
+            - first_seen_at
+            - -first_seen_at
+            - last_seen_at
+            - -last_seen_at
+            - failing_since
+            - -failing_since
+        explode: false
       tags:
       - Finding Groups
       security:
@@ -1525,14 +2351,31 @@ paths:
             - check_description
             - severity
             - status
+            - muted
             - impacted_providers
             - resources_fail
             - resources_total
             - pass_count
             - fail_count
+            - manual_count
+            - pass_muted_count
+            - fail_muted_count
+            - manual_muted_count
             - muted_count
             - new_count
             - changed_count
+            - new_fail_count
+            - new_fail_muted_count
+            - new_pass_count
+            - new_pass_muted_count
+            - new_manual_count
+            - new_manual_muted_count
+            - changed_fail_count
+            - changed_fail_muted_count
+            - changed_pass_count
+            - changed_pass_muted_count
+            - changed_manual_count
+            - changed_manual_muted_count
             - first_seen_at
             - last_seen_at
             - failing_since
@@ -1577,19 +2420,482 @@ paths:
             - check_description
             - severity
             - status
+            - muted
             - impacted_providers
             - resources_fail
             - resources_total
             - pass_count
             - fail_count
+            - manual_count
+            - pass_muted_count
+            - fail_muted_count
+            - manual_muted_count
             - muted_count
             - new_count
             - changed_count
+            - new_fail_count
+            - new_fail_muted_count
+            - new_pass_count
+            - new_pass_muted_count
+            - new_manual_count
+            - new_manual_muted_count
+            - changed_fail_count
+            - changed_fail_muted_count
+            - changed_pass_count
+            - changed_pass_muted_count
+            - changed_manual_count
+            - changed_manual_muted_count
             - first_seen_at
             - last_seen_at
             - failing_since
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[check_title__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - googleworkspace
+          - iac
+          - image
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - openstack
+          - oraclecloud
+          - vercel
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - check_id
+            - -check_id
+            - check_title
+            - -check_title
+            - check_description
+            - -check_description
+            - severity
+            - -severity
+            - status
+            - -status
+            - muted
+            - -muted
+            - impacted_providers
+            - -impacted_providers
+            - resources_fail
+            - -resources_fail
+            - resources_total
+            - -resources_total
+            - pass_count
+            - -pass_count
+            - fail_count
+            - -fail_count
+            - manual_count
+            - -manual_count
+            - pass_muted_count
+            - -pass_muted_count
+            - fail_muted_count
+            - -fail_muted_count
+            - manual_muted_count
+            - -manual_muted_count
+            - muted_count
+            - -muted_count
+            - new_count
+            - -new_count
+            - changed_count
+            - -changed_count
+            - new_fail_count
+            - -new_fail_count
+            - new_fail_muted_count
+            - -new_fail_muted_count
+            - new_pass_count
+            - -new_pass_count
+            - new_pass_muted_count
+            - -new_pass_muted_count
+            - new_manual_count
+            - -new_manual_count
+            - new_manual_muted_count
+            - -new_manual_muted_count
+            - changed_fail_count
+            - -changed_fail_count
+            - changed_fail_muted_count
+            - -changed_fail_muted_count
+            - changed_pass_count
+            - -changed_pass_count
+            - changed_pass_muted_count
+            - -changed_pass_muted_count
+            - changed_manual_count
+            - -changed_manual_count
+            - changed_manual_muted_count
+            - -changed_manual_muted_count
+            - first_seen_at
+            - -first_seen_at
+            - last_seen_at
+            - -last_seen_at
+            - failing_since
+            - -failing_since
         explode: false
       tags:
       - Finding Groups
@@ -1811,7 +3117,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -1827,6 +3133,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1842,13 +3149,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -1864,6 +3172,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -1881,6 +3190,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -2413,7 +3723,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -2429,6 +3739,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2444,13 +3755,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -2466,6 +3778,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -2483,6 +3796,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -2923,7 +4237,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -2939,6 +4253,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2954,13 +4269,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -2976,6 +4292,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -2993,6 +4310,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -3431,7 +4749,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -3447,6 +4765,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -3462,13 +4781,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -3484,6 +4804,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -3501,6 +4822,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -3927,7 +5249,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -3943,6 +5265,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -3958,13 +5281,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -3980,6 +5304,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -3997,6 +5322,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -4410,8 +5736,16 @@ paths:
   /api/v1/integrations/{integration_pk}/jira/dispatches:
     post:
       operationId: integrations_jira_dispatches_create
-      description: Send a set of filtered findings to the given integration. At least
-        one finding filter must be provided.
+      description: |-
+        Send a set of filtered findings to the given integration. At least one finding filter must be provided.
+
+        ## Known Limitations
+
+        ### Issue Types with Required Custom Fields
+
+        Certain Jira issue types (such as Epic) may require mandatory custom fields that Prowler does not currently populate when creating work items. If a selected issue type enforces required fields beyond the standard set (e.g., "Team", "Epic Name"), the work item creation will fail.
+
+        To avoid this, select an issue type that does not require additional custom fields - **Task**, **Bug**, or **Story** typically work without restrictions. If unsure which issue types are available for a project, Prowler automatically fetches and displays them in the "Issue Type" selector when sending a finding.
       summary: Send findings to a Jira integration
       parameters:
       - in: query
@@ -4471,6 +5805,47 @@ paths:
                         result: null
                         task_args: null
                         metadata: null
+          description: ''
+  /api/v1/integrations/{integration_pk}/jira/issue_types:
+    get:
+      operationId: integrations_jira_issue_types_retrieve
+      description: Fetch the available issue types from Jira for a given project key
+        and update the integration configuration.
+      summary: Get available issue types for a Jira project
+      parameters:
+      - in: query
+        name: fields[jira-issue-types]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - project_key
+            - issue_types
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: integration_pk
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: project_key
+        schema:
+          type: string
+        description: The Jira project key to fetch issue types for.
+        required: true
+      tags:
+      - Integration
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/IntegrationJiraIssueTypesResponse'
           description: ''
   /api/v1/integrations/{id}:
     get:
@@ -5764,7 +7139,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -5780,6 +7155,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5795,13 +7171,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -5817,6 +7194,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -5834,6 +7212,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - name: filter[search]
@@ -5939,7 +7318,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -5955,6 +7334,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5970,13 +7350,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -5992,6 +7373,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -6009,6 +7391,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - name: filter[search]
@@ -6119,6 +7502,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6134,6 +7518,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6155,6 +7540,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -6172,6 +7558,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - name: filter[search]
@@ -6298,7 +7685,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -6314,6 +7701,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6329,13 +7717,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -6351,6 +7740,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -6368,6 +7758,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -6507,7 +7898,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -6523,6 +7914,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6538,13 +7930,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -6560,6 +7953,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -6577,6 +7971,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -6726,6 +8121,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6741,6 +8137,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6762,6 +8159,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -6779,6 +8177,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - name: filter[search]
@@ -6954,7 +8353,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -6970,6 +8369,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6985,13 +8385,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -7007,6 +8408,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -7024,6 +8426,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -7128,7 +8531,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -7144,6 +8547,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7159,13 +8563,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -7181,6 +8586,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -7198,6 +8604,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -7326,7 +8733,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -7342,6 +8749,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7357,13 +8765,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -7379,6 +8788,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -7396,6 +8806,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -8165,7 +9576,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -8181,6 +9592,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8196,13 +9608,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -8218,6 +9631,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -8235,13 +9649,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -8257,6 +9672,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8272,13 +9688,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -8294,6 +9711,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -8311,6 +9729,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - name: filter[search]
@@ -8964,7 +10383,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -8980,6 +10399,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -8995,13 +10415,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -9017,6 +10438,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -9034,6 +10456,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -9511,7 +10934,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -9527,6 +10950,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -9542,13 +10966,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -9564,6 +10989,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -9581,6 +11007,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -9871,7 +11298,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -9887,6 +11314,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -9902,13 +11330,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -9924,6 +11353,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -9941,6 +11371,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -10237,7 +11668,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -10253,6 +11684,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -10268,13 +11700,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -10290,6 +11723,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -10307,6 +11741,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -11050,6 +12485,21 @@ paths:
           type: string
           format: date
       - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[inserted_at]
         schema:
           type: string
@@ -11113,7 +12563,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 91f917e0c3ab97e8
           enum:
           - alibabacloud
           - aws
@@ -11129,6 +12579,7 @@ paths:
           - mongodbatlas
           - openstack
           - oraclecloud
+          - vercel
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -11144,13 +12595,14 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 91f917e0c3ab97e8
             enum:
             - alibabacloud
             - aws
@@ -11166,6 +12618,7 @@ paths:
             - mongodbatlas
             - openstack
             - oraclecloud
+            - vercel
         description: |-
           Multiple values may be separated by commas.
 
@@ -11183,6 +12636,7 @@ paths:
           * `openstack` - OpenStack
           * `image` - Image
           * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
         explode: false
         style: form
       - in: query
@@ -11477,6 +12931,73 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScanUpdateResponse'
           description: ''
+  /api/v1/scans/{id}/cis:
+    get:
+      operationId: scans_cis_retrieve
+      description: Download the CIS Benchmark compliance report as a PDF file. When
+        a provider ships multiple CIS versions, the report is generated for the highest
+        available version.
+      summary: Retrieve CIS Benchmark compliance report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the CIS compliance report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no CIS reports, or the CIS report generation task
+            has not started yet
   /api/v1/scans/{id}/compliance/{name}:
     get:
       operationId: scans_compliance_retrieve
@@ -12291,12 +13812,53 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[date_joined]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[date_joined__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[date_joined__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[date_joined__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[role]
+        schema:
+          type: string
+          x-spec-enum-id: 12c359ee5dc51001
+          enum:
+          - member
+          - owner
+        description: |-
+          * `owner` - Owner
+          * `member` - Member
       - name: filter[search]
         required: false
         in: query
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: filter[tenant]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[user]
+        schema:
+          type: string
+          format: uuid
       - name: page[number]
         required: false
         in: query
@@ -12350,9 +13912,12 @@ paths:
   /api/v1/tenants/{tenant_pk}/memberships/{id}:
     delete:
       operationId: tenants_memberships_destroy
-      description: Delete the membership details of users in a tenant. You need to
-        be one of the owners to delete a membership that is not yours. If you are
-        the last owner of a tenant, you cannot delete your own membership.
+      description: 'Delete a user''s membership from a tenant. This action: (1) removes
+        the membership, (2) revokes all refresh tokens for the expelled user, (3)
+        removes their role grants for this tenant, (4) cleans up orphaned roles, and
+        (5) deletes the user account if this was their last membership. You must be
+        a tenant owner to delete another user''s membership. The last owner of a tenant
+        cannot delete their own membership.'
       summary: Delete tenant memberships
       parameters:
       - in: path
@@ -13175,6 +14740,11 @@ paths:
         schema:
           type: string
           format: uuid
+      - in: query
+        name: filter[user]
+        schema:
+          type: string
+          format: uuid
       - name: page[number]
         required: false
         in: query
@@ -13370,6 +14940,7 @@ components:
                 query:
                   type: string
                   minLength: 1
+                  maxLength: 10000
               required:
               - query
       required:
@@ -14239,6 +15810,8 @@ components:
               type: string
             status:
               type: string
+            muted:
+              type: boolean
             impacted_providers:
               type: array
               items:
@@ -14251,11 +15824,43 @@ components:
               type: integer
             fail_count:
               type: integer
+            manual_count:
+              type: integer
+            pass_muted_count:
+              type: integer
+            fail_muted_count:
+              type: integer
+            manual_muted_count:
+              type: integer
             muted_count:
               type: integer
             new_count:
               type: integer
             changed_count:
+              type: integer
+            new_fail_count:
+              type: integer
+            new_fail_muted_count:
+              type: integer
+            new_pass_count:
+              type: integer
+            new_pass_muted_count:
+              type: integer
+            new_manual_count:
+              type: integer
+            new_manual_muted_count:
+              type: integer
+            changed_fail_count:
+              type: integer
+            changed_fail_muted_count:
+              type: integer
+            changed_pass_count:
+              type: integer
+            changed_pass_muted_count:
+              type: integer
+            changed_manual_count:
+              type: integer
+            changed_manual_muted_count:
               type: integer
             first_seen_at:
               type: string
@@ -14274,13 +15879,30 @@ components:
           - check_id
           - severity
           - status
+          - muted
           - resources_fail
           - resources_total
           - pass_count
           - fail_count
+          - manual_count
+          - pass_muted_count
+          - fail_muted_count
+          - manual_muted_count
           - muted_count
           - new_count
           - changed_count
+          - new_fail_count
+          - new_fail_muted_count
+          - new_pass_count
+          - new_pass_muted_count
+          - new_manual_count
+          - new_manual_muted_count
+          - changed_fail_count
+          - changed_fail_muted_count
+          - changed_pass_count
+          - changed_pass_muted_count
+          - changed_manual_count
+          - changed_manual_muted_count
     FindingGroupResponse:
       type: object
       properties:
@@ -14882,14 +16504,44 @@ components:
                   type: string
                   minLength: 1
                 issue_type:
-                  enum:
-                  - Task
                   type: string
-                  description: '* `Task` - Task'
-                  x-spec-enum-id: b527b0cec62087c1
+                  minLength: 1
               required:
               - project_key
               - issue_type
+      required:
+      - data
+    IntegrationJiraIssueTypes:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - jira-issue-types
+        id: {}
+        attributes:
+          type: object
+          properties:
+            project_key:
+              type: string
+              readOnly: true
+            issue_types:
+              type: array
+              items:
+                type: string
+              readOnly: true
+    IntegrationJiraIssueTypesResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/IntegrationJiraIssueTypes'
       required:
       - data
     IntegrationResponse:
@@ -18463,6 +20115,15 @@ components:
                     required:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
+                  - type: object
+                    title: Vercel API Token
+                    properties:
+                      api_token:
+                        type: string
+                        description: Vercel API token for authentication. Can be scoped
+                          to a specific team.
+                    required:
+                    - api_token
                   writeOnly: true
               required:
               - secret
@@ -19465,6 +21126,7 @@ components:
               - openstack
               - image
               - googleworkspace
+              - vercel
               type: string
               description: |-
                 * `aws` - AWS
@@ -19481,7 +21143,8 @@ components:
                 * `openstack` - OpenStack
                 * `image` - Image
                 * `googleworkspace` - Google Workspace
-              x-spec-enum-id: c0d56cad8ab9abe5
+                * `vercel` - Vercel
+              x-spec-enum-id: 91f917e0c3ab97e8
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -19601,8 +21264,9 @@ components:
               - openstack
               - image
               - googleworkspace
+              - vercel
               type: string
-              x-spec-enum-id: c0d56cad8ab9abe5
+              x-spec-enum-id: 91f917e0c3ab97e8
               description: |-
                 Type of provider to create.
 
@@ -19620,6 +21284,7 @@ components:
                 * `openstack` - OpenStack
                 * `image` - Image
                 * `googleworkspace` - Google Workspace
+                * `vercel` - Vercel
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -19671,8 +21336,9 @@ components:
                   - openstack
                   - image
                   - googleworkspace
+                  - vercel
                   type: string
-                  x-spec-enum-id: c0d56cad8ab9abe5
+                  x-spec-enum-id: 91f917e0c3ab97e8
                   description: |-
                     Type of provider to create.
 
@@ -19690,6 +21356,7 @@ components:
                     * `openstack` - OpenStack
                     * `image` - Image
                     * `googleworkspace` - Google Workspace
+                    * `vercel` - Vercel
                 uid:
                   type: string
                   minLength: 3
@@ -20539,6 +22206,15 @@ components:
                 required:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
+              - type: object
+                title: Vercel API Token
+                properties:
+                  api_token:
+                    type: string
+                    description: Vercel API token for authentication. Can be scoped
+                      to a specific team.
+                required:
+                - api_token
               writeOnly: true
           required:
           - secret_type
@@ -20955,6 +22631,15 @@ components:
                     required:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
+                  - type: object
+                    title: Vercel API Token
+                    properties:
+                      api_token:
+                        type: string
+                        description: Vercel API token for authentication. Can be scoped
+                          to a specific team.
+                    required:
+                    - api_token
                   writeOnly: true
               required:
               - secret_type
@@ -21381,6 +23066,15 @@ components:
                 required:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
+              - type: object
+                title: Vercel API Token
+                properties:
+                  api_token:
+                    type: string
+                    description: Vercel API token for authentication. Can be scoped
+                      to a specific team.
+                required:
+                - api_token
               writeOnly: true
           required:
           - secret

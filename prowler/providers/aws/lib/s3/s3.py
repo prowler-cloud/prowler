@@ -111,6 +111,13 @@ class S3:
         - None
         """
         if session:
+            # Preserve the caller's existing default config (and the
+            # retries_max_attempts already baked into it) instead of clobbering
+            # it with a freshly built one.
+            if session._session.get_default_client_config() is None:
+                session._session.set_default_client_config(
+                    AwsProvider.set_session_config(retries_max_attempts)
+                )
             self._session = session.client(__class__.__name__.lower())
         else:
             aws_setup_session = AwsSetUpSession(
@@ -127,8 +134,7 @@ class S3:
                 regions=regions,
             )
             self._session = aws_setup_session._session.current_session.client(
-                __class__.__name__.lower(),
-                config=aws_setup_session._session.session_config,
+                __class__.__name__.lower()
             )
 
         self._bucket_name = bucket_name
@@ -312,6 +318,9 @@ class S3:
                     aws_session_token=assumed_role_credentials.aws_session_token,
                     region_name=aws_region,
                     profile_name=profile,
+                )
+                session._session.set_default_client_config(
+                    AwsProvider.set_session_config(None)
                 )
             s3_client = session.client(__class__.__name__.lower())
             if "s3://" in bucket_name:

@@ -9,7 +9,7 @@
   "Severity": "critical",
   "ResourceType": "ALIYUN::ACTIONTRAIL::Trail",
   "ResourceGroup": "monitoring",
-  "Description": "**Alibaba Cloud ActionTrail** is a service that records API calls made to your account and delivers log files containing the identity of the API caller, the time and source IP of the call, the request parameters, and the response elements returned by the service. Ensuring that a **multi-region trail** exists guarantees that management operations performed across all regions and global services are captured, enabling detection of unexpected activities in otherwise unused regions.",
+  "Description": "**Alibaba Cloud ActionTrail** records API calls made to your account, including caller identity, time, source IP, request parameters, and response elements. Ensuring a **multi-region trail** exists guarantees that operations across all regions and global services are captured, enabling detection of unexpected activities in unused regions.",
   "Risk": "Without a **multi-region trail** enabled, API calls made in regions outside the primary trail's scope will not be recorded. This creates blind spots in **security analysis**, **resource change tracking**, and **compliance auditing**, potentially allowing unauthorized or malicious activity to go undetected across your Alibaba Cloud account.",
   "RelatedUrl": "",
   "AdditionalURLs": [

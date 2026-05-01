@@ -12,9 +12,9 @@ Before you begin, make sure you have:
 
 1. An **Alibaba Cloud Account ID** (visible in the Alibaba Cloud Console under your profile).
 2. **Credentials** with appropriate permissions:
-   - **RAM User with Access Keys**: For static credential authentication.
-   - **RAM Role**: For cross-account access using role assumption (recommended).
-3. The required permissions for Prowler to audit your resources. See the [Alibaba Cloud Authentication](/user-guide/providers/alibabacloud/authentication) guide for the full list of required permissions.
+   - **RAM User with Access Keys**: For local CLI usage or simple CI setups. See [RAM User and AccessKey](/user-guide/providers/alibabacloud/authentication#ram-user-and-accesskey).
+   - **RAM Role**: For role assumption and Prowler Cloud onboarding. See [RAM Role Assumption](/user-guide/providers/alibabacloud/authentication#ram-role-assumption-recommended).
+3. The required permissions for Prowler to audit your resources. See the [Alibaba Cloud Authentication](/user-guide/providers/alibabacloud/authentication) guide for setup steps and permission guidance.
 
 <CardGroup cols={2}>
   <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
@@ -37,7 +37,7 @@ Before you begin, make sure you have:
 
 ![Get Account ID](/images/providers/alibaba-account-id.png)
 
-### Step 2: Access Prowler Cloud or Prowler App
+### Step 2: Access Prowler Cloud
 
 1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
 2. Go to "Configuration" > "Cloud Providers"
@@ -64,7 +64,7 @@ After the Account ID is in place, select the authentication method that matches 
 
 #### RAM Role Assumption (Recommended)
 
-Use this method for secure cross-account access. For detailed instructions on how to create the RAM role, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication#ram-role-assumption-recommended-for-cross-account).
+Use this method for secure cross-account access. For detailed instructions on how to create the RAM role, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication#ram-role-assumption-recommended).
 
 1. Enter the **Role ARN** (format: `acs:ram::<account-id>:role/<role-name>`)
 2. Enter the **Access Key ID** and **Access Key Secret** of the RAM user that will assume the role
@@ -77,7 +77,7 @@ The RAM user whose credentials you provide must have permission to assume the ta
 
 #### Credentials (Static Access Keys)
 
-Use static credentials for quick scans (not recommended for production). For detailed setup, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication#permanent-access-keys).
+Use static credentials for quick scans (not recommended for production). For detailed setup, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication#ram-user-and-accesskey).
 
 1. Enter the **Access Key ID** and **Access Key Secret**
 
@@ -104,13 +104,20 @@ You can also run Alibaba Cloud assessments directly from the CLI. Both command-l
 
 ### Step 1: Select an Authentication Method
 
-Choose one of the following authentication methods. For the complete list and detailed configuration, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication).
+Choose one of the following authentication methods. For step-by-step credential creation and the full list of supported authentication modes, see the [Authentication guide](/user-guide/providers/alibabacloud/authentication).
 
 #### Environment Variables
 
 ```bash
 export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
 export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
+prowler alibabacloud
+```
+
+#### Default Credential Chain
+
+```bash
+aliyun configure --mode AK
 prowler alibabacloud
 ```
 
@@ -146,7 +153,7 @@ prowler alibabacloud
 #### Scan specific regions
 
 ```bash
-prowler alibabacloud --regions cn-hangzhou cn-shanghai
+prowler alibabacloud --region cn-hangzhou cn-shanghai
 ```
 
 #### Run specific checks

@@ -73,7 +73,9 @@
     {
       "Id": "1.1.4",
       "Description": "Ensure that when a proposed code change is updated, previous approvals are declined, and new approvals are required.",
-      "Checks": [],
+      "Checks": [
+        "repository_default_branch_dismisses_stale_reviews"
+      ],
       "Attributes": [
         {
           "Section": "1 Source Code",
@@ -499,7 +501,9 @@
     {
       "Id": "1.2.3",
       "Description": "Ensure only a limited number of trusted users can delete repositories.",
-      "Checks": [],
+      "Checks": [
+        "organization_repository_deletion_limited"
+      ],
       "Attributes": [
         {
           "Section": "1 Source Code",

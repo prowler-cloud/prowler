@@ -1,7 +1,8 @@
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import { getSamlConfig } from "@/actions/integrations/saml";
 import { getUserInfo } from "@/actions/users/users";
+import { auth } from "@/auth.config";
 import { SamlIntegrationCard } from "@/components/integrations/saml/saml-integration-card";
 import { ContentLayout } from "@/components/ui";
 import { ApiKeysCard, UserBasicInfoCard } from "@/components/users/profile";
@@ -37,6 +38,7 @@ const SSRDataUser = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
+  const session = await auth();
   const userProfile = (await getUserInfo()) as UserProfileResponse | undefined;
   if (!userProfile?.data) {
     return null;
@@ -75,11 +77,7 @@ const SSRDataUser = async ({
     {},
   );
 
-  const firstUserMembership = membershipsIncluded.find(
-    (m) => m.relationships?.user?.data?.id === userData.id,
-  );
-
-  const userTenantId = firstUserMembership?.relationships?.tenant?.data?.id;
+  const userTenantId = session?.tenantId;
 
   const userRoleIds =
     userData.relationships?.roles?.data?.map((r) => r.id) || [];
@@ -93,12 +91,6 @@ const SSRDataUser = async ({
     (role) =>
       role.attributes.manage_integrations === true &&
       userRoleIds.includes(role.id),
-  );
-
-  const isOwner = membershipsIncluded.some(
-    (m) =>
-      m.attributes.role === "owner" &&
-      m.relationships?.user?.data?.id === userData.id,
   );
 
   const samlConfig = hasManageIntegrations ? await getSamlConfig() : undefined;
@@ -117,7 +109,8 @@ const SSRDataUser = async ({
           <MembershipsCard
             memberships={membershipsIncluded}
             tenantsMap={tenantsMap}
-            isOwner={isOwner && hasManageAccount}
+            hasManageAccount={hasManageAccount}
+            sessionTenantId={session?.tenantId}
           />
           {hasManageAccount && <ApiKeysCard searchParams={searchParams} />}
         </div>

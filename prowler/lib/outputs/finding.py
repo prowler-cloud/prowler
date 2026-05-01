@@ -15,7 +15,7 @@ from prowler.lib.check.models import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import Status, fill_common_finding_data
-from prowler.lib.outputs.compliance.compliance import get_check_compliance
+from prowler.lib.outputs.compliance.compliance_check import get_check_compliance
 from prowler.lib.outputs.utils import unroll_tags
 from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider
@@ -245,15 +245,16 @@ class Finding(BaseModel):
             elif provider.type == "kubernetes":
                 if provider.identity.context == "In-Cluster":
                     output_data["auth_method"] = "in-cluster"
+                    output_data["provider_uid"] = provider.identity.cluster
                 else:
                     output_data["auth_method"] = "kubeconfig"
+                    output_data["provider_uid"] = provider.identity.context
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["account_name"] = f"context: {provider.identity.context}"
                 output_data["account_uid"] = get_nested_attribute(
                     provider, "identity.cluster"
                 )
-                output_data["provider_uid"] = provider.identity.context
                 output_data["region"] = f"namespace: {check_output.namespace}"
 
             elif provider.type == "github":
@@ -354,6 +355,9 @@ class Finding(BaseModel):
                     check_output, "resource_line_range", ""
                 )
                 output_data["framework"] = check_output.check_metadata.ServiceName
+                output_data["raw"] = {
+                    "resource_line_range": output_data.get("resource_line_range", ""),
+                }
 
             elif provider.type == "llm":
                 output_data["auth_method"] = provider.auth_method
@@ -403,6 +407,23 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.zone_name
+
+            elif provider.type == "vercel":
+                output_data["auth_method"] = "api_token"
+                team = get_nested_attribute(provider, "identity.team")
+                output_data["account_uid"] = (
+                    team.id
+                    if team
+                    else get_nested_attribute(provider, "identity.user_id")
+                )
+                output_data["account_name"] = (
+                    team.name
+                    if team
+                    else get_nested_attribute(provider, "identity.username")
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = "global"
 
             elif provider.type == "alibabacloud":
                 output_data["auth_method"] = get_nested_attribute(

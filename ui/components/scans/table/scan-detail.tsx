@@ -1,28 +1,15 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
-import { DateWithTime, EntityInfo, InfoField } from "@/components/ui/entities";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
+import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
+import { formatDuration } from "@/lib/date-utils";
 import { ProviderProps, ProviderType, ScanProps, TaskDetails } from "@/types";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
-};
-
-const formatDuration = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-
-  const parts = [];
-  if (hours > 0) parts.push(`${hours}h`);
-  if (minutes > 0) parts.push(`${minutes}m`);
-  if (remainingSeconds > 0 || parts.length === 0)
-    parts.push(`${remainingSeconds}s`);
-
-  return parts.join(" ");
 };
 
 export const ScanDetail = ({
@@ -81,18 +68,17 @@ export const ScanDetail = ({
           </div>
 
           <InfoField label="Scan ID" variant="simple">
-            <Snippet hideSymbol>{scanDetails.id}</Snippet>
+            <CodeSnippet value={scanDetails.id} />
           </InfoField>
 
           {scan.state === "failed" && taskDetails?.attributes.result && (
             <>
               {taskDetails.attributes.result.exc_message && (
                 <InfoField label="Error Message" variant="simple">
-                  <Snippet hideSymbol>
-                    <span className="text-xs whitespace-pre-line">
-                      {taskDetails.attributes.result.exc_message.join("\n")}
-                    </span>
-                  </Snippet>
+                  <CodeSnippet
+                    value={taskDetails.attributes.result.exc_message.join("\n")}
+                    multiline
+                  />
                 </InfoField>
               )}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

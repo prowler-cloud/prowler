@@ -3,7 +3,8 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 
 function ResourceCardSkeleton() {
   return (
-    <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary flex flex-1 flex-col gap-2 rounded-xl border px-3 py-2">
+    <div className="border-border-neutral-secondary bg-bg-neutral-secondary relative flex flex-1 flex-col gap-2 overflow-hidden rounded-xl border px-3 py-2 shadow-sm">
+      <Skeleton className="absolute inset-x-0 top-0 h-1 rounded-none" />
       {/* Header */}
       <div className="flex w-full items-center gap-1">
         <div className="flex flex-1 items-center gap-1">

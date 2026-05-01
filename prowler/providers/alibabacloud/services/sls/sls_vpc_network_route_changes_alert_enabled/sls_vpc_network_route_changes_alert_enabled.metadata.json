@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::SLS::Alert",
   "ResourceGroup": "monitoring",
-  "Description": "**Alibaba Cloud Simple Log Service (SLS)** should have a metric filter and alarm configured for **VPC network route** changes. By directing **ActionTrail** logs to SLS and establishing corresponding alert rules, real-time monitoring of route table modifications can be achieved. This ensures that any creation, deletion, or modification of route entries is promptly detected, helping verify that all VPC traffic flows through the expected network paths.",
-  "Risk": "Without monitoring for **route table changes**, unauthorized modifications to network routes may go undetected. This could allow attackers to redirect traffic through **malicious intermediaries** for interception or manipulation. Undetected route changes increase the risk of **man-in-the-middle attacks**, **data exfiltration**, and **service disruption**, as traffic may be silently diverted away from intended destinations, compromising the **confidentiality** and **integrity** of data in transit.",
+  "Description": "**Alibaba Cloud SLS** should have an alarm configured for **VPC network route** changes. By directing **ActionTrail** logs to SLS with alert rules, route table modifications are monitored in real time. This ensures creation, deletion, or modification of route entries is detected, verifying VPC traffic flows through expected paths.",
+  "Risk": "Without monitoring for **route table changes**, unauthorized route modifications may go undetected, allowing attackers to redirect traffic through **malicious intermediaries**. This increases risk of **man-in-the-middle attacks**, **data exfiltration**, and **service disruption** as traffic is diverted from intended destinations, compromising **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",

@@ -17,6 +17,8 @@ concurrency:
 env:
   API_WORKING_DIR: ./api
 
+permissions: {}
+
 jobs:
   api-security-scans:
     runs-on: ubuntu-latest
@@ -32,6 +34,19 @@ jobs:
         working-directory: ./api
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            pypi.org:443
+            files.pythonhosted.org:443
+            github.com:443
+            auth.safetycli.com:443
+            pyup.io:443
+            data.safetycli.com:443
+            api.github.com:443
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -40,11 +55,12 @@ jobs:
 
       - name: Check for API changes
         id: check-changes
-        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             api/**
             .github/workflows/api-security.yml
+            .safety-policy.yml
           files_ignore: |
             api/docs/**
             api/README.md
@@ -57,6 +73,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
+          update-lock: 'true'
 
       - name: Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -64,8 +81,8 @@ jobs:
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check --ignore 79023,79027
-        # TODO: 79023 & 79027 knack ReDoS until `azure-cli-core` (via `cartography`) allows `knack` >=0.13.0
+        # Accepted CVEs, severity threshold, and ignore expirations live in ../.safety-policy.yml
+        run: poetry run safety check --policy-file ../.safety-policy.yml
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'

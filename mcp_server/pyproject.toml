@@ -5,13 +5,13 @@ requires = ["setuptools>=61.0", "wheel"]
 [project]
 dependencies = [
   "fastmcp==2.14.0",
-  "httpx>=0.28.0"
+  "httpx==0.28.1"
 ]
 description = "MCP server for Prowler ecosystem"
 name = "prowler-mcp"
 readme = "README.md"
 requires-python = ">=3.12"
-version = "0.4.0"
+version = "0.5.0"
 
 [project.scripts]
 prowler-mcp = "prowler_mcp_server.main:main"

@@ -25,8 +25,8 @@ from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
     AWS_REGION_US_EAST_1,
     AWS_STS_GLOBAL_ENDPOINT_REGION,
-    BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
+    get_default_session_config,
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAccessKeyIDInvalidError,
@@ -96,7 +96,7 @@ class AwsProvider(Provider):
     _audit_resources: list = []
     _audit_config: dict
     _scan_unused_services: bool = False
-    _enabled_regions: set = set()
+    _enabled_regions: set | None = None
     _mutelist: AWSMutelist
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
@@ -111,6 +111,7 @@ class AwsProvider(Provider):
         mfa: bool = False,
         profile: str = None,
         regions: set = set(),
+        excluded_regions: set = None,
         organizations_role_arn: str = None,
         scan_unused_services: bool = False,
         resource_tags: list[str] = [],
@@ -136,6 +137,10 @@ class AwsProvider(Provider):
             - mfa: A boolean indicating whether MFA is enabled.
             - profile: The name of the AWS CLI profile to use.
             - regions: A set of regions to audit.
+            - excluded_regions: A set of regions to skip during the scan. Applied
+              on top of `regions` and of the account's enabled regions. Also
+              settable via the PROWLER_AWS_DISALLOWED_REGIONS environment variable
+              or the `disallowed_regions` key in the provider config file.
             - organizations_role_arn: The ARN of the AWS Organizations IAM role to assume.
             - scan_unused_services: A boolean indicating whether to scan unused services. False by default.
             - resource_tags: A list of tags to filter the resources to audit.
@@ -190,19 +195,47 @@ class AwsProvider(Provider):
 
         logger.info("Initializing AWS provider ...")
 
+        # Load provider config early because provider-level settings can affect
+        # bootstrap region selection before the scan starts.
+        if config_content is not None:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        excluded_regions = self.resolve_excluded_regions(
+            excluded_regions, self._audit_config
+        )
+
+        # Normalize excluded_regions and prune the include-list up front so
+        # every downstream consumer (identity, STS region, service/region
+        # enumeration) sees an already-filtered view.
+        if excluded_regions and regions:
+            regions = set(regions) - excluded_regions
+            if not regions:
+                raise AWSArgumentTypeValidationError(
+                    message=(
+                        "All requested AWS regions are excluded by the "
+                        "disallowed regions configuration."
+                    ),
+                    file=pathlib.Path(__file__).name,
+                )
+
         ######## AWS Session
         logger.info("Generating original session ...")
 
         # TODO: Use AwsSetUpSession ?????
         # Configure the initial AWS Session using the local credentials: profile or environment variables
+        session_config = self.set_session_config(retries_max_attempts)
         aws_session = self.setup_session(
             mfa=mfa,
             profile=profile,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
             aws_session_token=aws_session_token,
+            session_config=session_config,
         )
-        session_config = self.set_session_config(retries_max_attempts)
         # Current session and the original session points to the same session object until we get a new one, if needed
         self._session = AWSSession(
             current_session=aws_session,
@@ -215,7 +248,7 @@ class AwsProvider(Provider):
         # After the session is created, validate it
         logger.info("Validating credentials ...")
         sts_region = get_aws_region_for_sts(
-            self.session.current_session.region_name, regions
+            self.session.current_session.region_name, regions, excluded_regions
         )
 
         # Validate the credentials
@@ -229,7 +262,9 @@ class AwsProvider(Provider):
 
         ######## AWS Provider Identity
         # Get profile region
-        profile_region = self.get_profile_region(self._session.current_session)
+        profile_region = self.get_profile_region(
+            self._session.current_session, excluded_regions
+        )
 
         # Set identity
         self._identity = self.set_identity(
@@ -284,8 +319,16 @@ class AwsProvider(Provider):
         ########
 
         ######## AWS Organizations Metadata
-        # This is needed in the case we don't assume an AWS Organizations IAM Role
-        aws_organizations_session = self._session.original_session
+        # Default to the current (post-assume) session so DescribeAccount runs
+        # with the same identity that performs the scan. This makes delegated
+        # administrator scenarios work without extra configuration: when the
+        # scan role itself sits in the management or delegated admin account,
+        # it already holds the Organizations permissions needed. The
+        # management-account -> member-account flow is handled by the
+        # original-session fallback below. Use `organizations_role_arn` to
+        # override when Organizations lives in a different account than both
+        # the scan role and the original credentials.
+        aws_organizations_session = self._session.current_session
         # Get a new session if the organizations_role_arn is set
         if organizations_role_arn:
             # Validate the input role
@@ -330,9 +373,50 @@ class AwsProvider(Provider):
         self._organizations_metadata = self.get_organizations_info(
             aws_organizations_session, self._identity.account
         )
+
+        # Fallback to the original (pre-assume) session when no explicit
+        # organizations_role_arn is set and the current session could not
+        # retrieve Organizations metadata. This preserves the
+        # management-account -> member-account flow, where DescribeAccount is
+        # only allowed from the management account or a delegated
+        # administrator and the assumed member-account session has no
+        # Organizations permissions.
+        if (
+            not organizations_role_arn
+            and self._session.current_session is not self._session.original_session
+            and (
+                self._organizations_metadata is None
+                or not self._organizations_metadata.organization_id
+            )
+        ):
+            logger.info(
+                "Retrying AWS Organizations metadata retrieval with the original session"
+            )
+            self._organizations_metadata = self.get_organizations_info(
+                self._session.original_session, self._identity.account
+            )
         ########
 
-        # Parse Scan Tags
+        # Get Enabled Regions
+        self._enabled_regions = self.get_aws_enabled_regions(
+            self._session.current_session
+        )
+
+        # Apply the exclusion to the account's enabled regions. This is the
+        # gate used by generate_regional_clients, so skipped regions never get
+        # a boto3 client created for them and cannot stall the scan.
+        if excluded_regions:
+            if self._enabled_regions is not None:
+                self._enabled_regions = self._enabled_regions - excluded_regions
+            if self._identity.audited_regions:
+                self._identity.audited_regions = (
+                    set(self._identity.audited_regions) - excluded_regions
+                )
+            logger.info(f"Excluding AWS regions from scan: {sorted(excluded_regions)}")
+        self._excluded_regions = excluded_regions
+
+        # Parse Scan Tags after region exclusions are applied so tag discovery
+        # also skips disallowed regions.
         if resource_tags:
             self._audit_resources = self.get_tagged_resources(resource_tags)
 
@@ -340,21 +424,8 @@ class AwsProvider(Provider):
         if resource_arn:
             self._audit_resources = resource_arn
 
-        # Get Enabled Regions
-        self._enabled_regions = self.get_aws_enabled_regions(
-            self._session.current_session
-        )
-
         # Set ignore unused services
         self._scan_unused_services = scan_unused_services
-
-        # Audit Config
-        if config_content:
-            self._audit_config = config_content
-        else:
-            if not config_path:
-                config_path = default_config_file_path
-            self._audit_config = load_and_validate_config_file(self._type, config_path)
 
         # Fixer Config
         self._fixer_config = fixer_config
@@ -468,12 +539,53 @@ class AwsProvider(Provider):
             )
 
     @staticmethod
-    def get_profile_region(session: Session):
-        profile_region = AWS_REGION_US_EAST_1
-        if session.region_name:
-            profile_region = session.region_name
+    def resolve_excluded_regions(
+        excluded_regions: set | list | tuple | None,
+        audit_config: dict | None,
+    ) -> set[str]:
+        """Resolve AWS region exclusions with precedence arg > env > config."""
+        if excluded_regions is not None:
+            raw_regions = excluded_regions
+        else:
+            raw_regions = Provider.get_excluded_regions_from_env()
+            if not raw_regions and isinstance(audit_config, dict):
+                raw_regions = audit_config.get("disallowed_regions") or []
 
-        return profile_region
+        return {str(region).strip() for region in raw_regions if str(region).strip()}
+
+    @staticmethod
+    def get_bootstrap_region_candidates(session_region: str | None) -> tuple[str, ...]:
+        """Return safe fallback regions for bootstrap AWS calls."""
+        if session_region:
+            if session_region.startswith("cn-"):
+                return ("cn-north-1", "cn-northwest-1")
+            if session_region.startswith("us-gov-"):
+                return ("us-gov-east-1", "us-gov-west-1")
+            if session_region.startswith("eusc-"):
+                return ("eusc-de-east-1",)
+            if session_region.startswith("us-iso"):
+                return (session_region,)
+
+        return (AWS_STS_GLOBAL_ENDPOINT_REGION, "us-east-2", "us-west-2", "eu-west-1")
+
+    @staticmethod
+    def get_profile_region(
+        session: Session, excluded_regions: set[str] | None = None
+    ) -> str:
+        excluded_regions = set(excluded_regions or ())
+        session_region = session.region_name
+        if session_region and session_region not in excluded_regions:
+            return session_region
+
+        for region in AwsProvider.get_bootstrap_region_candidates(session_region):
+            if region not in excluded_regions:
+                if session_region and session_region != region:
+                    logger.info(
+                        f"Configured AWS profile region {session_region} is excluded; using {region} for bootstrap clients."
+                    )
+                return region
+
+        return session_region or AWS_REGION_US_EAST_1
 
     @staticmethod
     def set_identity(
@@ -519,6 +631,7 @@ class AwsProvider(Provider):
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
+        session_config: Optional[Config] = None,
     ) -> Session:
         """
         setup_session sets up an AWS session using the provided credentials.
@@ -529,6 +642,9 @@ class AwsProvider(Provider):
             - aws_access_key_id: The AWS access key ID.
             - aws_secret_access_key: The AWS secret access key.
             - aws_session_token: The AWS session token, optional.
+            - session_config: Botocore Config applied as the session's default
+              client config so every client created from the session inherits
+              the Prowler user agent and retry settings.
 
         Returns:
             - Session: The AWS session.
@@ -538,6 +654,9 @@ class AwsProvider(Provider):
         """
         try:
             logger.debug("Creating original session ...")
+
+            if session_config is None:
+                session_config = AwsProvider.set_session_config(None)
 
             session_arguments = {}
             if profile:
@@ -550,6 +669,7 @@ class AwsProvider(Provider):
 
             if mfa:
                 session = Session(**session_arguments)
+                session._session.set_default_client_config(session_config)
                 sts_client = session.client("sts")
 
                 # TODO: pass values from the input
@@ -562,7 +682,7 @@ class AwsProvider(Provider):
                 session_credentials = sts_client.get_session_token(
                     **get_session_token_arguments
                 )
-                return Session(
+                mfa_session = Session(
                     aws_access_key_id=session_credentials["Credentials"]["AccessKeyId"],
                     aws_secret_access_key=session_credentials["Credentials"][
                         "SecretAccessKey"
@@ -571,8 +691,12 @@ class AwsProvider(Provider):
                         "SessionToken"
                     ],
                 )
+                mfa_session._session.set_default_client_config(session_config)
+                return mfa_session
             else:
-                return Session(**session_arguments)
+                session = Session(**session_arguments)
+                session._session.set_default_client_config(session_config)
+                return session
         except Exception as error:
             logger.critical(
                 f"AWSSetUpSessionError[{error.__traceback__.tb_lineno}]: {error}"
@@ -587,6 +711,7 @@ class AwsProvider(Provider):
         identity: AWSIdentityInfo,
         assumed_role_configuration: AWSAssumeRoleConfiguration,
         session: AWSSession,
+        session_config: Optional[Config] = None,
     ) -> Session:
         """
         Sets up an assumed session using the provided assumed role credentials.
@@ -631,6 +756,13 @@ class AwsProvider(Provider):
             assumed_session = BotocoreSession()
             assumed_session._credentials = assumed_refreshable_credentials
             assumed_session.set_config_variable("region", identity.profile_region)
+            if session_config is None:
+                session_config = (
+                    session.session_config
+                    if session is not None
+                    else AwsProvider.set_session_config(None)
+                )
+            assumed_session.set_default_client_config(session_config)
             return Session(
                 profile_name=identity.profile,
                 botocore_session=assumed_session,
@@ -701,12 +833,15 @@ class AwsProvider(Provider):
         Caller Identity ARN: arn:aws:iam::123456789012:user/prowler
         ```
         """
-        # Beautify audited regions, set "all" if there is no filter region
-        regions = (
-            ", ".join(self._identity.audited_regions)
-            if self._identity.audited_regions is not None
-            else "all"
-        )
+        # Beautify audited regions. If the scan includes all regions but some
+        # are explicitly excluded, reflect that in the banner instead of
+        # showing the misleading "all" label.
+        if self._identity.audited_regions:
+            regions = ", ".join(sorted(self._identity.audited_regions))
+        elif getattr(self, "_excluded_regions", None):
+            regions = f"all except {', '.join(sorted(self._excluded_regions))}"
+        else:
+            regions = "all"
         # Beautify audited profile, set "default" if there is no profile set
         profile = (
             self._identity.profile if self._identity.profile is not None else "default"
@@ -745,16 +880,18 @@ class AwsProvider(Provider):
             service_regions = AwsProvider.get_available_aws_service_regions(
                 service, self._identity.partition, self._identity.audited_regions
             )
+            if getattr(self, "_excluded_regions", None):
+                service_regions = service_regions - self._excluded_regions
 
             # Get the regions enabled for the account and get the intersection with the service available regions
-            if self._enabled_regions:
+            if self._enabled_regions is not None:
                 enabled_regions = service_regions.intersection(self._enabled_regions)
             else:
                 enabled_regions = service_regions
 
             for region in enabled_regions:
                 regional_client = self._session.current_session.client(
-                    service, region_name=region, config=self._session.session_config
+                    service, region_name=region
                 )
                 regional_client.region = region
                 regional_clients[region] = regional_client
@@ -942,23 +1079,28 @@ class AwsProvider(Provider):
             )
             raise error
 
-    def get_default_region(self, service: str) -> str:
-        """get_default_region returns the default region based on the profile and audited service regions
+    def get_default_region(self, service: str, global_service: bool = False) -> str:
+        """get_default_region returns the default region based on the profile and audited service regions.
+
+        For global services (CloudFront, Route53, Shield, FMS) the partition's
+        global region is always returned, ignoring profile and audited regions.
 
         Args:
             - service: The AWS service name
+            - global_service: If True, return the partition's global region directly
 
         Returns:
             - str: The default region for the given service
-
-        Example:
-            service = "ec2"
-            default_region = get_default_region(service)
         """
         try:
+            if global_service:
+                return self.get_global_region()
+
             service_regions = AwsProvider.get_available_aws_service_regions(
                 service, self._identity.partition, self._identity.audited_regions
             )
+            if getattr(self, "_excluded_regions", None):
+                service_regions = service_regions - self._excluded_regions
             default_region = self.get_global_region()
             # global region of the partition when all regions are audited and there is no profile region
             if self._identity.profile_region in service_regions:
@@ -1019,21 +1161,16 @@ class AwsProvider(Provider):
         Returns:
             - Config: The botocore Config object
         """
-        # Set the maximum retries for the standard retrier config
-        default_session_config = Config(
-            retries={"max_attempts": 3, "mode": "standard"},
-            user_agent_extra=BOTO3_USER_AGENT_EXTRA,
-        )
+        default_session_config = get_default_session_config()
         if retries_max_attempts:
-            # Create the new config
-            config = Config(
-                retries={
-                    "max_attempts": retries_max_attempts,
-                    "mode": "standard",
-                },
+            default_session_config = default_session_config.merge(
+                Config(
+                    retries={
+                        "max_attempts": retries_max_attempts,
+                        "mode": "standard",
+                    },
+                )
             )
-            # Merge the new configuration
-            default_session_config = default_session_config.merge(config)
 
         return default_session_config
 
@@ -1101,14 +1238,14 @@ class AwsProvider(Provider):
                 file=pathlib.Path(__file__).name,
             )
 
-    def get_aws_enabled_regions(self, current_session: Session) -> set:
-        """get_aws_enabled_regions returns a set of enabled AWS regions
+    def get_aws_enabled_regions(self, current_session: Session) -> set | None:
+        """get_aws_enabled_regions returns a set of enabled AWS regions, or None on failure.
 
         Args:
             - current_session: The AWS session object
 
         Returns:
-            - set: set of strings representing the enabled AWS regions
+            - set | None: set of enabled AWS region strings, or None if regions could not be determined
         """
         try:
             # EC2 Client to check enabled regions
@@ -1128,7 +1265,7 @@ class AwsProvider(Provider):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return set()
+            return None
 
     # TODO: review this function
     # Maybe this should be done within the AwsProvider and not in __main__.py
@@ -1303,6 +1440,9 @@ class AwsProvider(Provider):
                     aws_session_token=assumed_role_credentials.aws_session_token,
                     region_name=aws_region,
                     profile_name=profile,
+                )
+                session._session.set_default_client_config(
+                    AwsProvider.set_session_config(None)
                 )
 
             caller_identity = AwsProvider.validate_credentials(session, aws_region)
@@ -1562,13 +1702,19 @@ def read_aws_regions_file() -> dict:
 
 
 # TODO: This can be moved to another class since it doesn't need self
-def get_aws_region_for_sts(session_region: str, regions: set[str]) -> str:
+def get_aws_region_for_sts(
+    session_region: str,
+    regions: set[str],
+    excluded_regions: set[str] | None = None,
+) -> str:
     """
     Get the AWS region for the STS Assume Role operation.
 
     Args:
         - session_region (str): The region configured in the AWS session.
         - regions (set[str]): The regions passed with the -f/--region/--filter-region option.
+        - excluded_regions (set[str] | None): Regions that should be avoided for
+          bootstrap calls when possible.
 
     Returns:
         str: The AWS region for the STS Assume Role operation
@@ -1576,20 +1722,21 @@ def get_aws_region_for_sts(session_region: str, regions: set[str]) -> str:
     Example:
         aws_region = get_aws_region_for_sts(session_region, regions)
     """
-    # If there is no region passed with -f/--region/--filter-region
-    if regions is None or len(regions) == 0:
-        # If you have a region configured in your AWS config or credentials file
-        if session_region is not None:
-            aws_region = session_region
-        else:
-            # If there is no region set passed with -f/--region
-            # we use the Global STS Endpoint Region, us-east-1
-            aws_region = AWS_STS_GLOBAL_ENDPOINT_REGION
-    else:
-        # Get the first region passed to the -f/--region
-        aws_region = list(regions)[0]
+    excluded_regions = set(excluded_regions or ())
 
-    return aws_region
+    if regions:
+        for region in regions:
+            if region not in excluded_regions:
+                return region
+
+    if session_region and session_region not in excluded_regions:
+        return session_region
+
+    for region in AwsProvider.get_bootstrap_region_candidates(session_region):
+        if region not in excluded_regions:
+            return region
+
+    return session_region or AWS_STS_GLOBAL_ENDPOINT_REGION
 
 
 # TODO: this duplicates the provider arguments validation library

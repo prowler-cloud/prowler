@@ -27,7 +27,8 @@ class vm_sufficient_daily_backup_retention_period(Check):
                     for backup_item in vault.backup_protected_items.values():
                         if (
                             backup_item.workload_type == DataSourceType.VM
-                            and backup_item.name.split(";")[-1] == vm.resource_name
+                            and backup_item.name.split(";")[-1].lower()
+                            == vm.resource_name.lower()
                         ):
                             backup_found = True
                             policy_id = backup_item.backup_policy_id

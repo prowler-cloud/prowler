@@ -10,7 +10,10 @@ import { DialogHeader, DialogTitle } from "@/components/shadcn/dialog";
 import { Modal } from "@/components/shadcn/modal";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
-import { PROVIDER_WIZARD_STEP } from "@/types/provider-wizard";
+import {
+  PROVIDER_WIZARD_MODE,
+  PROVIDER_WIZARD_STEP,
+} from "@/types/provider-wizard";
 
 import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
 import {
@@ -22,19 +25,26 @@ import { CredentialsStep } from "./steps/credentials-step";
 import { WIZARD_FOOTER_ACTION_TYPE } from "./steps/footer-controls";
 import { LaunchStep } from "./steps/launch-step";
 import { TestConnectionStep } from "./steps/test-connection-step";
-import type { ProviderWizardInitialData } from "./types";
-import { WizardStepper } from "./wizard-stepper";
+import type { OrgWizardInitialData, ProviderWizardInitialData } from "./types";
+import { PROVIDER_WIZARD_STEPS, WizardStepper } from "./wizard-stepper";
+
+const UPDATE_MODE_WIZARD_STEPS = PROVIDER_WIZARD_STEPS.slice(
+  0,
+  PROVIDER_WIZARD_STEP.LAUNCH,
+);
 
 interface ProviderWizardModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: ProviderWizardInitialData;
+  orgInitialData?: OrgWizardInitialData;
 }
 
 export function ProviderWizardModal({
   open,
   onOpenChange,
   initialData,
+  orgInitialData,
 }: ProviderWizardModalProps) {
   const {
     backToProviderFlow,
@@ -43,7 +53,9 @@ export function ProviderWizardModal({
     handleClose,
     handleDialogOpenChange,
     handleTestSuccess,
+    isOrgDirectEntry,
     isProviderFlow,
+    mode,
     modalTitle,
     openOrganizationsFlow,
     orgCurrentStep,
@@ -59,6 +71,7 @@ export function ProviderWizardModal({
     open,
     onOpenChange,
     initialData,
+    orgInitialData,
   });
   const scrollHintRefreshToken = `${wizardVariant}-${currentStep}-${orgCurrentStep}-${orgSetupPhase}`;
   const { containerRef, sentinelRef, showScrollHint } = useScrollHint({
@@ -93,7 +106,14 @@ export function ProviderWizardModal({
       <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden lg:mt-8 lg:flex-row">
         <div className="mb-4 box-border w-full shrink-0 lg:mb-0 lg:w-[328px]">
           {isProviderFlow ? (
-            <WizardStepper currentStep={currentStep} />
+            <WizardStepper
+              currentStep={currentStep}
+              steps={
+                mode === PROVIDER_WIZARD_MODE.UPDATE
+                  ? UPDATE_MODE_WIZARD_STEPS
+                  : undefined
+              }
+            />
           ) : (
             <WizardStepper
               currentStep={orgCurrentStep}
@@ -149,13 +169,23 @@ export function ProviderWizardModal({
 
             {!isProviderFlow && orgCurrentStep === ORG_WIZARD_STEP.SETUP && (
               <OrgSetupForm
-                onBack={backToProviderFlow}
+                onBack={isOrgDirectEntry ? handleClose : backToProviderFlow}
+                onClose={handleClose}
                 onNext={() => {
                   setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
                 }}
                 onFooterChange={setFooterConfig}
                 onPhaseChange={setOrgSetupPhase}
                 initialPhase={orgSetupPhase}
+                initialValues={
+                  orgInitialData
+                    ? {
+                        organizationName: orgInitialData.organizationName,
+                        awsOrgId: orgInitialData.externalId,
+                      }
+                    : undefined
+                }
+                intent={orgInitialData?.intent}
               />
             )}
 

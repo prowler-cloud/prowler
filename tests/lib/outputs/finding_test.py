@@ -557,7 +557,7 @@ class TestFinding:
         assert finding_output.resource_tags == {}
         assert finding_output.partition is None
         assert finding_output.account_uid == "test_cluster"
-        assert finding_output.provider_uid == "In-Cluster"
+        assert finding_output.provider_uid == "test_cluster"
         assert finding_output.account_name == "context: In-Cluster"
         assert finding_output.account_email is None
         assert finding_output.account_organization_uid is None
@@ -590,6 +590,40 @@ class TestFinding:
         assert finding_output.metadata.RelatedTo == ["check1", "check2"]
         assert finding_output.metadata.Notes == "mock_notes"
         assert finding_output.metadata.Compliance == []
+
+    def test_generate_output_kubernetes_kubeconfig(self):
+        # Mock provider
+        provider = MagicMock()
+        provider.type = "kubernetes"
+        provider.identity.context = "test-context"
+        provider.identity.cluster = "test_cluster"
+
+        # Mock check result
+        check_output = MagicMock()
+        check_output.resource_name = "test_resource_name"
+        check_output.resource_id = "test_resource_id"
+        check_output.namespace = "test_namespace"
+        check_output.resource_details = "test_resource_details"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="kubernetes")
+        check_output.timestamp = datetime.now()
+        check_output.resource = {}
+        check_output.compliance = {}
+
+        # Mock Output Options
+        output_options = MagicMock()
+        output_options.unix_timestamp = True
+
+        # Generate the finding
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.auth_method == "kubeconfig"
+        assert finding_output.account_uid == "test_cluster"
+        assert finding_output.provider_uid == "test-context"
+        assert finding_output.account_name == "context: test-context"
 
     def test_generate_output_github_personal_access_token(self):
         """Test GitHub output generation with Personal Access Token authentication."""
@@ -910,16 +944,19 @@ class TestFinding:
             "provider": "test_provider",
             "checkid": "service_check_001",
             "checktitle": "Test Check",
-            "checktype": ["type1"],
+            "checktype": [],
             "servicename": "service",
             "subservicename": "SubService",
             "severity": "high",
             "resourcetype": "TestResource",
             "description": "A test check",
             "risk": "High risk",
-            "relatedurl": "http://example.com",
+            "relatedurl": "",
             "remediation": {
-                "recommendation": {"text": "Fix it", "url": "http://fix.com"},
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "https://hub.prowler.com/check/service_check_001",
+                },
                 "code": {
                     "nativeiac": "iac_code",
                     "terraform": "terraform_code",
@@ -928,7 +965,7 @@ class TestFinding:
                 },
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one", "cat-two"],
+            "categories": ["encryption", "logging"],
             "dependson": ["dep1"],
             "relatedto": ["rel1"],
             "notes": "Some notes",
@@ -953,22 +990,25 @@ class TestFinding:
         assert meta.Provider == "test_provider"
         assert meta.CheckID == "service_check_001"
         assert meta.CheckTitle == "Test Check"
-        assert meta.CheckType == ["type1"]
+        assert meta.CheckType == []
         assert meta.ServiceName == "service"
         assert meta.SubServiceName == "SubService"
         assert meta.Severity == "high"
         assert meta.ResourceType == "TestResource"
         assert meta.Description == "A test check"
         assert meta.Risk == "High risk"
-        assert meta.RelatedUrl == "http://example.com"
+        assert meta.RelatedUrl == ""
         assert meta.Remediation.Recommendation.Text == "Fix it"
-        assert meta.Remediation.Recommendation.Url == "http://fix.com"
+        assert (
+            meta.Remediation.Recommendation.Url
+            == "https://hub.prowler.com/check/service_check_001"
+        )
         assert meta.Remediation.Code.NativeIaC == "iac_code"
         assert meta.Remediation.Code.Terraform == "terraform_code"
         assert meta.Remediation.Code.CLI == "cli_code"
         assert meta.Remediation.Code.Other == "other_code"
         assert meta.ResourceIdTemplate == "template"
-        assert meta.Categories == ["cat-one", "cat-two"]
+        assert meta.Categories == ["encryption", "logging"]
         assert meta.DependsOn == ["dep1"]
         assert meta.RelatedTo == ["rel1"]
         assert meta.Notes == "Some notes"
@@ -1034,11 +1074,11 @@ class TestFinding:
             "dependson": [],
             "relatedto": [],
             "categories": [],
-            "checktitle": "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'",
+            "checktitle": "Auto provisioning of Log Analytics agent for Azure VMs should be On",
             "compliance": None,
-            "relatedurl": "https://docs.microsoft.com/en-us/azure/security-center/security-center-data-security",
+            "relatedurl": "",
             "description": (
-                "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'. "
+                "Auto provisioning of Log Analytics agent for Azure VMs should be On. "
                 "The Microsoft Monitoring Agent scans for various security-related configurations and events such as system updates, "
                 "OS vulnerabilities, endpoint protection, and provides alerts."
             ),
@@ -1050,9 +1090,9 @@ class TestFinding:
                     "terraform": "",
                 },
                 "recommendation": {
-                    "url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components",
+                    "url": "https://hub.prowler.com/check/defender_auto_provisioning_log_analytics_agent_vms_on",
                     "text": (
-                        "Ensure comprehensive visibility into possible security vulnerabilities, including missing updates, "
+                        "Comprehensive visibility into possible security vulnerabilities, including missing updates, "
                         "misconfigured operating system security settings, and active threats, allowing for timely mitigation and improved overall security posture"
                     ),
                 },
@@ -1099,16 +1139,16 @@ class TestFinding:
         assert meta.CheckID == "defender_auto_provisioning_log_analytics_agent_vms_on"
         assert (
             meta.CheckTitle
-            == "Ensure that Auto provisioning of 'Log Analytics agent for Azure VMs' is Set to 'On'"
+            == "Auto provisioning of Log Analytics agent for Azure VMs should be On"
         )
         assert meta.Severity == "medium"
         assert meta.ResourceType == "AzureDefenderPlan"
         assert (
             meta.Remediation.Recommendation.Url
-            == "https://learn.microsoft.com/en-us/azure/defender-for-cloud/monitoring-components"
+            == "https://hub.prowler.com/check/defender_auto_provisioning_log_analytics_agent_vms_on"
         )
         assert meta.Remediation.Recommendation.Text.startswith(
-            "Ensure comprehensive visibility"
+            "Comprehensive visibility"
         )
 
         expected_segments = [
@@ -1156,7 +1196,7 @@ class TestFinding:
             "resourcetype": "GCPResourceType",
             "description": "GCP check description",
             "risk": "Medium risk",
-            "relatedurl": "http://gcp.example.com",
+            "relatedurl": "",
             "remediation": {
                 "code": {
                     "nativeiac": "iac_code",
@@ -1164,10 +1204,13 @@ class TestFinding:
                     "cli": "cli_code",
                     "other": "other_code",
                 },
-                "recommendation": {"text": "Fix it", "url": "http://fix-gcp.com"},
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "https://hub.prowler.com/check/service_gcp_check_001",
+                },
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one", "cat-two"],
+            "categories": ["encryption", "logging"],
             "dependson": ["dep1"],
             "relatedto": ["rel1"],
             "notes": "Some notes",
@@ -1236,7 +1279,7 @@ class TestFinding:
             "resourcetype": "K8sResourceType",
             "description": "K8s check description",
             "risk": "Low risk",
-            "relatedurl": "http://k8s.example.com",
+            "relatedurl": "",
             "remediation": {
                 "code": {
                     "nativeiac": "iac_code",
@@ -1244,10 +1287,13 @@ class TestFinding:
                     "cli": "cli_code",
                     "other": "other_code",
                 },
-                "recommendation": {"text": "Fix it", "url": "http://fix-k8s.com"},
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "https://hub.prowler.com/check/service_k8s_check_001",
+                },
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one"],
+            "categories": ["encryption"],
             "dependson": [],
             "relatedto": [],
             "notes": "K8s notes",
@@ -1302,7 +1348,7 @@ class TestFinding:
             "resourcetype": "M365ResourceType",
             "description": "M365 check description",
             "risk": "High risk",
-            "relatedurl": "http://m365.example.com",
+            "relatedurl": "",
             "remediation": {
                 "code": {
                     "nativeiac": "iac_code",
@@ -1310,10 +1356,13 @@ class TestFinding:
                     "cli": "cli_code",
                     "other": "other_code",
                 },
-                "recommendation": {"text": "Fix it", "url": "http://fix-m365.com"},
+                "recommendation": {
+                    "text": "Fix it",
+                    "url": "https://hub.prowler.com/check/service_m365_check_001",
+                },
             },
             "resourceidtemplate": "template",
-            "categories": ["cat-one"],
+            "categories": ["encryption"],
             "dependson": [],
             "relatedto": [],
             "notes": "M365 notes",

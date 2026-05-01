@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::RDS::DBInstance",
   "ResourceGroup": "database",
-  "Description": "**Alibaba Cloud RDS instances** should have **SQL auditing** (SQL Explorer) enabled to track database events and write them to an audit log. SQL auditing helps maintain **regulatory compliance**, understand database activity, and gain insight into discrepancies and anomalies that could indicate business concerns or suspected security violations. This applies to all RDS engine types except SQL Server 2012/2016/2017 and MariaDB TX.",
+  "Description": "**Alibaba Cloud RDS instances** should have **SQL auditing** (SQL Explorer) enabled to track database events in an audit log. This helps maintain **regulatory compliance**, understand database activity, and detect anomalies indicating security violations. Applies to all RDS engines except SQL Server 2012/2016/2017 and MariaDB TX.",
   "Risk": "Without **SQL auditing**, it is difficult to detect **unauthorized access**, **data breaches**, or **malicious activity** within the database. The absence of audit logs hinders **forensic investigations**, compliance reporting, and the ability to identify **data exfiltration** or **privilege escalation** attempts, impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
