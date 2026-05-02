@@ -1256,7 +1256,7 @@
         "storage_smb_channel_encryption_with_secure_algorithm",
         "vm_ensure_attached_disks_encrypted_with_cmk",
         "vm_ensure_unattached_disks_encrypted_with_cmk",
-        "cosmosdb_account_minimal_tls_version_12"
+        "cosmosdb_account_minimum_tls_version_12"
       ]
     },
     {

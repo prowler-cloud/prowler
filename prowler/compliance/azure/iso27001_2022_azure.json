@@ -1534,7 +1534,7 @@
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_attached_disks_encrypted_with_cmk",
         "vm_ensure_unattached_disks_encrypted_with_cmk",
-        "cosmosdb_account_minimal_tls_version_12",
+        "cosmosdb_account_minimum_tls_version_12",
         "entra_app_registration_credential_not_expired"
       ]
     },

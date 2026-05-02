@@ -1,6 +1,6 @@
 {
   "Provider": "azure",
-  "CheckID": "cosmosdb_account_minimal_tls_version_12",
+  "CheckID": "cosmosdb_account_minimum_tls_version_12",
   "CheckTitle": "Cosmos DB account enforces TLS 1.2 or higher",
   "CheckType": [],
   "ServiceName": "cosmosdb",
@@ -22,7 +22,7 @@
     },
     "Recommendation": {
       "Text": "",
-      "Url": "https://hub.prowler.com/check/cosmosdb_account_minimal_tls_version_12"
+      "Url": "https://hub.prowler.com/check/cosmosdb_account_minimum_tls_version_12"
     }
   },
   "Categories": [
