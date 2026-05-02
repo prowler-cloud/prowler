@@ -12,7 +12,7 @@
   "Risk": "Publicly accessible Cloud Functions can be invoked by any internet user or any authenticated Google account. This exposes business logic, enables abuse (e.g., denial-of-wallet via high invocation costs), and can lead to unauthorized data access or code execution if the function processes sensitive operations.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/functions/docs/securing/function-identity",
+    "https://cloud.google.com/functions/docs/securing/authenticating",
     "https://cloud.google.com/iam/docs/overview"
   ],
   "Remediation": {
