@@ -157,6 +157,43 @@ class TestCloudFunctionService:
             assert len(cf_client.functions) == 1
             assert cf_client.functions[0].publicly_accessible is True
 
+    def test_get_functions_iam_policy_all_authenticated_users(self):
+        """_get_functions_iam_policy sets publicly_accessible=True when allAuthenticatedUsers binding found."""
+
+        def mock_api_client(*args, **kwargs):
+            return _make_cloudfunction_client(
+                functions_list=[
+                    {
+                        "name": f"projects/{GCP_PROJECT_ID}/locations/{_LOCATION_ID}/functions/auth-users-func",
+                        "state": "ACTIVE",
+                        "serviceConfig": {},
+                    }
+                ],
+                iam_bindings=[
+                    {
+                        "role": "roles/cloudfunctions.invoker",
+                        "members": ["allAuthenticatedUsers"],
+                    }
+                ],
+            )
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
+        ):
+            cf_client = CloudFunction(
+                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+            )
+
+            assert len(cf_client.functions) == 1
+            assert cf_client.functions[0].publicly_accessible is True
+
     def test_get_functions_iam_policy_not_public(self):
         """_get_functions_iam_policy leaves publicly_accessible=False for private functions."""
 

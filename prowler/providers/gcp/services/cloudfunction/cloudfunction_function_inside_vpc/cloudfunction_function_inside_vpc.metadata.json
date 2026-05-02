@@ -12,7 +12,7 @@
   "Risk": "Cloud Functions without a VPC connector cannot reach internal GCP resources (e.g., Cloud SQL, Memorystore, GKE) privately and must expose those resources to the internet or use public IPs. This increases the attack surface and violates network segmentation controls required by security frameworks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/run/docs/configuring/vpc-connectors",
+    "https://cloud.google.com/functions/docs/networking/connecting-vpc",
     "https://cloud.google.com/vpc/docs/serverless-vpc-access"
   ],
   "Remediation": {

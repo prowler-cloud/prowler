@@ -8,6 +8,8 @@ class cloudfunction_function_not_publicly_accessible(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for function in cloudfunction_client.functions:
+            if function.state != "ACTIVE":
+                continue
             report = Check_Report_GCP(
                 metadata=self.metadata(),
                 resource=function,

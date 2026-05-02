@@ -43,7 +43,7 @@ class SecretManager(GCPService):
                     )
             except Exception as error:
                 logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{project_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def _get_secrets_iam_policy(self):

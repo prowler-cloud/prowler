@@ -18,14 +18,9 @@ class cloudfunction_function_inside_vpc(Check):
             )
             if function.vpc_connector:
                 report.status = "PASS"
-                egress_note = (
-                    " Ingress is unrestricted (ALLOW_ALL); consider restricting to internal traffic."
-                    if function.ingress_settings == "ALLOW_ALL"
-                    else ""
-                )
                 report.status_extended = (
                     f"Cloud Function {function.name} is connected to a VPC via "
-                    f"connector '{function.vpc_connector}'.{egress_note}"
+                    f"connector '{function.vpc_connector}'."
                 )
             else:
                 report.status = "FAIL"

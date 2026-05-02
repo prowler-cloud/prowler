@@ -1,6 +1,6 @@
 {
   "Framework": "KISA-ISMS-P",
-  "Name": "KISA ISMS compliance framework 2023",
+  "Name": "KISA ISMS-P compliance framework 2023",
   "Version": "2023",
   "Provider": "GCP",
   "Description": "The ISMS-P certification, established by KISA (Korea Internet & Security Agency), is a system where an independent certification body evaluates whether a company or organization's information security and privacy protection measures comply with certification standards, and grants certification. This mapping applies ISMS-P control requirements to Google Cloud Platform (GCP) environments.",

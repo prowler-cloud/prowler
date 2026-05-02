@@ -35,12 +35,11 @@ class secretmanager_secret_rotation_enabled(Check):
             rotation_overdue = False
             if rotation_days is not None and secret.next_rotation_time:
                 try:
-                    next_rotation = datetime.fromisoformat(
-                        secret.next_rotation_time.rstrip("Z")
-                    ).replace(tzinfo=timezone.utc)
+                    ts = secret.next_rotation_time.replace("Z", "+00:00")
+                    next_rotation = datetime.fromisoformat(ts)
                     rotation_overdue = next_rotation < datetime.now(timezone.utc)
                 except (ValueError, AttributeError):
-                    pass
+                    rotation_overdue = True
 
             if rotation_days is not None and rotation_days <= MAX_ROTATION_DAYS and not rotation_overdue:
                 report.status = "PASS"

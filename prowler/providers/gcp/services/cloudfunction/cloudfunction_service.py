@@ -68,7 +68,7 @@ class CloudFunction(GCPService):
                                 )
                         except Exception as error:
                             logger.error(
-                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                f"{location_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
                     locations_request = (
                         self.client.projects()
@@ -80,7 +80,7 @@ class CloudFunction(GCPService):
                     )
             except Exception as error:
                 logger.error(
-                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{project_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
     def _get_functions_iam_policy(self):

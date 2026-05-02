@@ -144,6 +144,41 @@ class TestSecretManagerService:
             assert sm_client.secrets[0].name == "public-secret"
             assert sm_client.secrets[0].publicly_accessible is True
 
+    def test_get_secrets_iam_policy_all_authenticated_users(self):
+        """_get_secrets_iam_policy sets publicly_accessible=True when allAuthenticatedUsers binding found."""
+
+        def mock_api_client_auth_users(*args, **kwargs):
+            return _make_secretmanager_client(
+                secrets_list=[
+                    {
+                        "name": f"projects/{GCP_PROJECT_ID}/secrets/auth-users-secret",
+                    }
+                ],
+                iam_bindings=[
+                    {
+                        "role": "roles/secretmanager.secretAccessor",
+                        "members": ["allAuthenticatedUsers"],
+                    }
+                ],
+            )
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client_auth_users,
+            ),
+        ):
+            sm_client = SecretManager(
+                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+            )
+
+            assert len(sm_client.secrets) == 1
+            assert sm_client.secrets[0].publicly_accessible is True
+
     def test_get_secrets_iam_policy_not_public(self):
         """_get_secrets_iam_policy leaves publicly_accessible=False when no public members."""
 

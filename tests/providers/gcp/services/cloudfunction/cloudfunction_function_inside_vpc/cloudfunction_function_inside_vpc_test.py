@@ -21,6 +21,14 @@ class Test_cloudfunction_function_inside_vpc:
             r = cloudfunction_function_inside_vpc().execute()
             assert r[0].status == "PASS" and r[0].resource_id == "fn-vpc" and r[0].location == GCP_US_CENTER1_LOCATION and r[0].project_id == GCP_PROJECT_ID
 
+    def test_function_inactive_skipped(self):
+        from prowler.providers.gcp.services.cloudfunction.cloudfunction_service import Function
+        c = mock.MagicMock()
+        c.functions = [Function(id=f"projects/{GCP_PROJECT_ID}/locations/{GCP_US_CENTER1_LOCATION}/functions/fn-deploy", name="fn-deploy", project_id=GCP_PROJECT_ID, location=GCP_US_CENTER1_LOCATION, state="DEPLOYING", vpc_connector=None)]
+        with (mock.patch("prowler.providers.common.provider.Provider.get_global_provider", return_value=set_mocked_gcp_provider()), mock.patch(_CLIENT_PATH, new=c)):
+            from prowler.providers.gcp.services.cloudfunction.cloudfunction_function_inside_vpc.cloudfunction_function_inside_vpc import cloudfunction_function_inside_vpc
+            assert len(cloudfunction_function_inside_vpc().execute()) == 0
+
     def test_function_without_vpc_fail(self):
         from prowler.providers.gcp.services.cloudfunction.cloudfunction_service import Function
         c = mock.MagicMock()
