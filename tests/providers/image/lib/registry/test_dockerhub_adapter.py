@@ -1,3 +1,4 @@
+import socket
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -9,6 +10,18 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryNetworkError,
 )
 from prowler.providers.image.lib.registry.dockerhub_adapter import DockerHubAdapter
+
+
+@pytest.fixture(autouse=True)
+def _default_dns_resolves_public(monkeypatch):
+    """Resolve every host to a public IP unless a test overrides this."""
+
+    def _stub(_host, *_a, **_kw):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))]
+
+    monkeypatch.setattr(
+        "prowler.providers.image.lib.registry.base.socket.getaddrinfo", _stub
+    )
 
 
 class TestDockerHubAdapterInit:
@@ -241,3 +254,35 @@ class TestDockerHubEmptyTokens:
         adapter = DockerHubAdapter("docker.io/myorg", username="u", password="p")
         with pytest.raises(ImageRegistryAuthError, match="empty token"):
             adapter._get_registry_token("myorg/myapp")
+
+
+class TestDockerHubPaginationLinkValidator:
+    """Server-controlled pagination links must be validated (PRWLRHELP-2103 class)."""
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_tag_pagination_to_metadata_ip_is_rejected(self, mock_request):
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "tok"}
+        tags_resp = MagicMock(
+            status_code=200,
+            headers={"Link": '<http://169.254.169.254/latest/meta-data>; rel="next"'},
+        )
+        tags_resp.json.return_value = {"tags": ["v1"]}
+        mock_request.side_effect = [token_resp, tags_resp]
+        adapter = DockerHubAdapter("docker.io/myorg")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter.list_tags("myorg/myapp")
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_tag_pagination_to_unrelated_host_is_rejected(self, mock_request):
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "tok"}
+        tags_resp = MagicMock(
+            status_code=200,
+            headers={"Link": '<https://attacker.com/v2/tags?n=200>; rel="next"'},
+        )
+        tags_resp.json.return_value = {"tags": ["v1"]}
+        mock_request.side_effect = [token_resp, tags_resp]
+        adapter = DockerHubAdapter("docker.io/myorg")
+        with pytest.raises(ImageRegistryAuthError, match="unrelated"):
+            adapter.list_tags("myorg/myapp")

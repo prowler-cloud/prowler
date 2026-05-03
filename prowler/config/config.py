@@ -125,6 +125,8 @@ def get_available_compliance_frameworks(provider=None):
                     )
     # Built-in multi-provider frameworks at top-level compliance/ directory.
     # Placed before external entry points so built-ins win on name collisions.
+    # When a specific provider was requested, only include the framework if it
+    # declares support for that provider; otherwise include all universal frameworks.
     compliance_root = f"{actual_directory}/../compliance"
     if os.path.isdir(compliance_root):
         with os.scandir(compliance_root) as files:

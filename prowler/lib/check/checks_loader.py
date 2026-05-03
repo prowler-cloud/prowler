@@ -22,6 +22,7 @@ def load_checks_to_execute(
     categories: set = None,
     resource_groups: set = None,
     list_checks: bool = False,
+    universal_frameworks: dict = None,
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
@@ -160,12 +161,21 @@ def load_checks_to_execute(
             if not bulk_compliance_frameworks:
                 bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
             for compliance_framework in compliance_frameworks:
-                checks_to_execute.update(
-                    CheckMetadata.list(
-                        bulk_compliance_frameworks=bulk_compliance_frameworks,
-                        compliance_framework=compliance_framework,
+                # Try universal frameworks first (snake_case dict-keyed checks)
+                if (
+                    universal_frameworks
+                    and compliance_framework in universal_frameworks
+                ):
+                    fw = universal_frameworks[compliance_framework]
+                    for req in fw.requirements:
+                        checks_to_execute.update(req.checks.get(provider.lower(), []))
+                elif compliance_framework in bulk_compliance_frameworks:
+                    checks_to_execute.update(
+                        CheckMetadata.list(
+                            bulk_compliance_frameworks=bulk_compliance_frameworks,
+                            compliance_framework=compliance_framework,
+                        )
                     )
-                )
 
         # Handle if there are categories passed using --categories
         elif categories:

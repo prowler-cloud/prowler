@@ -103,6 +103,48 @@ class CIS_Requirement_Attribute(BaseModel):
     References: str
 
 
+class EssentialEight_Requirement_Attribute_MaturityLevel(str, Enum):
+    """ASD Essential Eight Maturity Level"""
+
+    ML1 = "ML1"
+    ML2 = "ML2"
+    ML3 = "ML3"
+
+
+class EssentialEight_Requirement_Attribute_AssessmentStatus(str, Enum):
+    """Essential Eight Requirement Attribute Assessment Status"""
+
+    Manual = "Manual"
+    Automated = "Automated"
+
+
+class EssentialEight_Requirement_Attribute_CloudApplicability(str, Enum):
+    """How well the ASD control maps to AWS cloud infrastructure."""
+
+    Full = "full"
+    Partial = "partial"
+    Limited = "limited"
+    NonApplicable = "non-applicable"
+
+
+# Essential Eight Requirement Attribute
+class EssentialEight_Requirement_Attribute(BaseModel):
+    """ASD Essential Eight Requirement Attribute"""
+
+    Section: str
+    MaturityLevel: EssentialEight_Requirement_Attribute_MaturityLevel
+    AssessmentStatus: EssentialEight_Requirement_Attribute_AssessmentStatus
+    CloudApplicability: EssentialEight_Requirement_Attribute_CloudApplicability
+    MitigatedThreats: list[str]
+    Description: str
+    RationaleStatement: str
+    ImpactStatement: str
+    RemediationProcedure: str
+    AuditProcedure: str
+    AdditionalInformation: str
+    References: str
+
+
 # Well Architected Requirement Attribute
 class AWS_Well_Architected_Requirement_Attribute(BaseModel):
     """AWS Well Architected Requirement Attribute"""
@@ -251,6 +293,7 @@ class Compliance_Requirement(BaseModel):
     Name: Optional[str] = None
     Attributes: list[
         Union[
+            EssentialEight_Requirement_Attribute,
             CIS_Requirement_Attribute,
             ENS_Requirement_Attribute,
             ISO27001_2013_Requirement_Attribute,
