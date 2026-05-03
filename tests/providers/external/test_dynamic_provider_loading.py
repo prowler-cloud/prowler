@@ -59,10 +59,10 @@ class FakeExternalProvider(Provider):
         pass
 
     @classmethod
-    def from_cli_args(cls, arguments, fixer_config):
+    def from_cli_args(cls, _arguments, _fixer_config):
         cls()
 
-    def get_output_options(self, arguments, bulk_checks_metadata):
+    def get_output_options(self, _arguments, _bulk_checks_metadata):
         return MagicMock(output_directory="/tmp", output_filename="fake")
 
     def get_stdout_detail(self, finding):
@@ -90,11 +90,11 @@ class FakeExternalProvider(Provider):
     def display_compliance_table(
         self,
         findings,
-        bulk_checks_metadata,
-        compliance_framework,
-        output_filename,
-        output_directory,
-        compliance_overview,
+        _bulk_checks_metadata,
+        _compliance_framework,
+        _output_filename,
+        output_directory,  # referenced via name elsewhere in tests
+        _compliance_overview,
     ):
         return True
 
@@ -104,8 +104,8 @@ class FakeExternalProvider(Provider):
     def generate_compliance_output(
         self,
         findings,
-        bulk_compliance_frameworks,
-        input_compliance_frameworks,
+        _bulk_compliance_frameworks,
+        _input_compliance_frameworks,
         output_options,
         generated_outputs,
     ):
@@ -175,7 +175,7 @@ class FakePureContractProvider(Provider):
         pass
 
     @classmethod
-    def from_cli_args(cls, arguments, fixer_config):
+    def from_cli_args(cls, _arguments, _fixer_config):
         # Literal contract: return the instance, no side-effect in __init__.
         return cls()
 
@@ -661,7 +661,7 @@ class TestProviderInitialization:
         mock_is_builtin.return_value = True
         mock_load_ep.return_value = FakeExternalProvider  # plug-in shadow
         mock_import.return_value = MagicMock(
-            AwsProvider=MagicMock(side_effect=lambda **kw: None)
+            AwsProvider=MagicMock(side_effect=lambda **_kw: None)
         )
         mock_config.return_value = {}
 
@@ -700,8 +700,7 @@ class TestProviderInitialization:
         warning_msgs = [
             call.args[0]
             for call in mock_logger.warning.call_args_list
-            if call.args
-            and "Plug-in provider 'aws'" in call.args[0]
+            if call.args and "Plug-in provider 'aws'" in call.args[0]
         ]
         assert warning_msgs, "expected a warning about the shadowed plug-in 'aws'"
         assert "IGNORED" in warning_msgs[0]
