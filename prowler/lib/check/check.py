@@ -400,15 +400,23 @@ def _resolve_check_module(
     when a plug-in tries to override, so the user knows their plug-in
     duplicate is being ignored and can rename it.
 
-    Uses find_spec on the built-in path to distinguish "built-in doesn't
-    exist" from "built-in exists but failed to import" (broken transitive
-    dep, etc.). When the built-in is present, an import error propagates
-    instead of being silently swallowed.
+    Gates the built-in branch on `Provider.is_builtin(provider_type)` —
+    calling `find_spec` on `prowler.providers.{provider_type}.services...`
+    directly would propagate `ModuleNotFoundError` for external providers
+    (their parent package `prowler.providers.{provider_type}` does not
+    exist) instead of returning None. `Provider.is_builtin` encapsulates
+    the safe lookup, so external providers go straight to entry points.
+    For built-ins we still use `find_spec` to distinguish "check doesn't
+    exist" from "check exists but failed to import" (broken transitive
+    dep, etc.).
     """
+    from prowler.providers.common.provider import Provider
+
     # Built-in first — built-in wins on CheckID collision
-    builtin_path = f"prowler.providers.{provider_type}.services.{service}.{check_name}.{check_name}"
-    if importlib.util.find_spec(builtin_path) is not None:
-        return import_check(builtin_path)
+    if Provider.is_builtin(provider_type):
+        builtin_path = f"prowler.providers.{provider_type}.services.{service}.{check_name}.{check_name}"
+        if importlib.util.find_spec(builtin_path) is not None:
+            return import_check(builtin_path)
 
     # Entry point lookup — only consulted when the built-in truly doesn't exist
     for ep in importlib.metadata.entry_points(group=f"prowler.checks.{provider_type}"):

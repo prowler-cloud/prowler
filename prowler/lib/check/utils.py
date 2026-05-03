@@ -57,18 +57,18 @@ def recover_checks_from_provider(
             return []
 
         checks = []
-        # Built-in checks from prowler.providers.{provider}.services. Use
-        # find_spec to distinguish "service doesn't exist" from "service
-        # exists but failed to import" (broken transitive dep, etc.). We
-        # only fall through to entry points when the built-in package truly
-        # doesn't exist — otherwise the import error propagates and the
-        # user sees the real cause, instead of being silently replaced by
-        # an entry-point plug-in that happens to share a name.
-        service_path = f"prowler.providers.{provider}.services"
-        if service:
-            service_path += f".{service}"
+        # Built-in checks from prowler.providers.{provider}.services. Gate
+        # the built-in branch on `Provider.is_builtin(provider)` — calling
+        # `find_spec` directly on `prowler.providers.{provider}.services`
+        # would propagate `ModuleNotFoundError` when the parent package
+        # `prowler.providers.{provider}` does not exist (i.e. the provider
+        # is external), instead of returning None. `Provider.is_builtin`
+        # encapsulates the safe lookup, so we only run the built-in
+        # discovery when the provider actually ships with the SDK; for
+        # external providers we go straight to entry points.
+        from prowler.providers.common.provider import Provider
 
-        if importlib.util.find_spec(service_path) is not None:
+        if Provider.is_builtin(provider):
             modules = list_modules(provider, service)
             for module_name in modules:
                 # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
