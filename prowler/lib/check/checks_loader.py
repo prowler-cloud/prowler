@@ -2,10 +2,10 @@ import sys
 
 from colorama import Fore, Style
 
-from prowler.config.config import EXTERNAL_TOOL_PROVIDERS
 from prowler.lib.check.check import parse_checks_from_file
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata, Severity
+from prowler.lib.check.tool_wrapper import is_tool_wrapper_provider
 from prowler.lib.logger import logger
 
 
@@ -26,8 +26,13 @@ def load_checks_to_execute(
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
-        # Bypass check loading for providers that use external tools directly
-        if provider in EXTERNAL_TOOL_PROVIDERS:
+        # Bypass check loading for tool-wrapper providers — they delegate
+        # scanning to an external tool and have no checks to recover.
+        # Single source of truth across __main__, the CheckMetadata validators,
+        # check discovery and this loader, covering both built-in tool wrappers
+        # (iac/llm/image) and external plug-ins that declare
+        # `is_external_tool_provider = True` via the contract.
+        if is_tool_wrapper_provider(provider):
             return set()
 
         # Local subsets

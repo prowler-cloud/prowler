@@ -1,9 +1,43 @@
 import importlib
+import importlib.metadata
+import importlib.util
+import os
 import sys
 from pkgutil import walk_packages
 
-from prowler.lib.check.external_tool_providers import EXTERNAL_TOOL_PROVIDERS
+from prowler.lib.check.tool_wrapper import is_tool_wrapper_provider
 from prowler.lib.logger import logger
+from prowler.providers.common.builtin import is_builtin_provider
+
+
+def _recover_ep_checks(provider: str, service: str = None) -> list[tuple]:
+    """Discover external checks registered via entry points for a provider.
+
+    External plugins follow the same layout as built-ins:
+    `{plugin_root}.services.{service}.{check}.{check}`
+
+    When `service` is provided, only entry points whose dotted path contains
+    `.services.{service}.` are included — mirroring how built-in discovery
+    filters by the `prowler.providers.{provider}.services.{service}` package.
+
+    Uses find_spec to locate the check module without importing it,
+    avoiding service client initialization at discovery time.
+    """
+    checks = []
+    for ep in importlib.metadata.entry_points(group=f"prowler.checks.{provider}"):
+        try:
+            if service and f".services.{service}." not in ep.value:
+                continue
+
+            spec = importlib.util.find_spec(ep.value)
+            if spec and spec.origin:
+                check_path = os.path.dirname(spec.origin)
+                checks.append((ep.name, check_path))
+        except Exception as error:
+            logger.warning(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+    return checks
 
 
 def recover_checks_from_provider(
@@ -15,29 +49,55 @@ def recover_checks_from_provider(
     Returns a list of tuples with the following format (check_name, check_path)
     """
     try:
-        # Bypass check loading for providers that use external tools directly
-        if provider in EXTERNAL_TOOL_PROVIDERS:
+        # Bypass check loading for tool-wrapper providers — they delegate
+        # scanning to an external tool and have no checks to recover.
+        # Single source of truth: combines the EXTERNAL_TOOL_PROVIDERS
+        # frozenset (built-ins) with the per-provider `is_external_tool_provider`
+        # class attribute (so external plug-ins opt in via the contract).
+        if is_tool_wrapper_provider(provider):
             return []
 
         checks = []
-        modules = list_modules(provider, service)
-        for module_name in modules:
-            # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
-            check_module_name = module_name.name
-            # We need to exclude common shared libraries in services
-            if (
-                check_module_name.count(".") == 6
-                and ".lib." not in check_module_name
-                and (not check_module_name.endswith("_fixer") or include_fixers)
-            ):
-                check_path = module_name.module_finder.path
-                # Check name is the last part of the check_module_name
-                check_name = check_module_name.split(".")[-1]
-                check_info = (check_name, check_path)
-                checks.append(check_info)
-    except ModuleNotFoundError:
-        logger.critical(f"Service {service} was not found for the {provider} provider.")
-        sys.exit(1)
+        # Built-in checks from prowler.providers.{provider}.services. Gate
+        # the built-in branch on `is_builtin_provider(provider)` — calling
+        # `find_spec` directly on `prowler.providers.{provider}.services`
+        # would propagate `ModuleNotFoundError` when the parent package
+        # `prowler.providers.{provider}` does not exist (i.e. the provider
+        # is external), instead of returning None. The leaf helper
+        # encapsulates the safe lookup, so we only run the built-in
+        # discovery when the provider actually ships with the SDK; for
+        # external providers we go straight to entry points.
+        if is_builtin_provider(provider):
+            modules = list_modules(provider, service)
+            for module_name in modules:
+                # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
+                check_module_name = module_name.name
+                # We need to exclude common shared libraries in services
+                if (
+                    check_module_name.count(".") == 6
+                    and ".lib." not in check_module_name
+                    and (not check_module_name.endswith("_fixer") or include_fixers)
+                ):
+                    check_path = module_name.module_finder.path
+                    check_name = check_module_name.split(".")[-1]
+                    check_info = (check_name, check_path)
+                    checks.append(check_info)
+
+        # External checks registered via entry points — always consulted, with
+        # optional service filter. Previously gated by `if not service:`, which
+        # prevented external providers from being usable with --service.
+        checks.extend(_recover_ep_checks(provider, service))
+
+        # A service was requested but nothing matched in either built-ins or
+        # entry points — surface this as a clear error instead of silently
+        # returning an empty list.
+        if service and not checks:
+            logger.critical(
+                f"Service '{service}' was not found for the '{provider}' provider "
+                f"(neither as a built-in nor via external entry points)."
+            )
+            sys.exit(1)
+
     except Exception as e:
         logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
         sys.exit(1)
@@ -64,8 +124,9 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
     Returns a set of checks from the given services
     """
     try:
-        # Bypass check loading for providers that use external tools directly
-        if provider in EXTERNAL_TOOL_PROVIDERS:
+        # Bypass check loading for tool-wrapper providers — symmetric with
+        # `recover_checks_from_provider` above, using the same source of truth.
+        if is_tool_wrapper_provider(provider):
             return set()
 
         checks = set()

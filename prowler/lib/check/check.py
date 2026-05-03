@@ -1,4 +1,6 @@
 import importlib
+import importlib.metadata
+import importlib.util
 import json
 import os
 import re
@@ -19,6 +21,7 @@ from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
+from prowler.providers.common.builtin import is_builtin_provider
 from prowler.providers.common.models import Audit_Metadata
 
 
@@ -385,6 +388,45 @@ def import_check(check_path: str) -> ModuleType:
     return lib
 
 
+def _resolve_check_module(
+    provider_type: str, service: str, check_name: str
+) -> ModuleType:
+    """Resolve and import a check module.
+
+    Built-in wins on CheckID collision. Plug-ins are first-class extenders
+    (they can add new checks under new CheckIDs) but cannot override
+    existing built-ins — a security tool prefers fail-loud predictability
+    over silent overrides. CheckMetadata.get_bulk() applies the same
+    precedence on the metadata side (first-write-wins) and emits a warning
+    when a plug-in tries to override, so the user knows their plug-in
+    duplicate is being ignored and can rename it.
+
+    Gates the built-in branch on `is_builtin_provider(provider_type)` —
+    calling `find_spec` on `prowler.providers.{provider_type}.services...`
+    directly would propagate `ModuleNotFoundError` for external providers
+    (their parent package `prowler.providers.{provider_type}` does not
+    exist) instead of returning None. The leaf helper encapsulates the
+    safe lookup, so external providers go straight to entry points. For
+    built-ins we still use `find_spec` to distinguish "check doesn't
+    exist" from "check exists but failed to import" (broken transitive
+    dep, etc.).
+    """
+    # Built-in first — built-in wins on CheckID collision
+    if is_builtin_provider(provider_type):
+        builtin_path = f"prowler.providers.{provider_type}.services.{service}.{check_name}.{check_name}"
+        if importlib.util.find_spec(builtin_path) is not None:
+            return import_check(builtin_path)
+
+    # Entry point lookup — only consulted when the built-in truly doesn't exist
+    for ep in importlib.metadata.entry_points(group=f"prowler.checks.{provider_type}"):
+        if ep.name == check_name:
+            return importlib.import_module(ep.value)
+
+    raise ModuleNotFoundError(
+        f"Check '{check_name}' not found for provider '{provider_type}'"
+    )
+
+
 def run_fixer(check_findings: list) -> int:
     """
     Run the fixer for the check if it exists and there are any FAIL findings
@@ -525,9 +567,10 @@ def execute_checks(
             service = check_name.split("_")[0]
             try:
                 try:
-                    # Import check module
-                    check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
-                    lib = import_check(check_module_path)
+                    # Import check module (built-in or entry point)
+                    lib = _resolve_check_module(
+                        global_provider.type, service, check_name
+                    )
                     # Recover functions from check
                     check_to_execute = getattr(lib, check_name)
                     check = check_to_execute()
@@ -605,9 +648,10 @@ def execute_checks(
                 )
                 try:
                     try:
-                        # Import check module
-                        check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
-                        lib = import_check(check_module_path)
+                        # Import check module (built-in or entry point)
+                        lib = _resolve_check_module(
+                            global_provider.type, service, check_name
+                        )
                         # Recover functions from check
                         check_to_execute = getattr(lib, check_name)
                         check = check_to_execute()
@@ -745,6 +789,9 @@ def execute(
                 is_finding_muted_args["tenancy_id"] = (
                     global_provider.identity.tenancy_id
                 )
+            else:
+                # External/custom provider — delegate identity args
+                is_finding_muted_args = global_provider.get_mutelist_finding_args()
             for finding in check_findings:
                 if global_provider.type == "cloudflare":
                     is_finding_muted_args["account_id"] = finding.account_id
