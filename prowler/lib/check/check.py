@@ -21,6 +21,7 @@ from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
+from prowler.providers.common.builtin import is_builtin_provider
 from prowler.providers.common.models import Audit_Metadata
 
 
@@ -400,20 +401,18 @@ def _resolve_check_module(
     when a plug-in tries to override, so the user knows their plug-in
     duplicate is being ignored and can rename it.
 
-    Gates the built-in branch on `Provider.is_builtin(provider_type)` —
+    Gates the built-in branch on `is_builtin_provider(provider_type)` —
     calling `find_spec` on `prowler.providers.{provider_type}.services...`
     directly would propagate `ModuleNotFoundError` for external providers
     (their parent package `prowler.providers.{provider_type}` does not
-    exist) instead of returning None. `Provider.is_builtin` encapsulates
-    the safe lookup, so external providers go straight to entry points.
-    For built-ins we still use `find_spec` to distinguish "check doesn't
+    exist) instead of returning None. The leaf helper encapsulates the
+    safe lookup, so external providers go straight to entry points. For
+    built-ins we still use `find_spec` to distinguish "check doesn't
     exist" from "check exists but failed to import" (broken transitive
     dep, etc.).
     """
-    from prowler.providers.common.provider import Provider
-
     # Built-in first — built-in wins on CheckID collision
-    if Provider.is_builtin(provider_type):
+    if is_builtin_provider(provider_type):
         builtin_path = f"prowler.providers.{provider_type}.services.{service}.{check_name}.{check_name}"
         if importlib.util.find_spec(builtin_path) is not None:
             return import_check(builtin_path)

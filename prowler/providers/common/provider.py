@@ -175,7 +175,7 @@ class Provider(ABC):
             f"{self.__class__.__name__} has not implemented get_summary_entity()"
         )
 
-    def get_finding_output_data(self, check_output) -> dict:
+    def get_finding_output_data(self, _check_output) -> dict:
         """Return provider-specific fields for Finding.generate_output()."""
         raise NotImplementedError(
             f"{self.__class__.__name__} has not implemented get_finding_output_data()"
@@ -191,9 +191,9 @@ class Provider(ABC):
         self,
         findings,
         bulk_compliance_frameworks,
-        input_compliance_frameworks,
+        _input_compliance_frameworks,
         output_options,
-        generated_outputs,
+        _generated_outputs,
     ) -> None:
         """Generate compliance CSV output for this provider's frameworks."""
         raise NotImplementedError(
@@ -216,9 +216,9 @@ class Provider(ABC):
         findings: list,
         bulk_checks_metadata: dict,
         compliance_framework: str,
-        output_filename: str,
-        output_directory: str,
-        compliance_overview: bool,
+        _output_filename: str,
+        _output_directory: str,
+        _compliance_overview: bool,
     ) -> bool:
         """Render a custom compliance table in the terminal.
 
@@ -606,9 +606,7 @@ class Provider(ABC):
         the leaf module that holds the actual logic. Kept on `Provider` as a
         convenience entry point for callers that already import `Provider`.
         """
-        from prowler.lib.check.tool_wrapper import (
-            is_tool_wrapper_provider as _impl,
-        )
+        from prowler.lib.check.tool_wrapper import is_tool_wrapper_provider as _impl
 
         return _impl(provider)
 
@@ -616,18 +614,15 @@ class Provider(ABC):
     def is_builtin(provider: str) -> bool:
         """Return True if the provider's own package is importable as a built-in.
 
-        Uses `importlib.util.find_spec` — Python's canonical API to check module
-        existence without executing it. Discriminates at call sites between
-        built-in providers (`prowler.providers.{provider}`) and externals, so we
-        don't rely on catching `ImportError` after the fact and inspecting
-        `e.name` — which is fragile when the error comes from a transitive
-        dependency inside the built-in's own import chain.
+        Delegates to `prowler.providers.common.builtin.is_builtin_provider`,
+        the leaf module that holds the actual check. Kept on `Provider` as a
+        convenience entry point for callers that already import `Provider`.
+        Call sites in `prowler.lib.check.*` should import from the leaf
+        directly to avoid the import cycle through this module.
         """
-        try:
-            spec = importlib.util.find_spec(f"{providers_path}.{provider}")
-            return spec is not None
-        except (ImportError, ValueError):
-            return False
+        from prowler.providers.common.builtin import is_builtin_provider as _impl
+
+        return _impl(provider)
 
     @staticmethod
     def _load_ep_provider(name: str):

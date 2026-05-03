@@ -7,6 +7,7 @@ from pkgutil import walk_packages
 
 from prowler.lib.check.tool_wrapper import is_tool_wrapper_provider
 from prowler.lib.logger import logger
+from prowler.providers.common.builtin import is_builtin_provider
 
 
 def _recover_ep_checks(provider: str, service: str = None) -> list[tuple]:
@@ -58,17 +59,15 @@ def recover_checks_from_provider(
 
         checks = []
         # Built-in checks from prowler.providers.{provider}.services. Gate
-        # the built-in branch on `Provider.is_builtin(provider)` — calling
+        # the built-in branch on `is_builtin_provider(provider)` — calling
         # `find_spec` directly on `prowler.providers.{provider}.services`
         # would propagate `ModuleNotFoundError` when the parent package
         # `prowler.providers.{provider}` does not exist (i.e. the provider
-        # is external), instead of returning None. `Provider.is_builtin`
+        # is external), instead of returning None. The leaf helper
         # encapsulates the safe lookup, so we only run the built-in
         # discovery when the provider actually ships with the SDK; for
         # external providers we go straight to entry points.
-        from prowler.providers.common.provider import Provider
-
-        if Provider.is_builtin(provider):
+        if is_builtin_provider(provider):
             modules = list_modules(provider, service)
             for module_name in modules:
                 # Format: "prowler.providers.{provider}.services.{service}.{check_name}.{check_name}"
