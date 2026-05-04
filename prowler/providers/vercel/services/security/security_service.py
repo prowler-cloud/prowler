@@ -29,11 +29,13 @@ class Security(VercelService):
             data = self._read_firewall_config(project)
 
             if data is None:
-                # 403 — plan limitation, store with managed_rulesets=None
+                # Firewall config endpoint unavailable for this project/token
                 self.firewall_configs[project.id] = VercelFirewallConfig(
                     project_id=project.id,
                     project_name=project.name,
                     team_id=project.team_id,
+                    billing_plan=project.billing_plan,
+                    firewall_config_accessible=False,
                     firewall_enabled=False,
                     managed_rulesets=None,
                     name=project.name,
@@ -49,6 +51,8 @@ class Security(VercelService):
                     project_id=project.id,
                     project_name=project.name,
                     team_id=project.team_id,
+                    billing_plan=project.billing_plan,
+                    firewall_config_accessible=True,
                     firewall_enabled=(
                         fallback_firewall_enabled
                         if fallback_firewall_enabled is not None
@@ -93,6 +97,8 @@ class Security(VercelService):
                 project_id=project.id,
                 project_name=project.name,
                 team_id=project.team_id,
+                billing_plan=project.billing_plan,
+                firewall_config_accessible=True,
                 firewall_enabled=firewall_enabled,
                 managed_rulesets=managed,
                 custom_rules=custom_rules,
@@ -246,8 +252,10 @@ class VercelFirewallConfig(BaseModel):
     project_id: str
     project_name: Optional[str] = None
     team_id: Optional[str] = None
+    billing_plan: Optional[str] = None
+    firewall_config_accessible: bool = True
     firewall_enabled: bool = False
-    managed_rulesets: Optional[dict] = None  # None means plan-gated (403)
+    managed_rulesets: Optional[dict] = None  # None means config endpoint unavailable
     custom_rules: list[dict] = Field(default_factory=list)
     ip_blocking_rules: list[dict] = Field(default_factory=list)
     rate_limiting_rules: list[dict] = Field(default_factory=list)
