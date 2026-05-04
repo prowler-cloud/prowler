@@ -15,7 +15,7 @@ This whole module exists only for the cutover window: as long as any tenant
 still has data on the Neo4j cluster, every Neptune-sink scan tries to clear
 the matching legacy subgraph. Once every tenant has been cut over and no
 Neo4j tenant DBs remain, this module and its caller in `scan.py` can be
-deleted — at which point the Neptune scan path no longer needs a fallback.
+deleted, at which point the Neptune scan path no longer needs a fallback.
 
 # TODO: drop after Neptune cutover
 """

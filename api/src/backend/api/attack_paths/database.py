@@ -66,7 +66,7 @@ def _is_ingest_database(database: str | None) -> bool:
 def init_driver() -> Any:
     """Initialize the configured sink backend.
 
-    The ingest driver (Neo4j for cartography temp DBs) stays lazy — it is
+    The ingest driver (Neo4j for cartography temp DBs) stays lazy: it is
     only initialized when a temp-DB operation actually runs, which never
     happens on API pods.
     """
