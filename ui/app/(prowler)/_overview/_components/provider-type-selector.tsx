@@ -277,8 +277,7 @@ export const ProviderTypeSelector = ({
         className="sr-only"
         id="provider-type-label"
       >
-        Filter by cloud provider type. Select one or more providers to view
-        findings.
+        Filter by provider type. Select one or more providers to view findings.
       </label>
       <MultiSelect
         values={selectedTypes}

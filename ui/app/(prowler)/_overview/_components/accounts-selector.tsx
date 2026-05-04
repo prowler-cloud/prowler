@@ -146,7 +146,7 @@ export function AccountsSelector({
   const filterDescription =
     selectedProviderTypes && selectedProviderTypes.length > 0
       ? `Accounts for ${selectedProviderTypes.map(getProviderDisplayName).join(", ")}`
-      : "All connected cloud provider accounts";
+      : "All connected provider accounts";
 
   return (
     <div className="relative">
@@ -155,8 +155,8 @@ export function AccountsSelector({
         className="sr-only"
         id="accounts-label"
       >
-        Filter by cloud provider account. {filterDescription}. Select one or
-        more accounts to view findings.
+        Filter by provider account. {filterDescription}. Select one or more
+        accounts to view findings.
       </label>
       <MultiSelect values={selectedIds} onValuesChange={handleMultiValueChange}>
         <MultiSelectTrigger

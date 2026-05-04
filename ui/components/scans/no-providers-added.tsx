@@ -23,8 +23,8 @@ export const NoProvidersAdded = () => {
             </div>
             <div className="flex flex-col items-center gap-3">
               <p className="text-md leading-relaxed text-gray-600 dark:text-gray-300">
-                No cloud providers have been configured. Start by setting up a
-                cloud provider.
+                No providers have been configured. Start by setting up a
+                provider.
               </p>
             </div>
 
