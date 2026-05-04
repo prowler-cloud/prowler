@@ -8,7 +8,7 @@
   "ServiceName": "bedrock",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
   "Description": "**Bedrock Prompt Management** enables centralized creation, versioning, and governance of prompts used with foundation models.\n\nThis region-level check verifies whether at least one managed prompt exists in each scanned region, used as an adoption signal for Prompt Management. The presence of a prompt does not by itself guarantee that every application prompt is managed.",
