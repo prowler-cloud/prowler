@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "ses_identity_dkim_enabled",
+  "CheckTitle": "SES identity has DKIM signing enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+  ],
+  "ServiceName": "ses",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsSesIdentity",
+  "ResourceGroup": "messaging",
+  "Description": "**Amazon SES identities** are evaluated for **DKIM (DomainKeys Identified Mail)** signing enabled and verified. DKIM adds a cryptographic signature to outgoing emails, allowing recipients to verify that the email was sent by the domain owner and was not altered in transit.",
+  "Risk": "Without DKIM signing, emails sent from SES identities are vulnerable to **spoofing and tampering**. Attackers can forge emails that appear to come from your domain, leading to phishing attacks, brand impersonation, and loss of email deliverability. Email providers are more likely to reject or mark unsigned emails as spam, impacting business communication and reputation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/ses/latest/dg/send-email-authentication-dkim.html",
+    "https://docs.aws.amazon.com/ses/latest/dg/send-email-authentication.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sesv2 put-email-identity-dkim-signing-attributes --email-identity <IDENTITY-NAME> --signing-attributes-origin AWS_SES",
+      "NativeIaC": "",
+      "Other": "1. In the AWS Console, go to Simple Email Service (SES)\n2. Open Verified identities and select the affected identity\n3. Click the Authentication tab\n4. Under DKIM, click Edit\n5. Enable DKIM signatures and select 'Provide DKIM authentication token (Easy DKIM)'\n6. Save changes and add the provided CNAME records to your DNS provider",
+      "Terraform": "```hcl\nresource \"aws_ses_domain_dkim\" \"<example_resource_name>\" {\n  domain = \"<example_domain_name>\"\n}\n\n# Add the CNAME records to Route53 (or your DNS provider)\nresource \"aws_route53_record\" \"<example_resource_name>_dkim\" {\n  count   = 3\n  zone_id = \"<route53_zone_id>\"\n  name    = \"${aws_ses_domain_dkim.<example_resource_name>.dkim_tokens[count.index]}._domainkey.<example_domain_name>\"\n  type    = \"CNAME\"\n  ttl     = 600\n  records = [\"${aws_ses_domain_dkim.<example_resource_name>.dkim_tokens[count.index]}.dkim.amazonses.com\"]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **DKIM signing** for all SES identities and ensure the DKIM status is **SUCCESS**. Add the required CNAME records to your DNS provider to complete verification. Combine DKIM with **SPF** and **DMARC** for comprehensive email authentication following **defense in depth** principles. Monitor DKIM status regularly and rotate DKIM keys as recommended by AWS.",
+      "Url": "https://hub.prowler.com/check/ses_identity_dkim_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
