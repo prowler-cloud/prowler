@@ -30,7 +30,6 @@ export function FindingDetailDrawer({
 }: FindingDetailDrawerProps) {
   const drawer = useResourceDetailDrawer({
     resources: [findingToFindingResourceRow(finding)],
-    checkId: finding.attributes.check_id,
     totalResourceCount: 1,
     initialIndex: defaultOpen || inline ? 0 : null,
   });
@@ -63,6 +62,7 @@ export function FindingDetailDrawer({
         checkMeta={drawer.checkMeta}
         currentIndex={drawer.currentIndex}
         totalResources={drawer.totalResources}
+        currentResource={drawer.currentResource}
         currentFinding={drawer.currentFinding}
         otherFindings={drawer.otherFindings}
         onNavigatePrev={drawer.navigatePrev}
@@ -87,6 +87,7 @@ export function FindingDetailDrawer({
         checkMeta={drawer.checkMeta}
         currentIndex={drawer.currentIndex}
         totalResources={drawer.totalResources}
+        currentResource={drawer.currentResource}
         currentFinding={drawer.currentFinding}
         otherFindings={drawer.otherFindings}
         onNavigatePrev={drawer.navigatePrev}

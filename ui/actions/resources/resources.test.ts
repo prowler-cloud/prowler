@@ -8,9 +8,35 @@ const { fetchMock, getAuthHeadersMock, handleApiResponseMock } = vi.hoisted(
   }),
 );
 
+// Pull every constant transitively required by the modules under test
+// (resources.ts → findings action → finding-groups action) so the `@/lib`
+// mock is a complete surface. Going via the barrel would drag in next-auth.
+import {
+  includesMutedFindings,
+  splitCsvFilterValues,
+} from "@/lib/findings-filters";
+import {
+  composeSort,
+  FG_FAIL_FIRST,
+  FG_RECENT_LAST_SEEN,
+  FG_SEVERITY_HIGH_FIRST,
+  FINDING_GROUP_RESOURCES_DEFAULT_SORT,
+  FINDINGS_FILTERED_SORT,
+  RESOURCE_DRAWER_OTHER_FINDINGS_SORT,
+} from "@/lib/findings-sort";
+
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
   getAuthHeaders: getAuthHeadersMock,
+  composeSort,
+  FG_FAIL_FIRST,
+  FG_RECENT_LAST_SEEN,
+  FG_SEVERITY_HIGH_FIRST,
+  FINDING_GROUP_RESOURCES_DEFAULT_SORT,
+  FINDINGS_FILTERED_SORT,
+  RESOURCE_DRAWER_OTHER_FINDINGS_SORT,
+  includesMutedFindings,
+  splitCsvFilterValues,
 }));
 
 vi.mock("@/lib/server-actions-helper", () => ({

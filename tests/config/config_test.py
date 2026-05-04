@@ -394,6 +394,7 @@ class Test_Config:
 
     def test_get_available_compliance_frameworks(self):
         compliance_frameworks = [
+            "csa_ccm_4.0",
             "cisa_aws",
             "soc2_aws",
             "cis_1.4_aws",
@@ -427,6 +428,40 @@ class Test_Config:
         assert (
             get_available_compliance_frameworks().sort() == compliance_frameworks.sort()
         )
+
+    def test_get_available_compliance_frameworks_filters_universal_by_provider(self):
+        aws_frameworks = get_available_compliance_frameworks("aws")
+        kubernetes_frameworks = get_available_compliance_frameworks("kubernetes")
+
+        assert "csa_ccm_4.0" in aws_frameworks
+        assert "csa_ccm_4.0" not in kubernetes_frameworks
+
+    def test_get_available_compliance_frameworks_no_provider_includes_universals(self):
+        """Regression test for the variable shadowing bug.
+
+        Previously, the inner ``for provider in providers`` loop shadowed
+        the outer ``provider`` parameter. When called without a provider,
+        the post-loop ``if provider:`` branch wrongly applied
+        ``framework.supports_provider(<last provider iterated>)`` and
+        excluded universal frameworks from the result.
+
+        Result: the parser-level ``available_compliance_frameworks``
+        constant was missing universal frameworks like ``csa_ccm_4.0``,
+        which made ``--compliance csa_ccm_4.0`` reject the choice.
+        """
+        all_frameworks = get_available_compliance_frameworks()
+        assert "csa_ccm_4.0" in all_frameworks
+
+    def test_get_available_compliance_frameworks_does_not_mutate_provider_param(self):
+        """Calling with a specific provider must not affect a subsequent
+        call without provider. Validates that the loop variable rename
+        prevents leaking state between calls."""
+        # Force an iteration over multiple providers first
+        get_available_compliance_frameworks("kubernetes")
+        # Then a no-provider call must still include universals supported
+        # by ANY provider (not filtered by some leaked value)
+        all_frameworks = get_available_compliance_frameworks()
+        assert "csa_ccm_4.0" in all_frameworks
 
     def test_load_and_validate_config_file_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))

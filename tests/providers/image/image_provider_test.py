@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from prowler.lib.check.models import CheckReportImage
+from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
     ImageInvalidConfigScannerError,
     ImageInvalidNameError,
@@ -20,7 +21,6 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageScanError,
     ImageTrivyBinaryNotFoundError,
 )
-from prowler.providers.common.provider import Provider
 from prowler.providers.image.image_provider import ImageProvider
 from tests.providers.image.image_fixtures import (
     SAMPLE_IMAGE_SHA,
@@ -345,6 +345,24 @@ class TestImageProvider:
         )
         mock_adapter.list_repositories.assert_called_once()
 
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_registry_url_with_https_scheme(self, mock_factory):
+        """Registry URL with https:// scheme is normalised before adapter creation."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.return_value = ["repo1"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(image="https://my-registry.example.com")
+
+        assert result.is_connected is True
+        mock_factory.assert_called_once_with(
+            registry_url="my-registry.example.com",
+            username=None,
+            password=None,
+            token=None,
+        )
+        mock_adapter.list_repositories.assert_called_once()
+
     def test_build_status_extended(self):
         """Test status message content for different finding types."""
         provider = _make_provider()
@@ -659,6 +677,27 @@ class TestImageProviderRegistryAuth:
             assert "Docker login" in output
 
 
+class TestStripScheme:
+    @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ("https://my-registry.example.com", "my-registry.example.com"),
+            ("http://my-registry.example.com", "my-registry.example.com"),
+            ("HTTPS://My-Registry.Example.Com", "My-Registry.Example.Com"),
+            ("Http://localhost:5000", "localhost:5000"),
+            ("my-registry.example.com", "my-registry.example.com"),
+            ("https://", ""),
+            ("https://https://nested.example.com", "https://nested.example.com"),
+            (
+                "ftp://not-a-supported-scheme.example.com",
+                "ftp://not-a-supported-scheme.example.com",
+            ),
+        ],
+    )
+    def test_strip_scheme(self, raw, expected):
+        assert ImageProvider._strip_scheme(raw) == expected
+
+
 class TestExtractRegistry:
     def test_docker_hub_simple(self):
         assert ImageProvider._extract_registry("alpine:3.18") is None
@@ -698,6 +737,24 @@ class TestExtractRegistry:
     def test_bare_image_name(self):
         assert ImageProvider._extract_registry("nginx") is None
 
+    def test_https_scheme_bare_hostname_returns_none(self):
+        """Bare scheme-prefixed hostname has no image path, so no registry is extracted."""
+        assert (
+            ImageProvider._extract_registry("https://my-registry.example.com") is None
+        )
+
+    def test_http_scheme_with_port_stripped(self):
+        assert (
+            ImageProvider._extract_registry("http://localhost:5000/myimage:latest")
+            == "localhost:5000"
+        )
+
+    def test_https_scheme_with_path_stripped(self):
+        assert (
+            ImageProvider._extract_registry("https://ghcr.io/org/image:tag")
+            == "ghcr.io"
+        )
+
 
 class TestIsRegistryUrl:
     def test_bare_ecr_hostname(self):
@@ -727,6 +784,16 @@ class TestIsRegistryUrl:
 
     def test_dockerhub_namespace(self):
         assert not ImageProvider._is_registry_url("library/alpine")
+
+    def test_https_scheme_bare_hostname(self):
+        assert ImageProvider._is_registry_url("https://my-registry.example.com")
+
+    def test_http_scheme_bare_hostname_with_port(self):
+        assert ImageProvider._is_registry_url("http://my-registry.example.com:5000")
+
+    def test_https_scheme_image_reference_not_registry(self):
+        """A scheme-prefixed full image reference is still an image, not a registry URL."""
+        assert not ImageProvider._is_registry_url("https://ghcr.io/myorg/repo:tag")
 
 
 class TestTestRegistryConnection:
@@ -1185,3 +1252,58 @@ class TestInitGlobalProviderRegistryEnumeration:
             # The "other/lib" repo should be filtered out by --image-filter
             assert not any("other/lib" in img for img in provider.images)
             assert len(provider.images) == 3
+
+
+class TestRegistryListMode:
+    """Regression test: `prowler image --registry <url> --registry-list` crashes.
+
+    When --registry-list is passed, ImageProvider._enumerate_registry sets
+    _listing_only = True and __init__ returns early — before calling
+    Provider.set_global_provider(self). The caller in __main__.py then calls
+    global_provider.print_credentials() on a None reference, raising
+    AttributeError: 'NoneType' object has no attribute 'print_credentials'.
+    """
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    @patch("prowler.providers.common.provider.load_and_validate_config_file")
+    def test_registry_list_does_not_crash(self, mock_load_config, mock_adapter_factory):
+        """Reproduce the --registry-list crash by running the same sequence
+        as __main__.py: init_global_provider, get_global_provider,
+        then print_credentials."""
+        mock_load_config.return_value = {}
+
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["myorg/app"]
+        adapter.list_tags.return_value = ["v1.0", "latest"]
+        mock_adapter_factory.return_value = adapter
+
+        arguments = Namespace(
+            provider="image",
+            config_file=None,
+            fixer_config=None,
+            images=None,
+            image_list_file=None,
+            scanners=["vuln"],
+            image_config_scanners=None,
+            trivy_severity=None,
+            ignore_unfixed=False,
+            timeout="5m",
+            registry="myregistry.io",
+            image_filter=None,
+            tag_filter=None,
+            max_images=0,
+            registry_insecure=False,
+            registry_list_images=True,
+        )
+
+        # Reproduce the exact crash sequence from __main__.py lines 289-294:
+        #   Provider.init_global_provider(args)
+        #   global_provider = Provider.get_global_provider()
+        #   global_provider.print_credentials()
+        with mock.patch.object(Provider, "_global", None):
+            Provider.init_global_provider(arguments)
+            global_provider = Provider.get_global_provider()
+
+            # This is the line that crashes: global_provider is None so
+            # .print_credentials() raises AttributeError.
+            global_provider.print_credentials()

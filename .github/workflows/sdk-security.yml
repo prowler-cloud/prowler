@@ -83,7 +83,8 @@ jobs:
 
       - name: Security scan with Safety
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run safety check -r pyproject.toml
+        # Accepted CVEs, severity threshold, and ignore expirations live in .safety-policy.yml
+        run: poetry run safety check -r pyproject.toml --policy-file .safety-policy.yml
 
       - name: Dead code detection with Vulture
         if: steps.check-changes.outputs.any_changed == 'true'

@@ -20,6 +20,7 @@ import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   getFilteredFindingGroupResourceCount,
+  getFindingGroupEmptyStateMessage,
   getFindingGroupSkeletonCount,
 } from "./inline-resource-container.utils";
 import { ResourceDetailDrawer } from "./resource-detail-drawer";
@@ -69,27 +70,23 @@ function ResourceSkeletonRow({
           <div className="bg-bg-input-primary border-border-input-primary size-5 rounded-sm border shadow-[0_1px_2px_0_rgba(0,0,0,0.1)]" />
         </div>
       </TableCell>
-      {/* Resource: icon + name + uid */}
-      <TableCell className={cellClassName}>
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-4 rounded" />
-          <div className="space-y-1.5">
-            <Skeleton className="h-4 w-32 rounded" />
-            <Skeleton className="h-3.5 w-20 rounded" />
-          </div>
-        </div>
-      </TableCell>
       {/* Status */}
       <TableCell className={cellClassName}>
         <Skeleton className="h-6 w-11 rounded-md" />
       </TableCell>
-      {/* Service */}
+      {/* Resource: name + uid */}
       <TableCell className={cellClassName}>
-        <Skeleton className="h-4.5 w-16 rounded" />
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-32 rounded" />
+          <Skeleton className="h-3.5 w-20 rounded" />
+        </div>
       </TableCell>
-      {/* Region */}
+      {/* Provider: alias + uid */}
       <TableCell className={cellClassName}>
-        <Skeleton className="h-4.5 w-20 rounded" />
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-24 rounded" />
+          <Skeleton className="h-3.5 w-16 rounded" />
+        </div>
       </TableCell>
       {/* Severity */}
       <TableCell className={cellClassName}>
@@ -98,15 +95,13 @@ function ResourceSkeletonRow({
           <Skeleton className="h-4.5 w-12 rounded" />
         </div>
       </TableCell>
-      {/* Account: provider icon + alias + uid */}
+      {/* Service */}
       <TableCell className={cellClassName}>
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-4 rounded" />
-          <div className="space-y-1.5">
-            <Skeleton className="h-4 w-24 rounded" />
-            <Skeleton className="h-3.5 w-16 rounded" />
-          </div>
-        </div>
+        <Skeleton className="h-4.5 w-16 rounded" />
+      </TableCell>
+      {/* Region */}
+      <TableCell className={cellClassName}>
+        <Skeleton className="h-4.5 w-20 rounded" />
       </TableCell>
       {/* Last seen */}
       <TableCell className={cellClassName}>
@@ -278,9 +273,7 @@ export function InlineResourceContainer({
                             colSpan={columns.length}
                             className="h-24 text-center"
                           >
-                            {Object.keys(filters).length > 0
-                              ? "No resources found for the selected filters."
-                              : "No resources found."}
+                            {getFindingGroupEmptyStateMessage(group, filters)}
                           </TableCell>
                         </TableRow>
                       )}
@@ -334,8 +327,10 @@ export function InlineResourceContainer({
         checkMeta={drawer.checkMeta}
         currentIndex={drawer.currentIndex}
         totalResources={drawer.totalResources}
+        currentResource={drawer.currentResource}
         currentFinding={drawer.currentFinding}
         otherFindings={drawer.otherFindings}
+        showSyntheticResourceHint={group.resourcesTotal === 0}
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleDrawerMuteComplete}

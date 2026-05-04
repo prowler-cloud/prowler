@@ -53,7 +53,7 @@ from django.db.models import (
 )
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast, Coalesce, RowNumber
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
@@ -83,6 +83,10 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework_json_api import filters as jsonapi_filters
 from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
@@ -169,6 +173,7 @@ from api.models import (
     FindingGroupDailySummary,
     Integration,
     Invitation,
+    InvitationRoleRelationship,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -417,7 +422,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.26.0"
+        spectacular_settings.VERSION = "1.27.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1330,9 +1335,11 @@ class MembershipViewSet(BaseTenantViewset):
     ),
     destroy=extend_schema(
         summary="Delete tenant memberships",
-        description="Delete the membership details of users in a tenant. You need to be one of the owners to delete a "
-        "membership that is not yours. If you are the last owner of a tenant, you cannot delete your own "
-        "membership.",
+        description="Delete a user's membership from a tenant. This action: (1) removes the membership, "
+        "(2) revokes all refresh tokens for the expelled user, (3) removes their role grants for this tenant, "
+        "(4) cleans up orphaned roles, and (5) deletes the user account if this was their last membership. "
+        "You must be a tenant owner to delete another user's membership. The last owner of a tenant cannot "
+        "delete their own membership.",
         tags=["Tenant"],
     ),
 )
@@ -1341,6 +1348,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     http_method_names = ["get", "delete"]
     serializer_class = MembershipSerializer
     queryset = Membership.objects.none()
+    filterset_class = MembershipFilter
     # Authorization is handled by get_requesting_membership (owner/member checks),
     # not by RBAC, since the target tenant differs from the JWT tenant.
     required_permissions = []
@@ -1398,7 +1406,84 @@ class TenantMembersViewSet(BaseTenantViewset):
                     "You do not have permission to delete this membership."
                 )
 
-        membership_to_delete.delete()
+        user_to_check_id = membership_to_delete.user_id
+        tenant_id = membership_to_delete.tenant_id
+        # All writes run on the admin connection so that the uncommitted
+        # membership delete is visible to the subsequent "other memberships"
+        # check. Splitting the delete and the check across the default
+        # (prowler_user, RLS) and admin connections caused the admin side to
+        # miss the just-deleted row and leave the User row orphaned.
+        with transaction.atomic(using=MainRouter.admin_db):
+            Membership.objects.using(MainRouter.admin_db).filter(
+                id=membership_to_delete.id
+            ).delete()
+
+            # Remove role grants for this user in this tenant to prevent
+            # orphaned permissions that could allow access after expulsion
+            deleted_role_relationships = UserRoleRelationship.objects.using(
+                MainRouter.admin_db
+            ).filter(user_id=user_to_check_id, tenant_id=tenant_id)
+
+            # Collect role IDs that might become orphaned after deletion
+            role_ids_to_check = list(
+                deleted_role_relationships.values_list("role_id", flat=True)
+            )
+
+            # Delete the user role relationships for this tenant
+            deleted_role_relationships.delete()
+
+            # Clean up orphaned roles that have no remaining user or invitation relationships
+            if role_ids_to_check:
+                for role_id in role_ids_to_check:
+                    has_user_relationships = (
+                        UserRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(role_id=role_id)
+                        .exists()
+                    )
+
+                    has_invitation_relationships = (
+                        InvitationRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(role_id=role_id)
+                        .exists()
+                    )
+
+                    if not has_user_relationships and not has_invitation_relationships:
+                        Role.objects.using(MainRouter.admin_db).filter(
+                            id=role_id
+                        ).delete()
+
+            # Revoke any refresh tokens the expelled user still holds so they
+            # cannot mint fresh access tokens. This must happen before the
+            # User row is deleted, because OutstandingToken.user is
+            # on_delete=SET_NULL in djangorestframework-simplejwt 5.5.1
+            # (see rest_framework_simplejwt/token_blacklist/models.py): once
+            # the user row is gone, user_id becomes NULL and we can no longer
+            # look up that user's outstanding tokens. Access tokens already
+            # issued remain valid until SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]
+            # expires.
+            outstanding_token_ids = list(
+                OutstandingToken.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_to_check_id)
+                .values_list("id", flat=True)
+            )
+            if outstanding_token_ids:
+                BlacklistedToken.objects.using(MainRouter.admin_db).bulk_create(
+                    [
+                        BlacklistedToken(token_id=token_id)
+                        for token_id in outstanding_token_ids
+                    ],
+                    ignore_conflicts=True,
+                )
+
+            has_other_memberships = (
+                Membership.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_to_check_id)
+                .exists()
+            )
+            if not has_other_memberships:
+                User.objects.using(MainRouter.admin_db).filter(
+                    id=user_to_check_id
+                ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1841,6 +1926,27 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             ),
         },
     ),
+    cis=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve CIS Benchmark compliance report",
+        description="Download the CIS Benchmark compliance report as a PDF file. "
+        "When a provider ships multiple CIS versions, the report is generated "
+        "for the highest available version.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the CIS compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no CIS reports, or the CIS report generation task has not started yet"
+            ),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1909,6 +2015,9 @@ class ScanViewSet(BaseRLSViewSet):
         elif self.action == "csa":
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
+        elif self.action == "cis":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1971,24 +2080,38 @@ class ScanViewSet(BaseRLSViewSet):
             },
         )
 
-    def _load_file(self, path_pattern, s3=False, bucket=None, list_objects=False):
+    def _load_file(
+        self,
+        path_pattern,
+        s3=False,
+        bucket=None,
+        list_objects=False,
+        content_type=None,
+    ):
         """
-        Loads a binary file (e.g., ZIP or CSV) and returns its content and filename.
+        Resolve a report file location and return the bytes (filesystem) or a redirect (S3).
 
         Depending on the input parameters, this method supports loading:
-        - From S3 using a direct key.
-        - From S3 by listing objects under a prefix and matching suffix.
-        - From the local filesystem using glob pattern matching.
+        - From S3 using a direct key, returns a 302 to a short-lived presigned URL.
+        - From S3 by listing objects under a prefix and matching suffix, returns a 302 to a short-lived presigned URL.
+        - From the local filesystem using glob pattern matching, returns the file bytes.
+
+        The S3 branch never streams bytes through the worker; this prevents gunicorn
+        worker timeouts on large reports.
 
         Args:
             path_pattern (str): The key or glob pattern representing the file location.
             s3 (bool, optional): Whether the file is stored in S3. Defaults to False.
             bucket (str, optional): The name of the S3 bucket, required if `s3=True`. Defaults to None.
             list_objects (bool, optional): If True and `s3=True`, list objects by prefix to find the file. Defaults to False.
+            content_type (str, optional): On the S3 branch, forwarded as `ResponseContentType`
+                so the presigned download advertises the same Content-Type the API used to send.
+                Ignored on the filesystem branch.
 
         Returns:
-            tuple[bytes, str]: A tuple containing the file content as bytes and the filename if successful.
-            Response: A DRF `Response` object with an appropriate status and error detail if an error occurs.
+            tuple[bytes, str]: For the filesystem branch, the file content and filename.
+            HttpResponseRedirect: For the S3 branch on success, a 302 redirect to a presigned `GetObject` URL.
+            Response: For any error path, a DRF `Response` with an appropriate status and detail.
         """
         if s3:
             try:
@@ -2035,25 +2158,45 @@ class ScanViewSet(BaseRLSViewSet):
                 # path_pattern here is prefix, but in compliance we build correct suffix check before
                 key = keys[0]
             else:
-                # path_pattern is exact key
+                # path_pattern is exact key; HEAD before presigning to preserve the 404 contract.
                 key = path_pattern
-            try:
-                s3_obj = client.get_object(Bucket=bucket, Key=key)
-            except ClientError as e:
-                code = e.response.get("Error", {}).get("Code")
-                if code == "NoSuchKey":
+                try:
+                    client.head_object(Bucket=bucket, Key=key)
+                except ClientError as e:
+                    code = e.response.get("Error", {}).get("Code")
+                    if code in ("NoSuchKey", "404"):
+                        return Response(
+                            {
+                                "detail": "The scan has no reports, or the report generation task has not started yet."
+                            },
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
                     return Response(
-                        {
-                            "detail": "The scan has no reports, or the report generation task has not started yet."
-                        },
-                        status=status.HTTP_404_NOT_FOUND,
+                        {"detail": "There is a problem with credentials."},
+                        status=status.HTTP_403_FORBIDDEN,
                     )
-                return Response(
-                    {"detail": "There is a problem with credentials."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-            content = s3_obj["Body"].read()
+
             filename = os.path.basename(key)
+            # escape quotes and strip CR/LF so a malformed key cannot break out of the header
+            safe_filename = (
+                filename.replace("\\", "\\\\")
+                .replace('"', '\\"')
+                .replace("\r", "")
+                .replace("\n", "")
+            )
+            params = {
+                "Bucket": bucket,
+                "Key": key,
+                "ResponseContentDisposition": f'attachment; filename="{safe_filename}"',
+            }
+            if content_type:
+                params["ResponseContentType"] = content_type
+            url = client.generate_presigned_url(
+                "get_object",
+                Params=params,
+                ExpiresIn=300,
+            )
+            return HttpResponseRedirect(url)
         else:
             files = glob.glob(path_pattern)
             if not files:
@@ -2096,12 +2239,16 @@ class ScanViewSet(BaseRLSViewSet):
             bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
             key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
             loader = self._load_file(
-                key_prefix, s3=True, bucket=bucket, list_objects=False
+                key_prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=False,
+                content_type="application/x-zip-compressed",
             )
         else:
             loader = self._load_file(scan.output_location, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2139,17 +2286,68 @@ class ScanViewSet(BaseRLSViewSet):
             prefix = os.path.join(
                 os.path.dirname(key_prefix), "compliance", f"{name}.csv"
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="text/csv",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "compliance", f"*_{name}.csv")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
         return self._serve_file(content, filename, "text/csv")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="cis",
+    )
+    def cis(self, request, pk=None):
+        scan = self.get_object()
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the CIS report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "cis",
+                "*_cis_report.pdf",
+            )
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "cis", "*_cis_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, HttpResponseBase):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
 
     @action(
         detail=True,
@@ -2179,13 +2377,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "threatscore",
                 "*_threatscore_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "threatscore", "*_threatscore_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2219,13 +2423,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "ens",
                 "*_ens_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "ens", "*_ens_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2258,13 +2468,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "nis2",
                 "*_nis2_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "nis2", "*_nis2_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2297,13 +2513,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "csa",
                 "*_csa_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "csa", "*_csa_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -7127,17 +7349,16 @@ class FindingGroupViewSet(BaseRLSViewSet):
             output_field=IntegerField(),
         )
 
-        # `pass_count`, `fail_count` and `manual_count` count *every* finding
-        # for the check (muted or not) so the aggregated `status` reflects the
-        # underlying check outcome regardless of mute state. Whether the group
-        # is actionable is signalled by the orthogonal `muted` flag below.
+        # `pass_count`, `fail_count` and `manual_count` only count non-muted
+        # findings. Muted findings are tracked separately via the
+        # `*_muted_count` fields.
         return (
             queryset.values("check_id")
             .annotate(
                 severity_order=Max(severity_case),
-                pass_count=Count("id", filter=Q(status="PASS")),
-                fail_count=Count("id", filter=Q(status="FAIL")),
-                manual_count=Count("id", filter=Q(status="MANUAL")),
+                pass_count=Count("id", filter=Q(status="PASS", muted=False)),
+                fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                manual_count=Count("id", filter=Q(status="MANUAL", muted=False)),
                 pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
                 fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
                 manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),
@@ -7282,12 +7503,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
             # finding-level aggregation path.
             row.pop("nonmuted_count", None)
 
-            # Compute aggregated status. Counts are inclusive of muted findings,
-            # so the underlying check outcome surfaces even when the group is
-            # fully muted.
+            # Muted findings are treated as resolved/accepted, so they do not
+            # contribute to a failing status. A group is FAIL only when there
+            # is at least one non-muted FAIL; otherwise any pass (muted or
+            # not) or any muted fail makes the group PASS. Only groups whose
+            # findings are exclusively MANUAL fall through to MANUAL.
             if row.get("fail_count", 0) > 0:
                 row["status"] = "FAIL"
-            elif row.get("pass_count", 0) > 0:
+            elif (
+                row.get("pass_count", 0) > 0
+                or row.get("pass_muted_count", 0) > 0
+                or row.get("fail_muted_count", 0) > 0
+            ):
                 row["status"] = "PASS"
             else:
                 row["status"] = "MANUAL"
@@ -7390,6 +7617,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 aggregated_status=Case(
                     When(fail_count__gt=0, then=Value("FAIL")),
                     When(pass_count__gt=0, then=Value("PASS")),
+                    When(pass_muted_count__gt=0, then=Value("PASS")),
+                    When(fail_muted_count__gt=0, then=Value("PASS")),
                     default=Value("MANUAL"),
                     output_field=CharField(),
                 )
@@ -7409,6 +7638,25 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         return filterset.qs
 
+    def _resolve_finding_ids(self, filtered_queryset):
+        """
+        Materialize and request-cache the finding_ids list used to anchor
+        RFM lookups.
+
+        Turning `finding_id__in=Subquery(findings_qs)` into `finding_id__in=
+        [uuid, ...]` nudges PostgreSQL out of a Merge Semi Join that ends up
+        reading hundreds of thousands of RFM index entries just to post-
+        filter tenant_id. Caching on the ViewSet instance (one instance per
+        request) avoids duplicating the findings round-trip when several
+        helpers build different RFM querysets from the same filtered set.
+        """
+        cached = getattr(self, "_finding_ids_cache", None)
+        if cached is not None and cached[0] is filtered_queryset:
+            return cached[1]
+        finding_ids = list(filtered_queryset.order_by().values_list("id", flat=True))
+        self._finding_ids_cache = (filtered_queryset, finding_ids)
+        return finding_ids
+
     def _build_resource_mapping_queryset(
         self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
     ):
@@ -7418,10 +7666,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
         Starting from ResourceFindingMapping avoids scanning all mappings
         before applying check_id/date filters on findings.
         """
-        finding_ids = filtered_queryset.order_by().values("id")
+        finding_ids = self._resolve_finding_ids(filtered_queryset)
 
         mapping_queryset = ResourceFindingMapping.objects.filter(
-            finding_id__in=Subquery(finding_ids)
+            finding_id__in=finding_ids
         )
         if tenant_id:
             mapping_queryset = mapping_queryset.filter(tenant_id=tenant_id)
@@ -7773,16 +8021,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 sort_param, self._FINDING_GROUP_SORT_MAP
             )
             if ordering:
-                # status_order is annotated on demand so groups can be sorted by
-                # their aggregated status (FAIL > PASS > MANUAL), mirroring the
-                # priority used in _post_process_aggregation. Counts are
-                # inclusive of muted findings, so the underlying check outcome
-                # surfaces even for fully muted groups.
                 if any(field.lstrip("-") == "status_order" for field in ordering):
                     aggregated_queryset = aggregated_queryset.annotate(
                         status_order=Case(
                             When(fail_count__gt=0, then=Value(3)),
                             When(pass_count__gt=0, then=Value(2)),
+                            When(pass_muted_count__gt=0, then=Value(2)),
+                            When(fail_muted_count__gt=0, then=Value(2)),
                             default=Value(1),
                             output_field=IntegerField(),
                         )
@@ -7843,23 +8088,24 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 request, filtered_queryset, resource_ids, tenant_id, ordering
             )
 
-        has_mappings = self._build_resource_mapping_queryset(
-            filtered_queryset, resource_ids=None, tenant_id=tenant_id
-        ).exists()
+        # Serve the mapping response directly and piggyback on the paginator
+        # count to detect orphan-only groups, instead of paying a separate
+        # has_mappings.exists() semi-join over ResourceFindingMapping on
+        # every non-IaC request. TODO: once the ephemeral resources strategy
+        # is decided, mixed groups should route to _combined_paginated_response.
+        response = self._mapping_paginated_response(
+            request, filtered_queryset, resource_ids, tenant_id, ordering
+        )
 
-        if has_mappings:
-            # Normal or mixed group: serve only resource-mapped rows.
-            # TODO: Orphan findings in mixed groups are intentionally excluded
-            # until the ephemeral resources strategy is decided. When resolved,
-            # route mixed groups to _combined_paginated_response instead.
-            return self._mapping_paginated_response(
-                request, filtered_queryset, resource_ids, tenant_id, ordering
+        page = getattr(self.paginator, "page", None)
+        mapping_total = page.paginator.count if page is not None else None
+        if mapping_total == 0:
+            # Pure orphan group (e.g. IaC): synthesize resource-like rows.
+            return self._combined_paginated_response(
+                request, filtered_queryset, tenant_id, ordering
             )
 
-        # Pure orphan group (e.g. IaC): synthesize resource-like rows.
-        return self._combined_paginated_response(
-            request, filtered_queryset, tenant_id, ordering
-        )
+        return response
 
     def _mapping_paginated_response(
         self, request, filtered_queryset, resource_ids, tenant_id, ordering
@@ -8143,10 +8389,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
         tenant_id = request.tenant_id
         queryset = self._get_finding_queryset()
 
-        # Get latest completed scan for each provider
+        # Order by -completed_at (matching the /latest summary path and the
+        # daily summary upsert keyed on midnight(completed_at)) so that
+        # overlapping scans do not make /resources and /latest read from
+        # different scans and report diverging counts.
         latest_scan_ids = (
             Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
+            .order_by("provider_id", "-completed_at", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )

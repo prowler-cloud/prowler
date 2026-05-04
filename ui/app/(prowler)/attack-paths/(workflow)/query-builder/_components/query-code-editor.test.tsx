@@ -29,6 +29,32 @@ describe("QueryCodeEditor", () => {
     expect(screen.getByText("1")).toBeInTheDocument();
   });
 
+  it("keeps the accessible editor name when the visible label is hidden", () => {
+    // Given
+    render(
+      <QueryCodeEditor
+        ariaLabel="Resource metadata"
+        visibleLabel={null}
+        language="json"
+        value="{}"
+        showCopyButton
+        onChange={() => {}}
+      />,
+    );
+
+    // When
+    const editor = screen.getByRole("textbox", {
+      name: /resource metadata/i,
+    });
+
+    // Then
+    expect(editor).toBeInTheDocument();
+    expect(screen.queryByText("Resource metadata")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /copy resource metadata/i }),
+    ).toBeInTheDocument();
+  });
+
   it("propagates content changes and exposes the invalid state in the container", async () => {
     // Given
     const user = userEvent.setup();

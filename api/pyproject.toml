@@ -38,7 +38,7 @@ dependencies = [
   "matplotlib (==3.10.8)",
   "reportlab (==4.4.10)",
   "neo4j (==6.1.0)",
-  "cartography (==0.132.0)",
+  "cartography (==0.135.0)",
   "gevent (==25.9.1)",
   "werkzeug (==3.1.7)",
   "sqlparse (==0.5.5)",
@@ -50,7 +50,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.26.0"
+version = "1.27.0"
 
 [project.scripts]
 celery = "src.backend.config.settings.celery"
@@ -62,7 +62,6 @@ django-silk = "5.3.2"
 docker = "7.1.0"
 filelock = "3.20.3"
 freezegun = "1.5.1"
-marshmallow = "==3.26.2"
 mypy = "1.10.1"
 pylint = "3.2.5"
 pytest = "9.0.3"

@@ -4,7 +4,11 @@ import {
   getFindingGroupResources,
   getLatestFindingGroupResources,
 } from "@/actions/finding-groups";
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import {
+  apiBaseUrl,
+  getAuthHeaders,
+  RESOURCE_DRAWER_OTHER_FINDINGS_SORT,
+} from "@/lib";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
@@ -250,10 +254,12 @@ export const getLatestFindingsByResourceUid = async ({
   resourceUid,
   page = 1,
   pageSize = 50,
+  includeMuted = false,
 }: {
   resourceUid: string;
   page?: number;
   pageSize?: number;
+  includeMuted?: boolean;
 }) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -262,8 +268,9 @@ export const getLatestFindingsByResourceUid = async ({
   );
 
   url.searchParams.append("filter[resource_uid]", resourceUid);
-  url.searchParams.append("filter[muted]", "include");
-  url.searchParams.append("sort", "-severity,-updated_at");
+  url.searchParams.append("filter[status]", "FAIL");
+  url.searchParams.append("filter[muted]", includeMuted ? "include" : "false");
+  url.searchParams.append("sort", RESOURCE_DRAWER_OTHER_FINDINGS_SORT);
   if (page) url.searchParams.append("page[number]", page.toString());
   if (pageSize) url.searchParams.append("page[size]", pageSize.toString());
 

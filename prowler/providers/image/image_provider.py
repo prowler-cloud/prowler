@@ -163,42 +163,50 @@ class ImageProvider(Provider):
         # Registry scan mode: enumerate images from registry
         if self.registry:
             self._enumerate_registry()
-            if self._listing_only:
-                return
 
-        for image in self.images:
-            self._validate_image_name(image)
-
-        if not self.images:
-            raise ImageNoImagesProvidedError(
-                file=__file__,
-                message="No images provided for scanning.",
-            )
-
-        # Audit Config
-        if config_content:
-            self._audit_config = config_content
-        else:
-            if not config_path:
-                config_path = default_config_file_path
-            self._audit_config = load_and_validate_config_file(self._type, config_path)
-
-        # Fixer Config
-        self._fixer_config = fixer_config if fixer_config is not None else {}
-
-        # Mutelist (not needed for Image provider since Trivy has its own logic)
+        # Safe defaults for listing-only mode (overwritten below in scan mode)
+        self._audit_config = {}
+        self._fixer_config = {}
         self._mutelist = None
+        self.audit_metadata = None
 
-        self.audit_metadata = Audit_Metadata(
-            provider=self._type,
-            account_id=self.audited_account,
-            account_name="image",
-            region=self.region,
-            services_scanned=0,
-            expected_checks=[],
-            completed_checks=0,
-            audit_progress=0,
-        )
+        # Skip scan setup for listing-only mode
+        if not self._listing_only:
+            for image in self.images:
+                self._validate_image_name(image)
+
+            if not self.images:
+                raise ImageNoImagesProvidedError(
+                    file=__file__,
+                    message="No images provided for scanning.",
+                )
+
+            # Audit Config
+            if config_content:
+                self._audit_config = config_content
+            else:
+                if not config_path:
+                    config_path = default_config_file_path
+                self._audit_config = load_and_validate_config_file(
+                    self._type, config_path
+                )
+
+            # Fixer Config
+            self._fixer_config = fixer_config if fixer_config is not None else {}
+
+            # Mutelist (not needed for Image provider since Trivy has its own logic)
+            self._mutelist = None
+
+            self.audit_metadata = Audit_Metadata(
+                provider=self._type,
+                account_id=self.audited_account,
+                account_name="image",
+                region=self.region,
+                services_scanned=0,
+                expected_checks=[],
+                completed_checks=0,
+                audit_progress=0,
+            )
 
         Provider.set_global_provider(self)
 
@@ -322,11 +330,20 @@ class ImageProvider(Provider):
         return None
 
     @staticmethod
+    def _strip_scheme(value: str) -> str:
+        """Remove a leading http:// or https:// scheme from a registry input."""
+        for prefix in ("https://", "http://"):
+            if value.lower().startswith(prefix):
+                return value[len(prefix) :]
+        return value
+
+    @staticmethod
     def _extract_registry(image: str) -> str | None:
         """Extract registry hostname from an image reference.
 
         Returns None for Docker Hub images (no registry prefix).
         """
+        image = ImageProvider._strip_scheme(image)
         parts = image.split("/")
         if len(parts) >= 2 and ("." in parts[0] or ":" in parts[0]):
             return parts[0]
@@ -340,6 +357,7 @@ class ImageProvider(Provider):
         or "myregistry.com:5000" are registry URLs (dots in host, no slash).
         Image references like "alpine:3.18" or "nginx" are not.
         """
+        image_uid = ImageProvider._strip_scheme(image_uid)
         if "/" not in image_uid:
             host_part = image_uid.split(":")[0]
             if "." in host_part:
@@ -827,11 +845,9 @@ class ImageProvider(Provider):
                     image_ref = f"{repo}:{tag}"
                 else:
                     # OCI registries need the full host/repo:tag reference
-                    registry_host = self.registry.rstrip("/")
-                    for prefix in ("https://", "http://"):
-                        if registry_host.startswith(prefix):
-                            registry_host = registry_host[len(prefix) :]
-                            break
+                    registry_host = ImageProvider._strip_scheme(
+                        self.registry.rstrip("/")
+                    )
                     image_ref = f"{registry_host}/{repo}:{tag}"
                 discovered_images.append(image_ref)
 
@@ -968,6 +984,8 @@ class ImageProvider(Provider):
 
             if not image:
                 return Connection(is_connected=False, error="Image name is required")
+
+            image = ImageProvider._strip_scheme(image)
 
             # Registry URL (bare hostname) → test via OCI catalog
             if ImageProvider._is_registry_url(image):
