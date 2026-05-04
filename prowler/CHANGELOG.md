@@ -29,6 +29,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.25.2] (Prowler v5.25.2)
+
+### 🐞 Fixed
+
+- Duplicate Kubernetes RBAC findings when the same User or Group subject appeared in multiple ClusterRoleBindings [(#10242)](https://github.com/prowler-cloud/prowler/pull/10242)
+
+---
+
 ## [5.25.1] (Prowler v5.25.1)
 
 ### 🐞 Fixed
@@ -214,10 +222,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Route53 dangling IP check false positive when using `--region` flag [(#9952)](https://github.com/prowler-cloud/prowler/pull/9952)
 - RBI compliance framework support on Prowler Dashboard for the Azure provider [(#10360)](https://github.com/prowler-cloud/prowler/pull/10360)
 - CheckMetadata strict validators rejecting valid external tool provider data (image, iac, llm) [(#10363)](https://github.com/prowler-cloud/prowler/pull/10363)
-
-### 🐞 Fixed
-
-- Duplicate Kubernetes RBAC findings when the same User or Group subject appeared in multiple ClusterRoleBindings [(#10242)](https://github.com/prowler-cloud/prowler/pull/10242)
 
 ### 🔐 Security
 
