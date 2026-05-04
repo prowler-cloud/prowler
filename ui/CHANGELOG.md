@@ -2,10 +2,11 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.26.0] (Prowler UNRELEASED)
+## [1.25.2] (Prowler UNRELEASED)
 
 ### 🔄 Changed
 
+- Compliance cards: progress bar now spans the full card width, the passing-requirements caption sits beside the framework logo under the title, and the ISO 27001 logo asset is recentered within its tile [(#10939)](https://github.com/prowler-cloud/prowler/pull/10939)
 - Findings expanded resource rows now drop the redundant cube icons, render Service and Region with the same compact label style as Last seen and Failing for, and reorder columns to Status, Resource, Provider, Severity, then field labels [(#10949)](https://github.com/prowler-cloud/prowler/pull/10949)
 
 ---
