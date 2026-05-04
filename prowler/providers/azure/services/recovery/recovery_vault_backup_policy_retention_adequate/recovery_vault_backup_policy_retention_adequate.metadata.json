@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "recovery_vault_backup_policy_retention_adequate",
+  "CheckTitle": "Recovery Services backup policy has at least 30 days retention",
+  "CheckType": [],
+  "ServiceName": "recovery",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "storage",
+  "Description": "**Azure Recovery Services** backup policies are evaluated for adequate **daily retention**. Policies with fewer than 30 days of retention may not provide sufficient recovery points for incident investigation, compliance requirements, or ransomware recovery scenarios.",
+  "Risk": "Short retention periods limit the ability to recover from **delayed-discovery incidents** such as ransomware that encrypts backups over time, data corruption that propagates across backup cycles, or compliance investigations requiring historical data. Insufficient retention may violate regulatory requirements.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/backup/backup-azure-vm-backup-faq",
+    "https://learn.microsoft.com/en-us/azure/backup/backup-azure-backup-faq"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Azure portal\n2. Go to Recovery Services vaults and select the vault\n3. Go to Backup policies\n4. Select the policy to modify\n5. Under Retention range, set Daily backup point retention to at least 30 days\n6. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set daily backup retention to at least **30 days**. For production workloads, consider 90+ days. Configure **weekly, monthly, and yearly** retention points for long-term compliance. Use **immutable vaults** to prevent backup deletion by compromised admin accounts.",
+      "Url": "https://hub.prowler.com/check/recovery_vault_backup_policy_retention_adequate"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check evaluates daily retention from the backup policy's retention_policy.daily_schedule.retention_duration.count. Policies without a daily schedule are flagged. The 30-day minimum aligns with common compliance requirements and incident response timelines."
+}

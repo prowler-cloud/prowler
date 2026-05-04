@@ -1,0 +1,34 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_cluster_defender_enabled",
+  "CheckTitle": "AKS cluster has Microsoft Defender for Containers enabled",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "container",
+  "Description": "**Azure Kubernetes Service** clusters are evaluated for **Microsoft Defender for Containers** security monitoring. Defender provides runtime threat detection, vulnerability assessment, and security alerts for containerized workloads.",
+  "Risk": "Without Defender, container runtime threats such as **cryptomining**, **container escape**, and **malicious image execution** go undetected. Compromised containers can pivot to cluster resources and cloud APIs.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://hub.prowler.com/check/aks_cluster_defender_enabled"
+    }
+  },
+  "Categories": [
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

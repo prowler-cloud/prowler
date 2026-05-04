@@ -1,0 +1,34 @@
+{
+  "Provider": "azure",
+  "CheckID": "databricks_workspace_no_public_ip_enabled",
+  "CheckTitle": "Databricks workspace has secure cluster connectivity (no public IP)",
+  "CheckType": [],
+  "ServiceName": "databricks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Azure Databricks** workspaces are evaluated for **secure cluster connectivity** (No Public IP / NPIP). When enabled, cluster nodes do not receive public IP addresses, reducing the attack surface.",
+  "Risk": "Cluster nodes with public IPs are directly reachable from the internet, enabling **port scanning**, **lateral movement** from compromised nodes, and **data exfiltration** bypassing network controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "",
+      "Url": "https://hub.prowler.com/check/databricks_workspace_no_public_ip_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -291,7 +291,8 @@
         "monitor_diagnostic_setting_with_appropriate_categories",
         "monitor_diagnostic_settings_exists",
         "monitor_storage_account_with_activity_logs_cmk_encrypted",
-        "monitor_storage_account_with_activity_logs_is_private"
+        "monitor_storage_account_with_activity_logs_is_private",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -332,7 +333,8 @@
         "entra_policy_guest_invite_only_for_admin_roles",
         "entra_policy_guest_users_access_restrictions",
         "entra_policy_restricts_user_consent_for_apps",
-        "entra_policy_user_consent_for_verified_apps"
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -1108,7 +1110,8 @@
         "app_minimum_tls_version_12",
         "sqlserver_tde_encryption_enabled",
         "storage_ensure_encryption_with_customer_managed_keys",
-        "storage_infrastructure_encryption_is_enabled"
+        "storage_infrastructure_encryption_is_enabled",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ]
     },
     {
@@ -1266,7 +1269,10 @@
           "Check_Summary": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "recovery_vault_has_protected_items",
+        "recovery_vault_backup_policy_retention_adequate"
+      ]
     },
     {
       "Id": "A.8.14",
@@ -1507,7 +1513,8 @@
         "storage_infrastructure_encryption_is_enabled",
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_attached_disks_encrypted_with_cmk",
-        "vm_ensure_unattached_disks_encrypted_with_cmk"
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {
