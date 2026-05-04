@@ -2,7 +2,6 @@ from argparse import Namespace
 from json import dumps
 
 from boto3 import client, session
-from botocore.config import Config
 from moto import mock_aws
 
 from prowler.config.config import (
@@ -116,6 +115,12 @@ def set_mocked_aws_provider(
     status: list[str] = [],
     create_default_organization: bool = True,
 ) -> AwsProvider:
+    if audited_regions is None:
+        raise ValueError(
+            "audited_regions is None, which means all 36 regions will be used. "
+            "Pass an explicit list of regions instead."
+        )
+
     if create_default_organization:
         # Create default AWS Organization
         create_default_aws_organization()
@@ -127,10 +132,11 @@ def set_mocked_aws_provider(
     provider = AwsProvider()
 
     # Mock Session
-    provider._session.session_config = None
+    session_config = AwsProvider.set_session_config(None)
+    provider._session.session_config = session_config
     provider._session.original_session = original_session
     provider._session.current_session = audit_session
-    provider._session.session_config = Config()
+    audit_session._session.set_default_client_config(session_config)
     # Mock Identity
     provider._identity.account = audited_account
     provider._identity.account_arn = audited_account_arn
@@ -191,7 +197,13 @@ def create_default_aws_organization():
     mockdomain = "moto-example.org"
     mockemail = "@".join([mockname, mockdomain])
 
-    _ = organizations_client.create_organization(FeatureSet="ALL")["Organization"]["Id"]
+    try:
+        _ = organizations_client.create_organization(FeatureSet="ALL")["Organization"][
+            "Id"
+        ]
+    except organizations_client.exceptions.AlreadyInOrganizationException:
+        return
+
     account_id = organizations_client.create_account(
         AccountName=mockname, Email=mockemail
     )["CreateAccountStatus"]["AccountId"]

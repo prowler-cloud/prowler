@@ -4,6 +4,8 @@ import boto3
 from botocore.exceptions import ClientError
 from moto import mock_aws
 
+from prowler.providers.aws.aws_provider import AwsProvider
+from prowler.providers.aws.config import BOTO3_USER_AGENT_EXTRA
 from prowler.providers.aws.lib.organizations.organizations import (
     _get_ou_metadata,
     get_organizations_metadata,
@@ -221,6 +223,20 @@ class Test_AWS_Organizations:
         assert metadata == {}
         assert tags == {}
         assert ou_metadata == {}
+
+    def test_get_organizations_metadata_uses_user_agent_extra(self):
+        real_session = boto3.Session()
+        real_session._session.set_default_client_config(
+            AwsProvider.set_session_config(None)
+        )
+        wrapper = MagicMock(wraps=real_session)
+
+        get_organizations_metadata("123456789012", wrapper)
+
+        wrapper.client.assert_called_once()
+        default_config = real_session._session.get_default_client_config()
+        assert default_config is not None
+        assert BOTO3_USER_AGENT_EXTRA in default_config.user_agent_extra
 
     def test_parse_organizations_metadata_with_empty_ou_metadata(self):
         tags = {"Tags": []}
