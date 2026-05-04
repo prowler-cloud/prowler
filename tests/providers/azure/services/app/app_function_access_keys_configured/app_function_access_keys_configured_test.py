@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -10,6 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_app_function_access_keys_configured:
     def test_app_no_subscriptions(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -33,6 +35,7 @@ class Test_app_function_access_keys_configured:
 
     def test_app_subscription_empty(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.functions = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (
@@ -55,6 +58,7 @@ class Test_app_function_access_keys_configured:
 
     def test_app_function_no_keys(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.functions = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (
@@ -107,6 +111,7 @@ class Test_app_function_access_keys_configured:
 
     def test_app_function_using_functions_keys(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.functions = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (

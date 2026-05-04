@@ -7,6 +7,7 @@ from prowler.providers.azure.services.vm.vm_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -14,6 +15,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_vm_linux_enforce_ssh_authentication:
     def test_no_subscriptions(self):
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {}
 
         with (
@@ -36,6 +38,7 @@ class Test_vm_linux_enforce_ssh_authentication:
 
     def test_empty_subscription(self):
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (
@@ -59,6 +62,7 @@ class Test_vm_linux_enforce_ssh_authentication:
     def test_linux_vm_password_auth_disabled(self):
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -100,6 +104,7 @@ class Test_vm_linux_enforce_ssh_authentication:
     def test_linux_vm_password_auth_enabled(self):
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -141,6 +146,7 @@ class Test_vm_linux_enforce_ssh_authentication:
     def test_non_linux_vm(self):
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(

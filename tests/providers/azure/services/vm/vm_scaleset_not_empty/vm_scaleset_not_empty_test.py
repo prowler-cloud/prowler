@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.vm.vm_service import VirtualMachineScaleSet
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
 )
@@ -83,7 +84,7 @@ class Test_vm_scaleset_not_empty:
             assert result[0].resource_id == vmss_id
             assert result[0].resource_name == "empty-vmss"
             assert result[0].location == "eastus"
-            expected_status_extended = f"Scale set 'empty-vmss' in subscription '{AZURE_SUBSCRIPTION_ID}' is empty: no VM instances present."
+            expected_status_extended = f"Scale set 'empty-vmss' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}' is empty: no VM instances present."
             assert result[0].status_extended == expected_status_extended
 
     def test_scale_set_with_instances(self):
@@ -121,7 +122,7 @@ class Test_vm_scaleset_not_empty:
             assert result[0].resource_id == vmss_id
             assert result[0].resource_name == "nonempty-vmss"
             assert result[0].location == "westeurope"
-            expected_status_extended = f"Scale set 'nonempty-vmss' in subscription '{AZURE_SUBSCRIPTION_ID}' has {len(instance_ids)} VM instances."
+            expected_status_extended = f"Scale set 'nonempty-vmss' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}' has {len(instance_ids)} VM instances."
             assert result[0].status_extended == expected_status_extended
 
     def test_multiple_scale_sets(self):
@@ -165,10 +166,10 @@ class Test_vm_scaleset_not_empty:
             assert len(result) == 2
             for r in result:
                 if r.resource_name == "empty-vmss":
-                    expected_status_extended = f"Scale set 'empty-vmss' in subscription '{AZURE_SUBSCRIPTION_ID}' is empty: no VM instances present."
+                    expected_status_extended = f"Scale set 'empty-vmss' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}' is empty: no VM instances present."
                     assert r.status == "FAIL"
                     assert r.status_extended == expected_status_extended
                 elif r.resource_name == "nonempty-vmss":
-                    expected_status_extended = f"Scale set 'nonempty-vmss' in subscription '{AZURE_SUBSCRIPTION_ID}' has {len(instance_ids)} VM instances."
+                    expected_status_extended = f"Scale set 'nonempty-vmss' in subscription '{AZURE_SUBSCRIPTION_DISPLAY}' has {len(instance_ids)} VM instances."
                     assert r.status == "PASS"
                     assert r.status_extended == expected_status_extended

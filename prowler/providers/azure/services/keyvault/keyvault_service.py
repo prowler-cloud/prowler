@@ -56,7 +56,7 @@ class KeyVault(AzureService):
 
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         return key_vaults
@@ -172,7 +172,7 @@ class KeyVault(AzureService):
 
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
         try:
@@ -204,7 +204,7 @@ class KeyVault(AzureService):
         # TODO: handle different errors here since we are catching all HTTP Errors here
         except HttpResponseError:
             logger.warning(
-                f"Subscription name: {subscription} -- has no access policy configured for keyvault {keyvault_name}"
+                f"Subscription ID: {subscription} -- has no access policy configured for keyvault {keyvault_name}"
             )
 
         return keys
@@ -256,7 +256,7 @@ class KeyVault(AzureService):
                 )
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
         return secrets
@@ -268,13 +268,13 @@ class KeyVault(AzureService):
         monitor_diagnostics_settings = []
         try:
             monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
-                self.subscriptions[subscription],
-                f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{keyvault_name}",
+                subscription,
+                f"subscriptions/{subscription}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{keyvault_name}",
                 monitor_client.clients[subscription],
             )
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
         return monitor_diagnostics_settings

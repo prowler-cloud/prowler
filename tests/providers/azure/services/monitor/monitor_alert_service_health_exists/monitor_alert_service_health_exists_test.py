@@ -1,7 +1,9 @@
 from unittest import mock
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -9,6 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_monitor_alert_service_health_exists:
     def test_monitor_alert_service_health_exists_no_subscriptions(self):
         monitor_client = mock.MagicMock()
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         monitor_client.alert_rules = {}
         with (
             mock.patch(
@@ -31,7 +34,7 @@ class Test_monitor_alert_service_health_exists:
     def test_no_alert_rules(self):
         monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {AZURE_SUBSCRIPTION_ID: []}
-        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -55,11 +58,12 @@ class Test_monitor_alert_service_health_exists:
             assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
             assert (
                 result[0].status_extended
-                == f"There is no activity log alert for Service Health in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is no activity log alert for Service Health in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_alert_rules_configured(self):
         monitor_client = mock.MagicMock()
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -108,11 +112,12 @@ class Test_monitor_alert_service_health_exists:
             assert result[0].resource_id == "id1"
             assert (
                 result[0].status_extended
-                == f"There is an activity log alert for Service Health in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is an activity log alert for Service Health in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_alert_rules_configured_but_disabled(self):
         monitor_client = mock.MagicMock()
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -153,7 +158,7 @@ class Test_monitor_alert_service_health_exists:
                 ]
             }
             monitor_client.subscriptions = {
-                AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID
+                AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
             }
             check = monitor_alert_service_health_exists()
             result = check.execute()
@@ -164,5 +169,5 @@ class Test_monitor_alert_service_health_exists:
             assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
             assert (
                 result[0].status_extended
-                == f"There is no activity log alert for Service Health in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is no activity log alert for Service Health in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )

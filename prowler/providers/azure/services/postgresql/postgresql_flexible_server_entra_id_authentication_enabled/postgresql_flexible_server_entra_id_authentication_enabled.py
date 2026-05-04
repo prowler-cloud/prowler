@@ -11,6 +11,9 @@ class postgresql_flexible_server_entra_id_authentication_enabled(Check):
             subscription,
             flexible_servers,
         ) in postgresql_client.flexible_servers.items():
+            subscription_name = postgresql_client.subscriptions.get(
+                subscription, subscription
+            )
             for server in flexible_servers:
                 report = Check_Report_Azure(metadata=self.metadata(), resource=server)
                 report.subscription = subscription
@@ -23,7 +26,7 @@ class postgresql_flexible_server_entra_id_authentication_enabled(Check):
                     not server.active_directory_auth
                     or server.active_directory_auth != "ENABLED"
                 ):
-                    report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has Microsoft Entra ID authentication disabled"
+                    report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription_name} ({subscription}) has Microsoft Entra ID authentication disabled"
                 else:
                     # Authentication is enabled, now check for admins
                     admin_count = (
@@ -31,13 +34,13 @@ class postgresql_flexible_server_entra_id_authentication_enabled(Check):
                     )
 
                     if admin_count == 0:
-                        report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has Microsoft Entra ID authentication enabled but no Entra ID administrators configured"
+                        report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription_name} ({subscription}) has Microsoft Entra ID authentication enabled but no Entra ID administrators configured"
                     else:
                         report.status = "PASS"
                         admin_text = (
                             "administrator" if admin_count == 1 else "administrators"
                         )
-                        report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has Microsoft Entra ID authentication enabled with {admin_count} {admin_text} configured"
+                        report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription_name} ({subscription}) has Microsoft Entra ID authentication enabled with {admin_count} {admin_text} configured"
                 findings.append(report)
 
         return findings

@@ -10,6 +10,7 @@ from prowler.providers.azure.services.storage.storage_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -17,6 +18,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_storage_ensure_file_shares_soft_delete_is_enabled:
     def test_no_storage_accounts(self):
         storage_client = mock.MagicMock
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {}
 
         with (
@@ -41,6 +43,7 @@ class Test_storage_ensure_file_shares_soft_delete_is_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -85,6 +88,7 @@ class Test_storage_ensure_file_shares_soft_delete_is_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         retention_policy = DeleteRetentionPolicy(enabled=False, days=0)
         file_service_properties = FileServiceProperties(
             id=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/prowler-resource-group/providers/Microsoft.Storage/storageAccounts/{storage_account_name}/fileServices/default",
@@ -148,6 +152,7 @@ class Test_storage_ensure_file_shares_soft_delete_is_enabled:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         retention_policy = DeleteRetentionPolicy(enabled=True, days=7)
         file_service_properties = FileServiceProperties(
             id=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/prowler-resource-group/providers/Microsoft.Storage/storageAccounts/{storage_account_name}/fileServices/default",

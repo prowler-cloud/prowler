@@ -3,7 +3,9 @@ from uuid import uuid4
 
 from prowler.providers.azure.config import VIRTUAL_MACHINE_ADMINISTRATOR_LOGIN_ROLE_ID
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     DOMAIN,
     set_mocked_azure_provider,
 )
@@ -12,7 +14,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_iam_assignment_priviledge_access_vm_has_mfa:
     def test_iam_no_roles(self):
         iam_client = mock.MagicMock
+        iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         entra_client = mock.MagicMock
+        entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -37,8 +41,10 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
 
     def test_entra_user_with_vm_access_has_mfa(self):
         iam_client = mock.MagicMock
+        iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
+        entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         user_id = str(uuid4())
 
         with (
@@ -98,7 +104,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"User test can access VMs in subscription {AZURE_SUBSCRIPTION_ID} but it has MFA."
+                    == f"User test can access VMs in subscription {AZURE_SUBSCRIPTION_DISPLAY} but it has MFA."
                 )
                 assert result[0].subscription == AZURE_SUBSCRIPTION_ID
                 assert result[0].resource_name == "test"
@@ -106,8 +112,10 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
 
     def test_entra_user_with_vm_access_has_mfa_no_mfa(self):
         iam_client = mock.MagicMock
+        iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
+        entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         user_id = str(uuid4())
 
         with (
@@ -167,7 +175,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"User test without MFA can access VMs in subscription {AZURE_SUBSCRIPTION_ID}"
+                    == f"User test without MFA can access VMs in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
                 )
                 assert result[0].subscription == AZURE_SUBSCRIPTION_ID
                 assert result[0].resource_name == "test"
@@ -175,8 +183,10 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
 
     def test_entra_user_with_vm_access_has_mfa_no_user(self):
         iam_client = mock.MagicMock
+        iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
+        entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         user_id = str(uuid4())
 
         with (
@@ -227,8 +237,10 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
 
     def test_entra_user_with_vm_access_has_mfa_no_role(self):
         iam_client = mock.MagicMock
+        iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
+        entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         user_id = str(uuid4())
 
         with (

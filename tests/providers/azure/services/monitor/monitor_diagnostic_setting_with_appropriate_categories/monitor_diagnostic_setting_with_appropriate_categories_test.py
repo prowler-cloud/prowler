@@ -1,7 +1,9 @@
 from unittest import mock
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,7 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
         self,
     ):
         monitor_client = mock.MagicMock
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         monitor_client.diagnostics_settings = {}
 
         with (
@@ -34,7 +37,7 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
     def test_no_diagnostic_settings(self):
         monitor_client = mock.MagicMock
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION_ID: []}
-        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -58,11 +61,12 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
             assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
             assert (
                 result[0].status_extended
-                == f"No diagnostic setting captures all appropriate categories (Administrative, Security, Alert, Policy) in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"No diagnostic setting captures all appropriate categories (Administrative, Security, Alert, Policy) in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_diagnostic_settings_configured(self):
         monitor_client = mock.MagicMock
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -128,5 +132,5 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
             assert result[0].resource_name == "name"
             assert (
                 result[0].status_extended
-                == f"Diagnostic setting name captures appropriate categories in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"Diagnostic setting name captures appropriate categories in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )

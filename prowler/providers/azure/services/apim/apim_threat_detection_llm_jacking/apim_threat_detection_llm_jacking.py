@@ -99,7 +99,7 @@ class apim_threat_detection_llm_jacking(Check):
                 report = Check_Report_Azure(self.metadata(), resource={})
                 report.resource_name = subscription
                 report.resource_id = (
-                    f"/subscriptions/{apim_client.subscriptions[subscription]}"
+                    f"/subscriptions/{subscription}"
                 )
                 report.subscription = subscription
                 report.status = "PASS"

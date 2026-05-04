@@ -6,13 +6,16 @@ class network_udp_internet_access_restricted(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, security_groups in network_client.security_groups.items():
+            subscription_name = network_client.subscriptions.get(
+                subscription, subscription
+            )
             for security_group in security_groups:
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=security_group
                 )
                 report.subscription = subscription
                 report.status = "PASS"
-                report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has UDP internet access restricted."
+                report.status_extended = f"Security Group {security_group.name} from subscription {subscription_name} ({subscription}) has UDP internet access restricted."
                 rule_fail_condition = any(
                     (
                         rule.protocol in ["UDP", "Udp"]
@@ -28,7 +31,7 @@ class network_udp_internet_access_restricted(Check):
                 )
                 if rule_fail_condition:
                     report.status = "FAIL"
-                    report.status_extended = f"Security Group {security_group.name} from subscription {subscription} has UDP internet access allowed."
+                    report.status_extended = f"Security Group {security_group.name} from subscription {subscription_name} ({subscription}) has UDP internet access allowed."
                 findings.append(report)
 
         return findings

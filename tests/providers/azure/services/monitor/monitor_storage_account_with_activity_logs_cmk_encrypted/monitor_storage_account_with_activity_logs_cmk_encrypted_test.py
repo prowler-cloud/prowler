@@ -1,7 +1,9 @@
 from unittest import mock
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,7 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
         self,
     ):
         monitor_client = mock.MagicMock
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         monitor_client.diagnostics_settings = {}
 
         with (
@@ -33,6 +36,7 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
 
     def test_no_diagnostic_settings(self):
         monitor_client = mock.MagicMock
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION_ID: []}
         with (
             mock.patch(
@@ -54,7 +58,9 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
 
     def test_diagnostic_settings_configured(self):
         monitor_client = mock.MagicMock
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client = mock.MagicMock
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -191,7 +197,7 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
                 )
                 assert (
                     result[0].status_extended
-                    == f"Storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION_ID][0].name} storing activity log in subscription {AZURE_SUBSCRIPTION_ID} is encrypted with Customer Managed Key or not necessary."
+                    == f"Storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION_ID][0].name} storing activity log in subscription {AZURE_SUBSCRIPTION_DISPLAY} is encrypted with Customer Managed Key or not necessary."
                 )
                 assert result[1].status == "FAIL"
                 assert result[1].resource_name == "storageaccountname2"
@@ -202,5 +208,5 @@ class Test_monitor_storage_account_with_activity_logs_cmk_encrypted:
                 )
                 assert (
                     result[1].status_extended
-                    == f"Storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION_ID][1].name} storing activity log in subscription {AZURE_SUBSCRIPTION_ID} is not encrypted with Customer Managed Key."
+                    == f"Storage account {storage_client.storage_accounts[AZURE_SUBSCRIPTION_ID][1].name} storing activity log in subscription {AZURE_SUBSCRIPTION_DISPLAY} is not encrypted with Customer Managed Key."
                 )

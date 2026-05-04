@@ -3,6 +3,7 @@ from unittest import mock
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -143,6 +144,7 @@ class Test_apim_threat_detection_llm_jacking:
     def test_no_apim_instances(self):
         """Test when there are no APIM instances"""
         apim_client = mock.MagicMock()
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         apim_client.instances = {}
         apim_client.audit_config = {
             "apim_threat_detection_llm_jacking_threshold": 0.1,
@@ -175,6 +177,7 @@ class Test_apim_threat_detection_llm_jacking:
     def test_no_potential_llm_jacking(self):
         """Test when no potential LLM jacking is detected"""
         apim_client = mock.MagicMock()
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         apim_client.instances = {
             AZURE_SUBSCRIPTION_ID: [
                 mock.MagicMock(
@@ -184,7 +187,7 @@ class Test_apim_threat_detection_llm_jacking:
                 )
             ]
         }
-        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         apim_client.audit_config = {
             "apim_threat_detection_llm_jacking_threshold": 0.9,
             "apim_threat_detection_llm_jacking_minutes": 1440,
@@ -240,6 +243,7 @@ class Test_apim_threat_detection_llm_jacking:
     def test_potential_llm_jacking_detected(self):
         """Test when potential LLM jacking is detected"""
         apim_client = mock.MagicMock()
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         apim_client.instances = {
             AZURE_SUBSCRIPTION_ID: [
                 mock.MagicMock(
@@ -293,6 +297,7 @@ class Test_apim_threat_detection_llm_jacking:
     def test_higher_threshold_no_detection(self):
         """Test when threshold is higher and no attack is detected"""
         apim_client = mock.MagicMock()
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         apim_client.instances = {
             AZURE_SUBSCRIPTION_ID: [
                 mock.MagicMock(
@@ -302,7 +307,7 @@ class Test_apim_threat_detection_llm_jacking:
                 )
             ]
         }
-        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         apim_client.audit_config = {
             "apim_threat_detection_llm_jacking_threshold": 0.9,
             "apim_threat_detection_llm_jacking_minutes": 1440,
@@ -367,7 +372,7 @@ class Test_apim_threat_detection_llm_jacking:
                 )
             ]
         }
-        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         apim_client.audit_config = {
             "apim_threat_detection_llm_jacking_threshold": 0.9,
             "apim_threat_detection_llm_jacking_minutes": 1440,
@@ -423,6 +428,7 @@ class Test_apim_threat_detection_llm_jacking:
     def test_multiple_subscriptions(self):
         """Test with multiple subscriptions"""
         apim_client = mock.MagicMock()
+        apim_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         apim_client.instances = {
             AZURE_SUBSCRIPTION_ID: [
                 mock.MagicMock(
@@ -440,7 +446,7 @@ class Test_apim_threat_detection_llm_jacking:
             ],
         }
         apim_client.subscriptions = {
-            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID,
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME,
             "another-subscription": "another-subscription-id",
         }
         apim_client.audit_config = {

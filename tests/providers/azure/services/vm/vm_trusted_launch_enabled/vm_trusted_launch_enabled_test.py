@@ -10,7 +10,9 @@ from prowler.providers.azure.services.vm.vm_service import (
     VirtualMachine,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -18,6 +20,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_vm_trusted_launch_enabled:
     def test_vm_no_subscriptions(self):
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {}
         with (
             mock.patch(
@@ -39,6 +42,7 @@ class Test_vm_trusted_launch_enabled:
 
     def test_vm_no_vm(self):
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {}}
         with (
             mock.patch(
@@ -61,6 +65,7 @@ class Test_vm_trusted_launch_enabled:
     def test_vm_trusted_launch_enabled(self):
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -111,12 +116,13 @@ class Test_vm_trusted_launch_enabled:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest has trusted launch enabled in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"VM VMTest has trusted launch enabled in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )
 
     def test_vm_trusted_launch_disabled(self):
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -168,12 +174,13 @@ class Test_vm_trusted_launch_enabled:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest has trusted launch disabled in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"VM VMTest has trusted launch disabled in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )
 
     def test_vm_no_security_profile(self):
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -219,5 +226,5 @@ class Test_vm_trusted_launch_enabled:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest has trusted launch disabled in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"VM VMTest has trusted launch disabled in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )

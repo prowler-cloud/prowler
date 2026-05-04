@@ -7,12 +7,12 @@ class app_function_not_publicly_accessible(Check):
         findings = []
 
         for (
-            subscription_name,
+            subscription_id,
             functions,
         ) in app_client.functions.items():
             for function in functions.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=function)
-                report.subscription = subscription_name
+                report.subscription = subscription_id
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Function {function.name} is publicly accessible."

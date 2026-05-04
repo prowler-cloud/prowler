@@ -6,18 +6,21 @@ class sqlserver_va_scan_reports_configured(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
+            subscription_name = sqlserver_client.subscriptions.get(
+                subscription, subscription
+            )
             for sql_server in sql_servers:
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=sql_server
                 )
                 report.subscription = subscription
                 report.status = "FAIL"
-                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has vulnerability assessment disabled."
+                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has vulnerability assessment disabled."
                 if (
                     sql_server.vulnerability_assessment
                     and sql_server.vulnerability_assessment.storage_container_path
                 ):
-                    report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has vulnerability assessment enabled but no scan reports configured."
+                    report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has vulnerability assessment enabled but no scan reports configured."
                     if sql_server.vulnerability_assessment.recurring_scans and (
                         (
                             sql_server.vulnerability_assessment.recurring_scans.email_subscription_admins
@@ -31,7 +34,7 @@ class sqlserver_va_scan_reports_configured(Check):
                         )
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has vulnerability assessment enabled and scan reports configured."
+                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has vulnerability assessment enabled and scan reports configured."
                 findings.append(report)
 
         return findings

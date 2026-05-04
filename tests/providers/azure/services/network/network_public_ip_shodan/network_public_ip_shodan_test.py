@@ -3,6 +3,7 @@ from unittest import mock
 from prowler.providers.azure.services.network.network_service import PublicIp
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -10,6 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_network_public_ip_shodan:
     def test_no_public_ip_addresses(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_client.public_ip_addresses = {}
 
         with (
@@ -38,6 +40,7 @@ class Test_network_public_ip_shodan:
 
     def test_network_ip_in_shodan(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         public_ip_id = "id"
         public_ip_name = "name"
         ip_address = "ip_address"

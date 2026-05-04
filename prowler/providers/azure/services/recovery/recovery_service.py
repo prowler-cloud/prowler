@@ -54,19 +54,19 @@ class Recovery(AzureService):
         vaults_dict: dict[str, dict[str, BackupVault]] = {}
         try:
             vaults_dict: dict[str, dict[str, BackupVault]] = {}
-            for subscription_name, client in self.clients.items():
+            for subscription_id, client in self.clients.items():
                 vaults = client.vaults.list_by_subscription_id()
-                vaults_dict[subscription_name] = {}
+                vaults_dict[subscription_id] = {}
                 for vault in vaults:
                     vault_obj = BackupVault(
                         id=vault.id,
                         name=vault.name,
                         location=vault.location,
                     )
-                    vaults_dict[subscription_name][vault_obj.id] = vault_obj
+                    vaults_dict[subscription_id][vault_obj.id] = vault_obj
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return vaults_dict
 
@@ -76,17 +76,17 @@ class RecoveryBackup(AzureService):
         self, provider: AzureProvider, vaults: dict[str, dict[str, BackupVault]]
     ):
         super().__init__(RecoveryServicesBackupClient, provider)
-        for subscription_name, vaults in vaults.items():
+        for subscription_id, vaults in vaults.items():
             for vault in vaults.values():
                 vault.backup_protected_items = self._get_backup_protected_items(
-                    subscription_name=subscription_name, vault=vault
+                    subscription_id=subscription_id, vault=vault
                 )
                 vault.backup_policies = self._get_backup_policies(
-                    subscription_name=subscription_name, vault=vault
+                    subscription_id=subscription_id, vault=vault
                 )
 
     def _get_backup_protected_items(
-        self, subscription_name: str, vault: BackupVault
+        self, subscription_id: str, vault: BackupVault
     ) -> dict[str, BackupItem]:
         """
         Retrieve all backup protected items for a given vault.
@@ -95,7 +95,7 @@ class RecoveryBackup(AzureService):
         backup_protected_items_dict: dict[str, BackupItem] = {}
         try:
             backup_protected_items = self.clients[
-                subscription_name
+                subscription_id
             ].backup_protected_items.list(
                 vault_name=vault.name,
                 resource_group_name=vault.id.split("/")[4],
@@ -114,12 +114,12 @@ class RecoveryBackup(AzureService):
                 )
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return backup_protected_items_dict
 
     def _get_backup_policies(
-        self, subscription_name: str, vault: BackupVault
+        self, subscription_id: str, vault: BackupVault
     ) -> dict[str, BackupPolicy]:
         """
         Retrieve all backup policies for a given vault.
@@ -132,7 +132,7 @@ class RecoveryBackup(AzureService):
                 if item.backup_policy_id:
                     unique_backup_policies.add(item.backup_policy_id)
             for policy_id in unique_backup_policies:
-                policy = self.clients[subscription_name].protection_policies.get(
+                policy = self.clients[subscription_id].protection_policies.get(
                     vault_name=vault.name,
                     resource_group_name=vault.id.split("/")[4],
                     policy_name=policy_id.split("/")[-1],
@@ -160,6 +160,6 @@ class RecoveryBackup(AzureService):
                 )
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return backup_policies_dict

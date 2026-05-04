@@ -49,15 +49,15 @@ class AzureService:
             if "GraphServiceClient" in str(service):
                 clients.update({identity.tenant_domain: service(credentials=session)})
             elif "LogsQueryClient" in str(service):
-                for display_name, id in identity.subscriptions.items():
-                    clients.update({display_name: service(credential=session)})
+                for subscription_id, display_name in identity.subscriptions.items():
+                    clients.update({subscription_id: service(credential=session)})
             else:
-                for display_name, id in identity.subscriptions.items():
+                for subscription_id, display_name in identity.subscriptions.items():
                     clients.update(
                         {
-                            display_name: service(
+                            subscription_id: service(
                                 credential=session,
-                                subscription_id=id,
+                                subscription_id=subscription_id,
                                 base_url=region_config.base_url,
                                 credential_scopes=region_config.credential_scopes,
                             )

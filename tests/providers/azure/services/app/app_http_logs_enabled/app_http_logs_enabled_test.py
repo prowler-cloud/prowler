@@ -1,7 +1,9 @@
 from unittest import mock
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -10,6 +12,7 @@ class Test_app_http_logs_enabled:
 
     def test_app_http_logs_enabled_no_subscriptions(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.apps = {}
 
         with (
@@ -33,6 +36,7 @@ class Test_app_http_logs_enabled:
 
     def test_app_subscriptions_empty(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (
@@ -55,6 +59,7 @@ class Test_app_http_logs_enabled:
 
     def test_no_diagnostics_settings(self):
         app_client = mock.MagicMock()
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -93,12 +98,13 @@ class Test_app_http_logs_enabled:
             assert result[0].resource_id == "resource_id"
             assert (
                 result[0].status_extended
-                == f"App app1 does not have a diagnostic setting in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"App app1 does not have a diagnostic setting in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
 
     def test_diagnostic_setting_configured(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -233,11 +239,12 @@ class Test_app_http_logs_enabled:
             assert result[0].resource_id == "resource_id2"
             assert (
                 result[0].status_extended
-                == f"App app_id-2 has HTTP Logs enabled in diagnostic setting name_diagnostic_setting2 in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"App app_id-2 has HTTP Logs enabled in diagnostic setting name_diagnostic_setting2 in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )
 
     def test_diagnostic_setting_with_all_logs_category_group(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -296,11 +303,12 @@ class Test_app_http_logs_enabled:
             assert result[0].resource_id == "resource_id3"
             assert (
                 result[0].status_extended
-                == f"App app_id-3 has allLogs category group which includes HTTP Logs enabled in diagnostic setting name_diagnostic_setting3 in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"App app_id-3 has allLogs category group which includes HTTP Logs enabled in diagnostic setting name_diagnostic_setting3 in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )
 
     def test_diagnostic_setting_with_all_logs_category_group_disabled(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -359,5 +367,5 @@ class Test_app_http_logs_enabled:
             assert result[0].resource_id == "resource_id4"
             assert (
                 result[0].status_extended
-                == f"App app_id-4 does not have HTTP Logs enabled in diagnostic setting name_diagnostic_setting4 in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"App app_id-4 does not have HTTP Logs enabled in diagnostic setting name_diagnostic_setting4 in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )

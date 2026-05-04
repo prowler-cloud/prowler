@@ -5,7 +5,9 @@ from azure.mgmt.network.models import SecurityRule
 
 from prowler.providers.azure.services.network.network_service import SecurityGroup
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -13,6 +15,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_network_ssh_internet_access_restricted:
     def test_no_security_groups(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_client.security_groups = {}
 
         with (
@@ -39,6 +42,7 @@ class Test_network_ssh_internet_access_restricted:
 
     def test_network_security_groups_none_destination_port_range(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         security_group_name = "Security Group Name"
         security_group_id = str(uuid4())
 
@@ -85,7 +89,7 @@ class Test_network_ssh_internet_access_restricted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_ID} has HTTP internet access restricted."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has HTTP internet access restricted."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
@@ -94,6 +98,7 @@ class Test_network_ssh_internet_access_restricted:
 
     def test_network_security_groups_no_security_rules(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         security_group_name = "Security Group Name"
         security_group_id = str(uuid4())
 
@@ -132,7 +137,7 @@ class Test_network_ssh_internet_access_restricted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_ID} has SSH internet access restricted."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has SSH internet access restricted."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
@@ -141,6 +146,7 @@ class Test_network_ssh_internet_access_restricted:
 
     def test_network_security_groups_invalid_security_rules(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         security_group_name = "Security Group Name"
         security_group_id = str(uuid4())
 
@@ -187,7 +193,7 @@ class Test_network_ssh_internet_access_restricted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_ID} has SSH internet access allowed."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has SSH internet access allowed."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
@@ -196,6 +202,7 @@ class Test_network_ssh_internet_access_restricted:
 
     def test_network_security_groups_invalid_security_rules_range(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         security_group_name = "Security Group Name"
         security_group_id = str(uuid4())
 
@@ -242,7 +249,7 @@ class Test_network_ssh_internet_access_restricted:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_ID} has SSH internet access allowed."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has SSH internet access allowed."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name
@@ -251,6 +258,7 @@ class Test_network_ssh_internet_access_restricted:
 
     def test_network_security_groups_valid_security_rules(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         security_group_name = "Security Group Name"
         security_group_id = str(uuid4())
 
@@ -297,7 +305,7 @@ class Test_network_ssh_internet_access_restricted:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_ID} has SSH internet access restricted."
+                == f"Security Group {security_group_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has SSH internet access restricted."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == security_group_name

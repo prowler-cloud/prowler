@@ -20,10 +20,13 @@ class entra_user_with_vm_access_has_mfa(Check):
         for users in entra_client.users.values():
             for user in users.values():
                 for (
-                    subscription_name,
+                    subscription_id,
                     role_assigns,
                 ) in iam_client.role_assignments.items():
-                    if (user.id, subscription_name) in already_reported:
+                    subscription_name = entra_client.subscriptions.get(
+                        subscription_id, subscription_id
+                    )
+                    if (user.id, subscription_id) in already_reported:
                         continue
 
                     for assignment in role_assigns.values():
@@ -44,15 +47,15 @@ class entra_user_with_vm_access_has_mfa(Check):
                             report = Check_Report_Azure(
                                 metadata=self.metadata(), resource=user
                             )
-                            report.subscription = subscription_name
+                            report.subscription = subscription_id
                             report.status = "FAIL"
-                            report.status_extended = f"User {user.name} without MFA can access VMs in subscription {subscription_name}"
+                            report.status_extended = f"User {user.name} without MFA can access VMs in subscription {subscription_name} ({subscription_id})"
                             if user.is_mfa_capable:
                                 report.status = "PASS"
-                                report.status_extended = f"User {user.name} can access VMs in subscription {subscription_name} but it has MFA."
+                                report.status_extended = f"User {user.name} can access VMs in subscription {subscription_name} ({subscription_id}) but it has MFA."
 
                             findings.append(report)
-                            already_reported.add((user.id, subscription_name))
+                            already_reported.add((user.id, subscription_id))
                             break
 
         return findings

@@ -3,7 +3,9 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.vm.vm_service import VirtualMachine
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_vm_ensure_using_approved_images:
     def test_no_subscriptions(self):
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {}
         with (
             mock.patch(
@@ -32,6 +35,7 @@ class Test_vm_ensure_using_approved_images:
 
     def test_empty_vms_in_subscription(self):
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {}}
         with (
             mock.patch(
@@ -64,6 +68,7 @@ class Test_vm_ensure_using_approved_images:
             image_reference=approved_image_id,
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {vm_id: vm}}
         with (
             mock.patch(
@@ -86,7 +91,7 @@ class Test_vm_ensure_using_approved_images:
             assert result[0].resource_name == "VMTestApproved"
             assert result[0].resource_id == vm_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            expected_status_extended = f"VM VMTestApproved in subscription {AZURE_SUBSCRIPTION_ID} is using an approved machine image: custom-image."
+            expected_status_extended = f"VM VMTestApproved in subscription {AZURE_SUBSCRIPTION_DISPLAY} is using an approved machine image: custom-image."
             assert result[0].status_extended == expected_status_extended
 
     def test_vm_with_not_approved_image(self):
@@ -102,6 +107,7 @@ class Test_vm_ensure_using_approved_images:
             image_reference=not_approved_image_id,
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {vm_id: vm}}
         with (
             mock.patch(
@@ -124,7 +130,7 @@ class Test_vm_ensure_using_approved_images:
             assert result[0].resource_name == "VMTestNotApproved"
             assert result[0].resource_id == vm_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            expected_status_extended = f"VM VMTestNotApproved in subscription {AZURE_SUBSCRIPTION_ID} is not using an approved machine image."
+            expected_status_extended = f"VM VMTestNotApproved in subscription {AZURE_SUBSCRIPTION_DISPLAY} is not using an approved machine image."
             assert result[0].status_extended == expected_status_extended
 
     def test_vm_with_missing_image_reference(self):
@@ -139,6 +145,7 @@ class Test_vm_ensure_using_approved_images:
             image_reference=None,
         )
         vm_client = mock.MagicMock()
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {vm_id: vm}}
         with (
             mock.patch(
@@ -161,5 +168,5 @@ class Test_vm_ensure_using_approved_images:
             assert result[0].resource_name == "VMTestNoImageRef"
             assert result[0].resource_id == vm_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            expected_status_extended = f"VM VMTestNoImageRef in subscription {AZURE_SUBSCRIPTION_ID} is not using an approved machine image."
+            expected_status_extended = f"VM VMTestNoImageRef in subscription {AZURE_SUBSCRIPTION_DISPLAY} is not using an approved machine image."
             assert result[0].status_extended == expected_status_extended

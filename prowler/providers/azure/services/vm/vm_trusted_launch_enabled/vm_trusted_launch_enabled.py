@@ -6,12 +6,15 @@ class vm_trusted_launch_enabled(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        for subscription_name, vms in vm_client.virtual_machines.items():
+        for subscription_id, vms in vm_client.virtual_machines.items():
+            subscription_name = vm_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             for vm in vms.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=vm)
-                report.subscription = subscription_name
+                report.subscription = subscription_id
                 report.status = "FAIL"
-                report.status_extended = f"VM {vm.resource_name} has trusted launch disabled in subscription {subscription_name}"
+                report.status_extended = f"VM {vm.resource_name} has trusted launch disabled in subscription {subscription_name} ({subscription_id})"
 
                 if (
                     vm.security_profile
@@ -20,7 +23,7 @@ class vm_trusted_launch_enabled(Check):
                     and vm.security_profile.uefi_settings.v_tpm_enabled
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"VM {vm.resource_name} has trusted launch enabled in subscription {subscription_name}"
+                    report.status_extended = f"VM {vm.resource_name} has trusted launch enabled in subscription {subscription_name} ({subscription_id})"
 
                 findings.append(report)
 

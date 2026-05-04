@@ -6,18 +6,21 @@ class aks_clusters_public_access_disabled(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        for subscription_name, clusters in aks_client.clusters.items():
+        for subscription_id, clusters in aks_client.clusters.items():
+            subscription_name = aks_client.subscriptions.get(
+                subscription_id, subscription_id
+            )
             for cluster in clusters.values():
                 report = Check_Report_Azure(metadata=self.metadata(), resource=cluster)
-                report.subscription = subscription_name
+                report.subscription = subscription_id
                 report.status = "FAIL"
-                report.status_extended = f"Public access to nodes is enabled for cluster '{cluster.name}' in subscription '{subscription_name}'"
+                report.status_extended = f"Public access to nodes is enabled for cluster '{cluster.name}' in subscription '{subscription_name} ({subscription_id})'"
 
                 if cluster.private_fqdn:
                     for agent_pool in cluster.agent_pool_profiles:
                         if not getattr(agent_pool, "enable_node_public_ip", False):
                             report.status = "PASS"
-                            report.status_extended = f"Public access to nodes is disabled for cluster '{cluster.name}' in subscription '{subscription_name}'"
+                            report.status_extended = f"Public access to nodes is disabled for cluster '{cluster.name}' in subscription '{subscription_name} ({subscription_id})'"
 
                 findings.append(report)
 

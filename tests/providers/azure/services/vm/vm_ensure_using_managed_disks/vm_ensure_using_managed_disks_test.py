@@ -11,7 +11,9 @@ from prowler.providers.azure.services.vm.vm_service import (
     VirtualMachine,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -19,6 +21,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_vm_ensure_using_managed_disks:
     def test_vm_no_subscriptions(self):
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {}
 
         with (
@@ -41,6 +44,7 @@ class Test_vm_ensure_using_managed_disks:
 
     def test_vm_subscriptions(self):
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (
@@ -64,6 +68,7 @@ class Test_vm_ensure_using_managed_disks:
     def test_vm_ensure_using_managed_disks(self):
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -115,12 +120,13 @@ class Test_vm_ensure_using_managed_disks:
             assert result[0].resource_id == vm_id
             assert (
                 result[0].status_extended
-                == f"VM VMTest is using managed disks in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"VM VMTest is using managed disks in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )
 
     def test_vm_using_not_managed_os_disk(self):
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -172,12 +178,13 @@ class Test_vm_ensure_using_managed_disks:
             assert result[0].location == "location"
             assert (
                 result[0].status_extended
-                == f"VM VMTest is not using managed disks in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"VM VMTest is not using managed disks in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )
 
     def test_vm_using_not_managed_data_disks(self):
         vm_id = str(uuid4())
         vm_client = mock.MagicMock
+        vm_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         vm_client.virtual_machines = {
             AZURE_SUBSCRIPTION_ID: {
                 vm_id: VirtualMachine(
@@ -231,5 +238,5 @@ class Test_vm_ensure_using_managed_disks:
             assert result[0].location == "location"
             assert (
                 result[0].status_extended
-                == f"VM VMTest is not using managed disks in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"VM VMTest is not using managed disks in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )

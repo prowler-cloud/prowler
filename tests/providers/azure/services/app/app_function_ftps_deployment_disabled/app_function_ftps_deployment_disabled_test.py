@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -10,6 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_app_function_ftps_deployment_disabled:
     def test_no_subscriptions(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -33,6 +35,7 @@ class Test_app_function_ftps_deployment_disabled:
 
     def test_subscription_empty(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -56,6 +59,7 @@ class Test_app_function_ftps_deployment_disabled:
 
     def test_function_ftp_deployment_enabled(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -106,6 +110,7 @@ class Test_app_function_ftps_deployment_disabled:
 
     def test_function_ftps_deployment_enabled(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -156,6 +161,7 @@ class Test_app_function_ftps_deployment_disabled:
 
     def test_function_ftp_and_ftps_deployment_disabled(self):
         app_client = mock.MagicMock
+        app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
