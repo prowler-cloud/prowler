@@ -112,7 +112,7 @@ def execute_query(
     scan=None,
 ) -> dict[str, Any]:
     try:
-        # TODO: Drop after Neptune migration is finished
+        # TODO: drop after Neptune cutover
         # Route reads by the scan row's recorded sink, not by current settings.
         backend = (
             sink_module.get_backend_for_scan(scan)
@@ -168,7 +168,7 @@ def execute_custom_query(
     validate_custom_query(cypher)
     cypher = inject_provider_label(cypher, provider_id)
 
-    # TODO: Drop after Neptune migration is finished
+    # TODO: drop after Neptune cutover
     backend = (
         sink_module.get_backend_for_scan(scan)
         if scan is not None

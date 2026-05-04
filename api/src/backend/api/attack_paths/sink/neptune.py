@@ -1,28 +1,36 @@
 """AWS Neptune sink implementation.
 
 Dual Bolt drivers: one against the writer endpoint for workers, one against
-the reader endpoint for the API read path. If ``NEPTUNE_READER_ENDPOINT`` is
+the reader endpoint for the API read path. If `NEPTUNE_READER_ENDPOINT` is
 unset the reader falls back to the writer driver so single-node clusters work.
 
-Neptune is single-database. The ``database`` argument on the SinkDatabase
+Neptune is single-database. The `database` argument on the SinkDatabase
 protocol is ignored; tenant / provider isolation is enforced by labels that
 the sync step already writes on every node (see tasks/jobs/attack_paths/sync.py).
+
+SigV4 auth lives at the bottom of this file as `neptune_auth_provider`. The
+neo4j driver invokes the returned callable on each token refresh.
 """
 from __future__ import annotations
 
 import atexit
+import datetime
+import json
 import logging
 import threading
 from contextlib import AbstractContextManager, contextmanager
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
 
 import neo4j
 import neo4j.exceptions
+from botocore.auth import SigV4Auth, _host_from_url
+from botocore.awsrequest import AWSRequest
+from botocore.session import Session as BotoSession
 from config.env import env
 from django.conf import settings
+from neo4j import ExpiringAuth
 
 from api.attack_paths.retryable_session import RetryableSession
-from api.attack_paths.sink.auth_neptune import neptune_auth_provider
 from api.attack_paths.sink.base import SinkDatabase
 
 logging.getLogger("neo4j").setLevel(logging.ERROR)
@@ -47,6 +55,9 @@ READ_EXCEPTION_CODES = [
 ]
 CLIENT_STATEMENT_EXCEPTION_PREFIX = "Neo.ClientError.Statement."
 
+# Refresh 60s before the 5-minute SigV4 window closes
+SIGV4_TOKEN_LIFETIME_MINUTES = 4
+
 
 class NeptuneSink(SinkDatabase):
     """Neptune-backed sink. Single database; isolation is label-based."""
@@ -57,7 +68,7 @@ class NeptuneSink(SinkDatabase):
         self._lock = threading.Lock()
         self._atexit_registered = False
 
-    # ------------------------------------------------------------------ config
+    # Config
 
     def _config(self) -> dict:
         return settings.DATABASES["neptune"]
@@ -88,7 +99,7 @@ class NeptuneSink(SinkDatabase):
             max_transaction_retry_time=0,
         )
 
-    # ------------------------------------------------------------------ lifecycle
+    # Lifecycle
 
     def init(self) -> None:
         if self._writer is not None:
@@ -114,25 +125,19 @@ class NeptuneSink(SinkDatabase):
 
     def close(self) -> None:
         with self._lock:
-            for attr in ("_reader", "_writer"):
-                driver = getattr(self, attr)
-                if driver is not None and driver is not getattr(self, "_writer", None) or attr == "_writer":
-                    # reader may alias writer; close each underlying driver once
-                    pass
-            # Close in defined order, guarding against reader==writer aliasing
-            closed: set[int] = set()
+            # Driver.close() is idempotent, so closing the same driver twice
+            # (when reader aliases writer on single-endpoint configs) is safe.
             for driver in (self._reader, self._writer):
-                if driver is None or id(driver) in closed:
+                if driver is None:
                     continue
                 try:
                     driver.close()
                 except Exception:  # pragma: no cover - best-effort
                     pass
-                closed.add(id(driver))
             self._writer = None
             self._reader = None
 
-    # ------------------------------------------------------------------ sessions
+    # Sessions
 
     def _get_writer(self) -> neo4j.Driver:
         self.init()
@@ -191,7 +196,7 @@ class NeptuneSink(SinkDatabase):
             if session_wrapper is not None:
                 session_wrapper.close()
 
-    # ------------------------------------------------------------------ operations
+    # Operations
 
     def execute_read_query(
         self,
@@ -263,8 +268,51 @@ class NeptuneSink(SinkDatabase):
         return None
 
     # Test helpers
+
     def get_writer(self) -> neo4j.Driver:
         return self._get_writer()
 
     def get_reader(self) -> neo4j.Driver:
         return self._get_reader()
+
+
+# SigV4 auth provider
+
+class _NeptuneAuthToken(neo4j.Auth):
+    """Neo4j Auth backed by a SigV4-signed GET to `/opencypher`."""
+
+    def __init__(self, region: str, url: str) -> None:
+        session = BotoSession()
+        credentials = session.get_credentials()
+        if credentials is None:
+            raise RuntimeError(
+                "No AWS credentials available for Neptune SigV4 signing. "
+                "Ensure the boto3 credential chain can resolve."
+            )
+        credentials = credentials.get_frozen_credentials()
+
+        request = AWSRequest(method="GET", url=url + "/opencypher")
+        request.headers.add_header("Host", _host_from_url(request.url))
+        SigV4Auth(credentials, "neptune-db", region).add_auth(request)
+
+        auth_obj = {
+            header: request.headers[header]
+            for header in ("Authorization", "X-Amz-Date", "X-Amz-Security-Token", "Host")
+            if header in request.headers
+        }
+        auth_obj["HttpMethod"] = "GET"
+
+        super().__init__("basic", "username", json.dumps(auth_obj), "realm")
+
+
+def neptune_auth_provider(region: str, https_url: str) -> Callable[[], ExpiringAuth]:
+    """Return a callable the neo4j driver can invoke to refresh credentials."""
+
+    def _provider() -> ExpiringAuth:
+        token = _NeptuneAuthToken(region, https_url)
+        expires_at = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
+            minutes=SIGV4_TOKEN_LIFETIME_MINUTES
+        )
+        return ExpiringAuth(auth=token, expires_at=expires_at)
+
+    return _provider

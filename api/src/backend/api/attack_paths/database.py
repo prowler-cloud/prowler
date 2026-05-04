@@ -1,15 +1,15 @@
-"""Backwards-compatible facade over the staging and sink modules.
+"""Backwards-compatible facade over the ingest and sink modules.
 
 Historically this module owned a single Neo4j driver used for both the
 cartography temp database and the per-tenant sink database. The port to AWS
-Neptune split those roles: the staging (temp) database is always Neo4j and
-lives in ``api.attack_paths.staging``; the sink is configurable (Neo4j or
-Neptune) and lives in ``api.attack_paths.sink``. This shim preserves the
-public API that ``tasks/`` and ``api/v1/views.py`` already depend on, and
+Neptune split those roles: the cartography ingest (temp) database is always
+Neo4j and lives in `api.attack_paths.ingest`; the sink is configurable
+(Neo4j or Neptune) and lives in `api.attack_paths.sink`. This shim preserves
+the public API that `tasks/` and `api/v1/views.py` already depend on, and
 dispatches to the right module by database-name prefix.
 
-A database name starting with ``db-tmp-scan-`` is a cartography temp DB and
-routes to staging. Everything else routes to the configured sink.
+A database name starting with `db-tmp-scan-` is a cartography temp DB and
+routes to ingest. Everything else routes to the configured sink.
 """
 from __future__ import annotations
 
@@ -22,8 +22,8 @@ import neo4j  # noqa: F401 - kept for tests that patch api.attack_paths.database
 from config.env import env
 from django.conf import settings  # noqa: F401 - kept for tests that patch ...database.settings
 
+from api.attack_paths import ingest
 from api.attack_paths import sink as sink_module
-from api.attack_paths import staging
 
 MAX_CUSTOM_QUERY_NODES = env.int("ATTACK_PATHS_MAX_CUSTOM_QUERY_NODES", default=250)
 
@@ -56,7 +56,7 @@ class ClientStatementException(GraphDatabaseQueryException):
 # ---------------------------------------------------------------- routing
 
 
-def _is_staging_database(database: str | None) -> bool:
+def _is_ingest_database(database: str | None) -> bool:
     return bool(database) and database.startswith(TEMP_DB_PREFIX)
 
 
@@ -66,8 +66,9 @@ def _is_staging_database(database: str | None) -> bool:
 def init_driver() -> Any:
     """Initialize the configured sink backend.
 
-    Staging (Neo4j for temp DBs) stays lazy — it is only initialized when a
-    temp-DB operation actually runs, which never happens on API pods.
+    The ingest driver (Neo4j for cartography temp DBs) stays lazy — it is
+    only initialized when a temp-DB operation actually runs, which never
+    happens on API pods.
     """
     return sink_module.init()
 
@@ -75,7 +76,7 @@ def init_driver() -> Any:
 def close_driver() -> None:
     """Close every driver held by this process."""
     sink_module.close()
-    staging.close_driver()
+    ingest.close_driver()
 
 
 def get_driver() -> neo4j.Driver:
@@ -83,7 +84,7 @@ def get_driver() -> neo4j.Driver:
 
     Only meaningful for the Neo4j sink (where the backend has a single Neo4j
     driver). On Neptune this returns the writer driver. Kept for tests and
-    legacy call-sites; prefer ``get_session`` for new code.
+    legacy call-sites; prefer `get_session` for new code.
     """
     backend = sink_module.get_backend()
     # Neo4jSink exposes get_driver(); NeptuneSink exposes get_writer()
@@ -112,12 +113,12 @@ def get_session(
 ) -> AbstractContextManager:
     """Return a session against the right backend.
 
-    - ``database`` names starting with ``db-tmp-scan-`` always go to staging.
-    - No database name → staging (used for CREATE / DROP DATABASE admin ops).
+    - `database` names starting with `db-tmp-scan-` always go to ingest.
+    - No database name → ingest (used for CREATE / DROP DATABASE admin ops).
     - Any other name → sink.
     """
-    if _is_staging_database(database) or database is None:
-        return staging.get_session(database=database, default_access_mode=default_access_mode)
+    if _is_ingest_database(database) or database is None:
+        return ingest.get_session(database=database, default_access_mode=default_access_mode)
     return sink_module.get_backend().get_session(
         database=database, default_access_mode=default_access_mode
     )
@@ -133,22 +134,22 @@ def execute_read_query(
 
 
 def create_database(database: str) -> None:
-    """Create a database. Temp DBs always land on staging (Neo4j).
+    """Create a database. Temp DBs always land on ingest (Neo4j).
 
-    On the Neo4j sink, tenant DBs also route to staging because both drivers
+    On the Neo4j sink, tenant DBs also route to ingest because both drivers
     connect to the same Neo4j cluster. On the Neptune sink, tenant DB creates
     are no-ops.
     """
-    if _is_staging_database(database):
-        staging.create_database(database)
+    if _is_ingest_database(database):
+        ingest.create_database(database)
         return
     sink_module.get_backend().create_database(database)
 
 
 def drop_database(database: str) -> None:
-    """Drop a database. Mirrors ``create_database`` routing."""
-    if _is_staging_database(database):
-        staging.drop_database(database)
+    """Drop a database. Mirrors `create_database` routing."""
+    if _is_ingest_database(database):
+        ingest.drop_database(database)
         return
     sink_module.get_backend().drop_database(database)
 
@@ -162,8 +163,8 @@ def has_provider_data(database: str, provider_id: str) -> bool:
 
 
 def clear_cache(database: str) -> None:
-    if _is_staging_database(database):
-        staging.clear_cache(database)
+    if _is_ingest_database(database):
+        ingest.clear_cache(database)
         return
     sink_module.get_backend().clear_cache(database)
 

@@ -1,10 +1,10 @@
-"""
-Temporary per-scan Neo4j database.
+"""Cartography ingest driver: per-scan throw-away Neo4j database.
 
 Cartography writes each scan's graph into a throw-away Neo4j database named
-``db-tmp-scan-{scan_uuid}``. This is always Neo4j — Neptune is single-database
-and cannot host per-scan throw-away databases. This module owns the Neo4j
-driver used for temp DBs and its admin operations (CREATE / DROP DATABASE).
+`db-tmp-scan-{scan_uuid}`. This is always Neo4j, regardless of the configured
+sink: Neptune is single-database and cannot host per-scan throw-away
+databases. This module owns the Neo4j driver used for those temp DBs and the
+admin ops they need (CREATE / DROP DATABASE).
 """
 
 import atexit
@@ -99,7 +99,7 @@ def get_session(
     default_access_mode: str | None = None,
 ) -> Iterator[RetryableSession]:
     """Session against the Neo4j temp-database cluster. Used for temp DB sessions
-    and for admin operations (CREATE / DROP DATABASE) when ``database`` is None."""
+    and for admin operations (CREATE / DROP DATABASE) when `database` is None."""
     from api.attack_paths.database import (
         ClientStatementException,
         GraphDatabaseQueryException,

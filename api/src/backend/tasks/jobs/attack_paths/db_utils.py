@@ -39,7 +39,7 @@ def create_attack_paths_scan(
             graph_data_ready=True,
         ).exists()
 
-        # TODO: Drop after Neptune migration is finished
+        # TODO: drop after Neptune cutover
         is_neptune = getattr(settings, "ATTACK_PATHS_SINK_DATABASE", "neo4j") == "neptune"
 
         attack_paths_scan = ProwlerAPIAttackPathsScan.objects.create(
@@ -211,7 +211,7 @@ def recover_graph_data_ready(
         from api.attack_paths import sink as sink_module
 
         tenant_db = graph_database.get_database_name(attack_paths_scan.tenant_id)
-        # TODO: Drop after Neptune migration is finished
+        # TODO: drop after Neptune cutover
         # Check the backend that actually holds this scan's data, not the
         # currently configured sink — a stale EXECUTING scan from before a
         # backend switch must still be recoverable.

@@ -1,6 +1,6 @@
-"""Tests for the phase-1 legacy Neo4j drain.
+"""Tests for the cutover-window legacy Neo4j drain.
 
-# TODO: Drop after Neptune migration is finished
+# TODO: drop after Neptune cutover
 """
 from unittest.mock import MagicMock, patch
 

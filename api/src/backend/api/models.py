@@ -782,7 +782,7 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
     # Records which sink database holds this scan's graph. Stamped at row
     # creation from settings.ATTACK_PATHS_SINK_DATABASE so reads route to
     # the right backend even after the setting changes for future scans.
-    # TODO: Drop after Neptune migration is finished
+    # TODO: drop after Neptune cutover
     is_neptune = models.BooleanField(default=False)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):

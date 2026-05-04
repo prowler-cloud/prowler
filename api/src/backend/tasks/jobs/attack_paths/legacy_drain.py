@@ -1,8 +1,8 @@
 """Drain the legacy Neo4j tenant DB after a Neptune-sink scan finishes.
 
 When the sink is Neptune, each successful scan's data lives in Neptune.
-Pre-migration scans for the same provider may still live in the Neo4j
-tenant DB; those rows are unreachable via the API (``is_neptune=False``
+Pre-cutover scans for the same provider may still live in the Neo4j
+tenant DB; those rows are unreachable via the API (`is_neptune=False`
 scans go through a Neo4j backend) but the graph data persists in Neo4j
 until we explicitly delete it.
 
@@ -11,7 +11,13 @@ provider's subgraph from the Neo4j tenant DB, and drop the tenant DB if it
 becomes empty. All failures are logged and swallowed — the Neptune write
 already succeeded, the drain is opportunistic.
 
-# TODO: Drop after Neptune migration is finished
+This whole module exists only for the cutover window: as long as any tenant
+still has data on the Neo4j cluster, every Neptune-sink scan tries to clear
+the matching legacy subgraph. Once every tenant has been cut over and no
+Neo4j tenant DBs remain, this module and its caller in `scan.py` can be
+deleted — at which point the Neptune scan path no longer needs a fallback.
+
+# TODO: drop after Neptune cutover
 """
 from __future__ import annotations
 
@@ -48,13 +54,11 @@ def drain_legacy_neo4j_for_provider(
         tenant_db = get_database_name(tenant_id, temporary=False)
         sink = Neo4jSink()
 
-        if not _has_any_data(sink, tenant_db):
-            logger.info(
-                f"Legacy Neo4j tenant DB {tenant_db} has no data; nothing to drain"
-            )
-            _close_silently(sink)
-            return
-
+        # No early return on missing/empty DB: `has_provider_data` and
+        # `drop_subgraph` are both safe (they swallow DatabaseNotFound and are
+        # no-ops when the subgraph is empty), and the bottom check is the only
+        # one that distinguishes a missing DB from an empty existing DB. An
+        # early return here would leave empty existing tenant DBs orphaned.
         if sink.has_provider_data(tenant_db, str(provider_id)):
             deleted = sink.drop_subgraph(tenant_db, str(provider_id))
             logger.info(
@@ -62,7 +66,7 @@ def drain_legacy_neo4j_for_provider(
                 f"(deleted_nodes={deleted})"
             )
 
-        if not _has_any_data(sink, tenant_db):
+        if _exists_and_empty(sink, tenant_db):
             logger.info(
                 f"Legacy Neo4j tenant DB {tenant_db} is now empty; dropping"
             )
@@ -78,8 +82,12 @@ def drain_legacy_neo4j_for_provider(
         )
 
 
-def _has_any_data(sink, database: str) -> bool:
-    """True if the tenant DB has any ``_ProviderResource`` node."""
+def _exists_and_empty(sink, database: str) -> bool:
+    """True iff the tenant DB exists but contains no `_ProviderResource` nodes.
+
+    Returns False when the DB is missing (so the caller does not try to drop
+    something that is not there) and False when the DB still holds data.
+    """
     import neo4j
 
     try:
@@ -87,7 +95,7 @@ def _has_any_data(sink, database: str) -> bool:
             result = session.run(
                 f"MATCH (n:{PROVIDER_RESOURCE_LABEL}) RETURN 1 LIMIT 1"
             )
-            return result.single() is not None
+            return result.single() is None
     except GraphDatabaseQueryException as exc:
         if exc.code == DATABASE_NOT_FOUND_CODE:
             return False

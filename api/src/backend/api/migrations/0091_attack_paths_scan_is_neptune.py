@@ -1,3 +1,4 @@
+# TODO: drop after Neptune cutover
 from django.db import migrations, models
 
 
