@@ -19,9 +19,15 @@ class Audit(OCIService):
     def __get_configuration__(self):
         """Get Audit configuration."""
         try:
-            audit_client = self._create_oci_client(oci.audit.AuditClient)
+            home_region = self.provider.identity.home_region
+            audit_client = self._create_oci_client(
+                oci.audit.AuditClient,
+                config_overrides={"region": home_region},
+            )
 
-            logger.info("Audit - Getting Configuration...")
+            logger.info(
+                f"Audit - Getting Configuration from home region ({home_region})..."
+            )
 
             try:
                 config = audit_client.get_configuration(
