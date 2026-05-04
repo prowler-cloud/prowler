@@ -1,6 +1,7 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportVercel
+from prowler.providers.vercel.lib.billing import plan_reason_suffix
 from prowler.providers.vercel.services.security.security_client import security_client
 
 
@@ -25,7 +26,16 @@ class security_ip_blocking_rules_configured(Check):
         for config in security_client.firewall_configs.values():
             report = CheckReportVercel(metadata=self.metadata(), resource=config)
 
-            if config.ip_blocking_rules:
+            if not config.firewall_config_accessible:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Project {config.project_name} ({config.project_id}) "
+                    f"could not be assessed for IP blocking rules because the "
+                    f"firewall configuration endpoint was not accessible. "
+                    f"Manual verification is required."
+                    f"{plan_reason_suffix(config.billing_plan, {'hobby'}, 'IP blocking rules are not available on the Vercel Hobby plan.')}"
+                )
+            elif config.ip_blocking_rules:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Project {config.project_name} ({config.project_id}) "

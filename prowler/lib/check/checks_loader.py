@@ -2,6 +2,7 @@ import sys
 
 from colorama import Fore, Style
 
+from prowler.config.config import EXTERNAL_TOOL_PROVIDERS
 from prowler.lib.check.check import parse_checks_from_file
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata, Severity
@@ -21,11 +22,12 @@ def load_checks_to_execute(
     categories: set = None,
     resource_groups: set = None,
     list_checks: bool = False,
+    universal_frameworks: dict = None,
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
-        # Bypass check loading for providers that use Trivy directly
-        if provider in ("iac", "image"):
+        # Bypass check loading for providers that use external tools directly
+        if provider in EXTERNAL_TOOL_PROVIDERS:
             return set()
 
         # Local subsets
@@ -154,12 +156,21 @@ def load_checks_to_execute(
             if not bulk_compliance_frameworks:
                 bulk_compliance_frameworks = Compliance.get_bulk(provider=provider)
             for compliance_framework in compliance_frameworks:
-                checks_to_execute.update(
-                    CheckMetadata.list(
-                        bulk_compliance_frameworks=bulk_compliance_frameworks,
-                        compliance_framework=compliance_framework,
+                # Try universal frameworks first (snake_case dict-keyed checks)
+                if (
+                    universal_frameworks
+                    and compliance_framework in universal_frameworks
+                ):
+                    fw = universal_frameworks[compliance_framework]
+                    for req in fw.requirements:
+                        checks_to_execute.update(req.checks.get(provider.lower(), []))
+                elif compliance_framework in bulk_compliance_frameworks:
+                    checks_to_execute.update(
+                        CheckMetadata.list(
+                            bulk_compliance_frameworks=bulk_compliance_frameworks,
+                            compliance_framework=compliance_framework,
+                        )
                     )
-                )
 
         # Handle if there are categories passed using --categories
         elif categories:

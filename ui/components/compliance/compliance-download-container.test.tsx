@@ -6,15 +6,16 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { downloadComplianceCsvMock, downloadComplianceReportPdfMock } =
-  vi.hoisted(() => ({
+const { downloadComplianceCsvMock, downloadCompliancePdfMock } = vi.hoisted(
+  () => ({
     downloadComplianceCsvMock: vi.fn(),
-    downloadComplianceReportPdfMock: vi.fn(),
-  }));
+    downloadCompliancePdfMock: vi.fn(),
+  }),
+);
 
 vi.mock("@/lib/helper", () => ({
   downloadComplianceCsv: downloadComplianceCsvMock,
-  downloadComplianceReportPdf: downloadComplianceReportPdfMock,
+  downloadCompliancePdf: downloadCompliancePdfMock,
 }));
 
 vi.mock("@/components/ui", () => ({
@@ -69,7 +70,7 @@ describe("ComplianceDownloadContainer", () => {
     const trigger = screen.getByRole("button", {
       name: "Open compliance export actions",
     });
-    expect(trigger.className).toContain("border-text-neutral-secondary");
+    expect(trigger.className).toContain("rounded-md");
   });
 
   it("should open export actions from the compact trigger", async () => {
@@ -124,7 +125,7 @@ describe("ComplianceDownloadContainer", () => {
       "compliance-1",
       {},
     );
-    expect(downloadComplianceReportPdfMock).toHaveBeenCalledWith(
+    expect(downloadCompliancePdfMock).toHaveBeenCalledWith(
       "scan-1",
       "threatscore",
       {},

@@ -106,6 +106,19 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     )
     attack_paths_scan = db_utils.retrieve_attack_paths_scan(tenant_id, scan_id)
 
+    # Idempotency guard: cleanup may have flipped this row to a terminal state
+    # while the message was still in flight. Bail out before touching state.
+    if attack_paths_scan and attack_paths_scan.state in (
+        StateChoices.FAILED,
+        StateChoices.COMPLETED,
+        StateChoices.CANCELLED,
+    ):
+        logger.warning(
+            f"Attack Paths scan {attack_paths_scan.id} already in terminal "
+            f"state {attack_paths_scan.state}; skipping execution"
+        )
+        return {}
+
     # Checks before starting the scan
     if not cartography_ingestion_function:
         ingestion_exceptions = {
@@ -123,12 +136,17 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     else:
         if not attack_paths_scan:
+            # Safety net for in-flight messages or direct task invocations; dispatcher normally pre-creates the row.
             logger.warning(
                 f"No Attack Paths Scan found for scan {scan_id} and tenant {tenant_id}, let's create it then"
             )
             attack_paths_scan = db_utils.create_attack_paths_scan(
                 tenant_id, scan_id, prowler_api_provider.id
             )
+            if attack_paths_scan and task_id:
+                db_utils.set_attack_paths_scan_task_id(
+                    tenant_id, attack_paths_scan.id, task_id
+                )
 
     tmp_database_name = graph_database.get_database_name(
         attack_paths_scan.id, temporary=True
@@ -150,9 +168,13 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     )
 
     # Starting the Attack Paths scan
-    db_utils.starting_attack_paths_scan(
-        attack_paths_scan, task_id, tenant_cartography_config
-    )
+    if not db_utils.starting_attack_paths_scan(
+        attack_paths_scan, tenant_cartography_config
+    ):
+        logger.warning(
+            f"Attack Paths scan {attack_paths_scan.id} no longer in SCHEDULED state; cleanup likely raced ahead"
+        )
+        return {}
 
     scan_t0 = time.perf_counter()
     logger.info(

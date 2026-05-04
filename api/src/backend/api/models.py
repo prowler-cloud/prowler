@@ -595,9 +595,39 @@ class Scan(RowLevelSecurityProtectedModel):
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
+    _SCOPING_SCANNER_ARG_KEYS_CACHE: tuple[str, ...] | None = None
+
+    @classmethod
+    def get_scoping_scanner_arg_keys(cls) -> tuple[str, ...]:
+        """Return the scanner_args keys that mark a scan as scoped.
+
+        Derived from ``prowler.lib.scan.scan.Scan.__init__`` so the API stays
+        in sync with whatever the SDK actually accepts as filters. Cached at
+        class level — the signature is stable for the process lifetime.
+        """
+        if cls._SCOPING_SCANNER_ARG_KEYS_CACHE is None:
+            import inspect
+
+            from prowler.lib.scan.scan import Scan as ProwlerScan
+
+            params = inspect.signature(ProwlerScan.__init__).parameters
+            cls._SCOPING_SCANNER_ARG_KEYS_CACHE = tuple(
+                name for name in params if name not in ("self", "provider")
+            )
+        return cls._SCOPING_SCANNER_ARG_KEYS_CACHE
+
     class TriggerChoices(models.TextChoices):
         SCHEDULED = "scheduled", _("Scheduled")
         MANUAL = "manual", _("Manual")
+
+    # Trigger values for scans that ran the SDK end-to-end. Imported scans (or
+    # any future trigger) are intentionally NOT in this set — they may carry
+    # only a partial slice of resources, so post-scan logic that depends on a
+    # full-scope sweep (e.g. resetting ephemeral resource findings) must skip
+    # them by default.
+    LIVE_SCAN_TRIGGERS = frozenset(
+        (TriggerChoices.SCHEDULED.value, TriggerChoices.MANUAL.value)
+    )
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     name = models.CharField(
@@ -680,6 +710,24 @@ class Scan(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "scans"
+
+    def is_full_scope(self) -> bool:
+        """Return True if this scan ran with no scoping filters at all.
+
+        Used to gate post-scan operations (such as resetting the
+        failed_findings_count of resources missing from the scan) that are only
+        safe when the scan covered every check, service, and category. Imported
+        scans are NOT full-scope by definition — they may carry only a partial
+        slice of resources, so they're rejected via ``trigger`` even before the
+        scanner_args check.
+        """
+        if self.trigger not in self.LIVE_SCAN_TRIGGERS:
+            return False
+        scanner_args = self.scanner_args or {}
+        for key in self.get_scoping_scanner_arg_keys():
+            if scanner_args.get(key):
+                return False
+        return True
 
 
 class AttackPathsScan(RowLevelSecurityProtectedModel):

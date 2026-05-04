@@ -2,6 +2,7 @@ import {
   getComplianceCsv,
   getCompliancePdfReport,
   getExportsZip,
+  type ScanBinaryResult,
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
@@ -149,12 +150,12 @@ export const downloadScanZip = async (
  * Generic function to download a file from base64 data
  */
 const downloadFile = async (
-  result: any,
+  result: ScanBinaryResult,
   outputType: string,
   successMessage: string,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
-  if (result?.pending) {
+  if ("pending" in result && result.pending) {
     toast({
       title: "The report is still being generated",
       description: "Please try again in a few minutes.",
@@ -162,7 +163,7 @@ const downloadFile = async (
     return;
   }
 
-  if (result?.success && result.data) {
+  if ("success" in result && result.success) {
     try {
       const binaryString = window.atob(result.data);
       const bytes = new Uint8Array(binaryString.length);
@@ -194,7 +195,7 @@ const downloadFile = async (
     return;
   }
 
-  if (result?.error) {
+  if ("error" in result) {
     toast({
       variant: "destructive",
       title: "Download Failed",
@@ -230,12 +231,18 @@ export const downloadComplianceCsv = async (
 };
 
 /**
- * Generic function to download a compliance PDF report (ThreatScore, ENS, etc.)
+ * Download a compliance PDF report.
+ *
+ * The call hits ``/scans/{id}/{reportType}`` for every supported framework.
+ * For CIS — which ships multiple versions per provider — the backend only
+ * generates the PDF for the highest available version, so the call site
+ * does not need to resolve a specific variant.
+ *
  * @param scanId - The scan ID
  * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
  * @param toast - Toast notification function
  */
-export const downloadComplianceReportPdf = async (
+export const downloadCompliancePdf = async (
   scanId: string,
   reportType: ComplianceReportType,
   toast: ReturnType<typeof useToast>["toast"],
@@ -253,6 +260,16 @@ export const downloadComplianceReportPdf = async (
     toast,
   );
 };
+
+/**
+ * @deprecated Use {@link downloadCompliancePdf} instead. Kept as a thin
+ * wrapper for callers not yet migrated.
+ */
+export const downloadComplianceReportPdf = async (
+  scanId: string,
+  reportType: ComplianceReportType,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => downloadCompliancePdf(scanId, reportType, toast);
 
 export const isGoogleOAuthEnabled =
   !!process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_ID &&

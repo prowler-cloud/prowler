@@ -53,7 +53,7 @@ from django.db.models import (
 )
 from django.db.models.fields.json import KeyTextTransform
 from django.db.models.functions import Cast, Coalesce, RowNumber
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
@@ -422,7 +422,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.26.0"
+        spectacular_settings.VERSION = "1.27.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1926,6 +1926,27 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             ),
         },
     ),
+    cis=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve CIS Benchmark compliance report",
+        description="Download the CIS Benchmark compliance report as a PDF file. "
+        "When a provider ships multiple CIS versions, the report is generated "
+        "for the highest available version.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the CIS compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no CIS reports, or the CIS report generation task has not started yet"
+            ),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1994,6 +2015,9 @@ class ScanViewSet(BaseRLSViewSet):
         elif self.action == "csa":
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
+        elif self.action == "cis":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -2056,24 +2080,38 @@ class ScanViewSet(BaseRLSViewSet):
             },
         )
 
-    def _load_file(self, path_pattern, s3=False, bucket=None, list_objects=False):
+    def _load_file(
+        self,
+        path_pattern,
+        s3=False,
+        bucket=None,
+        list_objects=False,
+        content_type=None,
+    ):
         """
-        Loads a binary file (e.g., ZIP or CSV) and returns its content and filename.
+        Resolve a report file location and return the bytes (filesystem) or a redirect (S3).
 
         Depending on the input parameters, this method supports loading:
-        - From S3 using a direct key.
-        - From S3 by listing objects under a prefix and matching suffix.
-        - From the local filesystem using glob pattern matching.
+        - From S3 using a direct key, returns a 302 to a short-lived presigned URL.
+        - From S3 by listing objects under a prefix and matching suffix, returns a 302 to a short-lived presigned URL.
+        - From the local filesystem using glob pattern matching, returns the file bytes.
+
+        The S3 branch never streams bytes through the worker; this prevents gunicorn
+        worker timeouts on large reports.
 
         Args:
             path_pattern (str): The key or glob pattern representing the file location.
             s3 (bool, optional): Whether the file is stored in S3. Defaults to False.
             bucket (str, optional): The name of the S3 bucket, required if `s3=True`. Defaults to None.
             list_objects (bool, optional): If True and `s3=True`, list objects by prefix to find the file. Defaults to False.
+            content_type (str, optional): On the S3 branch, forwarded as `ResponseContentType`
+                so the presigned download advertises the same Content-Type the API used to send.
+                Ignored on the filesystem branch.
 
         Returns:
-            tuple[bytes, str]: A tuple containing the file content as bytes and the filename if successful.
-            Response: A DRF `Response` object with an appropriate status and error detail if an error occurs.
+            tuple[bytes, str]: For the filesystem branch, the file content and filename.
+            HttpResponseRedirect: For the S3 branch on success, a 302 redirect to a presigned `GetObject` URL.
+            Response: For any error path, a DRF `Response` with an appropriate status and detail.
         """
         if s3:
             try:
@@ -2120,25 +2158,45 @@ class ScanViewSet(BaseRLSViewSet):
                 # path_pattern here is prefix, but in compliance we build correct suffix check before
                 key = keys[0]
             else:
-                # path_pattern is exact key
+                # path_pattern is exact key; HEAD before presigning to preserve the 404 contract.
                 key = path_pattern
-            try:
-                s3_obj = client.get_object(Bucket=bucket, Key=key)
-            except ClientError as e:
-                code = e.response.get("Error", {}).get("Code")
-                if code == "NoSuchKey":
+                try:
+                    client.head_object(Bucket=bucket, Key=key)
+                except ClientError as e:
+                    code = e.response.get("Error", {}).get("Code")
+                    if code in ("NoSuchKey", "404"):
+                        return Response(
+                            {
+                                "detail": "The scan has no reports, or the report generation task has not started yet."
+                            },
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
                     return Response(
-                        {
-                            "detail": "The scan has no reports, or the report generation task has not started yet."
-                        },
-                        status=status.HTTP_404_NOT_FOUND,
+                        {"detail": "There is a problem with credentials."},
+                        status=status.HTTP_403_FORBIDDEN,
                     )
-                return Response(
-                    {"detail": "There is a problem with credentials."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-            content = s3_obj["Body"].read()
+
             filename = os.path.basename(key)
+            # escape quotes and strip CR/LF so a malformed key cannot break out of the header
+            safe_filename = (
+                filename.replace("\\", "\\\\")
+                .replace('"', '\\"')
+                .replace("\r", "")
+                .replace("\n", "")
+            )
+            params = {
+                "Bucket": bucket,
+                "Key": key,
+                "ResponseContentDisposition": f'attachment; filename="{safe_filename}"',
+            }
+            if content_type:
+                params["ResponseContentType"] = content_type
+            url = client.generate_presigned_url(
+                "get_object",
+                Params=params,
+                ExpiresIn=300,
+            )
+            return HttpResponseRedirect(url)
         else:
             files = glob.glob(path_pattern)
             if not files:
@@ -2181,12 +2239,16 @@ class ScanViewSet(BaseRLSViewSet):
             bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
             key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
             loader = self._load_file(
-                key_prefix, s3=True, bucket=bucket, list_objects=False
+                key_prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=False,
+                content_type="application/x-zip-compressed",
             )
         else:
             loader = self._load_file(scan.output_location, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2224,17 +2286,68 @@ class ScanViewSet(BaseRLSViewSet):
             prefix = os.path.join(
                 os.path.dirname(key_prefix), "compliance", f"{name}.csv"
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="text/csv",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "compliance", f"*_{name}.csv")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
         return self._serve_file(content, filename, "text/csv")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="cis",
+    )
+    def cis(self, request, pk=None):
+        scan = self.get_object()
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the CIS report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "cis",
+                "*_cis_report.pdf",
+            )
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "cis", "*_cis_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, HttpResponseBase):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
 
     @action(
         detail=True,
@@ -2264,13 +2377,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "threatscore",
                 "*_threatscore_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "threatscore", "*_threatscore_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2304,13 +2423,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "ens",
                 "*_ens_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "ens", "*_ens_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2343,13 +2468,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "nis2",
                 "*_nis2_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "nis2", "*_nis2_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2382,13 +2513,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "csa",
                 "*_csa_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "csa", "*_csa_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader

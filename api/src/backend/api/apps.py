@@ -52,11 +52,7 @@ class ApiConfig(AppConfig):
             "check_and_fix_socialaccount_sites_migration",
         ]
 
-        # Skip sink initialization during tests, some Django commands, and Celery.
-        # Celery workers initialize drivers post-fork via worker_process_init in
-        # config/celery.py; gunicorn workers re-initialize via post_fork in
-        # config/guniconf.py. The staging (Neo4j) driver is lazy and only
-        # materializes when a worker opens a temp-DB session.
+        # Skip eager Neo4j init for tests, some Django commands, and Celery (prefork pool: driver must stay lazy, no post_fork hook)
         if getattr(settings, "TESTING", False) or (
             len(sys.argv) > 1
             and (
@@ -68,7 +64,7 @@ class ApiConfig(AppConfig):
             )
         ):
             logger.info(
-                "Skipping attack-paths sink initialization (tests, Django command, or Celery)"
+                "Skipping eager Neo4j init: tests, some Django commands, or Celery prefork pool (driver stays lazy)"
             )
 
         else:
