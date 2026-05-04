@@ -47,6 +47,9 @@ from prowler.lib.outputs.compliance.csa.csa_oraclecloud import OracleCloudCSA
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
+from prowler.lib.outputs.compliance.essential_eight.essential_eight_aws import (
+    EssentialEightAWS,
+)
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_azure import AzureISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
@@ -100,6 +103,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("ccc_"), CCC_AWS),
         (lambda name: name.startswith("c5_"), AWSC5),
         (lambda name: name.startswith("csa_"), AWSCSA),
+        (lambda name: name == "essential_eight_aws", EssentialEightAWS),
     ],
     "azure": [
         (lambda name: name.startswith("cis_"), AzureCIS),
