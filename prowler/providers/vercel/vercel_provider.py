@@ -20,6 +20,7 @@ from prowler.providers.vercel.exceptions.exceptions import (
     VercelRateLimitError,
     VercelSessionError,
 )
+from prowler.providers.vercel.lib.billing import extract_billing_plan
 from prowler.providers.vercel.lib.mutelist.mutelist import VercelMutelist
 from prowler.providers.vercel.models import (
     VercelIdentityInfo,
@@ -195,6 +196,7 @@ class VercelProvider(Provider):
             user_id = user_data.get("id")
             username = user_data.get("username")
             email = user_data.get("email")
+            billing_plan = extract_billing_plan(user_data)
 
             # Get team info
             team_info = None
@@ -214,6 +216,7 @@ class VercelProvider(Provider):
                         id=team_data.get("id", session.team_id),
                         name=team_data.get("name", ""),
                         slug=team_data.get("slug", ""),
+                        billing_plan=extract_billing_plan(team_data),
                     )
                     all_teams = [team_info]
                 elif team_response.status_code in (404, 403):
@@ -239,6 +242,7 @@ class VercelProvider(Provider):
                                     id=t.get("id", ""),
                                     name=t.get("name", ""),
                                     slug=t.get("slug", ""),
+                                    billing_plan=extract_billing_plan(t),
                                 )
                             )
                         if all_teams:
@@ -253,6 +257,7 @@ class VercelProvider(Provider):
                 user_id=user_id,
                 username=username,
                 email=email,
+                billing_plan=billing_plan,
                 team=team_info,
                 teams=all_teams,
             )

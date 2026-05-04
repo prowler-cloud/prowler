@@ -9,6 +9,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
 - Universal compliance pipeline integrated into the CLI: `--list-compliance` and `--list-compliance-requirements` show universal frameworks, and CSV plus OCSF outputs are generated for any framework declaring a `TableConfig` [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
 - ASD Essential Eight Maturity Model compliance framework for AWS (Maturity Level One, Nov 2023) [(#10808)](https://github.com/prowler-cloud/prowler/pull/10808)
+- Update Vercel checks to return personalized finding status extended depending on billing plan and classify them with billing-plan categories [(#10663)](https://github.com/prowler-cloud/prowler/pull/10663)
+- `bedrock_prompt_management_exists` check for AWS provider [(#10878)](https://github.com/prowler-cloud/prowler/pull/10878)
 
 ### 🔄 Changed
 
@@ -22,6 +24,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - AWS SDK test isolation: autouse `mock_aws` fixture and leak detector in `conftest.py` to prevent tests from hitting real AWS endpoints, with idempotent organization setup for tests calling `set_mocked_aws_provider` multiple times [(#10605)](https://github.com/prowler-cloud/prowler/pull/10605)
 - AWS `boto` user agent extra is now applied to every client [(#10944)](https://github.com/prowler-cloud/prowler/pull/10944)
+- Image provider connection check no longer fails with a misleading `host='https'` resolution error when the registry URL includes an `http://` or `https://` scheme prefix [(#10950)](https://github.com/prowler-cloud/prowler/pull/10950)
 
 ### 🔐 Security
 
@@ -35,6 +38,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Duplicate Kubernetes RBAC findings when the same User or Group subject appeared in multiple ClusterRoleBindings [(#10242)](https://github.com/prowler-cloud/prowler/pull/10242)
 - Match K8s RBAC rules by `apiGroup` [(#10969)](https://github.com/prowler-cloud/prowler/pull/10969)
+- Return a compact actor name from CloudTrail `userIdentity` events [(#10986)](https://github.com/prowler-cloud/prowler/pull/10986)
 
 ---
 

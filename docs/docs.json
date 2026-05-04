@@ -365,7 +365,8 @@
               "developer-guide/security-compliance-framework",
               "developer-guide/lighthouse-architecture",
               "developer-guide/mcp-server",
-              "developer-guide/ai-skills"
+              "developer-guide/ai-skills",
+              "developer-guide/prowler-studio"
             ]
           },
           {

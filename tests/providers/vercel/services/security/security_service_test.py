@@ -7,7 +7,12 @@ from tests.providers.vercel.vercel_fixtures import PROJECT_ID, PROJECT_NAME, TEA
 
 class TestSecurityService:
     def test_fetch_firewall_config_reads_active_version_and_normalizes_response(self):
-        project = VercelProject(id=PROJECT_ID, name=PROJECT_NAME, team_id=TEAM_ID)
+        project = VercelProject(
+            id=PROJECT_ID,
+            name=PROJECT_NAME,
+            team_id=TEAM_ID,
+            billing_plan="pro",
+        )
         service = Security.__new__(Security)
         service.firewall_configs = {}
 
@@ -89,6 +94,7 @@ class TestSecurityService:
         )
 
         config = service.firewall_configs[PROJECT_ID]
+        assert config.billing_plan == "pro"
         assert config.firewall_enabled is True
         assert config.managed_rulesets == {"owasp": {"active": True, "action": "deny"}}
         assert [rule["id"] for rule in config.custom_rules] == ["rule-custom"]
