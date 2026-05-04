@@ -70,6 +70,7 @@ import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
 import { cn } from "@/lib/utils";
+import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
 
@@ -87,44 +88,8 @@ function stripCodeFences(code: string): string {
     .trim();
 }
 
-function isProwlerHubUrl(url: string): boolean {
-  return url.startsWith("https://hub.prowler.com/");
-}
-
-function isCveOrgUrl(url: string): boolean {
-  try {
-    return new URL(url).hostname.toLowerCase() === "www.cve.org";
-  } catch {
-    return false;
-  }
-}
-
-function isGitHubAdvisoryUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return (
-      parsed.hostname.toLowerCase() === "github.com" &&
-      parsed.pathname.startsWith("/advisories/")
-    );
-  } catch {
-    return false;
-  }
-}
-
-function getRecommendationLinkLabel(url: string): string {
-  if (isCveOrgUrl(url)) {
-    return "View CVE";
-  }
-
-  if (isProwlerHubUrl(url)) {
-    return "View in Prowler Hub";
-  }
-
-  if (isGitHubAdvisoryUrl(url)) {
-    return "View Advisory";
-  }
-
-  return "View Reference";
+function isNonEmptyString(value: string | null | undefined): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function resolveNativeIacConfig(providerType: string | undefined): {
@@ -339,12 +304,6 @@ function buildComplianceDetailHref({
   return `/compliance/${encodeURIComponent(framework)}?${params.toString()}`;
 }
 
-function buildResourceDetailHref(resourceId: string): string {
-  const params = new URLSearchParams();
-  params.set("resourceId", resourceId);
-  return `/resources?${params.toString()}`;
-}
-
 interface ResourceDetailDrawerContentProps {
   isLoading: boolean;
   isNavigating: boolean;
@@ -462,17 +421,18 @@ export function ResourceDetailDrawerContent({
   const nativeIacConfig = resolveNativeIacConfig(providerType);
   const showOverviewCheckMetaContent = showCheckMetaContent;
   const showOverviewFindingContent = Boolean(f);
-  const recommendationUrl =
-    f?.remediation.recommendation.url ||
-    checkMeta.remediation.recommendation.url;
+  const findingRecommendationUrl = f?.remediation.recommendation.url;
+  const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
+  const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
+    ? findingRecommendationUrl
+    : isNonEmptyString(checkRecommendationUrl)
+      ? checkRecommendationUrl
+      : null;
   const recommendationLink = recommendationUrl
     ? {
         href: recommendationUrl,
         label: getRecommendationLinkLabel(recommendationUrl),
       }
-    : null;
-  const resourceDetailHref = f?.resourceId
-    ? buildResourceDetailHref(f.resourceId)
     : null;
   const overviewStatusExtended = f?.statusExtended;
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
@@ -815,21 +775,6 @@ export function ResourceDetailDrawerContent({
                 )}
               </div>
             </div>
-
-            {resourceDetailHref && (
-              <div className="border-border-neutral-secondary flex justify-end border-t pt-3">
-                <Button variant="link" size="link-sm" asChild>
-                  <Link
-                    href={resourceDetailHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View Resource
-                    <ExternalLink className="size-3" />
-                  </Link>
-                </Button>
-              </div>
-            )}
           </>
         )}
 
@@ -909,11 +854,9 @@ export function ResourceDetailDrawerContent({
                     {(checkMeta.remediation.recommendation.text ||
                       recommendationLink) && (
                       <div className="flex flex-col gap-1">
-                        {checkMeta.remediation.recommendation.text && (
-                          <span className="text-text-neutral-secondary text-xs">
-                            Remediation:
-                          </span>
-                        )}
+                        <span className="text-text-neutral-secondary text-xs">
+                          Remediation:
+                        </span>
                         <div className="flex items-start gap-3">
                           {checkMeta.remediation.recommendation.text && (
                             <div className="text-text-neutral-primary flex-1 text-sm">

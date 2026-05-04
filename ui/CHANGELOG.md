@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Finding detail drawer now labels the remediation action by destination: "View CVE" for cve.org, "View in Prowler Hub" for Prowler Hub, "View Advisory" for GitHub Security Advisories [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
+- Finding detail drawer now labels remediation actions from finding-level recommendation URLs by destination: "View CVE", "View in Prowler Hub", "View Advisory", or "View Reference", while keeping URL-only remediation cards labeled [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
 
 ---
 

@@ -408,7 +408,7 @@ const mockFinding: ResourceDrawerFinding = {
 };
 
 describe("ResourceDetailDrawerContent — resource navigation", () => {
-  it("should render a View Resource link below the resource actions menu", () => {
+  it("should not render resource navigation from the recommendation drawer", () => {
     // Given
     render(
       <ResourceDetailDrawerContent
@@ -425,25 +425,10 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
       />,
     );
 
-    // When
-    const viewResourceLink = screen.getByRole("link", {
-      name: "View Resource",
-    });
-    const resourceActionsMenu = screen.getByRole("menu", {
-      name: "Resource actions",
-    });
-
     // Then
-    expect(viewResourceLink).toHaveAttribute(
-      "href",
-      "/resources?resourceId=res-1",
-    );
-    expect(viewResourceLink).toHaveAttribute("target", "_blank");
-    expect(viewResourceLink).toHaveAttribute("rel", "noopener noreferrer");
     expect(
-      resourceActionsMenu.compareDocumentPosition(viewResourceLink) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).not.toBe(0);
+      screen.queryByRole("link", { name: "View Resource" }),
+    ).not.toBeInTheDocument();
   });
 });
 const mockResourceRow: FindingResourceRow = {
@@ -698,9 +683,6 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
       "href",
       externalCveUrl,
     );
-    expect(
-      screen.queryByRole("link", { name: "5.7.13" }),
-    ).not.toBeInTheDocument();
     expect(screen.getByText(statusExtendedWithFixVersions)).toBeInTheDocument();
     expect(
       screen.queryByRole("link", { name: "View in Prowler Hub" }),
@@ -745,9 +727,7 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
       />,
     );
 
-    expect(
-      screen.queryByRole("link", { name: "5.7.13" }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText(statusExtendedWithFixVersions)).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "View in Prowler Hub" }),
     ).toHaveAttribute(
@@ -756,7 +736,7 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
     );
   });
 
-  it("should render the official CVE reference without Aqua URLs", () => {
+  it("should render the official CVE reference", () => {
     const cveCheckMeta: CheckMeta = {
       ...mockCheckMeta,
       remediation: {
@@ -804,7 +784,6 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
       "href",
       externalCveUrl,
     );
-    expect(screen.queryByText(/avd\.aquasec\.com/)).not.toBeInTheDocument();
   });
 
   it("should render View Advisory when the recommendation URL points to GitHub Security Advisories", () => {
@@ -852,6 +831,50 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
     expect(
       screen.queryByRole("link", { name: "View CVE" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("should render a remediation label when the only remediation content is a recommendation link", () => {
+    const cveCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "",
+          url: externalCveUrl,
+        },
+      },
+    };
+    const cveFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "",
+          url: externalCveUrl,
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={cveCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={cveFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Remediation:")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View CVE" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
   });
 });
 
