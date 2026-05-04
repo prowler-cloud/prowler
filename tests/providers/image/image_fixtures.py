@@ -11,6 +11,12 @@ SAMPLE_VULNERABILITY_FINDING = {
     "Title": "OpenSSL Buffer Overflow",
     "Description": "A buffer overflow vulnerability in OpenSSL allows remote attackers to execute arbitrary code.",
     "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-1234",
+    "References": [
+        "https://avd.aquasec.com/nvd/cve-2024-1234",
+        "https://nvd.nist.gov/vuln/detail/CVE-2024-1234",
+        "https://www.cve.org/CVERecord?id=CVE-2024-1234",
+        "https://security.alpinelinux.org/vuln/CVE-2024-1234",
+    ],
 }
 
 # Sample secret finding from Trivy
@@ -43,6 +49,50 @@ SAMPLE_UNKNOWN_SEVERITY_FINDING = {
     "Severity": "UNKNOWN",
     "Title": "Unknown severity issue",
     "Description": "An issue with unknown severity.",
+}
+
+SAMPLE_VULNERABILITY_WITHOUT_CVE_ORG_REFERENCE = {
+    "VulnerabilityID": "CVE-2024-5678",
+    "PkgID": "libcrypto3@3.3.2-r0",
+    "PkgName": "libcrypto3",
+    "InstalledVersion": "3.3.2-r0",
+    "FixedVersion": "3.3.2-r1",
+    "Severity": "HIGH",
+    "Title": "OpenSSL advisory without cve.org reference",
+    "Description": "A vulnerability with references but no cve.org reference.",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-5678",
+    "References": [
+        "https://avd.aquasec.com/nvd/cve-2024-5678",
+        "https://nvd.nist.gov/vuln/detail/CVE-2024-5678",
+        "https://security.alpinelinux.org/vuln/CVE-2024-5678",
+    ],
+}
+
+SAMPLE_CVE_WITHOUT_REFERENCES_FINDING = {
+    "VulnerabilityID": "CVE-2024-9012",
+    "PkgID": "busybox@1.36.1-r8",
+    "PkgName": "busybox",
+    "InstalledVersion": "1.36.1-r8",
+    "FixedVersion": "1.36.1-r9",
+    "Severity": "MEDIUM",
+    "Title": "Busybox fallback CVE",
+    "Description": "A vulnerability without explicit references.",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-9012",
+}
+
+SAMPLE_NON_CVE_VULNERABILITY_FINDING = {
+    "VulnerabilityID": "GHSA-abcd-1234-efgh",
+    "PkgID": "custompkg@0.0.1",
+    "PkgName": "custompkg",
+    "InstalledVersion": "0.0.1",
+    "Severity": "HIGH",
+    "Title": "Non-CVE advisory",
+    "Description": "An advisory without a CVE identifier.",
+    "PrimaryURL": "https://avd.aquasec.com/nvd/ghsa-abcd-1234-efgh",
+    "References": [
+        "https://avd.aquasec.com/nvd/ghsa-abcd-1234-efgh",
+        "https://github.com/advisories/GHSA-abcd-1234-efgh",
+    ],
 }
 
 # Sample image SHA for testing (first 12 chars of a sha256 digest)

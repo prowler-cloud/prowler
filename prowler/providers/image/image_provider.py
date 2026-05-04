@@ -18,6 +18,9 @@ from prowler.config.config import (
 from prowler.lib.check.models import CheckReportImage
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
+from prowler.lib.utils.vulnerability_references import (
+    resolve_vulnerability_reference_urls,
+)
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
@@ -395,6 +398,8 @@ class ImageProvider(Provider):
         """
         try:
             # Determine finding ID and category based on type
+            recommendation_url = ""
+            additional_urls: list[str] = []
             if "VulnerabilityID" in finding:
                 finding_id = finding["VulnerabilityID"]
                 finding_description = finding.get(
@@ -402,17 +407,30 @@ class ImageProvider(Provider):
                 )
                 finding_status = "FAIL"
                 finding_categories = ["vulnerabilities"]
+                recommendation_url, additional_urls = (
+                    resolve_vulnerability_reference_urls(
+                        vulnerability_id=finding_id,
+                        references=finding.get("References"),
+                        primary_url=finding.get("PrimaryURL", ""),
+                    )
+                )
             elif "RuleID" in finding:
                 # Secret finding
                 finding_id = finding["RuleID"]
                 finding_description = finding.get("Title", "Secret detected")
                 finding_status = "FAIL"
                 finding_categories = ["secrets"]
+                additional_urls = (
+                    [url] if (url := finding.get("PrimaryURL", "")) else []
+                )
             else:
                 finding_id = finding.get("ID", "UNKNOWN")
                 finding_description = finding.get("Description", "")
                 finding_status = finding.get("Status", "FAIL")
                 finding_categories = []
+                additional_urls = (
+                    [url] if (url := finding.get("PrimaryURL", "")) else []
+                )
 
             # Build remediation text for vulnerabilities
             remediation_text = ""
@@ -451,13 +469,11 @@ class ImageProvider(Provider):
                     },
                     "Recommendation": {
                         "Text": remediation_text,
-                        "Url": "",
+                        "Url": recommendation_url,
                     },
                 },
                 "Categories": finding_categories,
-                "AdditionalURLs": (
-                    [url] if (url := finding.get("PrimaryURL", "")) else []
-                ),
+                "AdditionalURLs": additional_urls,
                 "DependsOn": [],
                 "RelatedTo": [],
                 "Notes": "",

@@ -31,6 +31,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.25.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Container image CVE findings and IaC findings now use official CVE, Prowler Hub, or GitHub Security Advisory URLs instead of Aqua advisory URLs in remediation and references; Trivy rule IDs map to Prowler Hub without the `AVD-` prefix so links resolve [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
+
+---
+
 ## [5.25.1] (Prowler v5.25.1)
 
 ### 🐞 Fixed

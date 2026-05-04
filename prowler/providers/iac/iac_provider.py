@@ -18,6 +18,10 @@ from prowler.config.config import (
 from prowler.lib.check.models import CheckReportIAC
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
+from prowler.lib.utils.vulnerability_references import (
+    build_finding_reference_url,
+    resolve_vulnerability_reference_urls,
+)
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 
@@ -189,14 +193,28 @@ class IacProvider(Provider):
                 finding_id = finding["VulnerabilityID"]
                 finding_description = finding["Description"]
                 finding_status = finding.get("Status", "FAIL")
+                recommendation_url, additional_urls = (
+                    resolve_vulnerability_reference_urls(
+                        vulnerability_id=finding_id,
+                        references=finding.get("References"),
+                        primary_url=finding.get("PrimaryURL", ""),
+                    )
+                )
+                if not recommendation_url:
+                    recommendation_url = build_finding_reference_url(finding_id)
+                    additional_urls = [recommendation_url]
             elif "RuleID" in finding:
                 finding_id = finding["RuleID"]
                 finding_description = finding["Title"]
                 finding_status = finding.get("Status", "FAIL")
+                recommendation_url = build_finding_reference_url(finding_id)
+                additional_urls = [recommendation_url]
             else:
                 finding_id = finding["ID"]
                 finding_description = finding["Description"]
                 finding_status = finding["Status"]
+                recommendation_url = build_finding_reference_url(finding_id)
+                additional_urls = [recommendation_url]
 
             metadata_dict = {
                 "Provider": "iac",
@@ -210,7 +228,7 @@ class IacProvider(Provider):
                 "ResourceType": "iac",
                 "Description": finding_description,
                 "Risk": "This provider has not defined a risk for this check.",
-                "RelatedUrl": finding.get("PrimaryURL", ""),
+                "RelatedUrl": recommendation_url,
                 "Remediation": {
                     "Code": {
                         "NativeIaC": "",
@@ -220,11 +238,11 @@ class IacProvider(Provider):
                     },
                     "Recommendation": {
                         "Text": finding.get("Resolution", ""),
-                        "Url": finding.get("PrimaryURL", ""),
+                        "Url": recommendation_url,
                     },
                 },
                 "Categories": [],
-                "AdditionalURLs": [],
+                "AdditionalURLs": additional_urls,
                 "DependsOn": [],
                 "RelatedTo": [],
                 "Notes": "",

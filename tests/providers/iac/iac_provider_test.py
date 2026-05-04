@@ -20,6 +20,9 @@ from tests.providers.iac.iac_fixtures import (
     SAMPLE_KUBERNETES_CHECK,
     SAMPLE_PASSED_CHECK,
     SAMPLE_SKIPPED_CHECK,
+    SAMPLE_TRIVY_NON_CVE_VULNERABILITY,
+    SAMPLE_TRIVY_VULNERABILITY_WITHOUT_CVE_ORG_REFERENCE,
+    SAMPLE_TRIVY_VULNERABILITY_WITHOUT_REFERENCES,
     SAMPLE_YAML_CHECK,
     get_empty_trivy_output,
     get_invalid_trivy_output,
@@ -57,13 +60,15 @@ class TestIacProvider:
         assert isinstance(report, CheckReportIAC)
         assert report.status == "FAIL"
 
+        # Trivy emits "AVD-AWS-0001"; Hub indexes it without the AVD- prefix.
+        expected_url = "https://hub.prowler.com/check/AWS-0001"
         assert report.check_metadata.Provider == "iac"
         assert report.check_metadata.CheckID == SAMPLE_FAILED_CHECK["ID"]
         assert report.check_metadata.CheckTitle == SAMPLE_FAILED_CHECK["Title"]
         assert report.check_metadata.Severity == "low"
-        assert report.check_metadata.RelatedUrl == SAMPLE_FAILED_CHECK.get(
-            "PrimaryURL", ""
-        )
+        assert report.check_metadata.Remediation.Recommendation.Url == expected_url
+        assert report.check_metadata.RelatedUrl == expected_url
+        assert report.check_metadata.AdditionalURLs == [expected_url]
 
     def test_iac_provider_process_finding_passed(self):
         """Test processing a passed finding"""
@@ -78,6 +83,110 @@ class TestIacProvider:
         assert report.check_metadata.CheckID == SAMPLE_PASSED_CHECK["ID"]
         assert report.check_metadata.CheckTitle == SAMPLE_PASSED_CHECK["Title"]
         assert report.check_metadata.Severity == "low"
+
+    def test_iac_provider_process_vulnerability_prefers_cve_reference_and_filters_aqua(
+        self,
+    ):
+        """Test CVE findings use cve.org and exclude Aqua references."""
+        provider = IacProvider()
+
+        report = provider._process_finding(
+            {
+                "VulnerabilityID": "CVE-2023-1234",
+                "Title": "Example vulnerability",
+                "Description": "This is an example vulnerability",
+                "Severity": "high",
+                "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-1234",
+                "References": [
+                    "https://avd.aquasec.com/nvd/cve-2023-1234",
+                    "https://nvd.nist.gov/vuln/detail/CVE-2023-1234",
+                    "https://www.cve.org/CVERecord?id=CVE-2023-1234",
+                    "https://security.example.com/advisories/CVE-2023-1234",
+                ],
+            },
+            "package.json",
+            "nodejs",
+        )
+
+        assert (
+            report.check_metadata.Remediation.Recommendation.Url
+            == "https://www.cve.org/CVERecord?id=CVE-2023-1234"
+        )
+        assert (
+            report.check_metadata.RelatedUrl
+            == "https://www.cve.org/CVERecord?id=CVE-2023-1234"
+        )
+        assert report.check_metadata.AdditionalURLs == [
+            "https://www.cve.org/CVERecord?id=CVE-2023-1234"
+        ]
+
+    def test_iac_provider_process_vulnerability_builds_cve_org_for_nvd_reference(
+        self,
+    ):
+        """Test official CVE URL is built when only NVD is provided."""
+        provider = IacProvider()
+
+        report = provider._process_finding(
+            SAMPLE_TRIVY_VULNERABILITY_WITHOUT_CVE_ORG_REFERENCE,
+            "package.json",
+            "nodejs",
+        )
+
+        assert (
+            report.check_metadata.Remediation.Recommendation.Url
+            == "https://www.cve.org/CVERecord?id=CVE-2023-5678"
+        )
+        assert (
+            report.check_metadata.RelatedUrl
+            == "https://www.cve.org/CVERecord?id=CVE-2023-5678"
+        )
+        assert report.check_metadata.AdditionalURLs == [
+            "https://www.cve.org/CVERecord?id=CVE-2023-5678"
+        ]
+
+    def test_iac_provider_process_vulnerability_builds_cve_org_when_references_missing(
+        self,
+    ):
+        """Test CVE URL is built from VulnerabilityID when references are absent."""
+        provider = IacProvider()
+
+        report = provider._process_finding(
+            SAMPLE_TRIVY_VULNERABILITY_WITHOUT_REFERENCES,
+            "package.json",
+            "nodejs",
+        )
+
+        assert (
+            report.check_metadata.Remediation.Recommendation.Url
+            == "https://www.cve.org/CVERecord?id=CVE-2023-9012"
+        )
+        assert (
+            report.check_metadata.RelatedUrl
+            == "https://www.cve.org/CVERecord?id=CVE-2023-9012"
+        )
+        assert report.check_metadata.AdditionalURLs == [
+            "https://www.cve.org/CVERecord?id=CVE-2023-9012"
+        ]
+
+    def test_iac_provider_process_non_cve_vulnerability_falls_back_to_github_advisory(
+        self,
+    ):
+        """Non-CVE vulnerabilities (GHSA-…) point to GitHub Security Advisories."""
+        provider = IacProvider()
+
+        report = provider._process_finding(
+            SAMPLE_TRIVY_NON_CVE_VULNERABILITY,
+            "package.json",
+            "nodejs",
+        )
+
+        expected_url = (
+            "https://github.com/advisories/"
+            f"{SAMPLE_TRIVY_NON_CVE_VULNERABILITY['VulnerabilityID'].upper()}"
+        )
+        assert report.check_metadata.Remediation.Recommendation.Url == expected_url
+        assert report.check_metadata.RelatedUrl == expected_url
+        assert report.check_metadata.AdditionalURLs == [expected_url]
 
     @patch("subprocess.run")
     def test_iac_provider_run_scan_success(self, mock_subprocess):

@@ -408,7 +408,7 @@ const mockFinding: ResourceDrawerFinding = {
 };
 
 describe("ResourceDetailDrawerContent — resource navigation", () => {
-  it("should render a View Resource link below the resource actions menu", () => {
+  it("should not render resource navigation from the recommendation drawer", () => {
     // Given
     render(
       <ResourceDetailDrawerContent
@@ -425,25 +425,10 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
       />,
     );
 
-    // When
-    const viewResourceLink = screen.getByRole("link", {
-      name: "View Resource",
-    });
-    const resourceActionsMenu = screen.getByRole("menu", {
-      name: "Resource actions",
-    });
-
     // Then
-    expect(viewResourceLink).toHaveAttribute(
-      "href",
-      "/resources?resourceId=res-1",
-    );
-    expect(viewResourceLink).toHaveAttribute("target", "_blank");
-    expect(viewResourceLink).toHaveAttribute("rel", "noopener noreferrer");
     expect(
-      resourceActionsMenu.compareDocumentPosition(viewResourceLink) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).not.toBe(0);
+      screen.queryByRole("link", { name: "View Resource" }),
+    ).not.toBeInTheDocument();
   });
 });
 const mockResourceRow: FindingResourceRow = {
@@ -648,6 +633,248 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
     expect(editors[2]).toHaveAttribute("data-language", "yaml");
     expect(editors[0]).toHaveAttribute("data-aria-label", "CLI Command");
     expect(editors[2]).toHaveAttribute("data-aria-label", "CloudFormation");
+  });
+});
+
+describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
+  const statusExtendedWithFixVersions =
+    "framework.security.spring-security-web@5.8.7 (fix available: 5.7.13, 5.8.15, 6.2.7, 6.0.13, 6.1.11, 6.3.4)";
+  const externalCveUrl = "https://www.cve.org/CVERecord?id=CVE-2026-12345";
+
+  it("should render a View CVE button when the recommendation URL points to an external CVE advisory and keep status extended as plain text", () => {
+    const cveCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: externalCveUrl,
+        },
+      },
+    };
+    const cveFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      statusExtended: statusExtendedWithFixVersions,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: externalCveUrl,
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={cveCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={cveFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "View CVE" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
+    expect(screen.getByText(statusExtendedWithFixVersions)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "View in Prowler Hub" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should show View in Prowler Hub when the recommendation URL points to Prowler Hub", () => {
+    const hubCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Open the check in Hub",
+          url: "https://hub.prowler.com/check/image_vulnerability",
+        },
+      },
+    };
+    const hubFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      statusExtended: statusExtendedWithFixVersions,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Open the check in Hub",
+          url: "https://hub.prowler.com/check/image_vulnerability",
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={hubCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={hubFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText(statusExtendedWithFixVersions)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "View in Prowler Hub" }),
+    ).toHaveAttribute(
+      "href",
+      "https://hub.prowler.com/check/image_vulnerability",
+    );
+  });
+
+  it("should render the official CVE reference", () => {
+    const cveCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: externalCveUrl,
+        },
+      },
+      additionalUrls: [externalCveUrl],
+    };
+    const cveFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      statusExtended: statusExtendedWithFixVersions,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: externalCveUrl,
+        },
+      },
+      additionalUrls: [externalCveUrl],
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={cveCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={cveFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "View CVE" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
+    expect(screen.getByRole("link", { name: externalCveUrl })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
+  });
+
+  it("should render View Advisory when the recommendation URL points to GitHub Security Advisories", () => {
+    const advisoryUrl = "https://github.com/advisories/GHSA-abcd-1234-efgh";
+    const advisoryCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: advisoryUrl,
+        },
+      },
+    };
+    const advisoryFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "Review the advisory",
+          url: advisoryUrl,
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={advisoryCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={advisoryFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "View Advisory" })).toHaveAttribute(
+      "href",
+      advisoryUrl,
+    );
+    expect(
+      screen.queryByRole("link", { name: "View CVE" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should render a remediation label when the only remediation content is a recommendation link", () => {
+    const cveCheckMeta: CheckMeta = {
+      ...mockCheckMeta,
+      remediation: {
+        ...mockCheckMeta.remediation,
+        recommendation: {
+          text: "",
+          url: externalCveUrl,
+        },
+      },
+    };
+    const cveFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      remediation: {
+        ...mockFinding.remediation,
+        recommendation: {
+          text: "",
+          url: externalCveUrl,
+        },
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={cveCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={cveFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Remediation:")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View CVE" })).toHaveAttribute(
+      "href",
+      externalCveUrl,
+    );
   });
 });
 
