@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - New `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
+- ASD Essential Eight (AWS) compliance framework wired into the API export pipeline so AWS scans emit a dedicated `essential_eight_aws` CSV with the framework-specific columns (Section, MaturityLevel, MitigatedThreats, …) instead of the generic compliance fallback [(#10982)](https://github.com/prowler-cloud/prowler/pull/10982)
 
 ---
 
