@@ -671,6 +671,12 @@ export default function AttackPathsPage() {
                                   onNodeClick={handleNodeClick}
                                   selectedNodeId={graphState.selectedNodeId}
                                   isFilteredView={graphState.isFilteredView}
+                                  expandedResources={
+                                    graphState.expandedResources
+                                  }
+                                  onResourceToggle={
+                                    graphState.toggleExpandedResource
+                                  }
                                 />
                               </div>
                               {/* Node Detail Panel - Side by side */}
@@ -714,6 +720,8 @@ export default function AttackPathsPage() {
                       onNodeClick={handleNodeClick}
                       selectedNodeId={graphState.selectedNodeId}
                       isFilteredView={graphState.isFilteredView}
+                      expandedResources={graphState.expandedResources}
+                      onResourceToggle={graphState.toggleExpandedResource}
                     />
                   </div>
 

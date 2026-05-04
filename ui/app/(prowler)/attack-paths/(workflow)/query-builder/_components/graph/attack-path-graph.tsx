@@ -53,11 +53,18 @@ interface AttackPathGraphProps {
   selectedNodeId?: string | null;
   isFilteredView?: boolean;
   initialNodeId?: string;
+  // Tier 1 expansion state — controlled by the parent (lives in the graph
+  // store) so it survives filtered-view enter/exit. If omitted, no resource
+  // expansion is tracked and findings stay hidden in the full view.
+  expandedResources?: Set<string>;
+  onResourceToggle?: (resourceId: string) => void;
   onNodeClick?: (node: GraphNode) => void;
   onInitialFilter?: (filteredData: AttackPathGraphData) => void;
   ref?: Ref<GraphHandle>;
   className?: string;
 }
+
+const EMPTY_EXPANDED: ReadonlySet<string> = new Set();
 
 // --- Node type registry (stable reference) ---
 
@@ -155,6 +162,8 @@ const GraphCanvas = ({
   selectedNodeId,
   isFilteredView,
   initialNodeId,
+  expandedResources,
+  onResourceToggle,
   onNodeClick,
   onInitialFilter,
   ref,
@@ -168,20 +177,16 @@ const GraphCanvas = ({
   const minimapColors =
     resolvedTheme === "dark" ? MINIMAP_COLORS.dark : MINIMAP_COLORS.light;
 
-  // Tier 1 state: which resource nodes have their findings expanded
-  const [expandedResources, setExpandedResources] = useState<Set<string>>(
-    new Set(),
-  );
-  // Path highlight state
+  // Path highlight state — local to the canvas, must reset on data swaps
+  // (otherwise we'd keep highlighting an edge that no longer exists).
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-
-  // Reset interaction state whenever the underlying graph data changes
-  // (e.g. scan switch or new query execution) to avoid leaking stale
-  // expansion / highlight state into the next graph.
   useEffect(() => {
-    setExpandedResources(new Set());
     setHoveredNodeId(null);
   }, [data]);
+
+  // Tier 1 expansion is controlled by the parent (zustand store) so it
+  // survives the data-swaps that happen on filtered-view enter/exit.
+  const expanded = expandedResources ?? EMPTY_EXPANDED;
 
   // --- initialNodeId: synchronous filtered-view derivation on first render ---
   // Compute the effective data: if initialNodeId is set and valid, derive filtered subgraph
@@ -260,7 +265,7 @@ const GraphCanvas = ({
         return;
       }
       const anyExpanded = Array.from(connectedResources).some((resId) =>
-        expandedResources.has(resId),
+        expanded.has(resId),
       );
       if (!anyExpanded) {
         hiddenFindingIds.add(findingId);
@@ -319,15 +324,7 @@ const GraphCanvas = ({
     // Tier 1: clicking resource in full view toggles connected findings
     if (!isFilteredView && !isFindingNode(graphNode.labels)) {
       if (resourcesWithFindings.has(node.id)) {
-        setExpandedResources((prev) => {
-          const next = new Set(prev);
-          if (next.has(node.id)) {
-            next.delete(node.id);
-          } else {
-            next.add(node.id);
-          }
-          return next;
-        });
+        onResourceToggle?.(node.id);
       }
     }
 
@@ -396,6 +393,8 @@ export const AttackPathGraph = ({
   selectedNodeId,
   isFilteredView,
   initialNodeId,
+  expandedResources,
+  onResourceToggle,
   onNodeClick,
   onInitialFilter,
   ref,
@@ -419,6 +418,8 @@ export const AttackPathGraph = ({
           selectedNodeId={selectedNodeId}
           isFilteredView={isFilteredView}
           initialNodeId={initialNodeId}
+          expandedResources={expandedResources}
+          onResourceToggle={onResourceToggle}
           onNodeClick={onNodeClick}
           onInitialFilter={onInitialFilter}
         />
