@@ -48,7 +48,7 @@ export const DeleteGroupForm = ({
         title: "Success!",
         description: "The provider group was removed successfully.",
       });
-      router.push("/providers?tab=account-groups");
+      router.push("/providers?tab=provider-groups");
     }
     setIsOpen(false); // Close the modal on success
   }

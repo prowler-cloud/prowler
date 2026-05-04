@@ -385,9 +385,8 @@ export const permissionFormFields: PermissionInfo[] = [
   },
   {
     field: "manage_providers",
-    label: "Manage Cloud Providers",
-    description:
-      "Allows configuration and management of cloud provider connections",
+    label: "Manage Providers",
+    description: "Allows configuration and management of provider connections",
   },
   {
     field: "manage_integrations",
