@@ -47,7 +47,7 @@ const initialState: GraphState & FilteredViewState = {
   expandedResources: new Set(),
 };
 
-const useGraphStore = create<GraphStore>((set) => ({
+export const useGraphStore = create<GraphStore>((set) => ({
   ...initialState,
   setGraphData: (data) =>
     set({

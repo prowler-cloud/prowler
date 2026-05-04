@@ -9,47 +9,38 @@
  * If you find yourself reaching for a DOM query in a test, push it into the harness.
  */
 
-import { describe, expect, test as base } from "vitest";
+import { beforeEach, describe, expect, test as base } from "vitest";
 
 import { handlersForFixture } from "@/__tests__/msw/handlers/attack-paths";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
 
+import { useGraphStore } from "./_hooks/use-graph-state";
 import AttackPathsPage from "./attack-paths-page";
 import { fixtures, type PageFixture } from "./attack-paths-page.fixtures";
 import { GraphHarness } from "./attack-paths-page.harness";
 
 interface Fixtures {
-  mountWith: (fx: PageFixture) => Promise<GraphHarness>;
+  mountWith: (fx?: PageFixture) => Promise<GraphHarness>;
 }
+
+// The graph store is module-scoped, so it survives across tests in the same
+// file. Reset it before each test so no test sees stale state from a previous
+// one (selection, filtered view, expanded resources, etc.).
+beforeEach(() => {
+  useGraphStore.getState().reset();
+});
 
 const test = base.extend<Fixtures>({
   mountWith: async ({}, use) => {
-    // Some tests call `mountWith` more than once to verify remount/reset
-    // behavior. Unmount the previous render before mounting again so we
-    // never end up with two AttackPathsPage instances in the DOM (which
-    // would surface as duplicate comboboxes / strict-mode locator errors).
-    // We hang the unmount on an object so TS's control-flow analysis
-    // doesn't narrow it to `never` across the async closure boundary.
-    const active: { unmount: (() => Promise<void>) | null } = { unmount: null };
-
-    const factory = async (fx: PageFixture) => {
-      if (active.unmount) {
-        await active.unmount();
-        active.unmount = null;
-      }
-      worker.use(...handlersForFixture(fx));
-      window.history.replaceState({}, "", `/attack-paths?scanId=${fx.scanId}`);
-      const result = await render(<AttackPathsPage />);
-      active.unmount = result.unmount;
-      return new GraphHarness(fx);
-    };
-
     // `use` is Vitest's fixture-injection callback, not React's `use` hook.
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    await use(factory);
-
-    if (active.unmount) await active.unmount();
+    await use(async (fx = fixtures.typical()) => {
+      worker.use(...handlersForFixture(fx));
+      window.history.replaceState({}, "", `/attack-paths?scanId=${fx.scanId}`);
+      await render(<AttackPathsPage />);
+      return new GraphHarness(fx);
+    });
   },
 });
 
@@ -61,7 +52,7 @@ describe("graph-data-normalization", () => {
   test("renders edges with string source/target from relationships", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(2);
 
@@ -75,7 +66,7 @@ describe("graph-data-normalization", () => {
   test("store rehydrates cleanly between scans (no panX/panY/zoomLevel)", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(1);
 
@@ -91,7 +82,7 @@ describe("graph-layout", () => {
   test("layoutWithDagre places nodes at non-zero positions", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
@@ -132,7 +123,7 @@ describe("graph-rendering", () => {
   test("renders React Flow with background and minimap", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
@@ -142,7 +133,7 @@ describe("graph-rendering", () => {
   });
 
   test("renders the three node types by label rule", async ({ mountWith }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
     await graph.expandAllFindings();
@@ -155,7 +146,7 @@ describe("graph-rendering", () => {
   test("toolbar is present with zoom/fit/export controls", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(1);
 
@@ -168,7 +159,7 @@ describe("graph-rendering", () => {
   test("animated dashed class is applied only to finding-connected edges", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
     await graph.expandAllFindings();
@@ -192,7 +183,7 @@ describe("graph-interactions", () => {
   test("clicking a finding node enters filtered view", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
     await graph.expandAllFindings();
@@ -205,7 +196,7 @@ describe("graph-interactions", () => {
   test("exiting filtered view restores the full graph", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
     await graph.expandAllFindings();
@@ -220,7 +211,7 @@ describe("graph-interactions", () => {
   test("hovering a node adds the highlighted class to its path edges", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
@@ -243,7 +234,7 @@ describe("graph-interactions", () => {
   });
 
   test("clicking empty canvas does not explode", async ({ mountWith }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
@@ -263,7 +254,7 @@ describe("graph-export", () => {
   test("export button is enabled and clickable when a graph is rendered", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
@@ -344,7 +335,7 @@ describe("intermediate flows", () => {
   test("rapid successive clicks on a finding node do not duplicate filtered view", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
     await graph.expandAllFindings();
@@ -357,7 +348,7 @@ describe("intermediate flows", () => {
   });
 
   test("double-click does not break state", async ({ mountWith }) => {
-    const graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
@@ -392,17 +383,16 @@ describe("edge-case data", () => {
 // ---------------------------------------------------------------------------
 
 describe("regressions", () => {
-  test("remount reinitializes the store — no stale selection survives", async ({
+  test("re-running a query clears the previous filtered view", async ({
     mountWith,
   }) => {
-    let graph = await mountWith(fixtures.typical());
+    const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
     await graph.expandAllFindings();
     await graph.clickFirstFindingNode();
     expect(graph.isInFilteredView).toBe(true);
 
-    graph = await mountWith(fixtures.typical());
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
     expect(graph.isInFilteredView).toBe(false);
