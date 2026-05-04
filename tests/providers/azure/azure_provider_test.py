@@ -527,3 +527,75 @@ class TestAzureProvider:
         regions = azure_provider.get_regions(subscription_ids=subscription_ids)
 
         assert regions == expected_regions
+
+
+class TestAzureProviderValidateResourceGroups:
+    @patch(
+        "prowler.providers.azure.azure_provider.AzureProvider.__init__",
+        return_value=None,
+    )
+    def _make_provider(self, mock_init, subscriptions=None):
+        provider = AzureProvider()
+        provider._identity = MagicMock()
+        provider._identity.subscriptions = subscriptions or {"Sub": str(uuid4())}
+        provider._session = MagicMock()
+        return provider
+
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_exact_match(self, mock_rm_client):
+        provider = self._make_provider()
+        list(provider._identity.subscriptions.values())[0]
+        sub_name = list(provider._identity.subscriptions.keys())[0]
+
+        mock_rg = MagicMock()
+        mock_rg.name = "mygroup"
+        mock_rm_client.return_value.resource_groups.list.return_value = [mock_rg]
+
+        result = provider.validate_resource_groups(["mygroup"])
+
+        assert result[sub_name] == ["mygroup"]
+
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_mixed_case(self, mock_rm_client):
+        provider = self._make_provider()
+        sub_name = list(provider._identity.subscriptions.keys())[0]
+
+        mock_rg = MagicMock()
+        mock_rg.name = "MyGroup"
+        mock_rm_client.return_value.resource_groups.list.return_value = [mock_rg]
+
+        result = provider.validate_resource_groups(["mygroup"])
+
+        assert result[sub_name] == ["mygroup"]
+
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_multiple_rgs(self, mock_rm_client):
+        provider = self._make_provider()
+        sub_name = list(provider._identity.subscriptions.keys())[0]
+
+        rg1, rg2 = MagicMock(), MagicMock()
+        rg1.name = "rg1"
+        rg2.name = "rg2"
+        mock_rm_client.return_value.resource_groups.list.return_value = [rg1, rg2]
+
+        result = provider.validate_resource_groups(["rg1", "rg2"])
+
+        assert set(result[sub_name]) == {"rg1", "rg2"}
+
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_not_found(self, mock_rm_client):
+        provider = self._make_provider()
+        sub_name = list(provider._identity.subscriptions.keys())[0]
+
+        mock_rg = MagicMock()
+        mock_rg.name = "existing"
+        mock_rm_client.return_value.resource_groups.list.return_value = [mock_rg]
+
+        result = provider.validate_resource_groups(["nonexistent"])
+
+        assert result[sub_name] == []
+
+    def test_validate_resource_groups_empty_input(self):
+        provider = self._make_provider()
+        result = provider.validate_resource_groups([])
+        assert result == {}

@@ -16,6 +16,7 @@ from azure.identity import (
     DefaultAzureCredential,
     InteractiveBrowserCredential,
 )
+from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
@@ -103,6 +104,7 @@ class AzureProvider(Provider):
     _region_config: AzureRegionConfig
     _locations: dict
     _mutelist: AzureMutelist
+    _resource_groups: list
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -115,6 +117,7 @@ class AzureProvider(Provider):
         tenant_id: str = None,
         region: str = "AzureCloud",
         subscription_ids: list = [],
+        resource_groups: list = [],
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
@@ -134,6 +137,7 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
             region (str): The Azure region.
             subscription_ids (list): List of subscription IDs.
+            resource_groups (list): List of resource group names.
             config_path (str): The path to the configuration file.
             config_content (dict): The configuration content.
             fixer_config (dict): The fixer configuration.
@@ -205,7 +209,7 @@ class AzureProvider(Provider):
                 ...     managed_identity_auth=False,
                 ...     region="AzureUSGovernment",
                 ... )
-            - Subscriptions: rowler is multisubscription, which means that is going to scan all the subscriptions is able to list. If you only assign permissions to one subscription, it is going to scan a single one.
+            - Subscriptions: Prowler is multisubscription, which means that is going to scan all the subscriptions is able to list. If you only assign permissions to one subscription, it is going to scan a single one.
               Prowler also allows you to specify the subscriptions you want to scan by passing a list of subscription IDs.
                 >>> AzureProvider(
                 ...     az_cli_auth=False,
@@ -213,6 +217,11 @@ class AzureProvider(Provider):
                 ...     browser_auth=False,
                 ...     managed_identity_auth=False,
                 ...     subscription_ids=["XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"],
+                ... )
+            - Resource Groups: Prowler allows you to narrow the scan to specific resource groups.
+                >>> AzureProvider(
+                ...     az_cli_auth=True,
+                ...     resource_groups=["rg-production", "rg-staging"],
                 ... )
 
         """
@@ -267,6 +276,8 @@ class AzureProvider(Provider):
 
         # TODO: should we keep this here or within the identity?
         self._locations = self.get_locations()
+
+        self._resource_groups = self.validate_resource_groups(resource_groups)
 
         # Audit Config
         if config_content:
@@ -332,6 +343,11 @@ class AzureProvider(Provider):
     def mutelist(self) -> AzureMutelist:
         """Mutelist object associated with this Azure provider."""
         return self._mutelist
+
+    @property
+    def resource_groups(self) -> list:
+        """Returns the list of resource groups to be scanned."""
+        return self._resource_groups
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
     # previously was using the AzureException
@@ -432,7 +448,7 @@ class AzureProvider(Provider):
         """Azure credentials information.
 
         This method prints the Azure Tenant Domain, Azure Tenant ID, Azure Region,
-        Azure Subscriptions, Azure Identity Type, and Azure Identity ID.
+        Azure Subscriptions, Azure Resource Groups, Azure Identity Type, and Azure Identity ID.
 
         Args:
             None
@@ -448,6 +464,7 @@ class AzureProvider(Provider):
             f"Azure Tenant Domain: {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} Azure Tenant ID: {Fore.YELLOW}{self._identity.tenant_ids[0]}{Style.RESET_ALL}",
             f"Azure Region: {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
             f"Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}",
+            f"Azure Resource Groups: {Fore.YELLOW}{sorted({rg for rgs in self._resource_groups.values() for rg in rgs}) if self._resource_groups else 'ALL'}{Style.RESET_ALL}",
             f"Azure Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
         ]
         report_title = (
@@ -1070,6 +1087,37 @@ class AzureProvider(Provider):
             }
 
         return set(chain.from_iterable(locations.values()))
+
+    def validate_resource_groups(self, resource_groups: list) -> dict:
+        if not resource_groups:
+            return {}
+
+        rg_map = {sub: [] for sub in self._identity.subscriptions}
+        credentials = self.session
+
+        for display_name, subscription_id in self._identity.subscriptions.items():
+            rg_client = ResourceManagementClient(credentials, subscription_id)
+
+            existing_rgs = {rg.name.lower() for rg in rg_client.resource_groups.list()}
+
+            for rg in resource_groups:
+                if rg.lower() in existing_rgs:
+                    rg_map[display_name].append(rg)
+
+        for rg in resource_groups:
+            if not any(rg in rgs for rgs in rg_map.values()):
+                logger.warning(
+                    f"Resource group '{rg}' was not found in any subscription. "
+                    "Please check the resource group name and try again."
+                )
+
+        if not any(rgs for rgs in rg_map.values()):
+            logger.warning(
+                f"None of the provided resource groups {resource_groups} were found "
+                "in any subscription. Please check the resource group names and try again."
+            )
+
+        return rg_map
 
     @staticmethod
     def validate_static_credentials(

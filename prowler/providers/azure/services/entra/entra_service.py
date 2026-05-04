@@ -66,6 +66,11 @@ class Entra(AzureService):
     async def _get_users(self):
         logger.info("Entra - Getting users...")
         users = {}
+        if self.resource_groups:
+            logger.warning(
+                "Entra users are tenant-scoped and cannot be filtered by resource group. Skipping."
+            )
+            return users
         try:
             request_configuration = RequestConfiguration(
                 query_parameters=UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
@@ -145,6 +150,11 @@ class Entra(AzureService):
         logger.info("Entra - Getting authorization policy...")
 
         authorization_policy = {}
+        if self.resource_groups:
+            logger.warning(
+                "Entra authorization policy is tenant-scoped and cannot be filtered by resource group. Skipping."
+            )
+            return authorization_policy
         try:
             for tenant, client in self.clients.items():
                 auth_policy = await client.policies.authorization_policy.get()
@@ -220,6 +230,11 @@ class Entra(AzureService):
     async def _get_group_settings(self):
         logger.info("Entra - Getting group settings...")
         group_settings = {}
+        if self.resource_groups:
+            logger.warning(
+                "Entra group settings are tenant-scoped and cannot be filtered by resource group. Skipping."
+            )
+            return group_settings
         try:
             for tenant, client in self.clients.items():
                 group_settings_list = await client.group_settings.get()
@@ -253,6 +268,11 @@ class Entra(AzureService):
         logger.info("Entra - Getting security default...")
         try:
             security_defaults = {}
+            if self.resource_groups:
+                logger.warning(
+                    "Entra security defaults are tenant-scoped and cannot be filtered by resource group. Skipping."
+                )
+                return security_defaults
             for tenant, client in self.clients.items():
                 security_default = (
                     await client.policies.identity_security_defaults_enforcement_policy.get()
@@ -276,6 +296,11 @@ class Entra(AzureService):
     async def _get_named_locations(self):
         logger.info("Entra - Getting named locations...")
         named_locations = {}
+        if self.resource_groups:
+            logger.warning(
+                "Entra named locations are tenant-scoped and cannot be filtered by resource group. Skipping."
+            )
+            return named_locations
         try:
             for tenant, client in self.clients.items():
                 named_locations_list = (
@@ -308,6 +333,11 @@ class Entra(AzureService):
     async def _get_directory_roles(self):
         logger.info("Entra - Getting directory roles...")
         directory_roles_with_members = {}
+        if self.resource_groups:
+            logger.warning(
+                "Entra directory roles are tenant-scoped and cannot be filtered by resource group. Skipping."
+            )
+            return directory_roles_with_members
         try:
             for tenant, client in self.clients.items():
                 directory_roles_with_members.update({tenant: {}})
@@ -340,6 +370,11 @@ class Entra(AzureService):
     async def _get_conditional_access_policy(self):
         logger.info("Entra - Getting conditional access policy...")
         conditional_access_policy = {}
+        if self.resource_groups:
+            logger.warning(
+                "Entra conditional access policies are tenant-scoped and cannot be filtered by resource group. Skipping."
+            )
+            return conditional_access_policy
         try:
             for tenant, client in self.clients.items():
                 conditional_access_policies = (

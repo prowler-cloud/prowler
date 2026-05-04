@@ -18,7 +18,29 @@ class MySQL(AzureService):
         servers = {}
         for subscription_name, client in self.clients.items():
             try:
-                servers_list = client.servers.list()
+                servers_list = []
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription_name, [])
+
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription_name}"
+                        )
+                        continue
+
+                    for rg in rgs:
+                        try:
+                            servers_list += list(
+                                client.servers.list_by_resource_group(rg)
+                            )
+                        except Exception as error:
+                            logger.warning(
+                                f"Subscription: {subscription_name} | RG: {rg} -- "
+                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                else:
+                    servers_list = list(client.servers.list())
+
                 servers.update({subscription_name: {}})
                 for server in servers_list:
                     servers[subscription_name].update(

@@ -3,6 +3,8 @@ from unittest.mock import MagicMock, patch
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -263,3 +265,203 @@ class Test_keyvault_service:
                 .storage_account_name
                 == "storage_account_name"
             )
+
+
+class Test_KeyVault_get_key_vaults:
+    def test_get_key_vaults_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.vaults.list_by_subscription.return_value = []
+
+        mock_provider = MagicMock()
+        mock_provider.identity = MagicMock()
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVault,
+            )
+
+            keyvault = KeyVault(set_mocked_azure_provider())
+
+        keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        keyvault.resource_groups = None
+
+        provider = set_mocked_azure_provider()
+        with patch(
+            "prowler.providers.azure.services.keyvault.keyvault_service.monitor_client"
+        ):
+            result = keyvault._get_key_vaults(provider)
+
+        mock_client.vaults.list_by_subscription.assert_called_once()
+        mock_client.vaults.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_key_vaults_with_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.vaults.list_by_resource_group.return_value = []
+
+        mock_provider = MagicMock()
+        mock_provider.identity = MagicMock()
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVault,
+            )
+
+            keyvault = KeyVault(set_mocked_azure_provider())
+
+        keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        keyvault.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        provider = set_mocked_azure_provider()
+        with patch(
+            "prowler.providers.azure.services.keyvault.keyvault_service.monitor_client"
+        ):
+            result = keyvault._get_key_vaults(provider)
+
+        mock_client.vaults.list_by_resource_group.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.vaults.list_by_subscription.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_key_vaults_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+
+        mock_provider = MagicMock()
+        mock_provider.identity = MagicMock()
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVault,
+            )
+
+            keyvault = KeyVault(set_mocked_azure_provider())
+
+        keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        keyvault.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        provider = set_mocked_azure_provider()
+        with patch(
+            "prowler.providers.azure.services.keyvault.keyvault_service.monitor_client"
+        ):
+            result = keyvault._get_key_vaults(provider)
+
+        mock_client.vaults.list_by_resource_group.assert_not_called()
+        mock_client.vaults.list_by_subscription.assert_not_called()
+        assert result[AZURE_SUBSCRIPTION_ID] == []
+
+    def test_get_key_vaults_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.vaults.list_by_resource_group.return_value = []
+
+        mock_provider = MagicMock()
+        mock_provider.identity = MagicMock()
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVault,
+            )
+
+            keyvault = KeyVault(set_mocked_azure_provider())
+
+        keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        keyvault.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        provider = set_mocked_azure_provider()
+        with patch(
+            "prowler.providers.azure.services.keyvault.keyvault_service.monitor_client"
+        ):
+            result = keyvault._get_key_vaults(provider)
+
+        assert mock_client.vaults.list_by_resource_group.call_count == len(
+            RESOURCE_GROUP_LIST
+        )
+        mock_client.vaults.list_by_subscription.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_key_vaults_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.vaults.list_by_resource_group.return_value = []
+
+        mock_provider = MagicMock()
+        mock_provider.identity = MagicMock()
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVault,
+            )
+
+            keyvault = KeyVault(set_mocked_azure_provider())
+
+        keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        keyvault.resource_groups = {AZURE_SUBSCRIPTION_ID: ["MyRG"]}
+
+        provider = set_mocked_azure_provider()
+        with patch(
+            "prowler.providers.azure.services.keyvault.keyvault_service.monitor_client"
+        ):
+            keyvault._get_key_vaults(provider)
+
+        mock_client.vaults.list_by_resource_group.assert_called_once_with(
+            resource_group_name="MyRG"
+        )

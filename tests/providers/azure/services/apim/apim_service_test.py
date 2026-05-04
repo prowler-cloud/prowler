@@ -1,6 +1,6 @@
 from datetime import timedelta
 from unittest import TestCase, mock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from azure.mgmt.loganalytics.models import Workspace
 from azure.mgmt.monitor.models import DiagnosticSettingsResource
@@ -8,6 +8,8 @@ from azure.monitor.query import LogsQueryResult
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -15,7 +17,6 @@ from tests.providers.azure.azure_fixtures import (
 APIM_INSTANCE_ID = f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/rg/providers/Microsoft.ApiManagement/service/apim1"
 APIM_INSTANCE_NAME = "apim1"
 LOCATION = "West US"
-RESOURCE_GROUP = "rg"
 WORKSPACE_ID = f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourcegroups/rg/providers/microsoft.operationalinsights/workspaces/loganalytics"
 WORKSPACE_CUSTOMER_ID = "12345678-1234-1234-1234-1234567890ab"
 
@@ -316,3 +317,168 @@ class Test_APIM_Service(TestCase):
                 instance = apim.instances[AZURE_SUBSCRIPTION_ID][0]
                 result = apim.get_llm_operations_logs(AZURE_SUBSCRIPTION_ID, instance)
                 self.assertEqual(result, [{"log": "data"}])
+
+
+class Test_APIM_get_instances:
+    def test_get_instances_no_resource_groups(self):
+        mock_instance = MagicMock()
+        mock_instance.id = APIM_INSTANCE_ID
+        mock_instance.name = APIM_INSTANCE_NAME
+        mock_instance.location = LOCATION
+
+        mock_client = MagicMock()
+        mock_client.api_management_service.list.return_value = [mock_instance]
+
+        mock_provider = mock.MagicMock()
+        mock_provider.identity = mock.MagicMock()
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.apim.apim_service.APIM._get_instances",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.apim.apim_service import APIM
+
+            apim = APIM(set_mocked_azure_provider())
+
+        apim.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        apim.resource_groups = None
+
+        with patch.object(apim, "_get_log_analytics_workspace_id", return_value=None):
+            result = apim._get_instances()
+
+        mock_client.api_management_service.list.assert_called_once()
+        mock_client.api_management_service.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+        assert len(result[AZURE_SUBSCRIPTION_ID]) == 1
+        assert result[AZURE_SUBSCRIPTION_ID][0].id == APIM_INSTANCE_ID
+
+    def test_get_instances_with_resource_group(self):
+        mock_instance = MagicMock()
+        mock_instance.id = APIM_INSTANCE_ID
+        mock_instance.name = APIM_INSTANCE_NAME
+        mock_instance.location = LOCATION
+
+        mock_client = MagicMock()
+        mock_client.api_management_service.list_by_resource_group.return_value = [
+            mock_instance
+        ]
+
+        mock_provider = mock.MagicMock()
+        mock_provider.identity = mock.MagicMock()
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.apim.apim_service.APIM._get_instances",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.apim.apim_service import APIM
+
+            apim = APIM(set_mocked_azure_provider())
+
+        apim.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        apim.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        with patch.object(apim, "_get_log_analytics_workspace_id", return_value=None):
+            result = apim._get_instances()
+
+        mock_client.api_management_service.list_by_resource_group.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.api_management_service.list.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+        assert len(result[AZURE_SUBSCRIPTION_ID]) == 1
+        assert result[AZURE_SUBSCRIPTION_ID][0].name == APIM_INSTANCE_NAME
+
+    def test_get_instances_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+
+        mock_provider = mock.MagicMock()
+        mock_provider.identity = mock.MagicMock()
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.apim.apim_service.APIM._get_instances",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.apim.apim_service import APIM
+
+            apim = APIM(set_mocked_azure_provider())
+
+        apim.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        apim.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        result = apim._get_instances()
+
+        mock_client.api_management_service.list_by_resource_group.assert_not_called()
+        mock_client.api_management_service.list.assert_not_called()
+        assert result[AZURE_SUBSCRIPTION_ID] == []
+
+    def test_get_instances_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+
+        mock_provider = mock.MagicMock()
+        mock_provider.identity = mock.MagicMock()
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.apim.apim_service.APIM._get_instances",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.apim.apim_service import APIM
+
+            apim = APIM(set_mocked_azure_provider())
+
+        apim.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        apim.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        with patch.object(apim, "_get_log_analytics_workspace_id", return_value=None):
+            result = apim._get_instances()
+
+        assert mock_client.api_management_service.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_instances_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+
+        mock_provider = mock.MagicMock()
+        mock_provider.identity = mock.MagicMock()
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.apim.apim_service.APIM._get_instances",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.apim.apim_service import APIM
+
+            apim = APIM(set_mocked_azure_provider())
+
+        apim.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        apim.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        with patch.object(apim, "_get_log_analytics_workspace_id", return_value=None):
+            apim._get_instances()
+
+        mock_client.api_management_service.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )

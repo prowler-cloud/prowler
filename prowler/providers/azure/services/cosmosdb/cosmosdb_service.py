@@ -18,8 +18,31 @@ class CosmosDB(AzureService):
         accounts = {}
         for subscription, client in self.clients.items():
             try:
-                accounts_list = client.database_accounts.list()
+                accounts_list = []
                 accounts.update({subscription: []})
+
+                if self.resource_groups:
+                    rgs = self.resource_groups.get(subscription, [])
+                    if not rgs:
+                        logger.warning(
+                            f"No valid resource groups for subscription {subscription}"
+                        )
+                    else:
+                        for rg in rgs:
+                            try:
+                                accounts_list += list(
+                                    client.database_accounts.list_by_resource_group(
+                                        resource_group_name=rg
+                                    )
+                                )
+                            except Exception as error:
+                                logger.warning(
+                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
+                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                else:
+                    accounts_list = client.database_accounts.list()
+
                 for account in accounts_list:
                     accounts[subscription].append(
                         Account(
