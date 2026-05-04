@@ -13,6 +13,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.25.1] (Prowler v5.25.1)
 
+### 🔄 Changed
+
+- Standardized "Providers" wording across UI and documentation, replacing legacy "Cloud Providers" / "Accounts" / "Account Groups" copy [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+
 ### 🐞 Fixed
 
 - Compliance page export menu now scales on small screens, and frameworks load on first render without requiring a manual scan re-selection [(#10918)](https://github.com/prowler-cloud/prowler/pull/10918)

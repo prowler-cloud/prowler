@@ -14,7 +14,7 @@ export const NoProvidersConnected = () => {
           <div className="flex items-center justify-start gap-3">
             <InfoIcon className="h-6 w-6 text-gray-800 dark:text-white" />
             <h2 className="text-lg font-bold text-gray-800 dark:text-white">
-              No Connected Cloud Providers
+              No Connected Providers
             </h2>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -32,7 +32,7 @@ export const NoProvidersConnected = () => {
             className="w-full justify-center md:w-fit"
             aria-label="Go to Cloud providers page"
           >
-            <Link href="/providers">Review Cloud Providers</Link>
+            <Link href="/providers">Review Providers</Link>
           </Button>
         </div>
       </CardContent>

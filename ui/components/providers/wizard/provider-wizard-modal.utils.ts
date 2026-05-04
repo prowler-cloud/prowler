@@ -25,7 +25,7 @@ export function getProviderWizardModalTitle(mode: ProviderWizardMode) {
     return "Update Provider Credentials";
   }
 
-  return "Adding A Cloud Provider";
+  return "Adding A Provider";
 }
 
 export function getProviderWizardDocsDestination(docsLink: string) {
@@ -44,7 +44,7 @@ export function getProviderWizardDocsDestination(docsLink: string) {
     alibabacloud: "Alibaba Cloud",
     cloudflare: "Cloudflare",
     openstack: "OpenStack",
-    help: "Cloud Provider",
+    help: "Provider",
   };
 
   try {

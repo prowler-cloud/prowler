@@ -374,7 +374,7 @@ export const permissionFormFields: PermissionInfo[] = [
   },
   {
     field: "manage_account",
-    label: "Manage Account",
+    label: "Manage Provider",
     description: "Provides access to account settings and RBAC configuration",
   },
   {
@@ -385,7 +385,7 @@ export const permissionFormFields: PermissionInfo[] = [
   },
   {
     field: "manage_providers",
-    label: "Manage Cloud Providers",
+    label: "Manage Providers",
     description:
       "Allows configuration and management of cloud provider connections",
   },

@@ -25,7 +25,7 @@ export default async function Providers({
   const searchParamsKey = JSON.stringify(paramsWithoutTab);
 
   return (
-    <ContentLayout title="Cloud Providers" icon="lucide:cloud-cog">
+    <ContentLayout title="Providers" icon="lucide:cloud-cog">
       <FilterTransitionWrapper>
         <ProviderPageTabs
           activeTab={activeTab}
@@ -59,7 +59,7 @@ const ProvidersTableFallback = () => {
         <Skeleton className="h-[52px] min-w-[200px] flex-1 rounded-lg md:max-w-[280px]" />
         {/* Organizations filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
-        {/* Account Groups filter */}
+        {/* Provider Groups filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
         {/* Status filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />

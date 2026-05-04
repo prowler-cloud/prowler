@@ -140,7 +140,7 @@ export function getColumnProviders(
           <div className="ml-2">
             <DataTableColumnHeader
               column={column}
-              title="Account"
+              title="Provider"
               param="alias"
             />
           </div>
@@ -200,7 +200,7 @@ export function getColumnProviders(
       accessorKey: "groupNames",
       size: 160,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Account Groups" />
+        <DataTableColumnHeader column={column} title="Provider Groups" />
       ),
       cell: ({ row }) => {
         if (isProvidersOrganizationRow(row.original)) {
@@ -251,7 +251,7 @@ export function getColumnProviders(
         if (isProvidersOrganizationRow(row.original)) {
           return (
             <span className="text-text-neutral-tertiary text-sm">
-              {row.original.providerCount} Accounts
+              {row.original.providerCount} Providers
             </span>
           );
         }

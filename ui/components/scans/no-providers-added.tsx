@@ -18,7 +18,7 @@ export const NoProvidersAdded = () => {
             <div className="flex flex-col items-center gap-4">
               <InfoIcon className="h-10 w-10 text-gray-800 dark:text-white" />
               <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
-                No Cloud Providers Configured
+                No Providers Configured
               </h2>
             </div>
             <div className="flex flex-col items-center gap-3">
@@ -29,7 +29,7 @@ export const NoProvidersAdded = () => {
             </div>
 
             <Button
-              aria-label="Open Add Cloud Provider modal"
+              aria-label="Open Add Provider modal"
               className="w-full max-w-xs justify-center"
               size="lg"
               onClick={() => setOpen(true)}

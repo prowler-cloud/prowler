@@ -333,12 +333,12 @@ export class ProvidersPage extends BasePage {
       .getByRole("dialog")
       .filter({
         has: page.getByRole("heading", {
-          name: /Adding A Cloud Provider|Update Provider Credentials/i,
+          name: /Adding A Provider|Update Provider Credentials/i,
         }),
       })
       .first();
     this.wizardTitle = page.getByRole("heading", {
-      name: /Adding A Cloud Provider|Update Provider Credentials/i,
+      name: /Adding A Provider|Update Provider Credentials/i,
     });
 
     // Button to add a new cloud provider
