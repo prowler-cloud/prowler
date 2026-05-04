@@ -38,7 +38,7 @@ export const getRolePermissions = (attributes: RolePermissionAttributes) => {
     },
     {
       key: "manage_account",
-      label: "Manage Provider",
+      label: "Manage Account",
       enabled: attributes.manage_account,
     },
     {

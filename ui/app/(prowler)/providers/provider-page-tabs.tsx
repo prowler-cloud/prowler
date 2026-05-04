@@ -9,14 +9,14 @@ import { PROVIDER_TAB, type ProviderTab } from "./provider-page-tabs.shared";
 
 interface ProviderPageTabsProps {
   activeTab: ProviderTab;
-  accountsContent: ReactNode;
-  accountGroupsContent: ReactNode;
+  providersContent: ReactNode;
+  providerGroupsContent: ReactNode;
 }
 
 export const ProviderPageTabs = ({
   activeTab,
-  accountsContent,
-  accountGroupsContent,
+  providersContent,
+  providerGroupsContent,
 }: ProviderPageTabsProps) => {
   const router = useRouter();
 
@@ -48,11 +48,11 @@ export const ProviderPageTabs = ({
       </TabsList>
 
       <TabsContent value={PROVIDER_TAB.PROVIDERS} className="mt-0">
-        {accountsContent}
+        {providersContent}
       </TabsContent>
 
       <TabsContent value={PROVIDER_TAB.PROVIDER_GROUPS} className="mt-0">
-        {accountGroupsContent}
+        {providerGroupsContent}
       </TabsContent>
     </Tabs>
   );

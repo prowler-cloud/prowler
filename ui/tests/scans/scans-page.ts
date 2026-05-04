@@ -20,7 +20,7 @@ export class ScansPage extends BasePage {
     super(page);
 
     // Scan provider selection elements
-    this.scanProviderSelect = page.getByRole('combobox').filter({ hasText: 'Choose a cloud provider' })
+    this.scanProviderSelect = page.getByRole('combobox').filter({ hasText: 'Choose a provider' })
     this.scanAliasInput = page.getByRole("textbox", { name: "Scan label (optional)" });
     this.startNowButton = page.getByRole("button", { name: /Start now|Start scan now/i });
 

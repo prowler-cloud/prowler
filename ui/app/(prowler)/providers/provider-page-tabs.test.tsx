@@ -33,8 +33,8 @@ describe("ProviderPageTabs", () => {
     const { rerender } = render(
       <ProviderPageTabs
         activeTab={PROVIDER_TAB.PROVIDER_GROUPS}
-        accountsContent={<div>Providers content</div>}
-        accountGroupsContent={<div>Provider groups content</div>}
+        providersContent={<div>Providers content</div>}
+        providerGroupsContent={<div>Provider groups content</div>}
       />,
     );
 
@@ -45,8 +45,8 @@ describe("ProviderPageTabs", () => {
     rerender(
       <ProviderPageTabs
         activeTab={PROVIDER_TAB.PROVIDERS}
-        accountsContent={<div>Providers content</div>}
-        accountGroupsContent={<div>Provider groups content</div>}
+        providersContent={<div>Providers content</div>}
+        providerGroupsContent={<div>Provider groups content</div>}
       />,
     );
 
@@ -63,8 +63,8 @@ describe("ProviderPageTabs", () => {
     render(
       <ProviderPageTabs
         activeTab={PROVIDER_TAB.PROVIDERS}
-        accountsContent={<div>Providers content</div>}
-        accountGroupsContent={<div>Provider groups content</div>}
+        providersContent={<div>Providers content</div>}
+        providerGroupsContent={<div>Provider groups content</div>}
       />,
     );
 

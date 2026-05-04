@@ -232,7 +232,7 @@ export class ProvidersPage extends BasePage {
   // Alias input
   readonly aliasInput: Locator;
 
-  // Button to add a new cloud provider
+  // Button to add a new provider
   readonly addProviderButton: Locator;
   readonly providersTable: Locator;
 
@@ -341,7 +341,7 @@ export class ProvidersPage extends BasePage {
       name: /Adding A Provider|Update Provider Credentials/i,
     });
 
-    // Button to add a new cloud provider
+    // Button to add a new provider
     this.addProviderButton = page
       .getByRole("button", {
         name: "Add Provider",
@@ -357,7 +357,7 @@ export class ProvidersPage extends BasePage {
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
 
-    // Option buttons to select the type of cloud provider (listbox with options)
+    // Option buttons to select the type of provider (listbox with options)
     this.awsProviderRadio = page.getByRole("option", {
       name: /Amazon Web Services/i,
     });

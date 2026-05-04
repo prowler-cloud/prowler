@@ -374,7 +374,7 @@ export const permissionFormFields: PermissionInfo[] = [
   },
   {
     field: "manage_account",
-    label: "Manage Provider",
+    label: "Manage Account",
     description: "Provides access to account settings and RBAC configuration",
   },
   {
