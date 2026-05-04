@@ -8,6 +8,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - New `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
 
+### 🔐 Security
+
+- `trivy` binary in the API image from 0.69.2 to 0.70.0, patching CVE-2026-33186 (gRPC-Go authorization bypass via missing leading slash in HTTP/2 `:path`)
+
 ---
 
 ## [1.26.1] (Prowler v5.25.1)
