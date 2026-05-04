@@ -14,8 +14,11 @@
     "lint:fix": "eslint . --fix",
     "format:check": "./node_modules/.bin/prettier --check ./app",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app",
-    "test": "vitest",
-    "test:run": "vitest run",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run --project unit",
+    "test:browser": "vitest run --project browser",
+    "test:browser:watch": "vitest --project browser",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test --project=auth --project=sign-up --project=providers --project=invitations --project=scans",
     "test:e2e:ui": "playwright test --project=auth --project=sign-up --project=providers --project=invitations --project=scans --ui",
@@ -139,6 +142,8 @@
     "@typescript-eslint/eslint-plugin": "8.53.0",
     "@typescript-eslint/parser": "8.53.0",
     "@vitejs/plugin-react": "5.1.2",
+    "@vitest/browser": "4.0.18",
+    "@vitest/browser-playwright": "4.0.18",
     "@vitest/coverage-v8": "4.0.18",
     "autoprefixer": "10.4.19",
     "babel-plugin-react-compiler": "1.0.0",
@@ -157,6 +162,7 @@
     "eslint-plugin-unused-imports": "4.3.0",
     "globals": "17.0.0",
     "jsdom": "27.4.0",
+    "msw": "2.13.4",
     "postcss": "8.4.38",
     "prettier": "3.6.2",
     "prettier-plugin-tailwindcss": "0.6.14",
@@ -164,7 +170,8 @@
     "tailwind-variants": "0.1.20",
     "tailwindcss": "4.1.18",
     "typescript": "5.5.4",
-    "vitest": "4.0.18"
+    "vitest": "4.0.18",
+    "vitest-browser-react": "2.0.4"
   },
   "pnpm": {
     "overrides": {
@@ -193,5 +200,10 @@
     }
   },
   "version": "0.0.1",
-  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
 }

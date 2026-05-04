@@ -42,6 +42,8 @@ jobs:
             fonts.gstatic.com:443
             api.github.com:443
             release-assets.githubusercontent.com:443
+            cdn.playwright.dev:443
+            objects.githubusercontent.com:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -151,6 +153,24 @@ jobs:
         run: |
           echo "Only test files changed - running ALL unit tests"
           pnpm run test:run
+
+      - name: Cache Playwright browsers
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: playwright-cache
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-chromium-
+
+      - name: Install Playwright Chromium browser
+        if: steps.check-changes.outputs.any_changed == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install chromium
+
+      - name: Run browser tests
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm run test:browser
 
       - name: Build application
         if: steps.check-changes.outputs.any_changed == 'true'

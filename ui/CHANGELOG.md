@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## Unreleased
 
+### 🚀 Added
+
+- Browser test mode using Vitest with the Playwright provider, with initial coverage of the Attack Paths page and a new `pnpm test:browser` script wired into CI
+
 ### 🔄 Changed
 
 - Attack Paths graph: extract shared primitives across `FindingNode`, `ResourceNode`, and `InternetNode` (hidden handles, label truncation, fill/border resolution) without forcing a generic node renderer [(#10705)](https://github.com/prowler-cloud/prowler/pull/10705)
