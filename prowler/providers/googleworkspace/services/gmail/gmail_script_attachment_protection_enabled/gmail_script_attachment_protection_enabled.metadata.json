@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_script_attachment_protection_enabled",
+  "CheckTitle": "Protection against attachments with scripts from untrusted senders is enabled",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when an attachment containing scripts is received from an untrusted sender. Script-bearing attachments (e.g., .js, .vbs, .ps1) are a common malware delivery mechanism.",
+  "Risk": "Without protection against script-bearing attachments from untrusted senders, users may receive **files containing malicious scripts** that can execute harmful code when opened. Attackers commonly use script attachments to deliver **malware, backdoors, or credential stealers**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/7676854",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **Safety** > **Attachments**\n4. Check **Protect against attachments with scripts from untrusted senders**\n5. Select the desired action (e.g., Move email to spam)\n6. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable protection against attachments with scripts from untrusted senders and configure an appropriate action such as moving to spam or quarantining.",
+      "Url": "https://hub.prowler.com/check/gmail_script_attachment_protection_enabled"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "gmail_encrypted_attachment_protection_enabled",
+    "gmail_anomalous_attachment_protection_enabled"
+  ],
+  "Notes": ""
+}

@@ -653,13 +653,15 @@
     {
       "Id": "3.1.3.4.1.1",
       "Description": "Ensure protection against encrypted attachments from untrusted senders is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_encrypted_attachment_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
           "SubSection": "3.1.3 Gmail",
           "Profile": "Level 1",
-          "AssessmentStatus": "Manual",
+          "AssessmentStatus": "Automated",
           "Description": "As a Google Workspace administrator, you can protect incoming mail against phishing and harmful software (malware). You can also choose what action to take based on the type of threat detected.",
           "RationaleStatement": "You should protect your users from potentially malicious attachments.",
           "ImpactStatement": "Users will be warned when they receive an encrypted attachment from an untrusted sender.",
@@ -674,13 +676,15 @@
     {
       "Id": "3.1.3.4.1.2",
       "Description": "Ensure protection against attachments with scripts from untrusted senders is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_script_attachment_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
           "SubSection": "3.1.3 Gmail",
           "Profile": "Level 1",
-          "AssessmentStatus": "Manual",
+          "AssessmentStatus": "Automated",
           "Description": "As a Google Workspace administrator, you can protect incoming mail against phishing and harmful software (malware). You can also choose what action to take based on the type of threat detected.",
           "RationaleStatement": "You should protect your users from potentially malicious attachments.",
           "ImpactStatement": "Users will be warned when they receive an attachments with scripts from an untrusted sender.",
@@ -695,13 +699,15 @@
     {
       "Id": "3.1.3.4.1.3",
       "Description": "Ensure protection against anomalous attachment types in emails is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_anomalous_attachment_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
           "SubSection": "3.1.3 Gmail",
           "Profile": "Level 1",
-          "AssessmentStatus": "Manual",
+          "AssessmentStatus": "Automated",
           "Description": "As a Google Workspace administrator, you can protect incoming mail against phishing and harmful software (malware). You can also choose what action to take based on the type of threat detected.",
           "RationaleStatement": "You should protect your users from potentially malicious attachments.",
           "ImpactStatement": "Users will be warned when they receive an anomalous attachment.",
@@ -785,13 +791,15 @@
     {
       "Id": "3.1.3.4.3.1",
       "Description": "Ensure protection against domain spoofing based on similar domain names is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_domain_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
           "SubSection": "3.1.3 Gmail",
           "Profile": "Level 1",
-          "AssessmentStatus": "Manual",
+          "AssessmentStatus": "Automated",
           "Description": "Moves domain spoofing emails to spam folder.",
           "RationaleStatement": "You should protect your users from domain spoofing emails.",
           "ImpactStatement": "Domain spoofed emails will be moved to a user's spam folder.",
@@ -806,13 +814,15 @@
     {
       "Id": "3.1.3.4.3.2",
       "Description": "Ensure protection against spoofing of employee names is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_employee_name_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
           "SubSection": "3.1.3 Gmail",
           "Profile": "Level 1",
-          "AssessmentStatus": "Manual",
+          "AssessmentStatus": "Automated",
           "Description": "Moves employee spoofing emails to spam folder.",
           "RationaleStatement": "You should protect your users from employee spoofing emails.",
           "ImpactStatement": "Employee spoofed emails will be moved to a user's spam folder.",
@@ -827,13 +837,15 @@
     {
       "Id": "3.1.3.4.3.3",
       "Description": "Ensure protection against inbound emails spoofing your domain is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_inbound_domain_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
           "SubSection": "3.1.3 Gmail",
           "Profile": "Level 1",
-          "AssessmentStatus": "Manual",
+          "AssessmentStatus": "Automated",
           "Description": "Moves inbound emails spoofing your domain to spam folder.",
           "RationaleStatement": "You should protect your users from inbound company domain spoofing emails.",
           "ImpactStatement": "Inbound company domain spoofed emails will be moved to a user's spam folder.",
@@ -848,13 +860,15 @@
     {
       "Id": "3.1.3.4.3.4",
       "Description": "Ensure protection against any unauthenticated emails is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_unauthenticated_email_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
           "SubSection": "3.1.3 Gmail",
           "Profile": "Level 1",
-          "AssessmentStatus": "Manual",
+          "AssessmentStatus": "Automated",
           "Description": "Displays a warning when any message is not authenticated (SPF or DKIM).",
           "RationaleStatement": "You should protect your users from any emails that aren't authenticated (SPF or DKIM)",
           "ImpactStatement": "Emails that aren't authenticated (SPF or DKIM) display a warning message to the recipient.",
@@ -869,13 +883,15 @@
     {
       "Id": "3.1.3.4.3.5",
       "Description": "Ensure groups are protected from inbound emails spoofing your domain",
-      "Checks": [],
+      "Checks": [
+        "gmail_groups_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
           "SubSection": "3.1.3 Gmail",
           "Profile": "Level 1",
-          "AssessmentStatus": "Manual",
+          "AssessmentStatus": "Automated",
           "Description": "If a group receives an email that is spoofing your domain it is sent to the spam folder.",
           "RationaleStatement": "You should protect your groups from any emails that spoofing your domain.",
           "ImpactStatement": "Emails that are spoofing your domain and are received by a group are sent to the spam folder.",

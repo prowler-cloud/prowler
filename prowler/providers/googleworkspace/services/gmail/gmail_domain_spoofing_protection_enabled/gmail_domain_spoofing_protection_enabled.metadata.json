@@ -1,0 +1,42 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_domain_spoofing_protection_enabled",
+  "CheckTitle": "Protection against domain spoofing based on similar domain names is enabled",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when emails appear to come from domain names that look similar to the organization's domain. Lookalike domains are a common phishing technique used to trick users into trusting malicious messages.",
+  "Risk": "Without protection against domain spoofing based on similar domain names, users may receive **phishing emails from lookalike domains** (e.g., examp1e.com instead of example.com) that appear legitimate. This enables **credential theft, malware delivery, and business email compromise** attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/9157861",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **Safety** > **Spoofing and authentication**\n4. Check **Protect against domain spoofing based on similar domain names**\n5. Select the desired action (e.g., Move email to spam)\n6. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable protection against domain spoofing based on similar domain names and configure an appropriate action such as moving to spam or quarantining.",
+      "Url": "https://hub.prowler.com/check/gmail_domain_spoofing_protection_enabled"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "gmail_employee_name_spoofing_protection_enabled",
+    "gmail_inbound_domain_spoofing_protection_enabled",
+    "gmail_unauthenticated_email_protection_enabled",
+    "gmail_groups_spoofing_protection_enabled"
+  ],
+  "Notes": ""
+}

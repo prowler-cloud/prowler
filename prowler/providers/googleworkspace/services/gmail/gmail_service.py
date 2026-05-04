@@ -57,11 +57,20 @@ class Gmail(GoogleWorkspaceService):
                             logger.debug("Gmail mail delegation setting fetched.")
 
                         elif setting_type == "gmail.email_attachment_safety":
+                            self.policies.enable_encrypted_attachment_protection = (
+                                value.get("enableEncryptedAttachmentProtection")
+                            )
                             self.policies.encrypted_attachment_protection_consequence = value.get(
                                 "encryptedAttachmentProtectionConsequence"
                             )
+                            self.policies.enable_script_attachment_protection = (
+                                value.get("enableAttachmentWithScriptsProtection")
+                            )
                             self.policies.script_attachment_protection_consequence = (
                                 value.get("scriptAttachmentProtectionConsequence")
+                            )
+                            self.policies.enable_anomalous_attachment_protection = (
+                                value.get("enableAnomalousAttachmentProtection")
                             )
                             self.policies.anomalous_attachment_protection_consequence = value.get(
                                 "anomalousAttachmentProtectionConsequence"
@@ -83,17 +92,32 @@ class Gmail(GoogleWorkspaceService):
                             )
 
                         elif setting_type == "gmail.spoofing_and_authentication":
+                            self.policies.detect_domain_name_spoofing = value.get(
+                                "detectDomainNameSpoofing"
+                            )
                             self.policies.domain_spoofing_consequence = value.get(
                                 "domainSpoofingConsequence"
+                            )
+                            self.policies.detect_employee_name_spoofing = value.get(
+                                "detectEmployeeNameSpoofing"
                             )
                             self.policies.employee_name_spoofing_consequence = (
                                 value.get("employeeNameSpoofingConsequence")
                             )
+                            self.policies.detect_inbound_domain_spoofing = value.get(
+                                "detectDomainSpoofingFromUnauthenticatedSenders"
+                            )
                             self.policies.inbound_domain_spoofing_consequence = (
                                 value.get("inboundDomainSpoofingConsequence")
                             )
+                            self.policies.detect_unauthenticated_emails = value.get(
+                                "detectUnauthenticatedEmails"
+                            )
                             self.policies.unauthenticated_email_consequence = value.get(
                                 "unauthenticatedEmailConsequence"
+                            )
+                            self.policies.detect_groups_spoofing = value.get(
+                                "detectGroupsSpoofing"
                             )
                             self.policies.groups_spoofing_consequence = value.get(
                                 "groupsSpoofingConsequence"
@@ -177,8 +201,11 @@ class GmailPolicies(BaseModel):
     enable_mail_delegation: Optional[bool] = None
 
     # gmail.email_attachment_safety
+    enable_encrypted_attachment_protection: Optional[bool] = None
     encrypted_attachment_protection_consequence: Optional[str] = None
+    enable_script_attachment_protection: Optional[bool] = None
     script_attachment_protection_consequence: Optional[str] = None
+    enable_anomalous_attachment_protection: Optional[bool] = None
     anomalous_attachment_protection_consequence: Optional[str] = None
 
     # gmail.links_and_external_images
@@ -187,10 +214,15 @@ class GmailPolicies(BaseModel):
     enable_aggressive_warnings_on_untrusted_links: Optional[bool] = None
 
     # gmail.spoofing_and_authentication
+    detect_domain_name_spoofing: Optional[bool] = None
     domain_spoofing_consequence: Optional[str] = None
+    detect_employee_name_spoofing: Optional[bool] = None
     employee_name_spoofing_consequence: Optional[str] = None
+    detect_inbound_domain_spoofing: Optional[bool] = None
     inbound_domain_spoofing_consequence: Optional[str] = None
+    detect_unauthenticated_emails: Optional[bool] = None
     unauthenticated_email_consequence: Optional[str] = None
+    detect_groups_spoofing: Optional[bool] = None
     groups_spoofing_consequence: Optional[str] = None
 
     # gmail.pop_access
