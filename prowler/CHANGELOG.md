@@ -32,6 +32,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.25.2] (Prowler v5.25.2)
+
+### 🐞 Fixed
+
+- Duplicate Kubernetes RBAC findings when the same User or Group subject appeared in multiple ClusterRoleBindings [(#10242)](https://github.com/prowler-cloud/prowler/pull/10242)
+
+---
+
 ## [5.25.1] (Prowler v5.25.1)
 
 ### 🐞 Fixed
