@@ -6,6 +6,7 @@ from prowler.providers.kubernetes.services.rbac.rbac_client import rbac_client
 
 verbs = ["update", "patch"]
 resources = ["certificatesigningrequests/approval"]
+api_groups = ["certificates.k8s.io"]
 
 
 class rbac_minimize_csr_approval_access(Check):
@@ -33,7 +34,9 @@ class rbac_minimize_csr_approval_access(Check):
             report.status_extended = f"User or group '{subject.name}' does not have access to update the CSR approval sub-resource."
             for role_name in role_names:
                 cr = cluster_roles_by_name.get(role_name)
-                if cr and is_rule_allowing_permissions(cr.rules, resources, verbs):
+                if cr and is_rule_allowing_permissions(
+                    cr.rules, resources, verbs, api_groups
+                ):
                     report.status = "FAIL"
                     report.status_extended = f"User or group '{subject.name}' has access to update the CSR approval sub-resource."
                     break
