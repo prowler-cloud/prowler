@@ -20,6 +20,9 @@ import {
   findOrCreateFramework,
   updateCounters,
 } from "./commons";
+import { compareSectionsByCanonicalOrder } from "./threatscore-pillars";
+
+export { getTopFailedSections } from "./threat-helpers";
 
 export const mapComplianceData = (
   attributesData: AttributesData,
@@ -90,6 +93,14 @@ export const mapComplianceData = (
 
     control.requirements.push(requirement);
   }
+
+  // Sort categories within each framework by canonical pillar order so
+  // the accordion, charts and breakdown all agree on the same ordering.
+  frameworks.forEach((framework) => {
+    framework.categories.sort((a, b) =>
+      compareSectionsByCanonicalOrder(a.name, b.name),
+    );
+  });
 
   // Calculate counters and percentualScore (Threat-specific logic)
   frameworks.forEach((framework) => {
