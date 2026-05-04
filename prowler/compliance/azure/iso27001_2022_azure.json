@@ -291,7 +291,9 @@
         "monitor_diagnostic_setting_with_appropriate_categories",
         "monitor_diagnostic_settings_exists",
         "monitor_storage_account_with_activity_logs_cmk_encrypted",
-        "monitor_storage_account_with_activity_logs_is_private"
+        "monitor_storage_account_with_activity_logs_is_private",
+        "aks_cluster_local_accounts_disabled",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -332,7 +334,8 @@
         "entra_policy_guest_invite_only_for_admin_roles",
         "entra_policy_guest_users_access_restrictions",
         "entra_policy_restricts_user_consent_for_apps",
-        "entra_policy_user_consent_for_verified_apps"
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -1108,7 +1111,8 @@
         "app_minimum_tls_version_12",
         "sqlserver_tde_encryption_enabled",
         "storage_ensure_encryption_with_customer_managed_keys",
-        "storage_infrastructure_encryption_is_enabled"
+        "storage_infrastructure_encryption_is_enabled",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ]
     },
     {
@@ -1167,7 +1171,9 @@
           "Check_Summary": "Information about technical vulnerabilities of information systems in use should be obtained, the organisations exposure to such vulnerabilities should be evaluated and appropriate measures should be taken."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "aks_cluster_auto_upgrade_enabled"
+      ]
     },
     {
       "Id": "A.8.9",
@@ -1266,7 +1272,13 @@
           "Check_Summary": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "recovery_vault_has_protected_items",
+        "recovery_vault_backup_policy_retention_adequate",
+        "cosmosdb_account_backup_policy_continuous",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled"
+      ]
     },
     {
       "Id": "A.8.14",
@@ -1293,7 +1305,12 @@
         "storage_ensure_private_endpoints_in_storage_accounts",
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_using_managed_disks",
-        "vm_trusted_launch_enabled"
+        "vm_trusted_launch_enabled",
+        "cosmosdb_account_automatic_failover_enabled",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "mysql_flexible_server_high_availability_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_high_availability_enabled"
       ]
     },
     {
@@ -1346,7 +1363,10 @@
         "monitor_alert_delete_policy_assignment",
         "monitor_alert_delete_public_ip_address_rule",
         "monitor_alert_delete_security_solution",
-        "monitor_alert_delete_sqlserver_fr"
+        "monitor_alert_delete_sqlserver_fr",
+        "defender_ensure_defender_cspm_is_on",
+        "aks_cluster_defender_enabled",
+        "aks_cluster_azure_monitor_enabled"
       ]
     },
     {
@@ -1415,7 +1435,12 @@
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
         "network_udp_internet_access_restricted",
-        "network_watcher_enabled"
+        "network_watcher_enabled",
+        "network_vnet_ddos_protection_enabled",
+        "network_subnet_nsg_associated",
+        "cosmosdb_account_public_network_access_disabled",
+        "databricks_workspace_public_network_access_disabled",
+        "databricks_workspace_no_public_ip_enabled"
       ]
     },
     {
@@ -1469,7 +1494,8 @@
         "network_rdp_internet_access_restricted",
         "network_ssh_internet_access_restricted",
         "network_udp_internet_access_restricted",
-        "network_watcher_enabled"
+        "network_watcher_enabled",
+        "network_subnet_nsg_associated"
       ]
     },
     {
@@ -1507,7 +1533,9 @@
         "storage_infrastructure_encryption_is_enabled",
         "storage_secure_transfer_required_is_enabled",
         "vm_ensure_attached_disks_encrypted_with_cmk",
-        "vm_ensure_unattached_disks_encrypted_with_cmk"
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "cosmosdb_account_minimum_tls_version_12",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {

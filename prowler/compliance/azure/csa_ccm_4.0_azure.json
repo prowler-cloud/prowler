@@ -842,7 +842,11 @@
         "storage_blob_versioning_is_enabled",
         "storage_geo_redundant_enabled",
         "vm_scaleset_associated_with_load_balancer",
-        "vm_scaleset_not_empty"
+        "vm_scaleset_not_empty",
+        "recovery_vault_has_protected_items",
+        "recovery_vault_backup_policy_retention_adequate",
+        "cosmosdb_account_automatic_failover_enabled",
+        "cosmosdb_account_backup_policy_continuous"
       ]
     },
     {
@@ -1251,7 +1255,8 @@
         "storage_secure_transfer_required_is_enabled",
         "storage_smb_channel_encryption_with_secure_algorithm",
         "vm_ensure_attached_disks_encrypted_with_cmk",
-        "vm_ensure_unattached_disks_encrypted_with_cmk"
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "cosmosdb_account_minimum_tls_version_12"
       ]
     },
     {
@@ -1456,7 +1461,8 @@
         "keyvault_access_only_through_private_endpoints",
         "keyvault_private_endpoints",
         "keyvault_rbac_enabled",
-        "storage_ensure_encryption_with_customer_managed_keys"
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {
@@ -1645,7 +1651,8 @@
         "keyvault_non_rbac_secret_expiration_set",
         "keyvault_rbac_key_expiration_set",
         "keyvault_rbac_secret_expiration_set",
-        "storage_key_rotation_90_days"
+        "storage_key_rotation_90_days",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {
@@ -3380,7 +3387,8 @@
         }
       ],
       "Checks": [
-        "entra_global_admin_in_less_than_five_users"
+        "entra_global_admin_in_less_than_five_users",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -3488,7 +3496,8 @@
         "entra_global_admin_in_less_than_five_users",
         "keyvault_non_rbac_secret_expiration_set",
         "keyvault_rbac_secret_expiration_set",
-        "storage_key_rotation_90_days"
+        "storage_key_rotation_90_days",
+        "entra_user_with_recent_sign_in"
       ]
     },
     {
@@ -4080,7 +4089,9 @@
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
         "entra_security_defaults_enabled",
-        "entra_user_with_vm_access_has_mfa"
+        "entra_user_with_vm_access_has_mfa",
+        "entra_app_registration_credential_not_expired",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ]
     },
     {
@@ -4926,7 +4937,8 @@
         "cosmosdb_account_use_private_endpoints",
         "databricks_workspace_vnet_injection_enabled",
         "network_http_internet_access_restricted",
-        "storage_ensure_private_endpoints_in_storage_accounts"
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "network_subnet_nsg_associated"
       ]
     },
     {
@@ -6182,7 +6194,8 @@
       ],
       "Checks": [
         "monitor_diagnostic_setting_with_appropriate_categories",
-        "monitor_diagnostic_settings_exists"
+        "monitor_diagnostic_settings_exists",
+        "aks_cluster_azure_monitor_enabled"
       ]
     },
     {
@@ -6820,7 +6833,8 @@
         "defender_assessments_vm_endpoint_protection_installed",
         "defender_auto_provisioning_log_analytics_agent_vms_on",
         "defender_ensure_defender_for_server_is_on",
-        "defender_ensure_wdatp_is_enabled"
+        "defender_ensure_wdatp_is_enabled",
+        "defender_ensure_defender_cspm_is_on"
       ]
     },
     {
