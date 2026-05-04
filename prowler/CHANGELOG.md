@@ -29,8 +29,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔐 Security
 
 - Parser-mismatch SSRF in image provider registry auth where crafted bearer-token realms and pagination links could force requests to internal addresses and leak credentials cross-origin [(#10945)](https://github.com/prowler-cloud/prowler/pull/10945)
-- `cryptography` from 46.0.6 to 46.0.7 for CVE-2026-39892
-- `trivy` binary in the SDK for CVE-2026-33186 
+- `cryptography` from 46.0.6 to 46.0.7 and `trivy` binary from 0.69.2 to 0.70.0 in the SDK image for CVE-2026-39892 and CVE-2026-33186 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
 
 ---
 
