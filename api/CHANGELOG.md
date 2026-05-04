@@ -10,8 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔐 Security
 
-- `trivy` binary in the API image from 0.69.2 to 0.70.0 for CVE-2026-33186
-- `cryptography` from 46.0.6 to 46.0.7 (transitive via prowler SDK) for CVE-2026-39892
+- `trivy` binary from 0.69.2 to 0.70.0 and `cryptography` from 46.0.6 to 46.0.7 (transitive via prowler SDK) in the API image for CVE-2026-33186 and CVE-2026-39892 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
 
 ---
 
