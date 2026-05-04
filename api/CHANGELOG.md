@@ -10,7 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔐 Security
 
-- `trivy` binary in the API image from 0.69.2 to 0.70.0, patching CVE-2026-33186 (gRPC-Go authorization bypass via missing leading slash in HTTP/2 `:path`)
+- `trivy` binary in the API image from 0.69.2 to 0.70.0 for CVE-2026-33186
 
 ---
 
