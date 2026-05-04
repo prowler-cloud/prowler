@@ -9,6 +9,7 @@ resources = [
     "mutatingwebhookconfigurations",
 ]
 verbs = ["create", "update", "delete"]
+api_groups = ["admissionregistration.k8s.io"]
 
 
 class rbac_minimize_webhook_config_access(Check):
@@ -36,7 +37,9 @@ class rbac_minimize_webhook_config_access(Check):
             report.status_extended = f"User or group '{subject.name}' does not have access to create, update, or delete webhook configurations."
             for role_name in role_names:
                 cr = cluster_roles_by_name.get(role_name)
-                if cr and is_rule_allowing_permissions(cr.rules, resources, verbs):
+                if cr and is_rule_allowing_permissions(
+                    cr.rules, resources, verbs, api_groups
+                ):
                     report.status = "FAIL"
                     report.status_extended = f"User or group '{subject.name}' has access to create, update, or delete webhook configurations."
                     break
