@@ -2,7 +2,7 @@ import re
 import secrets
 import time
 import uuid
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager, nullcontext
 from datetime import datetime, timedelta, timezone
 
 from celery.utils.log import get_task_logger
@@ -78,14 +78,34 @@ def rls_transaction(
     retry_on_replica: bool = True,
 ):
     """
-    Creates a new database transaction setting the given configuration value for Postgres RLS. It validates the
-    if the value is a valid UUID.
+    Context manager that opens an RLS-scoped database transaction.
+
+    Sets a Postgres configuration variable (``set_config``) so that
+    Row-Level Security policies can filter by tenant.  When *using*
+    points to a read replica and *retry_on_replica* is True, two
+    layers of retry protect against replica failures:
+
+    1. **Pre-yield** (connection-setup failures): the function retries
+       up to ``REPLICA_MAX_ATTEMPTS`` times on the replica, then falls
+       back to the primary DB.
+    2. **Post-yield** (mid-query failures): an ``execute_wrapper``
+       intercepts ``OperationalError`` during ``cursor.execute()``
+       calls, retries on the replica with backoff, and falls back to
+       the primary if the replica stays down.  The wrapper swaps the
+       inner psycopg2 cursor so ``fetchall()`` / ``fetchone()`` read
+       from the new connection transparently.
+
+    Limitation: server-side cursors (``.iterator()``) fetch rows via
+    ``fetchmany()``, which the wrapper does not intercept.  Call sites
+    that iterate large result sets with ``.iterator()`` on the replica
+    should add their own retry logic.
 
     Args:
-        value (str): Database configuration parameter value.
-        parameter (str): Database configuration parameter name, by default is 'api.tenant_id'.
-        using (str | None): Optional database alias to run the transaction against. Defaults to the
-            active read alias (if any) or Django's default connection.
+        value: Database configuration parameter value (must be a valid UUID).
+        parameter: Database configuration parameter name.
+        using: Optional database alias.  Defaults to the active read
+            alias or Django's default connection.
+        retry_on_replica: Whether to retry on replica failures.
     """
     requested_alias = using or get_read_db_alias()
     db_alias = requested_alias or DEFAULT_DB_ALIAS
@@ -93,54 +113,147 @@ def rls_transaction(
         db_alias = DEFAULT_DB_ALIAS
 
     alias = db_alias
-    is_replica = READ_REPLICA_ALIAS and alias == READ_REPLICA_ALIAS
-    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica and retry_on_replica else 1
+    is_replica = bool(READ_REPLICA_ALIAS and alias == READ_REPLICA_ALIAS)
+    can_failover = is_replica and retry_on_replica
+    replica_alias = alias  # captured before the loop mutates alias
+    max_attempts = (REPLICA_MAX_ATTEMPTS + 1) if can_failover else 1
 
-    for attempt in range(1, max_attempts + 1):
-        router_token = None
-        yielded_cursor = False
+    # State shared between the generator and the _query_failover closure.
+    # The fallback transaction.atomic() is registered into fallback_stack
+    # via enter_context so its __exit__ runs when the outer with-ExitStack
+    # block exits, with the right exc_info. No manual __enter__/__exit__.
+    _fallback = {"succeeded": False, "token": None}
 
-        # On final attempt, fallback to primary
-        if attempt == max_attempts and is_replica:
-            logger.warning(
-                f"RLS transaction failed after {attempt - 1} attempts on replica, "
-                f"falling back to primary DB"
-            )
-            alias = DEFAULT_DB_ALIAS
+    with ExitStack() as fallback_stack:
 
-        conn = connections[alias]
-        try:
-            if alias != DEFAULT_DB_ALIAS:
-                router_token = set_read_db_alias(alias)
-
-            with transaction.atomic(using=alias):
-                with conn.cursor() as cursor:
+        def _query_failover(execute, sql, params, many, context):
+            """execute_wrapper: retry failed replica queries, then fall back to primary."""
+            try:
+                return execute(sql, params, many, context)
+            except OperationalError as err:
+                # Phase 1: retry on replica with exponential backoff
+                for retry in range(1, REPLICA_MAX_ATTEMPTS + 1):
                     try:
-                        # just in case the value is a UUID object
-                        uuid.UUID(str(value))
-                    except ValueError:
-                        raise ValidationError("Must be a valid UUID")
-                    cursor.execute(SET_CONFIG_QUERY, [parameter, value])
-                    yielded_cursor = True
-                    yield cursor
-            return
-        except OperationalError as e:
-            if yielded_cursor:
-                raise
-            # If on primary or max attempts reached, raise
-            if not is_replica or attempt == max_attempts:
-                raise
+                        connections[replica_alias].close()
+                    except Exception:
+                        pass  # Best-effort; connection may already be dead
 
-            # Retry with exponential backoff
-            delay = REPLICA_RETRY_BASE_DELAY * (2 ** (attempt - 1))
-            logger.info(
-                f"RLS transaction failed on replica (attempt {attempt}/{max_attempts}), "
-                f"retrying in {delay}s. Error: {e}"
-            )
-            time.sleep(delay)
-        finally:
-            if router_token is not None:
-                reset_read_db_alias(router_token)
+                    delay = REPLICA_RETRY_BASE_DELAY * (2 ** (retry - 1))
+                    logger.info(
+                        f"Mid-query failure on replica (retry {retry}/{REPLICA_MAX_ATTEMPTS}), "
+                        f"retrying in {delay:.1f}s. Error: {err}"
+                    )
+                    time.sleep(delay)
+
+                    try:
+                        replica_conn = connections[replica_alias]
+                        replica_conn.ensure_connection()
+                        replica_conn.connection.autocommit = False
+                        raw = replica_conn.connection.cursor()
+                        raw.execute(SET_CONFIG_QUERY, [parameter, value])
+                        if many:
+                            raw.executemany(sql, params)
+                        else:
+                            raw.execute(sql, params)
+                        context["cursor"].cursor = raw
+                        return None
+                    except OperationalError as retry_err:
+                        err = retry_err
+                        continue
+
+                # Phase 2: fall back to primary
+                try:
+                    connections[replica_alias].close()
+                except Exception:
+                    pass  # Best-effort; connection may already be dead
+
+                logger.warning(
+                    "Mid-query replica retries exhausted, falling back to primary DB"
+                )
+                primary = connections[DEFAULT_DB_ALIAS]
+                primary.ensure_connection()
+                fallback_stack.enter_context(transaction.atomic(using=DEFAULT_DB_ALIAS))
+                with primary.cursor() as setup_cursor:
+                    setup_cursor.execute(SET_CONFIG_QUERY, [parameter, value])
+                _fallback["token"] = set_read_db_alias(DEFAULT_DB_ALIAS)
+
+                raw = primary.connection.cursor()
+                if many:
+                    raw.executemany(sql, params)
+                else:
+                    raw.execute(sql, params)
+                context["cursor"].cursor = raw
+                _fallback["succeeded"] = True
+                return None
+
+        for attempt in range(1, max_attempts + 1):
+            router_token = None
+            yielded_cursor = False
+            _caller_exited_cleanly = False
+
+            # On final attempt, fall back to primary
+            if attempt == max_attempts and can_failover:
+                if attempt > 1:
+                    logger.warning(
+                        f"RLS transaction failed after {attempt - 1} attempts on replica, "
+                        f"falling back to primary DB"
+                    )
+                alias = DEFAULT_DB_ALIAS
+
+            conn = connections[alias]
+            try:
+                if alias != DEFAULT_DB_ALIAS:
+                    router_token = set_read_db_alias(alias)
+
+                with transaction.atomic(using=alias):
+                    with conn.cursor() as cursor:
+                        try:
+                            uuid.UUID(str(value))
+                        except ValueError:
+                            raise ValidationError("Must be a valid UUID")
+                        cursor.execute(SET_CONFIG_QUERY, [parameter, value])
+
+                        wrapper_cm = (
+                            conn.execute_wrapper(_query_failover)
+                            if can_failover and alias == replica_alias
+                            else nullcontext()
+                        )
+                        with wrapper_cm:
+                            yielded_cursor = True
+                            yield cursor
+                            _caller_exited_cleanly = True
+                return
+            except OperationalError as e:
+                try:
+                    connections[alias].close()
+                except Exception:
+                    pass  # Best-effort; connection may already be dead
+
+                if yielded_cursor:
+                    if _fallback["succeeded"] and _caller_exited_cleanly:
+                        # Caller's queries succeeded on primary via failover.
+                        # This error is transaction.atomic() cleanup on the
+                        # dead replica connection, suppress it.
+                        return
+                    raise
+
+                if not can_failover or attempt == max_attempts:
+                    raise
+
+                # Retry with exponential backoff
+                delay = REPLICA_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                logger.info(
+                    f"RLS transaction failed on replica (attempt {attempt}/{max_attempts}), "
+                    f"retrying in {delay}s. Error: {e}"
+                )
+                time.sleep(delay)
+            finally:
+                if _fallback["token"] is not None:
+                    reset_read_db_alias(_fallback["token"])
+                    _fallback["token"] = None
+
+                if router_token is not None:
+                    reset_read_db_alias(router_token)
 
 
 class CustomUserManager(BaseUserManager):

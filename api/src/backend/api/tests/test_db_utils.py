@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from enum import Enum
 from unittest.mock import MagicMock, patch
@@ -528,7 +529,7 @@ class TestRlsTransaction:
                 def atomic_side_effect(*args, **kwargs):
                     nonlocal call_count
                     call_count += 1
-                    if call_count < 3:
+                    if call_count < 4:
                         raise OperationalError("Connection error")
                     return MagicMock(
                         __enter__=MagicMock(return_value=None),
@@ -547,10 +548,11 @@ class TestRlsTransaction:
                                     with rls_transaction(tenant_id):
                                         pass
 
-                                    assert mock_sleep.call_count == 2
+                                    assert mock_sleep.call_count == 3
                                     mock_sleep.assert_any_call(0.5)
                                     mock_sleep.assert_any_call(1.0)
-                                    assert mock_logger.info.call_count == 2
+                                    mock_sleep.assert_any_call(2.0)
+                                    assert mock_logger.info.call_count == 3
 
     def test_rls_transaction_operational_error_inside_context_no_retry(
         self, tenants_fixture, enable_read_replica
@@ -582,10 +584,10 @@ class TestRlsTransaction:
 
                                 mock_sleep.assert_not_called()
 
-    def test_rls_transaction_max_three_attempts_for_replica(
+    def test_rls_transaction_max_attempts_for_replica(
         self, tenants_fixture, enable_read_replica
     ):
-        """Test maximum 3 attempts for replica database."""
+        """Test REPLICA_MAX_ATTEMPTS replica tries + 1 primary fallback."""
         tenant = tenants_fixture[0]
         tenant_id = str(tenant.id)
 
@@ -609,7 +611,8 @@ class TestRlsTransaction:
                                     with rls_transaction(tenant_id):
                                         pass
 
-                                assert mock_atomic.call_count == 3
+                                # 3 replica + 1 primary = 4 total
+                                assert mock_atomic.call_count == 4
 
     def test_rls_transaction_replica_no_retry_when_disabled(
         self, tenants_fixture, enable_read_replica
@@ -685,7 +688,7 @@ class TestRlsTransaction:
                 def atomic_side_effect(*args, **kwargs):
                     nonlocal call_count
                     call_count += 1
-                    if call_count < 3:
+                    if call_count < 4:
                         raise OperationalError("Replica error")
                     return MagicMock(
                         __enter__=MagicMock(return_value=None),
@@ -728,7 +731,7 @@ class TestRlsTransaction:
                 def atomic_side_effect(*args, **kwargs):
                     nonlocal call_count
                     call_count += 1
-                    if call_count < 3:
+                    if call_count < 4:
                         raise OperationalError("Replica error")
                     return MagicMock(
                         __enter__=MagicMock(return_value=None),
@@ -747,7 +750,7 @@ class TestRlsTransaction:
                                     with rls_transaction(tenant_id):
                                         pass
 
-                                    assert mock_logger.info.call_count == 2
+                                    assert mock_logger.info.call_count == 3
                                     assert mock_logger.warning.call_count == 1
 
     def test_rls_transaction_operational_error_raised_immediately_on_primary(
@@ -912,6 +915,446 @@ class TestRlsTransaction:
             cursor.execute("SELECT 1")
             result = cursor.fetchone()
             assert result[0] == 1
+
+    # --- Mid-query failover tests ---
+
+    def test_mid_query_failure_retries_on_replica(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Mid-query OperationalError retries on replica via execute_wrapper."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_conn.execute_wrappers = []
+
+                @contextmanager
+                def _execute_wrapper(fn):
+                    mock_conn.execute_wrappers.append(fn)
+                    try:
+                        yield
+                    finally:
+                        mock_conn.execute_wrappers.remove(fn)
+
+                mock_conn.execute_wrapper = _execute_wrapper
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                # The raw replica cursor that succeeds on retry
+                mock_raw_cursor = MagicMock()
+                mock_conn.connection.cursor.return_value = mock_raw_cursor
+
+                with patch("api.db_utils.transaction.atomic") as mock_atomic:
+                    mock_atomic.return_value.__enter__ = MagicMock(return_value=None)
+                    mock_atomic.return_value.__exit__ = MagicMock(return_value=False)
+
+                    with patch("api.db_utils.time.sleep") as mock_sleep:
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with rls_transaction(tenant_id):
+                                    # Wrapper is installed
+                                    assert len(mock_conn.execute_wrappers) == 1
+                                    wrapper = mock_conn.execute_wrappers[0]
+
+                                    # Simulate a mid-query failure that succeeds on retry
+                                    mock_execute = MagicMock(
+                                        side_effect=OperationalError("EOF")
+                                    )
+                                    mock_context = {"cursor": MagicMock()}
+
+                                    wrapper(
+                                        mock_execute,
+                                        "SELECT 1",
+                                        None,
+                                        False,
+                                        mock_context,
+                                    )
+
+                                    # Verify retry happened with backoff
+                                    mock_sleep.assert_called_once_with(0.5)
+                                    mock_conn.ensure_connection.assert_called_once()
+                                    # The raw cursor was swapped
+                                    assert (
+                                        mock_context["cursor"].cursor == mock_raw_cursor
+                                    )
+
+                        # Wrapper removed after exiting
+                        assert len(mock_conn.execute_wrappers) == 0
+
+    def test_mid_query_failure_falls_back_to_primary(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Mid-query failure falls back to primary after replica retries exhausted."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_replica_conn = MagicMock()
+                mock_replica_conn.execute_wrappers = []
+
+                @contextmanager
+                def _execute_wrapper_replica(fn):
+                    mock_replica_conn.execute_wrappers.append(fn)
+                    try:
+                        yield
+                    finally:
+                        mock_replica_conn.execute_wrappers.remove(fn)
+
+                mock_replica_conn.execute_wrapper = _execute_wrapper_replica
+                mock_cursor = MagicMock()
+                mock_replica_conn.cursor.return_value.__enter__.return_value = (
+                    mock_cursor
+                )
+                # Replica always fails on retry
+                mock_replica_conn.ensure_connection.side_effect = OperationalError(
+                    "replica down"
+                )
+
+                mock_primary_conn = MagicMock()
+                mock_primary_raw_cursor = MagicMock()
+                mock_primary_conn.connection.cursor.return_value = (
+                    mock_primary_raw_cursor
+                )
+
+                def connections_getitem(alias):
+                    if alias == "replica":
+                        return mock_replica_conn
+                    return mock_primary_conn
+
+                mock_connections.__getitem__.side_effect = connections_getitem
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic") as mock_atomic:
+                    mock_atomic.return_value.__enter__ = MagicMock(return_value=None)
+                    mock_atomic.return_value.__exit__ = MagicMock(return_value=False)
+
+                    with patch("api.db_utils.time.sleep"):
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with patch("api.db_utils.logger") as mock_logger:
+                                    with rls_transaction(tenant_id):
+                                        wrapper = mock_replica_conn.execute_wrappers[0]
+
+                                        mock_execute = MagicMock(
+                                            side_effect=OperationalError("EOF")
+                                        )
+                                        mock_context = {"cursor": MagicMock()}
+
+                                        wrapper(
+                                            mock_execute,
+                                            "SELECT 1",
+                                            None,
+                                            False,
+                                            mock_context,
+                                        )
+
+                                        # Verify primary was used
+                                        mock_primary_conn.ensure_connection.assert_called_once()
+                                        assert (
+                                            mock_context["cursor"].cursor
+                                            == mock_primary_raw_cursor
+                                        )
+
+                                    # Verify warning logged
+                                    warning_msgs = [
+                                        c[0][0]
+                                        for c in mock_logger.warning.call_args_list
+                                    ]
+                                    assert any(
+                                        "falling back to primary" in m
+                                        for m in warning_msgs
+                                    )
+
+    def test_mid_query_fallback_suppresses_cleanup_error(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """After successful primary fallback, replica cleanup error is suppressed."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_replica_conn = MagicMock()
+                mock_replica_conn.execute_wrappers = []
+
+                @contextmanager
+                def _execute_wrapper_replica(fn):
+                    mock_replica_conn.execute_wrappers.append(fn)
+                    try:
+                        yield
+                    finally:
+                        mock_replica_conn.execute_wrappers.remove(fn)
+
+                mock_replica_conn.execute_wrapper = _execute_wrapper_replica
+                mock_cursor = MagicMock()
+                mock_replica_conn.cursor.return_value.__enter__.return_value = (
+                    mock_cursor
+                )
+                mock_replica_conn.ensure_connection.side_effect = OperationalError(
+                    "replica down"
+                )
+
+                mock_primary_conn = MagicMock()
+                mock_primary_raw_cursor = MagicMock()
+                mock_primary_conn.connection.cursor.return_value = (
+                    mock_primary_raw_cursor
+                )
+
+                def connections_getitem(alias):
+                    if alias == "replica":
+                        return mock_replica_conn
+                    return mock_primary_conn
+
+                mock_connections.__getitem__.side_effect = connections_getitem
+                mock_connections.__contains__.return_value = True
+
+                # Replica's atomic.__exit__ raises on dead replica cleanup;
+                # primary's atomic.__exit__ returns False (healthy commit).
+                mock_outer_atomic = MagicMock()
+                mock_outer_atomic.__enter__ = MagicMock(return_value=None)
+                mock_outer_atomic.__exit__ = MagicMock(
+                    side_effect=OperationalError("cleanup failed on dead replica")
+                )
+
+                mock_fallback_atomic = MagicMock()
+                mock_fallback_atomic.__enter__ = MagicMock(return_value=None)
+                mock_fallback_atomic.__exit__ = MagicMock(return_value=False)
+
+                atomic_call_count = 0
+
+                def atomic_side_effect(*args, **kwargs):
+                    nonlocal atomic_call_count
+                    atomic_call_count += 1
+                    if atomic_call_count == 1:
+                        return mock_outer_atomic
+                    return mock_fallback_atomic
+
+                with patch(
+                    "api.db_utils.transaction.atomic",
+                    side_effect=atomic_side_effect,
+                ):
+                    with patch("api.db_utils.time.sleep"):
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                # Should NOT raise: the replica cleanup error is suppressed
+                                with rls_transaction(tenant_id):
+                                    wrapper = mock_replica_conn.execute_wrappers[0]
+                                    mock_execute = MagicMock(
+                                        side_effect=OperationalError("EOF")
+                                    )
+                                    mock_context = {"cursor": MagicMock()}
+                                    wrapper(
+                                        mock_execute,
+                                        "SELECT 1",
+                                        None,
+                                        False,
+                                        mock_context,
+                                    )
+
+    def test_mid_query_primary_also_fails(self, tenants_fixture, enable_read_replica):
+        """When both replica and primary fail, OperationalError propagates."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_conn.execute_wrappers = []
+
+                @contextmanager
+                def _execute_wrapper(fn):
+                    mock_conn.execute_wrappers.append(fn)
+                    try:
+                        yield
+                    finally:
+                        mock_conn.execute_wrappers.remove(fn)
+
+                mock_conn.execute_wrapper = _execute_wrapper
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                # Both replica retry and primary fail
+                mock_conn.ensure_connection.side_effect = OperationalError("down")
+                mock_conn.connection.cursor.side_effect = OperationalError("down")
+
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic") as mock_atomic:
+                    mock_atomic.return_value.__enter__ = MagicMock(return_value=None)
+                    mock_atomic.return_value.__exit__ = MagicMock(return_value=False)
+
+                    with patch("api.db_utils.time.sleep"):
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with rls_transaction(tenant_id):
+                                    wrapper = mock_conn.execute_wrappers[0]
+                                    mock_execute = MagicMock(
+                                        side_effect=OperationalError("EOF")
+                                    )
+                                    mock_context = {"cursor": MagicMock()}
+
+                                    with pytest.raises(OperationalError):
+                                        wrapper(
+                                            mock_execute,
+                                            "SELECT 1",
+                                            None,
+                                            False,
+                                            mock_context,
+                                        )
+
+    def test_wrapper_not_installed_on_primary(self, tenants_fixture):
+        """execute_wrapper is not installed when targeting primary DB."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=None):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_conn.execute_wrappers = []
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic") as mock_atomic:
+                    mock_atomic.return_value.__enter__ = MagicMock(return_value=None)
+                    mock_atomic.return_value.__exit__ = MagicMock(return_value=False)
+
+                    with rls_transaction(tenant_id):
+                        # No wrapper installed on primary
+                        assert len(mock_conn.execute_wrappers) == 0
+
+    def test_stale_connection_closed_on_pre_yield_retry(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Stale connection is closed before each pre-yield retry."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_conn.execute_wrappers = []
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                call_count = 0
+
+                def atomic_side_effect(*args, **kwargs):
+                    nonlocal call_count
+                    call_count += 1
+                    if call_count < 3:
+                        raise OperationalError("Connection error")
+                    return MagicMock(
+                        __enter__=MagicMock(return_value=None),
+                        __exit__=MagicMock(return_value=False),
+                    )
+
+                with patch(
+                    "api.db_utils.transaction.atomic", side_effect=atomic_side_effect
+                ):
+                    with patch("api.db_utils.time.sleep"):
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with rls_transaction(tenant_id):
+                                    pass
+
+                                # close() called for each failed pre-yield attempt
+                                assert mock_conn.close.call_count == 2
+
+    def test_caller_error_propagates_after_successful_failover(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """OperationalError raised by caller after failover is NOT suppressed."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_replica_conn = MagicMock()
+                mock_replica_conn.execute_wrappers = []
+
+                @contextmanager
+                def _execute_wrapper_replica(fn):
+                    mock_replica_conn.execute_wrappers.append(fn)
+                    try:
+                        yield
+                    finally:
+                        mock_replica_conn.execute_wrappers.remove(fn)
+
+                mock_replica_conn.execute_wrapper = _execute_wrapper_replica
+                mock_cursor = MagicMock()
+                mock_replica_conn.cursor.return_value.__enter__.return_value = (
+                    mock_cursor
+                )
+                mock_replica_conn.ensure_connection.side_effect = OperationalError(
+                    "replica down"
+                )
+
+                mock_primary_conn = MagicMock()
+                mock_primary_raw_cursor = MagicMock()
+                mock_primary_conn.connection.cursor.return_value = (
+                    mock_primary_raw_cursor
+                )
+
+                def connections_getitem(alias):
+                    if alias == "replica":
+                        return mock_replica_conn
+                    return mock_primary_conn
+
+                mock_connections.__getitem__.side_effect = connections_getitem
+                mock_connections.__contains__.return_value = True
+
+                # transaction.atomic().__exit__ raises on dead replica cleanup
+                mock_atomic_cm = MagicMock()
+                mock_atomic_cm.__enter__ = MagicMock(return_value=None)
+                mock_atomic_cm.__exit__ = MagicMock(
+                    side_effect=OperationalError("cleanup on dead replica")
+                )
+
+                with patch(
+                    "api.db_utils.transaction.atomic", return_value=mock_atomic_cm
+                ):
+                    with patch("api.db_utils.time.sleep"):
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with pytest.raises(OperationalError):
+                                    with rls_transaction(tenant_id):
+                                        # Trigger failover (succeeds on primary)
+                                        wrapper = mock_replica_conn.execute_wrappers[0]
+                                        mock_execute = MagicMock(
+                                            side_effect=OperationalError("EOF")
+                                        )
+                                        mock_context = {"cursor": MagicMock()}
+                                        wrapper(
+                                            mock_execute,
+                                            "SELECT 1",
+                                            None,
+                                            False,
+                                            mock_context,
+                                        )
+                                        # Caller raises after successful failover —
+                                        # must NOT be suppressed
+                                        raise OperationalError("caller error")
 
 
 class TestPostgresEnumMigration:
