@@ -52,7 +52,7 @@ body:
     attributes:
       label: New provider name
       description: Only fill this if you selected "Other / New provider" above.
-      placeholder: "Snowflake, Databricks, Tailscale, ..."
+      placeholder: "NewProviderName"
     validations:
       required: false
 
