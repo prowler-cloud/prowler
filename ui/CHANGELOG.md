@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [1.25.2] (Prowler UNRELEASED)
 
 ### 🔄 Changed
@@ -13,7 +11,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
->>>>>>> 652cb6921 (fix(ui): compliance card layout polish (#10939))
 ## [1.25.1] (Prowler v5.25.1)
 
 ### 🐞 Fixed
