@@ -100,7 +100,7 @@ class TestCloudTrailTimeline:
 
         assert len(result) == 1
         assert result[0]["event_name"] == "RunInstances"
-        assert result[0]["actor"] == "arn:aws:iam::123456789012:user/admin"
+        assert result[0]["actor"] == "user/admin"
         assert result[0]["source_ip_address"] == "203.0.113.1"
 
     def test_get_resource_timeline_with_resource_uid(
@@ -304,10 +304,7 @@ class TestExtractActor:
             "arn": "arn:aws:iam::123456789012:user/alice",
             "userName": "alice",
         }
-        assert (
-            CloudTrailTimeline._extract_actor(user_identity)
-            == "arn:aws:iam::123456789012:user/alice"
-        )
+        assert CloudTrailTimeline._extract_actor(user_identity) == "user/alice"
 
     def test_extract_actor_assumed_role(self):
         user_identity = {
@@ -316,26 +313,23 @@ class TestExtractActor:
         }
         assert (
             CloudTrailTimeline._extract_actor(user_identity)
-            == "arn:aws:sts::123456789012:assumed-role/MyRole/session-name"
+            == "assumed-role/MyRole/session-name"
         )
 
     def test_extract_actor_assumed_role_sso(self):
         """SSO sessions store the user identity in the session name."""
         user_identity = {
             "type": "AssumedRole",
-            "arn": "arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_AdministratorAccess_abc/user@example.com",
+            "arn": "arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_AdministratorAccess_96348e7f59a9aaf3/toni@prowler.com",
         }
         assert (
             CloudTrailTimeline._extract_actor(user_identity)
-            == "arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_AdministratorAccess_abc/user@example.com"
+            == "assumed-role/AWSReservedSSO_AdministratorAccess_96348e7f59a9aaf3/toni@prowler.com"
         )
 
     def test_extract_actor_root(self):
         user_identity = {"type": "Root", "arn": "arn:aws:iam::123456789012:root"}
-        assert (
-            CloudTrailTimeline._extract_actor(user_identity)
-            == "arn:aws:iam::123456789012:root"
-        )
+        assert CloudTrailTimeline._extract_actor(user_identity) == "root"
 
     def test_extract_actor_service(self):
         user_identity = {
@@ -357,7 +351,7 @@ class TestExtractActor:
         }
         assert (
             CloudTrailTimeline._extract_actor(user_identity)
-            == "arn:aws:sts::123456789012:federated-user/developer"
+            == "federated-user/developer"
         )
 
 
@@ -397,7 +391,7 @@ class TestParseEvent:
         assert result is not None
         assert result["event_name"] == "RunInstances"
         assert result["event_source"] == "ec2.amazonaws.com"
-        assert result["actor"] == "arn:aws:iam::123456789012:user/admin"
+        assert result["actor"] == "user/admin"
         assert result["actor_uid"] == "arn:aws:iam::123456789012:user/admin"
         assert result["actor_type"] == "IAMUser"
 
@@ -452,7 +446,7 @@ class TestParseEvent:
 
         assert result is not None
         assert result["event_name"] == "RunInstances"
-        assert result["actor"] == "arn:aws:iam::123456789012:user/admin"
+        assert result["actor"] == "user/admin"
 
     def test_parse_event_missing_event_id(self, mock_session):
         """Test parsing event without EventId returns None (event_id is required)."""
@@ -526,7 +520,7 @@ class TestParseEvent:
 
         assert result is not None
         assert result["event_name"] == "RunInstances"
-        assert result["actor"] == "arn:aws:iam::123456789012:user/admin"
+        assert result["actor"] == "user/admin"
         # actor_type should be None when not present in userIdentity
         assert result["actor_type"] is None
 

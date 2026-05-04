@@ -1,0 +1,131 @@
+---
+title: 'Prowler Studio'
+---
+
+**Prowler Studio is an AI workflow that ensures Claude Code follows Prowler's skills, guardrails, and best practices when creating new security checks.** What lands in the resulting pull request is consistent, tested, and ready for human review — not half-correct boilerplate that needs to be rewritten.
+
+<Info>
+**Contributor Tool**: Prowler Studio is a workflow for advanced contributors adding new Prowler security checks. It is not part of Prowler Cloud, Prowler App, or Prowler CLI.
+</Info>
+
+<Warning>
+**Preview Feature**: Prowler Studio is under active development and breaking changes are expected. Please report issues or share feedback on [GitHub](https://github.com/prowler-cloud/prowler-studio/issues) or in the [Slack community](https://goto.prowler.com/slack).
+</Warning>
+
+<Card title="Prowler Studio Repository" icon="github" href="https://github.com/prowler-cloud/prowler-studio" horizontal>
+  Clone the source code, install Prowler Studio, and explore the agent workflow in detail.
+</Card>
+
+## The Problem
+
+Adding a new check to [Prowler](https://github.com/prowler-cloud/prowler) is more than writing detection logic. A correct check has to:
+
+- Match Prowler's exact service and check folder structure and naming conventions
+- Wire up metadata, severity, remediation, tests, and compliance mappings
+- Mirror the patterns used by the hundreds of existing checks in the same provider
+- Actually load when Prowler scans for available checks — silent structural mistakes are easy to make
+
+Asking a general-purpose AI assistant to do this usually means guessing. It misses conventions, skips tests, or invents structure that looks right but does not load. The result is a half-correct PR that needs to be reviewed line by line or rewritten.
+
+## The Solution
+
+Prowler Studio enforces the workflow end-to-end. Describe the check once — a markdown ticket, a Jira issue, or a GitHub issue — and the workflow:
+
+1. **Loads Prowler-specific skills into every agent.** Every step starts with the same context an experienced Prowler engineer would have in mind. See [AI Skills System](/developer-guide/ai-skills) for how skills are structured.
+2. **Runs specialized agents in sequence.** Implementation → testing → compliance mapping → review → PR creation. Each agent has one job and a tight scope.
+3. **Verifies as it goes.** The check must load in Prowler. Tests must pass. If something fails, the agent fixes it and re-runs (up to a bounded number of attempts) before moving on.
+4. **Produces a complete pull request.** Branch, passing check, tests, compliance mappings, and a pull request waiting for human review.
+
+The result is a consistent starting point, every time, on every supported provider.
+
+## Quick Start
+
+### Install
+
+Prowler Studio requires [`uv`](https://docs.astral.sh/uv/getting-started/installation/) — see the official [installation guide](https://docs.astral.sh/uv/getting-started/installation/).
+
+```bash
+git clone https://github.com/prowler-cloud/prowler-studio
+cd prowler-studio
+uv sync
+source .venv/bin/activate
+```
+
+### Describe the Check
+
+A ticket is a structured markdown description of the check to create. It is the only input the workflow needs; every agent (implementation, testing, compliance mapping, review, PR creation) uses it as the source of truth, so the more concrete it is, the closer the first PR will land to the desired outcome.
+
+The ticket can be supplied in three ways:
+
+- **Local markdown file** → `--ticket path/to/ticket.md`
+- **Jira issue** → `--jira-url https://...` (uses the issue body)
+- **GitHub issue** → `--github-url https://...` (uses the issue body)
+
+The content should follow the **New Check Request** template:
+
+- The local copy at [`check_ticket_template.md`](https://github.com/prowler-cloud/prowler-studio/blob/main/check_ticket_template.md) covers `--ticket` and Jira tickets.
+- A prefilled GitHub form is also available: [Create a New Check Request issue](https://github.com/prowler-cloud/prowler/issues/new?template=new-check-request.yml).
+
+Sections marked *Optional* can be skipped; everything else helps the agents make the right decisions.
+
+### Run the Workflow
+
+From a local markdown ticket:
+
+```bash
+prowler-studio --ticket check_ticket.md
+```
+
+From a Jira ticket:
+
+```bash
+prowler-studio --jira-url https://mycompany.atlassian.net/browse/PROJ-123
+```
+
+From a GitHub issue:
+
+```bash
+prowler-studio --github-url https://github.com/owner/repo/issues/123
+```
+
+<Note>
+Provide exactly one of `--ticket`, `--jira-url`, or `--github-url`.
+</Note>
+
+Keep changes local (no push, no pull request):
+
+```bash
+prowler-studio -b feat/my-check --ticket check_ticket.md --local
+```
+
+### What You Get
+
+After a successful run the working environment contains:
+
+- A new branch on a clean Prowler worktree containing the check, metadata, tests, and compliance mappings
+- A pull request opened against Prowler (skipped with `--local`)
+- A timestamped log file under `logs/` capturing every step the agents took
+
+## CLI Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--branch` | `-b` | Branch name (default: `feat/<ticket>-<check_name>` or `feat/<check_name>`) |
+| `--ticket` | `-t` | Path to a markdown check ticket file |
+| `--jira-url` | `-j` | Jira ticket URL (e.g., `https://mycompany.atlassian.net/browse/PROJ-123`) |
+| `--github-url` | `-g` | GitHub issue URL (e.g., `https://github.com/owner/repo/issues/123`) |
+| `--working-dir` | `-w` | Working directory for the Prowler clone (default: `./working`) |
+| `--no-worktree` |  | Legacy mode — work directly on the main clone instead of using worktrees |
+| `--cleanup-worktree` |  | Remove the worktree after a successful pull request is created |
+| `--local` |  | Keep changes local — skip push and pull request creation |
+
+## Configuration
+
+Set these environment variables depending on the input source:
+
+| Variable | When Needed | Purpose |
+|----------|-------------|---------|
+| `GITHUB_TOKEN` | `--github-url` (recommended) | Higher GitHub API rate limits and access to private issues |
+| `JIRA_SITE_URL` | `--jira-url` | Jira site, e.g. `https://mycompany.atlassian.net` |
+| `JIRA_EMAIL` | `--jira-url` | Email of the Jira account used to fetch the ticket |
+| `JIRA_API_TOKEN` | `--jira-url` | API token for the Jira account |

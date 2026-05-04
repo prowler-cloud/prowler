@@ -32,6 +32,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.25.2] (Prowler v5.25.2)
+
+### 🐞 Fixed
+
+- Duplicate Kubernetes RBAC findings when the same User or Group subject appeared in multiple ClusterRoleBindings [(#10242)](https://github.com/prowler-cloud/prowler/pull/10242)
+- Return a compact actor name from CloudTrail `userIdentity` events [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
+---
+
 ## [5.25.1] (Prowler v5.25.1)
 
 ### 🐞 Fixed
