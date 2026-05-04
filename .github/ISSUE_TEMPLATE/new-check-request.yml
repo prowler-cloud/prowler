@@ -69,7 +69,7 @@ body:
     id: suggested_check_name
     attributes:
       label: Suggested check name
-      description: Optional. Use `snake_case` following `<service>_<resource>_<condition>`.
+      description: Optional. Use `snake_case` following `<service>_<resource>_<best_practice>`, with lowercase letters and underscores only.
       placeholder: "bedrock_guardrail_sensitive_information_filter_enabled"
     validations:
       required: false
