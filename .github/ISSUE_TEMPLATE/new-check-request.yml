@@ -1,0 +1,143 @@
+name: "🔎 New Check Request"
+description: Request a new Prowler security check
+title: "[New Check]: "
+labels: ["feature-request", "status/needs-triage"]
+
+body:
+  - type: checkboxes
+    id: search
+    attributes:
+      label: Existing check search
+      description: Confirm this check does not already exist before opening a new request.
+      options:
+        - label: I have searched existing issues, Prowler Hub, and the public roadmap, and this check does not already exist.
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to describe the security condition that Prowler should evaluate.
+
+        The most useful inputs for [Prowler Studio](https://github.com/prowler-cloud/prowler-studio) are:
+        - What should be detected
+        - What PASS and FAIL mean
+        - Vendor docs, API references, SDK methods, CLI commands, or reference code
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      description: Cloud or platform this check targets.
+      options:
+        - AWS
+        - Azure
+        - GCP
+        - Kubernetes
+        - GitHub
+        - Microsoft 365
+        - OCI
+        - Alibaba Cloud
+        - Cloudflare
+        - MongoDB Atlas
+        - Google Workspace
+        - OpenStack
+        - Vercel
+        - NHN
+        - Other / New provider
+    validations:
+      required: true
+
+  - type: input
+    id: other_provider_name
+    attributes:
+      label: New provider name
+      description: Only fill this if you selected "Other / New provider" above.
+      placeholder: "Snowflake, Databricks, Tailscale, ..."
+    validations:
+      required: false
+
+  - type: input
+    id: service_name
+    attributes:
+      label: Service or product area
+      description: Optional. Main service, product, or feature to audit.
+      placeholder: "s3, bedrock, entra, repository, apiserver"
+    validations:
+      required: false
+
+  - type: input
+    id: suggested_check_name
+    attributes:
+      label: Suggested check name
+      description: Optional. Use `snake_case` following `<service>_<resource>_<condition>`.
+      placeholder: "bedrock_guardrail_sensitive_information_filter_enabled"
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and goal
+      description: Describe the security problem, why it matters, and what this new check should help detect.
+      placeholder: |-
+        - Security condition to validate:
+        - Why it matters:
+        - Resource, feature, or configuration involved:
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected behavior
+      description: Explain what the check should evaluate and what PASS, FAIL, or MANUAL should mean.
+      placeholder: |-
+        - Resource or scope to evaluate:
+        - PASS when:
+        - FAIL when:
+        - MANUAL when (if applicable):
+        - Exclusions, thresholds, or edge cases:
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Add vendor docs, API references, SDK methods, CLI commands, endpoint docs, sample payloads, or similar reference material.
+      placeholder: |-
+        - Product or service documentation:
+        - API or SDK reference:
+        - CLI command or endpoint documentation:
+        - Sample payload or response:
+        - Security advisory or benchmark:
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Suggested severity
+      description: Your best estimate. Reviewers will confirm during triage.
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+        - Informational
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation_notes
+    attributes:
+      label: Additional implementation notes
+      description: Optional. Add permissions, unsupported regions, config knobs, product limitations, or anything else that may affect implementation.
+      placeholder: |-
+        - Required permissions or scopes:
+        - Region, tenant, or subscription limitations:
+        - Configurable behavior or thresholds:
+        - Other constraints:
+    validations:
+      required: false
