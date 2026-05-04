@@ -320,11 +320,11 @@ class TestExtractActor:
         """SSO sessions store the user identity in the session name."""
         user_identity = {
             "type": "AssumedRole",
-            "arn": "arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_AdministratorAccess_96348e7f59a9aaf3/toni@prowler.com",
+            "arn": "arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_AdministratorAccess_abcdef1234567890/user@example.com",
         }
         assert (
             CloudTrailTimeline._extract_actor(user_identity)
-            == "assumed-role/AWSReservedSSO_AdministratorAccess_96348e7f59a9aaf3/toni@prowler.com"
+            == "assumed-role/AWSReservedSSO_AdministratorAccess_abcdef1234567890/user@example.com"
         )
 
     def test_extract_actor_root(self):
