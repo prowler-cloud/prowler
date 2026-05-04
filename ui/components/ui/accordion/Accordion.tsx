@@ -134,6 +134,7 @@ export const Accordion = ({
       {items.map((item, index) => (
         <AccordionItem
           key={item.key}
+          data-accordion-key={item.key}
           aria-label={
             typeof item.title === "string" ? item.title : `Item ${item.key}`
           }

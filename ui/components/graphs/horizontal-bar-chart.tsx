@@ -14,17 +14,24 @@ interface HorizontalBarChartProps {
   height?: number;
   title?: string;
   onBarClick?: (dataPoint: BarDataPoint, index: number) => void;
+  /**
+   * When false, totals of 0 still render the supplied `data` as zero-width
+   * bars instead of falling back to severity placeholders. Useful for callers
+   * that pre-populate a canonical category list (e.g. ThreatScore pillars).
+   */
+  useSeverityEmptyState?: boolean;
 }
 
 export function HorizontalBarChart({
   data,
   title,
   onBarClick,
+  useSeverityEmptyState = true,
 }: HorizontalBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const total = data.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
-  const isEmpty = total <= 0;
+  const isEmpty = total <= 0 && (useSeverityEmptyState || data.length === 0);
 
   const emptyData: BarDataPoint[] = [
     { name: "Critical", value: 1, percentage: 100 },
