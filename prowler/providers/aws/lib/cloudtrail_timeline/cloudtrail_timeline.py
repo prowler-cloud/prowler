@@ -221,27 +221,12 @@ class CloudTrailTimeline(TimelineService):
 
     @staticmethod
     def _extract_actor(user_identity: Dict[str, Any]) -> str:
-        """Extract a human-readable actor name from CloudTrail userIdentity."""
-        # Try ARN first - most reliable
+        """Return a compact actor name from CloudTrail userIdentity.
+
+        For ARNs, returns the resource portion (everything after the last
+        `:`) — e.g. `user/alice`, `assumed-role/MyRole/session-name`,
+        `root`. The full ARN is preserved separately in `actor_uid`.
+        """
         if arn := user_identity.get("arn"):
-            if "/" in arn:
-                parts = arn.split("/")
-                # For assumed-role, return the role name (second-to-last part)
-                if "assumed-role" in arn and len(parts) >= 2:
-                    return parts[-2]
-                return parts[-1]
-            return arn.split(":")[-1]
-
-        # Fall back to userName
-        if username := user_identity.get("userName"):
-            return username
-
-        # Fall back to principalId
-        if principal_id := user_identity.get("principalId"):
-            return principal_id
-
-        # For service-invoked actions
-        if invoking_service := user_identity.get("invokedBy"):
-            return invoking_service
-
-        return "Unknown"
+            return arn.rsplit(":", 1)[-1]
+        return user_identity.get("invokedBy") or "Unknown"

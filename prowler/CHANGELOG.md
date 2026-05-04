@@ -37,6 +37,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - Duplicate Kubernetes RBAC findings when the same User or Group subject appeared in multiple ClusterRoleBindings [(#10242)](https://github.com/prowler-cloud/prowler/pull/10242)
+- Return a compact actor name from CloudTrail `userIdentity` events [(#10986)](https://github.com/prowler-cloud/prowler/pull/10986)
 
 ---
 
