@@ -10,9 +10,9 @@ import neo4j
 class SinkDatabase(Protocol):
     """Contract for the persistent attack-paths graph store.
 
-    The ``database`` argument is an opaque identifier passed through from the
-    legacy ``database.py`` API surface. On Neo4j it is the per-tenant database
-    name (e.g. ``db-tenant-{uuid}``). On Neptune it is ignored (the cluster
+    The `database` argument is an opaque identifier passed through from the
+    legacy `database.py` API surface. On Neo4j it is the per-tenant database
+    name (e.g. `db-tenant-{uuid}`). On Neptune it is ignored (the cluster
     has a single graph, and isolation is label-based).
     """
 

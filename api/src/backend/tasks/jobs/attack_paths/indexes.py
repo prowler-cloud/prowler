@@ -39,8 +39,8 @@ SYNC_INDEX_STATEMENTS = [
 def create_findings_indexes(neo4j_session: neo4j.Session) -> None:
     """Create indexes for Prowler findings and resource lookups.
 
-    Neptune auto-manages indexes and does not support ``CREATE INDEX``, so
-    this is a no-op when the sink is Neptune. The ``neo4j_session`` argument
+    Neptune auto-manages indexes and does not support `CREATE INDEX`, so
+    this is a no-op when the sink is Neptune. The `neo4j_session` argument
     is only honored on Neo4j sinks.
     """
     if _sink_is_neptune():
@@ -54,7 +54,7 @@ def create_findings_indexes(neo4j_session: neo4j.Session) -> None:
 def create_sync_indexes(neo4j_session: neo4j.Session) -> None:
     """Create indexes for provider resource sync operations.
 
-    Neptune auto-manages indexes and does not support ``CREATE INDEX``, so
+    Neptune auto-manages indexes and does not support `CREATE INDEX`, so
     this is a no-op when the sink is Neptune.
     """
     if _sink_is_neptune():

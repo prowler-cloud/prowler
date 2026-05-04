@@ -4,10 +4,10 @@ Cypher sanitizer for custom (user-supplied) Attack Paths queries.
 Two responsibilities:
 
 1. **Validation** - reject queries containing SSRF or dangerous procedure
-   patterns (defense-in-depth; the primary control is ``neo4j.READ_ACCESS``).
+   patterns (defense-in-depth; the primary control is `neo4j.READ_ACCESS`).
 
 2. **Provider-scoped label injection** - inject a dynamic
-   ``_Provider_{uuid}`` label into every node pattern so the database can
+   `_Provider_{uuid}` label into every node pattern so the database can
    use its native label index for provider isolation.
 
 Label-injection pipeline:
