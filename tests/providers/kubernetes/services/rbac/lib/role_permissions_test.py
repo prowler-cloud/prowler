@@ -47,9 +47,16 @@ class TestCheckRolePermissions:
         assert is_rule_allowing_permissions(rules, ["pods"], ["get"])
 
     def test_default_api_group_is_core(self):
-        rules = [Rule(resources=["pods"], verbs=["get"], apiGroups=[""])]
+        rules = [Rule(resources=["pods"], verbs=["get"], apiGroups=None)]
         assert is_rule_allowing_permissions(rules, ["pods"], ["get"])
 
+    def test_rule_with_empty_api_groups_does_not_match_non_core_request(self):
+        rules = [Rule(resources=["pods"], verbs=["get"], apiGroups=None)]
+        assert not is_rule_allowing_permissions(
+            rules, ["pods"], ["get"], ["admissionregistration.k8s.io"]
+        )
+
+    def test_non_core_rule_does_not_match_without_api_groups_argument(self):
         rules = [
             Rule(
                 resources=["validatingwebhookconfigurations"],

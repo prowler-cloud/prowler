@@ -22,8 +22,9 @@ def is_rule_allowing_permissions(rules, resources, verbs, api_groups=("",)):
     if not rules:
         return False
     for rule in rules:
-        if rule.apiGroups and not (
-            any(g in rule.apiGroups for g in api_groups) or "*" in rule.apiGroups
+        rule_api_groups = rule.apiGroups or [""]
+        if not (
+            any(g in rule_api_groups for g in api_groups) or "*" in rule_api_groups
         ):
             continue
         if (
