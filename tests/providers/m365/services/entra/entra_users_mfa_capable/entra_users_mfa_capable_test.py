@@ -11,6 +11,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -53,6 +54,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -95,6 +97,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -153,6 +156,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -191,6 +195,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -248,6 +253,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -286,6 +292,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -324,6 +331,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -383,6 +391,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
 
         with (
             mock.patch(
@@ -420,3 +429,122 @@ class Test_entra_users_mfa_capable:
             assert result[0].resource == entra_client.users[user_id]
             assert result[0].resource_name == "Test User"
             assert result[0].resource_id == user_id
+
+    def test_user_registration_details_permission_error(self):
+        """Test FAIL when there's a permission error reading user registration details."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable import (
+                entra_users_mfa_capable,
+            )
+
+            user_id = str(uuid4())
+            entra_client.users = {
+                user_id: User(
+                    id=user_id,
+                    name="Test User",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=False,
+                    account_enabled=True,
+                )
+            }
+
+            check = entra_users_mfa_capable()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "Cannot verify MFA capability for user Test User" in result[0].status_extended
+            assert "AuditLog.Read.All" in result[0].status_extended
+            assert result[0].resource == entra_client.users[user_id]
+            assert result[0].resource_name == "Test User"
+            assert result[0].resource_id == user_id
+
+    def test_user_registration_details_permission_error_skips_guest_and_disabled(self):
+        """CIS-scope skip (Guest, disabled) still applies on the permission-error path.
+
+        With ``user_registration_details_error`` set, only enabled member users
+        should receive a per-user "Cannot verify MFA capability" FAIL — guests
+        and disabled members are filtered out before the error branch runs.
+        """
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable import (
+                entra_users_mfa_capable,
+            )
+
+            member_id = str(uuid4())
+            guest_id = str(uuid4())
+            disabled_member_id = str(uuid4())
+            entra_client.users = {
+                member_id: User(
+                    id=member_id,
+                    name="Enabled Member",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=False,
+                    account_enabled=True,
+                    user_type="Member",
+                ),
+                guest_id: User(
+                    id=guest_id,
+                    name="Guest User",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=False,
+                    account_enabled=True,
+                    user_type="Guest",
+                ),
+                disabled_member_id: User(
+                    id=disabled_member_id,
+                    name="Disabled Member",
+                    on_premises_sync_enabled=False,
+                    directory_roles_ids=[],
+                    is_mfa_capable=False,
+                    account_enabled=False,
+                    user_type="Member",
+                ),
+            }
+
+            check = entra_users_mfa_capable()
+            result = check.execute()
+
+            # Only the enabled member should be reported — Guest and
+            # disabled member are skipped before the error branch.
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                "Cannot verify MFA capability for user Enabled Member"
+                in result[0].status_extended
+            )
+            assert "AuditLog.Read.All" in result[0].status_extended
+            assert result[0].resource == entra_client.users[member_id]
+            assert result[0].resource_name == "Enabled Member"
+            assert result[0].resource_id == member_id
