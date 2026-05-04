@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.26.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Findings expanded resource rows now drop the redundant cube icons, render Service and Region with the same compact label style as Last seen and Failing for, and reorder columns to Status, Resource, Provider, Severity, then field labels [(#10949)](https://github.com/prowler-cloud/prowler/pull/10949)
+
+---
+
 ## [1.25.1] (Prowler v5.25.1)
 
 ### 🐞 Fixed
