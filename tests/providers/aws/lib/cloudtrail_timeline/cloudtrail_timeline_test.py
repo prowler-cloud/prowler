@@ -344,6 +344,21 @@ class TestExtractActor:
     def test_extract_actor_unknown(self):
         assert CloudTrailTimeline._extract_actor({}) == "Unknown"
 
+    def test_extract_actor_username_only_returns_unknown(self):
+        """When userIdentity carries only userName/principalId (no arn or
+        invokedBy), we deliberately return "Unknown" — we rely on the ARN
+        from the upstream service for the actor."""
+        assert (
+            CloudTrailTimeline._extract_actor({"type": "IAMUser", "userName": "alice"})
+            == "Unknown"
+        )
+        assert (
+            CloudTrailTimeline._extract_actor(
+                {"type": "Unknown", "principalId": "AROAEXAMPLEID:session"}
+            )
+            == "Unknown"
+        )
+
     def test_extract_actor_federated_user(self):
         user_identity = {
             "type": "FederatedUser",
