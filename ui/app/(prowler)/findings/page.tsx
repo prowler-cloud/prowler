@@ -8,6 +8,8 @@ import {
 import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScan, getScans } from "@/actions/scans";
+import { SeedFromFindingsButton } from "@/app/(prowler)/alerts/_components";
+import { isAlertsEnabled } from "@/app/(prowler)/alerts/_lib/env";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   FindingsGroupTable,
@@ -80,6 +82,7 @@ export default async function Findings({
     completedScans || [],
     providersData,
   ) as { [uid: string]: ScanEntity }[];
+  const showAlertsControls = isAlertsEnabled();
 
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
@@ -94,6 +97,20 @@ export default async function Findings({
             uniqueResourceTypes={uniqueResourceTypes}
             uniqueCategories={uniqueCategories}
             uniqueGroups={uniqueGroups}
+            trailingControls={
+              showAlertsControls ? (
+                <SeedFromFindingsButton
+                  filterBag={filters}
+                  providers={providersData?.data || []}
+                  scans={scanDetails}
+                  uniqueRegions={uniqueRegions}
+                  uniqueServices={uniqueServices}
+                  uniqueResourceTypes={uniqueResourceTypes}
+                  uniqueCategories={uniqueCategories}
+                  uniqueGroups={uniqueGroups}
+                />
+              ) : undefined
+            }
           />
         </div>
         <Suspense fallback={<SkeletonTableFindings />}>
