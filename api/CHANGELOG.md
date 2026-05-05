@@ -2,6 +2,17 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [1.27.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
+
+---
+
+>>>>>>> 703a33108 (chore(changelog): prepare for v5.25.2 (#10991))
 ## [1.26.1] (Prowler v5.25.1)
 
 ### 🐞 Fixed
