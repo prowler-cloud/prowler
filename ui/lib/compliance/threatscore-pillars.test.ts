@@ -7,15 +7,20 @@ import {
 } from "./threatscore-pillars";
 
 describe("getOrderedPillars", () => {
-  it("returns every canonical pillar in canonical order even when some are missing", () => {
+  it("returns every canonical pillar in canonical order, treating missing canonical pillars as 100% (no findings = secure)", () => {
     const result = getOrderedPillars({ "1. IAM": 90, "4. Encryption": 60 });
 
     expect(result.map((p) => p.name)).toEqual([...THREATSCORE_PILLARS]);
     expect(result[0]).toEqual({ name: "1. IAM", score: 90, hasData: true });
     expect(result[1]).toEqual({
       name: "2. Attack Surface",
-      score: 0,
-      hasData: false,
+      score: 100,
+      hasData: true,
+    });
+    expect(result[2]).toEqual({
+      name: "3. Logging and Monitoring",
+      score: 100,
+      hasData: true,
     });
     expect(result[3]).toEqual({
       name: "4. Encryption",
