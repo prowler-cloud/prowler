@@ -244,8 +244,18 @@ export class AttackPathPageHarness {
     return !!this.nodeDetailsHeading;
   }
 
+  get nodeActionHeading(): HTMLElement | null {
+    return (
+      Array.from(
+        document.querySelectorAll<HTMLElement>("[role='dialog'] h2"),
+      ).find((heading) =>
+        /^Choose node action$/i.test(heading.textContent ?? ""),
+      ) ?? null
+    );
+  }
+
   get hasNodeActionDialog(): boolean {
-    return this.containsText(/Choose node action/i);
+    return !!this.nodeActionHeading;
   }
 
   // --- Sync helpers ---

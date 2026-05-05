@@ -67,6 +67,21 @@ const NODE_ACTION_CONTEXT = {
 type NodeActionContext =
   (typeof NODE_ACTION_CONTEXT)[keyof typeof NODE_ACTION_CONTEXT];
 
+interface NodeActionBase {
+  node: GraphNode;
+  context: NodeActionContext;
+}
+
+interface ResourceFindingsNodeAction extends NodeActionBase {
+  context: typeof NODE_ACTION_CONTEXT.RESOURCE_FINDINGS;
+}
+
+interface FilteredParentNodeAction extends NodeActionBase {
+  context: typeof NODE_ACTION_CONTEXT.FILTERED_PARENT;
+}
+
+type NodeActionState = ResourceFindingsNodeAction | FilteredParentNodeAction;
+
 /**
  * Attack Paths
  * Allows users to select a scan, build a query, and visualize the attack path graph
@@ -83,10 +98,7 @@ export default function AttackPathsPage() {
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-  const [actionNode, setActionNode] = useState<GraphNode | null>(null);
-  const [actionContext, setActionContext] = useState<NodeActionContext>(
-    NODE_ACTION_CONTEXT.RESOURCE_FINDINGS,
-  );
+  const [nodeAction, setNodeAction] = useState<NodeActionState | null>(null);
   const graphRef = useRef<GraphHandle>(null);
   const fullscreenGraphRef = useRef<GraphHandle>(null);
   const hasResetRef = useRef(false);
@@ -317,8 +329,7 @@ export default function AttackPathsPage() {
     }
 
     if (graphState.isFilteredView) {
-      setActionNode(node);
-      setActionContext(NODE_ACTION_CONTEXT.FILTERED_PARENT);
+      setNodeAction({ node, context: NODE_ACTION_CONTEXT.FILTERED_PARENT });
       return;
     }
 
@@ -333,8 +344,7 @@ export default function AttackPathsPage() {
     });
 
     if (hasFindings) {
-      setActionNode(node);
-      setActionContext(NODE_ACTION_CONTEXT.RESOURCE_FINDINGS);
+      setNodeAction({ node, context: NODE_ACTION_CONTEXT.RESOURCE_FINDINGS });
       return;
     }
 
@@ -351,22 +361,22 @@ export default function AttackPathsPage() {
   };
 
   const handleShowNodeFindings = () => {
-    if (!actionNode) return;
-    graphState.toggleExpandedResource(actionNode.id);
-    setActionNode(null);
+    if (!nodeAction) return;
+    graphState.toggleExpandedResource(nodeAction.node.id);
+    setNodeAction(null);
   };
 
   const handleOpenNodeDetails = () => {
-    if (!actionNode) return;
+    if (!nodeAction) return;
     finding.resetFindingDetails();
-    graphState.selectNode(actionNode.id);
-    setActionNode(null);
+    graphState.selectNode(nodeAction.node.id);
+    setNodeAction(null);
   };
 
   const handleReturnToFullGraph = () => {
     graphState.exitFilteredView();
     graphState.selectNode(null);
-    setActionNode(null);
+    setNodeAction(null);
   };
 
   const handleViewFinding = (findingId: string) => {
@@ -374,8 +384,8 @@ export default function AttackPathsPage() {
     void finding.navigateToFinding(findingId);
   };
 
-  const actionNodeFindingsExpanded = actionNode
-    ? graphState.expandedResources.has(actionNode.id)
+  const actionNodeFindingsExpanded = nodeAction
+    ? graphState.expandedResources.has(nodeAction.node.id)
     : false;
 
   const handleGraphExport = async (target: "main" | "fullscreen") => {
@@ -675,16 +685,16 @@ export default function AttackPathsPage() {
             />
           )}
 
-          {actionNode && (
+          {nodeAction && (
             <Modal
-              open={!!actionNode}
+              open={!!nodeAction}
               onOpenChange={(open) => {
-                if (!open) setActionNode(null);
+                if (!open) setNodeAction(null);
               }}
               size="md"
               title="Choose node action"
               description={
-                actionContext === NODE_ACTION_CONTEXT.FILTERED_PARENT
+                nodeAction.context === NODE_ACTION_CONTEXT.FILTERED_PARENT
                   ? "You're viewing a filtered path. Choose whether to return to the full graph or inspect this node."
                   : "This node has related findings. Choose whether to reveal them in the graph or inspect the node metadata."
               }
@@ -693,7 +703,7 @@ export default function AttackPathsPage() {
                 <Button variant="outline" onClick={handleOpenNodeDetails}>
                   View node details
                 </Button>
-                {actionContext === NODE_ACTION_CONTEXT.FILTERED_PARENT ? (
+                {nodeAction.context === NODE_ACTION_CONTEXT.FILTERED_PARENT ? (
                   <Button onClick={handleReturnToFullGraph}>
                     Back to full graph
                   </Button>

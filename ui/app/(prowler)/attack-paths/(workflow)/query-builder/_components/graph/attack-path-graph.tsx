@@ -172,6 +172,30 @@ const AUTO_FIT_OPTIONS = {
   duration: 300,
 } as const;
 
+const MEASURED_FIT_MAX_ATTEMPTS = 30;
+
+const scheduleMeasuredFit = (
+  isMeasured: () => boolean,
+  onMeasured: () => void,
+) => {
+  let frame = 0;
+  let attempts = 0;
+
+  const tryFit = () => {
+    if (isMeasured() || attempts >= MEASURED_FIT_MAX_ATTEMPTS) {
+      onMeasured();
+      return;
+    }
+
+    attempts += 1;
+    frame = requestAnimationFrame(tryFit);
+  };
+
+  frame = requestAnimationFrame(tryFit);
+
+  return () => cancelAnimationFrame(frame);
+};
+
 const GraphCanvas = ({
   data,
   selectedNodeId,
@@ -273,23 +297,16 @@ const GraphCanvas = ({
     // previous zoom — most visibly when leaving a filtered view in which the
     // user had zoomed in. Poll until visible nodes are measured (or give up
     // after ~500ms so we never block on a stuck observer).
-    let frame = 0;
-    let attempts = 0;
-    const MAX_ATTEMPTS = 30;
-    const tryFit = () => {
-      const visibleNodes = getNodes().filter((n) => !n.hidden);
-      const allMeasured =
-        visibleNodes.length > 0 &&
-        visibleNodes.every((n) => (n.measured?.width ?? 0) > 0);
-      if (allMeasured || attempts >= MAX_ATTEMPTS) {
-        fitView(AUTO_FIT_OPTIONS);
-        return;
-      }
-      attempts += 1;
-      frame = requestAnimationFrame(tryFit);
-    };
-    frame = requestAnimationFrame(tryFit);
-    return () => cancelAnimationFrame(frame);
+    return scheduleMeasuredFit(
+      () => {
+        const visibleNodes = getNodes().filter((n) => !n.hidden);
+        return (
+          visibleNodes.length > 0 &&
+          visibleNodes.every((n) => (n.measured?.width ?? 0) > 0)
+        );
+      },
+      () => fitView(AUTO_FIT_OPTIONS),
+    );
   }, [isFilteredView, fitView, getNodes]);
 
   useEffect(() => {
@@ -315,15 +332,16 @@ const GraphCanvas = ({
     // measures them asynchronously. Poll before checking whether their full
     // bounding boxes sit entirely past a viewport edge; collapsing and
     // partially clipped findings preserve the user's current frame.
-    let frame = 0;
-    let attempts = 0;
-    const MAX_ATTEMPTS = 30;
-    const tryFit = () => {
-      const targets = getNodes().filter((n) => newFindingIds.has(n.id));
-      const allMeasured =
-        targets.length === newFindingIds.size &&
-        targets.every((n) => (n.measured?.width ?? 0) > 0);
-      if (allMeasured || attempts >= MAX_ATTEMPTS) {
+    return scheduleMeasuredFit(
+      () => {
+        const targets = getNodes().filter((n) => newFindingIds.has(n.id));
+        return (
+          targets.length === newFindingIds.size &&
+          targets.every((n) => (n.measured?.width ?? 0) > 0)
+        );
+      },
+      () => {
+        const targets = getNodes().filter((n) => newFindingIds.has(n.id));
         const containerEl = containerRef.current;
         if (!containerEl) return;
         const { width, height } = containerEl.getBoundingClientRect();
@@ -341,13 +359,8 @@ const GraphCanvas = ({
           return nx + nw < minX || nx > maxX || ny + nh < minY || ny > maxY;
         });
         if (anyOutside) fitView(AUTO_FIT_OPTIONS);
-        return;
-      }
-      attempts += 1;
-      frame = requestAnimationFrame(tryFit);
-    };
-    frame = requestAnimationFrame(tryFit);
-    return () => cancelAnimationFrame(frame);
+      },
+    );
   }, [expanded, fitView, getNodes, getViewport]);
 
   const nodes = effectiveData.nodes ?? [];
