@@ -37,7 +37,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
-          persist-credentials: false
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
       - name: Fetch PR base ref for tj-actions/changed-files
         env:
