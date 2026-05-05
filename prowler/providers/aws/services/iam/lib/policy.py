@@ -1165,3 +1165,47 @@ def evaluate_bedrock_staleness(
             f"IAM {identity_type} {identity_name} accessed Bedrock "
             f"{days_since_access} days ago (threshold: {max_days} days)."
         )
+
+
+def find_sagemaker_service(last_accessed_services: list[dict]) -> Optional[dict]:
+    """Return the SageMaker entry from a service last accessed list."""
+    for service in last_accessed_services:
+        if service.get("ServiceNamespace") == "sagemaker":
+            return service
+    return None
+
+
+def evaluate_sagemaker_staleness(
+    report: Check_Report_AWS,
+    sagemaker_service: dict,
+    max_days: int,
+    identity_name: str,
+    identity_type: str,
+) -> None:
+    """Populate a check report based on SageMaker access recency."""
+    last_authenticated = sagemaker_service.get("LastAuthenticated")
+    if last_authenticated is None:
+        report.status = "FAIL"
+        report.status_extended = (
+            f"IAM {identity_type} {identity_name} has SageMaker permissions "
+            f"but has never used them."
+        )
+        return
+
+    if isinstance(last_authenticated, str):
+        last_authenticated = parse(last_authenticated)
+
+    days_since_access = (datetime.now(timezone.utc) - last_authenticated).days
+
+    if days_since_access > max_days:
+        report.status = "FAIL"
+        report.status_extended = (
+            f"IAM {identity_type} {identity_name} has not accessed SageMaker "
+            f"in {days_since_access} days (threshold: {max_days} days)."
+        )
+    else:
+        report.status = "PASS"
+        report.status_extended = (
+            f"IAM {identity_type} {identity_name} accessed SageMaker "
+            f"{days_since_access} days ago (threshold: {max_days} days)."
+        )
