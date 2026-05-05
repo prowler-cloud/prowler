@@ -4,17 +4,46 @@ import { type NodeProps } from "@xyflow/react";
 
 import type { GraphNode } from "@/types/attack-paths";
 
-import { resolveNodeColors, truncateLabel } from "../../../_lib";
+import { resolveNodeColors, resolveNodeVisual } from "../../../_lib";
 import { HiddenHandles } from "./hidden-handles";
+import { getNodeLabelLines } from "./node-label-lines";
 
 interface FindingNodeData {
   graphNode: GraphNode;
   [key: string]: unknown;
 }
 
-const HEXAGON_WIDTH = 200;
-const HEXAGON_HEIGHT = 55;
-const TITLE_MAX_CHARS = 24;
+const NODE_WIDTH = 150;
+const NODE_HEIGHT = 112;
+const TITLE_MAX_CHARS = 18;
+const TITLE_MAX_LINES = 2;
+const BADGE_SIZE = 44;
+const BADGE_RADIUS = BADGE_SIZE / 2;
+const BADGE_CENTER_X = NODE_WIDTH / 2;
+const BADGE_CENTER_Y = 26;
+const BADGE_LEFT_X = BADGE_CENTER_X - BADGE_RADIUS;
+const BADGE_RIGHT_INSET = NODE_WIDTH - (BADGE_CENTER_X + BADGE_RADIUS);
+const ICON_SIZE = 28;
+const ICON_X = BADGE_CENTER_X - ICON_SIZE / 2;
+const ICON_Y = BADGE_CENTER_Y - ICON_SIZE / 2;
+const TEXT_X = BADGE_CENTER_X;
+const TITLE_Y = 66;
+const TITLE_LINE_HEIGHT = 13;
+const SEVERITY_Y = 94;
+
+const severityLabel = (severity: unknown): string | undefined => {
+  if (!severity) return undefined;
+  const rawSeverity = Array.isArray(severity) ? severity[0] : severity;
+  return String(rawSeverity).toLowerCase();
+};
+
+const toFindingIconTestId = (severity: string | undefined): string =>
+  `attack-path-finding-icon-${severity ?? "unknown"}`;
+
+const toAccessibleSeverity = (severity: string | undefined): string =>
+  severity
+    ? `${severity.charAt(0).toUpperCase()}${severity.slice(1)}`
+    : "Unknown";
 
 export const FindingNode = ({ data, selected }: NodeProps) => {
   const { graphNode } = data as FindingNodeData;
@@ -30,51 +59,96 @@ export const FindingNode = ({ data, selected }: NodeProps) => {
       graphNode.properties?.id ||
       "Finding",
   );
-  const displayTitle = truncateLabel(title, TITLE_MAX_CHARS);
+  const displayTitleLines = getNodeLabelLines(
+    title,
+    TITLE_MAX_CHARS,
+    TITLE_MAX_LINES,
+  );
+  const visual = resolveNodeVisual(graphNode);
+  const Icon = visual.Icon;
+  const severity = severityLabel(graphNode.properties?.severity);
+  const iconLabel = `${toAccessibleSeverity(severity)} finding risk icon`;
 
-  // Hexagon SVG path
-  const w = HEXAGON_WIDTH;
-  const h = HEXAGON_HEIGHT;
-  const sideInset = w * 0.15;
-  const hexPath = `
-    M ${sideInset} 0
-    L ${w - sideInset} 0
-    L ${w} ${h / 2}
-    L ${w - sideInset} ${h}
-    L ${sideInset} ${h}
-    L 0 ${h / 2}
-    Z
-  `;
+  const badgeStrokeWidth = selected ? 4 : 2.5;
+  const glowRadius = selected ? 32 : 30;
+  const glowOpacity = selected ? 0.34 : 0.28;
 
   return (
     <>
-      <HiddenHandles />
-      <svg
-        width={w}
-        height={h}
-        className="overflow-visible"
-        style={{ filter: selected ? undefined : "url(#glow)" }}
-      >
-        <path
-          d={hexPath}
-          fill={fillColor}
-          fillOpacity={0.85}
+      <HiddenHandles
+        sourceStyle={{ right: BADGE_RIGHT_INSET }}
+        style={{ top: BADGE_CENTER_Y }}
+        targetStyle={{ left: BADGE_LEFT_X }}
+      />
+      <svg width={NODE_WIDTH} height={NODE_HEIGHT} className="overflow-visible">
+        <circle
+          cx={BADGE_CENTER_X}
+          cy={BADGE_CENTER_Y}
+          r={glowRadius}
           stroke={borderColor}
-          strokeWidth={selected ? 4 : 2}
+          strokeOpacity={glowOpacity}
+          strokeWidth={8}
+          fill={borderColor}
+          fillOpacity={glowOpacity / 2}
+          pointerEvents="none"
+        />
+        <circle
+          cx={BADGE_CENTER_X}
+          cy={BADGE_CENTER_Y}
+          r={BADGE_RADIUS}
+          fill={fillColor}
+          fillOpacity={0.95}
+          stroke={borderColor}
+          strokeWidth={badgeStrokeWidth}
           className={selected ? "selected-node" : undefined}
         />
+        <g
+          aria-label={iconLabel}
+          data-testid={toFindingIconTestId(severity)}
+          role="img"
+          transform={`translate(${ICON_X}, ${ICON_Y})`}
+        >
+          <Icon
+            aria-hidden="true"
+            color="#ffffff"
+            focusable="false"
+            height={ICON_SIZE}
+            role="presentation"
+            size={ICON_SIZE}
+            strokeWidth={2.4}
+            width={ICON_SIZE}
+          />
+        </g>
         <text
-          x={w / 2}
-          y={h / 2}
+          x={TEXT_X}
+          y={TITLE_Y}
           textAnchor="middle"
           dominantBaseline="middle"
           fill="#ffffff"
-          fontSize="11px"
-          fontWeight="600"
           style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
           pointerEvents="none"
         >
-          {displayTitle}
+          {displayTitleLines.map((line, index) => (
+            <tspan
+              key={`${line}-${index}`}
+              x={TEXT_X}
+              y={TITLE_Y + index * TITLE_LINE_HEIGHT}
+              fontSize="11px"
+              fontWeight="600"
+            >
+              {line}
+            </tspan>
+          ))}
+          {severity && (
+            <tspan
+              x={TEXT_X}
+              y={SEVERITY_Y}
+              fontSize="9px"
+              fill="rgba(255,255,255,0.82)"
+            >
+              {severity}
+            </tspan>
+          )}
         </text>
       </svg>
     </>
