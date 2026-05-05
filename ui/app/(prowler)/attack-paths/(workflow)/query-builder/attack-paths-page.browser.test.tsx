@@ -2,7 +2,7 @@
  * Browser-mode tests for <AttackPathsPage />.
  *
  * Tests are grouped by user-perceived flow, not by internal spec taxonomy. Each
- * test interacts with the page ONLY through `GraphHarness`. Each test:
+ * test interacts with the page ONLY through `AttackPathPageHarness`. Each test:
  *   1. picks a fixture
  *   2. calls `mountWith(fx)` — wires MSW handlers, sets the URL, mounts the page
  *   3. drives the harness
@@ -19,10 +19,10 @@ import { render } from "@/__tests__/render-browser";
 import { useGraphStore } from "./_hooks/use-graph-state";
 import AttackPathsPage from "./attack-paths-page";
 import { fixtures, type PageFixture } from "./attack-paths-page.fixtures";
-import { GraphHarness } from "./attack-paths-page.harness";
+import { AttackPathPageHarness } from "./attack-paths-page.harness";
 
 interface Fixtures {
-  mountWith: (fx?: PageFixture) => Promise<GraphHarness>;
+  mountWith: (fx?: PageFixture) => Promise<AttackPathPageHarness>;
 }
 
 // The graph store is module-scoped, so it survives across tests in the same
@@ -40,7 +40,7 @@ const test = base.extend<Fixtures>({
       worker.use(...handlersForFixture(fx));
       window.history.replaceState({}, "", `/attack-paths?scanId=${fx.scanId}`);
       await render(<AttackPathsPage />);
-      return new GraphHarness(fx);
+      return new AttackPathPageHarness(fx);
     });
   },
 });

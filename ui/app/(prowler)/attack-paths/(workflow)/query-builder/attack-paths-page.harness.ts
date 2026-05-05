@@ -9,7 +9,7 @@ import { userEvent } from "vitest/browser";
 
 import type { PageFixture } from "./attack-paths-page.fixtures";
 
-export class GraphHarness {
+export class AttackPathPageHarness {
   private static readonly NODE_SEL = ".react-flow__node";
   private static readonly EDGE_SEL = ".react-flow__edge";
   private static readonly VIEWPORT_SEL = ".react-flow__viewport";
@@ -51,26 +51,26 @@ export class GraphHarness {
 
   get nodes(): HTMLElement[] {
     return Array.from(
-      this.container.querySelectorAll<HTMLElement>(GraphHarness.NODE_SEL),
+      this.container.querySelectorAll<HTMLElement>(AttackPathPageHarness.NODE_SEL),
     );
   }
 
   get edges(): HTMLElement[] {
     return Array.from(
-      this.container.querySelectorAll<HTMLElement>(GraphHarness.EDGE_SEL),
+      this.container.querySelectorAll<HTMLElement>(AttackPathPageHarness.EDGE_SEL),
     );
   }
 
   get findingNodes(): HTMLElement[] {
-    return this.nodes.filter(GraphHarness.isFindingElement);
+    return this.nodes.filter(AttackPathPageHarness.isFindingElement);
   }
 
   get resourceNodes(): HTMLElement[] {
-    return this.nodes.filter(GraphHarness.isResourceElement);
+    return this.nodes.filter(AttackPathPageHarness.isResourceElement);
   }
 
   get internetNodes(): HTMLElement[] {
-    return this.nodes.filter(GraphHarness.isInternetElement);
+    return this.nodes.filter(AttackPathPageHarness.isInternetElement);
   }
 
   get findingEdges(): HTMLElement[] {
@@ -134,13 +134,13 @@ export class GraphHarness {
 
   getNodeById(id: string): HTMLElement | null {
     return this.container.querySelector<HTMLElement>(
-      `${GraphHarness.NODE_SEL}[data-id="${id}"]`,
+      `${AttackPathPageHarness.NODE_SEL}[data-id="${id}"]`,
     );
   }
 
   getEdgeById(id: string): HTMLElement | null {
     return this.container.querySelector<HTMLElement>(
-      `${GraphHarness.EDGE_SEL}[data-id="${id}"]`,
+      `${AttackPathPageHarness.EDGE_SEL}[data-id="${id}"]`,
     );
   }
 
@@ -185,15 +185,15 @@ export class GraphHarness {
   }
 
   get minimap(): HTMLElement | null {
-    return this.q(GraphHarness.MINIMAP_SEL);
+    return this.q(AttackPathPageHarness.MINIMAP_SEL);
   }
 
   get background(): HTMLElement | null {
-    return this.q(GraphHarness.BACKGROUND_SEL);
+    return this.q(AttackPathPageHarness.BACKGROUND_SEL);
   }
 
   get viewport(): HTMLElement | null {
-    return this.q(GraphHarness.VIEWPORT_SEL);
+    return this.q(AttackPathPageHarness.VIEWPORT_SEL);
   }
 
   get fullscreenDialog(): HTMLElement | null {
