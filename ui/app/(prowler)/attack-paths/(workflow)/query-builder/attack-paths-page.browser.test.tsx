@@ -287,20 +287,24 @@ describe("auto-fitting the viewport", () => {
     expect(graph.minimapMaskStrokeWidth).toBeGreaterThan(0);
   });
 
-  test("expanding resources does not re-fit the viewport", async ({
+  test("expanding resources re-fits the viewport when revealed findings fall off-screen", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
+    // Hidden findings are not measured by the initial declarative fit, so
+    // their positions can sit outside the framed viewport. Expanding the
+    // resources should re-fit so the user does not have to hunt for the
+    // newly visible findings off-screen.
     const before = graph.viewportTransform;
     expect(before).toBeTruthy();
 
     await graph.expandAllFindings();
     await graph.waitForTransition();
 
-    expect(graph.viewportTransform).toBe(before);
+    expect(graph.viewportTransform).not.toBe(before);
   });
 
   test("clicking a finding re-fits the viewport for the filtered subgraph", async ({

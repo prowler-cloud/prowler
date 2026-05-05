@@ -166,7 +166,15 @@ const MINIMAP_VIEWPORT_STROKE_WIDTH = 3;
 // cap maxZoom — for small subgraphs (e.g. a finding's filtered view with 3
 // nodes) the user expects the result to fill the canvas; an artificial cap
 // looks like a layout error.
-const AUTO_FIT_OPTIONS = { padding: 0.2, duration: 300 } as const;
+//
+// Padding is asymmetric: the minimap sits in the bottom-right corner of the
+// canvas (default 200×150 panel + offset), so a fit with uniform padding
+// can drop nodes underneath it. Generous bottom/right padding keeps the
+// fitted graph clear of the minimap.
+const AUTO_FIT_OPTIONS = {
+  padding: { top: "32px", left: "32px", right: "240px", bottom: "180px" },
+  duration: 300,
+} as const;
 
 const GraphCanvas = ({
   data,
@@ -179,8 +187,15 @@ const GraphCanvas = ({
   onInitialFilter,
   ref,
 }: GraphCanvasProps) => {
-  const { zoomIn, zoomOut, fitView, getZoom, getNodes, getNodesBounds } =
-    useReactFlow();
+  const {
+    zoomIn,
+    zoomOut,
+    fitView,
+    getZoom,
+    getNodes,
+    getNodesBounds,
+    getViewport,
+  } = useReactFlow();
   const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
@@ -223,20 +238,31 @@ const GraphCanvas = ({
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- one-time init
 
-  // --- Auto-fit on filter toggle ---
+  // --- Auto-fit triggers ---
+  //
   // Filter toggles (finding click → filtered view, "Back to Full View" →
   // full graph) swap the data prop, which leaves the previous viewport
   // pointing at coordinates that no longer contain the new layout. Re-fit
   // once React Flow has applied the new layout (next animation frame).
   //
-  // Resource expansion intentionally has NO re-fit: the declarative
-  // `fitViewOptions.includeHiddenNodes` already lays out the initial
-  // viewport around every resource AND every (still-hidden) finding, so
-  // newly revealed findings sit inside the framing the user already has.
-  // Re-fitting on each expand caused jarring layout shifts that the user
-  // experienced as visual errors.
+  // Resource expansion fits ONLY when a newly revealed finding sits
+  // entirely outside the current viewport (i.e. its full bounding box
+  // is past one of the viewport edges). This intentionally lets
+  // partially-clipped edge nodes through without re-fitting — hidden
+  // findings contribute zero size to the initial bbox, so a finding's
+  // far edge often peeks past the padded viewport on the first reveal,
+  // and a "partially outside" check would re-fit on every expand. The
+  // user's "no cabe visualmente" complaint is about findings that
+  // appear completely off-screen after the user has panned away, which
+  // the strict check captures.
   const filteredFitInitRef = useRef(false);
   const previousFilteredRef = useRef(isFilteredView);
+  const previousExpandedRef = useRef<ReadonlySet<string>>(expanded);
+  // Captured every render so the expand-fit effect can resolve a resource
+  // ID to its connected finding IDs without recomputing the lookup.
+  // The map itself is built later in this render — see assignment below
+  // the layout-derivation block.
+  const resourceToFindingsRef = useRef<Map<string, Set<string>>>(new Map());
 
   useEffect(() => {
     if (!filteredFitInitRef.current) {
@@ -253,6 +279,48 @@ const GraphCanvas = ({
     });
     return () => cancelAnimationFrame(frame);
   }, [isFilteredView, fitView]);
+
+  useEffect(() => {
+    const previous = previousExpandedRef.current;
+    previousExpandedRef.current = expanded;
+    if (previous === expanded) return;
+    // Only fit on growth — collapsing intentionally leaves the user's
+    // framing alone.
+    const newResourceIds = Array.from(expanded).filter(
+      (id) => !previous.has(id),
+    );
+    if (newResourceIds.length === 0) return;
+
+    const newFindingIds = new Set<string>();
+    for (const resourceId of newResourceIds) {
+      const findings = resourceToFindingsRef.current.get(resourceId);
+      if (!findings) continue;
+      findings.forEach((id) => newFindingIds.add(id));
+    }
+    if (newFindingIds.size === 0) return;
+
+    const frame = requestAnimationFrame(() => {
+      const containerEl = containerRef.current;
+      if (!containerEl) return;
+      const { width, height } = containerEl.getBoundingClientRect();
+      if (width === 0 || height === 0) return;
+      const { x, y, zoom } = getViewport();
+      const minX = -x / zoom;
+      const minY = -y / zoom;
+      const maxX = minX + width / zoom;
+      const maxY = minY + height / zoom;
+      const anyOutside = getNodes().some((node) => {
+        if (!newFindingIds.has(node.id)) return false;
+        const nx = node.position.x;
+        const ny = node.position.y;
+        const nw = node.measured?.width ?? 0;
+        const nh = node.measured?.height ?? 0;
+        return nx + nw < minX || nx > maxX || ny + nh < minY || ny > maxY;
+      });
+      if (anyOutside) fitView(AUTO_FIT_OPTIONS);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [expanded, fitView, getNodes, getViewport]);
 
   const nodes = effectiveData.nodes ?? [];
   const edges = effectiveData.edges ?? [];
@@ -295,6 +363,9 @@ const GraphCanvas = ({
       findingToResources.set(edge.target, resources);
     }
   });
+
+  // Refresh the expand-fit effect's lookup with the latest mapping.
+  resourceToFindingsRef.current = resourceToFindings;
 
   // Tier 1: compute which finding nodes are hidden (not expanded)
   const hiddenFindingIds = new Set<string>();
