@@ -83,7 +83,7 @@ When adding a new check that requires data not yet collected by an existing serv
 
 2. **Add new attributes to the resource model**: Extend the Pydantic `BaseModel` class for the resource with the new fields. Use `Optional` types with `None` as the default value to maintain backward compatibility with existing checks.
 
-3. **Update the data collection method**: Modify the existing method that fetches resource details to also extract and store the new attributes. If no existing method fetches the data, add a new method and call it in the constructor using `self.__threading_call__`.
+3. **Update the data collection method**: Modify the existing method that fetches resource details to also extract and store the new attributes. If no existing method fetches the data, add a new method and call it in the constructor using `self.__threading_call__` if possible.
 
 4. **Use safe dictionary access**: When extracting values from API responses, always use `.get()` with appropriate defaults to prevent `KeyError` exceptions when the API doesn't return certain fields.
 
