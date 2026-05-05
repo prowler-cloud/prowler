@@ -897,6 +897,22 @@
   },
   {
     "section": "devDependencies",
+    "name": "@vitest/browser",
+    "from": "4.0.18",
+    "to": "4.0.18",
+    "strategy": "installed",
+    "generatedAt": "2026-04-30T13:13:39.682Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@vitest/browser-playwright",
+    "from": "4.0.18",
+    "to": "4.0.18",
+    "strategy": "installed",
+    "generatedAt": "2026-04-30T13:13:39.682Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "@vitest/coverage-v8",
     "from": "4.0.18",
     "to": "4.0.18",
@@ -1049,6 +1065,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "msw",
+    "from": "2.13.4",
+    "to": "2.13.4",
+    "strategy": "installed",
+    "generatedAt": "2026-04-30T13:13:39.682Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "postcss",
     "from": "8.4.38",
     "to": "8.4.38",
@@ -1110,5 +1134,13 @@
     "to": "4.0.18",
     "strategy": "installed",
     "generatedAt": "2026-01-29T16:42:27.795Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "vitest-browser-react",
+    "from": "2.0.4",
+    "to": "2.0.4",
+    "strategy": "installed",
+    "generatedAt": "2026-04-30T13:23:20.132Z"
   }
 ]
