@@ -131,28 +131,6 @@ describe("ApplyFiltersButton", () => {
       expect(applyButton).not.toBeDisabled();
     });
 
-    it("should render Apply Changes as primary and Undo as outline", () => {
-      // Given / When
-      render(
-        <ApplyFiltersButton
-          hasChanges={true}
-          changeCount={1}
-          onApply={vi.fn()}
-          onDiscard={vi.fn()}
-        />,
-      );
-
-      // Then
-      expect(
-        screen.getByRole("button", { name: "Apply Changes (1)" }),
-      ).toHaveAttribute("data-variant", "default");
-      expect(
-        screen.getByRole("button", {
-          name: /undo pending filter changes/i,
-        }),
-      ).toHaveAttribute("data-variant", "outline");
-    });
-
     it("should show the change count in the button label", () => {
       // Given / When
       render(

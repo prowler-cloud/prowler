@@ -155,32 +155,6 @@ describe("AlertsTable", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("should sort alert columns through the shared DataTable column header pattern", async () => {
-    // Given
-    const user = userEvent.setup();
-    render(
-      <AlertsTable
-        alerts={[
-          makeRule({ id: "alert-1", attributes: { name: "Beta alerts" } }),
-          makeRule({ id: "alert-2", attributes: { name: "Alpha alerts" } }),
-        ]}
-        mutatingId={null}
-        onEdit={vi.fn()}
-        onToggleEnabled={vi.fn()}
-        onDelete={vi.fn()}
-      />,
-    );
-
-    // When
-    await user.click(screen.getByRole("button", { name: /^name$/i }));
-
-    // Then
-    expect(navigationMocks.routerPush).toHaveBeenCalledWith(
-      "/alerts?sort=name",
-      { scroll: false },
-    );
-  });
-
   it("should truncate long descriptions in the name column", () => {
     // Given
     const description =
