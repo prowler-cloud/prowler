@@ -15,7 +15,11 @@ import {
 } from "@/components/shadcn/select/multiselect";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { isConnectionStatus, isScanEntity } from "@/lib/helper-filters";
+import {
+  getScanEntityLabel,
+  isConnectionStatus,
+  isScanEntity,
+} from "@/lib/helper-filters";
 import { cn } from "@/lib/utils";
 import {
   FilterEntity,
@@ -25,6 +29,10 @@ import {
 } from "@/types";
 import { DATA_TABLE_FILTER_MODE, DataTableFilterMode } from "@/types/filters";
 import { ProviderConnectionStatus } from "@/types/providers";
+
+function isNonEmptyString(value: string | null | undefined): value is string {
+  return Boolean(value);
+}
 
 export interface DataTableFilterCustomProps {
   filters: FilterOption[];
@@ -66,6 +74,14 @@ export const DataTableFilterCustom = ({
   const { updateFilter } = useUrlFilters();
   const searchParams = useSearchParams();
 
+  const buildSearchConfig = (filter: FilterOption) => {
+    const label = filter.labelCheckboxGroup.toLowerCase();
+    return {
+      placeholder: `Search ${label}...`,
+      emptyMessage: `No ${label} found.`,
+    };
+  };
+
   // Helper function to get entity from valueLabelMapping
   const getEntityForValue = (
     filter: FilterOption,
@@ -84,10 +100,11 @@ export const DataTableFilterCustom = ({
     if (!entity) return value;
 
     if (isScanEntity(entity as ScanEntity)) {
-      const scanEntity = entity as ScanEntity;
-      return (
-        scanEntity.providerInfo?.alias || scanEntity.providerInfo?.uid || value
-      );
+      // Match the summary-strip chip: "Scan: {provider} - {name}". Without the
+      // "Scan:" prefix, the trigger badge would just say "AWS Prod - Nightly",
+      // which reads as a generic account tag and hides that it's a scan filter.
+      const label = getScanEntityLabel(entity as ScanEntity);
+      return label ? `Scan: ${label}` : value;
     }
     if (isConnectionStatus(entity)) {
       const connectionStatus = entity as ProviderConnectionStatus;
@@ -117,6 +134,34 @@ export const DataTableFilterCustom = ({
         showCopyAction={false}
       />
     );
+  };
+
+  const getSearchKeywords = (
+    entity: FilterEntity | undefined,
+    value: string,
+    displayLabel: string,
+  ): string[] => {
+    if (!entity) {
+      return [displayLabel, value];
+    }
+
+    if (isScanEntity(entity as ScanEntity)) {
+      const label = getScanEntityLabel(entity as ScanEntity);
+      return [displayLabel, value, label].filter(isNonEmptyString);
+    }
+
+    if (isConnectionStatus(entity)) {
+      return [displayLabel, value, (entity as ProviderConnectionStatus).label];
+    }
+
+    const providerEntity = entity as ProviderEntity;
+    return [
+      displayLabel,
+      value,
+      providerEntity.alias,
+      providerEntity.uid,
+      providerEntity.provider,
+    ].filter(isNonEmptyString);
   };
 
   // Sort filters by index property, with fallback to original order for filters without index
@@ -199,7 +244,7 @@ export const DataTableFilterCustom = ({
               />
             </MultiSelectTrigger>
             <MultiSelectContent
-              search={false}
+              search={buildSearchConfig(filter)}
               width={filter.width ?? "default"}
             >
               <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
@@ -214,6 +259,7 @@ export const DataTableFilterCustom = ({
                     key={value}
                     value={value}
                     badgeLabel={getBadgeLabel(entity, displayLabel)}
+                    keywords={getSearchKeywords(entity, value, displayLabel)}
                   >
                     {entity ? renderEntityContent(entity) : displayLabel}
                   </MultiSelectItem>

@@ -29,6 +29,8 @@ class OSS(AlibabaCloudService):
         # Treat as regional for client generation consistency with other services
         super().__init__(__class__.__name__, provider, global_service=False)
         self._buckets_lock = Lock()
+        self._bucket_inventory_lock = Lock()
+        self._bucket_inventory_loaded = False
 
         # Fetch OSS resources
         self.buckets = {}
@@ -40,6 +42,11 @@ class OSS(AlibabaCloudService):
     def _list_buckets(self, regional_client=None):
         region = "unknown"
         try:
+            with self._bucket_inventory_lock:
+                if self._bucket_inventory_loaded:
+                    return
+                self._bucket_inventory_loaded = True
+
             regional_client = regional_client or self.client
             region = getattr(regional_client, "region", self.region)
             endpoint = f"oss-{region}.aliyuncs.com"
@@ -75,11 +82,20 @@ class OSS(AlibabaCloudService):
             headers["Authorization"] = f"OSS {credentials.access_key_id}:{signature}"
 
             url = f"https://{endpoint}/"
-            response = requests.get(url, headers=headers, timeout=10)
+            response = self._call_with_retries(
+                requests.get, url, headers=headers, timeout=10
+            )
             if response.status_code != 200:
-                logger.error(
-                    f"OSS - HTTP listing {endpoint_label} returned {response.status_code}: {response.text}"
-                )
+                if response.status_code == 403 and "UserDisable" in (
+                    response.text or ""
+                ):
+                    logger.info(
+                        f"OSS - HTTP listing {endpoint_label} skipped because OSS is disabled for this account."
+                    )
+                else:
+                    logger.error(
+                        f"OSS - HTTP listing {endpoint_label} returned {response.status_code}: {response.text}"
+                    )
                 return
 
             try:

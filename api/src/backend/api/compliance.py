@@ -1,7 +1,6 @@
 from collections.abc import Iterable, Mapping
 
 from api.models import Provider
-from prowler.config.config import get_available_compliance_frameworks
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
 
@@ -95,12 +94,12 @@ PROWLER_CHECKS = LazyChecksMapping()
 
 
 def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[str]:
-    """
-    Retrieve and cache the list of available compliance frameworks for a specific cloud provider.
+    """List compliance frameworks the API can load for `provider_type`.
 
-    This function lazily loads and caches the available compliance frameworks (e.g., CIS, MITRE, ISO)
-    for each provider type (AWS, Azure, GCP, etc.) on first access. Subsequent calls for the same
-    provider will return the cached result.
+    The list is sourced from `Compliance.get_bulk` so that the names
+    returned here are guaranteed to be loadable by the bulk loader. This
+    prevents downstream key mismatches (e.g. CSV report generation iterating
+    framework names and looking them up in the bulk dict).
 
     Args:
         provider_type (Provider.ProviderChoices): The cloud provider type for which to retrieve
@@ -112,8 +111,8 @@ def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[s
     """
     global AVAILABLE_COMPLIANCE_FRAMEWORKS
     if provider_type not in AVAILABLE_COMPLIANCE_FRAMEWORKS:
-        AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type] = (
-            get_available_compliance_frameworks(provider_type)
+        AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type] = list(
+            Compliance.get_bulk(provider_type).keys()
         )
 
     return AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type]

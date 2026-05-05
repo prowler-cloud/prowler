@@ -217,6 +217,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-progress",
+    "from": "1.1.7",
+    "to": "1.1.7",
+    "strategy": "installed",
+    "generatedAt": "2026-04-22T06:37:12.894Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@radix-ui/react-radio-group",
     "from": "1.3.8",
     "to": "1.3.8",
@@ -465,14 +473,6 @@
   },
   {
     "section": "dependencies",
-    "name": "html-to-image",
-    "from": "1.11.13",
-    "to": "1.11.13",
-    "strategy": "installed",
-    "generatedAt": "2026-04-20T09:33:38.114Z"
-  },
-  {
-    "section": "dependencies",
     "name": "import-in-the-middle",
     "from": "2.0.0",
     "to": "2.0.0",
@@ -534,6 +534,14 @@
     "to": "15.0.12",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "modern-screenshot",
+    "from": "4.7.0",
+    "to": "4.7.0",
+    "strategy": "installed",
+    "generatedAt": "2026-05-05T07:21:33.657Z"
   },
   {
     "section": "dependencies",
@@ -1030,6 +1038,14 @@
     "to": "27.4.0",
     "strategy": "installed",
     "generatedAt": "2026-01-29T16:42:27.795Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "knip",
+    "from": "6.3.1",
+    "to": "6.3.1",
+    "strategy": "installed",
+    "generatedAt": "2026-04-10T11:55:26.693Z"
   },
   {
     "section": "devDependencies",

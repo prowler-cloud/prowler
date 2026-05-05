@@ -60,23 +60,25 @@ export function ProvidersAccountsView({
 
   return (
     <>
-      <ProvidersFilters
-        filters={filters}
-        providers={providers}
-        actions={
-          <>
-            <MutedFindingsConfigButton />
-            <AddProviderButton onOpenWizard={() => openProviderWizard()} />
-          </>
-        }
-      />
-      <ProvidersAccountsTable
-        isCloud={isCloud}
-        metadata={metadata}
-        rows={rows}
-        onOpenProviderWizard={openProviderWizard}
-        onOpenOrganizationWizard={openOrganizationWizard}
-      />
+      <div className="flex flex-col gap-6">
+        <ProvidersFilters
+          filters={filters}
+          providers={providers}
+          actions={
+            <>
+              <MutedFindingsConfigButton />
+              <AddProviderButton onOpenWizard={() => openProviderWizard()} />
+            </>
+          }
+        />
+        <ProvidersAccountsTable
+          isCloud={isCloud}
+          metadata={metadata}
+          rows={rows}
+          onOpenProviderWizard={openProviderWizard}
+          onOpenOrganizationWizard={openOrganizationWizard}
+        />
+      </div>
       <ProviderWizardModal
         open={isProviderWizardOpen}
         onOpenChange={handleWizardOpenChange}

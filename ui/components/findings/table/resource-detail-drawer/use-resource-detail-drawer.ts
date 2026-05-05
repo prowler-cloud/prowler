@@ -228,10 +228,10 @@ export function useResourceDetailDrawer({
         : null;
 
       setCurrentFinding(nextCurrentFinding);
+      // The API already filters to status=FAIL (see getLatestFindingsByResourceUid).
+      // Only need to drop the current finding from the list.
       setOtherFindings(
-        nextOtherFindings.filter(
-          (finding) => finding.id !== findingId && finding.status === "FAIL",
-        ),
+        nextOtherFindings.filter((finding) => finding.id !== findingId),
       );
     } catch (_error) {
       if (!controller.signal.aborted) {

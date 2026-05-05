@@ -1,6 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
+import {
+  type AnchorHTMLAttributes,
+  type ButtonHTMLAttributes,
+  cloneElement,
+  type HTMLAttributes,
+  isValidElement,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -14,12 +21,14 @@ const {
   mockWindowOpen,
   mockClipboardWriteText,
   mockSearchParamsState,
+  mockNotificationIndicator,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
   mockGetCompliancesOverview: vi.fn(),
   mockWindowOpen: vi.fn(),
   mockClipboardWriteText: vi.fn(),
   mockSearchParamsState: { value: "" },
+  mockNotificationIndicator: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -34,8 +43,17 @@ vi.mock("next/image", () => ({
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    children: ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -62,7 +80,12 @@ vi.mock("@/components/shadcn", () => {
       variant?: string;
       size?: string;
       asChild?: boolean;
-    }) => <button {...props}>{children}</button>,
+    }) =>
+      _asChild && isValidElement(children) ? (
+        cloneElement(children, props)
+      ) : (
+        <button {...props}>{children}</button>
+      ),
     InfoField: ({
       children,
       label,
@@ -298,7 +321,11 @@ vi.mock("../delta-indicator", () => ({
 }));
 
 vi.mock("../notification-indicator", () => ({
-  NotificationIndicator: () => null,
+  NotificationIndicator: (props: Record<string, unknown>) => {
+    mockNotificationIndicator(props);
+    return null;
+  },
+  DeltaValues: { NEW: "new", CHANGED: "changed", NONE: "none" } as const,
 }));
 
 vi.mock("./resource-detail-skeleton", () => ({
@@ -380,6 +407,45 @@ const mockFinding: ResourceDrawerFinding = {
   scan: null,
 };
 
+describe("ResourceDetailDrawerContent — resource navigation", () => {
+  it("should render a View Resource link below the resource actions menu", () => {
+    // Given
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const viewResourceLink = screen.getByRole("link", {
+      name: "View Resource",
+    });
+    const resourceActionsMenu = screen.getByRole("menu", {
+      name: "Resource actions",
+    });
+
+    // Then
+    expect(viewResourceLink).toHaveAttribute(
+      "href",
+      "/resources?resourceId=res-1",
+    );
+    expect(viewResourceLink).toHaveAttribute("target", "_blank");
+    expect(viewResourceLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(
+      resourceActionsMenu.compareDocumentPosition(viewResourceLink) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+  });
+});
 const mockResourceRow: FindingResourceRow = {
   id: "row-1",
   rowType: "resource",
@@ -1346,5 +1412,81 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(
       screen.getByTestId("events-navigation-skeleton"),
     ).toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — other findings delta/muted indicator", () => {
+  const renderWithOtherFinding = (
+    overrides: Partial<ResourceDrawerFinding>,
+  ) => {
+    const otherFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      id: "finding-2",
+      uid: "uid-2",
+      checkId: "ec2_check",
+      checkTitle: "EC2 Check",
+      ...overrides,
+    };
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[otherFinding]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+  };
+
+  const lastNotificationIndicatorPropsForOtherRow = () => {
+    const calls = mockNotificationIndicator.mock.calls;
+    // Last call corresponds to the other-finding row (current finding row renders first).
+    return calls[calls.length - 1][0];
+  };
+
+  it("should forward delta='new' to the NotificationIndicator for a new other finding", () => {
+    renderWithOtherFinding({ delta: "new" });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: "new",
+      isMuted: false,
+      showDeltaWhenMuted: true,
+    });
+  });
+
+  it("should forward delta='changed' to the NotificationIndicator for a changed other finding", () => {
+    renderWithOtherFinding({ delta: "changed" });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: "changed",
+    });
+  });
+
+  it("should pass delta=undefined when the finding has delta='none'", () => {
+    renderWithOtherFinding({ delta: "none" });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: undefined,
+    });
+  });
+
+  it("should forward mutedReason and keep delta when a muted other finding is also new", () => {
+    renderWithOtherFinding({
+      delta: "new",
+      isMuted: true,
+      mutedReason: "False positive",
+    });
+
+    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
+      delta: "new",
+      isMuted: true,
+      mutedReason: "False positive",
+      showDeltaWhenMuted: true,
+    });
   });
 });

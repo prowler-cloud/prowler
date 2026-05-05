@@ -1,0 +1,42 @@
+# Prowler Reverse Proxy - Docker Compose Override
+#
+# Use this alongside the main docker-compose.yml to add an nginx
+# reverse proxy that unifies UI and API behind a single port.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f contrib/reverse-proxy/docker-compose.reverse-proxy.yml up -d
+#
+# Then access Prowler at http://localhost (port 80) or configure
+# your external reverse proxy (Traefik, Caddy, Cloudflare Tunnel,
+# Pangolin, etc.) to point to this container on port 80.
+#
+# For HTTPS with your own certs, see the README in this directory.
+#
+# Fixes: https://github.com/prowler-cloud/prowler/issues/8516
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: prowler-nginx
+    restart: unless-stopped
+    ports:
+      - "${PROWLER_PROXY_PORT:-80}:80"
+    volumes:
+      - ./contrib/reverse-proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - prowler-ui
+      - prowler-api
+    networks:
+      - prowler-network
+
+  # Override UI to not expose port externally (nginx handles it)
+  prowler-ui:
+    ports: !reset []
+
+  # Override API to not expose port externally (nginx handles it)
+  prowler-api:
+    ports: !reset []
+
+networks:
+  prowler-network:
+    driver: bridge

@@ -16,6 +16,7 @@ import {
 import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
+  applyDefaultMutedFilter,
   createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
@@ -34,9 +35,6 @@ export default async function Findings({
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
-  // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
-
   const [providersData, scansData] = await Promise.all([
     getProviders({ pageSize: 50 }),
     getScans({ pageSize: 50 }),
@@ -50,13 +48,14 @@ export default async function Findings({
       return response?.data;
     },
   });
-
+  const resolvedFilters = applyDefaultMutedFilter(filtersWithScanDates);
+  const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);
   const metadataInfoData = await (
-    hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
+    hasHistoricalData ? getMetadataInfo : getLatestMetadataInfo
   )({
     query,
     sort: encodedSort,
-    filters: filtersWithScanDates,
+    filters: resolvedFilters,
   });
 
   // Extract unique regions, services, categories, groups from the new endpoint
@@ -100,7 +99,7 @@ export default async function Findings({
         <Suspense fallback={<SkeletonTableFindings />}>
           <SSRDataTable
             searchParams={resolvedSearchParams}
-            filters={filtersWithScanDates}
+            filters={resolvedFilters}
           />
         </Suspense>
       </FilterTransitionWrapper>
@@ -119,10 +118,9 @@ const SSRDataTable = async ({
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
 
   const { encodedSort } = extractSortAndKey(searchParams);
-  // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(searchParams);
+  const hasHistoricalData = hasDateOrScanFilter(filters);
 
-  const fetchFindingGroups = hasDateOrScan
+  const fetchFindingGroups = hasHistoricalData
     ? getFindingGroups
     : getLatestFindingGroups;
 
@@ -151,7 +149,7 @@ const SSRDataTable = async ({
         data={groups}
         metadata={findingGroupsData?.meta}
         resolvedFilters={filters}
-        hasHistoricalData={hasDateOrScan}
+        hasHistoricalData={hasHistoricalData}
       />
     </>
   );

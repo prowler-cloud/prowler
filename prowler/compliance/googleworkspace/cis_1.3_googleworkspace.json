@@ -525,7 +525,9 @@
     {
       "Id": "3.1.3.1.1",
       "Description": "Ensure users cannot delegate access to their mailbox",
-      "Checks": [],
+      "Checks": [
+        "gmail_mail_delegation_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -714,7 +716,9 @@
     {
       "Id": "3.1.3.4.2.1",
       "Description": "Ensure link identification behind shortened URLs is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_shortener_scanning_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -735,7 +739,9 @@
     {
       "Id": "3.1.3.4.2.2",
       "Description": "Ensure scan linked images for malicious content is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_external_image_scanning_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -756,7 +762,9 @@
     {
       "Id": "3.1.3.4.2.3",
       "Description": "Ensure warning prompt is shown for any click on links to untrusted domains",
-      "Checks": [],
+      "Checks": [
+        "gmail_untrusted_link_warnings_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -882,7 +890,9 @@
     {
       "Id": "3.1.3.5.1",
       "Description": "Ensure POP and IMAP access is disabled for all users",
-      "Checks": [],
+      "Checks": [
+        "gmail_pop_imap_access_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -903,7 +913,9 @@
     {
       "Id": "3.1.3.5.2",
       "Description": "Ensure automatic forwarding options are disabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_auto_forwarding_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -924,7 +936,9 @@
     {
       "Id": "3.1.3.5.3",
       "Description": "Ensure per-user outbound gateways is disabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_per_user_outbound_gateway_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -966,7 +980,9 @@
     {
       "Id": "3.1.3.6.1",
       "Description": "Ensure enhanced pre-delivery message scanning is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_enhanced_pre_delivery_scanning_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1008,7 +1024,9 @@
     {
       "Id": "3.1.3.7.1",
       "Description": "Ensure comprehensive mail storage is enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_comprehensive_mail_storage_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",

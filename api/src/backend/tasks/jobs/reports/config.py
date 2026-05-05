@@ -313,6 +313,32 @@ FRAMEWORK_REGISTRY: dict[str, FrameworkConfig] = {
         has_niveles=False,
         has_weight=False,
     ),
+    "cis": FrameworkConfig(
+        name="cis",
+        display_name="CIS Benchmark",
+        logo_filename=None,
+        primary_color=COLOR_BLUE,
+        secondary_color=COLOR_LIGHT_BLUE,
+        bg_color=COLOR_BG_BLUE,
+        attribute_fields=[
+            "Section",
+            "SubSection",
+            "Profile",
+            "AssessmentStatus",
+            "Description",
+            "RationaleStatement",
+            "ImpactStatement",
+            "RemediationProcedure",
+            "AuditProcedure",
+            "References",
+        ],
+        sections=None,  # Derived dynamically per CIS variant (section names differ across versions/providers)
+        language="en",
+        has_risk_levels=False,
+        has_dimensions=False,
+        has_niveles=False,
+        has_weight=False,
+    ),
 }
 
 
@@ -336,5 +362,7 @@ def get_framework_config(compliance_id: str) -> FrameworkConfig | None:
         return FRAMEWORK_REGISTRY["nis2"]
     if "csa" in compliance_lower or "ccm" in compliance_lower:
         return FRAMEWORK_REGISTRY["csa_ccm"]
+    if compliance_lower.startswith("cis_") or "cis" in compliance_lower:
+        return FRAMEWORK_REGISTRY["cis"]
 
     return None

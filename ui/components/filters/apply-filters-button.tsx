@@ -1,7 +1,5 @@
 "use client";
 
-import { Check } from "lucide-react";
-
 import { Button } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
 
@@ -37,21 +35,20 @@ export const ApplyFiltersButton = ({
     changeCount > 0 ? `Apply Filters (${changeCount})` : "Apply Filters";
 
   return (
-    <div className={cn("flex items-center gap-1", className)}>
+    <div className={cn("flex items-center gap-2", className)}>
       <Button
-        variant="default"
+        variant="link"
         size="sm"
         disabled={!hasChanges}
         onClick={onApply}
         aria-label={label}
       >
-        <Check className="size-4" />
         {label}
       </Button>
 
       {hasChanges && (
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={onDiscard}
           aria-label="Undo pending filter changes"

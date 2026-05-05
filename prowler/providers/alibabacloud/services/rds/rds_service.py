@@ -22,6 +22,18 @@ class RDS(AlibabaCloudService):
         self.instances = []
         self.__threading_call__(self._describe_instances)
 
+    @staticmethod
+    def _set_region_id(request, regional_client) -> None:
+        """Populate RegionId on RDS requests when the SDK model exposes it."""
+        region = getattr(regional_client, "region", "")
+        if not region:
+            return
+
+        if hasattr(request, "region_id"):
+            request.region_id = region
+        elif hasattr(request, "RegionId"):
+            request.RegionId = region
+
     def _describe_instances(self, regional_client):
         """List all RDS instances and fetch their details in a specific region."""
         region = getattr(regional_client, "region", "unknown")
@@ -30,7 +42,10 @@ class RDS(AlibabaCloudService):
         try:
             # DescribeDBInstances returns instance list
             request = rds_models.DescribeDBInstancesRequest()
-            response = regional_client.describe_dbinstances(request)
+            self._set_region_id(request, regional_client)
+            response = self._call_with_retries(
+                regional_client.describe_dbinstances, request
+            )
 
             if response and response.body and response.body.items:
                 for instance_data in response.body.items.dbinstance:
@@ -123,7 +138,10 @@ class RDS(AlibabaCloudService):
         try:
             request = rds_models.DescribeDBInstanceAttributeRequest()
             request.dbinstance_id = instance_id
-            response = regional_client.describe_dbinstance_attribute(request)
+            self._set_region_id(request, regional_client)
+            response = self._call_with_retries(
+                regional_client.describe_dbinstance_attribute, request
+            )
 
             if (
                 response
@@ -146,7 +164,10 @@ class RDS(AlibabaCloudService):
         try:
             request = rds_models.DescribeDBInstanceSSLRequest()
             request.dbinstance_id = instance_id
-            response = regional_client.describe_dbinstance_ssl(request)
+            self._set_region_id(request, regional_client)
+            response = self._call_with_retries(
+                regional_client.describe_dbinstance_ssl, request
+            )
 
             if response and response.body:
                 # response.body is a DescribeDBInstanceSSLResponseBody model object, use getattr
@@ -169,7 +190,10 @@ class RDS(AlibabaCloudService):
         try:
             request = rds_models.DescribeDBInstanceTDERequest()
             request.dbinstance_id = instance_id
-            response = regional_client.describe_dbinstance_tde(request)
+            self._set_region_id(request, regional_client)
+            response = self._call_with_retries(
+                regional_client.describe_dbinstance_tde, request
+            )
 
             if response and response.body:
                 return {
@@ -187,7 +211,10 @@ class RDS(AlibabaCloudService):
         try:
             request = rds_models.DescribeDBInstanceIPArrayListRequest()
             request.dbinstance_id = instance_id
-            response = regional_client.describe_dbinstance_iparray_list(request)
+            self._set_region_id(request, regional_client)
+            response = self._call_with_retries(
+                regional_client.describe_dbinstance_iparray_list, request
+            )
 
             ips = []
             if response and response.body and response.body.items:
@@ -205,12 +232,12 @@ class RDS(AlibabaCloudService):
     def _describe_sql_collector_policy(self, regional_client, instance_id: str) -> dict:
         """Check SQL audit status."""
         try:
-            request = rds_models.DescribeSQLLogRecordsRequest()
-            request.dbinstance_id = instance_id
-
             policy_request = rds_models.DescribeSQLCollectorPolicyRequest()
             policy_request.dbinstance_id = instance_id
-            response = regional_client.describe_sqlcollector_policy(policy_request)
+            self._set_region_id(policy_request, regional_client)
+            response = self._call_with_retries(
+                regional_client.describe_sqlcollector_policy, policy_request
+            )
 
             if response and response.body:
                 status = getattr(response.body, "sqlcollector_status", "")
@@ -232,7 +259,10 @@ class RDS(AlibabaCloudService):
         try:
             request = rds_models.DescribeParametersRequest()
             request.dbinstance_id = instance_id
-            response = regional_client.describe_parameters(request)
+            self._set_region_id(request, regional_client)
+            response = self._call_with_retries(
+                regional_client.describe_parameters, request
+            )
 
             params = {}
             if response and response.body and response.body.running_parameters:

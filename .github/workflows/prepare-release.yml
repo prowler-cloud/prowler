@@ -45,6 +45,7 @@ jobs:
       with:
         python-version: '3.12'
         install-dependencies: 'false'
+        enable-cache: 'false'
 
     - name: Configure Git
       run: |

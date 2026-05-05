@@ -17,6 +17,9 @@ from .charts import (
     get_chart_color_for_percentage,
 )
 
+# Framework-specific generators
+from .cis import CISReportGenerator
+
 # Reusable components
 # Reusable components: Color helpers, Badge components, Risk component,
 # Table components, Section components
@@ -31,10 +34,12 @@ from .components import (
     create_section_header,
     create_status_badge,
     create_summary_table,
+    escape_html,
     get_color_for_compliance,
     get_color_for_risk_level,
     get_color_for_weight,
     get_status_color,
+    truncate_text,
 )
 
 # Framework configuration: Main configuration, Color constants, ENS colors,
@@ -90,8 +95,6 @@ from .config import (
     FrameworkConfig,
     get_framework_config,
 )
-
-# Framework-specific generators
 from .csa import CSAReportGenerator
 from .ens import ENSReportGenerator
 from .nis2 import NIS2ReportGenerator
@@ -109,6 +112,7 @@ __all__ = [
     "ENSReportGenerator",
     "NIS2ReportGenerator",
     "CSAReportGenerator",
+    "CISReportGenerator",
     # Configuration
     "FrameworkConfig",
     "FRAMEWORK_REGISTRY",
@@ -182,6 +186,9 @@ __all__ = [
     # Section components
     "create_section_header",
     "create_summary_table",
+    # Text helpers
+    "truncate_text",
+    "escape_html",
     # Chart functions
     "get_chart_color_for_percentage",
     "create_vertical_bar_chart",

@@ -8,10 +8,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { acceptInvitation } from "@/actions/invitations";
 import { Button } from "@/components/shadcn";
-import {
-  INVITATION_ACTION_PARAM,
-  INVITATION_SIGNUP_ACTION,
-} from "@/lib/invitation-routing";
 
 type AcceptState =
   | { kind: "no-token" }
@@ -204,7 +200,7 @@ export function AcceptInvitationClient({
                 className="w-full"
                 onClick={() => {
                   router.push(
-                    `/sign-up?invitation_token=${encodeURIComponent(token!)}&${INVITATION_ACTION_PARAM}=${INVITATION_SIGNUP_ACTION}`,
+                    `/sign-up?invitation_token=${encodeURIComponent(token!)}`,
                   );
                 }}
               >

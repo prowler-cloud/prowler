@@ -1,4 +1,26 @@
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, parseISO } from "date-fns";
+
+/**
+ * Formats an ISO string or Date into a `yyyy-MM-dd` string in the user's local
+ * timezone. Mirrors the format used by `DateWithTime`, so UI chips/URLs built
+ * with this helper match what the user sees in tables and pickers. Returns
+ * undefined for null, empty, or malformed input so callers can guard on it
+ * (e.g. `isDisabled={!toLocalDateString(x)}`). Do NOT use this for UTC-based
+ * date bucketing (e.g. chart axes partitioned server-side by UTC day) — that
+ * use case needs a separate UTC helper.
+ */
+export function toLocalDateString(
+  value: string | Date | null | undefined,
+): string | undefined {
+  if (!value) return undefined;
+  try {
+    const date = typeof value === "string" ? parseISO(value) : value;
+    if (isNaN(date.getTime())) return undefined;
+    return format(date, "yyyy-MM-dd");
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Formats a duration in seconds to a human-readable string like "2h 5m 30s".

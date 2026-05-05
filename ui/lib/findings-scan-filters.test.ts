@@ -50,7 +50,7 @@ describe("resolveFindingScanDateFilters", () => {
         {
           id: "scan-1",
           attributes: {
-            inserted_at: "2026-04-07T10:00:00Z",
+            completed_at: "2026-04-07T10:00:00Z",
           },
         },
       ],
@@ -68,7 +68,7 @@ describe("resolveFindingScanDateFilters", () => {
     const loadScan = vi.fn().mockResolvedValue({
       id: "scan-2",
       attributes: {
-        inserted_at: "2026-04-05T08:00:00Z",
+        completed_at: "2026-04-05T08:00:00Z",
       },
     });
 
@@ -97,7 +97,7 @@ describe("resolveFindingScanDateFilters", () => {
         {
           id: "scan-1",
           attributes: {
-            inserted_at: "2026-04-07T10:00:00Z",
+            completed_at: "2026-04-07T10:00:00Z",
           },
         },
       ],

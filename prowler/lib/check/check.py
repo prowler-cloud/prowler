@@ -299,12 +299,22 @@ def print_compliance_frameworks(
 def print_compliance_requirements(
     bulk_compliance_frameworks: dict, compliance_frameworks: list
 ):
+    from prowler.lib.check.compliance_models import ComplianceFramework
+
     for compliance_framework in compliance_frameworks:
         for key in bulk_compliance_frameworks.keys():
-            framework = bulk_compliance_frameworks[key].Framework
-            provider = bulk_compliance_frameworks[key].Provider
-            version = bulk_compliance_frameworks[key].Version
-            requirements = bulk_compliance_frameworks[key].Requirements
+            entry = bulk_compliance_frameworks[key]
+            is_universal = isinstance(entry, ComplianceFramework)
+            if is_universal:
+                framework = entry.framework
+                provider = entry.provider or "Multi-provider"
+                version = entry.version
+                requirements = entry.requirements
+            else:
+                framework = entry.Framework
+                provider = entry.Provider or "Multi-provider"
+                version = entry.Version
+                requirements = entry.Requirements
             # We can list the compliance requirements for a given framework using the
             # bulk_compliance_frameworks keys since they are the compliance specification file name
             if compliance_framework == key:
@@ -313,10 +323,23 @@ def print_compliance_requirements(
                 )
                 for requirement in requirements:
                     checks = ""
-                    for check in requirement.Checks:
-                        checks += f" {Fore.YELLOW}\t\t{check}\n{Style.RESET_ALL}"
+                    if is_universal:
+                        req_checks = requirement.checks
+                        req_id = requirement.id
+                        req_description = requirement.description
+                    else:
+                        req_checks = requirement.Checks
+                        req_id = requirement.Id
+                        req_description = requirement.Description
+                    if isinstance(req_checks, dict):
+                        for prov, check_list in req_checks.items():
+                            for check in check_list:
+                                checks += f" {Fore.YELLOW}\t\t[{prov}] {check}\n{Style.RESET_ALL}"
+                    else:
+                        for check in req_checks:
+                            checks += f" {Fore.YELLOW}\t\t{check}\n{Style.RESET_ALL}"
                     print(
-                        f"Requirement Id: {Fore.MAGENTA}{requirement.Id}{Style.RESET_ALL}\n\t- Description: {requirement.Description}\n\t- Checks:\n{checks}"
+                        f"Requirement Id: {Fore.MAGENTA}{req_id}{Style.RESET_ALL}\n\t- Description: {req_description}\n\t- Checks:\n{checks}"
                     )
 
 

@@ -14,8 +14,8 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from tasks.jobs.backfill import (
     backfill_resource_scan_summaries,
-    backfill_scan_category_summaries,
-    backfill_scan_resource_group_summaries,
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
 )
 
 from api.attack_paths import (
@@ -1445,8 +1445,8 @@ def latest_scan_finding_with_categories(
     )
     finding.add_resources([resource])
     backfill_resource_scan_summaries(tenant_id, str(scan.id))
-    backfill_scan_category_summaries(tenant_id, str(scan.id))
-    backfill_scan_resource_group_summaries(tenant_id, str(scan.id))
+    aggregate_scan_category_summaries(tenant_id, str(scan.id))
+    aggregate_scan_resource_group_summaries(tenant_id, str(scan.id))
     return finding
 
 

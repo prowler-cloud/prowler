@@ -44,18 +44,15 @@ export function adaptAttackPathScansResponse(
     },
   }));
 
-  // Transform links to MetaDataProps format if pagination exists
-  const metadata: MetaDataProps | undefined = response.links
+  const metadata: MetaDataProps | undefined = response.meta?.pagination
     ? {
         pagination: {
-          // Links-based pagination doesn't have traditional page numbers
-          // but we preserve the structure for consistency
-          page: 1,
-          pages: 1,
-          count: enrichedData.length,
-          itemsPerPage: [10, 25, 50, 100],
+          page: response.meta.pagination.page,
+          pages: response.meta.pagination.pages,
+          count: response.meta.pagination.count,
+          itemsPerPage: [5, 10, 25, 50, 100],
         },
-        version: "1.0",
+        version: response.meta.version ?? "1.0",
       }
     : undefined;
 

@@ -11,6 +11,7 @@ export * from "./drawer";
 export * from "./dropdown/dropdown";
 export * from "./info-field";
 export * from "./input/input";
+export * from "./progress";
 export * from "./search-input/search-input";
 export * from "./select/multiselect";
 export * from "./select/select";
