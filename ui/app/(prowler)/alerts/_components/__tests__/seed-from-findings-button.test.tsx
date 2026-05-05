@@ -90,6 +90,7 @@ vi.mock("@/app/(prowler)/alerts/_components/alert-form-modal", () => ({
                 regions: [],
                 services: [],
                 resourceGroups: [],
+                findingGroupIds: [],
                 resourceTypes: [],
                 recipientEmails: ["security@example.com"],
                 enabled: true,

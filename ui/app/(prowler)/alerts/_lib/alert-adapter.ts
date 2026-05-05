@@ -73,6 +73,8 @@ const filterItemToLeafFilter = (
       return { categories: normalized };
     case ALERT_FILTER_FIELDS.RESOURCE_GROUPS:
       return { resource_groups: normalized };
+    case ALERT_FILTER_FIELDS.FINDING_GROUPS:
+      return { finding_group_id: normalized };
     case ALERT_FILTER_FIELDS.TYPE: {
       const deltas = normalized.filter((value) =>
         ALERT_DELTA_VALUES.includes(value as AlertDelta),
@@ -148,6 +150,10 @@ const legacyValuesToFilterGroup = (
       ALERT_FILTER_FIELDS.RESOURCE_GROUPS,
       values.resourceGroups ?? [],
     ),
+    createFilterNode(
+      ALERT_FILTER_FIELDS.FINDING_GROUPS,
+      values.findingGroupIds ?? [],
+    ),
     createFilterNode(ALERT_FILTER_FIELDS.RESOURCES, []),
   ],
 });
@@ -177,6 +183,7 @@ const ALERT_FILTER_FIELDS_ALLOWED = new Set<keyof AlertLeafFilter>([
   "resource_types",
   "categories",
   "resource_groups",
+  "finding_group_id",
   "resource_uid",
 ]);
 
@@ -324,6 +331,10 @@ const filterToSimpleGroup = (
       getStringArrayFilterValue(filter, "resource_groups"),
     ),
     createFilterNode(
+      ALERT_FILTER_FIELDS.FINDING_GROUPS,
+      getStringArrayFilterValue(filter, "finding_group_id"),
+    ),
+    createFilterNode(
       ALERT_FILTER_FIELDS.RESOURCES,
       getStringArrayFilterValue(filter, "resource_uid"),
     ),
@@ -371,6 +382,7 @@ export const getEmptyAlertFormDefaults = (
   regions: [],
   services: [],
   resourceGroups: [],
+  findingGroupIds: [],
   resourceTypes: [],
   recipientEmails: [],
   enabled: true,
@@ -407,6 +419,10 @@ export const getAlertFormDefaults = (alert: AlertRule): AlertFormDefaults => {
     resourceGroups: getStringArrayFilterValue(
       simpleFilter ?? {},
       "resource_groups",
+    ),
+    findingGroupIds: getStringArrayFilterValue(
+      simpleFilter ?? {},
+      "finding_group_id",
     ),
     resourceTypes: getStringArrayFilterValue(
       simpleFilter ?? {},
@@ -452,6 +468,9 @@ const FINDINGS_FILTER_KEY_TO_SIMPLE_FIELD: Record<
   resource_groups: ALERT_FILTER_FIELDS.RESOURCE_GROUPS,
   resource_groups__in: ALERT_FILTER_FIELDS.RESOURCE_GROUPS,
   "resource_groups.in": ALERT_FILTER_FIELDS.RESOURCE_GROUPS,
+  finding_group_id: ALERT_FILTER_FIELDS.FINDING_GROUPS,
+  finding_group_id__in: ALERT_FILTER_FIELDS.FINDING_GROUPS,
+  "finding_group_id.in": ALERT_FILTER_FIELDS.FINDING_GROUPS,
   check_id: ALERT_FILTER_FIELDS.CHECKS,
   check_id__in: ALERT_FILTER_FIELDS.CHECKS,
   "check_id.in": ALERT_FILTER_FIELDS.CHECKS,
@@ -463,6 +482,23 @@ const FINDINGS_FILTER_KEY_TO_SIMPLE_FIELD: Record<
   resource_types: ALERT_FILTER_FIELDS.RESOURCE_TYPES,
   resource_types__in: ALERT_FILTER_FIELDS.RESOURCE_TYPES,
   "resource_types.in": ALERT_FILTER_FIELDS.RESOURCE_TYPES,
+};
+
+const SIMPLE_FIELD_TO_FINDINGS_FILTER: Partial<
+  Record<keyof AlertLeafFilter, string>
+> = {
+  provider_type: "filter[provider_type__in]",
+  provider_id: "filter[provider_id__in]",
+  severity: "filter[severity__in]",
+  delta: "filter[delta]",
+  resource_regions: "filter[region__in]",
+  resource_services: "filter[service__in]",
+  resource_types: "filter[resource_type__in]",
+  categories: "filter[category__in]",
+  resource_groups: "filter[resource_groups__in]",
+  check_id: "filter[check_id__in]",
+  finding_group_id: "filter[finding_group_id]",
+  resource_uid: "filter[resource_uid__in]",
 };
 
 const unwrapFindingsFilterKey = (rawKey: string): string => {
@@ -479,6 +515,47 @@ const splitFindingsFilterValues = (
   const values = Array.isArray(value) ? value : [value];
   return normalizeStringValues(
     values.flatMap((entry) => String(entry).split(",")),
+  );
+};
+
+const uniqueValues = (values: string[]): string[] =>
+  Array.from(new Set(values));
+
+export const getFindingsFiltersFromAlertCondition = (
+  condition: AlertCondition,
+): Record<string, string[]> => {
+  if ("filter" in condition) {
+    return Object.entries(condition.filter).reduce<Record<string, string[]>>(
+      (filters, [field, value]) => {
+        const filterKey =
+          SIMPLE_FIELD_TO_FINDINGS_FILTER[field as keyof AlertLeafFilter];
+        if (!filterKey || !Array.isArray(value)) return filters;
+        filters[filterKey] = uniqueValues([
+          ...(filters[filterKey] ?? []),
+          ...value,
+        ]);
+        return filters;
+      },
+      {},
+    );
+  }
+
+  if ("child" in condition) {
+    return getFindingsFiltersFromAlertCondition(condition.child);
+  }
+
+  return condition.children.reduce<Record<string, string[]>>(
+    (filters, child) => {
+      const childFilters = getFindingsFiltersFromAlertCondition(child);
+      Object.entries(childFilters).forEach(([filterKey, values]) => {
+        filters[filterKey] = uniqueValues([
+          ...(filters[filterKey] ?? []),
+          ...values,
+        ]);
+      });
+      return filters;
+    },
+    {},
   );
 };
 
@@ -510,6 +587,7 @@ const FINDINGS_FILTER_FIELD_ORDER = [
   ALERT_FILTER_FIELDS.CATEGORIES,
   ALERT_FILTER_FIELDS.RESOURCE_GROUPS,
   ALERT_FILTER_FIELDS.CHECKS,
+  ALERT_FILTER_FIELDS.FINDING_GROUPS,
   ALERT_FILTER_FIELDS.RESOURCE_TYPES,
   ALERT_FILTER_FIELDS.RESOURCES,
 ] as const;
@@ -547,6 +625,9 @@ export const getAlertFormDefaultsFromFindingsFilters = (
     resourceGroups:
       fieldValues[ALERT_FILTER_FIELDS.RESOURCE_GROUPS] ??
       defaults.resourceGroups,
+    findingGroupIds:
+      fieldValues[ALERT_FILTER_FIELDS.FINDING_GROUPS] ??
+      defaults.findingGroupIds,
     resourceTypes:
       fieldValues[ALERT_FILTER_FIELDS.RESOURCE_TYPES] ?? defaults.resourceTypes,
   };

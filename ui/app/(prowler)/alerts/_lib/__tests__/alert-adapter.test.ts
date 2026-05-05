@@ -14,6 +14,7 @@ import {
   buildAlertCondition,
   getAlertFormDefaults,
   getAlertFormDefaultsFromFindingsFilters,
+  getFindingsFiltersFromAlertCondition,
   toAlertPayload,
 } from "../alert-adapter";
 
@@ -56,6 +57,7 @@ const baseValues = {
   regions: ["us-east-1"],
   services: ["iam"],
   resourceGroups: ["prod"],
+  findingGroupIds: [],
   resourceTypes: ["AWS::IAM::User"],
   recipientEmails: [" Security@Example.COM ", "ops@example.com"],
   enabled: true,
@@ -203,6 +205,7 @@ describe("simple alert adapter", () => {
         "filter[category__in]": "identity-security",
         "filter[resource_groups__in]": "prod",
         "filter[check_id__in]": "iam_user_no_mfa",
+        "filter[finding_group_id]": "finding-group-1",
         "filter[resource_uid__in]": "arn:aws:iam::123:user/alice",
         "filter[status__in]": "FAIL",
         "filter[resource_type__in]": "AWS::IAM::User",
@@ -231,6 +234,11 @@ describe("simple alert adapter", () => {
         { kind: "filter", field: "checks", values: ["iam_user_no_mfa"] },
         {
           kind: "filter",
+          field: "findingGroups",
+          values: ["finding-group-1"],
+        },
+        {
+          kind: "filter",
           field: "resourceTypes",
           values: ["AWS::IAM::User"],
         },
@@ -243,6 +251,25 @@ describe("simple alert adapter", () => {
       expect(JSON.stringify(defaults.filterGroup)).not.toContain("inserted_at");
       expect(JSON.stringify(defaults.filterGroup)).not.toContain("status");
       expect(JSON.stringify(defaults.filterGroup)).not.toContain("muted");
+    });
+
+    it("should preserve finding group filters when seeding an alert from findings", () => {
+      // Given
+      const defaults = getAlertFormDefaultsFromFindingsFilters({
+        "filter[finding_group_id]": "group-1",
+      });
+
+      // When
+      const payload = toAlertPayload({
+        ...baseValues,
+        filterGroup: defaults.filterGroup,
+        findingGroupIds: defaults.findingGroupIds,
+      });
+
+      // Then
+      expect(payload.condition).toEqual(
+        countFilter({ finding_group_id: ["group-1"] }),
+      );
     });
 
     it("should keep ALL type as an unbounded delta while NEW maps to delta=new", () => {
@@ -307,6 +334,7 @@ describe("simple alert adapter", () => {
         regions: [],
         services: [],
         resourceGroups: [],
+        findingGroupIds: [],
         resourceTypes: [],
         recipientEmails: ["alerts@example.com"],
         enabled: false,
@@ -347,6 +375,28 @@ describe("simple alert adapter", () => {
         { kind: "filter", field: "providers", values: ["aws"] },
       ]);
       expect(defaults.advancedCondition).toBeNull();
+    });
+
+    it("should expose every editable alert condition as pending Findings filters", () => {
+      // Given
+      const condition = {
+        op: ALERT_BOOLEAN_OPS.AND,
+        children: [
+          countFilter({ check_id: ["iam_user_no_mfa"] }),
+          countFilter({ resource_uid: ["arn:aws:iam::123:user/alice"] }),
+          countFilter({ finding_group_id: ["finding-group-1"] }),
+        ],
+      } satisfies AlertCondition;
+
+      // When
+      const filters = getFindingsFiltersFromAlertCondition(condition);
+
+      // Then
+      expect(filters).toEqual({
+        "filter[check_id__in]": ["iam_user_no_mfa"],
+        "filter[resource_uid__in]": ["arn:aws:iam::123:user/alice"],
+        "filter[finding_group_id]": ["finding-group-1"],
+      });
     });
   });
 });

@@ -25,6 +25,7 @@ export const ALERT_FILTER_FIELDS = {
   SERVICES: "services",
   CATEGORIES: "categories",
   RESOURCE_GROUPS: "resourceGroups",
+  FINDING_GROUPS: "findingGroups",
   ACCOUNT_TAGS: "accountTags",
   TYPE: "type",
   DATA_DATE_WINDOW: "dataDateWindow",
@@ -88,6 +89,7 @@ export interface AlertFormValues {
   regions: string[];
   services: string[];
   resourceGroups: string[];
+  findingGroupIds: string[];
   resourceTypes: string[];
   recipientEmails: string[];
   enabled: boolean;

@@ -1,3 +1,7 @@
+import { FINDING_DELTA } from "@/types/components";
+import { PROVIDER_TYPES, type ProviderType } from "@/types/providers";
+import { SEVERITY_LEVELS, type SeverityLevel } from "@/types/severities";
+
 // Canonical DSL vocabulary and resource types for the Alerts UI.
 // Mirrors api/src/backend/alerts/dsl.py — every constant declared here MUST
 // match the API. Drift is a bug; reviewers compare the two files when either
@@ -82,38 +86,19 @@ export const ALERT_FILTER_FIELD_KIND_BY_FIELD: Readonly<
 
 // Closed enums for fields whose values are bounded. Builder uses them to
 // render multi-selects; validator uses them to reject out-of-range inputs.
-export const ALERT_SEVERITY_VALUES = [
-  "critical",
-  "high",
-  "medium",
-  "low",
-  "informational",
-] as const;
-export type AlertSeverity = (typeof ALERT_SEVERITY_VALUES)[number];
+export const ALERT_SEVERITY_VALUES = SEVERITY_LEVELS;
+export type AlertSeverity = SeverityLevel;
 
-export const ALERT_DELTA_VALUES = ["new", "changed"] as const;
+export const ALERT_DELTA_VALUES = [
+  FINDING_DELTA.NEW,
+  FINDING_DELTA.CHANGED,
+] as const;
 export type AlertDelta = (typeof ALERT_DELTA_VALUES)[number];
 
 // Mirrors api.models.Provider.ProviderChoices. Keep in sync if a new
 // platform is registered there; the API rejects values outside this set.
-export const ALERT_PROVIDER_TYPE_VALUES = [
-  "aws",
-  "azure",
-  "gcp",
-  "kubernetes",
-  "m365",
-  "github",
-  "mongodbatlas",
-  "iac",
-  "oraclecloud",
-  "alibabacloud",
-  "cloudflare",
-  "openstack",
-  "image",
-  "googleworkspace",
-  "vercel",
-] as const;
-export type AlertProviderType = (typeof ALERT_PROVIDER_TYPE_VALUES)[number];
+export const ALERT_PROVIDER_TYPE_VALUES = PROVIDER_TYPES;
+export type AlertProviderType = ProviderType;
 
 export const ALERT_ENUM_VALUES_BY_FIELD = {
   severity: ALERT_SEVERITY_VALUES,

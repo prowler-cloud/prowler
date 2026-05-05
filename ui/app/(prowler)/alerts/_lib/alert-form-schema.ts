@@ -56,6 +56,7 @@ export const alertFormSchema = z.object({
   regions: z.array(z.string().trim().min(1)).default([]),
   services: z.array(z.string().trim().min(1)).default([]),
   resourceGroups: z.array(z.string().trim().min(1)).default([]),
+  findingGroupIds: z.array(z.string().trim().min(1)).default([]),
   resourceTypes: z.array(z.string().trim().min(1)).default([]),
   recipientEmails: z
     .array(z.email({ error: "Enter a valid email address." }))

@@ -52,6 +52,7 @@ import {
   getAlertFormDefaults,
   getAlertFormDefaultsFromFindingsFilters,
   getEmptyAlertFormDefaults,
+  getFindingsFiltersFromAlertCondition,
 } from "../_lib/alert-adapter";
 import { alertFormSchema } from "../_lib/alert-form-schema";
 import type {
@@ -250,57 +251,8 @@ const PreviewSummary = ({ preview }: { preview: PreviewState }) => {
   );
 };
 
-const SIMPLE_FIELD_TO_FINDINGS_FILTER: Record<string, string> = {
-  provider_type: "filter[provider_type__in]",
-  provider_id: "filter[provider_id__in]",
-  severity: "filter[severity__in]",
-  delta: "filter[delta]",
-  resource_regions: "filter[region__in]",
-  resource_services: "filter[service__in]",
-  resource_types: "filter[resource_type__in]",
-  categories: "filter[category__in]",
-  resource_groups: "filter[resource_groups__in]",
-};
-
 const normalizeFindingsFilterKey = (filterKey: string): string =>
   filterKey.startsWith("filter[") ? filterKey : `filter[${filterKey}]`;
-
-const conditionToPendingFindingsFilters = (
-  condition: AlertCondition,
-): Record<string, string[]> => {
-  if ("filter" in condition) {
-    return Object.entries(condition.filter).reduce<Record<string, string[]>>(
-      (filters, [field, value]) => {
-        const filterKey = SIMPLE_FIELD_TO_FINDINGS_FILTER[field];
-        if (!filterKey || !Array.isArray(value)) return filters;
-        filters[filterKey] = uniqueValues([
-          ...(filters[filterKey] ?? []),
-          ...value,
-        ]);
-        return filters;
-      },
-      {},
-    );
-  }
-
-  if ("child" in condition) {
-    return conditionToPendingFindingsFilters(condition.child);
-  }
-
-  return condition.children.reduce<Record<string, string[]>>(
-    (filters, child) => {
-      const childFilters = conditionToPendingFindingsFilters(child);
-      Object.entries(childFilters).forEach(([filterKey, values]) => {
-        filters[filterKey] = uniqueValues([
-          ...(filters[filterKey] ?? []),
-          ...values,
-        ]);
-      });
-      return filters;
-    },
-    {},
-  );
-};
 
 interface AlertRecipientsSelectProps {
   selectedEmails: Set<string>;
@@ -461,7 +413,7 @@ const AlertFormModalContent = ({
     Record<string, string[]>
   >(
     editingAlert
-      ? conditionToPendingFindingsFilters(editingAlert.attributes.condition)
+      ? getFindingsFiltersFromAlertCondition(editingAlert.attributes.condition)
       : {},
   );
   const [selectedRecipientEmails, setSelectedRecipientEmails] = useState(
@@ -512,6 +464,7 @@ const AlertFormModalContent = ({
       regions: filterDefaults.regions,
       services: filterDefaults.services,
       resourceGroups: filterDefaults.resourceGroups,
+      findingGroupIds: filterDefaults.findingGroupIds,
       resourceTypes: filterDefaults.resourceTypes,
       recipientEmails: getRecipientEmails(selectedRecipientEmails),
       enabled,
