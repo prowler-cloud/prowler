@@ -28,6 +28,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -59,6 +60,7 @@ import {
 import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
+import { exportGraphAsPNG } from "./_lib";
 
 const getNodeDisplayTitle = (node: GraphNode): string => {
   const isFinding = node.labels.some((l) =>
@@ -419,6 +421,28 @@ export default function AttackPathsPage() {
     void finding.navigateToFinding(findingId);
   };
 
+  const handleGraphExport = async (target: "main" | "fullscreen") => {
+    const ref = target === "fullscreen" ? fullscreenGraphRef : graphRef;
+    const handle = ref.current;
+    if (!handle) return;
+
+    try {
+      await exportGraphAsPNG(
+        handle.getContainerElement(),
+        handle.getNodesBounds(),
+      );
+      toast({
+        title: "Success",
+        description: "Graph exported",
+        variant: "default",
+      });
+    } catch (error) {
+      const description =
+        error instanceof Error ? error.message : "Failed to export graph";
+      showErrorToast("Export failed", description);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       {/* Auto-refresh scans when there's an executing scan */}
@@ -598,6 +622,7 @@ export default function AttackPathsPage() {
                         onZoomIn={() => graphRef.current?.zoomIn()}
                         onZoomOut={() => graphRef.current?.zoomOut()}
                         onFitToScreen={() => graphRef.current?.resetZoom()}
+                        onExport={() => handleGraphExport("main")}
                       />
 
                       {/* Fullscreen button */}
@@ -619,6 +644,10 @@ export default function AttackPathsPage() {
                           <DialogContent className="flex h-full max-h-screen w-full max-w-full flex-col gap-0 rounded-none border-0 p-0 sm:max-w-full">
                             <DialogHeader className="sr-only">
                               <DialogTitle>Fullscreen graph view</DialogTitle>
+                              <DialogDescription>
+                                Explore the attack path graph at full size. Use
+                                the toolbar to zoom, fit, or export the graph.
+                              </DialogDescription>
                             </DialogHeader>
                             <div className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
                               <GraphControls
@@ -631,6 +660,7 @@ export default function AttackPathsPage() {
                                 onFitToScreen={() =>
                                   fullscreenGraphRef.current?.resetZoom()
                                 }
+                                onExport={() => handleGraphExport("fullscreen")}
                               />
                             </div>
                             <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6 lg:flex-row">
