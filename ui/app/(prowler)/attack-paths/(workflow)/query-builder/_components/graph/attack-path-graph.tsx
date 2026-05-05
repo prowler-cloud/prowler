@@ -386,9 +386,6 @@ const GraphCanvas = ({
   const nodes = effectiveData.nodes ?? [];
   const edges = effectiveData.edges ?? [];
 
-  // Derive RF nodes and edges from data (pure computation in render body — D4)
-  const { rfNodes, rfEdges } = layoutWithDagre(nodes, edges);
-
   // Pre-compute which resources have findings connected (O(n+e))
   const findingNodeIds = new Set<string>();
   const resourceToFindings = new Map<string, Set<string>>();
@@ -446,6 +443,21 @@ const GraphCanvas = ({
       }
     });
   }
+
+  const layoutNodeIds = new Set(
+    nodes
+      .filter((node) => !hiddenFindingIds.has(node.id))
+      .map((node) => node.id),
+  );
+  const layoutNodes = nodes.filter((node) => layoutNodeIds.has(node.id));
+  const layoutEdges = edges.filter(
+    (edge) => layoutNodeIds.has(edge.source) && layoutNodeIds.has(edge.target),
+  );
+
+  // Derive RF nodes and edges from visible data only. Hidden finding nodes are
+  // excluded before Dagre runs so the initial tier-1 graph does not reserve
+  // empty space for findings that the user has not expanded yet.
+  const { rfNodes, rfEdges } = layoutWithDagre(layoutNodes, layoutEdges);
 
   // Path highlight: compute highlighted edge IDs
   const activeHighlightNodeId = hoveredNodeId ?? selectedNodeId;

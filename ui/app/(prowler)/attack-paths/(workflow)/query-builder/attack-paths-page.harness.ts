@@ -112,6 +112,22 @@ export class AttackPathPageHarness {
     });
   }
 
+  get nodePositionsById(): Record<string, { x: number; y: number }> {
+    return Object.fromEntries(
+      this.nodes.map((el) => {
+        const id = el.getAttribute("data-id") ?? "";
+        const match = /translate\(\s*([-\d.]+)px?\s*,\s*([-\d.]+)px?\s*\)/.exec(
+          el.style.transform,
+        );
+
+        return [
+          id,
+          match ? { x: Number(match[1]), y: Number(match[2]) } : { x: 0, y: 0 },
+        ];
+      }),
+    );
+  }
+
   // --- Predicates ---
 
   get isInFilteredView(): boolean {

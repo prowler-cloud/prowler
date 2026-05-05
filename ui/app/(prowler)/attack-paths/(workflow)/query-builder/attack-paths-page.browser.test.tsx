@@ -17,6 +17,7 @@ import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
 
 import { useGraphStore } from "./_hooks/use-graph-state";
+import { isFindingNode, layoutWithDagre } from "./_lib/layout";
 import AttackPathsPage from "./attack-paths-page";
 import { fixtures, type PageFixture } from "./attack-paths-page.fixtures";
 import { AttackPathPageHarness } from "./attack-paths-page.harness";
@@ -188,6 +189,47 @@ describe("running a query", () => {
     }
     expect(graph.findingNodes.length).toBe(0);
     expect(graph.resourceNodes.length).toBe(0);
+  });
+
+  test("hidden findings do not reserve layout space until expanded", async ({
+    mountWith,
+  }) => {
+    // Given - a graph whose findings are hidden in the initial tier-1 view.
+    // The initial rendered positions should match a layout computed from only
+    // visible resources/edges, not from hidden finding nodes.
+    const fixture = fixtures.typical();
+    if (!fixture.queryResult) throw new Error("Expected graph fixture data");
+
+    const visibleNodes = fixture.queryResult.nodes.filter(
+      (node) => !isFindingNode(node.labels),
+    );
+    const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
+    const visibleEdges = (fixture.queryResult.relationships ?? [])
+      .filter(
+        (edge) =>
+          visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target),
+      )
+      .map((edge) => ({
+        ...edge,
+        type: edge.label,
+      }));
+    const expectedPositions = Object.fromEntries(
+      layoutWithDagre(visibleNodes, visibleEdges).rfNodes.map((node) => [
+        node.id,
+        node.position,
+      ]),
+    );
+
+    const graph = await mountWith(fixture);
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    // Then - hidden findings do not influence initial resource coordinates.
+    for (const node of visibleNodes) {
+      expect(graph.nodePositionsById[node.id]).toEqual(
+        expectedPositions[node.id],
+      );
+    }
   });
 
   test("self-loops, cycles, long labels, unicode, and duplicate edges all render", async ({
