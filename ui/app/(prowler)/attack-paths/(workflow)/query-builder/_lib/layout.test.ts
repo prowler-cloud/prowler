@@ -1,3 +1,4 @@
+import { Position } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
 
 import type { GraphEdge, GraphNode } from "@/types/attack-paths";
@@ -69,6 +70,77 @@ describe("layoutWithDagre", () => {
     const b = layoutWithDagre(nodes, edges);
 
     expect(a).toEqual(b);
+  });
+
+  it("spreads sibling nodes horizontally to use wide graph space", () => {
+    const rootNode: GraphNode = {
+      id: "root",
+      labels: ["AWSAccount"],
+      properties: { name: "account" },
+    };
+    const siblingNodes: GraphNode[] = [
+      {
+        id: "bucket",
+        labels: ["S3Bucket"],
+        properties: { name: "bucket" },
+      },
+      {
+        id: "lambda",
+        labels: ["AWSLambda"],
+        properties: { name: "function" },
+      },
+      {
+        id: "database",
+        labels: ["RDSInstance"],
+        properties: { name: "database" },
+      },
+    ];
+
+    const { rfNodes } = layoutWithDagre(
+      [rootNode, ...siblingNodes],
+      siblingNodes.map((node) => ({
+        id: `root-${node.id}`,
+        source: "root",
+        target: node.id,
+        type: "CONNECTS_TO",
+      })),
+    );
+
+    const siblingPositions = siblingNodes.map((node) => {
+      const rfNode = rfNodes.find((candidate) => candidate.id === node.id);
+
+      expect(rfNode).toBeDefined();
+
+      return rfNode?.position ?? { x: 0, y: 0 };
+    });
+
+    const xSpread =
+      Math.max(...siblingPositions.map((position) => position.x)) -
+      Math.min(...siblingPositions.map((position) => position.x));
+    const ySpread =
+      Math.max(...siblingPositions.map((position) => position.y)) -
+      Math.min(...siblingPositions.map((position) => position.y));
+
+    expect(xSpread).toBeGreaterThan(ySpread);
+  });
+
+  it("connects edges through top and bottom node sides for vertical layout", () => {
+    const { rfNodes } = layoutWithDagre(
+      [findingNode, resourceNode],
+      [
+        {
+          id: "e1",
+          source: "resource-1",
+          target: "finding-1",
+          type: "HAS_FINDING",
+        },
+      ],
+    );
+
+    rfNodes.forEach((node) => {
+      expect(node.sourcePosition).toBe(Position.Bottom);
+      expect(node.targetPosition).toBe(Position.Top);
+    });
   });
 
   it("offsets dagre center positions by half of the node dimensions (top-left)", () => {
