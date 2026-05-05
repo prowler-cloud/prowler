@@ -334,6 +334,7 @@ const SSRComplianceContent = async ({
         <TopFailedSectionsCard
           sections={topFailedResult.items}
           dataType={topFailedResult.type}
+          prepopulated={topFailedResult.prepopulated}
         />
         {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
       </div>

@@ -43,5 +43,5 @@ export const getTopFailedSections = (
     .sort(compareSectionsByCanonicalOrder)
     .map((name) => ({ name, total: totals.get(name) ?? 0 }));
 
-  return { items, type: TOP_FAILED_DATA_TYPE.SECTIONS };
+  return { items, type: TOP_FAILED_DATA_TYPE.SECTIONS, prepopulated: true };
 };

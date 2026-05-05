@@ -160,9 +160,7 @@ export const mapComplianceData = (
           ? (numerator / denominator) * 100
           : 0;
 
-      // Add percentualScore to category (we can extend the type or use a custom property)
-      (category as any).percentualScore =
-        Math.round(percentualScore * 100) / 100; // Round to 2 decimal places
+      category.percentualScore = Math.round(percentualScore * 100) / 100;
 
       framework.pass += category.pass;
       framework.fail += category.fail;
@@ -179,7 +177,7 @@ export const toAccordionItems = (
 ): AccordionItemProps[] => {
   return data.flatMap((framework) =>
     framework.categories.map((category) => {
-      const percentualScore = (category as any).percentualScore || 0;
+      const percentualScore = category.percentualScore ?? 0;
 
       return {
         key: `${framework.name}-${category.name}`,

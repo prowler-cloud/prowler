@@ -12,11 +12,16 @@ import {
 interface TopFailedSectionsCardProps {
   sections: FailedSection[];
   dataType?: TopFailedDataType;
+  // True when `sections` already covers every relevant category (e.g.
+  // ThreatScore's canonical pillars zero-filled). Renders the supplied list
+  // as-is instead of falling back to severity placeholders on zero totals.
+  prepopulated?: boolean;
 }
 
 export function TopFailedSectionsCard({
   sections,
   dataType = TOP_FAILED_DATA_TYPE.SECTIONS,
+  prepopulated = false,
 }: TopFailedSectionsCardProps) {
   const total = sections.reduce((sum, section) => sum + section.total, 0);
 
@@ -32,13 +37,6 @@ export function TopFailedSectionsCard({
       ? "Top Failed Requirements"
       : "Top Failed Sections";
 
-  // Callers like ThreatScore pre-populate a canonical pillar list. When all
-  // pillars have zero failures we still want to render those bars (at zero)
-  // instead of letting the chart fall back to severity placeholders, so the
-  // user keeps the context of which pillars are being tracked.
-  const hasPrepopulatedCategories =
-    dataType === TOP_FAILED_DATA_TYPE.SECTIONS && sections.length > 0;
-
   return (
     <Card variant="base" className="flex h-full min-h-[372px] w-full flex-col">
       <CardHeader>
@@ -47,7 +45,7 @@ export function TopFailedSectionsCard({
       <CardContent className="flex flex-1 items-center justify-start">
         <HorizontalBarChart
           data={barData}
-          useSeverityEmptyState={!hasPrepopulatedCategories}
+          useSeverityEmptyState={!prepopulated}
         />
       </CardContent>
     </Card>
