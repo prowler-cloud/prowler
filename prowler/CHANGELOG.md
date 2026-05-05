@@ -30,6 +30,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Parser-mismatch SSRF in image provider registry auth where crafted bearer-token realms and pagination links could force requests to internal addresses and leak credentials cross-origin [(#10945)](https://github.com/prowler-cloud/prowler/pull/10945)
 
+## [5.25.3] (Prowler v5.25.3 Unreleased)
+
+### 🐞 Fixed
+
+- Oracle cloud identity scans now scan known or supplied regions to better support non ashburn tenancies [(#10528)](https://github.com/prowler-cloud/prowler/pull/10529)
+
 ---
 
 ## [5.25.2] (Prowler v5.25.2)
@@ -159,7 +165,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - OCI mutelist support: pass `tenancy_id` to `is_finding_muted` and update `oraclecloud_mutelist_example.yaml` to use `Accounts` key [(#10566)](https://github.com/prowler-cloud/prowler/pull/10566)
 - `return` statements in `finally` blocks replaced across IAM, Organizations, GCP provider, and custom checks metadata to stop silently swallowing exceptions [(#10102)](https://github.com/prowler-cloud/prowler/pull/10102)
-- Oracle cloud identity scans now scan known or supplied regions to better support non ashburn tenancies [(#10528)](https://github.com/prowler-cloud/prowler/pull/10529)
 - `JiraConnection` now includes issue types per project fetched during `test_connection`, fixing `JiraInvalidIssueTypeError` on non-English Jira instances [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
 - `--list-checks` and `--list-checks-json` now include `threat-detection` category checks in their output [(#10578)](https://github.com/prowler-cloud/prowler/pull/10578)
 - Missing `__init__.py` in `codebuild_project_uses_allowed_github_organizations` check preventing discovery by `--list-checks` [(#10584)](https://github.com/prowler-cloud/prowler/pull/10584)
