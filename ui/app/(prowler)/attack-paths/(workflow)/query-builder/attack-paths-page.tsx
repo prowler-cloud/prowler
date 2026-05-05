@@ -664,7 +664,11 @@ export default function AttackPathsPage() {
 
                   {/* Legend below */}
                   <div className="flex justify-center overflow-x-auto">
-                    <GraphLegend data={graphState.data} />
+                    <GraphLegend
+                      data={graphState.data}
+                      expandedResources={graphState.expandedResources}
+                      isFilteredView={graphState.isFilteredView}
+                    />
                   </div>
                 </>
               ) : null}
