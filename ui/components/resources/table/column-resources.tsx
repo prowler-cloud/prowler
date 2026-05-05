@@ -92,7 +92,7 @@ export function getColumnResources({
     {
       accessorKey: "provider",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Cloud Provider" />
+        <DataTableColumnHeader column={column} title="Provider" />
       ),
       cell: ({ row }) => {
         const provider = getProviderData(row, "provider");
