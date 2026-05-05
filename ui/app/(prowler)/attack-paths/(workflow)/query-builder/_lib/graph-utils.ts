@@ -65,14 +65,12 @@ export const computeFilteredSubgraph = (
   traverseDownstream(targetNodeId);
 
   // Also include findings directly connected to the selected node
+  const nodeLabelMap = new Map(nodes.map((n) => [n.id, n.labels]));
   edges.forEach((edge) => {
-    const sourceNode = nodes.find((n) => n.id === edge.source);
-    const targetNode = nodes.find((n) => n.id === edge.target);
-
-    const sourceIsFinding = sourceNode?.labels.some((l) =>
+    const sourceIsFinding = (nodeLabelMap.get(edge.source) ?? []).some((l) =>
       l.toLowerCase().includes("finding"),
     );
-    const targetIsFinding = targetNode?.labels.some((l) =>
+    const targetIsFinding = (nodeLabelMap.get(edge.target) ?? []).some((l) =>
       l.toLowerCase().includes("finding"),
     );
 
