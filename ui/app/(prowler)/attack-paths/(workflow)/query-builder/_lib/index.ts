@@ -14,3 +14,9 @@ export {
 } from "./graph-colors";
 export { computeFilteredSubgraph, getPathEdges } from "./graph-utils";
 export { layoutWithDagre } from "./layout";
+export {
+  NODE_CATEGORY,
+  type NodeCategory,
+  type NodeVisual,
+  resolveNodeVisual,
+} from "./node-visuals";
