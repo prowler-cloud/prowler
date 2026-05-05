@@ -1,0 +1,30 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_agent_role_least_privilege",
+  "CheckTitle": "Bedrock Agent execution roles follow least privilege",
+  "CheckType": [],
+  "CheckAliases": [],
+  "ServiceName": "bedrock",
+  "SubServiceName": "agent",
+  "ResourceIdTemplate": "arn:aws:bedrock:{region}:{account-id}:agent/{agent-id}",
+  "Severity": "high",
+  "ResourceType": "AwsBedrockAgent",
+  "Description": "Ensures each Bedrock Agent execution role has no full-access managed policies attached.",  "Risk": "A permissive agent execution role turns prompt injection into privilege escalation.",
+  "RelatedUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam detach-role-policy --role-name <role-name> --policy-arn <full-access-policy-arn>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove full-access managed policies from the Bedrock Agent execution role and replace with a scoped policy granting only the permissions the agent requires.",
+      "Url": "https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html"
+    }
+  },
+  "Categories": ["gen-ai", "iam"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Requires bedrock-agent:GetAgent and iam:ListAttachedRolePolicies."
+}

@@ -218,6 +218,7 @@ class Agent(BaseModel):
     guardrail_id: Optional[str] = None
     region: str
     tags: Optional[list] = []
+    agent_resource_role_arn: Optional[str] = None
 
 
 class Prompt(BaseModel):
