@@ -1,0 +1,40 @@
+---
+title: 'Your partner organization'
+---
+
+Your **partner organization** in Prowler Partner Portal is the top-level container for your team, your branding, your role catalogue and the customers you operate Prowler Cloud tenants for.
+
+## Lifecycle
+
+A partner organization moves through these states:
+
+| State | Meaning |
+|---|---|
+| **Pending email verification** | The first administrator has signed up but has not yet clicked the email verification link. |
+| **Pending approval** | Email verified; Prowler is reviewing the application. |
+| **Active** | Approved by Prowler. The partner organization can sign in, invite team members and onboard customers. |
+| **Rejected** | Prowler reviewed and declined the application. The account cannot sign in; the decision email contains the reason. |
+| **Suspended** | A previously active partner has been suspended. Sign-in is blocked; resolve manually with Prowler support. |
+
+If an application is rejected, you receive an email with the reason. Common rejection categories include incomplete documentation, ineligibility and duplicate registrations.
+
+## Settings
+
+Partner administrators with the **Manage settings** permission can edit the partner organization's profile from **Settings**:
+
+- **Company name** — the display name shown in the console, invitations and emails.
+- **Branding** — logo and visual identity. See [Customise Partner Portal branding](/user-guide/tutorials/partner-portal-branding).
+- **Partner Code** — a Prowler-issued, read-only value shown on the Profile tab. Customers paste this code in Prowler Cloud to link their tenant to your partner.
+- **Security** — password change for any signed-in user, plus a Danger zone for partner administrators to **request partner deletion**.
+
+## Customer capacity
+
+Each partner organization has a maximum number of concurrent customer organizations (default: **50**). To raise the limit, contact Prowler.
+
+## Closing your organization
+
+To close a partner organization, an administrator submits a deletion request from **Settings → Security → Danger zone**. Typing `DELETE` in the confirmation field and (optionally) providing a short reason files the request; the partner moves into the **deletion requested** state.
+
+While the request is pending, you and your team can still sign in and use the Partner Portal. Once Prowler processes the request, the partner organization, its team memberships and its branding assets are removed and all sessions are invalidated.
+
+Customer Prowler Cloud tenants are **not** automatically deleted — coordinate tenant disposal with each customer through Prowler Cloud directly.

@@ -1,0 +1,40 @@
+---
+title: 'Overview'
+---
+
+[Prowler Partner Portal](https://partners.prowler.com) is a dedicated console for Prowler partners — resellers, MSPs and consultants — to onboard customers, manage their teams, and operate Prowler Cloud tenants on their customers' behalf.
+
+It gives every partner organization its own sign-in surface, a partner-scoped team and role model, branding controls, and a managed flow to provision and access customer Prowler Cloud tenants. Every action against a customer tenant is auditable as the partner user acting on behalf of the customer.
+
+<Card title="Sign up for Prowler Partner Portal" href="https://partners.prowler.com/sign-up" />
+
+Prowler Partner Portal provides:
+
+<ul>
+    <li> Self-service sign-up that flows through email verification and Prowler approval before activating a partner organization. </li>
+    <li> A partner-scoped role model with granular permissions for managing members, settings, billing, customer organizations, and tenant access. </li>
+    <li> Managed customer-tenant provisioning into Prowler Cloud. </li>
+    <li> Branding controls — partner logo on the sign-in screen, invitation emails, and the console header. </li>
+</ul>
+
+## Components
+
+The Partner Portal stack mirrors Prowler Cloud:
+
+- **Partner Portal UI** at `partners.prowler.com` — Next.js console for partner administrators and operators.
+- **Partner Portal API** at `api.partners.prowler.com` — Django REST Framework backend (JSON:API, JWT RS256).
+- **Prowler Cloud integration** — server-to-server signed tokens carry an `on_behalf_of` claim so Prowler Cloud attributes partner-driven actions to the customer tenant they target.
+
+## How it relates to Prowler Cloud
+
+| Capability | Prowler Cloud | Prowler Partner Portal |
+|---|---|---|
+| Audience | End customers | Resellers, MSPs, consultants |
+| Console | `cloud.prowler.com` | `partners.prowler.com` |
+| API | `api.prowler.com` | `api.partners.prowler.com` |
+| Tenancy | Customer-owned | Partner-owned, with managed access to customer tenants |
+| Branding | Prowler-branded | Partner-branded sign-in and console |
+
+## Getting access
+
+Prowler Partner Portal is invitation-driven. Sign up at `partners.prowler.com/sign-up`; a new partner organization stays in **Pending Approval** until the Prowler team reviews and approves the application. Once active, the partner administrator can invite team members and start onboarding customer organizations.

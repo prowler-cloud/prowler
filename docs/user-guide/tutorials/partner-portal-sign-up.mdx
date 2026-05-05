@@ -1,0 +1,50 @@
+---
+title: 'Sign up and sign in to Prowler Partner Portal'
+---
+
+Prowler Partner Portal sign-up and sign-in run on Prowler-managed accounts. The first administrator of a partner organization signs up self-service; subsequent team members are added by invitation.
+
+## Self-service sign-up
+
+<Steps>
+  <Step title="Open the sign-up page">
+    Go to https://partners.prowler.com/sign-up and provide your work email, your name, and the company name to register as a partner. Pick a password of at least 12 characters; a strength helper validates it as you type.
+  </Step>
+
+  <Step title="Verify your email">
+    Prowler sends a verification email with a one-time link, valid for **24 hours**. After verification, your partner organization moves to **Pending Approval**. If the link expires, request a new one at https://partners.prowler.com/resend-verification — issuing a fresh link invalidates any previous unused link for the same account.
+  </Step>
+
+  <Step title="Wait for Prowler approval">
+    Prowler reviews each new partner application. You receive an email when the organization is approved (status moves to **Active**) or, in rare cases, rejected with a reason.
+  </Step>
+
+  <Step title="Sign in">
+    Once approved, sign in at https://partners.prowler.com with the email and password you set during sign-up. You land on your partner organization's dashboard.
+  </Step>
+</Steps>
+
+## Sign-in
+
+Existing users sign in at https://partners.prowler.com with email and password. On success you land on `/dashboard`.
+
+Common sign-in errors:
+
+- `Invalid email or password` — credentials do not match an account.
+- `Please verify your email before signing in` — verification has not been completed; open the verification email or request a fresh link from `/resend-verification`.
+- `Your partner application is still under review` — sign-in is blocked until Prowler approves the application.
+- `Your partner application was not approved` — the application was rejected; the account cannot sign in.
+
+## Forgot password
+
+Click **Forgot password?** on the sign-in screen and enter your email at `/forgot-password`. Prowler sends a password reset email; the reset link is valid for a fixed window. The reset page asks for a new password (minimum 12 characters) and a confirmation; on success you are redirected back to sign-in.
+
+For security, the confirmation banner on the Forgot-password screen is shown whether or not the email matches an account — a fresh request invalidates any previous unused reset link.
+
+## Sessions
+
+Prowler Partner Portal uses short-lived JWTs (RS256) refreshed automatically while you remain active. Refresh tokens rotate on every refresh; previous refresh tokens are revoked. If a refresh fails — for example, after a long inactivity, a server restart, or a revoked token — you are returned to `/sign-in?error=RefreshAccessTokenError`. Sign in again to continue.
+
+## Sign out
+
+Open the user avatar in the top-right of any page and pick **Sign out**. The session is cleared and you are returned to the sign-in form.
