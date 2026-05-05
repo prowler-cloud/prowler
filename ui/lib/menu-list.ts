@@ -1,4 +1,5 @@
 import {
+  BellRing,
   CloudCog,
   Cog,
   GitBranch,
@@ -74,7 +75,6 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
           label: "Attack Paths",
           icon: GitBranch,
           active: pathname.startsWith("/attack-paths"),
-          highlight: true,
         },
       ],
     },
@@ -108,6 +108,17 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
           icon: Settings,
           submenus: [
             { href: "/providers", label: "Providers", icon: CloudCog },
+            ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
+              ? [
+                  {
+                    href: "/alerts",
+                    label: "Alerts",
+                    icon: BellRing,
+                    active: pathname.startsWith("/alerts"),
+                    highlight: true,
+                  },
+                ]
+              : []),
             {
               href: "/mutelist",
               label: "Mutelist",

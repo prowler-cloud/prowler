@@ -19,6 +19,7 @@ interface SubmenuItemProps {
   active?: boolean;
   target?: string;
   disabled?: boolean;
+  highlight?: boolean;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
@@ -29,6 +30,7 @@ export const SubmenuItem = ({
   active,
   target,
   disabled,
+  highlight,
   onClick,
 }: SubmenuItemProps) => {
   const pathname = usePathname();
@@ -72,7 +74,14 @@ export const SubmenuItem = ({
         <span className="mr-2">
           <Icon size={16} />
         </span>
-        <p className="max-w-[170px] truncate">{label}</p>
+        <p className="flex max-w-[170px] items-center truncate">
+          <span>{label}</span>
+          {highlight && (
+            <span className="ml-2 rounded-sm bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              NEW
+            </span>
+          )}
+        </p>
       </Link>
     </Button>
   );
