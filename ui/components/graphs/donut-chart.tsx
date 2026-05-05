@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Cell, Label, Pie, PieChart, Sector, Tooltip } from "recharts";
+import {
+  Cell,
+  Label,
+  Pie,
+  PieChart,
+  Sector,
+  type SectorProps,
+  Tooltip,
+} from "recharts";
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 
@@ -166,34 +174,11 @@ export function DonutChart({
     outerRadius - ACTIVE_GROW,
   );
 
-  interface ActiveSectorProps {
-    cx: number;
-    cy: number;
-    innerRadius: number;
-    outerRadius: number;
-    startAngle: number;
-    endAngle: number;
-    fill: string;
-  }
-
   // Grows the hovered slice up to the original outerRadius so tiny segments
   // (e.g. 1% fail) are easy to see and target with the cursor (PROWLER-1477).
-  // Recharts types `activeShape` as `(props: unknown) => Element`; cast on
-  // the boundary so the body stays strongly typed.
-  const renderActiveShape = (props: unknown) => {
-    const p = props as ActiveSectorProps;
-    return (
-      <Sector
-        cx={p.cx}
-        cy={p.cy}
-        innerRadius={p.innerRadius}
-        outerRadius={p.outerRadius + ACTIVE_GROW}
-        startAngle={p.startAngle}
-        endAngle={p.endAngle}
-        fill={p.fill}
-      />
-    );
-  };
+  const renderActiveShape = (props: SectorProps) => (
+    <Sector {...props} outerRadius={(props.outerRadius ?? 0) + ACTIVE_GROW} />
+  );
 
   return (
     <>
