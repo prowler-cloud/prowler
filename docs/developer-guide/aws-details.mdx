@@ -110,7 +110,7 @@ def _get_email_identities(self, identity):
             EmailIdentity=identity.name
         )
         # Step 4: Use .get() for safe dictionary access
-        for _, content in identity_attributes.get("Policies", {}).items():
+        for content_key, content_value in identity_attributes.get("Policies", {}).items():
             identity.policy = loads(content)
         identity.tags = identity_attributes.get("Tags", [])
         # Extract new DKIM attributes
