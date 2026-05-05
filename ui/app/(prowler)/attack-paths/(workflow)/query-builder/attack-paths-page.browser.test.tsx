@@ -50,11 +50,7 @@ describe("loading the page", () => {
     mountWith,
   }) => {
     const graph = await mountWith(fixtures.emptyScans());
-    const alert = await graph.waitFor(
-      () => graph.container.querySelector('[role="alert"]'),
-      2000,
-    );
-    expect(alert?.textContent).toMatch(/No scans available/i);
+    expect(await graph.emptyStateMessage()).toMatch(/No scans available/i);
   });
 });
 
@@ -76,11 +72,8 @@ describe("running a query", () => {
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
-    const transforms = graph.nodes.map((el) => el.style.transform);
-    const hasPositioned = transforms.some((t: string) =>
-      /translate\([^0]/.test(t),
-    );
-    expect(hasPositioned).toBe(true);
+    const positions = graph.nodePositions;
+    expect(positions.some((p) => p.x !== 0 || p.y !== 0)).toBe(true);
   });
 
   test("the toolbar exposes zoom, fit, and export controls", async ({
@@ -117,14 +110,8 @@ describe("running a query", () => {
     await graph.waitForLayoutStable(3);
     await graph.expandAllFindings();
 
-    const findingEdges = graph.edges.filter((e: HTMLElement) =>
-      e.classList.contains("finding-edge"),
-    );
-    const resourceEdges = graph.edges.filter((e: HTMLElement) =>
-      e.classList.contains("resource-edge"),
-    );
-    expect(findingEdges.length).toBeGreaterThan(0);
-    expect(resourceEdges.length).toBeGreaterThan(0);
+    expect(graph.findingEdges.length).toBeGreaterThan(0);
+    expect(graph.resourceEdges.length).toBeGreaterThan(0);
   });
 
   test("edges connect string source and target ids", async ({ mountWith }) => {
@@ -211,9 +198,7 @@ describe("running a query", () => {
     await graph.waitForLayoutStable(5);
 
     expect(graph.nodes.length).toBe(7);
-    expect(graph.container.textContent ?? "").toMatch(
-      /🔒-secure-bucket-日本語/,
-    );
+    expect(graph.containsText(/🔒-secure-bucket-日本語/)).toBe(true);
   });
 });
 
@@ -249,22 +234,13 @@ describe("exploring the graph", () => {
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
-    const [first] = graph.resourceNodes;
-    expect(first).toBeTruthy();
-    await graph.user.hover(first!);
+    await graph.hoverFirstResourceNode();
     await graph.waitForTransition(120);
-
-    const highlighted = graph.edges.filter((e: HTMLElement) =>
-      e.classList.contains("highlighted"),
-    );
-    expect(highlighted.length).toBeGreaterThanOrEqual(0);
+    expect(graph.highlightedEdges.length).toBeGreaterThanOrEqual(0);
 
     await graph.unhoverNodes();
     await graph.waitForTransition(120);
-    const stillHighlighted = graph.edges.filter((e: HTMLElement) =>
-      e.classList.contains("highlighted"),
-    );
-    expect(stillHighlighted.length).toBe(0);
+    expect(graph.highlightedEdges.length).toBe(0);
   });
 
   test("clicking the empty canvas keeps the full graph", async ({
@@ -274,10 +250,7 @@ describe("exploring the graph", () => {
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
-    const pane =
-      graph.container.querySelector<HTMLElement>(".react-flow__pane") ??
-      graph.container.querySelector<HTMLElement>(".react-flow__renderer");
-    if (pane) await graph.user.click(pane);
+    await graph.clickEmptyCanvas();
     expect(graph.isInFilteredView).toBe(false);
   });
 
@@ -289,10 +262,7 @@ describe("exploring the graph", () => {
     await graph.waitForLayoutStable(3);
     await graph.expandAllFindings();
 
-    const finding = graph.findingNodes[0]!;
-    await graph.user.click(finding);
-    await graph.user.click(finding);
-    await graph.waitForTransition();
+    await graph.rapidlyClickFirstFindingNode(2);
     expect(graph.isInFilteredView).toBe(true);
   });
 
@@ -301,9 +271,7 @@ describe("exploring the graph", () => {
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
-    const resource = graph.resourceNodes[0]!;
-    await graph.user.dblClick(resource);
-    await graph.waitForTransition();
+    await graph.dblClickFirstResourceNode();
     expect(graph.nodes.length).toBeGreaterThan(0);
   });
 });
@@ -316,9 +284,7 @@ describe("exporting the graph", () => {
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
-    const btn = graph.toolbar.exportButton as HTMLButtonElement | null;
-    expect(btn).toBeTruthy();
-    expect(btn?.disabled).toBe(false);
+    expect(graph.toolbar.isExportButtonEnabled).toBe(true);
   });
 
   test("clicking export downloads a PNG sized to the configured export canvas", async ({
@@ -329,43 +295,15 @@ describe("exporting the graph", () => {
     await graph.waitForLayoutStable(3);
     await graph.expandAllFindings();
 
-    // Capture the download anchor click without actually navigating/downloading.
-    const downloads: Array<{ href: string; download: string }> = [];
-    const originalClick = HTMLAnchorElement.prototype.click;
-    HTMLAnchorElement.prototype.click = function () {
-      if (this.download) {
-        downloads.push({ href: this.href, download: this.download });
-        return;
-      }
-      originalClick.call(this);
-    };
+    const png = await graph.captureExportPNG();
 
-    try {
-      await graph.exportAsPNG();
-      // Real raster pipeline runs end-to-end; allow generous slack for headless Chromium.
-      await graph.waitFor(() => downloads.length > 0, 10000);
-    } finally {
-      HTMLAnchorElement.prototype.click = originalClick;
-    }
-
-    const [download] = downloads;
-    expect(download.download).toBe("attack-path-graph.png");
-    expect(download.href.startsWith("data:image/png")).toBe(true);
-
-    // Validate dimensions from the PNG IHDR chunk: bytes 16-19 are width and
-    // 20-23 are height, both big-endian uint32. Regressions in the viewport
-    // element passed to `domToPng`, the configured export size, or the
-    // bounds-driven viewport transform fail loudly here.
-    const base64 = download.href.split(",")[1]!;
-    const bytes = atob(base64);
-    const u32BE = (offset: number) =>
-      ((bytes.charCodeAt(offset) << 24) |
-        (bytes.charCodeAt(offset + 1) << 16) |
-        (bytes.charCodeAt(offset + 2) << 8) |
-        bytes.charCodeAt(offset + 3)) >>>
-      0;
-    expect(u32BE(16)).toBe(1920);
-    expect(u32BE(20)).toBe(1080);
+    expect(png.filename).toBe("attack-path-graph.png");
+    expect(png.mimeType).toBe("image/png");
+    // Regressions in the viewport element passed to `domToPng`, the
+    // configured export size, or the bounds-driven viewport transform
+    // fail loudly here.
+    expect(png.width).toBe(1920);
+    expect(png.height).toBe(1080);
   });
 });
 

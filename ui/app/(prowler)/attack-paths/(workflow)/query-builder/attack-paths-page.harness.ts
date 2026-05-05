@@ -73,12 +73,39 @@ export class GraphHarness {
     return this.nodes.filter(GraphHarness.isInternetElement);
   }
 
+  get findingEdges(): HTMLElement[] {
+    return this.edges.filter((e) => e.classList.contains("finding-edge"));
+  }
+
+  get resourceEdges(): HTMLElement[] {
+    return this.edges.filter((e) => e.classList.contains("resource-edge"));
+  }
+
+  get highlightedEdges(): HTMLElement[] {
+    return this.edges.filter((e) => e.classList.contains("highlighted"));
+  }
+
   get renderedNodeIds(): string[] {
     return this.nodes.map((el) => el.getAttribute("data-id") ?? "");
   }
 
   get renderedEdgeIds(): string[] {
     return this.edges.map((el) => el.getAttribute("data-id") ?? "");
+  }
+
+  /**
+   * Parsed `translate(x, y)` from each rendered node's transform style.
+   * Useful for asserting layout actually placed nodes (non-zero, distinct, …).
+   */
+  get nodePositions(): Array<{ x: number; y: number }> {
+    return this.nodes.map((el) => {
+      const match = /translate\(\s*([-\d.]+)px?\s*,\s*([-\d.]+)px?\s*\)/.exec(
+        el.style.transform,
+      );
+      return match
+        ? { x: Number(match[1]), y: Number(match[2]) }
+        : { x: 0, y: 0 };
+    });
   }
 
   // --- Predicates ---
@@ -124,18 +151,37 @@ export class GraphHarness {
   }
 
   get toolbar() {
+    const exportButton =
+      this.q('button[aria-label="Export graph"]') ??
+      this.q('button[aria-label="Export available soon"]');
     return {
       zoomInButton: this.q('button[aria-label="Zoom in"]'),
       zoomOutButton: this.q('button[aria-label="Zoom out"]'),
       fitButton: this.q('button[aria-label="Fit graph to view"]'),
-      exportButton:
-        this.q('button[aria-label="Export graph"]') ??
-        this.q('button[aria-label="Export available soon"]'),
+      exportButton,
+      isExportButtonEnabled:
+        !!exportButton && !(exportButton as HTMLButtonElement).disabled,
       backToFullViewButton: this.q(
         'button[aria-label="Return to full graph view"]',
       ),
       fullscreenButton: this.q('button[aria-label="Fullscreen"]'),
     };
+  }
+
+  // --- Page-level surface (alerts, raw text) ---
+
+  /** Wait for a `[role="alert"]` to appear and return its text. */
+  async emptyStateMessage(timeoutMs = 2000): Promise<string> {
+    const alert = await this.waitFor(
+      () => this.container.querySelector<HTMLElement>('[role="alert"]'),
+      timeoutMs,
+    );
+    return alert.textContent ?? "";
+  }
+
+  /** True when the rendered page contains text matching `pattern`. */
+  containsText(pattern: RegExp): boolean {
+    return pattern.test(this.container.textContent ?? "");
   }
 
   get minimap(): HTMLElement | null {
@@ -265,6 +311,41 @@ export class GraphHarness {
   }
 
   /**
+   * Click the first finding `times` times back-to-back, with no transition
+   * waits between clicks. Used for rapid-click race tests.
+   */
+  async rapidlyClickFirstFindingNode(times = 2): Promise<HTMLElement> {
+    const [finding] = this.findingNodes;
+    if (!finding)
+      throw new Error("rapidlyClickFirstFindingNode: no finding rendered");
+    for (let i = 0; i < times; i++) {
+      await this.user.click(finding);
+    }
+    await this.waitForTransition();
+    return finding;
+  }
+
+  async dblClickFirstResourceNode(): Promise<HTMLElement> {
+    const [resource] = this.resourceNodes;
+    if (!resource)
+      throw new Error("dblClickFirstResourceNode: no resource rendered");
+    await this.user.dblClick(resource);
+    await this.waitForTransition();
+    return resource;
+  }
+
+  /**
+   * Click the React Flow background pane (anywhere not on a node/edge), used
+   * to verify that empty-canvas clicks don't open the filtered view.
+   */
+  async clickEmptyCanvas(): Promise<void> {
+    const pane = this.q(".react-flow__pane") ?? this.q(".react-flow__renderer");
+    if (!pane) throw new Error("clickEmptyCanvas: pane not rendered");
+    await this.user.click(pane);
+    await this.waitForTransition();
+  }
+
+  /**
    * Click every resource that the fixture's relationships connect to a finding.
    * Findings are hidden by default in the full graph view (Tier 1) — clicking
    * their adjacent resources reveals them.
@@ -296,6 +377,15 @@ export class GraphHarness {
     if (!el) throw new Error(`hoverNode: node "${nodeId}" not found`);
     await this.user.hover(el);
     await this.waitForTransition(80);
+  }
+
+  async hoverFirstResourceNode(): Promise<HTMLElement> {
+    const [resource] = this.resourceNodes;
+    if (!resource)
+      throw new Error("hoverFirstResourceNode: no resource rendered");
+    await this.user.hover(resource);
+    await this.waitForTransition(80);
+    return resource;
   }
 
   async unhoverNodes(): Promise<void> {
@@ -359,5 +449,60 @@ export class GraphHarness {
     if (!btn) throw new Error("exportAsPNG: export button disabled or missing");
     await this.user.click(btn);
     await this.waitForTransition(300);
+  }
+
+  /**
+   * Trigger an export and capture the resulting download as a structured
+   * record. Intercepts `HTMLAnchorElement.prototype.click` so the test
+   * environment doesn't actually navigate, and parses width/height from the
+   * PNG IHDR chunk so callers can assert on canvas size.
+   */
+  async captureExportPNG(
+    target: "main" | "fullscreen" = "main",
+    timeoutMs = 10000,
+  ): Promise<{
+    filename: string;
+    href: string;
+    mimeType: string;
+    width: number;
+    height: number;
+  }> {
+    const downloads: Array<{ href: string; download: string }> = [];
+    const originalClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () {
+      if (this.download) {
+        downloads.push({ href: this.href, download: this.download });
+        return;
+      }
+      originalClick.call(this);
+    };
+
+    try {
+      await this.exportAsPNG(target);
+      await this.waitFor(() => downloads.length > 0, timeoutMs);
+    } finally {
+      HTMLAnchorElement.prototype.click = originalClick;
+    }
+
+    const [download] = downloads;
+    const [meta, base64 = ""] = download.href.split(",");
+    const mimeType = /^data:([^;]+)/.exec(meta ?? "")?.[1] ?? "";
+
+    // PNG IHDR chunk: bytes 16-19 = width (uint32 BE), 20-23 = height.
+    const bytes = atob(base64);
+    const u32BE = (offset: number) =>
+      ((bytes.charCodeAt(offset) << 24) |
+        (bytes.charCodeAt(offset + 1) << 16) |
+        (bytes.charCodeAt(offset + 2) << 8) |
+        bytes.charCodeAt(offset + 3)) >>>
+      0;
+
+    return {
+      filename: download.download,
+      href: download.href,
+      mimeType,
+      width: u32BE(16),
+      height: u32BE(20),
+    };
   }
 }
