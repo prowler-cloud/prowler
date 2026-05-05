@@ -212,6 +212,104 @@ describe("exploring the graph", () => {
     expect(graph.isInFilteredView).toBe(false);
     await graph.clickFirstFindingNode();
     expect(graph.isInFilteredView).toBe(true);
+    expect(graph.hasNodeDetailsModal).toBe(false);
+  });
+
+  test("clicking a resource with findings opens the action selector", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    expect(graph.hasNodeDetailsModal).toBe(false);
+
+    await graph.clickFirstResourceNode();
+
+    expect(graph.hasNodeActionDialog).toBe(true);
+    expect(graph.hasNodeDetailsModal).toBe(false);
+  });
+
+  test("choosing Show findings reveals related finding nodes", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    await graph.clickFirstResourceNode();
+    await graph.chooseShowFindingsAction();
+
+    expect(graph.findingNodes.length).toBeGreaterThan(0);
+    expect(graph.hasNodeDetailsModal).toBe(false);
+  });
+
+  test("expanded resources offer Hide findings in the action selector", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    await graph.clickFirstResourceNode();
+    await graph.chooseShowFindingsAction();
+    expect(graph.findingNodes.length).toBeGreaterThan(0);
+
+    await graph.clickFirstResourceNode();
+
+    expect(graph.hasNodeActionDialog).toBe(true);
+    expect(graph.containsText(/Hide findings/i)).toBe(true);
+
+    await graph.chooseHideFindingsAction();
+
+    expect(graph.findingNodes.length).toBe(0);
+  });
+
+  test("choosing View node details opens node details in a modal", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    await graph.clickFirstResourceNode();
+    await graph.chooseViewNodeDetailsAction();
+
+    expect(graph.hasNodeDetailsModal).toBe(true);
+  });
+
+  test("clicking a resource without findings opens node details in a modal", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    expect(graph.hasNodeDetailsModal).toBe(false);
+
+    await graph.clickFirstResourceNodeWithoutFindings();
+
+    expect(graph.hasNodeDetailsModal).toBe(true);
+  });
+
+  test("clicking a parent node in filtered view asks whether to go back or view details", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+    await graph.expandAllFindings();
+    await graph.clickFirstFindingNode();
+    expect(graph.isInFilteredView).toBe(true);
+
+    await graph.clickFirstResourceNode();
+
+    expect(graph.hasNodeActionDialog).toBe(true);
+    expect(graph.containsText(/Back to full graph/i)).toBe(true);
+
+    await graph.chooseBackToFullGraphAction();
+
+    expect(graph.isInFilteredView).toBe(false);
   });
 
   test("exiting the filtered view restores the full graph", async ({
@@ -293,6 +391,14 @@ describe("auto-fitting the viewport", () => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
+
+    // Given - zoom into the current overview so newly revealed findings can
+    // sit entirely outside the current frame. The expand auto-fit should then
+    // recover the user instead of leaving them hunting off-screen.
+    for (let i = 0; i < 5; i++) {
+      await graph.zoomIn();
+      await graph.waitForTransition(80);
+    }
 
     // Hidden findings are not measured by the initial declarative fit, so
     // their positions can sit outside the framed viewport. Expanding the

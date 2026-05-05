@@ -53,11 +53,7 @@ interface AttackPathGraphProps {
   selectedNodeId?: string | null;
   isFilteredView?: boolean;
   initialNodeId?: string;
-  // Tier 1 expansion state — controlled by the parent (lives in the graph
-  // store) so it survives filtered-view enter/exit. If omitted, no resource
-  // expansion is tracked and findings stay hidden in the full view.
   expandedResources?: Set<string>;
-  onResourceToggle?: (resourceId: string) => void;
   onNodeClick?: (node: GraphNode) => void;
   onInitialFilter?: (filteredData: AttackPathGraphData) => void;
   ref?: Ref<GraphHandle>;
@@ -182,7 +178,6 @@ const GraphCanvas = ({
   isFilteredView,
   initialNodeId,
   expandedResources,
-  onResourceToggle,
   onNodeClick,
   onInitialFilter,
   ref,
@@ -272,23 +267,40 @@ const GraphCanvas = ({
     }
     if (previousFilteredRef.current === isFilteredView) return;
     previousFilteredRef.current = isFilteredView;
-    // Defer to the next animation frame so React Flow has applied the new
-    // layout (after the filter swap) before we measure for the fit.
-    const frame = requestAnimationFrame(() => {
-      fitView(AUTO_FIT_OPTIONS);
-    });
+    // React Flow measures node sizes asynchronously via ResizeObserver after
+    // the data swap. A single rAF runs while measured.width is still 0, so
+    // fitView computes a degenerate bbox and the viewport keeps the user's
+    // previous zoom — most visibly when leaving a filtered view in which the
+    // user had zoomed in. Poll until visible nodes are measured (or give up
+    // after ~500ms so we never block on a stuck observer).
+    let frame = 0;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 30;
+    const tryFit = () => {
+      const visibleNodes = getNodes().filter((n) => !n.hidden);
+      const allMeasured =
+        visibleNodes.length > 0 &&
+        visibleNodes.every((n) => (n.measured?.width ?? 0) > 0);
+      if (allMeasured || attempts >= MAX_ATTEMPTS) {
+        fitView(AUTO_FIT_OPTIONS);
+        return;
+      }
+      attempts += 1;
+      frame = requestAnimationFrame(tryFit);
+    };
+    frame = requestAnimationFrame(tryFit);
     return () => cancelAnimationFrame(frame);
-  }, [isFilteredView, fitView]);
+  }, [isFilteredView, fitView, getNodes]);
 
   useEffect(() => {
     const previous = previousExpandedRef.current;
     previousExpandedRef.current = expanded;
     if (previous === expanded) return;
-    // Only fit on growth — collapsing intentionally leaves the user's
-    // framing alone.
     const newResourceIds = Array.from(expanded).filter(
       (id) => !previous.has(id),
     );
+    // Only fit on growth — collapsing intentionally leaves the user's
+    // current framing alone.
     if (newResourceIds.length === 0) return;
 
     const newFindingIds = new Set<string>();
@@ -299,26 +311,42 @@ const GraphCanvas = ({
     }
     if (newFindingIds.size === 0) return;
 
-    const frame = requestAnimationFrame(() => {
-      const containerEl = containerRef.current;
-      if (!containerEl) return;
-      const { width, height } = containerEl.getBoundingClientRect();
-      if (width === 0 || height === 0) return;
-      const { x, y, zoom } = getViewport();
-      const minX = -x / zoom;
-      const minY = -y / zoom;
-      const maxX = minX + width / zoom;
-      const maxY = minY + height / zoom;
-      const anyOutside = getNodes().some((node) => {
-        if (!newFindingIds.has(node.id)) return false;
-        const nx = node.position.x;
-        const ny = node.position.y;
-        const nw = node.measured?.width ?? 0;
-        const nh = node.measured?.height ?? 0;
-        return nx + nw < minX || nx > maxX || ny + nh < minY || ny > maxY;
-      });
-      if (anyOutside) fitView(AUTO_FIT_OPTIONS);
-    });
+    // Findings transition from hidden to visible on expand, and React Flow
+    // measures them asynchronously. Poll before checking whether their full
+    // bounding boxes sit entirely past a viewport edge; collapsing and
+    // partially clipped findings preserve the user's current frame.
+    let frame = 0;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 30;
+    const tryFit = () => {
+      const targets = getNodes().filter((n) => newFindingIds.has(n.id));
+      const allMeasured =
+        targets.length === newFindingIds.size &&
+        targets.every((n) => (n.measured?.width ?? 0) > 0);
+      if (allMeasured || attempts >= MAX_ATTEMPTS) {
+        const containerEl = containerRef.current;
+        if (!containerEl) return;
+        const { width, height } = containerEl.getBoundingClientRect();
+        if (width === 0 || height === 0) return;
+        const { x, y, zoom } = getViewport();
+        const minX = -x / zoom;
+        const minY = -y / zoom;
+        const maxX = minX + width / zoom;
+        const maxY = minY + height / zoom;
+        const anyOutside = targets.some((node) => {
+          const nx = node.position.x;
+          const ny = node.position.y;
+          const nw = node.measured?.width ?? 0;
+          const nh = node.measured?.height ?? 0;
+          return nx + nw < minX || nx > maxX || ny + nh < minY || ny > maxY;
+        });
+        if (anyOutside) fitView(AUTO_FIT_OPTIONS);
+        return;
+      }
+      attempts += 1;
+      frame = requestAnimationFrame(tryFit);
+    };
+    frame = requestAnimationFrame(tryFit);
     return () => cancelAnimationFrame(frame);
   }, [expanded, fitView, getNodes, getViewport]);
 
@@ -434,13 +462,6 @@ const GraphCanvas = ({
   const handleNodeClick = (_event: MouseEvent, node: Node) => {
     const graphNode = (node.data as { graphNode: GraphNode }).graphNode;
 
-    // Tier 1: clicking resource in full view toggles connected findings
-    if (!isFilteredView && !isFindingNode(graphNode.labels)) {
-      if (resourcesWithFindings.has(node.id)) {
-        onResourceToggle?.(node.id);
-      }
-    }
-
     // Always fire parent callback (handles selection + Tier 2 filtered view)
     onNodeClick?.(graphNode);
   };
@@ -465,10 +486,14 @@ const GraphCanvas = ({
         onNodeMouseLeave={handleNodeMouseLeave}
         fitView
         fitViewOptions={{ padding: 0.2, includeHiddenNodes: true }}
-        zoomOnScroll={false}
+        // Supported React Flow behavior: wheel over the graph zooms the
+        // viewport. The surrounding UX avoids using node details as inline
+        // content, so this no longer fights a below-graph details section.
+        zoomOnScroll={true}
         zoomOnPinch={true}
         zoomOnDoubleClick={false}
         panOnScroll={false}
+        preventScrolling={true}
         minZoom={0.1}
         maxZoom={10}
         proOptions={{ hideAttribution: true }}
@@ -508,7 +533,6 @@ export const AttackPathGraph = ({
   isFilteredView,
   initialNodeId,
   expandedResources,
-  onResourceToggle,
   onNodeClick,
   onInitialFilter,
   ref,
@@ -533,7 +557,6 @@ export const AttackPathGraph = ({
           isFilteredView={isFilteredView}
           initialNodeId={initialNodeId}
           expandedResources={expandedResources}
-          onResourceToggle={onResourceToggle}
           onNodeClick={onNodeClick}
           onInitialFilter={onInitialFilter}
         />

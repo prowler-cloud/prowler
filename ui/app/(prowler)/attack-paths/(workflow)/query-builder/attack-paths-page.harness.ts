@@ -231,6 +231,23 @@ export class AttackPathPageHarness {
     return document.querySelector<HTMLElement>('[role="dialog"]');
   }
 
+  get nodeDetailsHeading(): HTMLElement | null {
+    return (
+      Array.from(
+        document.querySelectorAll<HTMLElement>("[role='dialog'] h2"),
+      ).find((heading) => /^Node Details$/i.test(heading.textContent ?? "")) ??
+      null
+    );
+  }
+
+  get hasNodeDetailsModal(): boolean {
+    return !!this.nodeDetailsHeading;
+  }
+
+  get hasNodeActionDialog(): boolean {
+    return this.containsText(/Choose node action/i);
+  }
+
   // --- Sync helpers ---
 
   /** Wait until React Flow has rendered at least `expected` node elements. */
@@ -341,6 +358,33 @@ export class AttackPathPageHarness {
     return resource;
   }
 
+  async clickFirstResourceNodeWithoutFindings(): Promise<HTMLElement> {
+    const findingIds = new Set(
+      (this.fixture.queryResult?.nodes ?? [])
+        .filter((n) =>
+          n.labels.some((l) => l.toLowerCase().includes("finding")),
+        )
+        .map((n) => n.id),
+    );
+    const resourceWithFindingIds = new Set<string>();
+    for (const rel of this.fixture.queryResult?.relationships ?? []) {
+      if (findingIds.has(rel.source)) resourceWithFindingIds.add(rel.target);
+      if (findingIds.has(rel.target)) resourceWithFindingIds.add(rel.source);
+    }
+    const resource = this.resourceNodes.find((node) => {
+      const id = node.getAttribute("data-id");
+      return id && !resourceWithFindingIds.has(id);
+    });
+    if (!resource) {
+      throw new Error(
+        "clickFirstResourceNodeWithoutFindings: no resource without findings rendered",
+      );
+    }
+    await this.user.click(resource);
+    await this.waitForTransition();
+    return resource;
+  }
+
   /**
    * Click the first finding `times` times back-to-back, with no transition
    * waits between clicks. Used for rapid-click race tests.
@@ -399,6 +443,9 @@ export class AttackPathPageHarness {
       if (el) {
         await this.user.click(el);
         await this.waitForTransition(50);
+        if (this.hasNodeActionDialog) {
+          await this.chooseShowFindingsAction();
+        }
       }
     }
   }
@@ -442,6 +489,51 @@ export class AttackPathPageHarness {
     const btn = this.toolbar.fitButton;
     if (!btn) throw new Error("fit: toolbar not rendered");
     await this.user.click(btn);
+  }
+
+  async closeNodeDetailsModal(): Promise<void> {
+    const btn = this.q('button[aria-label="Close node details"]');
+    if (!btn) throw new Error("closeNodeDetailsModal: modal not rendered");
+    await this.user.click(btn);
+    await this.waitForTransition();
+  }
+
+  async chooseShowFindingsAction(): Promise<void> {
+    const button = Array.from(
+      document.querySelectorAll<HTMLButtonElement>("button"),
+    ).find((btn) => /show findings/i.test(btn.textContent ?? ""));
+    if (!button) throw new Error("chooseShowFindingsAction: button not found");
+    await this.user.click(button);
+    await this.waitForTransition();
+  }
+
+  async chooseHideFindingsAction(): Promise<void> {
+    const button = Array.from(
+      document.querySelectorAll<HTMLButtonElement>("button"),
+    ).find((btn) => /hide findings/i.test(btn.textContent ?? ""));
+    if (!button) throw new Error("chooseHideFindingsAction: button not found");
+    await this.user.click(button);
+    await this.waitForTransition();
+  }
+
+  async chooseViewNodeDetailsAction(): Promise<void> {
+    const button = Array.from(
+      document.querySelectorAll<HTMLButtonElement>("button"),
+    ).find((btn) => /view node details/i.test(btn.textContent ?? ""));
+    if (!button)
+      throw new Error("chooseViewNodeDetailsAction: button not found");
+    await this.user.click(button);
+    await this.waitForTransition();
+  }
+
+  async chooseBackToFullGraphAction(): Promise<void> {
+    const button = Array.from(
+      document.querySelectorAll<HTMLButtonElement>("button"),
+    ).find((btn) => /back to full graph/i.test(btn.textContent ?? ""));
+    if (!button)
+      throw new Error("chooseBackToFullGraphAction: button not found");
+    await this.user.click(button);
+    await this.waitForTransition();
   }
 
   async exitFilteredView(): Promise<void> {
