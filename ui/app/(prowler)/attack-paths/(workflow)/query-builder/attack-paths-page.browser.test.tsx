@@ -1,7 +1,8 @@
 /**
  * Browser-mode tests for <AttackPathsPage />.
  *
- * Tests interact with the page ONLY through `GraphHarness`. Each test:
+ * Tests are grouped by user-perceived flow, not by internal spec taxonomy. Each
+ * test interacts with the page ONLY through `GraphHarness`. Each test:
  *   1. picks a fixture
  *   2. calls `mountWith(fx)` — wires MSW handlers, sets the URL, mounts the page
  *   3. drives the harness
@@ -44,83 +45,21 @@ const test = base.extend<Fixtures>({
   },
 });
 
-// ---------------------------------------------------------------------------
-// graph-data-normalization
-// ---------------------------------------------------------------------------
-
-describe("graph-data-normalization", () => {
-  test("renders edges with string source/target from relationships", async ({
+describe("loading the page", () => {
+  test("an account with no scans shows the empty state", async ({
     mountWith,
   }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(2);
-
-    const edgeIds = graph.renderedEdgeIds;
-    expect(edgeIds.length).toBeGreaterThan(0);
-    for (const id of edgeIds) {
-      expect(id).toMatch(/^[\w-]+-[\w-]+$/);
-    }
-  });
-
-  test("store rehydrates cleanly between scans (no panX/panY/zoomLevel)", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(1);
-
-    expect(graph.isInFilteredView).toBe(false);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// graph-layout
-// ---------------------------------------------------------------------------
-
-describe("graph-layout", () => {
-  test("layoutWithDagre places nodes at non-zero positions", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-
-    const transforms = graph.nodes.map((el) => el.style.transform);
-    const hasPositioned = transforms.some((t: string) =>
-      /translate\([^0]/.test(t),
+    const graph = await mountWith(fixtures.emptyScans());
+    const alert = await graph.waitFor(
+      () => graph.container.querySelector('[role="alert"]'),
+      2000,
     );
-    expect(hasPositioned).toBe(true);
-  });
-
-  test("single-node fixture renders exactly one node", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith(fixtures.singleNode());
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(1);
-    expect(graph.nodes).toHaveLength(1);
-  });
-
-  test("empty-graph fixture surfaces an error toast without crashing", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith(fixtures.emptyGraph());
-    try {
-      await graph.executeQuery();
-    } catch {
-      /* expected: layout never stabilizes */
-    }
-    expect(graph.nodes).toHaveLength(0);
+    expect(alert?.textContent).toMatch(/No scans available/i);
   });
 });
 
-// ---------------------------------------------------------------------------
-// graph-rendering
-// ---------------------------------------------------------------------------
-
-describe("graph-rendering", () => {
-  test("renders React Flow with background and minimap", async ({
+describe("running a query", () => {
+  test("the graph renders with a background, a minimap, and a viewport", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -132,18 +71,19 @@ describe("graph-rendering", () => {
     expect(graph.viewport).toBeTruthy();
   });
 
-  test("renders the three node types by label rule", async ({ mountWith }) => {
+  test("nodes are laid out at distinct positions", async ({ mountWith }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
-    await graph.expandAllFindings();
 
-    expect(graph.findingNodes.length).toBeGreaterThan(0);
-    expect(graph.resourceNodes.length).toBeGreaterThan(0);
-    expect(graph.internetNodes.length).toBeGreaterThan(0);
+    const transforms = graph.nodes.map((el) => el.style.transform);
+    const hasPositioned = transforms.some((t: string) =>
+      /translate\([^0]/.test(t),
+    );
+    expect(hasPositioned).toBe(true);
   });
 
-  test("toolbar is present with zoom/fit/export controls", async ({
+  test("the toolbar exposes zoom, fit, and export controls", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -156,7 +96,20 @@ describe("graph-rendering", () => {
     expect(graph.toolbar.exportButton).toBeTruthy();
   });
 
-  test("animated dashed class is applied only to finding-connected edges", async ({
+  test("finding, resource, and internet nodes all render", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+    await graph.expandAllFindings();
+
+    expect(graph.findingNodes.length).toBeGreaterThan(0);
+    expect(graph.resourceNodes.length).toBeGreaterThan(0);
+    expect(graph.internetNodes.length).toBeGreaterThan(0);
+  });
+
+  test("only edges connected to a finding are animated", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -173,16 +126,99 @@ describe("graph-rendering", () => {
     expect(findingEdges.length).toBeGreaterThan(0);
     expect(resourceEdges.length).toBeGreaterThan(0);
   });
-});
 
-// ---------------------------------------------------------------------------
-// graph-interactions
-// ---------------------------------------------------------------------------
+  test("edges connect string source and target ids", async ({ mountWith }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(2);
 
-describe("graph-interactions", () => {
-  test("clicking a finding node enters filtered view", async ({
+    const edgeIds = graph.renderedEdgeIds;
+    expect(edgeIds.length).toBeGreaterThan(0);
+    for (const id of edgeIds) {
+      expect(id).toMatch(/^[\w-]+-[\w-]+$/);
+    }
+  });
+
+  test("a query that returns one node renders just that node", async ({
     mountWith,
   }) => {
+    const graph = await mountWith(fixtures.singleNode());
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(1);
+    expect(graph.nodes).toHaveLength(1);
+  });
+
+  test("a query that returns no graph data surfaces an error without crashing", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.emptyGraph());
+    try {
+      await graph.executeQuery();
+    } catch {
+      /* expected: layout never stabilizes */
+    }
+    expect(graph.nodes).toHaveLength(0);
+  });
+
+  test("a 200-node graph finishes laying out within 5s", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.large(200));
+    const start = performance.now();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(1);
+    const elapsed = performance.now() - start;
+    expect(elapsed).toBeLessThan(5000);
+  });
+
+  test("disconnected components are both visible", async ({ mountWith }) => {
+    const graph = await mountWith(fixtures.disconnected());
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(4);
+    expect(graph.nodes.length).toBe(4);
+  });
+
+  test("a query that returns only resources renders no findings", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.resourcesOnly());
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+    expect(graph.findingNodes.length).toBe(0);
+    expect(graph.resourceNodes.length).toBe(3);
+  });
+
+  test("findings without a connected resource are hidden by default", async ({
+    mountWith,
+  }) => {
+    // Tier 1 view: unattached findings stay hidden until the user expands
+    // their adjacent resource — none here, so nothing renders.
+    const graph = await mountWith(fixtures.findingsOnly());
+    try {
+      await graph.executeQuery();
+    } catch {
+      /* expected: nothing visible, layout never stabilizes */
+    }
+    expect(graph.findingNodes.length).toBe(0);
+    expect(graph.resourceNodes.length).toBe(0);
+  });
+
+  test("self-loops, cycles, long labels, unicode, and duplicate edges all render", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.edgeCases());
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(5);
+
+    expect(graph.nodes.length).toBe(7);
+    expect(graph.container.textContent ?? "").toMatch(
+      /🔒-secure-bucket-日本語/,
+    );
+  });
+});
+
+describe("exploring the graph", () => {
+  test("clicking a finding opens the filtered view", async ({ mountWith }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
@@ -193,7 +229,7 @@ describe("graph-interactions", () => {
     expect(graph.isInFilteredView).toBe(true);
   });
 
-  test("exiting filtered view restores the full graph", async ({
+  test("exiting the filtered view restores the full graph", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -208,9 +244,7 @@ describe("graph-interactions", () => {
     expect(graph.isInFilteredView).toBe(false);
   });
 
-  test("hovering a node adds the highlighted class to its path edges", async ({
-    mountWith,
-  }) => {
+  test("hovering a node highlights its path edges", async ({ mountWith }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
@@ -233,7 +267,9 @@ describe("graph-interactions", () => {
     expect(stillHighlighted.length).toBe(0);
   });
 
-  test("clicking empty canvas does not explode", async ({ mountWith }) => {
+  test("clicking the empty canvas keeps the full graph", async ({
+    mountWith,
+  }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
@@ -244,95 +280,8 @@ describe("graph-interactions", () => {
     if (pane) await graph.user.click(pane);
     expect(graph.isInFilteredView).toBe(false);
   });
-});
 
-// ---------------------------------------------------------------------------
-// graph-export
-// ---------------------------------------------------------------------------
-
-describe("graph-export", () => {
-  test("export button is enabled and clickable when a graph is rendered", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-
-    const btn = graph.toolbar.exportButton as HTMLButtonElement | null;
-    expect(btn).toBeTruthy();
-    expect(btn?.disabled).toBe(false);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// variants
-// ---------------------------------------------------------------------------
-
-describe("variants", () => {
-  test("empty scans shows the empty state", async ({ mountWith }) => {
-    const graph = await mountWith(fixtures.emptyScans());
-    const alert = await graph.waitFor(
-      () => graph.container.querySelector('[role="alert"]'),
-      2000,
-    );
-    expect(alert?.textContent).toMatch(/No scans available/i);
-  });
-
-  test("single-node graph renders without crash", async ({ mountWith }) => {
-    const graph = await mountWith(fixtures.singleNode());
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(1);
-    expect(graph.nodes).toHaveLength(1);
-  });
-
-  test("large (200-node) graph completes layout within 5s", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith(fixtures.large(200));
-    const start = performance.now();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(1);
-    const elapsed = performance.now() - start;
-    expect(elapsed).toBeLessThan(5000);
-  });
-
-  test("disconnected components are both visible", async ({ mountWith }) => {
-    const graph = await mountWith(fixtures.disconnected());
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(4);
-    expect(graph.nodes.length).toBe(4);
-  });
-
-  test("findings-only fixture hides unattached findings by default (Tier 1)", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith(fixtures.findingsOnly());
-    try {
-      await graph.executeQuery();
-    } catch {
-      /* expected: nothing visible, layout never stabilizes */
-    }
-    expect(graph.findingNodes.length).toBe(0);
-    expect(graph.resourceNodes.length).toBe(0);
-  });
-
-  test("resources-only fixture renders no finding nodes", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith(fixtures.resourcesOnly());
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-    expect(graph.findingNodes.length).toBe(0);
-    expect(graph.resourceNodes.length).toBe(3);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// intermediate flows
-// ---------------------------------------------------------------------------
-
-describe("intermediate flows", () => {
-  test("rapid successive clicks on a finding node do not duplicate filtered view", async ({
+  test("rapid clicks on a finding don't duplicate the filtered view", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -347,7 +296,7 @@ describe("intermediate flows", () => {
     expect(graph.isInFilteredView).toBe(true);
   });
 
-  test("double-click does not break state", async ({ mountWith }) => {
+  test("double-clicking a node doesn't break state", async ({ mountWith }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
@@ -359,33 +308,69 @@ describe("intermediate flows", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// edge-case data
-// ---------------------------------------------------------------------------
-
-describe("edge-case data", () => {
-  test("self-loops, cycles, long labels, unicode, and duplicate edges all render", async ({
+describe("exporting the graph", () => {
+  test("the export button is enabled when a graph is rendered", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.edgeCases());
+    const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(5);
+    await graph.waitForLayoutStable(3);
 
-    expect(graph.nodes.length).toBe(7);
-    expect(graph.container.textContent ?? "").toMatch(
-      /🔒-secure-bucket-日本語/,
-    );
+    const btn = graph.toolbar.exportButton as HTMLButtonElement | null;
+    expect(btn).toBeTruthy();
+    expect(btn?.disabled).toBe(false);
+  });
+
+  test("clicking export downloads a PNG sized to the configured export canvas", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+    await graph.expandAllFindings();
+
+    // Capture the download anchor click without actually navigating/downloading.
+    const downloads: Array<{ href: string; download: string }> = [];
+    const originalClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function () {
+      if (this.download) {
+        downloads.push({ href: this.href, download: this.download });
+        return;
+      }
+      originalClick.call(this);
+    };
+
+    try {
+      await graph.exportAsPNG();
+      // Real raster pipeline runs end-to-end; allow generous slack for headless Chromium.
+      await graph.waitFor(() => downloads.length > 0, 10000);
+    } finally {
+      HTMLAnchorElement.prototype.click = originalClick;
+    }
+
+    const [download] = downloads;
+    expect(download.download).toBe("attack-path-graph.png");
+    expect(download.href.startsWith("data:image/png")).toBe(true);
+
+    // Validate dimensions from the PNG IHDR chunk: bytes 16-19 are width and
+    // 20-23 are height, both big-endian uint32. Regressions in the viewport
+    // element passed to `domToPng`, the configured export size, or the
+    // bounds-driven viewport transform fail loudly here.
+    const base64 = download.href.split(",")[1]!;
+    const bytes = atob(base64);
+    const u32BE = (offset: number) =>
+      ((bytes.charCodeAt(offset) << 24) |
+        (bytes.charCodeAt(offset + 1) << 16) |
+        (bytes.charCodeAt(offset + 2) << 8) |
+        bytes.charCodeAt(offset + 3)) >>>
+      0;
+    expect(u32BE(16)).toBe(1920);
+    expect(u32BE(20)).toBe(1080);
   });
 });
 
-// ---------------------------------------------------------------------------
-// regressions
-// ---------------------------------------------------------------------------
-
-describe("regressions", () => {
-  test("re-running a query clears the previous filtered view", async ({
-    mountWith,
-  }) => {
+describe("running a different query", () => {
+  test("the previous filtered view is cleared", async ({ mountWith }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
