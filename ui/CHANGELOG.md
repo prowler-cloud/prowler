@@ -11,7 +11,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Attack Paths graph: extract shared primitives across `FindingNode`, `ResourceNode`, and `InternetNode` (hidden handles, label truncation, fill/border resolution) without forcing a generic node renderer [(#10705)](https://github.com/prowler-cloud/prowler/pull/10705)
-- Attack Paths graph: viewport now auto-fits when entering or exiting the filtered view (clicking a finding or "Back to Full View") so the focused subgraph is centered, and the minimap viewport indicator stands out against the dark theme
 
 ---
 

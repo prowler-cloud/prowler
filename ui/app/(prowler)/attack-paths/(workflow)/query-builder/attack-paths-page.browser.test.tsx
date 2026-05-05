@@ -487,7 +487,6 @@ describe("auto-fitting the viewport", () => {
       await graph.zoomIn();
       await graph.waitForTransition(80);
     }
-
     // Hidden findings are not measured by the initial declarative fit, so
     // their positions can sit outside the framed viewport. Expanding the
     // resources should re-fit so the user does not have to hunt for the

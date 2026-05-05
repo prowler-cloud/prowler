@@ -206,8 +206,14 @@ const GraphCanvas = ({
   onInitialFilter,
   ref,
 }: GraphCanvasProps) => {
-  const { zoomIn, zoomOut, fitView, getZoom, getNodes, getNodesBounds } =
-    useReactFlow();
+  const {
+    zoomIn,
+    zoomOut,
+    fitView,
+    getZoom,
+    getNodes,
+    getNodesBounds,
+  } = useReactFlow();
   const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
