@@ -402,10 +402,14 @@ export const ResourceDetailContent = ({
                     }}
                     controlledPage={currentPage}
                     controlledPageSize={pageSize}
-                    onPaginationChange={(nextPage, nextPageSize) => {
+                    onPageChange={(page) => {
                       setRowSelection({});
-                      setCurrentPage(nextPage);
-                      setPageSize(nextPageSize);
+                      setCurrentPage(page);
+                    }}
+                    onPageSizeChange={(size) => {
+                      setRowSelection({});
+                      setCurrentPage(1);
+                      setPageSize(size);
                     }}
                     isLoading={findingsLoading}
                   />

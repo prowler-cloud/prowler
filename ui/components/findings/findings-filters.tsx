@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
@@ -16,7 +17,7 @@ import {
 } from "@/components/filters/filter-summary-strip";
 import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/ui/expandable-section";
-import { DataTableFilterCustom } from "@/components/ui/table";
+import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
 import { FilterType, ScanEntity } from "@/types";
@@ -38,6 +39,22 @@ interface FindingsFiltersProps {
   uniqueResourceTypes: string[];
   uniqueCategories: string[];
   uniqueGroups: string[];
+  trailingControls?: ReactNode;
+}
+
+interface FindingsFilterBatchControlsProps extends FindingsFiltersProps {
+  appliedFilters: Record<string, string[]>;
+  pendingFilters: Record<string, string[]>;
+  changedFilters: Record<string, string[]>;
+  setPending: (filterKey: string, values: string[]) => void;
+  applyAll?: () => void;
+  discardAll?: () => void;
+  clearAndApply?: () => void;
+  removeAppliedAndApply?: (filterKey: string, value?: string) => void;
+  hasChanges?: boolean;
+  changeCount?: number;
+  getFilterValue: (filterKey: string) => string[];
+  showSummaries?: boolean;
 }
 
 const countVisibleFilterKeys = (filters: Record<string, string[]>): number =>
@@ -47,7 +64,10 @@ const countVisibleFilterKeys = (filters: Record<string, string[]>): number =>
     return true;
   }).length;
 
-export const FindingsFilters = ({
+const FILTER_CONTROL_COLUMN_CLASS =
+  "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
+
+export const FindingsFilterBatchControls = ({
   providers,
   completedScanIds,
   scanDetails,
@@ -56,24 +76,21 @@ export const FindingsFilters = ({
   uniqueResourceTypes,
   uniqueCategories,
   uniqueGroups,
-}: FindingsFiltersProps) => {
+  trailingControls,
+  appliedFilters,
+  pendingFilters,
+  changedFilters,
+  setPending,
+  applyAll,
+  discardAll,
+  clearAndApply,
+  removeAppliedAndApply,
+  hasChanges = false,
+  changeCount = 0,
+  getFilterValue,
+  showSummaries = true,
+}: FindingsFilterBatchControlsProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const {
-    appliedFilters,
-    pendingFilters,
-    changedFilters,
-    setPending,
-    applyAll,
-    discardAll,
-    clearAndApply,
-    removeAppliedAndApply,
-    hasChanges,
-    changeCount,
-    getFilterValue,
-  } = useFilterBatch({
-    defaultParams: { "filter[muted]": "false" },
-  });
 
   // Custom filters for the expandable section (removed Provider - now using AccountsSelector)
   const customFilters = [
@@ -196,11 +213,11 @@ export const FindingsFilters = ({
   const appliedSummary = (
     <FilterSummaryStrip
       chips={appliedFilterChips}
-      onRemove={removeAppliedAndApply}
+      onRemove={removeAppliedAndApply ?? (() => undefined)}
       trailingContent={
         <ClearFiltersButton
           showCount
-          onClear={clearAndApply}
+          onClear={clearAndApply ?? (() => undefined)}
           pendingCount={appliedCount}
         />
       }
@@ -215,8 +232,8 @@ export const FindingsFilters = ({
         <ApplyFiltersButton
           hasChanges={hasChanges}
           changeCount={changeCount}
-          onApply={applyAll}
-          onDiscard={discardAll}
+          onApply={applyAll ?? (() => undefined)}
+          onDiscard={discardAll ?? (() => undefined)}
         />
       }
     />
@@ -225,16 +242,17 @@ export const FindingsFilters = ({
   return (
     <BatchFiltersLayout
       testIdPrefix="findings"
+      controlsClassName="gap-3"
       controls={
         <>
-          <div className="min-w-[200px] flex-1 md:max-w-[280px]">
+          <div className={FILTER_CONTROL_COLUMN_CLASS}>
             <ProviderTypeSelector
               providers={providers}
               onBatchChange={setPending}
               selectedValues={getFilterValue("filter[provider_type__in]")}
             />
           </div>
-          <div className="min-w-[200px] flex-1 md:max-w-[280px]">
+          <div className={FILTER_CONTROL_COLUMN_CLASS}>
             <AccountsSelector
               providers={providers}
               onBatchChange={setPending}
@@ -256,14 +274,50 @@ export const FindingsFilters = ({
               />
             </Button>
           )}
+          {trailingControls}
         </>
       }
       expandedFilters={expandedFilters}
       expandedFiltersVisible={isExpanded}
-      appliedSummary={appliedSummary}
-      pendingSummary={pendingSummary}
-      showAppliedRow={showAppliedRow}
-      showPendingRow={showPendingRow}
+      appliedSummary={showSummaries ? appliedSummary : null}
+      pendingSummary={showSummaries ? pendingSummary : null}
+      showAppliedRow={showSummaries && showAppliedRow}
+      showPendingRow={showSummaries && showPendingRow}
+    />
+  );
+};
+
+export const FindingsFilters = (props: FindingsFiltersProps) => {
+  const {
+    appliedFilters,
+    pendingFilters,
+    changedFilters,
+    setPending,
+    applyAll,
+    discardAll,
+    clearAndApply,
+    removeAppliedAndApply,
+    hasChanges,
+    changeCount,
+    getFilterValue,
+  } = useFilterBatch({
+    defaultParams: { "filter[muted]": "false" },
+  });
+
+  return (
+    <FindingsFilterBatchControls
+      {...props}
+      appliedFilters={appliedFilters}
+      pendingFilters={pendingFilters}
+      changedFilters={changedFilters}
+      setPending={setPending}
+      applyAll={applyAll}
+      discardAll={discardAll}
+      clearAndApply={clearAndApply}
+      removeAppliedAndApply={removeAppliedAndApply}
+      hasChanges={hasChanges}
+      changeCount={changeCount}
+      getFilterValue={getFilterValue}
     />
   );
 };
