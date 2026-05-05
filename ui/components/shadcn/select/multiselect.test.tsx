@@ -6,6 +6,7 @@ import {
   MultiSelect,
   MultiSelectContent,
   MultiSelectItem,
+  MultiSelectSelectAll,
   MultiSelectTrigger,
   MultiSelectValue,
 } from "./multiselect";
@@ -180,6 +181,39 @@ describe("MultiSelect", () => {
     expect(screen.getByPlaceholderText("Search accounts...")).toHaveValue("");
   });
 
+  it("closes the dropdown when clicking outside", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <div>
+        <MultiSelect values={[]} onValuesChange={() => {}}>
+          <MultiSelectTrigger>
+            <MultiSelectValue placeholder="Select accounts" />
+          </MultiSelectTrigger>
+          <MultiSelectContent
+            search={{
+              placeholder: "Search accounts...",
+              emptyMessage: "No accounts found.",
+            }}
+          >
+            <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          </MultiSelectContent>
+        </MultiSelect>
+        <button type="button">Outside target</button>
+      </div>,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox"));
+    expect(screen.getByPlaceholderText("Search accounts...")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /outside target/i }));
+
+    // Then
+    expect(
+      screen.queryByPlaceholderText("Search accounts..."),
+    ).not.toBeInTheDocument();
+  });
+
   it("uses a normalized dropdown width instead of growing with the longest item", async () => {
     const user = userEvent.setup();
 
@@ -203,5 +237,80 @@ describe("MultiSelect", () => {
       "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))]",
     );
     expect(screen.getByRole("dialog")).toHaveClass("max-w-[24rem]");
+  });
+
+  it("keeps the legacy clear-all behavior by default", async () => {
+    const user = userEvent.setup();
+    const onValuesChange = vi.fn();
+
+    render(
+      <MultiSelect values={["aws-prod"]} onValuesChange={onValuesChange}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+    await user.click(screen.getByRole("button", { name: /select all/i }));
+
+    expect(onValuesChange).toHaveBeenCalledWith([]);
+  });
+
+  it("disables the legacy select all action when no filter is selected", async () => {
+    const user = userEvent.setup();
+    const onValuesChange = vi.fn();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={onValuesChange}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+
+    expect(
+      screen.getByRole("button", { name: /all selected/i }),
+    ).toBeDisabled();
+  });
+
+  it("selects every provided option when select mode is enabled", async () => {
+    const user = userEvent.setup();
+    const onValuesChange = vi.fn();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={onValuesChange}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectSelectAll
+            mode="select"
+            values={["aws-prod", "azure-dev"]}
+          >
+            Select All
+          </MultiSelectSelectAll>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+    await user.click(screen.getByRole("button", { name: /select all/i }));
+
+    expect(onValuesChange).toHaveBeenCalledWith(["aws-prod", "azure-dev"]);
   });
 });

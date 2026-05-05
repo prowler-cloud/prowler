@@ -166,7 +166,6 @@ export default async function Compliance({
           >
             <SSRComplianceGrid
               searchParams={resolvedSearchParams}
-              scanId={selectedScanId}
               selectedScan={selectedScanData}
             />
           </Suspense>
@@ -180,13 +179,12 @@ export default async function Compliance({
 
 const SSRComplianceGrid = async ({
   searchParams,
-  scanId,
   selectedScan,
 }: {
   searchParams: SearchParamsProps;
-  scanId: string | null;
   selectedScan?: ScanEntity;
 }) => {
+  const scanId = searchParams.scanId?.toString() || "";
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 
   // Only fetch compliance data if we have a valid scanId
@@ -249,7 +247,7 @@ const SSRComplianceGrid = async ({
     <ComplianceOverviewPanel>
       <ComplianceOverviewGrid
         frameworks={frameworks}
-        scanId={scanId ?? ""}
+        scanId={scanId}
         selectedScan={selectedScan}
         latestCisIds={latestCisIds}
       />
