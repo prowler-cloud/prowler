@@ -1,0 +1,283 @@
+name: 'MCP: Bump Version'
+
+on:
+  release:
+    types:
+      - 'published'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+env:
+  PROWLER_VERSION: ${{ github.event.release.tag_name }}
+  BASE_BRANCH: master
+
+permissions: {}
+
+jobs:
+  detect-release-type:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      is_minor: ${{ steps.detect.outputs.is_minor }}
+      is_patch: ${{ steps.detect.outputs.is_patch }}
+      major_version: ${{ steps.detect.outputs.major_version }}
+      minor_version: ${{ steps.detect.outputs.minor_version }}
+      patch_version: ${{ steps.detect.outputs.patch_version }}
+      mcp_target_version: ${{ steps.changelog.outputs.mcp_target_version }}
+      current_mcp_version: ${{ steps.changelog.outputs.current_mcp_version }}
+      should_bump: ${{ steps.changelog.outputs.should_bump }}
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Detect release type and parse version
+        id: detect
+        run: |
+          if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            MAJOR_VERSION=${BASH_REMATCH[1]}
+            MINOR_VERSION=${BASH_REMATCH[2]}
+            PATCH_VERSION=${BASH_REMATCH[3]}
+
+            echo "major_version=${MAJOR_VERSION}" >> "${GITHUB_OUTPUT}"
+            echo "minor_version=${MINOR_VERSION}" >> "${GITHUB_OUTPUT}"
+            echo "patch_version=${PATCH_VERSION}" >> "${GITHUB_OUTPUT}"
+
+            if (( MAJOR_VERSION != 5 )); then
+              echo "::error::Releasing another Prowler major version, aborting..."
+              exit 1
+            fi
+
+            if (( PATCH_VERSION == 0 )); then
+              echo "is_minor=true" >> "${GITHUB_OUTPUT}"
+              echo "is_patch=false" >> "${GITHUB_OUTPUT}"
+              echo "✓ Minor release detected: $PROWLER_VERSION"
+            else
+              echo "is_minor=false" >> "${GITHUB_OUTPUT}"
+              echo "is_patch=true" >> "${GITHUB_OUTPUT}"
+              echo "✓ Patch release detected: $PROWLER_VERSION"
+            fi
+          else
+            echo "::error::Invalid version syntax: '$PROWLER_VERSION' (must be X.Y.Z)"
+            exit 1
+          fi
+
+      # MCP versioning is decoupled from Prowler's: it only advances when MCP code
+      # changes. The source of truth is mcp_server/CHANGELOG.md — the same file
+      # prepare-release.yml uses to compose release notes. We only bump pyproject.toml
+      # when the changelog has a matching "(Prowler vX.Y.Z)" entry (and the file is
+      # not already at that version).
+      - name: Resolve MCP target version from changelog
+        id: changelog
+        run: |
+          set -e
+          CURRENT_MCP_VERSION=$(grep '^version' mcp_server/pyproject.toml | head -1 | sed -E 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
+          echo "current_mcp_version=${CURRENT_MCP_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "Current MCP version (mcp_server/pyproject.toml): ${CURRENT_MCP_VERSION}"
+
+          # Match either "(Prowler X.Y.Z)" or "(Prowler vX.Y.Z)"
+          MCP_TARGET_VERSION=$(grep '^## \[' mcp_server/CHANGELOG.md \
+            | grep "(Prowler v\?${PROWLER_VERSION})" \
+            | head -1 \
+            | sed 's/^## \[\(.*\)\].*/\1/' \
+            | sed 's/^v//' \
+            | tr -d '[:space:]' || true)
+
+          if [ -z "${MCP_TARGET_VERSION}" ]; then
+            echo "should_bump=false" >> "${GITHUB_OUTPUT}"
+            echo "mcp_target_version=" >> "${GITHUB_OUTPUT}"
+            echo "::notice title=No MCP bump needed::No mcp_server/CHANGELOG.md entry for Prowler ${PROWLER_VERSION}; MCP code did not change in this release."
+            exit 0
+          fi
+
+          echo "mcp_target_version=${MCP_TARGET_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "Target MCP version (from changelog): ${MCP_TARGET_VERSION}"
+
+          if [ "${CURRENT_MCP_VERSION}" = "${MCP_TARGET_VERSION}" ]; then
+            echo "should_bump=false" >> "${GITHUB_OUTPUT}"
+            echo "::notice title=MCP already at target::mcp_server/pyproject.toml is already at ${MCP_TARGET_VERSION}; nothing to bump."
+          else
+            echo "should_bump=true" >> "${GITHUB_OUTPUT}"
+            echo "✓ Will bump MCP ${CURRENT_MCP_VERSION} → ${MCP_TARGET_VERSION}"
+          fi
+
+  bump-minor-version:
+    needs: detect-release-type
+    if: needs.detect-release-type.outputs.is_minor == 'true' && needs.detect-release-type.outputs.should_bump == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Bump MCP version in mcp_server/pyproject.toml on master
+        env:
+          CURRENT_MCP_VERSION: ${{ needs.detect-release-type.outputs.current_mcp_version }}
+          MCP_TARGET_VERSION: ${{ needs.detect-release-type.outputs.mcp_target_version }}
+        run: |
+          set -e
+
+          sed -i "s|version = \"${CURRENT_MCP_VERSION}\"|version = \"${MCP_TARGET_VERSION}\"|" mcp_server/pyproject.toml
+
+          echo "Files modified:"
+          git --no-pager diff
+
+      - name: Create PR for MCP bump to master
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: master
+          commit-message: 'chore(mcp): Bump version to v${{ needs.detect-release-type.outputs.mcp_target_version }}'
+          branch: mcp-version-bump-to-v${{ needs.detect-release-type.outputs.mcp_target_version }}
+          title: 'chore(mcp): Bump version to v${{ needs.detect-release-type.outputs.mcp_target_version }}'
+          labels: no-changelog,skip-sync
+          body: |
+            ### Description
+
+            Bump Prowler MCP version to v${{ needs.detect-release-type.outputs.mcp_target_version }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            Target version was resolved from `mcp_server/CHANGELOG.md` (the same source `prepare-release.yml` uses for release notes).
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+      - name: Checkout version branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: v${{ needs.detect-release-type.outputs.major_version }}.${{ needs.detect-release-type.outputs.minor_version }}
+          persist-credentials: false
+
+      - name: Bump MCP version in mcp_server/pyproject.toml on version branch
+        env:
+          MCP_TARGET_VERSION: ${{ needs.detect-release-type.outputs.mcp_target_version }}
+          MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
+        run: |
+          set -e
+
+          # Re-read on the version branch — current value may differ from master
+          BRANCH_MCP_VERSION=$(grep '^version' mcp_server/pyproject.toml | head -1 | sed -E 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
+          echo "Version-branch current MCP version: ${BRANCH_MCP_VERSION}"
+
+          if [ "${BRANCH_MCP_VERSION}" = "${MCP_TARGET_VERSION}" ]; then
+            echo "BRANCH_NEEDS_BUMP=false" >> "${GITHUB_ENV}"
+            echo "::notice title=Version branch already at target::Skipping PR for version branch (already at ${MCP_TARGET_VERSION})."
+          else
+            echo "BRANCH_NEEDS_BUMP=true" >> "${GITHUB_ENV}"
+            sed -i "s|version = \"${BRANCH_MCP_VERSION}\"|version = \"${MCP_TARGET_VERSION}\"|" mcp_server/pyproject.toml
+            echo "Files modified:"
+            git --no-pager diff
+          fi
+
+          VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
+          echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
+
+      - name: Create PR for MCP bump on version branch
+        if: env.BRANCH_NEEDS_BUMP == 'true'
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.VERSION_BRANCH }}
+          commit-message: 'chore(mcp): Bump version to v${{ needs.detect-release-type.outputs.mcp_target_version }}'
+          branch: mcp-version-bump-to-v${{ needs.detect-release-type.outputs.mcp_target_version }}-${{ env.VERSION_BRANCH }}
+          title: 'chore(mcp): Bump version to v${{ needs.detect-release-type.outputs.mcp_target_version }} on ${{ env.VERSION_BRANCH }}'
+          labels: no-changelog,skip-sync
+          body: |
+            ### Description
+
+            Bump Prowler MCP version to v${{ needs.detect-release-type.outputs.mcp_target_version }} on ${{ env.VERSION_BRANCH }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+  bump-patch-version:
+    needs: detect-release-type
+    if: needs.detect-release-type.outputs.is_patch == 'true' && needs.detect-release-type.outputs.should_bump == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Compute version branch
+        id: branch
+        env:
+          MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
+        run: |
+          VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
+          echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
+
+      - name: Checkout version branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.VERSION_BRANCH }}
+          persist-credentials: false
+
+      - name: Bump MCP version in mcp_server/pyproject.toml on version branch
+        env:
+          MCP_TARGET_VERSION: ${{ needs.detect-release-type.outputs.mcp_target_version }}
+        run: |
+          set -e
+
+          BRANCH_MCP_VERSION=$(grep '^version' mcp_server/pyproject.toml | head -1 | sed -E 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
+          echo "Version-branch current MCP version: ${BRANCH_MCP_VERSION}"
+
+          if [ "${BRANCH_MCP_VERSION}" = "${MCP_TARGET_VERSION}" ]; then
+            echo "::notice title=Version branch already at target::Nothing to bump (already at ${MCP_TARGET_VERSION})."
+            echo "BRANCH_NEEDS_BUMP=false" >> "${GITHUB_ENV}"
+          else
+            echo "BRANCH_NEEDS_BUMP=true" >> "${GITHUB_ENV}"
+            sed -i "s|version = \"${BRANCH_MCP_VERSION}\"|version = \"${MCP_TARGET_VERSION}\"|" mcp_server/pyproject.toml
+            echo "Files modified:"
+            git --no-pager diff
+          fi
+
+      - name: Create PR for MCP bump on version branch
+        if: env.BRANCH_NEEDS_BUMP == 'true'
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.VERSION_BRANCH }}
+          commit-message: 'chore(mcp): Bump version to v${{ needs.detect-release-type.outputs.mcp_target_version }}'
+          branch: mcp-version-bump-to-v${{ needs.detect-release-type.outputs.mcp_target_version }}-${{ env.VERSION_BRANCH }}
+          title: 'chore(mcp): Bump version to v${{ needs.detect-release-type.outputs.mcp_target_version }} on ${{ env.VERSION_BRANCH }}'
+          labels: no-changelog,skip-sync
+          body: |
+            ### Description
+
+            Bump Prowler MCP version to v${{ needs.detect-release-type.outputs.mcp_target_version }} on ${{ env.VERSION_BRANCH }} after releasing Prowler v${{ env.PROWLER_VERSION }}.
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
