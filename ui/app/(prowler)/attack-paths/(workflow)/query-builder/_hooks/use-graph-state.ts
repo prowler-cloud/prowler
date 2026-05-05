@@ -14,6 +14,11 @@ interface FilteredViewState {
   isFilteredView: boolean;
   filteredNodeId: string | null;
   fullData: AttackPathGraphData | null; // Original data before filtering
+  // Tier 1 expansion state: which resource nodes have their findings revealed.
+  // Lives in the store (not local component state) so it survives the data
+  // swaps that happen when entering/exiting filtered view. Reset only on
+  // fresh data loads (new query / scan) — see `setGraphData`.
+  expandedResources: Set<string>;
 }
 
 interface GraphStore extends GraphState, FilteredViewState {
@@ -27,6 +32,7 @@ interface GraphStore extends GraphState, FilteredViewState {
     filteredData: AttackPathGraphData | null,
     fullData: AttackPathGraphData | null,
   ) => void;
+  toggleExpandedResource: (resourceId: string) => void;
   reset: () => void;
 }
 
@@ -38,9 +44,10 @@ const initialState: GraphState & FilteredViewState = {
   isFilteredView: false,
   filteredNodeId: null,
   fullData: null,
+  expandedResources: new Set(),
 };
 
-const useGraphStore = create<GraphStore>((set) => ({
+export const useGraphStore = create<GraphStore>((set) => ({
   ...initialState,
   setGraphData: (data) =>
     set({
@@ -49,6 +56,8 @@ const useGraphStore = create<GraphStore>((set) => ({
       error: null,
       isFilteredView: false,
       filteredNodeId: null,
+      // Fresh data → drop any stale expansion from the previous graph.
+      expandedResources: new Set(),
     }),
   setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),
   setLoading: (loading) => set({ loading }),
@@ -60,6 +69,16 @@ const useGraphStore = create<GraphStore>((set) => ({
       data: filteredData,
       fullData,
       selectedNodeId: nodeId,
+    }),
+  toggleExpandedResource: (resourceId) =>
+    set((state) => {
+      const next = new Set(state.expandedResources);
+      if (next.has(resourceId)) {
+        next.delete(resourceId);
+      } else {
+        next.add(resourceId);
+      }
+      return { expandedResources: next };
     }),
   reset: () => set(initialState),
 }));
@@ -153,6 +172,8 @@ export const useGraphState = () => {
     isFilteredView: store.isFilteredView,
     filteredNodeId: store.filteredNodeId,
     filteredNode: getFilteredNode(),
+    expandedResources: store.expandedResources,
+    toggleExpandedResource: store.toggleExpandedResource,
     updateGraphData,
     selectNode,
     startLoading,
