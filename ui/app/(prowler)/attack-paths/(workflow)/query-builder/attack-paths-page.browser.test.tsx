@@ -276,6 +276,71 @@ describe("exploring the graph", () => {
   });
 });
 
+describe("auto-fitting the viewport", () => {
+  test("the minimap viewport indicator has a visible border", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    expect(graph.minimapMaskStrokeWidth).toBeGreaterThan(0);
+  });
+
+  test("expanding resources does not re-fit the viewport", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    const before = graph.viewportTransform;
+    expect(before).toBeTruthy();
+
+    await graph.expandAllFindings();
+    await graph.waitForTransition();
+
+    expect(graph.viewportTransform).toBe(before);
+  });
+
+  test("clicking a finding re-fits the viewport for the filtered subgraph", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+    await graph.expandAllFindings();
+
+    const beforeFilter = graph.viewportTransform;
+    expect(beforeFilter).toBeTruthy();
+
+    await graph.clickFirstFindingNode();
+    expect(graph.isInFilteredView).toBe(true);
+    await graph.waitForTransition();
+
+    expect(graph.viewportTransform).not.toBe(beforeFilter);
+  });
+
+  test("Back to Full View re-fits the viewport for the full graph", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+    await graph.expandAllFindings();
+    await graph.clickFirstFindingNode();
+    expect(graph.isInFilteredView).toBe(true);
+    await graph.waitForTransition();
+    const filterT = graph.viewportTransform;
+
+    await graph.exitFilteredView();
+    await graph.waitForLayoutStable(3);
+    await graph.waitForTransition();
+
+    expect(graph.viewportTransform).not.toBe(filterT);
+  });
+});
+
 describe("exporting the graph", () => {
   test("the export button is enabled when a graph is rendered", async ({
     mountWith,

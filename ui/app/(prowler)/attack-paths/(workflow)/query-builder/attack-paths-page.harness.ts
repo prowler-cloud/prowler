@@ -200,6 +200,33 @@ export class AttackPathPageHarness {
     return this.q(AttackPathPageHarness.VIEWPORT_SEL);
   }
 
+  /**
+   * Inline `transform` of the React Flow viewport element. This is the
+   * pan/zoom matrix React Flow rewrites on every fit/zoom/pan, so comparing
+   * it before vs. after a user action is enough to assert that the viewport
+   * actually moved (or stayed put).
+   */
+  get viewportTransform(): string {
+    return this.viewport?.style.transform ?? "";
+  }
+
+  /**
+   * `stroke-width` of the minimap mask SVG. The mask cuts out the area
+   * currently in view; the cut-out's border is what indicates the viewport
+   * inside the minimap. A non-zero stroke-width means the indicator has a
+   * visible border (rather than blending into the dark theme background).
+   */
+  get minimapMaskStrokeWidth(): number {
+    const mask = this.minimap?.querySelector<SVGPathElement>(
+      ".react-flow__minimap-mask",
+    );
+    if (!mask) return 0;
+    const inline = mask.getAttribute("stroke-width");
+    if (inline) return Number.parseFloat(inline);
+    const computed = getComputedStyle(mask).strokeWidth;
+    return Number.parseFloat(computed);
+  }
+
   get fullscreenDialog(): HTMLElement | null {
     return document.querySelector<HTMLElement>('[role="dialog"]');
   }

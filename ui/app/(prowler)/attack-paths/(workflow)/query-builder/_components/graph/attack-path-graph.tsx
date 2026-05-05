@@ -144,18 +144,29 @@ const GraphDefs = () => (
 
 type GraphCanvasProps = Omit<AttackPathGraphProps, "className">;
 
+// Mask covers the area NOT currently in view; the cut-out rectangle is the
+// viewport. To make the viewport rectangle stand out we darken the mask and
+// give its border high contrast against the minimap background.
 const MINIMAP_COLORS = {
   light: {
     bg: "#f8fafc",
-    mask: "rgba(241, 245, 249, 0.6)",
-    maskStroke: "#cbd5e1",
+    mask: "rgba(15, 23, 42, 0.45)",
+    maskStroke: "#0f172a",
   },
   dark: {
     bg: "#0f172a",
-    mask: "rgba(15, 23, 42, 0.6)",
-    maskStroke: "#475569",
+    mask: "rgba(0, 0, 0, 0.7)",
+    maskStroke: "#cbd5e1",
   },
 } as const;
+
+const MINIMAP_VIEWPORT_STROKE_WIDTH = 3;
+
+// Animated re-fit shared by every auto-fit trigger. We deliberately do not
+// cap maxZoom — for small subgraphs (e.g. a finding's filtered view with 3
+// nodes) the user expects the result to fill the canvas; an artificial cap
+// looks like a layout error.
+const AUTO_FIT_OPTIONS = { padding: 0.2, duration: 300 } as const;
 
 const GraphCanvas = ({
   data,
@@ -211,6 +222,37 @@ const GraphCanvas = ({
       onInitialFilter(effectiveData);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- one-time init
+
+  // --- Auto-fit on filter toggle ---
+  // Filter toggles (finding click → filtered view, "Back to Full View" →
+  // full graph) swap the data prop, which leaves the previous viewport
+  // pointing at coordinates that no longer contain the new layout. Re-fit
+  // once React Flow has applied the new layout (next animation frame).
+  //
+  // Resource expansion intentionally has NO re-fit: the declarative
+  // `fitViewOptions.includeHiddenNodes` already lays out the initial
+  // viewport around every resource AND every (still-hidden) finding, so
+  // newly revealed findings sit inside the framing the user already has.
+  // Re-fitting on each expand caused jarring layout shifts that the user
+  // experienced as visual errors.
+  const filteredFitInitRef = useRef(false);
+  const previousFilteredRef = useRef(isFilteredView);
+
+  useEffect(() => {
+    if (!filteredFitInitRef.current) {
+      filteredFitInitRef.current = true;
+      previousFilteredRef.current = isFilteredView;
+      return;
+    }
+    if (previousFilteredRef.current === isFilteredView) return;
+    previousFilteredRef.current = isFilteredView;
+    // Defer to the next animation frame so React Flow has applied the new
+    // layout (after the filter swap) before we measure for the fit.
+    const frame = requestAnimationFrame(() => {
+      fitView(AUTO_FIT_OPTIONS);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isFilteredView, fitView]);
 
   const nodes = effectiveData.nodes ?? [];
   const edges = effectiveData.edges ?? [];
@@ -351,7 +393,7 @@ const GraphCanvas = ({
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: 0.2, includeHiddenNodes: true }}
         zoomOnScroll={false}
         zoomOnPinch={true}
         zoomOnDoubleClick={false}
@@ -368,6 +410,7 @@ const GraphCanvas = ({
           bgColor={minimapColors.bg}
           maskColor={minimapColors.mask}
           maskStrokeColor={minimapColors.maskStroke}
+          maskStrokeWidth={MINIMAP_VIEWPORT_STROKE_WIDTH}
           nodeColor={(node) => {
             const graphNode = (node.data as { graphNode?: GraphNode })
               .graphNode;
