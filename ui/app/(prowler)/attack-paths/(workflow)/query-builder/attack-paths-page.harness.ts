@@ -51,13 +51,17 @@ export class AttackPathPageHarness {
 
   get nodes(): HTMLElement[] {
     return Array.from(
-      this.container.querySelectorAll<HTMLElement>(AttackPathPageHarness.NODE_SEL),
+      this.container.querySelectorAll<HTMLElement>(
+        AttackPathPageHarness.NODE_SEL,
+      ),
     );
   }
 
   get edges(): HTMLElement[] {
     return Array.from(
-      this.container.querySelectorAll<HTMLElement>(AttackPathPageHarness.EDGE_SEL),
+      this.container.querySelectorAll<HTMLElement>(
+        AttackPathPageHarness.EDGE_SEL,
+      ),
     );
   }
 
