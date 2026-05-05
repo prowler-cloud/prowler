@@ -387,11 +387,11 @@ const GraphCanvas = ({
     const previous = previousExpandedRef.current;
     previousExpandedRef.current = expanded;
     if (previous === expanded) return;
-    // Only fit on growth — collapsing intentionally leaves the user's
-    // framing alone.
     const newResourceIds = Array.from(expanded).filter(
       (id) => !previous.has(id),
     );
+    // Only fit on growth — collapsing intentionally leaves the user's
+    // current framing alone.
     if (newResourceIds.length === 0) return;
 
     const newFindingIds = new Set<string>();
@@ -402,26 +402,42 @@ const GraphCanvas = ({
     }
     if (newFindingIds.size === 0) return;
 
-    const frame = requestAnimationFrame(() => {
-      const containerEl = containerRef.current;
-      if (!containerEl) return;
-      const { width, height } = containerEl.getBoundingClientRect();
-      if (width === 0 || height === 0) return;
-      const { x, y, zoom } = getViewport();
-      const minX = -x / zoom;
-      const minY = -y / zoom;
-      const maxX = minX + width / zoom;
-      const maxY = minY + height / zoom;
-      const anyOutside = getNodes().some((node) => {
-        if (!newFindingIds.has(node.id)) return false;
-        const nx = node.position.x;
-        const ny = node.position.y;
-        const nw = node.measured?.width ?? 0;
-        const nh = node.measured?.height ?? 0;
-        return nx + nw < minX || nx > maxX || ny + nh < minY || ny > maxY;
-      });
-      if (anyOutside) fitView(AUTO_FIT_OPTIONS);
-    });
+    // Findings transition from hidden to visible on expand, and React Flow
+    // measures them asynchronously. Poll before checking whether their full
+    // bounding boxes sit entirely past a viewport edge; collapsing and
+    // partially clipped findings preserve the user's current frame.
+    let frame = 0;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 30;
+    const tryFit = () => {
+      const targets = getNodes().filter((n) => newFindingIds.has(n.id));
+      const allMeasured =
+        targets.length === newFindingIds.size &&
+        targets.every((n) => (n.measured?.width ?? 0) > 0);
+      if (allMeasured || attempts >= MAX_ATTEMPTS) {
+        const containerEl = containerRef.current;
+        if (!containerEl) return;
+        const { width, height } = containerEl.getBoundingClientRect();
+        if (width === 0 || height === 0) return;
+        const { x, y, zoom } = getViewport();
+        const minX = -x / zoom;
+        const minY = -y / zoom;
+        const maxX = minX + width / zoom;
+        const maxY = minY + height / zoom;
+        const anyOutside = targets.some((node) => {
+          const nx = node.position.x;
+          const ny = node.position.y;
+          const nw = node.measured?.width ?? 0;
+          const nh = node.measured?.height ?? 0;
+          return nx + nw < minX || nx > maxX || ny + nh < minY || ny > maxY;
+        });
+        if (anyOutside) fitView(AUTO_FIT_OPTIONS);
+        return;
+      }
+      attempts += 1;
+      frame = requestAnimationFrame(tryFit);
+    };
+    frame = requestAnimationFrame(tryFit);
     return () => cancelAnimationFrame(frame);
   }, [expanded, fitView, getNodes, getViewport]);
 

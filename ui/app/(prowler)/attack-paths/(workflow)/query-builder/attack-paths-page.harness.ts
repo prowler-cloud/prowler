@@ -427,6 +427,33 @@ export class AttackPathPageHarness {
     return resource;
   }
 
+  async clickFirstResourceNodeWithoutFindings(): Promise<HTMLElement> {
+    const findingIds = new Set(
+      (this.fixture.queryResult?.nodes ?? [])
+        .filter((n) =>
+          n.labels.some((l) => l.toLowerCase().includes("finding")),
+        )
+        .map((n) => n.id),
+    );
+    const resourceWithFindingIds = new Set<string>();
+    for (const rel of this.fixture.queryResult?.relationships ?? []) {
+      if (findingIds.has(rel.source)) resourceWithFindingIds.add(rel.target);
+      if (findingIds.has(rel.target)) resourceWithFindingIds.add(rel.source);
+    }
+    const resource = this.resourceNodes.find((node) => {
+      const id = node.getAttribute("data-id");
+      return id && !resourceWithFindingIds.has(id);
+    });
+    if (!resource) {
+      throw new Error(
+        "clickFirstResourceNodeWithoutFindings: no resource without findings rendered",
+      );
+    }
+    await this.user.click(resource);
+    await this.waitForTransition();
+    return resource;
+  }
+
   /**
    * Click the first finding `times` times back-to-back, with no transition
    * waits between clicks. Used for rapid-click race tests.

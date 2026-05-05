@@ -271,7 +271,6 @@ describe("exploring the graph", () => {
       2000,
     );
   });
-
   test("expanded resources offer Hide findings in the action selector", async ({
     mountWith,
   }) => {
@@ -340,7 +339,6 @@ describe("exploring the graph", () => {
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     expect(graph.viewportTransform).toBeTruthy();
   });
-
   test("choosing View node details opens node details in a modal", async ({
     mountWith,
   }) => {
