@@ -5,10 +5,22 @@ on:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'prowler/**'
+      - 'Dockerfile*'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/sdk-container-checks.yml'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'prowler/**'
+      - 'Dockerfile*'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/sdk-container-checks.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -59,13 +71,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        include:
-          - platform: linux/amd64
-            runner: ubuntu-latest
-            arch: amd64
-          - platform: linux/arm64
-            runner: ubuntu-24.04-arm
-            arch: arm64
+        # PRs build amd64 only (arm64 is verified on push to master + nightly cron); push/release builds both
+        include: ${{ fromJSON(github.event_name == 'pull_request' && '[{"platform":"linux/amd64","runner":"ubuntu-latest","arch":"amd64"}]' || '[{"platform":"linux/amd64","runner":"ubuntu-latest","arch":"amd64"},{"platform":"linux/arm64","runner":"ubuntu-24.04-arm","arch":"arm64"}]') }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -142,7 +149,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.arch }}
           cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
       - name: Scan SDK container with Trivy for ${{ matrix.arch }}
         if: steps.check-changes.outputs.any_changed == 'true'
