@@ -4,6 +4,7 @@ import {
   Braces,
   CircleAlert,
   FileKey2,
+  Globe2,
   Info,
   KeyRound,
   Route,
