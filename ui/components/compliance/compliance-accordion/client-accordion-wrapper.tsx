@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/shadcn";
 import { Accordion, AccordionItemProps } from "@/components/ui";
@@ -19,23 +19,6 @@ export const ClientAccordionWrapper = ({
   const [selectedKeys, setSelectedKeys] =
     useState<string[]>(defaultExpandedKeys);
   const [isExpanded, setIsExpanded] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!scrollToKey || !containerRef.current) return;
-    // Wait one frame so the accordion has applied the expanded state and
-    // the target's final layout position is what we land on (HeroUI's
-    // motion-driven expansion otherwise leaves us at the collapsed offset).
-    const handle = requestAnimationFrame(() => {
-      const node = containerRef.current?.querySelector(
-        `[data-accordion-key="${CSS.escape(scrollToKey)}"]`,
-      );
-      if (node) {
-        node.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-    return () => cancelAnimationFrame(handle);
-  }, [scrollToKey, items]);
 
   // Function to get all keys except the last level (requirements)
   const getAllKeysExceptLastLevel = (items: AccordionItemProps[]): string[] => {
@@ -73,6 +56,20 @@ export const ClientAccordionWrapper = ({
 
   const handleSelectionChange = (keys: string[]) => {
     setSelectedKeys(keys);
+  };
+
+  // Callback ref runs after the container's children have committed to the
+  // DOM, so we can locate the target accordion item without an effect. The
+  // rAF defers one frame so HeroUI's expand animation has applied the final
+  // layout offset before scrollIntoView lands.
+  const containerRef = (node: HTMLDivElement | null) => {
+    if (!node || !scrollToKey) return;
+    requestAnimationFrame(() => {
+      const target = node.querySelector(
+        `[data-accordion-key="${CSS.escape(scrollToKey)}"]`,
+      );
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   };
 
   return (
