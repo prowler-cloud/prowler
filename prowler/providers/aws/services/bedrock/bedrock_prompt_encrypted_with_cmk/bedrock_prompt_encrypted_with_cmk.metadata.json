@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "bedrock_prompt_encrypted_with_cmk",
-  "CheckTitle": "Bedrock prompt is encrypted at rest with a customer-managed KMS key",
+  "CheckTitle": "Amazon Bedrock prompt is encrypted at rest with a customer-managed KMS key",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
@@ -36,6 +36,8 @@
     "encryption"
   ],
   "DependsOn": [],
-  "RelatedTo": [],
+  "RelatedTo": [
+    "bedrock_prompt_management_exists"
+  ],
   "Notes": ""
 }
