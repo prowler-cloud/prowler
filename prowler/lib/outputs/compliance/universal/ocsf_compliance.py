@@ -1,6 +1,7 @@
+import json
 import os
 from datetime import datetime
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from py_ocsf_models.events.base_event import SeverityID
 from py_ocsf_models.events.base_event import StatusID as EventStatusID
@@ -20,16 +21,51 @@ from py_ocsf_models.objects.resource_details import ResourceDetails
 from prowler.config.config import prowler_version
 from prowler.lib.check.compliance_models import ComplianceFramework
 from prowler.lib.logger import logger
-from prowler.lib.outputs.finding import Finding
-from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.utils import unroll_dict_to_list
 from prowler.lib.utils.utils import open_file
+
+if TYPE_CHECKING:
+    from prowler.lib.outputs.finding import Finding
 
 PROWLER_TO_COMPLIANCE_STATUS = {
     "PASS": ComplianceStatusID.Pass,
     "FAIL": ComplianceStatusID.Fail,
     "MANUAL": ComplianceStatusID.Unknown,
 }
+
+
+def _sanitize_resource_data(resource_details, resource_metadata) -> dict:
+    """Ensure resource data is JSON-serializable.
+
+    Service resource_metadata may carry non-serializable objects (e.g. raw
+    Pydantic models or service classes such as ``Trail`` / ``LifecyclePolicy``).
+    Convert them to plain dicts and roundtrip through JSON so the resulting
+    ComplianceFinding can be serialized without errors.
+    """
+
+    def _make_serializable(obj):
+        if hasattr(obj, "model_dump") and callable(obj.model_dump):
+            return _make_serializable(obj.model_dump())
+        if hasattr(obj, "dict") and callable(obj.dict):
+            return _make_serializable(obj.dict())
+        if isinstance(obj, dict):
+            return {str(k): _make_serializable(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [_make_serializable(v) for v in obj]
+        return obj
+
+    try:
+        converted = _make_serializable(resource_metadata)
+        sanitized_metadata = json.loads(json.dumps(converted, default=str))
+    except (TypeError, ValueError, RecursionError) as error:
+        logger.warning(
+            f"Failed to serialize resource metadata, defaulting to empty: {error}"
+        )
+        sanitized_metadata = {}
+    return {
+        "details": resource_details,
+        "metadata": sanitized_metadata,
+    }
 
 
 def _to_snake_case(name: str) -> str:
@@ -108,7 +144,7 @@ class OCSFComplianceOutput:
 
     def _transform(
         self,
-        findings: List[Finding],
+        findings: List["Finding"],
         framework: ComplianceFramework,
         compliance_name: str,
     ) -> None:
@@ -177,7 +213,7 @@ class OCSFComplianceOutput:
 
     def _build_compliance_finding(
         self,
-        finding: Finding,
+        finding: "Finding",
         framework: ComplianceFramework,
         requirement,
         compliance_name: str,
@@ -195,7 +231,9 @@ class OCSFComplianceOutput:
                 finding.metadata.Severity.capitalize(),
                 SeverityID.Unknown,
             )
-            event_status = OCSF.get_finding_status_id(finding.muted)
+            event_status = (
+                EventStatusID.Suppressed if finding.muted else EventStatusID.New
+            )
 
             time_value = (
                 int(finding.timestamp.timestamp())
@@ -268,10 +306,10 @@ class OCSFComplianceOutput:
                             if finding.provider == "kubernetes"
                             else None
                         ),
-                        data={
-                            "details": finding.resource_details,
-                            "metadata": finding.resource_metadata,
-                        },
+                        data=_sanitize_resource_data(
+                            finding.resource_details,
+                            finding.resource_metadata,
+                        ),
                     )
                 ],
                 severity_id=finding_severity.value,

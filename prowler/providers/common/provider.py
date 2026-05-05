@@ -282,6 +282,11 @@ class Provider(ABC):
                         repositories=repos,
                         repo_list_file=getattr(arguments, "repo_list_file", None),
                         organizations=orgs,
+                        github_actions_enabled=not getattr(
+                            arguments, "no_github_actions", False
+                        ),
+                        exclude_workflows=getattr(arguments, "exclude_workflows", []),
+                        fixer_config=fixer_config,
                     )
                 elif "googleworkspace" in provider_class_name.lower():
                     provider_class(

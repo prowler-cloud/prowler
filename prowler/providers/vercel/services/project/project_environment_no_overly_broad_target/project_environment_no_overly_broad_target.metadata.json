@@ -28,7 +28,8 @@
     }
   },
   "Categories": [
-    "secrets"
+    "secrets",
+    "vercel-hobby-plan"
   ],
   "DependsOn": [],
   "RelatedTo": [

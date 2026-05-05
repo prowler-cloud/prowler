@@ -64,3 +64,20 @@ def init_parser(self):
         default=None,
         metavar="ORGANIZATION",
     )
+
+    github_actions_subparser = github_parser.add_argument_group(
+        "GitHub Actions Scanning"
+    )
+    github_actions_subparser.add_argument(
+        "--no-github-actions",
+        action="store_true",
+        default=False,
+        help="Disable GitHub Actions workflow security scanning",
+    )
+    github_actions_subparser.add_argument(
+        "--exclude-workflows",
+        nargs="+",
+        default=[],
+        help="Workflow files or glob patterns to exclude from GitHub Actions scanning",
+        metavar="PATTERN",
+    )

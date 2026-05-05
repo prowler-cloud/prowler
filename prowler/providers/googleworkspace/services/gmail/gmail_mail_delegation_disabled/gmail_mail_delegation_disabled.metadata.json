@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_mail_delegation_disabled",
+  "CheckTitle": "Mail delegation is disabled for users",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Mail delegation allows a delegate to read, send, and delete messages on behalf of another user. When enabled at the user level, this creates a risk that unauthorized individuals could gain access to sensitive email content. Only administrators should be able to manage mailbox delegation.",
+  "Risk": "If users can delegate access to their mailbox, an attacker who compromises one account could silently delegate access to maintain persistent email surveillance. This also increases the risk of **insider threats** and **data exfiltration** through shared mailbox access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/7223765",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **User Settings** > **Mail delegation**\n4. Uncheck **Let users delegate access to their mailbox to other users in the domain**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable mail delegation so that only administrators can manage mailbox access. This prevents users from granting unauthorized access to their email.",
+      "Url": "https://hub.prowler.com/check/gmail_mail_delegation_disabled"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

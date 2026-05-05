@@ -2,12 +2,16 @@
 
 from unittest.mock import MagicMock
 
-from prowler.providers.googleworkspace.models import GoogleWorkspaceIdentityInfo
+from prowler.providers.googleworkspace.models import (
+    GoogleWorkspaceIdentityInfo,
+    GoogleWorkspaceResource,
+)
 
 # Google Workspace test constants
 DOMAIN = "test-company.com"
 CUSTOMER_ID = "C1234567"
 DELEGATED_USER = "prowler-reader@test-company.com"
+ROOT_ORG_UNIT_ID = "03ph8a2z1234"
 
 # Service Account credentials (mock)
 SERVICE_ACCOUNT_CREDENTIALS = {
@@ -81,10 +85,22 @@ def set_mocked_googleworkspace_provider(
         domain=DOMAIN,
         customer_id=CUSTOMER_ID,
         delegated_user=DELEGATED_USER,
+        root_org_unit_id=ROOT_ORG_UNIT_ID,
         profile="default",
     ),
 ):
     provider = MagicMock()
     provider.type = "googleworkspace"
     provider.identity = identity
+    provider.domain_resource = build_googleworkspace_domain_resource()
     return provider
+
+
+def build_googleworkspace_domain_resource() -> GoogleWorkspaceResource:
+    """Build the domain-level Google Workspace resource for tests."""
+
+    return GoogleWorkspaceResource(
+        id=CUSTOMER_ID,
+        name=DOMAIN,
+        customer_id=CUSTOMER_ID,
+    )

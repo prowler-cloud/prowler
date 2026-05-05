@@ -85,6 +85,7 @@ export function getStandaloneFindingColumns({
             isMuted={finding.attributes.muted}
             mutedReason={finding.attributes.muted_reason}
             showDeltaWhenMuted
+            reserveMutedSlot
           />
         );
       },

@@ -214,3 +214,41 @@ def test_admincenter__get_users_handles_pagination():
     with_url_mock.assert_called_once_with("next-link")
     assert users["user-1"].license == "SKU-user-1"
     assert users["user-3"].license == "SKU-user-3"
+
+
+def test_admincenter__get_groups_maps_group_types():
+    admincenter_service = AdminCenter.__new__(AdminCenter)
+
+    groups_response = SimpleNamespace(
+        value=[
+            SimpleNamespace(
+                id="id-1",
+                display_name="Unified Group",
+                visibility="Private",
+                group_types=["Unified"],
+            ),
+            SimpleNamespace(
+                id="id-2",
+                display_name="Security Group",
+                visibility=None,
+                group_types=[],
+            ),
+            SimpleNamespace(
+                id="id-3",
+                display_name="Legacy Group",
+                visibility="Public",
+            ),
+        ]
+    )
+
+    groups_builder = SimpleNamespace(get=AsyncMock(return_value=groups_response))
+    admincenter_service.client = SimpleNamespace(groups=groups_builder)
+
+    groups = asyncio.run(admincenter_service._get_groups())
+
+    assert len(groups) == 3
+    assert groups_builder.get.await_count == 1
+    assert groups["id-1"].group_types == ["Unified"]
+    assert groups["id-2"].group_types == []
+    assert groups["id-3"].group_types == []
+    assert groups["id-3"].visibility == "Public"

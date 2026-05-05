@@ -86,6 +86,7 @@ export const ClearFiltersButton = ({
     <Button
       aria-label={ariaLabel}
       onClick={onClear ?? clearFiltersPreservingExcluded}
+      size="sm"
       variant={variant}
     >
       <XCircle className="mr-0.5 size-4" />

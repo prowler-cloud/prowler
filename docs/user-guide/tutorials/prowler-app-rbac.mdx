@@ -227,6 +227,7 @@ Assign administrative permissions by selecting from the following options:
 | Manage Integrations | All | Add or modify the Prowler Integrations. |
 | Manage Ingestions | Prowler Cloud | Allow or deny the ability to submit findings ingestion batches via the API. |
 | Manage Billing | Prowler Cloud | Access and manage billing settings and subscription information. |
+| Manage Alerts | Prowler Cloud | Create, edit, and delete alert rules and recipients. |
 
 <Note>
 The **Scope** column indicates where each permission applies. **All** means the permission is available in both Prowler Cloud and Self-Managed deployments. **Prowler Cloud** indicates permissions that are specific to [Prowler Cloud](https://cloud.prowler.com/sign-in).
@@ -241,3 +242,5 @@ The following permissions are available exclusively in **Prowler Cloud**:
 **Manage Ingestions:** Submit and manage findings ingestion jobs via the API. Required to upload OCSF scan results using the `--push-to-cloud` CLI flag or the ingestion endpoints. See [Import Findings](/user-guide/tutorials/prowler-app-import-findings) for details.
 
 **Manage Billing:** Access and manage billing settings, subscription plans, and payment methods.
+
+**Manage Alerts:** Create, edit, and delete alert rules and recipients used to deliver scan-result digests via email.

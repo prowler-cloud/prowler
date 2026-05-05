@@ -9,6 +9,16 @@ import requests
 import yaml
 from packaging import version
 
+from prowler.lib.check.compliance_models import load_compliance_framework_universal
+
+# Re-exported from a leaf module so prowler.lib.check.utils can import the
+# constant without participating in the config <-> compliance_models <-> utils
+# import cycle. Existing consumers continue to import from this module.
+# The `as EXTERNAL_TOOL_PROVIDERS` rename is the PEP 484 explicit re-export
+# form so static analyzers (CodeQL, mypy, ruff) treat the name as public.
+from prowler.lib.check.external_tool_providers import (  # noqa: F401
+    EXTERNAL_TOOL_PROVIDERS as EXTERNAL_TOOL_PROVIDERS,
+)
 from prowler.lib.logger import logger
 
 
@@ -38,7 +48,7 @@ class _MutableTimestamp:
 
 timestamp = _MutableTimestamp(datetime.today())
 timestamp_utc = _MutableTimestamp(datetime.now(timezone.utc))
-prowler_version = "5.25.0"
+prowler_version = "5.26.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://raw.githubusercontent.com/prowler-cloud/prowler/dc7d2d5aeb92fdf12e8604f42ef6472cd3e8e889/docs/img/prowler-logo-black.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
@@ -68,10 +78,6 @@ class Provider(str, Enum):
     VERCEL = "vercel"
 
 
-# Providers that delegate scanning to an external tool (e.g. Trivy, promptfoo)
-# and bypass standard check/service loading.
-EXTERNAL_TOOL_PROVIDERS = frozenset({"iac", "llm", "image"})
-
 # Compliance
 actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
@@ -81,8 +87,8 @@ def get_available_compliance_frameworks(provider=None):
     providers = [p.value for p in Provider]
     if provider:
         providers = [provider]
-    for provider in providers:
-        compliance_dir = f"{actual_directory}/../compliance/{provider}"
+    for current_provider in providers:
+        compliance_dir = f"{actual_directory}/../compliance/{current_provider}"
         if not os.path.isdir(compliance_dir):
             continue
         with os.scandir(compliance_dir) as files:
@@ -91,6 +97,23 @@ def get_available_compliance_frameworks(provider=None):
                     available_compliance_frameworks.append(
                         file.name.removesuffix(".json")
                     )
+    # Also scan top-level compliance/ for multi-provider (universal) JSONs.
+    # When a specific provider was requested, only include the framework if it
+    # declares support for that provider; otherwise include all universal frameworks.
+    compliance_root = f"{actual_directory}/../compliance"
+    if os.path.isdir(compliance_root):
+        with os.scandir(compliance_root) as files:
+            for file in files:
+                if file.is_file() and file.name.endswith(".json"):
+                    name = file.name.removesuffix(".json")
+                    if provider:
+                        framework = load_compliance_framework_universal(file.path)
+                        if framework is None or not framework.supports_provider(
+                            provider
+                        ):
+                            continue
+                    if name not in available_compliance_frameworks:
+                        available_compliance_frameworks.append(name)
     return available_compliance_frameworks
 
 
@@ -136,7 +159,7 @@ def set_output_timestamp(
     Override the global output timestamps so generated artifacts reflect a specific scan.
     Returns the previous values so callers can restore them afterwards.
     """
-    global timestamp, timestamp_utc, output_file_timestamp, timestamp_iso
+    global output_file_timestamp, timestamp_iso
 
     previous_values = (
         timestamp.value,

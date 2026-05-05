@@ -15,10 +15,7 @@ import {
 } from "@/components/shadcn/tooltip";
 import { toast } from "@/components/ui";
 import type { ComplianceReportType } from "@/lib/compliance/compliance-report-types";
-import {
-  downloadComplianceCsv,
-  downloadComplianceReportPdf,
-} from "@/lib/helper";
+import { downloadComplianceCsv, downloadCompliancePdf } from "@/lib/helper";
 import { cn } from "@/lib/utils";
 
 interface ComplianceDownloadContainerProps {
@@ -61,7 +58,7 @@ export const ComplianceDownloadContainer = ({
     if (!reportType || isDownloadingPdf) return;
     setIsDownloadingPdf(true);
     try {
-      await downloadComplianceReportPdf(scanId, reportType, toast);
+      await downloadCompliancePdf(scanId, reportType, toast);
     } finally {
       setIsDownloadingPdf(false);
     }

@@ -377,6 +377,50 @@ class TestCheckMetadataValidators:
         check_metadata = CheckMetadata(**valid_metadata)
         assert check_metadata.Categories == ["encryption", "logging", "secrets"]
 
+    def test_valid_vercel_plan_categories_success(self):
+        """Test Vercel plan categories are accepted using hyphen-separated names."""
+        valid_metadata = {
+            "Provider": "vercel",
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": [],
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "",
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
+            },
+            "Categories": [
+                "vercel-hobby-plan",
+                "vercel-pro-plan",
+                "vercel-enterprise-plan",
+            ],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+
+        check_metadata = CheckMetadata(**valid_metadata)
+        assert check_metadata.Categories == [
+            "vercel-hobby-plan",
+            "vercel-pro-plan",
+            "vercel-enterprise-plan",
+        ]
+
     def test_valid_category_failure_non_string(self):
         """Test valid category validation fails with non-string category"""
         invalid_metadata = {
@@ -454,7 +498,7 @@ class TestCheckMetadataValidators:
         with pytest.raises(ValidationError) as exc_info:
             CheckMetadata(**invalid_metadata)
         assert (
-            "Categories can only contain lowercase letters, numbers and hyphen"
+            "Categories can only contain lowercase letters, numbers, and hyphen '-'"
             in str(exc_info.value)
         )
 

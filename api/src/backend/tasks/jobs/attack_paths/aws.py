@@ -49,7 +49,7 @@ def start_aws_ingestion(
     }
 
     boto3_session = get_boto3_session(prowler_api_provider, prowler_sdk_provider)
-    regions: list[str] = list(prowler_sdk_provider._enabled_regions)
+    regions: list[str] = resolve_aws_regions(prowler_api_provider, prowler_sdk_provider)
     requested_syncs = list(cartography_aws.RESOURCE_FUNCTIONS.keys())
 
     sync_args = cartography_aws._build_aws_sync_kwargs(
@@ -224,6 +224,48 @@ def get_boto3_session(
         boto3_session._session.set_config_variable("region", global_region)
 
     return boto3_session
+
+
+def resolve_aws_regions(
+    prowler_api_provider: ProwlerAPIProvider,
+    prowler_sdk_provider: ProwlerSDKProvider,
+) -> list[str]:
+    """Resolve the regions to scan, falling back when `_enabled_regions` is `None`.
+
+    The SDK silently sets `_enabled_regions` to `None` when `ec2:DescribeRegions`
+    fails (missing IAM permission, transient error). Without a fallback the
+    Cartography ingestion crashes with a non-actionable `TypeError`. Try the
+    user's `audited_regions` next, then the partition's static region list.
+    Excluded regions are honored on every branch.
+    """
+    if prowler_sdk_provider._enabled_regions is not None:
+        regions = set(prowler_sdk_provider._enabled_regions)
+
+    elif prowler_sdk_provider.identity.audited_regions:
+        regions = set(prowler_sdk_provider.identity.audited_regions)
+
+    else:
+        partition = prowler_sdk_provider.identity.partition
+        try:
+            regions = prowler_sdk_provider.get_available_aws_service_regions(
+                "ec2", partition
+            )
+
+        except KeyError:
+            raise RuntimeError(
+                f"No region data available for partition {partition!r}; "
+                f"cannot determine regions to scan for "
+                f"{prowler_api_provider.uid}"
+            )
+
+        logger.warning(
+            f"Could not enumerate enabled regions for AWS account "
+            f"{prowler_api_provider.uid}; falling back to all regions in "
+            f"partition {partition!r}"
+        )
+
+    excluded = set(getattr(prowler_sdk_provider, "_excluded_regions", None) or ())
+    return sorted(regions - excluded)
 
 
 def get_aioboto3_session(boto3_session: boto3.Session) -> aioboto3.Session:

@@ -16,8 +16,12 @@ export interface PendingFilters {
 }
 
 export interface UseFilterBatchReturn {
+  /** Current applied filter values — URL-backed state */
+  appliedFilters: PendingFilters;
   /** Current pending filter values — local state, not yet in URL */
   pendingFilters: PendingFilters;
+  /** Pending filter keys whose selected values differ from the applied URL state */
+  changedFilters: PendingFilters;
   /** Update a single pending filter. Does NOT touch the URL. */
   setPending: (key: string, values: string[]) => void;
   /** Apply all pending filters to URL in a single router.push */
@@ -30,6 +34,8 @@ export interface UseFilterBatchReturn {
    * the resulting URL in one step.
    */
   clearAndApply: () => void;
+  /** Remove one applied URL-backed filter value and immediately navigate */
+  removeAppliedAndApply: (key: string, value?: string) => void;
   /** Remove a single filter key from pending state */
   removePending: (key: string) => void;
   /** Whether pending state differs from the current URL */
@@ -107,6 +113,37 @@ function countChanges(
   return count;
 }
 
+function getChangedFilters(
+  pending: PendingFilters,
+  applied: PendingFilters,
+): PendingFilters {
+  const pendingKeys = Object.keys(pending).filter((key) => {
+    const values = pending[key];
+    return values.length > 0;
+  });
+  const appliedKeys = Object.keys(applied).filter((key) => {
+    const values = applied[key];
+    return values.length > 0;
+  });
+  const allKeys = Array.from(new Set([...pendingKeys, ...appliedKeys]));
+
+  return allKeys.reduce<PendingFilters>((changed, key) => {
+    const pendingValues = pending[key] ?? [];
+    const appliedValues = applied[key] ?? [];
+    const sortedPending = [...pendingValues].sort();
+    const sortedApplied = [...appliedValues].sort();
+    const isChanged =
+      sortedPending.length !== sortedApplied.length ||
+      !sortedPending.every((value, index) => value === sortedApplied[index]);
+
+    if (isChanged && pendingValues.length > 0) {
+      changed[key] = pendingValues;
+    }
+
+    return changed;
+  }, {});
+}
+
 export interface UseFilterBatchOptions {
   /**
    * Default URL params to apply when applyAll() is called and they are not
@@ -132,6 +169,9 @@ export const useFilterBatch = (
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const [appliedFilters, setAppliedFilters] = useState<PendingFilters>(() =>
+    deriveAppliedFromUrl(new URLSearchParams(searchParams.toString())),
+  );
   const [pendingFilters, setPendingFilters] = useState<PendingFilters>(() =>
     deriveAppliedFromUrl(new URLSearchParams(searchParams.toString())),
   );
@@ -142,6 +182,7 @@ export const useFilterBatch = (
     const applied = deriveAppliedFromUrl(
       new URLSearchParams(searchParams.toString()),
     );
+    setAppliedFilters(applied);
     setPendingFilters(applied);
   }, [searchParams]);
 
@@ -164,6 +205,7 @@ export const useFilterBatch = (
 
   /** Private helper — builds URLSearchParams from a pending state and pushes. */
   const buildAndPush = (nextPending: PendingFilters) => {
+    setAppliedFilters(nextPending);
     const params = new URLSearchParams(searchParams.toString());
 
     // Remove all batch-managed filter params
@@ -222,25 +264,49 @@ export const useFilterBatch = (
     buildAndPush({});
   };
 
+  const removeAppliedAndApply = (key: string, value?: string) => {
+    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+    const applied = deriveAppliedFromUrl(
+      new URLSearchParams(searchParams.toString()),
+    );
+    const nextValues =
+      value === undefined
+        ? []
+        : (applied[filterKey] ?? []).filter((item) => item !== value);
+    const nextApplied = { ...applied };
+
+    if (nextValues.length > 0) {
+      nextApplied[filterKey] = nextValues;
+    } else {
+      delete nextApplied[filterKey];
+    }
+
+    setPendingFilters(nextApplied);
+    buildAndPush(nextApplied);
+  };
+
   const getFilterValue = (key: string): string[] => {
     const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
     return pendingFilters[filterKey] ?? [];
   };
 
-  const appliedFilters = deriveAppliedFromUrl(
-    new URLSearchParams(searchParams.toString()),
-  );
   const hasChanges = !areFiltersEqual(pendingFilters, appliedFilters);
   const changeCount = hasChanges
     ? countChanges(pendingFilters, appliedFilters)
     : 0;
+  const changedFilters = hasChanges
+    ? getChangedFilters(pendingFilters, appliedFilters)
+    : {};
 
   return {
+    appliedFilters,
     pendingFilters,
+    changedFilters,
     setPending,
     applyAll,
     discardAll,
     clearAndApply,
+    removeAppliedAndApply,
     removePending,
     hasChanges,
     changeCount,

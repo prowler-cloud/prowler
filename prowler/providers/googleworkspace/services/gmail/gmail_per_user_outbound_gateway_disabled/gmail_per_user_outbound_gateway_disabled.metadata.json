@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_per_user_outbound_gateway_disabled",
+  "CheckTitle": "Per-user outbound gateways are disabled",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "A per-user outbound gateway allows users to send mail through an external SMTP server instead of Google's mail servers. Disabling this setting ensures all outbound email is routed through the organization's configured mail infrastructure.",
+  "Risk": "With per-user outbound gateways enabled, users can route outbound email through **external SMTP servers**, bypassing organizational **email security controls**, **DLP policies**, and **audit logging**. This creates an unmonitored channel for data exfiltration and policy circumvention.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/176652",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **End User Access** > **Allow per-user outbound gateways**\n4. Uncheck **Allow users to send mail through an external SMTP server when configuring a \"from\" address hosted outside your email domain**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable per-user outbound gateways to ensure all outbound email passes through the organization's mail infrastructure where security controls and monitoring are applied.",
+      "Url": "https://hub.prowler.com/check/gmail_per_user_outbound_gateway_disabled"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "gmail_pop_imap_access_disabled",
+    "gmail_auto_forwarding_disabled"
+  ],
+  "Notes": ""
+}

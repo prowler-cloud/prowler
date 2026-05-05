@@ -2,16 +2,50 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.25.0] (Prowler UNRELEASED)
+## [1.25.2] (Prowler UNRELEASED)
 
 ### 🔄 Changed
 
+- Compliance cards: progress bar now spans the full card width, the passing-requirements caption sits beside the framework logo under the title, and the ISO 27001 logo asset is recentered within its tile [(#10939)](https://github.com/prowler-cloud/prowler/pull/10939)
+- Findings expanded resource rows now drop the redundant cube icons, render Service and Region with the same compact label style as Last seen and Failing for, and reorder columns to Status, Resource, Provider, Severity, then field labels [(#10949)](https://github.com/prowler-cloud/prowler/pull/10949)
+
+---
+
+## [1.25.1] (Prowler v5.25.1)
+
+### 🐞 Fixed
+
+- Compliance page export menu now scales on small screens, and frameworks load on first render without requiring a manual scan re-selection [(#10918)](https://github.com/prowler-cloud/prowler/pull/10918)
+
+---
+
+## [1.25.0] (Prowler v5.25.0)
+
+### 🚀 Added
+
+- Download PDF button for CIS Benchmark compliance cards, surfaced only on the latest CIS variant per provider to match the backend's latest-only PDF generation [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
+- `knip` for dead code detection with `lint:knip` and `lint:knip:fix` scripts [(#10654)](https://github.com/prowler-cloud/prowler/pull/10654)
+- Resource button in the findings resource detail drawer to open the related resource page [(#10847)](https://github.com/prowler-cloud/prowler/pull/10847)
+
+### 🔄 Changed
+
+- Redesign compliance page, client-side search for compliance frameworks, compact scan selector trigger, enhanced compliance cards [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
 - Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
-
-### ❌ Removed
-
-- Redesign compliance page with a horizontal ThreatScore card (always-visible pillar breakdown + ActionDropdown), client-side search for compliance frameworks, compact scan selector trigger, responsive mobile filters, download-started toasts for CSV/PDF exports, enhanced compliance cards with truncated titles, and Alert-based empty/error states; migrate Progress component from HeroUI to shadcn [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
+- Shared filter dropdowns now support local option search and auto-scroll to the first visible match across table and provider filters [(#10859)](https://github.com/prowler-cloud/prowler/pull/10859)
 - Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
+- Mutelist improvements: table now supports name/reason search and visual count badges for finding targets [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
+- Resources now use batch-applied filters, render metadata JSON with syntax highlighting, and more [(#10861)](https://github.com/prowler-cloud/prowler/pull/10861)
+- Table pagination controls now keep their arrows visible on hover in light theme, and more UI improvements [(#10862)](https://github.com/prowler-cloud/prowler/pull/10862)
+- Fix rows-per-page selector silently ignoring changes in URL-driven tables by unifying `DataTable` pagination into a single `onPaginationChange` callback [(#10863)](https://github.com/prowler-cloud/prowler/pull/10863)
+
+---
+
+## [1.24.4] (Prowler 5.24.4)
+
+### 🐞 Fixed
+
+- Provider wizard no longer advances to the Launch Scan step when rotating credentials [(#10851)](https://github.com/prowler-cloud/prowler/pull/10851)
+- Attack Paths scan selector now lists scans from every provider with working pagination, instead of capping the list at the first ten [(#10864)](https://github.com/prowler-cloud/prowler/pull/10864)
 
 ---
 

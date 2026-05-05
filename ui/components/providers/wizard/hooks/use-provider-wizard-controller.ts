@@ -197,6 +197,12 @@ export function useProviderWizardController({
   };
 
   const handleTestSuccess = () => {
+    if (
+      useProviderWizardStore.getState().mode === PROVIDER_WIZARD_MODE.UPDATE
+    ) {
+      handleClose();
+      return;
+    }
     setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
   };
 
@@ -234,6 +240,7 @@ export function useProviderWizardController({
     handleTestSuccess,
     isOrgDirectEntry,
     isProviderFlow,
+    mode,
     modalTitle,
     openOrganizationsFlow,
     orgCurrentStep,

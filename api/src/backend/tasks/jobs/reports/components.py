@@ -26,6 +26,52 @@ from .config import (
 )
 
 
+def truncate_text(text: str, max_len: int) -> str:
+    """Truncate ``text`` to ``max_len`` characters, appending an ellipsis if cut.
+
+    Used by report generators that need to squeeze long descriptions, section
+    titles or finding titles into a fixed-width table cell.
+
+    Args:
+        text: Source string. ``None`` and non-string values are treated as empty.
+        max_len: Maximum output length including the ellipsis. Values < 4 are
+            clamped so the result never grows beyond ``max_len``.
+
+    Returns:
+        The original string if short enough, otherwise ``text[: max_len - 3] + "..."``.
+        When ``max_len < 4`` a plain substring of length ``max_len`` is returned
+        so callers never get a string longer than they asked for.
+    """
+    if not text:
+        return ""
+    text = str(text)
+    if len(text) <= max_len:
+        return text
+    if max_len < 4:
+        return text[:max_len]
+    return text[: max_len - 3] + "..."
+
+
+def escape_html(text: str) -> str:
+    """Escape the minimal HTML entities required for safe ReportLab Paragraph rendering.
+
+    ReportLab's ``Paragraph`` parses a small HTML subset, so raw ``<``, ``>``
+    and ``&`` in user-provided content (rationale, remediation, etc.) would
+    break layout or be interpreted as tags. This helper mirrors
+    ``html.escape`` but avoids pulling in the stdlib dependency and keeps the
+    output deterministic.
+
+    Args:
+        text: Untrusted source string.
+
+    Returns:
+        A string safe to embed inside a ReportLab Paragraph.
+    """
+    return (
+        str(text or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    )
+
+
 def get_color_for_risk_level(risk_level: int) -> colors.Color:
     """
     Get color based on risk level.

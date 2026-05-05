@@ -19,8 +19,7 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
       base: "border-border-neutral-secondary bg-bg-neutral-secondary px-[18px] pt-3 pb-4",
       inner:
         "rounded-[12px] backdrop-blur-[46px] border-border-neutral-tertiary bg-bg-neutral-tertiary",
-      danger:
-        "gap-1 rounded-[12px] border-[rgba(67,34,50,0.5)] bg-[rgba(67,34,50,0.2)] dark:border-[rgba(67,34,50,0.7)] dark:bg-[rgba(67,34,50,0.3)]",
+      danger: "border-border-error bg-bg-fail-secondary gap-1 rounded-[12px]",
     },
     padding: {
       default: "",

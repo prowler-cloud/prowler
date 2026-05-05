@@ -86,7 +86,7 @@ export function useFindingGroupResourceState({
     totalResourceCount: totalCount ?? group.resourcesTotal,
     onRequestMoreResources: loadMore,
     canLoadOtherFindings: group.resourcesTotal !== 0,
-    includeMutedInOtherFindings: true,
+    includeMutedInOtherFindings: filters["filter[muted]"] === "include",
   });
 
   const handleDrawerMuteComplete = () => {

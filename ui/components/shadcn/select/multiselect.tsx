@@ -284,11 +284,26 @@ export function MultiSelectContent({
   width?: "default" | "wide";
 } & Omit<ComponentPropsWithoutRef<typeof Command>, "children">) {
   const canSearch = typeof search === "object" ? true : search;
+  const listRef = useRef<HTMLDivElement>(null);
 
   const widthClasses =
     width === "wide"
       ? "w-[min(max(var(--radix-popover-trigger-width),24rem),calc(100vw-2rem))] max-w-[32rem]"
       : "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))] max-w-[24rem]";
+
+  function handleSearchValueChange(searchValue: string) {
+    if (!canSearch || !searchValue.trim()) return;
+
+    requestAnimationFrame(() => {
+      const firstVisibleItem = listRef.current?.querySelector<HTMLElement>(
+        '[data-slot="multiselect-item"]:not([hidden])',
+      );
+
+      firstVisibleItem?.scrollIntoView({
+        block: "nearest",
+      });
+    });
+  }
 
   return (
     <>
@@ -312,11 +327,15 @@ export function MultiSelectContent({
                 typeof search === "object" ? search.placeholder : undefined
               }
               className="text-bg-button-secondary placeholder:text-bg-button-secondary"
+              onValueChange={handleSearchValueChange}
             />
           ) : (
             <button className="sr-only" />
           )}
-          <CommandList className="minimal-scrollbar max-h-[300px] overflow-x-hidden overflow-y-auto p-3">
+          <CommandList
+            ref={listRef}
+            className="minimal-scrollbar max-h-[300px] overflow-x-hidden overflow-y-auto p-3"
+          >
             {canSearch && (
               <CommandEmpty className="text-bg-button-secondary py-6 text-center text-sm">
                 {typeof search === "object" ? search.emptyMessage : undefined}
@@ -357,7 +376,7 @@ export function MultiSelectItem({
       keywords={keywords}
       data-slot="multiselect-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary my-1 flex w-full cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none first:mt-0 last:mb-0 hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         isSelected && "bg-slate-100 dark:bg-slate-800/50",
         className,
       )}

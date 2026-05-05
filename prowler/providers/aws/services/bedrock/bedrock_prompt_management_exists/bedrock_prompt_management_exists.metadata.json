@@ -1,0 +1,39 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_prompt_management_exists",
+  "CheckTitle": "Amazon Bedrock Prompt Management prompts exist in the region",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Bedrock Prompt Management** enables centralized creation, versioning, and governance of prompts used with foundation models.\n\nThis region-level check verifies whether at least one managed prompt exists in each scanned region, used as an adoption signal for Prompt Management. The presence of a prompt does not by itself guarantee that every application prompt is managed.",
+  "Risk": "Without **Prompt Management**, prompts are scattered across applications with no central oversight, versioning, or auditability over instructions sent to foundation models, weakening governance and compliance posture.\n\nManaged prompts are a governance enabler; **prompt injection** defenses are provided by Bedrock **guardrails**, covered by separate checks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-management.html",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-management-create.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws bedrock-agent create-prompt --name example_prompt --default-variant default --variants '[{\"name\":\"default\",\"templateType\":\"TEXT\",\"templateConfiguration\":{\"text\":{\"text\":\"Your prompt template here.\"}}}]'",
+      "NativeIaC": "",
+      "Other": "1. Open the Amazon Bedrock console\n2. Navigate to Prompt Management\n3. Click Create prompt\n4. Provide a name and configure the prompt template (a prompt can contain at most one variant; additional variants are created via CreatePromptVersion)\n5. Save the prompt",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Adopt **Bedrock Prompt Management** to centralize prompt definitions, enforce versioning, and maintain governance over model interactions.\n\nUse managed prompts with **guardrails** and apply **least privilege** access controls to restrict who can create or modify prompts.",
+      "Url": "https://hub.prowler.com/check/bedrock_prompt_management_exists"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results are generated per scanned region. Regions where `ListPrompts` cannot be queried are omitted from the findings."
+}
