@@ -58,6 +58,7 @@ from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
+    reset_ephemeral_resource_findings_count,
     update_provider_compliance_scores,
 )
 from tasks.utils import (
@@ -76,6 +77,7 @@ from api.v1.serializers import ScanTaskSerializer
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
+
 
 logger = get_task_logger(__name__)
 
@@ -157,6 +159,13 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             ),
             generate_outputs_task.si(
                 scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+            ),
+            # post-scan task — runs in the parallel group so a
+            # failure cannot cascade into reports or integrations. Its only
+            # prerequisite is that perform_prowler_scan has committed
+            # ResourceScanSummary, which is true by the time this chain fires.
+            reset_ephemeral_resource_findings_count_task.si(
+                tenant_id=tenant_id, scan_id=scan_id
             ),
         ),
         group(
@@ -393,7 +402,8 @@ class AttackPathsScanRLSTask(RLSTask):
     SDK initialization, or Neo4j configuration errors during setup).
     """
 
-    def on_failure(self, exc, task_id, args, kwargs, _einfo):
+    def on_failure(self, exc, task_id, args, kwargs, _einfo):  # noqa: ARG002
+        del args  # Required by Celery's Task.on_failure signature; not used.
         tenant_id = kwargs.get("tenant_id")
         scan_id = kwargs.get("scan_id")
 
@@ -788,6 +798,32 @@ def update_provider_compliance_scores_task(tenant_id: str, scan_id: str):
 def aggregate_daily_severity_task(tenant_id: str, scan_id: str):
     """Aggregate scan severity into DailySeveritySummary for findings_severity/timeseries endpoint."""
     return aggregate_daily_severity(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="scan-reset-ephemeral-resources", queue="overview")
+@handle_provider_deletion
+def reset_ephemeral_resource_findings_count_task(tenant_id: str, scan_id: str):
+    """Reset failed_findings_count for resources missing from a completed full-scope scan.
+
+    Failures are swallowed and returned as a status: this task lives inside the
+    post-scan group, and Celery propagates group-member exceptions into the next
+    chain step — meaning a crash here would block compliance reports and
+    integrations. The reset is purely cosmetic (UI sort optimization), so a
+    bad run is logged and absorbed rather than allowed to cascade.
+    """
+    try:
+        return reset_ephemeral_resource_findings_count(
+            tenant_id=tenant_id, scan_id=scan_id
+        )
+    except Exception as exc:  # noqa: BLE001 — intentionally broad
+        logger.exception(
+            f"reset_ephemeral_resource_findings_count failed for scan {scan_id}: {exc}"
+        )
+        return {
+            "status": "failed",
+            "scan_id": str(scan_id),
+            "reason": str(exc),
+        }
 
 
 @shared_task(base=RLSTask, name="scan-finding-group-summaries", queue="overview")

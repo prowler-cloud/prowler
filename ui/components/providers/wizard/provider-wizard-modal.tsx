@@ -93,7 +93,7 @@ export function ProviderWizardModal({
         </DialogTitle>
         <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
           <Info className="size-4 shrink-0" />
-          <span>For assistance connecting a Cloud Provider visit</span>
+          <span>For assistance connecting a Provider visit</span>
           <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
             <a href={docsLink} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="size-3.5 shrink-0" />
