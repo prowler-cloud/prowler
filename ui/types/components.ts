@@ -21,6 +21,7 @@ export type SubmenuProps = {
   active?: boolean;
   icon: IconComponent;
   disabled?: boolean;
+  highlight?: boolean;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
