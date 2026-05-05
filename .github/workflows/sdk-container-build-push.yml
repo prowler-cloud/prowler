@@ -3,9 +3,7 @@ name: 'SDK: Container Build and Push'
 on:
   push:
     branches:
-      - 'v3'      # For v3-latest
-      - 'v4.6'    # For v4-latest
-      - 'master'  # For latest
+      - 'master'
     paths-ignore:
       - '.github/**'
       - '!.github/workflows/sdk-container-build-push.yml'
@@ -56,7 +54,6 @@ jobs:
     timeout-minutes: 5
     outputs:
       prowler_version: ${{ steps.get-prowler-version.outputs.prowler_version }}
-      prowler_version_major: ${{ steps.get-prowler-version.outputs.prowler_version_major }}
       latest_tag: ${{ steps.get-prowler-version.outputs.latest_tag }}
       stable_tag: ${{ steps.get-prowler-version.outputs.stable_tag }}
     permissions:
@@ -92,32 +89,13 @@ jobs:
           PROWLER_VERSION="$(poetry version -s 2>/dev/null)"
           echo "prowler_version=${PROWLER_VERSION}" >> "${GITHUB_OUTPUT}"
 
-          # Extract major version
           PROWLER_VERSION_MAJOR="${PROWLER_VERSION%%.*}"
-          echo "prowler_version_major=${PROWLER_VERSION_MAJOR}" >> "${GITHUB_OUTPUT}"
-
-          # Set version-specific tags
-          case ${PROWLER_VERSION_MAJOR} in
-            3)
-              echo "latest_tag=v3-latest" >> "${GITHUB_OUTPUT}"
-              echo "stable_tag=v3-stable" >> "${GITHUB_OUTPUT}"
-              echo "✓ Prowler v3 detected - tags: v3-latest, v3-stable"
-              ;;
-            4)
-              echo "latest_tag=v4-latest" >> "${GITHUB_OUTPUT}"
-              echo "stable_tag=v4-stable" >> "${GITHUB_OUTPUT}"
-              echo "✓ Prowler v4 detected - tags: v4-latest, v4-stable"
-              ;;
-            5)
-              echo "latest_tag=latest" >> "${GITHUB_OUTPUT}"
-              echo "stable_tag=stable" >> "${GITHUB_OUTPUT}"
-              echo "✓ Prowler v5 detected - tags: latest, stable"
-              ;;
-            *)
-              echo "::error::Unsupported Prowler major version: ${PROWLER_VERSION_MAJOR}"
-              exit 1
-              ;;
-          esac
+          if [[ "${PROWLER_VERSION_MAJOR}" != "5" ]]; then
+            echo "::error::Unsupported Prowler major version: ${PROWLER_VERSION_MAJOR}"
+            exit 1
+          fi
+          echo "latest_tag=latest" >> "${GITHUB_OUTPUT}"
+          echo "stable_tag=stable" >> "${GITHUB_OUTPUT}"
 
   notify-release-started:
     if: github.repository == 'prowler-cloud/prowler' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
@@ -228,7 +206,7 @@ jobs:
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }}-${{ matrix.arch }}
           cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
   # Create and push multi-architecture manifest
   create-manifest:
@@ -386,39 +364,3 @@ jobs:
           payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
           step-outcome: ${{ steps.outcome.outputs.outcome }}
           update-ts: ${{ needs.notify-release-started.outputs.message-ts }}
-
-  dispatch-v3-deployment:
-    needs: [setup, container-build-push]
-    if: always() && needs.setup.outputs.prowler_version_major == '3' && needs.setup.result == 'success' && needs.container-build-push.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
-        with:
-          egress-policy: audit
-
-      - name: Calculate short SHA
-        id: short-sha
-        run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-
-      - name: Dispatch v3 deployment (latest)
-        if: github.event_name == 'push'
-        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
-        with:
-          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          repository: ${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}
-          event-type: dispatch
-          client-payload: '{"version":"v3-latest","tag":"${{ steps.short-sha.outputs.short_sha }}"}'
-
-      - name: Dispatch v3 deployment (release)
-        if: github.event_name == 'release'
-        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
-        with:
-          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          repository: ${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}
-          event-type: dispatch
-          client-payload: '{"version":"release","tag":"${{ needs.setup.outputs.prowler_version }}"}'
