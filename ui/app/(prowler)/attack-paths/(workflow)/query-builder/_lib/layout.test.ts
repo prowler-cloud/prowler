@@ -29,7 +29,6 @@ describe("layoutWithDagre", () => {
     expect(result.rfNodes).toEqual([]);
     expect(result.rfEdges).toEqual([]);
   });
-
   it("assigns node types and dimensions from labels", () => {
     const { rfNodes } = layoutWithDagre(
       [findingNode, resourceNode, internetNode],
@@ -233,7 +232,7 @@ describe("layoutWithDagre", () => {
     });
   });
 
-  it("builds rf edge IDs as `${source}-${target}` after layout", () => {
+  it("preserves the original edge id when the graph has a single edge", () => {
     const { rfEdges } = layoutWithDagre(
       [findingNode, resourceNode],
       [
@@ -246,6 +245,31 @@ describe("layoutWithDagre", () => {
       ],
     );
 
-    expect(rfEdges[0]?.id).toBe("resource-1-finding-1");
+    expect(rfEdges[0]?.id).toBe("ignored-by-rf");
+  });
+
+  it("preserves parallel edges between the same nodes with unique ids", () => {
+    const { rfEdges } = layoutWithDagre(
+      [resourceNode, findingNode],
+      [
+        {
+          id: "edge-1",
+          source: "resource-1",
+          target: "finding-1",
+          type: "HAS_FINDING",
+        },
+        {
+          id: "edge-2",
+          source: "resource-1",
+          target: "finding-1",
+          type: "HAS_FINDING",
+        },
+      ],
+    );
+
+    expect(rfEdges).toHaveLength(2);
+    expect(rfEdges.map((edge) => edge.id)).toEqual(["edge-1", "edge-2"]);
+    expect(rfEdges.every((edge) => edge.source === "resource-1")).toBe(true);
+    expect(rfEdges.every((edge) => edge.target === "finding-1")).toBe(true);
   });
 });

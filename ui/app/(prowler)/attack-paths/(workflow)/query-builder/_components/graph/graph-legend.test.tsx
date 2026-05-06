@@ -99,6 +99,35 @@ describe("GraphLegend", () => {
     expect(screen.getByText("Node with findings")).toBeInTheDocument();
   });
 
+  it("should keep unattached findings visible in the legend", () => {
+    // Given - Findings have no connected resource and stay visible in the full graph
+    const findingsOnlyGraphData: AttackPathGraphData = {
+      nodes: [
+        {
+          id: "finding-critical",
+          labels: ["ProwlerFinding"],
+          properties: { check_title: "Critical finding", severity: "critical" },
+        },
+        {
+          id: "finding-high",
+          labels: ["ProwlerFinding"],
+          properties: { check_title: "High finding", severity: "high" },
+        },
+      ],
+      relationships: [],
+    };
+
+    // When
+    render(<GraphLegend data={findingsOnlyGraphData} />);
+
+    // Then
+    expect(
+      screen.getByRole("heading", { name: /findings by risk/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Critical")).toBeInTheDocument();
+    expect(screen.getByText("High")).toBeInTheDocument();
+  });
+
   it("should list policy and role node types separately", () => {
     // Given - A graph whose visible nodes are all identity-related, but distinct
     const identityGraphData: AttackPathGraphData = {

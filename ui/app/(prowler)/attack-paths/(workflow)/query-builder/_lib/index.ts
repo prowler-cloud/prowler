@@ -12,7 +12,11 @@ export {
   GRAPH_SELECTION_COLOR,
   resolveNodeColors,
 } from "./graph-colors";
-export { computeFilteredSubgraph, getPathEdges } from "./graph-utils";
+export {
+  computeFilteredSubgraph,
+  getPathEdges,
+  resolveHiddenFindingIds,
+} from "./graph-utils";
 export { layoutWithDagre } from "./layout";
 export {
   NODE_CATEGORY,

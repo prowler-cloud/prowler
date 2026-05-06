@@ -26,12 +26,13 @@ import { cn } from "@/lib/utils";
 import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
 import {
+  computeFilteredSubgraph,
   getNodeBorderColor,
   getNodeColor,
   getPathEdges,
   GRAPH_EDGE_HIGHLIGHT_COLOR,
+  resolveHiddenFindingIds,
 } from "../../_lib";
-import { computeFilteredSubgraph } from "../../_lib/graph-utils";
 import { isFindingNode, layoutWithDagre } from "../../_lib/layout";
 import { FindingNode } from "./nodes/finding-node";
 import { InternetNode } from "./nodes/internet-node";
@@ -199,7 +200,7 @@ const scheduleMeasuredFit = (
 const GraphCanvas = ({
   data,
   selectedNodeId,
-  isFilteredView,
+  isFilteredView = false,
   initialNodeId,
   expandedResources,
   onNodeClick,
@@ -426,23 +427,12 @@ const GraphCanvas = ({
   resourceToFindingsRef.current = resourceToFindings;
 
   // Tier 1: compute which finding nodes are hidden (not expanded)
-  const hiddenFindingIds = new Set<string>();
-  if (!isFilteredView) {
-    findingNodeIds.forEach((findingId) => {
-      // A finding is visible only if at least one of its connected resources is expanded
-      const connectedResources = findingToResources.get(findingId);
-      if (!connectedResources) {
-        hiddenFindingIds.add(findingId);
-        return;
-      }
-      const anyExpanded = Array.from(connectedResources).some((resId) =>
-        expanded.has(resId),
-      );
-      if (!anyExpanded) {
-        hiddenFindingIds.add(findingId);
-      }
-    });
-  }
+  const hiddenFindingIds = resolveHiddenFindingIds({
+    expandedResources: expanded,
+    findingNodeIds,
+    findingToResources,
+    isFilteredView,
+  });
 
   const layoutNodeIds = new Set(
     nodes
@@ -483,7 +473,12 @@ const GraphCanvas = ({
   const enrichedEdges = rfEdges.map((edge) => {
     const sourceHidden = hiddenFindingIds.has(edge.source);
     const targetHidden = hiddenFindingIds.has(edge.target);
-    const isHighlighted = highlightedEdgeIds.has(edge.id);
+    const pathKey =
+      typeof edge.data === "object" && edge.data && "pathKey" in edge.data
+        ? String((edge.data as { pathKey?: string }).pathKey)
+        : `${edge.source}-${edge.target}`;
+    const isHighlighted =
+      highlightedEdgeIds.has(edge.id) || highlightedEdgeIds.has(pathKey);
 
     return {
       ...edge,

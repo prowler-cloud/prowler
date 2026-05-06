@@ -101,6 +101,7 @@ export default function AttackPathsPage() {
   const [nodeAction, setNodeAction] = useState<NodeActionState | null>(null);
   const graphRef = useRef<GraphHandle>(null);
   const fullscreenGraphRef = useRef<GraphHandle>(null);
+  const findingNavigationInFlightRef = useRef(false);
   const hasResetRef = useRef(false);
   const graphContainerRef = useRef<HTMLDivElement>(null);
 
@@ -317,6 +318,11 @@ export default function AttackPathsPage() {
     );
 
     if (isFinding) {
+      if (findingNavigationInFlightRef.current) {
+        return;
+      }
+
+      findingNavigationInFlightRef.current = true;
       // Findings skip the intermediate node-details modal. The finding drawer
       // is the useful destination, so open it directly from the graph click.
       graphState.enterFilteredView(node.id);
@@ -324,7 +330,7 @@ export default function AttackPathsPage() {
       // highlight it. Clear the selection right after for findings so the node
       // details modal does not open before the finding drawer.
       graphState.selectNode(null);
-      handleViewFinding(String(node.properties?.id || node.id));
+      void handleViewFinding(String(node.properties?.id || node.id));
       return;
     }
 
@@ -379,9 +385,14 @@ export default function AttackPathsPage() {
     setNodeAction(null);
   };
 
-  const handleViewFinding = (findingId: string) => {
+  const handleViewFinding = async (findingId: string) => {
     if (!findingId) return;
-    void finding.navigateToFinding(findingId);
+
+    try {
+      await finding.navigateToFinding(findingId);
+    } finally {
+      findingNavigationInFlightRef.current = false;
+    }
   };
 
   const actionNodeFindingsExpanded = nodeAction
@@ -574,8 +585,8 @@ export default function AttackPathsPage() {
                           💡
                         </span>
                         <span className="flex-1">
-                          Click on any node to filter and view its connected
-                          paths
+                          Click a finding to focus its connected path, or click
+                          a resource to view details and reveal related findings
                         </span>
                       </div>
                     )}

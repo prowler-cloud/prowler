@@ -151,10 +151,10 @@ export const resolveNodeColors = ({
   hasFindings,
 }: ResolveNodeColorsParams): NodeColorResult => {
   const fillColor = getNodeColor(labels, properties);
-  const borderColor = hasFindings
-    ? GRAPH_ALERT_BORDER_COLOR
-    : selected
-      ? GRAPH_EDGE_HIGHLIGHT_COLOR
+  const borderColor = selected
+    ? GRAPH_EDGE_HIGHLIGHT_COLOR
+    : hasFindings
+      ? GRAPH_ALERT_BORDER_COLOR
       : getNodeBorderColor(labels, properties);
   return { fillColor, borderColor };
 };
