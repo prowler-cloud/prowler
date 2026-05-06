@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest import mock
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
@@ -138,6 +139,13 @@ def mock_get_llm_operations_logs_attacker(subscription, instance, minutes):
 def mock_get_llm_operations_logs_no_workspace(subscription, instance, minutes):
     """Mock LLM operations logs for instance without workspace"""
     return []
+
+
+def mock_get_llm_operations_logs_by_subscription(subscription, instance, minutes):
+    """Return different logs per subscription to validate isolation."""
+    if subscription == AZURE_SUBSCRIPTION_ID:
+        return mock_get_llm_operations_logs_attacker(subscription, instance, minutes)
+    return mock_get_llm_operations_logs_2_operations(subscription, instance, minutes)
 
 
 class Test_apim_threat_detection_llm_jacking:
@@ -290,6 +298,7 @@ class Test_apim_threat_detection_llm_jacking:
                 "Potential LLM Jacking attack detected from IP address 10.0.0.50"
                 in result[0].status_extended
             )
+            assert AZURE_SUBSCRIPTION_DISPLAY in result[0].status_extended
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource["name"] == "10.0.0.50"
             assert result[0].resource["id"] == "10.0.0.50"
@@ -502,3 +511,90 @@ class Test_apim_threat_detection_llm_jacking:
                     "No potential LLM Jacking attacks detected"
                     in report.status_extended
                 )
+
+    def test_multiple_subscriptions_keep_findings_isolated(self):
+        """Ensure findings from one subscription do not leak into another."""
+        apim_client = mock.MagicMock()
+        second_subscription_id = "another-subscription"
+        second_subscription_name = "another-subscription-id"
+        apim_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME,
+            second_subscription_id: second_subscription_name,
+        }
+        apim_client.instances = {
+            AZURE_SUBSCRIPTION_ID: [
+                mock.MagicMock(
+                    id="/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.ApiManagement/service/test-apim",
+                    name="test-apim",
+                    log_analytics_workspace_id="/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/test-workspace",
+                )
+            ],
+            second_subscription_id: [
+                mock.MagicMock(
+                    id="/subscriptions/another-sub/resourceGroups/test-rg/providers/Microsoft.ApiManagement/service/another-apim",
+                    name="another-apim",
+                    log_analytics_workspace_id="/subscriptions/another-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/another-workspace",
+                )
+            ],
+        }
+        apim_client.audit_config = {
+            "apim_threat_detection_llm_jacking_threshold": 0.2,
+            "apim_threat_detection_llm_jacking_minutes": 1440,
+            "apim_threat_detection_llm_jacking_actions": [
+                "ChatCompletions_Create",
+                "ImageGenerations_Create",
+                "Completions_Create",
+                "Embeddings_Create",
+                "FineTuning_Jobs_Create",
+                "Models_List",
+                "Deployments_List",
+                "Deployments_Get",
+                "Deployments_Create",
+                "Deployments_Delete",
+                "Messages_Create",
+                "Claude_Create",
+                "GenerateContent",
+                "GenerateText",
+                "GenerateImage",
+                "Llama_Create",
+                "CodeLlama_Create",
+                "Gemini_Generate",
+                "Claude_Generate",
+                "Llama_Generate",
+            ],
+        }
+        apim_client.get_llm_operations_logs = (
+            mock_get_llm_operations_logs_by_subscription
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.apim.apim_threat_detection_llm_jacking.apim_threat_detection_llm_jacking.apim_client",
+                new=apim_client,
+            ),
+        ):
+            from prowler.providers.azure.services.apim.apim_threat_detection_llm_jacking.apim_threat_detection_llm_jacking import (
+                apim_threat_detection_llm_jacking,
+            )
+
+            check = apim_threat_detection_llm_jacking()
+            result = check.execute()
+
+            assert len(result) == 2
+
+            report_by_subscription = {report.subscription: report for report in result}
+
+            assert report_by_subscription[AZURE_SUBSCRIPTION_ID].status == "FAIL"
+            assert (
+                AZURE_SUBSCRIPTION_DISPLAY
+                in report_by_subscription[AZURE_SUBSCRIPTION_ID].status_extended
+            )
+            assert report_by_subscription[second_subscription_id].status == "PASS"
+            assert (
+                f"{second_subscription_name} ({second_subscription_id})"
+                in report_by_subscription[second_subscription_id].status_extended
+            )

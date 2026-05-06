@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.azure.config import USER_ACCESS_ADMINISTRATOR_ROLE_ID
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
@@ -181,7 +182,7 @@ class Test_app_function_identity_without_admin_privileges:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function function1 has a managed identity enabled but without admin privileges."
+                == f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} has a managed identity enabled but without admin privileges."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
@@ -271,7 +272,7 @@ class Test_app_function_identity_without_admin_privileges:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function function1 has a managed identity enabled and it is configure with admin privileges using role User Access Administrator."
+                == f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} has a managed identity enabled and it is configure with admin privileges using role User Access Administrator."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"

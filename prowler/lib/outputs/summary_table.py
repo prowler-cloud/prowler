@@ -185,9 +185,13 @@ def display_summary_table(
             print(
                 f"\n{entity_type} {Fore.YELLOW}{audited_entities}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
             )
-            if provider == "azure":
+            if provider.type == "azure":
+                scanned_subscriptions = ", ".join(
+                    f"{display_name} ({subscription_id})"
+                    for subscription_id, display_name in provider.identity.subscriptions.items()
+                )
                 print(
-                    f"\nSubscriptions scanned: {Fore.YELLOW}{' '.join(provider.identity.subscriptions.values())}{Style.RESET_ALL}"
+                    f"\nSubscriptions scanned: {Fore.YELLOW}{scanned_subscriptions}{Style.RESET_ALL}"
                 )
             print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
             print(

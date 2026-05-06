@@ -2,6 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
@@ -101,7 +102,7 @@ class Test_app_function_application_insights_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function function1 is not using Application Insights."
+                == f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} is not using Application Insights."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
@@ -152,7 +153,7 @@ class Test_app_function_application_insights_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function function1 is using Application Insights."
+                == f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} is using Application Insights."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
@@ -203,7 +204,7 @@ class Test_app_function_application_insights_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function function1 is using Application Insights."
+                == f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} is using Application Insights."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
@@ -254,7 +255,7 @@ class Test_app_function_application_insights_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function function1 is not using Application Insights."
+                == f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} is not using Application Insights."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"

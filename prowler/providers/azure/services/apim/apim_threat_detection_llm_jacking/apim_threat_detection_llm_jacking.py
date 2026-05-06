@@ -50,9 +50,11 @@ class apim_threat_detection_llm_jacking(Check):
             ],
         )
 
-        # 1. Aggregate logs from all APIM instances first
-        all_llm_logs: List[LogsQueryLogEntry] = []
         for subscription, instances in apim_client.instances.items():
+            subscription_name = apim_client.subscriptions.get(
+                subscription, subscription
+            )
+            all_llm_logs: List[LogsQueryLogEntry] = []
             for instance in instances:
                 if instance.log_analytics_workspace_id:
                     logs = apim_client.get_llm_operations_logs(
@@ -60,7 +62,8 @@ class apim_threat_detection_llm_jacking(Check):
                     )
                     all_llm_logs.extend(logs)
 
-            # 2. Perform a single, global analysis on all collected logs
+            # Analyze logs only within the current subscription to avoid
+            # cross-subscription attribution when scanning multiple subscriptions.
             potential_llm_jacking_attackers = {}
             for log in all_llm_logs:
                 operation_name = log.operation_id
@@ -91,19 +94,17 @@ class apim_threat_detection_llm_jacking(Check):
                     report = Check_Report_Azure(self.metadata(), resource=resource)
                     report.subscription = subscription
                     report.status = "FAIL"
-                    report.status_extended = f"Potential LLM Jacking attack detected from IP address {principal_ip} with a threshold of {action_ratio}."
+                    report.status_extended = f"Potential LLM Jacking attack detected from IP address {principal_ip} in subscription {subscription_name} ({subscription}) with an action ratio of {action_ratio}, above the configured threshold of {threshold}."
                     findings.append(report)
 
-            # 4. If no threats were found after checking all principals, create a single PASS report
+            # If no threats were found after checking all principals, create a single PASS report.
             if not found_potential_llm_jacking_attackers:
                 report = Check_Report_Azure(self.metadata(), resource={})
-                report.resource_name = subscription
-                report.resource_id = (
-                    f"/subscriptions/{subscription}"
-                )
+                report.resource_name = subscription_name
+                report.resource_id = f"/subscriptions/{subscription}"
                 report.subscription = subscription
                 report.status = "PASS"
-                report.status_extended = f"No potential LLM Jacking attacks detected across all monitored APIM instances in the last {threat_detection_minutes} minutes."
+                report.status_extended = f"No potential LLM Jacking attacks detected across monitored APIM instances in subscription {subscription_name} ({subscription}) in the last {threat_detection_minutes} minutes."
                 findings.append(report)
 
         return findings

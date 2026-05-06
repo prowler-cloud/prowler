@@ -9,6 +9,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     SMBProtocolSettings,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
@@ -141,7 +142,7 @@ class Test_storage_ensure_file_shares_soft_delete_is_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"File share soft delete is not enabled for storage account {storage_account_name}."
+                == f"File share soft delete is not enabled for storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -205,7 +206,7 @@ class Test_storage_ensure_file_shares_soft_delete_is_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"File share soft delete is enabled for storage account {storage_account_name} with a retention period of {retention_policy.days} days."
+                == f"File share soft delete is enabled for storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} with a retention period of {retention_policy.days} days."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name

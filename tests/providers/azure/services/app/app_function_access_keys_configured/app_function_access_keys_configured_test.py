@@ -2,6 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
@@ -102,7 +103,7 @@ class Test_app_function_access_keys_configured:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Function function1 does not have function keys configured."
+                == f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} does not have function keys configured."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
@@ -158,7 +159,7 @@ class Test_app_function_access_keys_configured:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Function function1 has function keys configured."
+                == f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} has function keys configured."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"

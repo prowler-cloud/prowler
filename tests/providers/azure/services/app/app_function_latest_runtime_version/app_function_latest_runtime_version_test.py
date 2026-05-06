@@ -2,6 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
@@ -100,7 +101,7 @@ class Test_app_function_latest_runtime_version:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                "Function function1 is using the latest runtime."
+                f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} is using the latest runtime."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"
@@ -150,7 +151,7 @@ class Test_app_function_latest_runtime_version:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                "Function function1 is not using the latest runtime. The current runtime is '2' and should be '~4'."
+                f"Function function1 from subscription {AZURE_SUBSCRIPTION_DISPLAY} is not using the latest runtime. The current runtime is '2' and should be '~4'."
             )
             assert result[0].resource_id == function_id
             assert result[0].resource_name == "function1"

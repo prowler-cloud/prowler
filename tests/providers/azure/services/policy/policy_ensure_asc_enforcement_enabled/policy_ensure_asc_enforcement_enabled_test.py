@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.policy.policy_service import PolicyAssigment
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
@@ -120,7 +121,7 @@ class Test_policy_ensure_asc_enforcement_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Policy assigment '{resource_id}' is configured with enforcement mode 'Default'."
+                == f"Policy assigment '{resource_id}' from subscription {AZURE_SUBSCRIPTION_DISPLAY} is configured with enforcement mode 'Default'."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "SecurityCenterBuiltIn"
@@ -160,7 +161,7 @@ class Test_policy_ensure_asc_enforcement_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Policy assigment '{resource_id}' is not configured with enforcement mode Default."
+                == f"Policy assigment '{resource_id}' from subscription {AZURE_SUBSCRIPTION_DISPLAY} is not configured with enforcement mode Default."
             )
             assert result[0].resource_id == resource_id
             assert result[0].resource_name == "SecurityCenterBuiltIn"
