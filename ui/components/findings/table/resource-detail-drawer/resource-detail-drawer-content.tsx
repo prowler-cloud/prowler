@@ -120,11 +120,13 @@ function renderRemediationCodeBlock({
   value,
   copyValue,
   language = QUERY_EDITOR_LANGUAGE.PLAIN_TEXT,
+  showLineNumbers = true,
 }: {
   label: string;
   value: string;
   copyValue?: string;
   language?: QueryEditorLanguage;
+  showLineNumbers?: boolean;
 }) {
   return (
     <QueryCodeEditor
@@ -135,6 +137,7 @@ function renderRemediationCodeBlock({
       editable={false}
       minHeight={96}
       showCopyButton
+      showLineNumbers={showLineNumbers}
       onChange={() => {}}
     />
   );
@@ -889,6 +892,7 @@ export function ResourceDetailDrawerContent({
                           copyValue: stripCodeFences(
                             checkMeta.remediation.code.cli,
                           ),
+                          showLineNumbers: false,
                         })}
                       </div>
                     )}
