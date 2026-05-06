@@ -1,8 +1,8 @@
 ---
-title: 'Your partner organization'
+title: 'Your Partner Organization'
 ---
 
-Your **partner organization** in Prowler Partner Portal is the top-level container for your team, your branding, your role catalogue and the customers you operate Prowler Cloud tenants for.
+Your **partner organization** in Prowler Partner Portal is the top-level container for your team, your branding, your role catalog and the customers you operate Prowler Cloud tenants for.
 
 ## Lifecycle
 
@@ -23,18 +23,32 @@ If an application is rejected, you receive an email with the reason. Common reje
 Partner administrators with the **Manage settings** permission can edit the partner organization's profile from **Settings**:
 
 - **Company name** — the display name shown in the console, invitations and emails.
-- **Branding** — logo and visual identity. See [Customise Partner Portal branding](/user-guide/tutorials/partner-portal-branding).
+- **Branding** — logo and visual identity. See [Customizing Partner Portal Branding](/user-guide/tutorials/partner-portal-branding).
 - **Partner Code** — a Prowler-issued, read-only value shown on the Profile tab. Customers paste this code in Prowler Cloud to link their tenant to your partner.
 - **Security** — password change for any signed-in user, plus a Danger zone for partner administrators to **request partner deletion**.
 
-## Customer capacity
+## Customer Capacity
 
 Each partner organization has a maximum number of concurrent customer organizations (default: **50**). To raise the limit, contact Prowler.
 
-## Closing your organization
+## Closing Your Organization
 
 To close a partner organization, an administrator submits a deletion request from **Settings → Security → Danger zone**. Typing `DELETE` in the confirmation field and (optionally) providing a short reason files the request; the partner moves into the **deletion requested** state.
 
 While the request is pending, you and your team can still sign in and use the Partner Portal. Once Prowler processes the request, the partner organization, its team memberships and its branding assets are removed and all sessions are invalidated.
 
 Customer Prowler Cloud tenants are **not** automatically deleted — coordinate tenant disposal with each customer through Prowler Cloud directly.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Managing Your Partner Portal Team" icon="users" href="/user-guide/tutorials/partner-portal-team">
+    Invite team members, assign roles, and manage memberships.
+  </Card>
+  <Card title="Customizing Partner Portal Branding" icon="palette" href="/user-guide/tutorials/partner-portal-branding">
+    Upload your logo and customize visual identity.
+  </Card>
+  <Card title="Onboarding Customers" icon="building" href="/user-guide/tutorials/partner-portal-customer-onboarding">
+    Provision customer Prowler Cloud tenants and operate on their behalf.
+  </Card>
+</Columns>

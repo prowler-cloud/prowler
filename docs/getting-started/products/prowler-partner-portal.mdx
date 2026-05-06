@@ -6,7 +6,9 @@ title: 'Overview'
 
 It gives every partner organization its own sign-in surface, a partner-scoped team and role model, branding controls, and a managed flow to provision and access customer Prowler Cloud tenants. Every action against a customer tenant is auditable as the partner user acting on behalf of the customer.
 
-<Card title="Sign up for Prowler Partner Portal" href="https://partners.prowler.com/sign-up" />
+<Card title="Sign up for Prowler Partner Portal" icon="rocket" href="https://partners.prowler.com/sign-up" />
+
+{/* TODO: Add architecture diagram */}
 
 Prowler Partner Portal provides:
 
@@ -25,7 +27,7 @@ The Partner Portal stack mirrors Prowler Cloud:
 - **Partner Portal API** at `api.partners.prowler.com` — Django REST Framework backend (JSON:API, JWT RS256).
 - **Prowler Cloud integration** — server-to-server signed tokens carry an `on_behalf_of` claim so Prowler Cloud attributes partner-driven actions to the customer tenant they target.
 
-## How it relates to Prowler Cloud
+## How It Relates to Prowler Cloud
 
 | Capability | Prowler Cloud | Prowler Partner Portal |
 |---|---|---|
@@ -35,6 +37,23 @@ The Partner Portal stack mirrors Prowler Cloud:
 | Tenancy | Customer-owned | Partner-owned, with managed access to customer tenants |
 | Branding | Prowler-branded | Partner-branded sign-in and console |
 
-## Getting access
+## Getting Access
 
-Prowler Partner Portal is invitation-driven. Sign up at `partners.prowler.com/sign-up`; a new partner organization stays in **Pending Approval** until the Prowler team reviews and approves the application. Once active, the partner administrator can invite team members and start onboarding customer organizations.
+Prowler Partner Portal is invitation-driven. Sign up at [partners.prowler.com/sign-up](https://partners.prowler.com/sign-up); a new partner organization stays in **Pending Approval** until the Prowler team reviews and approves the application. Once active, the partner administrator can invite team members and start onboarding customer organizations.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Sign Up and Sign In" icon="user-plus" href="/user-guide/tutorials/partner-portal-sign-up">
+    Self-service sign-up, sign-in, password reset and session handling.
+  </Card>
+  <Card title="Managing Your Partner Portal Team" icon="users" href="/user-guide/tutorials/partner-portal-team">
+    Invite team members, assign roles, and manage memberships.
+  </Card>
+  <Card title="Onboarding Customers" icon="building" href="/user-guide/tutorials/partner-portal-customer-onboarding">
+    Provision customer Prowler Cloud tenants and operate on their behalf.
+  </Card>
+  <Card title="Your Partner Organization" icon="briefcase" href="/user-guide/tutorials/partner-portal-organization">
+    Lifecycle, settings, Partner Code and closing your organization.
+  </Card>
+</Columns>

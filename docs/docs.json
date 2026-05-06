@@ -174,8 +174,8 @@
             "group": "Prowler Partner Portal",
             "pages": [
               "user-guide/tutorials/partner-portal-sign-up",
-              "user-guide/tutorials/partner-portal-organization",
               "user-guide/tutorials/partner-portal-team",
+              "user-guide/tutorials/partner-portal-organization",
               "user-guide/tutorials/partner-portal-branding",
               "user-guide/tutorials/partner-portal-customer-onboarding"
             ]

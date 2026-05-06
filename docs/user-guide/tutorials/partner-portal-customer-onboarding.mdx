@@ -1,14 +1,14 @@
 ---
-title: 'Onboard a customer and access their tenant'
+title: 'Onboarding Customers and Accessing Their Tenants'
 ---
 
 Prowler Partner Portal lets partners provision Prowler Cloud tenants for customer organizations and operate inside those tenants on the customer's behalf. Every partner action is recorded in Prowler Cloud's audit log with both the partner identity and an `on_behalf_of` claim that pinpoints the customer.
 
-## Provision a customer
+## Provisioning a Customer
 
 <Steps>
   <Step title="Open Customers">
-    From the sidebar, choose **Customers**. The page is only visible to all signed-in partner users; the **+ Add Customer** button on the toolbar requires the `manage_organizations` permission.
+    From the sidebar, choose **Customers**. The page is visible to all signed-in partner users; the **+ Add Customer** button on the toolbar requires the `manage_organizations` permission.
   </Step>
 
   <Step title="Start the wizard">
@@ -22,34 +22,45 @@ Prowler Partner Portal lets partners provision Prowler Cloud tenants for custome
 
 The customer is now visible to your team in the Customers table and ready for partner-side operations.
 
-## The Customers view
+## The Customers View
 
 The Customers table lists the customer organizations linked to your partner. Each row carries:
 
 - **Customer** — the cloud organization name.
 - **Cloud accounts** — count of cloud-provider accounts attached to the customer.
-- **Providers** — icons for each cloud provider in use (AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub, IAC, Vercel, MongoDB Atlas, Cloudflare, Google Workspace, Alibaba Cloud, Oracle Cloud, image scanning, OpenStack — plus any new providers Prowler adds).
+- **Providers** — icons for each cloud provider in use. See [supported providers](/getting-started/products/prowler-app#components).
 - **Findings** — Critical / High / Medium counts from the latest scan.
 - **Last scan** — timestamp of the last successful scan.
 
-## Customer self-pairing with a Partner Code
+## Customer Self-Pairing with a Partner Code
 
 Each approved partner has a **Partner Code** — a unique, Prowler-issued value shown on **Settings → Profile** with the helper text *"Share this code with customers to link their accounts"*. Sharing the code lets a customer paste it into their Prowler Cloud account and request the partner relationship; once confirmed, the customer is listed in your Customers view alongside any partner-provisioned tenants.
 
 The customer-side flow that consumes the Partner Code is rolled out progressively in Prowler Cloud. Verify availability with your Prowler contact before sharing the code.
 
-## Access a customer tenant on behalf of
+## Accessing a Customer Tenant on Behalf of the Customer
 
-From **Customers**, open the customer's row and choose **Open in Prowler Cloud**. You're redirected to https://cloud.prowler.com signed in as a partner user **on behalf of** the customer. While operating in the tenant:
+From **Customers**, open the customer's row and choose **Open in Prowler Cloud**. You're redirected to [cloud.prowler.com](https://cloud.prowler.com) signed in as a partner user **on behalf of** the customer. While operating in the tenant:
 
 - You see the same Prowler Cloud UI a customer administrator would see.
 - Every action is recorded in Prowler Cloud's audit log with both your identity (the partner user) and an `on_behalf_of` claim identifying the customer tenant.
 - Returning to Prowler Partner Portal — close the tab or use the *Back to Partner Portal* link.
 
-## Customer self-access
+## Customer Self-Access
 
-Customers continue to sign into https://cloud.prowler.com directly with their own users. Partner-side access is **additive** — it does not replace customer-side users.
+Customers continue to sign into [cloud.prowler.com](https://cloud.prowler.com) directly with their own users. Partner-side access is **additive** — it does not replace customer-side users.
 
-## Removing a customer
+## Removing a Customer
 
 Removing a customer in Prowler Partner Portal detaches the tenant from your partner organization but does **not** delete the underlying Prowler Cloud tenant. Coordinate tenant disposal with the customer through Prowler Cloud directly.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Your Partner Organization" icon="briefcase" href="/user-guide/tutorials/partner-portal-organization">
+    Lifecycle, settings, Partner Code and closing your organization.
+  </Card>
+  <Card title="Managing Your Partner Portal Team" icon="users" href="/user-guide/tutorials/partner-portal-team">
+    Invite team members, assign roles, and manage memberships.
+  </Card>
+</Columns>
