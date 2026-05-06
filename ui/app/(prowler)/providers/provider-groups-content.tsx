@@ -9,7 +9,7 @@ import { ColumnGroups } from "@/components/manage-groups/table";
 import { DataTable } from "@/components/ui/table";
 import { ProviderProps, Role, SearchParamsProps } from "@/types";
 
-export const AccountGroupsContent = async ({
+export const ProviderGroupsContent = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
@@ -57,10 +57,10 @@ export const AccountGroupsContent = async ({
         ) : (
           <div className="flex flex-col">
             <h1 className="mb-2 text-xl font-medium">
-              Create a new account group
+              Create a new provider group
             </h1>
             <p className="text-text-neutral-tertiary mb-5 text-sm">
-              Create a new account group to manage the providers and roles.
+              Create a new provider group to manage the providers and roles.
             </p>
             <AddGroupForm providers={providersList} roles={rolesList} />
           </div>
@@ -127,9 +127,9 @@ const EditGroupSection = ({
 
   return (
     <div className="flex flex-col">
-      <h1 className="mb-2 text-xl font-medium">Edit account group</h1>
+      <h1 className="mb-2 text-xl font-medium">Edit provider group</h1>
       <p className="text-text-neutral-tertiary mb-5 text-sm">
-        Edit the account group to manage the providers and roles.
+        Edit the provider group to manage the providers and roles.
       </p>
       <EditGroupForm
         providerGroupId={providerGroupId}

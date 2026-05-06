@@ -152,7 +152,7 @@ jobs:
             org.opencontainers.image.created=${{ github.event_name == 'release' && github.event.release.published_at || github.event.head_commit.timestamp }}
             ${{ github.event_name == 'release' && format('org.opencontainers.image.version={0}', env.RELEASE_TAG) || '' }}
           cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
   # Create and push multi-architecture manifest
   create-manifest:
