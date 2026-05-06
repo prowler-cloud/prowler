@@ -5,10 +5,26 @@ on:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'prowler/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/sdk-tests.yml'
+      - '.github/workflows/sdk-code-quality.yml'
+      - '.github/actions/setup-python-poetry/**'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'prowler/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/sdk-tests.yml'
+      - '.github/workflows/sdk-code-quality.yml'
+      - '.github/actions/setup-python-poetry/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
