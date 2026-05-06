@@ -11,6 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_ensure_defender_for_containers_is_on:
     def test_defender_no_container_registries(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.pricings = {}
 
         with (
@@ -34,6 +35,7 @@ class Test_defender_ensure_defender_for_containers_is_on:
     def test_defender_container_registries_pricing_tier_not_standard(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
                 "Containers": Pricing(
@@ -74,6 +76,7 @@ class Test_defender_ensure_defender_for_containers_is_on:
     def test_defender_container_registries_pricing_tier_standard(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
                 "Containers": Pricing(

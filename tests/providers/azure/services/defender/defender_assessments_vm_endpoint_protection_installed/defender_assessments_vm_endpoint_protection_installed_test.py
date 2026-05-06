@@ -11,6 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_assessments_vm_endpoint_protection_installed:
     def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.assessments = {}
 
         with (
@@ -33,6 +34,7 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
 
     def test_defender_subscriptions_with_no_assessments(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.assessments = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (
@@ -55,6 +57,7 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
 
     def test_defender_subscriptions_with_healthy_assessments(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         resource_id = str(uuid4())
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
@@ -93,6 +96,7 @@ class Test_defender_assessments_vm_endpoint_protection_installed:
 
     def test_defender_subscriptions_with_unhealthy_assessments(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         resource_id = str(uuid4())
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {

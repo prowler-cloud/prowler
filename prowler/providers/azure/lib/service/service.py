@@ -49,8 +49,8 @@ class AzureService:
             return list(list_all_fn())
         resource_groups = self.resource_groups.get(subscription_name, [])
         if not resource_groups:
-            logger.warning(
-                f"No valid resource groups for subscription {subscription_name}"
+            logger.info(
+                f"No valid resource groups for subscription {subscription_name}, skipping."
             )
             return []
         output = []

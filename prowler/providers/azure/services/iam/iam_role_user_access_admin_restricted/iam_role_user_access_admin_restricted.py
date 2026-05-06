@@ -6,6 +6,17 @@ class iam_role_user_access_admin_restricted(Check):
     def execute(self):
         findings = []
 
+        if iam_client.resource_groups:
+            for subscription in iam_client.subscriptions:
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
+                report.subscription = subscription
+                report.resource_name = "Not Applicable"
+                report.resource_id = "Not Applicable"
+                report.status = "MANUAL"
+                report.status_extended = f"Subscription '{subscription}': this check is subscription-scoped and cannot be evaluated when --azure-resource-group is active. Re-run without --azure-resource-group to get full results."
+                findings.append(report)
+            return findings
+
         for subscription_name, assignments in iam_client.role_assignments.items():
             for assignment in assignments.values():
                 role_assignment_name = getattr(

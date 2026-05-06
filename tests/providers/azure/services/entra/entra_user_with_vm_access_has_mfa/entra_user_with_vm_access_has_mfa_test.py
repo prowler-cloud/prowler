@@ -12,8 +12,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_iam_assignment_priviledge_access_vm_has_mfa:
     def test_iam_no_roles(self):
         iam_client = mock.MagicMock
+        iam_client.resource_groups = {}
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -37,8 +38,10 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
 
     def test_entra_user_with_vm_access_has_mfa(self):
         iam_client = mock.MagicMock
+        iam_client.resource_groups = {}
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         user_id = str(uuid4())
 
         with (
@@ -106,8 +109,10 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
 
     def test_entra_user_with_vm_access_has_mfa_no_mfa(self):
         iam_client = mock.MagicMock
+        iam_client.resource_groups = {}
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         user_id = str(uuid4())
 
         with (
@@ -175,8 +180,10 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
 
     def test_entra_user_with_vm_access_has_mfa_no_user(self):
         iam_client = mock.MagicMock
+        iam_client.resource_groups = {}
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         user_id = str(uuid4())
 
         with (
@@ -227,8 +234,10 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
 
     def test_entra_user_with_vm_access_has_mfa_no_role(self):
         iam_client = mock.MagicMock
+        iam_client.resource_groups = {}
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         user_id = str(uuid4())
 
         with (

@@ -73,6 +73,8 @@ class Monitor(AzureService):
     def get_alert_rules(self):
         logger.info("Monitor - Getting alert rules...")
         alert_rules = {}
+        if self.resource_groups:
+            return alert_rules
         for subscription, client in self.clients.items():
             try:
                 alert_rules.update({subscription: []})

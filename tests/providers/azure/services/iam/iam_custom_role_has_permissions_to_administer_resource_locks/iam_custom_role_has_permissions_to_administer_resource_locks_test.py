@@ -12,6 +12,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
     def test_iam_no_roles(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.custom_roles = {}
 
         with (
@@ -36,6 +37,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         self,
     ):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         role_name = "test-role"
         defender_client.custom_roles = {
             AZURE_SUBSCRIPTION_ID: {
@@ -91,6 +93,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         self,
     ):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         role_name = "test-role"
         defender_client.custom_roles = {
             AZURE_SUBSCRIPTION_ID: {
@@ -139,6 +142,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
         self,
     ):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         role_name = "test-role"
         role_name2 = "test-role2"
         defender_client.custom_roles = {
@@ -206,6 +210,7 @@ class Test_iam_custom_role_has_permissions_to_administer_resource_locks:
 
     def test_iam_custom_roles_empty_list_but_with_key(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.custom_roles = {AZURE_SUBSCRIPTION_ID: {}}
 
         with (

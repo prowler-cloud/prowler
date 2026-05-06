@@ -14,6 +14,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_additional_email_configured_with_a_security_contact:
     def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.security_contact_configurations = {}
 
         with (
@@ -37,6 +38,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
     def test_defender_no_additional_emails(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -83,6 +85,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
     def test_defender_additional_email_configured(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(

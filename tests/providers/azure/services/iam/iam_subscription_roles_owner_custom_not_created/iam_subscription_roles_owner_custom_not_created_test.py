@@ -12,6 +12,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_iam_subscription_roles_owner_custom_not_created:
     def test_iam_no_roles(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.custom_roles = {}
 
         with (
@@ -34,6 +35,7 @@ class Test_iam_subscription_roles_owner_custom_not_created:
 
     def test_iam_custom_owner_role_created_with_all(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         role_name = "test-role"
         defender_client.custom_roles = {
             AZURE_SUBSCRIPTION_ID: {
@@ -80,6 +82,7 @@ class Test_iam_subscription_roles_owner_custom_not_created:
 
     def test_iam_custom_owner_role_created_with_no_permissions(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         role_name = "test-role"
         defender_client.custom_roles = {
             AZURE_SUBSCRIPTION_ID: {

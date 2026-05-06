@@ -225,11 +225,11 @@ class Test_Monitor_get_alert_rules:
 
         result = monitor.get_alert_rules()
 
-        # Alert rules are subscription-scoped; RG filter is intentionally ignored here.
-        # The checks themselves emit MANUAL when resource_groups is set.
-        mock_client.activity_log_alerts.list_by_subscription_id.assert_called_once()
+        # Alert rules are subscription-scoped; when resource_groups is set the method
+        # returns early so checks can emit MANUAL findings themselves.
+        mock_client.activity_log_alerts.list_by_subscription_id.assert_not_called()
         mock_client.activity_log_alerts.list_by_resource_group.assert_not_called()
-        assert AZURE_SUBSCRIPTION_ID in result
+        assert result == {}
 
 
 class Test_Monitor_get_diagnostics_settings_skipped:
@@ -305,6 +305,6 @@ class Test_Monitor_get_diagnostics_settings_skipped:
 
         result = monitor.get_alert_rules()
 
-        mock_client.activity_log_alerts.list_by_subscription_id.assert_called_once()
+        mock_client.activity_log_alerts.list_by_subscription_id.assert_not_called()
         mock_client.activity_log_alerts.list_by_resource_group.assert_not_called()
-        assert AZURE_SUBSCRIPTION_ID in result
+        assert result == {}

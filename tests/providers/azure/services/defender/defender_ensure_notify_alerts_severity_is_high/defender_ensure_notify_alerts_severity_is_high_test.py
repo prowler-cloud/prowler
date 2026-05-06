@@ -14,6 +14,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_ensure_notify_alerts_severity_is_high:
     def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.security_contact_configurations = {}
 
         with (
@@ -37,6 +38,7 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
     def test_defender_severity_alerts_critical(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -83,6 +85,7 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
     def test_defender_severity_alerts_high(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -130,6 +133,7 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
     def test_defender_severity_alerts_low(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -176,6 +180,7 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
 
     def test_defender_default_security_contact_not_found(self):
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default": SecurityContactConfiguration(

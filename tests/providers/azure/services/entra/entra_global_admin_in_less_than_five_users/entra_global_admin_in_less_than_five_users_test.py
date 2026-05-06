@@ -7,7 +7,7 @@ from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provid
 class Test_entra_global_admin_in_less_than_five_users:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -32,7 +32,7 @@ class Test_entra_global_admin_in_less_than_five_users:
 
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -57,7 +57,7 @@ class Test_entra_global_admin_in_less_than_five_users:
 
     def test_entra_less_than_five_global_admins(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -110,7 +110,7 @@ class Test_entra_global_admin_in_less_than_five_users:
 
     def test_entra_more_than_five_global_admins(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -178,7 +178,7 @@ class Test_entra_global_admin_in_less_than_five_users:
 
     def test_entra_exactly_five_global_admins(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

@@ -17,6 +17,17 @@ class entra_user_with_vm_access_has_mfa(Check):
         findings = []
         already_reported = set()
 
+        if entra_client.resource_groups:
+            for tenant in entra_client.clients:
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
+                report.subscription = tenant
+                report.resource_name = "Not Applicable"
+                report.resource_id = "Not Applicable"
+                report.status = "MANUAL"
+                report.status_extended = f"Tenant '{tenant}': this check is tenant-scoped and cannot be evaluated when --azure-resource-group is active. Re-run without --azure-resource-group to get full results."
+                findings.append(report)
+            return findings
+
         for users in entra_client.users.values():
             for user in users.values():
                 for (

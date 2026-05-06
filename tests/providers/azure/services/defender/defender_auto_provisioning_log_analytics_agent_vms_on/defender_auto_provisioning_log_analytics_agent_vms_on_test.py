@@ -13,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
     def test_defender_no_app_services(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.auto_provisioning_settings = {}
 
         with (
@@ -36,6 +37,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
     def test_defender_auto_provisioning_log_analytics_off(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.auto_provisioning_settings = {
             AZURE_SUBSCRIPTION_ID: {
                 "default": AutoProvisioningSetting(
@@ -76,6 +78,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
     def test_defender_auto_provisioning_log_analytics_on(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.auto_provisioning_settings = {
             AZURE_SUBSCRIPTION_ID: {
                 "default": AutoProvisioningSetting(
@@ -116,6 +119,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
     def test_defender_auto_provisioning_log_analytics_on_and_off(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.auto_provisioning_settings = {
             AZURE_SUBSCRIPTION_ID: {
                 "default": AutoProvisioningSetting(

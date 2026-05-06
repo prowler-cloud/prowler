@@ -7,7 +7,7 @@ from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provid
 class Test_entra_policy_guest_users_access_restrictions:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -30,6 +30,7 @@ class Test_entra_policy_guest_users_access_restrictions:
 
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (
@@ -74,6 +75,7 @@ class Test_entra_policy_guest_users_access_restrictions:
 
     def test_entra_tenant_policy_access_same_as_member(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (
@@ -117,6 +119,7 @@ class Test_entra_policy_guest_users_access_restrictions:
 
     def test_entra_tenant_policy_limited_access(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (
@@ -160,6 +163,7 @@ class Test_entra_policy_guest_users_access_restrictions:
 
     def test_entra_tenant_policy_access_restricted(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (

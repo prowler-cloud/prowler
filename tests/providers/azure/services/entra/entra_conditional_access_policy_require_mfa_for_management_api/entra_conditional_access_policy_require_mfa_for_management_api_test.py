@@ -7,7 +7,7 @@ from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provid
 class Test_entra_conditional_access_policy_require_mfa_for_management_api:
     def test_entra_no_subscriptions(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -30,7 +30,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_no_policies(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -61,6 +61,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_policy_no_mfa(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         policy_id = str(uuid4())
 
         with (
@@ -105,6 +106,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_policy_mfa(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         policy_id = str(uuid4())
 
         with (
@@ -149,6 +151,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_policy_mfa_disabled(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         policy_id = str(uuid4())
 
         with (
@@ -193,6 +196,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_policy_mfa_no_target(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         policy_id = str(uuid4())
 
         with (
@@ -237,6 +241,7 @@ class Test_entra_conditional_access_policy_require_mfa_for_management_api:
 
     def test_entra_tenant_policy_mfa_no_users(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         policy_id = str(uuid4())
 
         with (

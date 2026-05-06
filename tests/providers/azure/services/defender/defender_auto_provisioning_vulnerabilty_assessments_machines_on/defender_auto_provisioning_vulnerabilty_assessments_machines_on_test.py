@@ -11,6 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_auto_provisioning_vulnerabilty_assessments_machines_on:
     def test_defender_no_app_services(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.assessments = {}
 
         with (
@@ -34,6 +35,7 @@ class Test_defender_auto_provisioning_vulnerabilty_assessments_machines_on:
     def test_defender_machines_no_vulnerability_assessment_solution(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
                 "Machines should have a vulnerability assessment solution": Assesment(
@@ -73,6 +75,7 @@ class Test_defender_auto_provisioning_vulnerabilty_assessments_machines_on:
     def test_defender_machines_vulnerability_assessment_solution(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
                 "Machines should have a vulnerability assessment solution": Assesment(
