@@ -40,6 +40,7 @@ interface FindingsFiltersProps {
   uniqueCategories: string[];
   uniqueGroups: string[];
   trailingControls?: ReactNode;
+  variant?: "default" | "alerts-edit";
 }
 
 interface FindingsFilterBatchControlsProps extends FindingsFiltersProps {
@@ -66,6 +67,7 @@ const countVisibleFilterKeys = (filters: Record<string, string[]>): number =>
 
 const FILTER_CONTROL_COLUMN_CLASS =
   "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
+const FILTER_GRID_ITEM_CLASS = "min-w-0";
 
 export const FindingsFilterBatchControls = ({
   providers,
@@ -89,19 +91,23 @@ export const FindingsFilterBatchControls = ({
   changeCount = 0,
   getFilterValue,
   showSummaries = true,
+  variant = "default",
 }: FindingsFilterBatchControlsProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const isAlertsEdit = variant === "alerts-edit";
 
   // Custom filters for the expandable section (removed Provider - now using AccountsSelector)
   const customFilters = [
-    ...filterFindings.map((filter) => ({
-      ...filter,
-      labelFormatter: (value: string) =>
-        getFindingsFilterDisplayValue(`filter[${filter.key}]`, value, {
-          providers,
-          scans: scanDetails,
-        }),
-    })),
+    ...filterFindings
+      .filter((filter) => !isAlertsEdit || filter.key !== FilterType.STATUS)
+      .map((filter) => ({
+        ...filter,
+        labelFormatter: (value: string) =>
+          getFindingsFilterDisplayValue(`filter[${filter.key}]`, value, {
+            providers,
+            scans: scanDetails,
+          }),
+      })),
     {
       key: FilterType.REGION,
       labelCheckboxGroup: "Regions",
@@ -134,19 +140,27 @@ export const FindingsFilterBatchControls = ({
       labelFormatter: getGroupLabel,
       index: 6,
     },
-    {
-      key: FilterType.SCAN,
-      labelCheckboxGroup: "Scan ID",
-      values: completedScanIds,
-      width: "wide" as const,
-      valueLabelMapping: scanDetails,
-      labelFormatter: (value: string) =>
-        getFindingsFilterDisplayValue(`filter[${FilterType.SCAN}]`, value, {
-          providers,
-          scans: scanDetails,
-        }),
-      index: 7,
-    },
+    ...(isAlertsEdit
+      ? []
+      : [
+          {
+            key: FilterType.SCAN,
+            labelCheckboxGroup: "Scan ID",
+            values: completedScanIds,
+            width: "wide" as const,
+            valueLabelMapping: scanDetails,
+            labelFormatter: (value: string) =>
+              getFindingsFilterDisplayValue(
+                `filter[${FilterType.SCAN}]`,
+                value,
+                {
+                  providers,
+                  scans: scanDetails,
+                },
+              ),
+            index: 7,
+          },
+        ]),
   ];
 
   const hasCustomFilters = customFilters.length > 0;
@@ -189,26 +203,67 @@ export const FindingsFilterBatchControls = ({
       ? pendingDateValues[0]
       : undefined;
 
-  const expandedFilters = hasCustomFilters ? (
-    <ExpandableSection isExpanded={isExpanded} contentClassName="pt-0">
-      <DataTableFilterCustom
-        gridClassName="gap-3"
-        filters={customFilters}
-        prependElement={
-          <CustomDatePicker
-            onBatchChange={(filterKey, value) =>
-              setPending(filterKey, value ? [value] : [])
-            }
-            value={pendingDateValue}
-          />
-        }
-        hideClearButton
-        mode={DATA_TABLE_FILTER_MODE.BATCH}
+  const providerTypeControl = (className: string) => (
+    <div className={className}>
+      <ProviderTypeSelector
+        providers={providers}
         onBatchChange={setPending}
-        getFilterValue={getFilterValue}
+        selectedValues={getFilterValue("filter[provider_type__in]")}
       />
-    </ExpandableSection>
+    </div>
+  );
+
+  const accountsControl = (className: string) => (
+    <div className={className}>
+      <AccountsSelector
+        providers={providers}
+        onBatchChange={setPending}
+        selectedValues={getFilterValue("filter[provider_id__in]")}
+        selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
+      />
+    </div>
+  );
+
+  const alertEditFilterGrid = hasCustomFilters ? (
+    <DataTableFilterCustom
+      gridClassName="w-full gap-3"
+      filters={customFilters}
+      prependElement={
+        <>
+          {providerTypeControl(FILTER_GRID_ITEM_CLASS)}
+          {accountsControl(FILTER_GRID_ITEM_CLASS)}
+        </>
+      }
+      hideClearButton
+      mode={DATA_TABLE_FILTER_MODE.BATCH}
+      onBatchChange={setPending}
+      getFilterValue={getFilterValue}
+    />
   ) : null;
+
+  const expandedFilters =
+    hasCustomFilters && !isAlertsEdit ? (
+      <ExpandableSection isExpanded={isExpanded} contentClassName="pt-0">
+        <DataTableFilterCustom
+          gridClassName="gap-3"
+          filters={customFilters}
+          prependElement={
+            isAlertsEdit ? undefined : (
+              <CustomDatePicker
+                onBatchChange={(filterKey, value) =>
+                  setPending(filterKey, value ? [value] : [])
+                }
+                value={pendingDateValue}
+              />
+            )
+          }
+          hideClearButton
+          mode={DATA_TABLE_FILTER_MODE.BATCH}
+          onBatchChange={setPending}
+          getFilterValue={getFilterValue}
+        />
+      </ExpandableSection>
+    ) : null;
 
   const appliedSummary = (
     <FilterSummaryStrip
@@ -244,38 +299,27 @@ export const FindingsFilterBatchControls = ({
       testIdPrefix="findings"
       controlsClassName="gap-3"
       controls={
-        <>
-          <div className={FILTER_CONTROL_COLUMN_CLASS}>
-            <ProviderTypeSelector
-              providers={providers}
-              onBatchChange={setPending}
-              selectedValues={getFilterValue("filter[provider_type__in]")}
-            />
-          </div>
-          <div className={FILTER_CONTROL_COLUMN_CLASS}>
-            <AccountsSelector
-              providers={providers}
-              onBatchChange={setPending}
-              selectedValues={getFilterValue("filter[provider_id__in]")}
-              selectedProviderTypes={getFilterValue(
-                "filter[provider_type__in]",
-              )}
-            />
-          </div>
-          {hasCustomFilters && (
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? "Less Filters" : "More Filters"}
-              <ChevronDown
-                className={`size-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}
-              />
-            </Button>
-          )}
-          {trailingControls}
-        </>
+        isAlertsEdit ? (
+          alertEditFilterGrid
+        ) : (
+          <>
+            {providerTypeControl(FILTER_CONTROL_COLUMN_CLASS)}
+            {accountsControl(FILTER_CONTROL_COLUMN_CLASS)}
+            {hasCustomFilters && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setIsExpanded(!isExpanded)}
+              >
+                {isExpanded ? "Less Filters" : "More Filters"}
+                <ChevronDown
+                  className={`size-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}
+                />
+              </Button>
+            )}
+            {trailingControls}
+          </>
+        )
       }
       expandedFilters={expandedFilters}
       expandedFiltersVisible={isExpanded}

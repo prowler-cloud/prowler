@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 
-import { previewAlertCondition } from "@/app/(prowler)/alerts/_actions";
+import {
+  previewAlertCondition,
+  seedAlertRule,
+} from "@/app/(prowler)/alerts/_actions";
 import { listAlertRecipients } from "@/app/(prowler)/alerts/_actions/recipients";
 import {
   ALERT_TRIGGER_KINDS,
@@ -29,7 +32,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Separator,
   Skeleton,
   Textarea,
 } from "@/components/shadcn";
@@ -48,15 +50,12 @@ import type { ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 import {
-  buildAlertCondition,
   getAlertFormDefaults,
-  getAlertFormDefaultsFromFindingsFilters,
   getEmptyAlertFormDefaults,
   getFindingsFiltersFromAlertCondition,
 } from "../_lib/alert-adapter";
 import { alertFormSchema } from "../_lib/alert-form-schema";
 import type {
-  AlertFormFindingFilterBag,
   AlertFormSubmitResult,
   AlertFormValues,
 } from "../_types/alert-form";
@@ -74,14 +73,11 @@ interface AlertFormModalProps {
   uniqueCategories?: string[];
   uniqueGroups?: string[];
   editingAlert?: AlertRule | null;
-  initialFindingsFilters?: AlertFormFindingFilterBag | null;
+  seededCondition?: AlertCondition | null;
   selectedFindingsFilterChips?: FilterChip[];
   defaultName?: string;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (
-    values: AlertFormValues,
-    advancedCondition: AlertCondition | null,
-  ) => Promise<AlertFormSubmitResult>;
+  onSubmit: (values: AlertFormValues) => Promise<AlertFormSubmitResult>;
 }
 
 interface FormErrors {
@@ -110,35 +106,26 @@ const ALERT_FREQUENCY_OPTIONS = [
   },
 ] as const;
 
-const serializeFindingFilters = (
-  filters: AlertFormFindingFilterBag | null,
-): string => {
-  if (!filters) return "none";
+const ALERT_SEED_ERROR = "Apply at least one alert-compatible Findings filter.";
 
-  return Object.entries(filters)
-    .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
-    .map(([key, value]) => {
-      const serializedValue = Array.isArray(value) ? value.join(",") : value;
-      return `${key}:${serializedValue}`;
-    })
-    .join("|");
-};
+const serializeCondition = (condition: AlertCondition | null): string =>
+  condition ? JSON.stringify(condition) : "none";
 
 const getAlertFormModalResetKey = ({
   open,
   defaultFrequency,
   editingAlert,
-  initialFindingsFilters,
+  seededCondition,
 }: Pick<
   AlertFormModalProps,
-  "open" | "defaultFrequency" | "editingAlert" | "initialFindingsFilters"
+  "open" | "defaultFrequency" | "editingAlert" | "seededCondition"
 >): string =>
   [
     open ? "open" : "closed",
     editingAlert?.id ?? "create",
     editingAlert?.attributes.updated_at ?? "",
     defaultFrequency,
-    serializeFindingFilters(initialFindingsFilters ?? null),
+    serializeCondition(seededCondition ?? null),
   ].join("|");
 
 const allowInitialDialogFocus = () => undefined;
@@ -158,28 +145,29 @@ const formatPreviewNumber = (value: number): string =>
 const getPreviewSeverityLabel = (severity: string): string =>
   severity.charAt(0).toUpperCase() + severity.slice(1);
 
+const getPreviewMessage = (data: AlertPreviewResponse): string => {
+  if (!data.would_fire) {
+    return "These filters did not find matching findings.";
+  }
+
+  const totalFindings = data.summary.finding_count_total ?? 0;
+  const findingLabel = totalFindings === 1 ? "finding" : "findings";
+  const topSeverity = data.summary.top_severity;
+  const severityClause = topSeverity
+    ? `, including ${getPreviewSeverityLabel(topSeverity)} severity`
+    : "";
+
+  return `It found ${formatPreviewNumber(totalFindings)} ${findingLabel}${severityClause}.`;
+};
+
 const PreviewSummarySkeleton = () => (
   <Card variant="inner" padding="sm">
-    <CardContent className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
+    <CardContent className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
         <Skeleton className="h-5 w-28" />
         <Skeleton className="h-5 w-20 rounded-full" />
       </div>
-      <Separator />
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-5 w-12" />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-5 w-16" />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-3 w-14" />
-          <Skeleton className="h-5 w-10" />
-        </div>
-      </div>
+      <Skeleton className="h-4 w-full" />
     </CardContent>
   </Card>
 );
@@ -189,14 +177,13 @@ const PreviewSummary = ({ preview }: { preview: PreviewState }) => {
     return (
       <Card variant="danger" padding="sm">
         <CardContent className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-text-neutral-primary text-sm font-medium">
               Test result
             </span>
             <Badge variant="tag">Error</Badge>
           </div>
-          <Separator />
-          <p className="text-destructive text-sm">{preview.error}</p>
+          <p className="text-text-error-primary text-sm">{preview.error}</p>
         </CardContent>
       </Card>
     );
@@ -205,47 +192,20 @@ const PreviewSummary = ({ preview }: { preview: PreviewState }) => {
   const data = preview.data;
   if (!data) return null;
 
-  const totalFindings = data.summary.finding_count_total ?? 0;
-  const topSeverity = data.summary.top_severity ?? "none";
-  const duration = data.duration_ms === undefined ? null : data.duration_ms;
   const statusLabel = data.would_fire ? "Would fire" : "Would not fire";
 
   return (
     <Card variant="inner" padding="sm">
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
+      <CardContent className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
           <span className="text-text-neutral-primary text-sm font-medium">
             Test result
           </span>
           <Badge variant="tag">{statusLabel}</Badge>
         </div>
-        <Separator />
-        <div className="grid gap-3 text-sm sm:grid-cols-3">
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-xs">
-              Findings
-            </span>
-            <span className="text-text-neutral-primary font-medium">
-              {formatPreviewNumber(totalFindings)}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-xs">
-              Top severity
-            </span>
-            <span className="text-text-neutral-primary font-medium">
-              {getPreviewSeverityLabel(topSeverity)}
-            </span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-text-neutral-secondary text-xs">
-              Duration
-            </span>
-            <span className="text-text-neutral-primary font-medium">
-              {duration === null ? "-" : `${formatPreviewNumber(duration)} ms`}
-            </span>
-          </div>
-        </div>
+        <p className="text-text-neutral-secondary text-sm">
+          {getPreviewMessage(data)}
+        </p>
       </CardContent>
     </Card>
   );
@@ -362,7 +322,7 @@ const AlertRecipientsSelect = ({
           ))}
         </MultiSelectContent>
       </MultiSelect>
-      {error && <p className="text-destructive text-xs">{error}</p>}
+      {error && <p className="text-text-error-primary text-xs">{error}</p>}
     </div>
   );
 };
@@ -385,7 +345,7 @@ const AlertFormModalContent = ({
   uniqueCategories = [],
   uniqueGroups = [],
   editingAlert = null,
-  initialFindingsFilters = null,
+  seededCondition = null,
   selectedFindingsFilterChips = [],
   defaultName = "Findings filter alert",
   onOpenChange,
@@ -393,12 +353,7 @@ const AlertFormModalContent = ({
 }: AlertFormModalProps) => {
   const defaults = editingAlert
     ? getAlertFormDefaults(editingAlert)
-    : initialFindingsFilters
-      ? getAlertFormDefaultsFromFindingsFilters(
-          initialFindingsFilters,
-          defaultFrequency,
-        )
-      : getEmptyAlertFormDefaults(defaultFrequency);
+    : getEmptyAlertFormDefaults(defaultFrequency, seededCondition ?? undefined);
   const initialName = editingAlert
     ? defaults.name
     : defaults.name || defaultName;
@@ -443,38 +398,29 @@ const AlertFormModalContent = ({
   const getPendingFilterValue = (filterKey: string): string[] =>
     pendingFilters[normalizeFindingsFilterKey(filterKey)] ?? [];
 
-  const buildCurrentValues = (): AlertFormValues => {
-    const filterDefaults = getAlertFormDefaultsFromFindingsFilters(
-      pendingFilters,
-      frequency,
-    );
-
-    return {
-      name,
-      description,
-      method: ALERT_NOTIFICATION_METHODS.EMAIL,
-      frequency,
-      filterGroup: filterDefaults.filterGroup,
-      severities: filterDefaults.severities,
-      deltas: filterDefaults.deltas,
-      providerTypes: filterDefaults.providerTypes,
-      providerIds: filterDefaults.providerIds,
-      checkIds: filterDefaults.checkIds,
-      categories: filterDefaults.categories,
-      regions: filterDefaults.regions,
-      services: filterDefaults.services,
-      resourceGroups: filterDefaults.resourceGroups,
-      findingGroupIds: filterDefaults.findingGroupIds,
-      resourceTypes: filterDefaults.resourceTypes,
-      recipientEmails: getRecipientEmails(selectedRecipientEmails),
-      enabled,
-    };
-  };
+  const buildCurrentValues = (condition: AlertCondition): AlertFormValues => ({
+    name,
+    description,
+    method: ALERT_NOTIFICATION_METHODS.EMAIL,
+    frequency,
+    condition,
+    recipientEmails: getRecipientEmails(selectedRecipientEmails),
+    enabled,
+  });
 
   const handlePreview = async () => {
     if (!editingAlert) return;
 
-    const values = buildCurrentValues();
+    const seedResult = await seedAlertRule(pendingFilters);
+    if (!seedResult.ok) {
+      setPreview({
+        status: "error",
+        error: ALERT_SEED_ERROR,
+      });
+      return;
+    }
+
+    const values = buildCurrentValues(seedResult.data.condition);
     const parsed = alertFormSchema.safeParse(values);
     if (!parsed.success) {
       setPreview({
@@ -486,7 +432,7 @@ const AlertFormModalContent = ({
 
     setPreviewLoading(true);
     const result = await previewAlertCondition({
-      condition: buildAlertCondition(parsed.data.filterGroup),
+      condition: parsed.data.condition,
     });
     setPreviewLoading(false);
 
@@ -507,7 +453,17 @@ const AlertFormModalContent = ({
   };
 
   const handleSubmit = async () => {
-    const values = buildCurrentValues();
+    const seedResult = editingAlert
+      ? await seedAlertRule(pendingFilters)
+      : null;
+    if (seedResult && !seedResult.ok) {
+      setErrors({ root: ALERT_SEED_ERROR });
+      return;
+    }
+
+    const values = buildCurrentValues(
+      seedResult?.data.condition ?? defaults.condition,
+    );
     const parsed = alertFormSchema.safeParse(values);
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
@@ -519,7 +475,7 @@ const AlertFormModalContent = ({
     }
 
     setSaving(true);
-    const result = await onSubmit(parsed.data, null);
+    const result = await onSubmit(parsed.data);
     setSaving(false);
     if (result.ok) {
       setErrors({});
@@ -622,6 +578,7 @@ const AlertFormModalContent = ({
                   setPending={setPendingFilter}
                   getFilterValue={getPendingFilterValue}
                   showSummaries={false}
+                  variant="alerts-edit"
                 />
               </CardContent>
             </Card>
@@ -637,7 +594,7 @@ const AlertFormModalContent = ({
           </div>
         )}
         {errors.root && (
-          <div className="text-destructive text-sm">{errors.root}</div>
+          <div className="text-text-error-primary text-sm">{errors.root}</div>
         )}
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>

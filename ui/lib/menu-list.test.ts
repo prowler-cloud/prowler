@@ -18,12 +18,19 @@ describe("getMenuList", () => {
     delete process.env.NEXT_PUBLIC_IS_CLOUD_ENV;
   });
 
-  it("should hide Alerts in OSS when Cloud is disabled", () => {
+  it("should show Alerts as disabled Cloud-only in OSS when Cloud is disabled", () => {
     // Given / When
     const alerts = findSubmenu("Alerts");
 
     // Then
-    expect(alerts).toBeUndefined();
+    expect(alerts).toEqual(
+      expect.objectContaining({
+        href: "/alerts",
+        disabled: true,
+        cloudOnly: true,
+        active: false,
+      }),
+    );
   });
 
   it("should show Alerts as new under Configuration when Cloud is enabled", () => {

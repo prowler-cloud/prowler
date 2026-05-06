@@ -9,6 +9,7 @@ import {
   type AlertPreviewResponse,
   type AlertRule,
   type AlertsActionResult,
+  type AlertSeedWarning,
   type AlertTriggerKind,
 } from "../_types";
 import { alertsRequest } from "./_request";
@@ -39,6 +40,46 @@ export interface AlertsListResponse {
   };
 }
 
+export interface AlertSeedResult {
+  condition: AlertCondition;
+  schemaVersion: number;
+  warnings: AlertSeedWarning[];
+}
+
+interface AlertSeedEnvelope {
+  data?: {
+    id?: string;
+    type?: "alert-rule-seedings";
+    attributes?: {
+      condition?: AlertCondition;
+      schema_version?: number;
+      warnings?: AlertSeedWarning[];
+    };
+  };
+}
+
+const buildSeedEnvelope = (filterBag: Record<string, string | string[]>) => ({
+  data: {
+    type: "alert-rule-seedings",
+    attributes: {
+      filter_bag: filterBag,
+    },
+  },
+});
+
+const normalizeSeedResponse = (value: AlertSeedEnvelope): AlertSeedResult => {
+  const attributes = value.data?.attributes;
+  if (!attributes?.condition) {
+    throw new Error("Seed response is missing condition.");
+  }
+
+  return {
+    condition: attributes.condition,
+    schemaVersion: attributes.schema_version ?? ALERT_SCHEMA_VERSION,
+    warnings: attributes.warnings ?? [],
+  };
+};
+
 export const listAlerts = async (
   searchParams?: URLSearchParams,
 ): Promise<AlertsActionResult<AlertsListResponse>> =>
@@ -53,6 +94,43 @@ export const getAlert = async (
   alertsRequest<{ data: AlertRule }>(`${ALERT_RULES_API_PATH}/${alertId}`, {
     method: "GET",
   });
+
+export const seedAlertRule = async (
+  filterBag: Record<string, string | string[]>,
+): Promise<AlertsActionResult<AlertSeedResult>> => {
+  const result = await alertsRequest<AlertSeedEnvelope>(
+    `${ALERT_RULES_API_PATH}/seed`,
+    {
+      method: "POST",
+      body: buildSeedEnvelope(filterBag),
+    },
+  );
+
+  breadcrumb(
+    result.ok ? "alerts.seed" : "alerts.seed.failed",
+    "Seeded alert condition",
+    { ok: result.ok },
+  );
+
+  if (!result.ok) return result;
+
+  try {
+    return { ...result, data: normalizeSeedResponse(result.data) };
+  } catch (error) {
+    Sentry.captureException(error, {
+      tags: { error_source: "alerts.seed" },
+      level: "error",
+    });
+    return {
+      ok: false,
+      error: {
+        code: "unknown",
+        detail:
+          error instanceof Error ? error.message : "Seed response is invalid.",
+      },
+    };
+  }
+};
 
 export interface AlertPayload {
   name: string;

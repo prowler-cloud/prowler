@@ -33,6 +33,8 @@ interface MenuListOptions {
 }
 
 export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+
   return [
     {
       groupLabel: "",
@@ -108,17 +110,15 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
           icon: Settings,
           submenus: [
             { href: "/providers", label: "Providers", icon: CloudCog },
-            ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-              ? [
-                  {
-                    href: "/alerts",
-                    label: "Alerts",
-                    icon: BellRing,
-                    active: pathname.startsWith("/alerts"),
-                    highlight: true,
-                  },
-                ]
-              : []),
+            {
+              href: "/alerts",
+              label: "Alerts",
+              icon: BellRing,
+              active: isCloudEnv && pathname.startsWith("/alerts"),
+              highlight: isCloudEnv,
+              disabled: !isCloudEnv,
+              cloudOnly: !isCloudEnv,
+            },
             {
               href: "/mutelist",
               label: "Mutelist",

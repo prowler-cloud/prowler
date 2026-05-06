@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { IconComponent } from "@/types";
 
 interface SubmenuItemProps {
@@ -20,6 +21,7 @@ interface SubmenuItemProps {
   target?: string;
   disabled?: boolean;
   highlight?: boolean;
+  cloudOnly?: boolean;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
@@ -31,6 +33,7 @@ export const SubmenuItem = ({
   target,
   disabled,
   highlight,
+  cloudOnly,
   onClick,
 }: SubmenuItemProps) => {
   const pathname = usePathname();
@@ -58,6 +61,33 @@ export const SubmenuItem = ({
     );
   }
 
+  if (disabled) {
+    const tooltip = cloudOnly
+      ? "Available in Prowler Cloud."
+      : `${label} is unavailable.`;
+
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="menu-inactive"
+            className="mt-1 w-[calc(100%-12px)] cursor-not-allowed justify-start py-1"
+            disabled
+          >
+            <span className="mr-2">
+              <Icon size={16} />
+            </span>
+            <p className="flex max-w-[170px] items-center gap-2 truncate">
+              <span>{label}</span>
+              {cloudOnly && <CloudFeatureBadge label="Cloud" />}
+            </p>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="right">{tooltip}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
   return (
     <Button
       variant={isActive ? "menu-active" : "menu-inactive"}
@@ -81,6 +111,7 @@ export const SubmenuItem = ({
               NEW
             </span>
           )}
+          {cloudOnly && <CloudFeatureBadge label="Cloud" />}
         </p>
       </Link>
     </Button>

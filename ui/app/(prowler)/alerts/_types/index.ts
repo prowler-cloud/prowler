@@ -202,6 +202,11 @@ export const ALERT_SEEDING_WARNINGS = {
 export type AlertSeedingWarning =
   (typeof ALERT_SEEDING_WARNINGS)[keyof typeof ALERT_SEEDING_WARNINGS];
 
+export interface AlertSeedWarning {
+  field: string;
+  reason: AlertSeedingWarning;
+}
+
 // ---- discriminated condition union --------------------------------------
 
 // Leaf filter is a partial mapping from a whitelisted field name to its

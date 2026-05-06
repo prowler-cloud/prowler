@@ -82,7 +82,7 @@ export default async function Findings({
     completedScans || [],
     providersData,
   ) as { [uid: string]: ScanEntity }[];
-  const showAlertsControls = isAlertsEnabled();
+  const alertsEnabled = isAlertsEnabled();
 
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
@@ -98,18 +98,17 @@ export default async function Findings({
             uniqueCategories={uniqueCategories}
             uniqueGroups={uniqueGroups}
             trailingControls={
-              showAlertsControls ? (
-                <SeedFromFindingsButton
-                  filterBag={filters}
-                  providers={providersData?.data || []}
-                  scans={scanDetails}
-                  uniqueRegions={uniqueRegions}
-                  uniqueServices={uniqueServices}
-                  uniqueResourceTypes={uniqueResourceTypes}
-                  uniqueCategories={uniqueCategories}
-                  uniqueGroups={uniqueGroups}
-                />
-              ) : undefined
+              <SeedFromFindingsButton
+                filterBag={filters}
+                providers={providersData?.data || []}
+                scans={scanDetails}
+                uniqueRegions={uniqueRegions}
+                uniqueServices={uniqueServices}
+                uniqueResourceTypes={uniqueResourceTypes}
+                uniqueCategories={uniqueCategories}
+                uniqueGroups={uniqueGroups}
+                isCloudEnabled={alertsEnabled}
+              />
             }
           />
         </div>

@@ -5,14 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { createAlert } from "@/app/(prowler)/alerts/_actions";
+import { createAlert, seedAlertRule } from "@/app/(prowler)/alerts/_actions";
 import { AlertFormModal } from "@/app/(prowler)/alerts/_components/alert-form-modal";
-import { toAlertPayload } from "@/app/(prowler)/alerts/_lib/alert-adapter";
 import {
-  canSeedAlertFromFindingsFilters,
-  toPortableAlertFilterBag,
-} from "@/app/(prowler)/alerts/_lib/seeding";
+  getFindingsFiltersFromAlertCondition,
+  toAlertPayload,
+} from "@/app/(prowler)/alerts/_lib/alert-adapter";
 import {
+  ALERT_SEVERITY_VALUES,
   ALERT_TRIGGER_KINDS,
   type AlertCondition,
   type AlertsFilterBag,
@@ -28,12 +28,31 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { ToastAction, useToast } from "@/components/ui";
 import type { ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 const DISABLED_FILTER_TOOLTIP =
   "Apply at least one Findings filter to create an alert from filters.";
+const CLOUD_ONLY_TOOLTIP = "Available in Prowler Cloud.";
+const ALERT_SEED_ERROR = "Apply at least one alert-compatible Findings filter.";
+
+const NON_FILTER_QUERY_KEYS = new Set(["sort", "page", "pageSize"]);
+const ALERT_COMPATIBLE_FILTER_KEYS = new Set([
+  "filter[provider_type__in]",
+  "filter[provider_id__in]",
+  "filter[severity__in]",
+  "filter[delta]",
+  "filter[region__in]",
+  "filter[service__in]",
+  "filter[resource_type__in]",
+  "filter[category__in]",
+  "filter[resource_groups__in]",
+  "filter[check_id__in]",
+  "filter[finding_group_id]",
+  "filter[resource_uid__in]",
+]);
 
 interface SeedFromFindingsButtonProps {
   filterBag: AlertsFilterBag;
@@ -47,6 +66,7 @@ interface SeedFromFindingsButtonProps {
   className?: string;
   size?: "sm" | "default";
   defaultName?: string;
+  isCloudEnabled?: boolean;
 }
 
 const toChipFilterMap = (
@@ -64,6 +84,45 @@ const toChipFilterMap = (
       .filter(([, values]) => values.length > 0),
   );
 
+const hasFindingFilterValue = (filterBag: AlertsFilterBag): boolean =>
+  Object.entries(filterBag).some(([rawKey, value]) => {
+    if (!rawKey.startsWith("filter[") || NON_FILTER_QUERY_KEYS.has(rawKey)) {
+      return false;
+    }
+
+    const values = Array.isArray(value) ? value : [value];
+    return values.some((entry) =>
+      entry
+        .split(",")
+        .map((part) => part.trim())
+        .some(Boolean),
+    );
+  });
+
+const hasAlertCompatibleFilterValue = (filterBag: AlertsFilterBag): boolean =>
+  Object.entries(filterBag).some(([rawKey, value]) => {
+    if (!ALERT_COMPATIBLE_FILTER_KEYS.has(rawKey)) return false;
+
+    const values = Array.isArray(value) ? value : [value];
+    return values.some((entry) =>
+      entry
+        .split(",")
+        .map((part) => part.trim())
+        .some(Boolean),
+    );
+  });
+
+const withDefaultAlertSeedFilters = (
+  filterBag: AlertsFilterBag,
+): AlertsFilterBag => {
+  if (hasAlertCompatibleFilterValue(filterBag)) return filterBag;
+
+  return {
+    ...filterBag,
+    "filter[severity__in]": [...ALERT_SEVERITY_VALUES],
+  };
+};
+
 export const SeedFromFindingsButton = ({
   filterBag,
   providers = [],
@@ -76,28 +135,53 @@ export const SeedFromFindingsButton = ({
   className,
   size = "sm",
   defaultName = "Findings filter alert",
+  isCloudEnabled = true,
 }: SeedFromFindingsButtonProps) => {
   const router = useRouter();
   const { toast } = useToast();
   const [modalOpen, setModalOpen] = useState(false);
-
-  const canSeedFromFilters = canSeedAlertFromFindingsFilters(filterBag);
-  const portableFilterBag = toPortableAlertFilterBag(filterBag);
-  const selectedFindingsFilterChips = buildFindingsFilterChips(
-    toChipFilterMap(filterBag),
-    { providers, scans, includeMuted: true },
+  const [seeding, setSeeding] = useState(false);
+  const [seededCondition, setSeededCondition] = useState<AlertCondition | null>(
+    null,
   );
+  const [selectedFindingsFilterChips, setSelectedFindingsFilterChips] =
+    useState(() =>
+      buildFindingsFilterChips(toChipFilterMap(filterBag), {
+        providers,
+        scans,
+      }),
+    );
 
-  const handleClick = () => {
-    if (!canSeedFromFilters) return;
+  const canSeedFromFilters = hasFindingFilterValue(filterBag);
+
+  const handleClick = async () => {
+    if (!isCloudEnabled || !canSeedFromFilters) return;
+    setSeeding(true);
+    const result = await seedAlertRule(withDefaultAlertSeedFilters(filterBag));
+    setSeeding(false);
+    if (!result.ok) {
+      toast({
+        variant: "destructive",
+        title: "Alert seed failed",
+        description: ALERT_SEED_ERROR,
+      });
+      return;
+    }
+
+    setSeededCondition(result.data.condition);
+    setSelectedFindingsFilterChips(
+      buildFindingsFilterChips(
+        getFindingsFiltersFromAlertCondition(result.data.condition),
+        { providers, scans },
+      ),
+    );
     setModalOpen(true);
   };
 
   const submitAlert = async (
     values: AlertFormValues,
-    advancedCondition: AlertCondition | null,
   ): Promise<AlertFormSubmitResult> => {
-    const result = await createAlert(toAlertPayload(values, advancedCondition));
+    const result = await createAlert(toAlertPayload(values));
     if (!result.ok) return { ok: false, error: result.error.detail };
     toast({
       title: "Alert created",
@@ -117,33 +201,36 @@ export const SeedFromFindingsButton = ({
       size={size}
       variant="default"
       onClick={handleClick}
-      disabled={!canSeedFromFilters}
+      disabled={!isCloudEnabled || !canSeedFromFilters || seeding}
       className={className}
     >
       <BellPlusIcon size={14} />
-      Create Alert
+      {seeding ? "Preparing Alert" : "Create Alert"}
+      {!isCloudEnabled && <CloudFeatureBadge />}
     </Button>
   );
 
-  if (canSeedFromFilters) {
+  if (isCloudEnabled && canSeedFromFilters) {
     return (
       <>
         {button}
-        <AlertFormModal
-          open={modalOpen}
-          defaultFrequency={ALERT_TRIGGER_KINDS.AFTER_SCAN}
-          providers={providers}
-          uniqueRegions={uniqueRegions}
-          uniqueServices={uniqueServices}
-          uniqueResourceTypes={uniqueResourceTypes}
-          uniqueCategories={uniqueCategories}
-          uniqueGroups={uniqueGroups}
-          initialFindingsFilters={portableFilterBag}
-          selectedFindingsFilterChips={selectedFindingsFilterChips}
-          defaultName={defaultName}
-          onOpenChange={setModalOpen}
-          onSubmit={submitAlert}
-        />
+        {seededCondition && (
+          <AlertFormModal
+            open={modalOpen}
+            defaultFrequency={ALERT_TRIGGER_KINDS.AFTER_SCAN}
+            providers={providers}
+            uniqueRegions={uniqueRegions}
+            uniqueServices={uniqueServices}
+            uniqueResourceTypes={uniqueResourceTypes}
+            uniqueCategories={uniqueCategories}
+            uniqueGroups={uniqueGroups}
+            seededCondition={seededCondition}
+            selectedFindingsFilterChips={selectedFindingsFilterChips}
+            defaultName={defaultName}
+            onOpenChange={setModalOpen}
+            onSubmit={submitAlert}
+          />
+        )}
       </>
     );
   }
@@ -154,13 +241,13 @@ export const SeedFromFindingsButton = ({
         <span
           className="inline-flex"
           tabIndex={0}
-          title={DISABLED_FILTER_TOOLTIP}
+          title={isCloudEnabled ? DISABLED_FILTER_TOOLTIP : CLOUD_ONLY_TOOLTIP}
         >
           {button}
         </span>
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-xs">
-        {DISABLED_FILTER_TOOLTIP}
+        {isCloudEnabled ? DISABLED_FILTER_TOOLTIP : CLOUD_ONLY_TOOLTIP}
       </TooltipContent>
     </Tooltip>
   );

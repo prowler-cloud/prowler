@@ -22,6 +22,7 @@ const recipientsActionMocks = vi.hoisted(() => ({
 
 const alertsActionMocks = vi.hoisted(() => ({
   previewAlertCondition: vi.fn(),
+  seedAlertRule: vi.fn(),
 }));
 
 vi.mock(
@@ -247,6 +248,18 @@ describe("AlertFormModal", () => {
       new Promise(() => {}),
     );
     alertsActionMocks.previewAlertCondition.mockReset();
+    alertsActionMocks.seedAlertRule.mockReset();
+    alertsActionMocks.seedAlertRule.mockResolvedValue({
+      ok: true,
+      data: {
+        condition: {
+          op: ALERT_AGGREGATE_OPS.ANY,
+          filter: { provider_type: ["gcp"] },
+        },
+        schemaVersion: 1,
+        warnings: [],
+      },
+    });
   });
 
   it("should render the simplified alert form without preview, delivery settings, or nested recipient management", () => {
@@ -297,7 +310,10 @@ describe("AlertFormModal", () => {
   it("should show selected Findings filters as chips while keeping criteria controls hidden", () => {
     // Given / When
     renderCreateModal({
-      initialFindingsFilters: {},
+      seededCondition: {
+        op: ALERT_AGGREGATE_OPS.ANY,
+        filter: { severity: ["critical"] },
+      },
       selectedFindingsFilterChips: [
         { key: "filter[status__in]", label: "Status", value: "FAIL" },
         { key: "filter[muted]", label: "Muted", value: "false" },
@@ -343,7 +359,6 @@ describe("AlertFormModal", () => {
           frequency: ALERT_TRIGGER_KINDS.AFTER_SCAN,
           recipientEmails: ["pending@example.com"],
         }),
-        null,
       ),
     );
     const recipientsParams = recipientsActionMocks.listAlertRecipients.mock
@@ -382,7 +397,6 @@ describe("AlertFormModal", () => {
         expect.objectContaining({
           frequency: ALERT_TRIGGER_KINDS.DAILY,
         }),
-        null,
       ),
     );
   });
@@ -406,12 +420,30 @@ describe("AlertFormModal", () => {
         expect.objectContaining({
           recipientEmails: [],
         }),
-        null,
       ),
     );
     expect(
       screen.queryByText(/select at least one recipient/i),
     ).not.toBeInTheDocument();
+  });
+
+  it("should render backend submit errors with the design error color", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onSubmit = vi.fn().mockResolvedValue({
+      ok: false,
+      error: "Backend validation failed",
+    });
+    mockRecipientsList();
+    renderCreateModal({ onSubmit });
+
+    // When
+    await user.type(screen.getByLabelText(/^name$/i), "Critical alerts");
+    await user.click(screen.getByRole("button", { name: /^create$/i }));
+
+    // Then
+    const errorMessage = await screen.findByText("Backend validation failed");
+    expect(errorMessage).toHaveClass("text-text-error-primary");
   });
 
   it("should reset form defaults when opening a different alert", () => {
@@ -446,7 +478,6 @@ describe("AlertFormModal", () => {
 
   it("should render the shared Findings batch filter controls for an existing alert", async () => {
     // Given
-    const user = userEvent.setup();
     mockRecipientsList();
     renderCreateModal({
       editingAlert: createEditingAlert({
@@ -474,9 +505,6 @@ describe("AlertFormModal", () => {
       uniqueGroups: ["prod"],
     });
 
-    // When
-    await user.click(screen.getByRole("button", { name: /more filters/i }));
-
     // Then
     const recipientsTrigger = screen.getByLabelText(/^recipients$/i);
     const filtersHeading = screen.getByRole("heading", { name: /^filters$/i });
@@ -487,11 +515,20 @@ describe("AlertFormModal", () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(filtersHeading.closest('[data-slot="card"]')).toBeVisible();
+    const filterControls = screen.getByTestId("findings-filter-controls");
     expect(screen.getAllByText("Amazon Web Services")[0]).toBeVisible();
     expect(screen.getByText("All accounts")).toBeVisible();
-    expect(screen.getByText("All Status")).toBeVisible();
-    expect(screen.getByText("All Delta")).toBeVisible();
-    expect(screen.getByText("All Resource Type")).toBeVisible();
+    expect(within(filterControls).getByText("All Delta")).toBeVisible();
+    expect(within(filterControls).getByText("All Resource Type")).toBeVisible();
+    expect(
+      screen.queryByTestId("findings-expanded-filters"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /more filters/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("All Status")).not.toBeInTheDocument();
+    expect(screen.queryByText("Scan ID")).not.toBeInTheDocument();
+    expect(screen.queryByText(/^date$/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/^severity$/i)).not.toBeInTheDocument();
   });
 
@@ -509,7 +546,6 @@ describe("AlertFormModal", () => {
     });
 
     // When
-    await user.click(screen.getByRole("button", { name: /more filters/i }));
     await user.click(screen.getByLabelText(/provider type/i));
     const providerOptions = await screen.findAllByText("Google Cloud Platform");
     const visibleProviderOption = providerOptions.at(-1);
@@ -519,15 +555,20 @@ describe("AlertFormModal", () => {
 
     // Then
     await waitFor(() =>
+      expect(alertsActionMocks.seedAlertRule).toHaveBeenCalled(),
+    );
+    expect(alertsActionMocks.seedAlertRule).toHaveBeenCalledWith(
+      expect.objectContaining({
+        "filter[provider_type__in]": ["gcp"],
+      }),
+    );
+    await waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
-          filterGroup: expect.objectContaining({
-            children: expect.arrayContaining([
-              { kind: "filter", field: "providers", values: ["gcp"] },
-            ]),
+          condition: expect.objectContaining({
+            filter: { provider_type: ["gcp"] },
           }),
         }),
-        null,
       ),
     );
   });
@@ -555,7 +596,6 @@ describe("AlertFormModal", () => {
     });
 
     // When
-    await user.click(screen.getByRole("button", { name: /more filters/i }));
     await user.click(screen.getByLabelText(/provider type/i));
     const providerOptions = await screen.findAllByText("Google Cloud Platform");
     const visibleProviderOption = providerOptions.at(-1);
@@ -565,31 +605,69 @@ describe("AlertFormModal", () => {
 
     // Then
     await waitFor(() =>
+      expect(alertsActionMocks.seedAlertRule).toHaveBeenCalledWith(
+        expect.objectContaining({
+          "filter[provider_type__in]": ["gcp"],
+        }),
+      ),
+    );
+    await waitFor(() =>
       expect(alertsActionMocks.previewAlertCondition).toHaveBeenCalledWith(
         expect.objectContaining({
           condition: expect.objectContaining({
-            op: ALERT_BOOLEAN_OPS.AND,
-            children: expect.arrayContaining([
-              expect.objectContaining({
-                filter: { provider_type: ["gcp"] },
-                value: 1,
-              }),
-            ]),
+            filter: { provider_type: ["gcp"] },
           }),
         }),
       ),
     );
-    const previewStatus = await screen.findByText(/would fire/i);
+    const previewStatus = await screen.findByText("Would fire");
     expect(previewStatus).toBeVisible();
     const previewCard = previewStatus.closest('[data-slot="card"]');
     expect(previewCard).toBeInTheDocument();
     const previewCardQueries = within(previewCard as HTMLElement);
-    expect(previewCardQueries.getByText(/^findings$/i)).toBeVisible();
-    expect(previewCardQueries.getByText("7")).toBeVisible();
-    expect(previewCardQueries.getByText(/^top severity$/i)).toBeVisible();
-    expect(previewCardQueries.getByText("Critical")).toBeVisible();
-    expect(previewCardQueries.getByText(/^duration$/i)).toBeVisible();
-    expect(previewCardQueries.getByText(/42 ms/i)).toBeVisible();
+    expect(
+      previewCardQueries.getByText(
+        "It found 7 findings, including Critical severity.",
+      ),
+    ).toBeVisible();
+    expect(
+      previewCardQueries.queryByText(/^findings$/i),
+    ).not.toBeInTheDocument();
+    expect(
+      previewCardQueries.queryByText(/^top severity$/i),
+    ).not.toBeInTheDocument();
+    expect(
+      previewCardQueries.queryByText(/^duration$/i),
+    ).not.toBeInTheDocument();
+    expect(previewCardQueries.queryByText(/42 ms/i)).not.toBeInTheDocument();
+  });
+
+  it("should explain when the edited alert would not fire", async () => {
+    // Given
+    const user = userEvent.setup();
+    alertsActionMocks.previewAlertCondition.mockResolvedValue({
+      ok: true,
+      data: {
+        would_fire: false,
+        summary: {
+          finding_count_total: 0,
+        },
+        sample_finding_ids: [],
+        evaluation_failed: false,
+      },
+    });
+    mockRecipientsList();
+    renderCreateModal({ editingAlert: createEditingAlert() });
+
+    // When
+    await user.click(screen.getByRole("button", { name: /^test$/i }));
+
+    // Then
+    const previewStatus = await screen.findByText("Would not fire");
+    expect(previewStatus).toBeVisible();
+    expect(
+      screen.getByText("These filters did not find matching findings."),
+    ).toBeVisible();
   });
 
   it("should render preview errors inline in edit mode", async () => {
@@ -606,7 +684,9 @@ describe("AlertFormModal", () => {
     await user.click(screen.getByRole("button", { name: /^test$/i }));
 
     // Then
-    expect(await screen.findByText(/invalid condition/i)).toBeVisible();
+    const errorMessage = await screen.findByText(/invalid condition/i);
+    expect(errorMessage).toBeVisible();
+    expect(errorMessage).toHaveClass("text-text-error-primary");
   });
 
   it("should hydrate advanced edit mode filters and normalize them on save", async () => {
@@ -623,6 +703,17 @@ describe("AlertFormModal", () => {
     const onSubmit = vi
       .fn()
       .mockResolvedValue({ ok: true, alertId: "alert-1" });
+    alertsActionMocks.seedAlertRule.mockResolvedValue({
+      ok: true,
+      data: {
+        condition: {
+          op: ALERT_AGGREGATE_OPS.ANY,
+          filter: { severity: ["critical"] },
+        },
+        schemaVersion: 1,
+        warnings: [],
+      },
+    });
     mockRecipientsList();
     renderCreateModal({
       editingAlert: createEditingAlert({
@@ -641,17 +732,11 @@ describe("AlertFormModal", () => {
         expect.objectContaining({
           name: "Existing alert",
           recipientEmails: ["security@example.com"],
-          filterGroup: expect.objectContaining({
-            children: [
-              {
-                kind: "filter",
-                field: "checkSeverities",
-                values: ["critical"],
-              },
-            ],
-          }),
+          condition: {
+            op: ALERT_AGGREGATE_OPS.ANY,
+            filter: { severity: ["critical"] },
+          },
         }),
-        null,
       ),
     );
     expect(

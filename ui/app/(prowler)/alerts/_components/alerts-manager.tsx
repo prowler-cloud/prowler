@@ -11,7 +11,6 @@ import {
 } from "@/app/(prowler)/alerts/_actions";
 import {
   ALERT_TRIGGER_KINDS,
-  type AlertCondition,
   type AlertRule,
 } from "@/app/(prowler)/alerts/_types";
 import { Button } from "@/components/shadcn";
@@ -81,12 +80,11 @@ export const AlertsManager = ({
 
   const submitAlert = async (
     values: AlertFormValues,
-    advancedCondition: AlertCondition | null,
   ): Promise<AlertFormSubmitResult> => {
     if (!editingAlert) {
       return { ok: false, error: "Create alerts from Findings." };
     }
-    const payload = toAlertPayload(values, advancedCondition);
+    const payload = toAlertPayload(values);
     const result = await updateAlert(editingAlert.id, payload);
     if (!result.ok) return { ok: false, error: result.error.detail };
     toast({

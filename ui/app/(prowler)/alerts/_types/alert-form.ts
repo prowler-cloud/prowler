@@ -1,8 +1,5 @@
 import type {
   AlertCondition,
-  AlertDelta,
-  AlertProviderType,
-  AlertSeverity,
   AlertTriggerKind,
 } from "@/app/(prowler)/alerts/_types";
 
@@ -79,18 +76,7 @@ export interface AlertFormValues {
   description: string;
   method: AlertNotificationMethod;
   frequency: AlertTriggerKind;
-  filterGroup: AlertFormFilterGroup;
-  severities: AlertSeverity[];
-  deltas: AlertDelta[];
-  providerTypes: AlertProviderType[];
-  providerIds: string[];
-  checkIds: string[];
-  categories: string[];
-  regions: string[];
-  services: string[];
-  resourceGroups: string[];
-  findingGroupIds: string[];
-  resourceTypes: string[];
+  condition: AlertCondition;
   recipientEmails: string[];
   enabled: boolean;
 }

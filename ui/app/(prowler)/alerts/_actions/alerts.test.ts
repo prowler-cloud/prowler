@@ -31,6 +31,7 @@ import {
   enableAlert,
   listAlerts,
   previewAlertCondition,
+  seedAlertRule,
   updateAlert,
 } from "./alerts";
 
@@ -177,6 +178,75 @@ describe("createAlert", () => {
 
     const body = JSON.parse((calls[0].init.body as string) ?? "{}");
     expect(body.data.attributes.recipient_emails).toEqual([]);
+  });
+});
+
+describe("seedAlertRule", () => {
+  it("posts a JSON:API seeding envelope and normalizes the seed response", async () => {
+    // Given
+    const calls = captureFetchArgs(200, {
+      data: {
+        id: "seed",
+        type: "alert-rule-seedings",
+        attributes: {
+          condition: {
+            op: ALERT_AGGREGATE_OPS.ANY,
+            filter: { severity: ["critical"] },
+          },
+          schema_version: 1,
+          warnings: [{ field: "sort", reason: "ordering_not_supported" }],
+        },
+      },
+    });
+    const filterBag = {
+      "filter[severity__in]": "critical",
+      "filter[sort]": "-severity",
+    };
+
+    // When
+    const result = await seedAlertRule(filterBag);
+
+    // Then
+    expect(result.ok).toBe(true);
+    expect(calls[0].url).toMatch(/\/alerts\/rules\/seed$/);
+    expect(calls[0].init.method).toBe("POST");
+    expect(JSON.parse((calls[0].init.body as string) ?? "{}")).toEqual({
+      data: {
+        type: "alert-rule-seedings",
+        attributes: { filter_bag: filterBag },
+      },
+    });
+    if (result.ok) {
+      expect(result.data).toEqual({
+        condition: {
+          op: ALERT_AGGREGATE_OPS.ANY,
+          filter: { severity: ["critical"] },
+        },
+        schemaVersion: 1,
+        warnings: [{ field: "sort", reason: "ordering_not_supported" }],
+      });
+    }
+  });
+
+  it("surfaces invalid seed errors from the API", async () => {
+    // Given
+    mockFetchOnce(400, {
+      errors: [
+        {
+          code: "invalid_shape",
+          detail: "At least one portable filter is required.",
+        },
+      ],
+    });
+
+    // When
+    const result = await seedAlertRule({});
+
+    // Then
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe(ALERT_ERROR_CODES.INVALID_SHAPE);
+    }
   });
 });
 

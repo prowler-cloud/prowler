@@ -22,6 +22,7 @@ export type SubmenuProps = {
   icon: IconComponent;
   disabled?: boolean;
   highlight?: boolean;
+  cloudOnly?: boolean;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
