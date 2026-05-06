@@ -85,7 +85,7 @@ export const SkeletonTableNewFindings = () => {
             <th className="px-3 py-3 text-left">
               <Skeleton className="h-4 w-16 rounded" />
             </th>
-            {/* Cloud Provider */}
+            {/* Provider */}
             <th className="px-3 py-3 text-left">
               <Skeleton className="h-4 w-24 rounded" />
             </th>

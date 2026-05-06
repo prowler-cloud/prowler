@@ -1,0 +1,98 @@
+name: 'Nightly: ARM64 Container Builds'
+
+# Mitigation for amd64-only PR container-checks: build amd64+arm64 nightly against
+# master to keep arm-specific Dockerfile regressions caught quickly. Build only —
+# no push, no Trivy (weekly checks already cover that).
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  build-arm64:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: sdk
+            context: .
+            dockerfile: ./Dockerfile
+            image_name: prowler
+          - component: api
+            context: ./api
+            dockerfile: ./api/Dockerfile
+            image_name: prowler-api
+          - component: ui
+            context: ./ui
+            dockerfile: ./ui/Dockerfile
+            image_name: prowler-ui
+            target: prod
+            build_args: |
+              NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51LwpXXXX
+          - component: mcp
+            context: ./mcp_server
+            dockerfile: ./mcp_server/Dockerfile
+            image_name: prowler-mcp
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Build ${{ matrix.component }} container (linux/arm64)
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          push: false
+          load: false
+          platforms: linux/arm64
+          tags: ${{ matrix.image_name }}:nightly-arm64
+          build-args: ${{ matrix.build_args }}
+          cache-from: type=gha,scope=arm64
+          cache-to: type=gha,mode=min,scope=arm64
+
+  notify-failure:
+    needs: build-arm64
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Notify Slack on failure
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+            text: ":rotating_light: Nightly arm64 container build failed for prowler — <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|view run>"
+          errors: true
