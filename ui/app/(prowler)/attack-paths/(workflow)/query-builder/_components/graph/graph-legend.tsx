@@ -116,7 +116,7 @@ const buildVisualItem = (
 });
 
 const providerRootItem = buildVisualItem(
-  "Provider / account root",
+  "Provider",
   "Cloud account, tenant, project, organization, or cluster entry point.",
   buildNode(["AWSAccount"], { name: "Provider root" }),
   GRAPH_NODE_COLORS.awsAccount,

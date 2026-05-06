@@ -55,7 +55,7 @@ describe("GraphLegend", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /edges/i })).toBeInTheDocument();
 
-    expect(screen.getByText("Provider / account root")).toBeInTheDocument();
+    expect(screen.getByText("Provider")).toBeInTheDocument();
     expect(screen.getByText("S3 Bucket")).toBeInTheDocument();
     expect(screen.getByText("VPC")).toBeInTheDocument();
     expect(screen.queryByText("Storage")).not.toBeInTheDocument();
