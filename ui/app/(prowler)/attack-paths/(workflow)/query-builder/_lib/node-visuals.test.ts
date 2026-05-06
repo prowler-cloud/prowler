@@ -113,14 +113,14 @@ describe("resolveNodeVisual", () => {
     });
 
     it.each([
-      ["AWSAccount", NODE_CATEGORY.ACCOUNT, "AWS Account", AWSAccountIcon],
+      ["AWSAccount", NODE_CATEGORY.ACCOUNT, "AWS Account", AWSProviderBadge],
       ["S3Bucket", NODE_CATEGORY.STORAGE, "S3 Bucket", AmazonS3Icon],
       ["S3", NODE_CATEGORY.STORAGE, "S3", AmazonS3Icon],
       ["VPC", NODE_CATEGORY.NETWORK, "VPC", AmazonVPCIcon],
-      ["Subnet", NODE_CATEGORY.NETWORK, "Subnet", Network],
-      ["SecurityGroup", NODE_CATEGORY.NETWORK, "Security Group", Network],
-      ["InternetGateway", NODE_CATEGORY.NETWORK, "Internet Gateway", Globe2],
-      ["DefaultGateway", NODE_CATEGORY.NETWORK, "Default Gateway", Globe2],
+      ["Subnet", NODE_CATEGORY.NETWORK, "Subnet", Waypoints],
+      ["SecurityGroup", NODE_CATEGORY.NETWORK, "Security Group", Shield],
+      ["InternetGateway", NODE_CATEGORY.NETWORK, "Internet Gateway", Route],
+      ["DefaultGateway", NODE_CATEGORY.NETWORK, "Default Gateway", Route],
       ["EC2Instance", NODE_CATEGORY.COMPUTE, "EC2 Instance", AmazonEC2Icon],
       [
         "VirtualMachine",
@@ -132,7 +132,7 @@ describe("resolveNodeVisual", () => {
       ["NIC", NODE_CATEGORY.COMPUTE, "NIC", Server],
       ["IAMUser", NODE_CATEGORY.IDENTITY, "IAM User", AWSIAMIcon],
       ["IAMRole", NODE_CATEGORY.IDENTITY, "IAM Role", AWSIAMIcon],
-      ["ServiceAccount", NODE_CATEGORY.IDENTITY, "Service Account", UserRound],
+      ["ServiceAccount", NODE_CATEGORY.IDENTITY, "Service Account", Bot],
       ["AccessKey", NODE_CATEGORY.SECRET, "Access Key", KeyRound],
       ["Secret", NODE_CATEGORY.SECRET, "Secret", KeyRound],
     ] as const)(
