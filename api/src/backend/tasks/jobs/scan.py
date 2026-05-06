@@ -202,8 +202,9 @@ def _get_attack_surface_mapping_from_provider(provider_type: str) -> dict:
             "iam_inline_policy_allows_privilege_escalation",
         },
         "ec2-imdsv1": {
-            "ec2_instance_imdsv2_enabled"
-        },  # AWS only - IMDSv1 enabled findings
+            "ec2_instance_imdsv2_enabled",
+            "ec2_instance_account_imdsv2_enabled",
+        },  # AWS only - instance-level IMDSv1 exposure and account IMDS defaults
     }
     for category_name, check_ids in attack_surface_check_mappings.items():
         if check_ids is None:

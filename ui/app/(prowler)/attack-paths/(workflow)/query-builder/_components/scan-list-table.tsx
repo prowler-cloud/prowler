@@ -150,7 +150,7 @@ const getColumns = ({
   {
     accessorKey: "provider",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Account" />
+      <DataTableColumnHeader column={column} title="Provider" />
     ),
     cell: ({ row }) => (
       <EntityInfo
