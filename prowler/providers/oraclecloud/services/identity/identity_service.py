@@ -1,6 +1,7 @@
 """OCI Identity Service Module."""
 
 from datetime import datetime
+from threading import Lock
 from typing import Optional
 
 import oci
@@ -26,6 +27,7 @@ class Identity(OCIService):
         self.policies = []
         self.dynamic_groups = []
         self.domains = []
+        self._domains_lock = Lock()
         self.password_policy = None
         self.root_compartment_resources = []
         self.active_non_root_compartments = []
@@ -465,30 +467,37 @@ class Identity(OCIService):
 
                     for domain in domains:
 
-                        existing = next(
-                            (d for d in self.domains if d.id == domain.id), None
-                        )
-                        if existing is not None:
-                            # Prefer the entry from the domain's home region
-                            if domain.home_region == regional_client.region:
-                                self.domains.remove(existing)
-                            else:
-                                continue
-
-                        self.domains.append(
-                            IdentityDomain(
-                                id=domain.id,
-                                display_name=domain.display_name,
-                                description=domain.description or "",
-                                url=domain.url,
-                                home_region=domain.home_region,
-                                compartment_id=compartment.id,
-                                lifecycle_state=domain.lifecycle_state,
-                                time_created=domain.time_created,
-                                region=regional_client.region,
-                                password_policies=[],
+                        # Threads run __list_domains__ concurrently per
+                        # region; serialize the dedupe-then-append so two
+                        # regions returning the same domain cannot race
+                        # past each other and produce duplicates or lose
+                        # the home-region preference.
+                        with self._domains_lock:
+                            existing = next(
+                                (d for d in self.domains if d.id == domain.id),
+                                None,
                             )
-                        )
+                            if existing is not None:
+                                # Prefer the entry from the domain's home region
+                                if domain.home_region == regional_client.region:
+                                    self.domains.remove(existing)
+                                else:
+                                    continue
+
+                            self.domains.append(
+                                IdentityDomain(
+                                    id=domain.id,
+                                    display_name=domain.display_name,
+                                    description=domain.description or "",
+                                    url=domain.url,
+                                    home_region=domain.home_region,
+                                    compartment_id=compartment.id,
+                                    lifecycle_state=domain.lifecycle_state,
+                                    time_created=domain.time_created,
+                                    region=regional_client.region,
+                                    password_policies=[],
+                                )
+                            )
 
             except Exception as error:
                 logger.error(
