@@ -130,29 +130,12 @@ class APIM(AzureService):
 
         for subscription, client in self.clients.items():
             try:
-                apim_instances = []
                 instances.update({subscription: []})
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription}"
-                        )
-                    else:
-                        for rg in rgs:
-                            try:
-                                apim_instances += list(
-                                    client.api_management_service.list_by_resource_group(
-                                        resource_group_name=rg
-                                    )
-                                )
-                            except Exception as error:
-                                logger.warning(
-                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                else:
-                    apim_instances = client.api_management_service.list()
+                apim_instances = self.list_with_rg_scope(
+                    subscription,
+                    client.api_management_service.list,
+                    client.api_management_service.list_by_resource_group,
+                )
 
                 for instance in apim_instances:
                     workspace_id = self._get_log_analytics_workspace_id(

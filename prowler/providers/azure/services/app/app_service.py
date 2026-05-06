@@ -23,29 +23,11 @@ class App(AzureService):
         for subscription_name, client in self.clients.items():
             try:
                 apps.update({subscription_name: {}})
-                apps_list = []
-
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription_name, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription_name}"
-                        )
-                    else:
-                        for rg in rgs:
-                            try:
-                                apps_list += list(
-                                    client.web_apps.list_by_resource_group(
-                                        resource_group_name=rg
-                                    )
-                                )
-                            except Exception as error:
-                                logger.warning(
-                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                else:
-                    apps_list = client.web_apps.list()
+                apps_list = self.list_with_rg_scope(
+                    subscription_name,
+                    client.web_apps.list,
+                    client.web_apps.list_by_resource_group,
+                )
 
                 for app in apps_list:
                     # Filter function apps
@@ -139,30 +121,12 @@ class App(AzureService):
 
         for subscription_name, client in self.clients.items():
             try:
-                functions_list = []
                 functions.update({subscription_name: {}})
-
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription_name, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription_name}"
-                        )
-                    else:
-                        for rg in rgs:
-                            try:
-                                functions_list += list(
-                                    client.web_apps.list_by_resource_group(
-                                        resource_group_name=rg
-                                    )
-                                )
-                            except Exception as error:
-                                logger.warning(
-                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                else:
-                    functions_list = client.web_apps.list()
+                functions_list = self.list_with_rg_scope(
+                    subscription_name,
+                    client.web_apps.list,
+                    client.web_apps.list_by_resource_group,
+                )
 
                 for function in functions_list:
                     # Filter function apps

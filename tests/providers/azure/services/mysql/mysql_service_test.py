@@ -168,9 +168,8 @@ class Test_MySQL_get_flexible_servers:
 
         result = mysql._get_flexible_servers()
 
-        # MySQL uses positional arg, not keyword
         mock_client.servers.list_by_resource_group.assert_called_once_with(
-            RESOURCE_GROUP
+            resource_group_name=RESOURCE_GROUP
         )
         mock_client.servers.list.assert_not_called()
         assert AZURE_SUBSCRIPTION_ID in result
@@ -197,8 +196,8 @@ class Test_MySQL_get_flexible_servers:
 
         mock_client.servers.list_by_resource_group.assert_not_called()
         mock_client.servers.list.assert_not_called()
-        # MySQL uses `continue` when empty RGs, so the subscription key is not added
-        assert AZURE_SUBSCRIPTION_ID not in result
+        assert AZURE_SUBSCRIPTION_ID in result
+        assert result[AZURE_SUBSCRIPTION_ID] == {}
 
     def test_get_flexible_servers_with_multiple_resource_groups(self):
         mock_client = MagicMock()
@@ -245,5 +244,6 @@ class Test_MySQL_get_flexible_servers:
 
         mysql._get_flexible_servers()
 
-        # MySQL uses positional arg, not keyword
-        mock_client.servers.list_by_resource_group.assert_called_once_with("RG")
+        mock_client.servers.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )

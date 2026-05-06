@@ -35,28 +35,11 @@ class KeyVault(AzureService):
         for subscription, client in self.clients.items():
             try:
                 key_vaults[subscription] = []
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription}"
-                        )
-                        continue
-                    vaults_list = []
-                    for rg in rgs:
-                        try:
-                            vaults_list += list(
-                                client.vaults.list_by_resource_group(
-                                    resource_group_name=rg
-                                )
-                            )
-                        except Exception as error:
-                            logger.warning(
-                                f"Subscription name: {subscription} -- Resource Group: {rg} -- "
-                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                            )
-                else:
-                    vaults_list = list(client.vaults.list_by_subscription())
+                vaults_list = self.list_with_rg_scope(
+                    subscription,
+                    client.vaults.list_by_subscription,
+                    client.vaults.list_by_resource_group,
+                )
 
                 if not vaults_list:
                     continue

@@ -20,29 +20,11 @@ class Storage(AzureService):
         storage_accounts = {}
         for subscription, client in self.clients.items():
             try:
-                storage_accounts_list = []
-
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription}"
-                        )
-                    else:
-                        for rg in rgs:
-                            try:
-                                storage_accounts_list += list(
-                                    client.storage_accounts.list_by_resource_group(
-                                        resource_group_name=rg
-                                    )
-                                )
-                            except Exception as error:
-                                logger.warning(
-                                    f"Subscription name: {subscription} -- Resource Group: {rg} -- "
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                else:
-                    storage_accounts_list = client.storage_accounts.list()
+                storage_accounts_list = self.list_with_rg_scope(
+                    subscription,
+                    client.storage_accounts.list,
+                    client.storage_accounts.list_by_resource_group,
+                )
 
                 storage_accounts.update({subscription: []})
                 for storage_account in storage_accounts_list:

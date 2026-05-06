@@ -22,27 +22,11 @@ class VirtualMachines(AzureService):
 
         for subscription_name, client in self.clients.items():
             try:
-                virtual_machines_list = []
-
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription_name, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription_name}"
-                        )
-                    else:
-                        for rg in rgs:
-                            try:
-                                virtual_machines_list += list(
-                                    client.virtual_machines.list(resource_group_name=rg)
-                                )
-                            except Exception as error:
-                                logger.warning(
-                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                else:
-                    virtual_machines_list = client.virtual_machines.list_all()
+                virtual_machines_list = self.list_with_rg_scope(
+                    subscription_name,
+                    client.virtual_machines.list_all,
+                    client.virtual_machines.list,
+                )
 
                 virtual_machines.update({subscription_name: {}})
 
@@ -176,29 +160,11 @@ class VirtualMachines(AzureService):
 
         for subscription_name, client in self.clients.items():
             try:
-                disks_list = []
-
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription_name, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription_name}"
-                        )
-                    else:
-                        for rg in rgs:
-                            try:
-                                disks_list += list(
-                                    client.disks.list_by_resource_group(
-                                        resource_group_name=rg
-                                    )
-                                )
-                            except Exception as error:
-                                logger.warning(
-                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                else:
-                    disks_list = client.disks.list()
+                disks_list = self.list_with_rg_scope(
+                    subscription_name,
+                    client.disks.list,
+                    client.disks.list_by_resource_group,
+                )
 
                 disks.update({subscription_name: {}})
 
@@ -246,29 +212,11 @@ class VirtualMachines(AzureService):
         vm_scale_sets = {}
         for subscription_name, client in self.clients.items():
             try:
-                scale_sets_list = []
-
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription_name, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription_name}"
-                        )
-                    else:
-                        for rg in rgs:
-                            try:
-                                scale_sets_list += list(
-                                    client.virtual_machine_scale_sets.list(
-                                        resource_group_name=rg
-                                    )
-                                )
-                            except Exception as error:
-                                logger.warning(
-                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                else:
-                    scale_sets_list = client.virtual_machine_scale_sets.list_all()
+                scale_sets_list = self.list_with_rg_scope(
+                    subscription_name,
+                    client.virtual_machine_scale_sets.list_all,
+                    client.virtual_machine_scale_sets.list,
+                )
 
                 vm_scale_sets[subscription_name] = {}
                 for scale_set in scale_sets_list:

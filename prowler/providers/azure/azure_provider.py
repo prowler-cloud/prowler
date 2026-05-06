@@ -1089,6 +1089,7 @@ class AzureProvider(Provider):
         return set(chain.from_iterable(locations.values()))
 
     def validate_resource_groups(self, resource_groups: list) -> dict:
+        resource_groups = [r for r in resource_groups if r and r.strip()]
         if not resource_groups:
             return {}
 
@@ -1096,16 +1097,25 @@ class AzureProvider(Provider):
         credentials = self.session
 
         for display_name, subscription_id in self._identity.subscriptions.items():
-            rg_client = ResourceManagementClient(credentials, subscription_id)
-
-            existing_rgs = {rg.name.lower() for rg in rg_client.resource_groups.list()}
+            try:
+                rg_client = ResourceManagementClient(credentials, subscription_id)
+                existing_rgs = {
+                    rg.name.lower(): rg.name for rg in rg_client.resource_groups.list()
+                }
+            except Exception as e:
+                logger.warning(
+                    f"Could not list resource groups for subscription '{display_name}' "
+                    f"({subscription_id}): {e}. Skipping resource group filtering for this subscription."
+                )
+                continue
 
             for rg in resource_groups:
-                if rg.lower() in existing_rgs:
-                    rg_map[display_name].append(rg)
+                real_name = existing_rgs.get(rg.lower())
+                if real_name:
+                    rg_map[display_name].append(real_name)
 
         for rg in resource_groups:
-            if not any(rg in rgs for rgs in rg_map.values()):
+            if not any(rg.lower() == r.lower() for rgs in rg_map.values() for r in rgs):
                 logger.warning(
                     f"Resource group '{rg}' was not found in any subscription. "
                     "Please check the resource group name and try again."

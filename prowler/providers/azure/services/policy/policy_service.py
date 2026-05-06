@@ -18,29 +18,11 @@ class Policy(AzureService):
 
         for subscription_name, client in self.clients.items():
             try:
-                policy_assigments_list = []
-
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription_name, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription_name}"
-                        )
-                    else:
-                        for rg in rgs:
-                            try:
-                                policy_assigments_list += list(
-                                    client.policy_assignments.list_for_resource_group(
-                                        resource_group_name=rg
-                                    )
-                                )
-                            except Exception as error:
-                                logger.warning(
-                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                else:
-                    policy_assigments_list = client.policy_assignments.list()
+                policy_assigments_list = self.list_with_rg_scope(
+                    subscription_name,
+                    client.policy_assignments.list,
+                    client.policy_assignments.list_for_resource_group,
+                )
 
                 policy_assigments.update({subscription_name: {}})
 

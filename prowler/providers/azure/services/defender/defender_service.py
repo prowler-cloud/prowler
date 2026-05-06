@@ -255,31 +255,11 @@ class Defender(AzureService):
         iot_security_solutions = {}
         for subscription_name, client in self.clients.items():
             try:
-                iot_security_solutions_list = []
-
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription_name, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription_name}"
-                        )
-                    else:
-                        for rg in rgs:
-                            try:
-                                iot_security_solutions_list += list(
-                                    client.iot_security_solution.list_by_resource_group(
-                                        resource_group_name=rg
-                                    )
-                                )
-                            except Exception as error:
-                                logger.warning(
-                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                else:
-                    iot_security_solutions_list = (
-                        client.iot_security_solution.list_by_subscription()
-                    )
+                iot_security_solutions_list = self.list_with_rg_scope(
+                    subscription_name,
+                    client.iot_security_solution.list_by_subscription,
+                    client.iot_security_solution.list_by_resource_group,
+                )
                 iot_security_solutions.update({subscription_name: {}})
                 for iot_security_solution in iot_security_solutions_list:
                     iot_security_solutions[subscription_name].update(
@@ -314,28 +294,11 @@ class Defender(AzureService):
         for subscription_name, client in self.clients.items():
             try:
                 jit_policies[subscription_name] = {}
-                policies_list = []
-                if self.resource_groups:
-                    rgs = self.resource_groups.get(subscription_name, [])
-                    if not rgs:
-                        logger.warning(
-                            f"No valid resource groups for subscription {subscription_name}"
-                        )
-                    else:
-                        for rg in rgs:
-                            try:
-                                policies_list += list(
-                                    client.jit_network_access_policies.list_by_resource_group(
-                                        resource_group_name=rg
-                                    )
-                                )
-                            except Exception as error:
-                                logger.warning(
-                                    f"Subscription name: {subscription_name} -- Resource Group: {rg} -- "
-                                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                else:
-                    policies_list = client.jit_network_access_policies.list()
+                policies_list = self.list_with_rg_scope(
+                    subscription_name,
+                    client.jit_network_access_policies.list,
+                    client.jit_network_access_policies.list_by_resource_group,
+                )
 
                 for policy in policies_list:
                     vm_ids = set()
