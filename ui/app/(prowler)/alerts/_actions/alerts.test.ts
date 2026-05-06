@@ -245,19 +245,30 @@ describe("enable / disable", () => {
 });
 
 describe("previewAlertCondition", () => {
-  it("posts to /preview and forwards trigger", async () => {
+  it("posts a JSON:API preview envelope to /preview", async () => {
     const calls = captureFetchArgs(200, { data: { attributes: {} } });
+    const condition = {
+      op: ALERT_AGGREGATE_OPS.ANY,
+      filter: { severity: ["critical"] },
+    };
     await previewAlertCondition({
-      condition: {
-        op: ALERT_AGGREGATE_OPS.ANY,
-        filter: { severity: ["critical"] },
-      },
-      trigger: ALERT_TRIGGER_KINDS.DAILY,
+      condition,
     });
     expect(calls[0].url).toMatch(/\/alerts\/rules\/preview$/);
     expect(calls[0].init.method).toBe("POST");
+    expect(calls[0].init.headers).toEqual(
+      expect.objectContaining({
+        Accept: "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+      }),
+    );
     const body = JSON.parse((calls[0].init.body as string) ?? "{}");
-    expect(body.trigger).toBe("daily");
+    expect(body).toEqual({
+      data: {
+        type: "alert-rule-previews",
+        attributes: { condition },
+      },
+    });
   });
 
   it("unwraps JSON:API preview attributes into the preview model", async () => {

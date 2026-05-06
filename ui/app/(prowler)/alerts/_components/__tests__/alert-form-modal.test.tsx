@@ -576,7 +576,6 @@ describe("AlertFormModal", () => {
               }),
             ]),
           }),
-          trigger: ALERT_TRIGGER_KINDS.AFTER_SCAN,
         }),
       ),
     );

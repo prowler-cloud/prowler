@@ -487,7 +487,6 @@ const AlertFormModalContent = ({
     setPreviewLoading(true);
     const result = await previewAlertCondition({
       condition: buildAlertCondition(parsed.data.filterGroup),
-      trigger: frequency,
     });
     setPreviewLoading(false);
 

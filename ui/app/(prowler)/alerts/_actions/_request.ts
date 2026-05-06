@@ -20,13 +20,6 @@ export interface AlertsRequestOptions {
   attachAuth?: boolean;
   cache?: RequestCache;
   signal?: AbortSignal;
-  /**
-   * Override the `Accept` / `Content-Type` headers. Useful for endpoints that
-   * use plain `JSONRenderer`/`JSONParser` instead of JSON:API renderers (e.g.
-   * the alerts dry-run endpoints `/preview` and `/{id}/test`).
-   */
-  acceptOverride?: string;
-  contentTypeOverride?: string;
 }
 
 const isPairArray = (
@@ -97,8 +90,6 @@ export const alertsRequest = async <T>(
     attachAuth = true,
     cache,
     signal,
-    acceptOverride,
-    contentTypeOverride,
   } = options;
   try {
     const baseHeaders = attachAuth
@@ -110,8 +101,6 @@ export const alertsRequest = async <T>(
             : {}),
         } as Record<string, string>);
     const headers: Record<string, string> = { ...baseHeaders };
-    if (acceptOverride) headers.Accept = acceptOverride;
-    if (contentTypeOverride) headers["Content-Type"] = contentTypeOverride;
 
     const url = buildUrl(path, query);
     const response = await fetch(url, {

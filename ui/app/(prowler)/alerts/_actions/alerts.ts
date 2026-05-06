@@ -234,18 +234,19 @@ const normalizePreviewResponse = (
 
 export const previewAlertCondition = async (payload: {
   condition: AlertCondition;
-  trigger?: AlertTriggerKind;
 }): Promise<AlertsActionResult<AlertPreviewResponse>> => {
   const result = await alertsRequest<
     AlertPreviewResponse | AlertPreviewEnvelope
   >(`${ALERT_RULES_API_PATH}/preview`, {
     method: "POST",
     body: {
-      condition: payload.condition,
-      trigger: payload.trigger,
+      data: {
+        type: "alert-rule-previews",
+        attributes: {
+          condition: payload.condition,
+        },
+      },
     },
-    acceptOverride: "application/vnd.api+json, application/json",
-    contentTypeOverride: "application/json",
   });
   breadcrumb(
     result.ok ? "alerts.preview" : "alerts.preview.failed",
