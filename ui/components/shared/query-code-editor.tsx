@@ -10,8 +10,6 @@ import { EditorState } from "@codemirror/state";
 import { tags } from "@lezer/highlight";
 import CodeMirror, {
   EditorView,
-  highlightActiveLineGutter,
-  lineNumbers,
   placeholder as codeEditorPlaceholder,
 } from "@uiw/react-codemirror";
 import { Check, Copy } from "lucide-react";
@@ -1177,6 +1175,7 @@ interface QueryCodeEditorProps
   editable?: boolean;
   minHeight?: number;
   showCopyButton?: boolean;
+  showLineNumbers?: boolean;
   onChange: (value: string) => void;
   onBlur?: () => void;
 }
@@ -1195,6 +1194,7 @@ export const QueryCodeEditor = ({
   editable = true,
   minHeight = 320,
   showCopyButton = false,
+  showLineNumbers = true,
   onChange,
   onBlur,
   ...props
@@ -1208,8 +1208,6 @@ export const QueryCodeEditor = ({
     : lightHighlightStyle;
 
   const extensions = [
-    lineNumbers(),
-    highlightActiveLineGutter(),
     EditorView.lineWrapping,
     codeEditorPlaceholder(placeholder ?? ""),
     EditorView.contentAttributes.of({
@@ -1260,6 +1258,7 @@ export const QueryCodeEditor = ({
     <div
       data-testid="query-code-editor"
       data-language={language}
+      data-show-line-numbers={String(showLineNumbers)}
       className={cn(
         "border-border-neutral-secondary bg-bg-neutral-primary overflow-hidden rounded-xl border",
         invalid && "border-border-error-primary",
@@ -1307,8 +1306,9 @@ export const QueryCodeEditor = ({
         basicSetup={{
           foldGutter: false,
           highlightActiveLine: false,
-          highlightActiveLineGutter: false,
+          highlightActiveLineGutter: showLineNumbers,
           searchKeymap: false,
+          lineNumbers: showLineNumbers,
         }}
         editable={editable}
         onChange={onChange}

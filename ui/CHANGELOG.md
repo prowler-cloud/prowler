@@ -10,6 +10,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
+## [1.25.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- CLI command in the finding drawer no longer renders the line-number gutter, matching the original styled block while removing the leading `1` [(#11059)](https://github.com/prowler-cloud/prowler/pull/11059)
+
+---
+
 ## [1.25.2] (Prowler v5.25.2)
 
 ### 🔄 Changed
