@@ -72,7 +72,7 @@ describe("layoutWithDagre", () => {
     expect(a).toEqual(b);
   });
 
-  it("spreads sibling nodes horizontally to use wide graph space", () => {
+  it("places connected children to the right and stacks siblings within the horizontal rank", () => {
     const rootNode: GraphNode = {
       id: "root",
       labels: ["AWSAccount"],
@@ -106,6 +106,9 @@ describe("layoutWithDagre", () => {
       })),
     );
 
+    const rootPosition = rfNodes.find(
+      (candidate) => candidate.id === "root",
+    )?.position;
     const siblingPositions = siblingNodes.map((node) => {
       const rfNode = rfNodes.find((candidate) => candidate.id === node.id);
 
@@ -121,10 +124,14 @@ describe("layoutWithDagre", () => {
       Math.max(...siblingPositions.map((position) => position.y)) -
       Math.min(...siblingPositions.map((position) => position.y));
 
-    expect(xSpread).toBeGreaterThan(ySpread);
+    expect(rootPosition).toBeDefined();
+    siblingPositions.forEach((position) => {
+      expect(position.x).toBeGreaterThan(rootPosition?.x ?? 0);
+    });
+    expect(ySpread).toBeGreaterThan(xSpread);
   });
 
-  it("connects edges through top and bottom node sides for vertical layout", () => {
+  it("connects edges through right and left node sides for horizontal layout", () => {
     const { rfNodes } = layoutWithDagre(
       [findingNode, resourceNode],
       [
@@ -138,8 +145,8 @@ describe("layoutWithDagre", () => {
     );
 
     rfNodes.forEach((node) => {
-      expect(node.sourcePosition).toBe(Position.Bottom);
-      expect(node.targetPosition).toBe(Position.Top);
+      expect(node.sourcePosition).toBe(Position.Right);
+      expect(node.targetPosition).toBe(Position.Left);
     });
   });
 

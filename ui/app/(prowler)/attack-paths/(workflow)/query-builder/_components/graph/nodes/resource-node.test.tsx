@@ -32,7 +32,7 @@ const buildNodeProps = (graphNode: GraphNode): NodeProps =>
   }) as unknown as NodeProps;
 
 describe("ResourceNode", () => {
-  it("positions graph handles for vertical top-to-bottom edges", () => {
+  it("positions graph handles for horizontal left-to-right edges", () => {
     // Given
     const props = buildNodeProps(buildGraphNode("S3Bucket", "logs"));
 
@@ -42,8 +42,10 @@ describe("ResourceNode", () => {
     // Then
     expect(hiddenHandlesMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        sourcePosition: Position.Bottom,
-        targetPosition: Position.Top,
+        sourcePosition: Position.Right,
+        sourceStyle: { left: 90, top: 26 },
+        targetPosition: Position.Left,
+        targetStyle: { left: 46, top: 26 },
       }),
       undefined,
     );

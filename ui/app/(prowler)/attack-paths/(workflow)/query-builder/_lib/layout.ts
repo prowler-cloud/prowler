@@ -65,7 +65,7 @@ export const layoutWithDagre = (
 ): { rfNodes: Node<NodeData>[]; rfEdges: Edge[] } => {
   const g = new Graph();
   g.setGraph({
-    rankdir: "TB",
+    rankdir: "LR",
     nodesep: 80,
     ranksep: 150,
     marginx: 50,
@@ -112,8 +112,8 @@ export const layoutWithDagre = (
         x: dagreNode.x - width / 2,
         y: dagreNode.y - height / 2,
       },
-      sourcePosition: Position.Bottom,
-      targetPosition: Position.Top,
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
       data: { graphNode: node },
       width,
       height,
