@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+## [0.7.0] (Prowler UNRELEASED)
+
+### 🔐 Security
+
+- `cryptography` from 46.0.1 to 47.0.0 (transitive) for CVE-2026-39892 and CVE-2026-26007 / CVE-2026-34073 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
+
+---
+
 ## [0.6.0] (Prowler v5.23.0)
 
 ### 🚀 Added

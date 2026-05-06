@@ -5,10 +5,20 @@ on:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-tests.yml'
+      - '.github/workflows/api-code-quality.yml'
+      - '.github/actions/setup-python-poetry/**'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-tests.yml'
+      - '.github/workflows/api-code-quality.yml'
+      - '.github/actions/setup-python-poetry/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
