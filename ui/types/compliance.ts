@@ -219,6 +219,50 @@ export interface CCCAttributesMetadata {
   }>;
 }
 
+// ASD Essential Eight enums — modelled on the canonical Maturity Model
+// (Nov 2023). Only ML1 ships today; ML2/ML3 are scoped out of the framework
+// but kept here so the type covers any future expansion without a schema
+// edit. AssessmentStatus and CloudApplicability are exhaustive per the JSON
+// fixture; new variants must be added explicitly.
+export const ASD_MATURITY_LEVEL = {
+  ML1: "ML1",
+  ML2: "ML2",
+  ML3: "ML3",
+} as const;
+export type ASDMaturityLevel =
+  (typeof ASD_MATURITY_LEVEL)[keyof typeof ASD_MATURITY_LEVEL];
+
+export const ASD_ASSESSMENT_STATUS = {
+  AUTOMATED: "Automated",
+  MANUAL: "Manual",
+} as const;
+export type ASDAssessmentStatus =
+  (typeof ASD_ASSESSMENT_STATUS)[keyof typeof ASD_ASSESSMENT_STATUS];
+
+export const ASD_CLOUD_APPLICABILITY = {
+  FULL: "full",
+  PARTIAL: "partial",
+  LIMITED: "limited",
+  NON_APPLICABLE: "non-applicable",
+} as const;
+export type ASDCloudApplicability =
+  (typeof ASD_CLOUD_APPLICABILITY)[keyof typeof ASD_CLOUD_APPLICABILITY];
+
+export interface ASDEssentialEightAttributesMetadata {
+  Section: string;
+  MaturityLevel: ASDMaturityLevel;
+  AssessmentStatus: ASDAssessmentStatus;
+  CloudApplicability: ASDCloudApplicability;
+  MitigatedThreats: string[];
+  Description: string;
+  RationaleStatement: string;
+  ImpactStatement: string;
+  RemediationProcedure: string;
+  AuditProcedure: string;
+  AdditionalInformation: string;
+  References: string;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -240,6 +284,7 @@ export interface AttributesItemData {
         | MITREAttributesMetadata[]
         | CCCAttributesMetadata[]
         | CSAAttributesMetadata[]
+        | ASDEssentialEightAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure
