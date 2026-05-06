@@ -31,6 +31,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Parser-mismatch SSRF in image provider registry auth where crafted bearer-token realms and pagination links could force requests to internal addresses and leak credentials cross-origin [(#10945)](https://github.com/prowler-cloud/prowler/pull/10945)
 - `cryptography` from 46.0.6 to 46.0.7 and `trivy` binary from 0.69.2 to 0.70.0 in the SDK image for CVE-2026-39892 and CVE-2026-33186 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
 
+## [5.25.3] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Oracle cloud identity scans now scan known or supplied regions to better support non ashburn tenancies [(#10528)](https://github.com/prowler-cloud/prowler/pull/10529)
+
 ---
 
 ## [5.25.2] (Prowler v5.25.2)
