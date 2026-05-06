@@ -1,6 +1,8 @@
+import { Globe2, KeyRound, Network, Server, UserRound } from "lucide-react";
 import { describe, expect, it } from "vitest";
 
 import {
+  AmazonEC2Icon,
   AmazonS3Icon,
   AmazonVPCIcon,
   AWSAccountIcon,
@@ -51,6 +53,48 @@ describe("resolveNodeVisual", () => {
       });
       expect(visual.Icon).toBe(AmazonS3Icon);
     });
+
+    it.each([
+      ["AWSAccount", NODE_CATEGORY.ACCOUNT, "AWS Account", AWSAccountIcon],
+      ["S3Bucket", NODE_CATEGORY.STORAGE, "S3 Bucket", AmazonS3Icon],
+      ["S3", NODE_CATEGORY.STORAGE, "S3", AmazonS3Icon],
+      ["VPC", NODE_CATEGORY.NETWORK, "VPC", AmazonVPCIcon],
+      ["Subnet", NODE_CATEGORY.NETWORK, "Subnet", Network],
+      ["SecurityGroup", NODE_CATEGORY.NETWORK, "Security Group", Network],
+      ["InternetGateway", NODE_CATEGORY.NETWORK, "Internet Gateway", Globe2],
+      ["DefaultGateway", NODE_CATEGORY.NETWORK, "Default Gateway", Globe2],
+      ["EC2Instance", NODE_CATEGORY.COMPUTE, "EC2 Instance", AmazonEC2Icon],
+      [
+        "VirtualMachine",
+        NODE_CATEGORY.COMPUTE,
+        "Virtual Machine",
+        AmazonEC2Icon,
+      ],
+      ["Compute", NODE_CATEGORY.COMPUTE, "Compute", Server],
+      ["NIC", NODE_CATEGORY.COMPUTE, "NIC", Server],
+      ["IAMUser", NODE_CATEGORY.IDENTITY, "IAM User", AWSIAMIcon],
+      ["IAMRole", NODE_CATEGORY.IDENTITY, "IAM Role", AWSIAMIcon],
+      ["ServiceAccount", NODE_CATEGORY.IDENTITY, "Service Account", UserRound],
+      ["AccessKey", NODE_CATEGORY.SECRET, "Access Key", KeyRound],
+      ["Secret", NODE_CATEGORY.SECRET, "Secret", KeyRound],
+    ] as const)(
+      "should map %s to %s with the expected icon",
+      (label, category, description, Icon) => {
+        // Given
+        const node = buildNode([label]);
+
+        // When
+        const visual = resolveNodeVisual(node);
+
+        // Then
+        expect(visual).toMatchObject({
+          category,
+          description,
+          fallbackUsed: false,
+        });
+        expect(visual.Icon).toBe(Icon);
+      },
+    );
 
     it("should resolve VPC nodes to network metadata", () => {
       // Given
