@@ -2,11 +2,28 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.25.2] (Prowler UNRELEASED)
+## [1.26.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Standardized "Providers" wording across UI and documentation, replacing legacy "Cloud Providers" / "Accounts" / "Account Groups" copy [(#10971)](https://github.com/prowler-cloud/prowler/pull/10971)
+
+---
+
+## [1.25.3] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
 
 - Finding detail drawer now labels remediation actions from finding-level recommendation URLs by destination: "View CVE", "View in Prowler Hub", "View Advisory", or "View Reference", while keeping URL-only remediation cards labeled [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
+
+---
+
+## [1.25.2] (Prowler v5.25.2)
+
+### 🔄 Changed
+
+- Compliance cards: progress bar now spans the full card width, the passing-requirements caption sits beside the framework logo under the title, and the ISO 27001 logo asset is recentered within its tile [(#10939)](https://github.com/prowler-cloud/prowler/pull/10939)
+- Findings expanded resource rows now drop the redundant cube icons, render Service and Region with the same compact label style as Last seen and Failing for, and reorder columns to Status, Resource, Provider, Severity, then field labels [(#10949)](https://github.com/prowler-cloud/prowler/pull/10949)
 
 ---
 

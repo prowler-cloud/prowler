@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
+from prowler.providers.vercel.lib.billing import extract_billing_plan
 from prowler.providers.vercel.lib.service.service import VercelService
 
 
@@ -67,6 +68,7 @@ class Team(VercelService):
                 id=team_data.get("id", team_id),
                 name=team_data.get("name", ""),
                 slug=team_data.get("slug", ""),
+                billing_plan=extract_billing_plan(team_data),
                 saml=saml_config,
                 directory_sync_enabled=dir_sync,
                 created_at=created_at,
@@ -151,6 +153,7 @@ class VercelTeam(BaseModel):
     id: str
     name: str
     slug: str
+    billing_plan: Optional[str] = None
     saml: Optional[SAMLConfig] = None
     directory_sync_enabled: bool = False
     members: list[VercelTeamMember] = Field(default_factory=list)

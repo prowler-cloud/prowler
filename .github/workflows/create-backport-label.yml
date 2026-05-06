@@ -43,14 +43,11 @@ jobs:
 
           echo "Processing release tag: $RELEASE_TAG"
 
-          # Remove 'v' prefix if present (e.g., v3.2.0 -> 3.2.0)
           VERSION_ONLY="${RELEASE_TAG#v}"
 
-          # Check if it's a minor version (X.Y.0)
           if [[ "$VERSION_ONLY" =~ ^([0-9]+)\.([0-9]+)\.0$ ]]; then
             echo "Release $RELEASE_TAG (version $VERSION_ONLY) is a minor version. Proceeding to create backport label."
 
-            # Extract X.Y from X.Y.0 (e.g., 5.6 from 5.6.0)
             MAJOR="${BASH_REMATCH[1]}"
             MINOR="${BASH_REMATCH[2]}"
             TWO_DIGIT_VERSION="${MAJOR}.${MINOR}"
@@ -62,7 +59,6 @@ jobs:
             echo "Label name: $LABEL_NAME"
             echo "Label description: $LABEL_DESC"
 
-            # Check if label already exists
             if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^${LABEL_NAME}[[:space:]]"; then
               echo "Label '$LABEL_NAME' already exists."
             else

@@ -14,15 +14,15 @@ export const NoProvidersConnected = () => {
           <div className="flex items-center justify-start gap-3">
             <InfoIcon className="h-6 w-6 text-gray-800 dark:text-white" />
             <h2 className="text-lg font-bold text-gray-800 dark:text-white">
-              No Connected Cloud Providers
+              No Connected Providers
             </h2>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            No cloud providers are currently connected. Connecting a cloud
-            provider is required to launch on-demand scans.
+            No providers are currently connected. Connecting a provider is
+            required to launch on-demand scans.
           </p>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            Once the cloud providers are correctly configured, this message will
+            Once the providers are correctly configured, this message will
             disappear, and on-demand scans can be launched.
           </p>
         </div>
@@ -30,9 +30,9 @@ export const NoProvidersConnected = () => {
           <Button
             asChild
             className="w-full justify-center md:w-fit"
-            aria-label="Go to Cloud providers page"
+            aria-label="Go to Providers page"
           >
-            <Link href="/providers">Review Cloud Providers</Link>
+            <Link href="/providers">Review Providers</Link>
           </Button>
         </div>
       </CardContent>
