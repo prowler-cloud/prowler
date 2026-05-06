@@ -703,6 +703,9 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                     "databaseVersion": "MYSQL_5_7",
                     "region": "us-central1",
                     "ipAddresses": [{"type": "PRIMARY", "ipAddress": "66.66.66.66"}],
+                    "diskEncryptionConfiguration": {
+                        "kmsKeyName": "projects/123/locations/global/keyRings/keyring1/cryptoKeys/key1"
+                    },
                     "settings": {
                         "ipConfiguration": {
                             "requireSsl": True,
@@ -711,6 +714,7 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                         },
                         "backupConfiguration": {"enabled": True},
                         "databaseFlags": [],
+                        "availabilityType": "REGIONAL",
                     },
                 },
                 {
@@ -726,6 +730,7 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                         },
                         "backupConfiguration": {"enabled": False},
                         "databaseFlags": [],
+                        "availabilityType": "ZONAL",
                     },
                 },
             ]
