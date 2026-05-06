@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- ASD Essential Eight compliance framework support [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- ASD Essential Eight compliance framework support [(#11071)](https://github.com/prowler-cloud/prowler/pull/11071)
 
 ### 🔄 Changed
 
