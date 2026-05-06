@@ -35,7 +35,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- Oracle cloud identity scans now scan known or supplied regions to better support non ashburn tenancies [(#10528)](https://github.com/prowler-cloud/prowler/pull/10529)
+- Oracle cloud identity scans now scan known or supplied regions to better support non ashburn tenancies [(#10529)](https://github.com/prowler-cloud/prowler/pull/10529)
 
 ---
 
