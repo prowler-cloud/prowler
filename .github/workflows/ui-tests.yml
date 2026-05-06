@@ -5,16 +5,10 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'ui/**'
-      - '.github/workflows/ui-tests.yml'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'ui/**'
-      - '.github/workflows/ui-tests.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
