@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Optional
 
 from prowler.lib.logger import logger
-from prowler.lib.outputs.inventory.models import ConnectivityGraph
+from lib.models import ConnectivityGraph
 
 
 # ---------------------------------------------------------------------------
@@ -486,7 +486,7 @@ def generate_inventory_outputs(output_path: str) -> None:
                      "output/prowler-output-20240101120000".
                      The function appends .inventory.json and .inventory.html.
     """
-    from prowler.lib.outputs.inventory.graph_builder import build_graph
+    from lib.graph_builder import build_graph
 
     graph = build_graph()
 

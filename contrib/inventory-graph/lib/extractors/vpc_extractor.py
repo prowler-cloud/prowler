@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from prowler.lib.outputs.inventory.models import ResourceEdge, ResourceNode
+from lib.models import ResourceEdge, ResourceNode
 
 
 def extract(client) -> Tuple[List[ResourceNode], List[ResourceEdge]]:

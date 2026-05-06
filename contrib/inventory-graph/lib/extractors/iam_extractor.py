@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, List, Tuple
 
 from prowler.lib.logger import logger
-from prowler.lib.outputs.inventory.models import ResourceEdge, ResourceNode
+from lib.models import ResourceEdge, ResourceNode
 
 
 def _parse_trust_principals(assume_role_policy: Any) -> List[str]:

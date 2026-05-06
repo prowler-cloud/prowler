@@ -12,44 +12,44 @@ import sys
 from typing import Tuple
 
 from prowler.lib.logger import logger
-from prowler.lib.outputs.inventory.models import ConnectivityGraph
+from lib.models import ConnectivityGraph
 
 # Registry: (sys.modules key, attribute name inside that module, extractor module path)
 _SERVICE_REGISTRY: Tuple[Tuple[str, str, str], ...] = (
     (
         "prowler.providers.aws.services.awslambda.awslambda_client",
         "awslambda_client",
-        "prowler.lib.outputs.inventory.extractors.lambda_extractor",
+        "lib.extractors.lambda_extractor",
     ),
     (
         "prowler.providers.aws.services.ec2.ec2_client",
         "ec2_client",
-        "prowler.lib.outputs.inventory.extractors.ec2_extractor",
+        "lib.extractors.ec2_extractor",
     ),
     (
         "prowler.providers.aws.services.vpc.vpc_client",
         "vpc_client",
-        "prowler.lib.outputs.inventory.extractors.vpc_extractor",
+        "lib.extractors.vpc_extractor",
     ),
     (
         "prowler.providers.aws.services.rds.rds_client",
         "rds_client",
-        "prowler.lib.outputs.inventory.extractors.rds_extractor",
+        "lib.extractors.rds_extractor",
     ),
     (
         "prowler.providers.aws.services.elbv2.elbv2_client",
         "elbv2_client",
-        "prowler.lib.outputs.inventory.extractors.elbv2_extractor",
+        "lib.extractors.elbv2_extractor",
     ),
     (
         "prowler.providers.aws.services.s3.s3_client",
         "s3_client",
-        "prowler.lib.outputs.inventory.extractors.s3_extractor",
+        "lib.extractors.s3_extractor",
     ),
     (
         "prowler.providers.aws.services.iam.iam_client",
         "iam_client",
-        "prowler.lib.outputs.inventory.extractors.iam_extractor",
+        "lib.extractors.iam_extractor",
     ),
 )
 
