@@ -219,21 +219,25 @@ vi.mock("@/components/shared/query-code-editor", () => ({
     language,
     value,
     copyValue,
+    showLineNumbers = true,
   }: {
     ariaLabel: string;
     language?: string;
     value: string;
     copyValue?: string;
+    showLineNumbers?: boolean;
   }) => (
     <div
       data-testid="query-code-editor"
       data-aria-label={ariaLabel}
       data-language={language}
+      data-show-line-numbers={String(showLineNumbers)}
     >
       <span>{ariaLabel}</span>
       <span>{value}</span>
       <button
         type="button"
+        aria-label={`Copy ${ariaLabel}`}
         onClick={() => mockClipboardWriteText(copyValue ?? value)}
       >
         Copy editor code
@@ -255,7 +259,22 @@ vi.mock("@/components/icons/services/IconServices", () => ({
 }));
 
 vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
-  CodeSnippet: ({ value }: { value: string }) => <span>{value}</span>,
+  CodeSnippet: ({
+    value,
+    formatter,
+    ariaLabel = "Copy to clipboard",
+  }: {
+    value: string;
+    formatter?: (value: string) => string;
+    ariaLabel?: string;
+  }) => (
+    <div data-testid="code-snippet">
+      <span>{formatter ? formatter(value) : value}</span>
+      <button type="button" onClick={() => mockClipboardWriteText(value)}>
+        {ariaLabel}
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("@/components/ui/custom/custom-link", () => ({
@@ -592,7 +611,7 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
     expect(allText).toContain("CLI Command");
   });
 
-  it("should render remediation snippets with the shared code editor and copy CLI without the visual prompt", async () => {
+  it("should render CLI remediation in the code editor without line numbers and copy without the visual prompt", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -612,17 +631,19 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
 
     // When
     const editors = screen.getAllByTestId("query-code-editor");
-    await user.click(
-      within(editors[0]).getByRole("button", { name: "Copy editor code" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Copy CLI Command" }));
 
     // Then
     expect(editors).toHaveLength(3);
+    expect(editors[0]).toHaveAttribute("data-aria-label", "CLI Command");
+    expect(editors[0]).toHaveAttribute("data-show-line-numbers", "false");
+    expect(editors[1]).toHaveAttribute("data-show-line-numbers", "true");
+    expect(editors[2]).toHaveAttribute("data-show-line-numbers", "true");
     expect(mockClipboardWriteText).toHaveBeenCalledWith("aws s3 ...");
     expect(screen.getByText("$ aws s3 ...")).toBeInTheDocument();
   });
 
-  it("should pass syntax highlighting languages to each remediation editor", () => {
+  it("should pass syntax highlighting languages to all remediation editors", () => {
     // Given
     render(
       <ResourceDetailDrawerContent
@@ -643,10 +664,12 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
     const editors = screen.getAllByTestId("query-code-editor");
 
     // Then
+    expect(editors).toHaveLength(3);
     expect(editors[0]).toHaveAttribute("data-language", "shell");
     expect(editors[1]).toHaveAttribute("data-language", "hcl");
     expect(editors[2]).toHaveAttribute("data-language", "yaml");
     expect(editors[0]).toHaveAttribute("data-aria-label", "CLI Command");
+    expect(editors[1]).toHaveAttribute("data-aria-label", "Terraform");
     expect(editors[2]).toHaveAttribute("data-aria-label", "CloudFormation");
   });
 });
