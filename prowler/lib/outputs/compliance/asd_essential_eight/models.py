@@ -1,9 +1,9 @@
 from pydantic.v1 import BaseModel
 
 
-class EssentialEightAWSModel(BaseModel):
+class ASDEssentialEightAWSModel(BaseModel):
     """
-    EssentialEightAWSModel generates a finding's output in AWS ASD Essential Eight Compliance format.
+    ASDEssentialEightAWSModel generates a finding's output in AWS ASD Essential Eight Compliance format.
     """
 
     Provider: str
