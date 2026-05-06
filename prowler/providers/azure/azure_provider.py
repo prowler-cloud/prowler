@@ -104,7 +104,7 @@ class AzureProvider(Provider):
     _region_config: AzureRegionConfig
     _locations: dict
     _mutelist: AzureMutelist
-    _resource_groups: list
+    _resource_groups: dict[str, list[str]]
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -345,8 +345,8 @@ class AzureProvider(Provider):
         return self._mutelist
 
     @property
-    def resource_groups(self) -> list:
-        """Returns the list of resource groups to be scanned."""
+    def resource_groups(self) -> dict[str, list[str]]:
+        """Mapping of subscription name to the list of resource groups to scan within it."""
         return self._resource_groups
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
@@ -464,7 +464,7 @@ class AzureProvider(Provider):
             f"Azure Tenant Domain: {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} Azure Tenant ID: {Fore.YELLOW}{self._identity.tenant_ids[0]}{Style.RESET_ALL}",
             f"Azure Region: {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
             f"Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}",
-            f"Azure Resource Groups: {Fore.YELLOW}{sorted({rg for rgs in self._resource_groups.values() for rg in rgs}) if self._resource_groups else 'ALL'}{Style.RESET_ALL}",
+            f"Azure Resource Groups: {Fore.YELLOW}{sorted({rg for rgs in self._resource_groups.values() for rg in rgs}) if any(self._resource_groups.values()) else ('NONE (no matching resource groups found)' if self._resource_groups else 'ALL')}{Style.RESET_ALL}",
             f"Azure Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
         ]
         report_title = (
