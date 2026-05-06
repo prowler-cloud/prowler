@@ -262,7 +262,9 @@ describe("running a query", () => {
 });
 
 describe("exploring the graph", () => {
-  test("clicking a finding opens the filtered view", async ({ mountWith }) => {
+  test("clicking a finding opens the filtered view and finding details", async ({
+    mountWith,
+  }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
@@ -270,40 +272,48 @@ describe("exploring the graph", () => {
 
     expect(graph.isInFilteredView).toBe(false);
     await graph.clickFirstFindingNode();
+
     expect(graph.isInFilteredView).toBe(true);
+    expect(getFindingByIdMock).toHaveBeenCalledTimes(1);
     expect(graph.hasNodeDetailsModal).toBe(false);
+    expect(graph.hasNodeActionDialog).toBe(false);
   });
 
-  test("clicking a resource with findings opens the action selector", async ({
+  test("clicking a resource with findings directly reveals related finding nodes", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
+    expect(graph.findingNodes.length).toBe(0);
     expect(graph.hasNodeDetailsModal).toBe(false);
 
     await graph.clickFirstResourceNode();
-
-    expect(graph.hasNodeActionDialog).toBe(true);
-    expect(graph.hasNodeDetailsModal).toBe(false);
-  });
-
-  test("choosing Show findings reveals related finding nodes", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-
-    await graph.clickFirstResourceNode();
-    await graph.chooseShowFindingsAction();
 
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     expect(graph.hasNodeDetailsModal).toBe(false);
+    expect(graph.hasNodeActionDialog).toBe(false);
   });
 
-  test("choosing Show findings re-fits around the resource and its findings", async ({
+  test("clicking an expanded resource with findings hides its related finding nodes", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    await graph.clickFirstResourceNode();
+    expect(graph.findingNodes.length).toBeGreaterThan(0);
+
+    await graph.clickFirstResourceNode();
+
+    expect(graph.findingNodes.length).toBe(0);
+    expect(graph.hasNodeDetailsModal).toBe(false);
+    expect(graph.hasNodeActionDialog).toBe(false);
+  });
+
+  test("clicking a resource with findings re-fits around the resource and its findings", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -313,7 +323,6 @@ describe("exploring the graph", () => {
     const initialViewport = graph.viewportTransform;
 
     await graph.clickFirstResourceNode();
-    await graph.chooseShowFindingsAction();
 
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     await graph.waitFor(
@@ -330,7 +339,7 @@ describe("exploring the graph", () => {
       2000,
     );
   });
-  test("expanded resources offer Hide findings in the action selector", async ({
+  test("clicking an expanded resource re-fits the remaining visible graph", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -338,35 +347,12 @@ describe("exploring the graph", () => {
     await graph.waitForLayoutStable(3);
 
     await graph.clickFirstResourceNode();
-    await graph.chooseShowFindingsAction();
-    expect(graph.findingNodes.length).toBeGreaterThan(0);
-
-    await graph.clickFirstResourceNode();
-
-    expect(graph.hasNodeActionDialog).toBe(true);
-    expect(graph.containsText(/Hide findings/i)).toBe(true);
-
-    await graph.chooseHideFindingsAction();
-
-    expect(graph.findingNodes.length).toBe(0);
-  });
-
-  test("choosing Hide findings re-fits the remaining visible graph", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-
-    await graph.clickFirstResourceNode();
-    await graph.chooseShowFindingsAction();
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     await graph.waitForTransition();
 
     const expandedViewport = graph.viewportTransform;
 
     await graph.clickFirstResourceNode();
-    await graph.chooseHideFindingsAction();
 
     expect(graph.findingNodes.length).toBe(0);
     await graph.waitFor(
@@ -383,7 +369,6 @@ describe("exploring the graph", () => {
     await graph.waitForLayoutStable(16);
 
     await graph.clickFirstResourceNode();
-    await graph.chooseShowFindingsAction();
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     await graph.waitForTransition();
 
@@ -398,20 +383,7 @@ describe("exploring the graph", () => {
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     expect(graph.viewportTransform).toBeTruthy();
   });
-  test("choosing View node details opens node details in a modal", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-
-    await graph.clickFirstResourceNode();
-    await graph.chooseViewNodeDetailsAction();
-
-    expect(graph.hasNodeDetailsModal).toBe(true);
-  });
-
-  test("clicking a resource without findings opens node details in a modal", async ({
+  test("clicking a resource without findings does nothing", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -419,30 +391,14 @@ describe("exploring the graph", () => {
     await graph.waitForLayoutStable(3);
 
     expect(graph.hasNodeDetailsModal).toBe(false);
+    expect(graph.hasNodeActionDialog).toBe(false);
+    expect(graph.findingNodes.length).toBe(0);
 
     await graph.clickFirstResourceNodeWithoutFindings();
 
-    expect(graph.hasNodeDetailsModal).toBe(true);
-  });
-
-  test("clicking a parent node in filtered view asks whether to go back or view details", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-    await graph.expandAllFindings();
-    await graph.clickFirstFindingNode();
-    expect(graph.isInFilteredView).toBe(true);
-
-    await graph.clickFirstResourceNode();
-
-    expect(graph.hasNodeActionDialog).toBe(true);
-    expect(graph.containsText(/Back to full graph/i)).toBe(true);
-
-    await graph.chooseBackToFullGraphAction();
-
-    expect(graph.isInFilteredView).toBe(false);
+    expect(graph.findingNodes.length).toBe(0);
+    expect(graph.hasNodeDetailsModal).toBe(false);
+    expect(graph.hasNodeActionDialog).toBe(false);
   });
 
   test("exiting the filtered view restores the full graph", async ({

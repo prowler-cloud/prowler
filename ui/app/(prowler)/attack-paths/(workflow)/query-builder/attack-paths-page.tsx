@@ -31,7 +31,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/shadcn/dialog";
-import { Modal } from "@/components/shadcn/modal/modal";
 import { useToast } from "@/components/ui";
 import type {
   AttackPathQuery,
@@ -47,7 +46,6 @@ import {
   GraphControls,
   GraphLegend,
   GraphLoading,
-  NodeDetailPanel as NodeDetailDrawer,
   QueryDescription,
   QueryExecutionError,
   QueryParametersForm,
@@ -58,29 +56,6 @@ import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
 import { exportGraphAsPNG } from "./_lib";
-
-const NODE_ACTION_CONTEXT = {
-  RESOURCE_FINDINGS: "resource-findings",
-  FILTERED_PARENT: "filtered-parent",
-} as const;
-
-type NodeActionContext =
-  (typeof NODE_ACTION_CONTEXT)[keyof typeof NODE_ACTION_CONTEXT];
-
-interface NodeActionBase {
-  node: GraphNode;
-  context: NodeActionContext;
-}
-
-interface ResourceFindingsNodeAction extends NodeActionBase {
-  context: typeof NODE_ACTION_CONTEXT.RESOURCE_FINDINGS;
-}
-
-interface FilteredParentNodeAction extends NodeActionBase {
-  context: typeof NODE_ACTION_CONTEXT.FILTERED_PARENT;
-}
-
-type NodeActionState = ResourceFindingsNodeAction | FilteredParentNodeAction;
 
 /**
  * Attack Paths
@@ -98,7 +73,6 @@ export default function AttackPathsPage() {
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-  const [nodeAction, setNodeAction] = useState<NodeActionState | null>(null);
   const graphRef = useRef<GraphHandle>(null);
   const fullscreenGraphRef = useRef<GraphHandle>(null);
   const findingNavigationInFlightRef = useRef(false);
@@ -334,11 +308,6 @@ export default function AttackPathsPage() {
       return;
     }
 
-    if (graphState.isFilteredView) {
-      setNodeAction({ node, context: NODE_ACTION_CONTEXT.FILTERED_PARENT });
-      return;
-    }
-
     const sourceData = graphState.fullData || graphState.data;
     const hasFindings = sourceData?.edges?.some((edge) => {
       if (edge.source !== node.id && edge.target !== node.id) return false;
@@ -350,39 +319,12 @@ export default function AttackPathsPage() {
     });
 
     if (hasFindings) {
-      setNodeAction({ node, context: NODE_ACTION_CONTEXT.RESOURCE_FINDINGS });
-      return;
+      graphState.toggleExpandedResource(node.id);
     }
-
-    finding.resetFindingDetails();
-    graphState.selectNode(node.id);
   };
 
   const handleBackToFullView = () => {
     graphState.exitFilteredView();
-  };
-
-  const handleCloseDetails = () => {
-    graphState.selectNode(null);
-  };
-
-  const handleShowNodeFindings = () => {
-    if (!nodeAction) return;
-    graphState.toggleExpandedResource(nodeAction.node.id);
-    setNodeAction(null);
-  };
-
-  const handleOpenNodeDetails = () => {
-    if (!nodeAction) return;
-    finding.resetFindingDetails();
-    graphState.selectNode(nodeAction.node.id);
-    setNodeAction(null);
-  };
-
-  const handleReturnToFullGraph = () => {
-    graphState.exitFilteredView();
-    graphState.selectNode(null);
-    setNodeAction(null);
   };
 
   const handleViewFinding = async (findingId: string) => {
@@ -394,10 +336,6 @@ export default function AttackPathsPage() {
       findingNavigationInFlightRef.current = false;
     }
   };
-
-  const actionNodeFindingsExpanded = nodeAction
-    ? graphState.expandedResources.has(nodeAction.node.id)
-    : false;
 
   const handleGraphExport = async (target: "main" | "fullscreen") => {
     const ref = target === "fullscreen" ? fullscreenGraphRef : graphRef;
@@ -586,7 +524,8 @@ export default function AttackPathsPage() {
                         </span>
                         <span className="flex-1">
                           Click a finding to focus its connected path, or click
-                          a resource to view details and reveal related findings
+                          a resource with findings to show or hide its related
+                          findings
                         </span>
                       </div>
                     )}
@@ -684,50 +623,6 @@ export default function AttackPathsPage() {
                 </>
               ) : null}
             </div>
-          )}
-
-          {/* Node Detail Drawer */}
-          {graphState.data && (
-            <NodeDetailDrawer
-              node={graphState.selectedNode}
-              allNodes={graphState.data.nodes}
-              onClose={handleCloseDetails}
-              onViewFinding={handleViewFinding}
-              viewFindingLoading={finding.findingDetailLoading}
-            />
-          )}
-
-          {nodeAction && (
-            <Modal
-              open={!!nodeAction}
-              onOpenChange={(open) => {
-                if (!open) setNodeAction(null);
-              }}
-              size="md"
-              title="Choose node action"
-              description={
-                nodeAction.context === NODE_ACTION_CONTEXT.FILTERED_PARENT
-                  ? "You're viewing a filtered path. Choose whether to return to the full graph or inspect this node."
-                  : "This node has related findings. Choose whether to reveal them in the graph or inspect the node metadata."
-              }
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <Button variant="outline" onClick={handleOpenNodeDetails}>
-                  View node details
-                </Button>
-                {nodeAction.context === NODE_ACTION_CONTEXT.FILTERED_PARENT ? (
-                  <Button onClick={handleReturnToFullGraph}>
-                    Back to full graph
-                  </Button>
-                ) : (
-                  <Button onClick={handleShowNodeFindings}>
-                    {actionNodeFindingsExpanded
-                      ? "Hide findings"
-                      : "Show findings"}
-                  </Button>
-                )}
-              </div>
-            </Modal>
           )}
 
           {finding.findingDetails && (

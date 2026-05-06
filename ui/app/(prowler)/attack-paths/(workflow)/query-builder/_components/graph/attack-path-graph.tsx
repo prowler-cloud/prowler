@@ -463,6 +463,13 @@ const GraphCanvas = ({
     ...node,
     selected: node.id === selectedNodeId,
     hidden: hiddenFindingIds.has(node.id),
+    className: cn(
+      node.className,
+      isFindingNode(node.data.graphNode.labels) ||
+        resourcesWithFindings.has(node.id)
+        ? "cursor-pointer"
+        : "cursor-default",
+    ),
     data: {
       ...node.data,
       hasFindings: resourcesWithFindings.has(node.id),

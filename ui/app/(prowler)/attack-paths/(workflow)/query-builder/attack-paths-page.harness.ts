@@ -539,9 +539,6 @@ export class AttackPathPageHarness {
       if (el) {
         await this.user.click(el);
         await this.waitForTransition(50);
-        if (this.hasNodeActionDialog) {
-          await this.chooseShowFindingsAction();
-        }
       }
     }
   }
@@ -585,51 +582,6 @@ export class AttackPathPageHarness {
     const btn = this.toolbar.fitButton;
     if (!btn) throw new Error("fit: toolbar not rendered");
     await this.user.click(btn);
-  }
-
-  async closeNodeDetailsModal(): Promise<void> {
-    const btn = this.q('button[aria-label="Close node details"]');
-    if (!btn) throw new Error("closeNodeDetailsModal: modal not rendered");
-    await this.user.click(btn);
-    await this.waitForTransition();
-  }
-
-  async chooseShowFindingsAction(): Promise<void> {
-    const button = Array.from(
-      document.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((btn) => /show findings/i.test(btn.textContent ?? ""));
-    if (!button) throw new Error("chooseShowFindingsAction: button not found");
-    await this.clickElement(button);
-    await this.waitForTransition();
-  }
-
-  async chooseHideFindingsAction(): Promise<void> {
-    const button = Array.from(
-      document.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((btn) => /hide findings/i.test(btn.textContent ?? ""));
-    if (!button) throw new Error("chooseHideFindingsAction: button not found");
-    await this.clickElement(button);
-    await this.waitForTransition();
-  }
-
-  async chooseViewNodeDetailsAction(): Promise<void> {
-    const button = Array.from(
-      document.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((btn) => /view node details/i.test(btn.textContent ?? ""));
-    if (!button)
-      throw new Error("chooseViewNodeDetailsAction: button not found");
-    await this.clickElement(button);
-    await this.waitForTransition();
-  }
-
-  async chooseBackToFullGraphAction(): Promise<void> {
-    const button = Array.from(
-      document.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((btn) => /back to full graph/i.test(btn.textContent ?? ""));
-    if (!button)
-      throw new Error("chooseBackToFullGraphAction: button not found");
-    await this.clickElement(button);
-    await this.waitForTransition();
   }
 
   async exitFilteredView(): Promise<void> {
