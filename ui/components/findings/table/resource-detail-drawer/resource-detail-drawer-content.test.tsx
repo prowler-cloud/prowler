@@ -408,7 +408,7 @@ const mockFinding: ResourceDrawerFinding = {
 };
 
 describe("ResourceDetailDrawerContent — resource navigation", () => {
-  it("should not render resource navigation from the recommendation drawer", () => {
+  it("should render a View Resource link below the resource actions menu", () => {
     // Given
     render(
       <ResourceDetailDrawerContent
@@ -425,10 +425,25 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
       />,
     );
 
+    // When
+    const viewResourceLink = screen.getByRole("link", {
+      name: "View Resource",
+    });
+    const resourceActionsMenu = screen.getByRole("menu", {
+      name: "Resource actions",
+    });
+
     // Then
+    expect(viewResourceLink).toHaveAttribute(
+      "href",
+      "/resources?resourceId=res-1",
+    );
+    expect(viewResourceLink).toHaveAttribute("target", "_blank");
+    expect(viewResourceLink).toHaveAttribute("rel", "noopener noreferrer");
     expect(
-      screen.queryByRole("link", { name: "View Resource" }),
-    ).not.toBeInTheDocument();
+      resourceActionsMenu.compareDocumentPosition(viewResourceLink) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
   });
 });
 const mockResourceRow: FindingResourceRow = {
