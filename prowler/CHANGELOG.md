@@ -30,7 +30,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - Parser-mismatch SSRF in image provider registry auth where crafted bearer-token realms and pagination links could force requests to internal addresses and leak credentials cross-origin [(#10945)](https://github.com/prowler-cloud/prowler/pull/10945)
 
-## [5.25.3] (Prowler v5.25.3 Unreleased)
+## [5.25.3] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
 
