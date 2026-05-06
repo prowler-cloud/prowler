@@ -1,0 +1,36 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudsql_instance_high_availability_enabled",
+  "CheckTitle": "Cloud SQL instance has high availability (REGIONAL) configured",
+  "CheckType": [],
+  "ServiceName": "cloudsql",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "Ensures that Cloud SQL instances have high availability configured by setting availabilityType to REGIONAL. A REGIONAL instance maintains a standby replica in a different zone within the same region and automatically fails over on zone-level outages.",
+  "Risk": "Instances with ZONAL availability have no standby replica. A zone-level outage will cause database downtime until manual recovery, violating availability requirements and potentially breaching SLAs and ISMS-P 2.12.1 disaster preparedness controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/sql/docs/postgres/high-availability",
+    "https://cloud.google.com/sql/docs/sqlserver/high-availability"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --availability-type=REGIONAL",
+      "NativeIaC": "",
+      "Other": "1. Go to Google Cloud Console > SQL > Instances.\n2. Click the instance name, then Edit.\n3. Under Availability, select Multiple zones (Highly available).\n4. Click Save.",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"example\" {\n  name             = \"<instance_name>\"\n  database_version = \"POSTGRES_15\"\n  region           = \"<region>\"\n\n  settings {\n    tier = \"db-custom-2-7680\"\n\n    availability_type = \"REGIONAL\"  # Critical: enables HA standby replica\n\n    backup_configuration {\n      enabled    = true\n      start_time = \"02:00\"\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set availabilityType to REGIONAL for all production Cloud SQL instances. This creates a standby replica in a different zone and enables automatic failover, reducing RTO in the event of a zone outage.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_high_availability_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Enabling HA increases instance cost approximately 2x due to the standby replica. ZONAL instances are acceptable for non-production workloads where downtime is tolerable."
+}
