@@ -317,7 +317,8 @@ class CheckMetadata(BaseModel):
         return check_id
 
     @validator("CheckTitle", pre=True, always=True)
-    def validate_check_title(cls, check_title, values):
+    @classmethod
+    def validate_check_title(cls, check_title, values):  # noqa: F841
         if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             if len(check_title) > 150:
                 raise ValueError(
@@ -330,7 +331,8 @@ class CheckMetadata(BaseModel):
         return check_title
 
     @validator("RelatedUrl", pre=True, always=True)
-    def validate_related_url(cls, related_url, values):
+    @classmethod
+    def validate_related_url(cls, related_url, values):  # noqa: F841
         if related_url and not ProviderABC.is_tool_wrapper_provider(
             values.get("Provider")
         ):
@@ -338,7 +340,8 @@ class CheckMetadata(BaseModel):
         return related_url
 
     @validator("Remediation")
-    def validate_recommendation_url(cls, remediation, values):
+    @classmethod
+    def validate_recommendation_url(cls, remediation, values):  # noqa: F841
         if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             url = remediation.Recommendation.Url
             if url and not url.startswith("https://hub.prowler.com/"):
@@ -377,7 +380,8 @@ class CheckMetadata(BaseModel):
         return check_type
 
     @validator("Description", pre=True, always=True)
-    def validate_description(cls, description, values):
+    @classmethod
+    def validate_description(cls, description, values):  # noqa: F841
         if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             if len(description) > 400:
                 raise ValueError(
@@ -386,7 +390,8 @@ class CheckMetadata(BaseModel):
         return description
 
     @validator("Risk", pre=True, always=True)
-    def validate_risk(cls, risk, values):
+    @classmethod
+    def validate_risk(cls, risk, values):  # noqa: F841
         if not ProviderABC.is_tool_wrapper_provider(values.get("Provider")):
             if len(risk) > 400:
                 raise ValueError(
