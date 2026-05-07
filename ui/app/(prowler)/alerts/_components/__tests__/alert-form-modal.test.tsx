@@ -580,7 +580,6 @@ describe("AlertFormModal", () => {
     alertsActionMocks.previewAlertCondition.mockResolvedValue({
       data: {
         attributes: {
-          would_fire: true,
           summary: {
             finding_count_total: 7,
             top_severity: "critical",
@@ -622,9 +621,9 @@ describe("AlertFormModal", () => {
         }),
       ),
     );
-    const previewStatus = await screen.findByText("Would fire");
-    expect(previewStatus).toBeVisible();
-    const previewCard = previewStatus.closest('[data-slot="card"]');
+    const previewHeading = await screen.findByText("Test result");
+    expect(previewHeading).toBeVisible();
+    const previewCard = previewHeading.closest('[data-slot="card"]');
     expect(previewCard).toBeInTheDocument();
     const previewCardQueries = within(previewCard as HTMLElement);
     expect(
@@ -642,15 +641,20 @@ describe("AlertFormModal", () => {
       previewCardQueries.queryByText(/^duration$/i),
     ).not.toBeInTheDocument();
     expect(previewCardQueries.queryByText(/42 ms/i)).not.toBeInTheDocument();
+    expect(
+      previewCardQueries.queryByText("Would fire"),
+    ).not.toBeInTheDocument();
+    expect(
+      previewCardQueries.queryByText("Would not fire"),
+    ).not.toBeInTheDocument();
   });
 
-  it("should explain when the edited alert would not fire", async () => {
+  it("should explain when the edited alert has no matching findings", async () => {
     // Given
     const user = userEvent.setup();
     alertsActionMocks.previewAlertCondition.mockResolvedValue({
       data: {
         attributes: {
-          would_fire: false,
           summary: {
             finding_count_total: 0,
           },
@@ -666,11 +670,13 @@ describe("AlertFormModal", () => {
     await user.click(screen.getByRole("button", { name: /^test$/i }));
 
     // Then
-    const previewStatus = await screen.findByText("Would not fire");
-    expect(previewStatus).toBeVisible();
     expect(
-      screen.getByText("These filters did not find matching findings."),
+      await screen.findByText(
+        "These filters did not match any findings for the latest scan.",
+      ),
     ).toBeVisible();
+    expect(screen.queryByText("Would fire")).not.toBeInTheDocument();
+    expect(screen.queryByText("Would not fire")).not.toBeInTheDocument();
   });
 
   it("should render preview errors inline in edit mode", async () => {

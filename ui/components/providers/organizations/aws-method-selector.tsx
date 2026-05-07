@@ -3,7 +3,7 @@
 import { Ban, Box, Boxes } from "lucide-react";
 
 import { RadioCard } from "@/components/providers/radio-card";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
+import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 
 interface AwsMethodSelectorProps {
   onSelectSingle: () => void;
@@ -34,21 +34,8 @@ export function AwsMethodSelector({
         onClick={onSelectOrganizations}
         disabled={!isCloudEnv}
       >
-        {!isCloudEnv && <CtaBadge />}
+        {!isCloudEnv && <CloudFeatureBadgeLink />}
       </RadioCard>
     </div>
-  );
-}
-
-function CtaBadge() {
-  return (
-    <a
-      href="https://prowler.com/pricing"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="shrink-0 transition-opacity hover:opacity-90"
-    >
-      <CloudFeatureBadge />
-    </a>
   );
 }

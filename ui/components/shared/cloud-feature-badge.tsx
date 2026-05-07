@@ -44,7 +44,7 @@ export const MenuFeatureBadge = ({
 }: MenuFeatureBadgeProps) => (
   <span
     className={cn(
-      "inline-flex shrink-0 items-center justify-center font-bold",
+      "inline-flex shrink-0 items-center justify-center font-bold whitespace-nowrap",
       FEATURE_BADGE_VARIANT_CLASS[variant],
       FEATURE_BADGE_SIZE_CLASS[size],
       className,
@@ -66,4 +66,25 @@ export const CloudFeatureBadge = ({
     size={size}
     className={className}
   />
+);
+
+interface CloudFeatureBadgeLinkProps
+  extends Omit<MenuFeatureBadgeProps, "variant"> {
+  href?: string;
+}
+
+export const CloudFeatureBadgeLink = ({
+  href = "https://prowler.com/pricing",
+  label,
+  size,
+  className,
+}: CloudFeatureBadgeLinkProps) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="shrink-0 whitespace-nowrap transition-opacity hover:opacity-90"
+  >
+    <CloudFeatureBadge label={label} size={size} className={className} />
+  </a>
 );

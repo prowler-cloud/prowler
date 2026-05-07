@@ -173,7 +173,6 @@ export interface AlertPreviewSummary {
 }
 
 export interface AlertPreviewResponse {
-  would_fire: boolean;
   summary: AlertPreviewSummary;
   sample_finding_ids?: string[];
   evaluation_failed: boolean;

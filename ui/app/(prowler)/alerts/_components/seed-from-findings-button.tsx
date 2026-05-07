@@ -28,14 +28,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
+import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import { ToastAction, useToast } from "@/components/ui";
 import type { ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 const DISABLED_FILTER_TOOLTIP =
   "Apply at least one Findings filter to create an alert from filters.";
-const CLOUD_ONLY_TOOLTIP = "Available in Prowler Cloud";
 const ALERT_SEED_ERROR = "Apply at least one alert-compatible Findings filter.";
 
 const NON_FILTER_QUERY_KEYS = new Set(["sort", "page", "pageSize"]);
@@ -207,7 +206,6 @@ export const SeedFromFindingsButton = ({
     >
       <BellPlusIcon size={14} />
       {seeding ? "Preparing Alert" : "Create Alert"}
-      {!isCloudEnabled && <CloudFeatureBadge label="Prowler Cloud" />}
     </Button>
   );
 
@@ -236,15 +234,26 @@ export const SeedFromFindingsButton = ({
     );
   }
 
+  if (!isCloudEnabled) {
+    return (
+      <span className="relative inline-flex" tabIndex={0}>
+        {button}
+        <span className="absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
+          <CloudFeatureBadgeLink />
+        </span>
+      </span>
+    );
+  }
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="inline-flex" tabIndex={0}>
+        <span className="relative inline-flex" tabIndex={0}>
           {button}
         </span>
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-xs">
-        {isCloudEnabled ? DISABLED_FILTER_TOOLTIP : CLOUD_ONLY_TOOLTIP}
+        {DISABLED_FILTER_TOOLTIP}
       </TooltipContent>
     </Tooltip>
   );

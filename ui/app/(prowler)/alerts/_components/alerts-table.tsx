@@ -42,6 +42,48 @@ interface GetAlertsTableColumnsOptions {
   onDelete: (alert: AlertRule) => void;
 }
 
+const AlertActionsItems = ({
+  alert,
+  isMutating,
+  onEdit,
+  onToggleEnabled,
+  onDelete,
+}: {
+  alert: AlertRule;
+  isMutating: boolean;
+  onEdit: (alert: AlertRule) => void;
+  onToggleEnabled: (alert: AlertRule) => void;
+  onDelete: (alert: AlertRule) => void;
+}) => {
+  const enabled = alert.attributes.enabled;
+  const toggleLabel = enabled ? "Disable" : "Enable";
+
+  return (
+    <>
+      <ActionDropdownItem
+        icon={<PencilIcon />}
+        label="Edit"
+        onSelect={() => onEdit(alert)}
+      />
+      <ActionDropdownItem
+        icon={<PowerIcon />}
+        label={toggleLabel}
+        disabled={isMutating}
+        onSelect={() => onToggleEnabled(alert)}
+      />
+      <ActionDropdownDangerZone>
+        <ActionDropdownItem
+          icon={<TrashIcon />}
+          label="Delete"
+          destructive
+          disabled={isMutating}
+          onSelect={() => onDelete(alert)}
+        />
+      </ActionDropdownDangerZone>
+    </>
+  );
+};
+
 const getAlertsTableColumns = ({
   mutatingId,
   onEdit,
@@ -58,9 +100,28 @@ const getAlertsTableColumns = ({
     ),
     cell: ({ row }) => {
       const alert = row.original;
+      const isMutating = mutatingId === alert.id;
       return (
         <div className="flex w-[320px] max-w-[320px] min-w-0 flex-col gap-1">
-          <span className="truncate font-medium">{alert.attributes.name}</span>
+          <ActionDropdown
+            align="start"
+            trigger={
+              <button
+                type="button"
+                className="hover:text-button-tertiary block w-full min-w-0 truncate text-left font-medium transition-colors"
+              >
+                {alert.attributes.name}
+              </button>
+            }
+          >
+            <AlertActionsItems
+              alert={alert}
+              isMutating={isMutating}
+              onEdit={onEdit}
+              onToggleEnabled={onToggleEnabled}
+              onDelete={onDelete}
+            />
+          </ActionDropdown>
           {alert.attributes.description && (
             <span
               className="text-text-neutral-secondary block w-full truncate text-xs"
@@ -116,31 +177,16 @@ const getAlertsTableColumns = ({
     cell: ({ row }) => {
       const alert = row.original;
       const isMutating = mutatingId === alert.id;
-      const enabled = alert.attributes.enabled;
-      const toggleLabel = enabled ? "Disable" : "Enable";
       return (
         <div className="flex items-center justify-end">
           <ActionDropdown ariaLabel={`Actions for ${alert.attributes.name}`}>
-            <ActionDropdownItem
-              icon={<PencilIcon />}
-              label="Edit"
-              onSelect={() => onEdit(alert)}
+            <AlertActionsItems
+              alert={alert}
+              isMutating={isMutating}
+              onEdit={onEdit}
+              onToggleEnabled={onToggleEnabled}
+              onDelete={onDelete}
             />
-            <ActionDropdownItem
-              icon={<PowerIcon />}
-              label={toggleLabel}
-              disabled={isMutating}
-              onSelect={() => onToggleEnabled(alert)}
-            />
-            <ActionDropdownDangerZone>
-              <ActionDropdownItem
-                icon={<TrashIcon />}
-                label="Delete"
-                destructive
-                disabled={isMutating}
-                onSelect={() => onDelete(alert)}
-              />
-            </ActionDropdownDangerZone>
           </ActionDropdown>
         </div>
       );

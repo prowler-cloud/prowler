@@ -215,4 +215,26 @@ describe("AlertsTable", () => {
     expect(onToggleEnabled).toHaveBeenCalledWith(alert);
     expect(onDelete).toHaveBeenCalledWith(alert);
   });
+
+  it("should open the action dropdown when clicking the alert name", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <AlertsTable
+        alerts={[makeRule()]}
+        mutatingId={null}
+        onEdit={vi.fn()}
+        onToggleEnabled={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Critical findings" }));
+
+    // Then
+    expect(screen.getByRole("menuitem", { name: /edit/i })).toBeVisible();
+    expect(screen.getByRole("menuitem", { name: /disable/i })).toBeVisible();
+    expect(screen.getByRole("menuitem", { name: /delete/i })).toBeVisible();
+  });
 });

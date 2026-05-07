@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
+import { isValidElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -22,6 +22,7 @@ const routerMocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   replace: vi.fn(),
   push: vi.fn(),
+  currentSearch: "",
 }));
 
 const toastMock = vi.hoisted(() => vi.fn());
@@ -52,7 +53,7 @@ vi.mock("@/lib", () => ({
 vi.mock("next/navigation", () => ({
   usePathname: () => "/alerts",
   useRouter: () => routerMocks,
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(routerMocks.currentSearch),
 }));
 
 vi.mock("@/components/ui", () => ({
@@ -61,29 +62,56 @@ vi.mock("@/components/ui", () => ({
 
 vi.mock("@/components/shadcn", () => ({
   Button: ({
+    asChild,
     children,
     disabled,
     onClick,
     variant,
   }: {
+    asChild?: boolean;
     children: ReactNode;
     disabled?: boolean;
     onClick?: () => void;
     variant?: string;
-  }) => (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      data-variant={variant}
-    >
-      {children}
-    </button>
-  ),
+  }) => {
+    if (asChild && isValidElement(children)) {
+      return <span data-variant={variant}>{children}</span>;
+    }
+
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        data-variant={variant}
+      >
+        {children}
+      </button>
+    );
+  },
 }));
 
 vi.mock("../alert-form-modal", () => ({
-  AlertFormModal: () => null,
+  AlertFormModal: ({
+    open,
+    editingAlert,
+    onOpenChange,
+  }: {
+    open: boolean;
+    editingAlert?: AlertRule | null;
+    onOpenChange: (open: boolean) => void;
+  }) =>
+    open ? (
+      <div
+        role="dialog"
+        aria-label={editingAlert ? "Edit Alert" : "Create Alert"}
+      >
+        <button type="button" onClick={() => onOpenChange(false)}>
+          Close modal
+        </button>
+        {editingAlert?.attributes.name}
+      </div>
+    ) : null,
 }));
 
 vi.mock("../alerts-empty-state", () => ({
@@ -128,6 +156,7 @@ const renderManager = (alerts: AlertRule[]) =>
 describe("AlertsManager", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    routerMocks.currentSearch = "";
   });
 
   it("links to Findings from the alerts description", () => {
@@ -139,6 +168,92 @@ describe("AlertsManager", () => {
 
     // Then
     expect(findingsLink).toHaveAttribute("href", "/findings");
+    expect(findingsLink.closest("[data-variant='link']")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "here." })).toHaveAttribute(
+      "href",
+      "https://docs.prowler.com/user-guide/tutorials/prowler-app",
+    );
+    expect(screen.getByText(/get notified when findings match/i)).toBeVisible();
+  });
+
+  it("opens the edit modal for an initial editing alert", () => {
+    // Given
+    const alert = makeAlert(true);
+
+    // When
+    render(
+      <AlertsManager
+        alerts={[alert]}
+        loadError={null}
+        providers={[]}
+        completedScanIds={[]}
+        scanDetails={[]}
+        uniqueRegions={[]}
+        uniqueServices={[]}
+        uniqueResourceTypes={[]}
+        uniqueCategories={[]}
+        uniqueGroups={[]}
+        initialEditingAlert={alert}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("dialog", { name: /edit alert/i }),
+    ).toHaveTextContent("Enabled alert");
+  });
+
+  it("adds the edit alert id to the URL when opening the edit modal", async () => {
+    // Given
+    const user = userEvent.setup();
+    const alert = makeAlert(true);
+    routerMocks.currentSearch = "page=2&filter[enabled]=true";
+    renderManager([alert]);
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /actions for enabled alert/i }),
+    );
+    await user.click(screen.getByRole("menuitem", { name: /edit/i }));
+
+    // Then
+    expect(routerMocks.replace).toHaveBeenCalledWith(
+      "/alerts?page=2&filter%5Benabled%5D=true&edit=enabled-alert",
+      { scroll: false },
+    );
+    expect(
+      screen.getByRole("dialog", { name: /edit alert/i }),
+    ).toHaveTextContent("Enabled alert");
+  });
+
+  it("removes only the edit alert id from the URL when closing the edit modal", async () => {
+    // Given
+    const user = userEvent.setup();
+    const alert = makeAlert(true);
+    routerMocks.currentSearch = "page=2&edit=enabled-alert";
+    render(
+      <AlertsManager
+        alerts={[alert]}
+        loadError={null}
+        providers={[]}
+        completedScanIds={[]}
+        scanDetails={[]}
+        uniqueRegions={[]}
+        uniqueServices={[]}
+        uniqueResourceTypes={[]}
+        uniqueCategories={[]}
+        uniqueGroups={[]}
+        initialEditingAlert={alert}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /close modal/i }));
+
+    // Then
+    expect(routerMocks.replace).toHaveBeenCalledWith("/alerts?page=2", {
+      scroll: false,
+    });
   });
 
   it("shows a success toast after disabling an alert", async () => {

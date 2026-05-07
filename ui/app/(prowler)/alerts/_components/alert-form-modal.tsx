@@ -146,11 +146,11 @@ const getPreviewSeverityLabel = (severity: string): string =>
   severity.charAt(0).toUpperCase() + severity.slice(1);
 
 const getPreviewMessage = (data: AlertPreviewResponse): string => {
-  if (!data.would_fire) {
-    return "These filters did not find matching findings.";
+  const totalFindings = data.summary.finding_count_total ?? 0;
+  if (totalFindings === 0) {
+    return "These filters did not match any findings for the latest scan.";
   }
 
-  const totalFindings = data.summary.finding_count_total ?? 0;
   const findingLabel = totalFindings === 1 ? "finding" : "findings";
   const topSeverity = data.summary.top_severity;
   const severityClause = topSeverity
@@ -192,17 +192,12 @@ const PreviewSummary = ({ preview }: { preview: PreviewState }) => {
   const data = preview.data;
   if (!data) return null;
 
-  const statusLabel = data.would_fire ? "Would fire" : "Would not fire";
-
   return (
     <Card variant="inner" padding="sm">
       <CardContent className="flex flex-col gap-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-text-neutral-primary text-sm font-medium">
-            Test result
-          </span>
-          <Badge variant="tag">{statusLabel}</Badge>
-        </div>
+        <span className="text-text-neutral-primary text-sm font-medium">
+          Test result
+        </span>
         <p className="text-text-neutral-secondary text-sm">
           {getPreviewMessage(data)}
         </p>

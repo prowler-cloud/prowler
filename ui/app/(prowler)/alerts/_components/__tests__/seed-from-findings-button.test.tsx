@@ -355,9 +355,8 @@ describe("SeedFromFindingsButton", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("should render disabled as a Cloud-only feature in OSS", async () => {
+  it("should render disabled as a Cloud-only feature in OSS", () => {
     // Given
-    const user = userEvent.setup();
     render(
       <SeedFromFindingsButton
         filterBag={{ "filter[severity__in]": "critical" }}
@@ -367,14 +366,19 @@ describe("SeedFromFindingsButton", () => {
 
     // When
     const button = screen.getByRole("button", { name: /Create Alert/i });
-    await user.hover(button.parentElement as HTMLElement);
 
     // Then
     expect(button).toBeDisabled();
-    expect(screen.getByText("Prowler Cloud")).toBeVisible();
-    expect(
-      await screen.findAllByText(/available in prowler cloud/i),
-    ).not.toHaveLength(0);
+    expect(button.className).not.toContain("min-w");
+    expect(button).not.toHaveClass("justify-start");
+    const pricingLink = screen.getByRole("link", {
+      name: /available in prowler cloud/i,
+    });
+    expect(pricingLink).toHaveAttribute("href", "https://prowler.com/pricing");
+    expect(pricingLink).toHaveClass("whitespace-nowrap");
+    expect(pricingLink).toHaveTextContent("Available in Prowler Cloud");
+    expect(pricingLink.closest("button")).toBeNull();
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
     expect(actionMocks.seedAlertRule).not.toHaveBeenCalled();
   });
 });

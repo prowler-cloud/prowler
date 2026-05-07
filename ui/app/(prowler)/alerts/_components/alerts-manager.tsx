@@ -1,7 +1,8 @@
 "use client";
 
+import { Info } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import {
@@ -17,6 +18,7 @@ import {
 import { Button } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
+import { DOCS_URLS } from "@/lib/external-urls";
 import type { MetaDataProps } from "@/types";
 import type { ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
@@ -60,6 +62,8 @@ export const AlertsManager = ({
   initialEditingAlert = null,
 }: AlertsManagerProps) => {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [, startTransition] = useTransition();
   const [modalOpen, setModalOpen] = useState(Boolean(initialEditingAlert));
@@ -71,11 +75,25 @@ export const AlertsManager = ({
 
   const refresh = () => startTransition(() => router.refresh());
 
+  const replaceEditParam = (alertId: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (alertId) {
+      params.set("edit", alertId);
+    } else {
+      params.delete("edit");
+    }
+
+    const queryString = params.toString();
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
+      scroll: false,
+    });
+  };
+
   const closeModal = (open: boolean) => {
     setModalOpen(open);
     if (!open) {
       setEditingRule(null);
-      router.replace("/alerts");
+      replaceEditParam(null);
     }
   };
 
@@ -138,20 +156,37 @@ export const AlertsManager = ({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex max-w-3xl flex-col gap-2">
-          <h1 className="text-text-neutral-primary text-2xl font-semibold">
-            Alerts
-          </h1>
-          <p className="text-text-neutral-secondary text-sm">
-            Get notified when findings match the conditions you define. To
-            create an alert, go to{" "}
-            <Link
-              href="/findings"
-              className="text-primary font-medium underline underline-offset-4"
+          <div className="text-text-neutral-secondary flex flex-wrap items-center gap-1 text-sm">
+            <Info className="size-4 shrink-0" />
+            <span>
+              Get notified when findings match the conditions you define.
+            </span>
+            <span>To create an alert, go to</span>
+            <Button
+              variant="link"
+              size="link-sm"
+              className="h-auto p-0"
+              asChild
             >
-              Findings
-            </Link>
-            .
-          </p>
+              <Link href="/findings">Findings</Link>
+            </Button>
+            <span>.</span>
+            <span>Learn more about configuring the Alerts</span>
+            <Button
+              variant="link"
+              size="link-sm"
+              className="h-auto p-0"
+              asChild
+            >
+              <a
+                href={DOCS_URLS.ALERTS}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span>here.</span>
+              </a>
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -171,6 +206,7 @@ export const AlertsManager = ({
           onEdit={(alert) => {
             setEditingRule(alert);
             setModalOpen(true);
+            replaceEditParam(alert.id);
           }}
           onToggleEnabled={toggleAlert}
           onDelete={setPendingDelete}
