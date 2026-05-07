@@ -169,7 +169,6 @@
             "pages": [
               "user-guide/cli/tutorials/misc",
               "user-guide/cli/tutorials/reporting",
-              "user-guide/cli/tutorials/compliance",
               "user-guide/cli/tutorials/dashboard",
               "user-guide/cli/tutorials/configuration_file",
               "user-guide/cli/tutorials/logging",
@@ -331,7 +330,7 @@
           {
             "group": "Compliance",
             "pages": [
-              "user-guide/compliance/tutorials/prowler-app-compliance",
+              "user-guide/compliance/tutorials/compliance",
               "user-guide/compliance/tutorials/threatscore"
             ]
           },
@@ -496,6 +495,10 @@
     }
   },
   "redirects": [
+    {
+      "source": "/user-guide/cli/tutorials/compliance",
+      "destination": "/user-guide/compliance/tutorials/compliance"
+    },
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-lighthouse",
       "destination": "/user-guide/tutorials/prowler-app-lighthouse"
