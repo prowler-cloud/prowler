@@ -457,13 +457,9 @@ class Test_iam_user_access_not_stale_to_sagemaker:
         iam = IAM(aws_provider)
 
         recent_user_name = "recent-user"
-        recent_user_arn = (
-            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{recent_user_name}"
-        )
+        recent_user_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{recent_user_name}"
         stale_user_name = "stale-user"
-        stale_user_arn = (
-            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{stale_user_name}"
-        )
+        stale_user_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{stale_user_name}"
         no_sagemaker_user_name = "no-sagemaker-user"
         no_sagemaker_user_arn = (
             f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/{no_sagemaker_user_name}"
@@ -530,10 +526,15 @@ class Test_iam_user_access_not_stale_to_sagemaker:
             results_by_id = {r.resource_id: r for r in result}
 
             assert results_by_id[recent_user_name].status == "PASS"
-            assert "accessed SageMaker" in results_by_id[recent_user_name].status_extended
+            assert (
+                "accessed SageMaker" in results_by_id[recent_user_name].status_extended
+            )
 
             assert results_by_id[stale_user_name].status == "FAIL"
-            assert "has not accessed SageMaker" in results_by_id[stale_user_name].status_extended
+            assert (
+                "has not accessed SageMaker"
+                in results_by_id[stale_user_name].status_extended
+            )
             assert "120 days" in results_by_id[stale_user_name].status_extended
 
             assert no_sagemaker_user_name not in results_by_id
