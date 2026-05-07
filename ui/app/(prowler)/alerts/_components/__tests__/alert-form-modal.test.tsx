@@ -516,6 +516,9 @@ describe("AlertFormModal", () => {
     ).toBeTruthy();
     expect(filtersHeading.closest('[data-slot="card"]')).toBeVisible();
     const filterControls = screen.getByTestId("findings-filter-controls");
+    const alertEditGrid = filterControls.querySelector(".grid");
+    expect(alertEditGrid).toHaveClass("xl:grid-cols-3", "2xl:grid-cols-3");
+    expect(alertEditGrid).not.toHaveClass("xl:grid-cols-4", "2xl:grid-cols-5");
     expect(screen.getAllByText("Amazon Web Services")[0]).toBeVisible();
     expect(screen.getByText("All accounts")).toBeVisible();
     expect(within(filterControls).getByText("All Delta")).toBeVisible();

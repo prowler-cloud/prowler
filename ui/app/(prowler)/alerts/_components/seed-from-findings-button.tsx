@@ -35,7 +35,7 @@ import type { ProviderProps } from "@/types/providers";
 
 const DISABLED_FILTER_TOOLTIP =
   "Apply at least one Findings filter to create an alert from filters.";
-const CLOUD_ONLY_TOOLTIP = "Available in Prowler Cloud.";
+const CLOUD_ONLY_TOOLTIP = "Available in Prowler Cloud";
 const ALERT_SEED_ERROR = "Apply at least one alert-compatible Findings filter.";
 
 const NON_FILTER_QUERY_KEYS = new Set(["sort", "page", "pageSize"]);
@@ -64,7 +64,7 @@ interface SeedFromFindingsButtonProps {
   uniqueCategories?: string[];
   uniqueGroups?: string[];
   className?: string;
-  size?: "sm" | "default";
+  size?: "sm" | "default" | "lg";
   defaultName?: string;
   isCloudEnabled?: boolean;
 }
@@ -133,7 +133,7 @@ export const SeedFromFindingsButton = ({
   uniqueCategories = [],
   uniqueGroups = [],
   className,
-  size = "sm",
+  size = "lg",
   defaultName = "Findings filter alert",
   isCloudEnabled = true,
 }: SeedFromFindingsButtonProps) => {
@@ -206,7 +206,7 @@ export const SeedFromFindingsButton = ({
     >
       <BellPlusIcon size={14} />
       {seeding ? "Preparing Alert" : "Create Alert"}
-      {!isCloudEnabled && <CloudFeatureBadge />}
+      {!isCloudEnabled && <CloudFeatureBadge label="Prowler Cloud" />}
     </Button>
   );
 
@@ -238,11 +238,7 @@ export const SeedFromFindingsButton = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          className="inline-flex"
-          tabIndex={0}
-          title={isCloudEnabled ? DISABLED_FILTER_TOOLTIP : CLOUD_ONLY_TOOLTIP}
-        >
+        <span className="inline-flex" tabIndex={0}>
           {button}
         </span>
       </TooltipTrigger>

@@ -226,7 +226,7 @@ export const FindingsFilterBatchControls = ({
 
   const alertEditFilterGrid = hasCustomFilters ? (
     <DataTableFilterCustom
-      gridClassName="w-full gap-3"
+      gridClassName="w-full gap-3 xl:grid-cols-3 2xl:grid-cols-3"
       filters={customFilters}
       prependElement={
         <>

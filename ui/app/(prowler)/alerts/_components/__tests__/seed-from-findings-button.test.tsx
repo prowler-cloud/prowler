@@ -136,6 +136,9 @@ describe("SeedFromFindingsButton", () => {
     expect(
       screen.getByRole("button", { name: /Create Alert/i }),
     ).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /Create Alert/i })).toHaveClass(
+      "h-10",
+    );
   });
 
   it("should add all severities when Findings only has non-portable default filters", async () => {
@@ -359,7 +362,7 @@ describe("SeedFromFindingsButton", () => {
 
     // Then
     expect(button).toBeDisabled();
-    expect(screen.getByText("Available in Prowler Cloud")).toBeVisible();
+    expect(screen.getByText("Prowler Cloud")).toBeVisible();
     expect(
       await screen.findAllByText(/available in prowler cloud/i),
     ).not.toHaveLength(0);
