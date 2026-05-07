@@ -33,6 +33,8 @@ def set_mocked_vercel_provider(
     team_id: str = TEAM_ID,
     identity: VercelIdentityInfo = None,
     audit_config: dict = None,
+    billing_plan: str = None,
+    team_billing_plan: str = None,
 ):
     """Create a mocked VercelProvider for testing."""
     provider = MagicMock()
@@ -42,15 +44,22 @@ def set_mocked_vercel_provider(
         team_id=team_id,
         http_session=MagicMock(),
     )
+    resolved_team_billing_plan = (
+        team_billing_plan if team_billing_plan is not None else billing_plan
+    )
+    team_info = VercelTeamInfo(
+        id=TEAM_ID,
+        name=TEAM_NAME,
+        slug=TEAM_SLUG,
+        billing_plan=resolved_team_billing_plan,
+    )
     provider.identity = identity or VercelIdentityInfo(
         user_id=USER_ID,
         username=USERNAME,
         email=USER_EMAIL,
-        team=VercelTeamInfo(
-            id=TEAM_ID,
-            name=TEAM_NAME,
-            slug=TEAM_SLUG,
-        ),
+        billing_plan=billing_plan,
+        team=team_info,
+        teams=[team_info],
     )
     provider.audit_config = audit_config or {"max_retries": 3}
     provider.fixer_config = {}

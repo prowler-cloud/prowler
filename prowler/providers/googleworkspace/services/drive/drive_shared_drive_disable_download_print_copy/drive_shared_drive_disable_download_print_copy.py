@@ -19,11 +19,7 @@ class drive_shared_drive_disable_download_print_copy(Check):
         if drive_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=drive_client.provider.identity,
-                resource_name=drive_client.provider.identity.domain,
-                resource_id=drive_client.provider.identity.customer_id,
-                customer_id=drive_client.provider.identity.customer_id,
-                location="global",
+                resource=drive_client.provider.domain_resource,
             )
 
             allowed = drive_client.policies.allowed_parties_for_download_print_copy

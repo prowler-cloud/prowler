@@ -1,6 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from "react";
+import {
+  type AnchorHTMLAttributes,
+  type ButtonHTMLAttributes,
+  cloneElement,
+  type HTMLAttributes,
+  isValidElement,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -36,8 +43,17 @@ vi.mock("next/image", () => ({
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    children,
+    href,
+    ...props
+  }: AnchorHTMLAttributes<HTMLAnchorElement> & {
+    children: ReactNode;
+    href: string;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
   ),
 }));
 
@@ -64,7 +80,12 @@ vi.mock("@/components/shadcn", () => {
       variant?: string;
       size?: string;
       asChild?: boolean;
-    }) => <button {...props}>{children}</button>,
+    }) =>
+      _asChild && isValidElement(children) ? (
+        cloneElement(children, props)
+      ) : (
+        <button {...props}>{children}</button>
+      ),
     InfoField: ({
       children,
       label,
@@ -198,21 +219,25 @@ vi.mock("@/components/shared/query-code-editor", () => ({
     language,
     value,
     copyValue,
+    showLineNumbers = true,
   }: {
     ariaLabel: string;
     language?: string;
     value: string;
     copyValue?: string;
+    showLineNumbers?: boolean;
   }) => (
     <div
       data-testid="query-code-editor"
       data-aria-label={ariaLabel}
       data-language={language}
+      data-show-line-numbers={String(showLineNumbers)}
     >
       <span>{ariaLabel}</span>
       <span>{value}</span>
       <button
         type="button"
+        aria-label={`Copy ${ariaLabel}`}
         onClick={() => mockClipboardWriteText(copyValue ?? value)}
       >
         Copy editor code
@@ -234,7 +259,22 @@ vi.mock("@/components/icons/services/IconServices", () => ({
 }));
 
 vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
-  CodeSnippet: ({ value }: { value: string }) => <span>{value}</span>,
+  CodeSnippet: ({
+    value,
+    formatter,
+    ariaLabel = "Copy to clipboard",
+  }: {
+    value: string;
+    formatter?: (value: string) => string;
+    ariaLabel?: string;
+  }) => (
+    <div data-testid="code-snippet">
+      <span>{formatter ? formatter(value) : value}</span>
+      <button type="button" onClick={() => mockClipboardWriteText(value)}>
+        {ariaLabel}
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("@/components/ui/custom/custom-link", () => ({
@@ -386,6 +426,45 @@ const mockFinding: ResourceDrawerFinding = {
   scan: null,
 };
 
+describe("ResourceDetailDrawerContent — resource navigation", () => {
+  it("should render a View Resource link below the resource actions menu", () => {
+    // Given
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const viewResourceLink = screen.getByRole("link", {
+      name: "View Resource",
+    });
+    const resourceActionsMenu = screen.getByRole("menu", {
+      name: "Resource actions",
+    });
+
+    // Then
+    expect(viewResourceLink).toHaveAttribute(
+      "href",
+      "/resources?resourceId=res-1",
+    );
+    expect(viewResourceLink).toHaveAttribute("target", "_blank");
+    expect(viewResourceLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(
+      resourceActionsMenu.compareDocumentPosition(viewResourceLink) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+  });
+});
 const mockResourceRow: FindingResourceRow = {
   id: "row-1",
   rowType: "resource",
@@ -532,7 +611,7 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
     expect(allText).toContain("CLI Command");
   });
 
-  it("should render remediation snippets with the shared code editor and copy CLI without the visual prompt", async () => {
+  it("should render CLI remediation in the code editor without line numbers and copy without the visual prompt", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -552,17 +631,19 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
 
     // When
     const editors = screen.getAllByTestId("query-code-editor");
-    await user.click(
-      within(editors[0]).getByRole("button", { name: "Copy editor code" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Copy CLI Command" }));
 
     // Then
     expect(editors).toHaveLength(3);
+    expect(editors[0]).toHaveAttribute("data-aria-label", "CLI Command");
+    expect(editors[0]).toHaveAttribute("data-show-line-numbers", "false");
+    expect(editors[1]).toHaveAttribute("data-show-line-numbers", "true");
+    expect(editors[2]).toHaveAttribute("data-show-line-numbers", "true");
     expect(mockClipboardWriteText).toHaveBeenCalledWith("aws s3 ...");
     expect(screen.getByText("$ aws s3 ...")).toBeInTheDocument();
   });
 
-  it("should pass syntax highlighting languages to each remediation editor", () => {
+  it("should pass syntax highlighting languages to all remediation editors", () => {
     // Given
     render(
       <ResourceDetailDrawerContent
@@ -583,10 +664,12 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
     const editors = screen.getAllByTestId("query-code-editor");
 
     // Then
+    expect(editors).toHaveLength(3);
     expect(editors[0]).toHaveAttribute("data-language", "shell");
     expect(editors[1]).toHaveAttribute("data-language", "hcl");
     expect(editors[2]).toHaveAttribute("data-language", "yaml");
     expect(editors[0]).toHaveAttribute("data-aria-label", "CLI Command");
+    expect(editors[1]).toHaveAttribute("data-aria-label", "Terraform");
     expect(editors[2]).toHaveAttribute("data-aria-label", "CloudFormation");
   });
 });

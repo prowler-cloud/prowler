@@ -28,9 +28,10 @@
     }
   },
   "Categories": [
-    "resilience"
+    "resilience",
+    "vercel-pro-plan"
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Required billing plan: Pro or Enterprise."
 }
