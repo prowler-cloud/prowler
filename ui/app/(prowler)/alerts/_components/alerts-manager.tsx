@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -141,7 +142,15 @@ export const AlertsManager = ({
             Alerts
           </h1>
           <p className="text-text-neutral-secondary text-sm">
-            Get notified when findings match the conditions you define.
+            Get notified when findings match the conditions you define. To
+            create an alert, go to{" "}
+            <Link
+              href="/findings"
+              className="text-primary font-medium underline underline-offset-4"
+            >
+              Findings
+            </Link>
+            .
           </p>
         </div>
       </div>

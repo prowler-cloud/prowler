@@ -28,6 +28,22 @@ const toastMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/app/(prowler)/alerts/_actions", () => actionMocks);
 
+vi.mock("next/link", () => ({
+  default: ({
+    children,
+    href,
+    className,
+  }: {
+    children: ReactNode;
+    href: string;
+    className?: string;
+  }) => (
+    <a href={href} className={className}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock("@/lib", () => ({
   cn: (...classes: Array<string | false | null | undefined>) =>
     classes.filter(Boolean).join(" "),
@@ -112,6 +128,17 @@ const renderManager = (alerts: AlertRule[]) =>
 describe("AlertsManager", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("links to Findings from the alerts description", () => {
+    // Given
+    renderManager([]);
+
+    // When
+    const findingsLink = screen.getByRole("link", { name: "Findings" });
+
+    // Then
+    expect(findingsLink).toHaveAttribute("href", "/findings");
   });
 
   it("shows a success toast after disabling an alert", async () => {
