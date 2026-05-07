@@ -341,7 +341,8 @@
       "Checks": [
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
-        "entra_security_defaults_enabled"
+        "entra_security_defaults_enabled",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ]
     },
     {
@@ -493,7 +494,8 @@
         "keyvault_non_rbac_secret_expiration_set",
         "keyvault_logging_enabled",
         "keyvault_private_endpoints",
-        "keyvault_access_only_through_private_endpoints"
+        "keyvault_access_only_through_private_endpoints",
+        "entra_app_registration_credential_not_expired"
       ]
     },
     {

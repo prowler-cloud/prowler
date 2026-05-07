@@ -332,7 +332,9 @@
         "iam_custom_role_has_permissions_to_administer_resource_locks",
         "iam_role_user_access_admin_restricted",
         "app_function_identity_is_configured",
-        "vm_managed_identity_enabled"
+        "vm_managed_identity_enabled",
+        "entra_user_with_recent_sign_in",
+        "entra_authentication_methods_policy_strong_auth_enforced"
       ]
     },
     {

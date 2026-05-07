@@ -226,7 +226,8 @@
         "entra_security_defaults_enabled",
         "entra_trusted_named_locations_exists",
         "entra_user_with_vm_access_has_mfa",
-        "entra_users_cannot_create_microsoft_365_groups"
+        "entra_users_cannot_create_microsoft_365_groups",
+        "entra_app_registration_credential_not_expired"
       ],
       "Attributes": [
         {
@@ -1377,7 +1378,8 @@
       "Description": "Adversaries may search compromised systems to find and obtain insecurely stored credentials. These credentials can be stored and/or misplaced in many locations on a system, including plaintext files (e.g. Bash History), operating system or application-specific repositories (e.g. Credentials in Registry), or other specialized files/artifacts (e.g. Private Keys).",
       "TechniqueURL": "https://attack.mitre.org/techniques/T1552/",
       "Checks": [
-        "defender_ensure_defender_for_app_services_is_on"
+        "defender_ensure_defender_for_app_services_is_on",
+        "entra_app_registration_credential_not_expired"
       ],
       "Attributes": [
         {
