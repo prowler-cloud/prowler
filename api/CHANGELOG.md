@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+- `DJANGO_CELERY_WORKER_CONCURRENCY` setting (default `4`) bounds the Celery worker prefork pool so memory is predictable regardless of host CPU count [(#11075)](https://github.com/prowler-cloud/prowler/pull/11075)
 
 ---
 
