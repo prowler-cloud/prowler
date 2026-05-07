@@ -605,7 +605,6 @@ class Test_Entra_Service:
         odata_error = ODataError()
         odata_error.error = MainError()
         odata_error.error.code = "Authorization_RequestDenied"
-        odata_error.__dict__["response_status_code"] = 403
 
         registration_builder = SimpleNamespace(get=AsyncMock(side_effect=odata_error))
 

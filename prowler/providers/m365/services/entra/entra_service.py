@@ -2,7 +2,7 @@ import asyncio
 import json
 from asyncio import gather
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
@@ -860,7 +860,9 @@ class Entra(M365Service):
             )
         return users
 
-    async def _get_user_registration_details(self):
+    async def _get_user_registration_details(
+        self,
+    ) -> Tuple[Dict[str, Dict[str, Any]], Optional[str]]:
         """Retrieve user authentication method registration details.
 
         Fetches registration details from the Microsoft Graph API, including
@@ -916,7 +918,7 @@ class Entra(M365Service):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            error_message = str(error)
+            error_message = f"Failed to retrieve user registration details: {error}"
 
         return registration_details, error_message
 
