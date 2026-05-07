@@ -109,6 +109,7 @@ from tasks.tasks import (
 from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
+from api.events import views_helpers as events_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
@@ -3390,6 +3391,9 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         description=(
             "Retrieve events showing modification history for a resource. "
             "Returns who modified the resource and when. Currently only available for AWS resources.\n\n"
+            "**Content negotiation:** send `Accept: text/plain` to receive a "
+            "compact markdown report optimized for LLM consumption "
+            "instead of the default JSON:API document.\n\n"
             "**Note:** Some events may not appear due to CloudTrail indexing limitations. "
             "Not all AWS API calls record the resource identifier in a searchable format."
         ),
@@ -3437,6 +3441,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         methods=["get"],
         url_name="events",
         filter_backends=[],  # Disable filters - we're calling external API, not filtering queryset
+        renderer_classes=[APIJSONRenderer, PlainTextRenderer],
     )
     def events(self, request, pk=None):
         """Get events for a resource."""
@@ -3568,6 +3573,15 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 region=resource.region,
                 resource_uid=resource.uid,
             )
+
+            if isinstance(request.accepted_renderer, PlainTextRenderer):
+                text = events_views_helpers.serialize_events_as_text(
+                    events,
+                    resource=resource,
+                    lookback_days=lookback_days,
+                    write_events_only=not include_read_events,
+                )
+                return Response(text)
 
             serializer = ResourceEventSerializer(events, many=True)
             return Response(serializer.data)

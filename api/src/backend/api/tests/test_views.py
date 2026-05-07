@@ -1469,9 +1469,9 @@ class TestProviderViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     def test_providers_retrieve(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -5468,13 +5468,13 @@ class TestAttackPathsScanViewSet:
                     content_type=API_JSON_CONTENT_TYPE,
                 )
                 if i < 10:
-                    assert (
-                        response.status_code == status.HTTP_200_OK
-                    ), f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    assert response.status_code == status.HTTP_200_OK, (
+                        f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    )
                 else:
-                    assert (
-                        response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-                    ), f"Request {i + 1} should be throttled"
+                    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS, (
+                        f"Request {i + 1} should be throttled"
+                    )
 
     # -- Timeout simulation -------------------------------------------------------
 
@@ -5677,9 +5677,9 @@ class TestResourceViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -6228,9 +6228,9 @@ class TestResourceViewSet:
             (e for e in errors if e["source"]["parameter"] == expected_invalid_param),
             None,
         )
-        assert (
-            error is not None
-        ), f"Expected error for parameter '{expected_invalid_param}'"
+        assert error is not None, (
+            f"Expected error for parameter '{expected_invalid_param}'"
+        )
         assert error["code"] == "invalid"
         assert error["status"] == "400"  # Must be string per JSON:API spec
         assert expected_invalid_param in error["detail"]
@@ -6762,16 +6762,187 @@ class TestResourceViewSet:
         # Test with completely malformed token
         client.credentials(HTTP_AUTHORIZATION="Bearer not.a.valid.jwt.token")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for malformed token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for malformed token but got {response.status_code}"
+        )
 
         # Test with empty bearer token
         client.credentials(HTTP_AUTHORIZATION="Bearer ")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for empty bearer token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for empty bearer token but got {response.status_code}"
+        )
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    @patch("api.v1.views.CloudTrailTimeline")
+    def test_events_text_plain_renders_markdown(
+        self,
+        mock_cloudtrail_timeline,
+        mock_initialize_provider,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """`Accept: text/plain` returns a markdown report instead of JSON:API."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]
+
+        resource = Resource.objects.create(
+            uid="arn:aws:s3:::acme-prod-data",
+            name="acme-prod-data",
+            type="bucket",
+            region="us-east-1",
+            service="s3",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        mock_session = Mock()
+        mock_provider = Mock()
+        mock_provider._session.current_session = mock_session
+        mock_initialize_provider.return_value = mock_provider
+
+        mock_timeline_instance = Mock()
+        mock_timeline_instance.get_resource_timeline.return_value = [
+            {
+                "event_id": "evt-1",
+                "event_time": "2026-05-04T16:55:01Z",
+                "event_name": "PutBucketPolicy",
+                "event_source": "s3.amazonaws.com",
+                "actor": "assumed-role/AdminRole/alice",
+                "actor_uid": "arn:aws:sts::123:assumed-role/AdminRole/alice",
+                "actor_type": "AssumedRole",
+                "source_ip_address": "1.2.3.4",
+                "user_agent": "aws-cli/2.15.30",
+                "request_data": {"bucketName": "acme-prod-data"},
+            },
+            {
+                "event_id": "evt-2",
+                "event_time": "2026-05-04T16:58:33Z",
+                "event_name": "PutBucketAcl",
+                "event_source": "s3.amazonaws.com",
+                "actor": "assumed-role/AdminRole/alice",
+                "error_code": "AccessDenied",
+                "error_message": "User not authorized",
+            },
+        ]
+        mock_cloudtrail_timeline.return_value = mock_timeline_instance
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id}),
+            HTTP_ACCEPT="text/plain",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response["Content-Type"].startswith("text/plain")
+
+        body = response.content.decode("utf-8")
+
+        # Header
+        assert body.startswith("# Resource Events\n")
+        assert "- Resource: arn:aws:s3:::acme-prod-data" in body
+        assert "- Region: us-east-1" in body
+        assert "- Events: 2" in body
+        # Body
+        assert "### 1. PutBucketPolicy at 2026-05-04T16:55:01Z" in body
+        assert "- Status: ok" in body
+        assert "- Status: ERROR(AccessDenied)" in body
+        assert "- Error: User not authorized" in body
+        assert '- Request: {bucketName: "acme-prod-data"}' in body
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    @patch("api.v1.views.CloudTrailTimeline")
+    def test_events_default_accept_still_returns_json(
+        self,
+        mock_cloudtrail_timeline,
+        mock_initialize_provider,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """Adding text/plain renderer must not regress the default JSON:API path."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-default-accept",
+            name="Default Accept Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        mock_session = Mock()
+        mock_provider = Mock()
+        mock_provider._session.current_session = mock_session
+        mock_initialize_provider.return_value = mock_provider
+
+        mock_timeline_instance = Mock()
+        mock_timeline_instance.get_resource_timeline.return_value = [
+            {
+                "event_id": "evt-json",
+                "event_time": "2026-05-04T16:55:01Z",
+                "event_name": "RunInstances",
+                "event_source": "ec2.amazonaws.com",
+                "actor": "user/alice",
+            }
+        ]
+        mock_cloudtrail_timeline.return_value = mock_timeline_instance
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id})
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "json" in response["Content-Type"]
+        payload = response.json()
+        assert payload["data"][0]["type"] == "resource-events"
+        assert payload["data"][0]["id"] == "evt-json"
+        assert payload["data"][0]["attributes"]["event_name"] == "RunInstances"
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    @patch("api.v1.views.CloudTrailTimeline")
+    def test_events_text_plain_no_events_renders_empty_marker(
+        self,
+        mock_cloudtrail_timeline,
+        mock_initialize_provider,
+        authenticated_client,
+        providers_fixture,
+    ):
+        """Empty timeline still produces a valid text response, not a 500."""
+        from api.models import Resource
+
+        aws_provider = providers_fixture[0]
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-empty",
+            name="Empty Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=aws_provider.tenant_id,
+        )
+
+        mock_session = Mock()
+        mock_provider = Mock()
+        mock_provider._session.current_session = mock_session
+        mock_initialize_provider.return_value = mock_provider
+
+        mock_timeline_instance = Mock()
+        mock_timeline_instance.get_resource_timeline.return_value = []
+        mock_cloudtrail_timeline.return_value = mock_timeline_instance
+
+        response = authenticated_client.get(
+            reverse("resource-events", kwargs={"pk": resource.id}),
+            HTTP_ACCEPT="text/plain",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response["Content-Type"].startswith("text/plain")
+        body = response.content.decode("utf-8")
+        assert "- Events: 0" in body
+        assert "No events recorded in the lookback window." in body
 
 
 @pytest.mark.django_db
@@ -6832,9 +7003,9 @@ class TestFindingViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -7373,9 +7544,9 @@ class TestJWTFields:
             reverse("token-obtain"), data, format="json"
         )
 
-        assert (
-            response.status_code == status.HTTP_200_OK
-        ), f"Unexpected status code: {response.status_code}"
+        assert response.status_code == status.HTTP_200_OK, (
+            f"Unexpected status code: {response.status_code}"
+        )
 
         access_token = response.data["attributes"]["access"]
         payload = jwt.decode(access_token, options={"verify_signature": False})
@@ -7389,23 +7560,23 @@ class TestJWTFields:
         # Verify expected fields
         for field in expected_fields:
             assert field in payload, f"The field '{field}' is not in the JWT"
-            assert (
-                payload[field] == expected_fields[field]
-            ), f"The value of '{field}' does not match"
+            assert payload[field] == expected_fields[field], (
+                f"The value of '{field}' does not match"
+            )
 
         # Verify time fields are integers
         for time_field in ["exp", "iat", "nbf"]:
             assert time_field in payload, f"The field '{time_field}' is not in the JWT"
-            assert isinstance(
-                payload[time_field], int
-            ), f"The field '{time_field}' is not an integer"
+            assert isinstance(payload[time_field], int), (
+                f"The field '{time_field}' is not an integer"
+            )
 
         # Verify identification fields are non-empty strings
         for id_field in ["jti", "sub", "tenant_id"]:
             assert id_field in payload, f"The field '{id_field}' is not in the JWT"
-            assert (
-                isinstance(payload[id_field], str) and payload[id_field]
-            ), f"The field '{id_field}' is not a valid string"
+            assert isinstance(payload[id_field], str) and payload[id_field], (
+                f"The field '{id_field}' is not a valid string"
+            )
 
 
 @pytest.mark.django_db
@@ -11346,9 +11517,9 @@ class TestIntegrationViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
@@ -12785,9 +12956,9 @@ class TestLighthouseConfigViewSet:
         )
         # Check that API key is masked with asterisks only
         masked_api_key = data["attributes"]["api_key"]
-        assert all(
-            c == "*" for c in masked_api_key
-        ), "API key should contain only asterisks"
+        assert all(c == "*" for c in masked_api_key), (
+            "API key should contain only asterisks"
+        )
 
     @pytest.mark.parametrize(
         "field_name, invalid_value",
@@ -16532,9 +16703,9 @@ class TestFindingGroupViewSet:
         assert len(data) == 2
         for item in data:
             resource = item["attributes"]["resource"]
-            assert (
-                resource["resource_group"] == "storage"
-            ), "resource_group must be 'storage'"
+            assert resource["resource_group"] == "storage", (
+                "resource_group must be 'storage'"
+            )
 
     def test_resources_name_icontains(
         self, authenticated_client, finding_groups_fixture
@@ -16848,12 +17019,12 @@ class TestFindingGroupViewSet:
         assert response_p1.status_code == status.HTTP_200_OK
         p1_check_ids = {item["id"] for item in response_p1.json()["data"]}
         # Provider1 has scan1 with 4 checks
-        assert (
-            len(p1_check_ids) == 4
-        ), f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
-        assert (
-            "cloudtrail_enabled" not in p1_check_ids
-        ), "cloudtrail_enabled should NOT be in provider1"
+        assert len(p1_check_ids) == 4, (
+            f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
+        )
+        assert "cloudtrail_enabled" not in p1_check_ids, (
+            "cloudtrail_enabled should NOT be in provider1"
+        )
 
         # Get finding groups for provider2 only
         response_p2 = authenticated_client.get(
@@ -16863,12 +17034,12 @@ class TestFindingGroupViewSet:
         assert response_p2.status_code == status.HTTP_200_OK
         p2_check_ids = {item["id"] for item in response_p2.json()["data"]}
         # Provider2 has scan2 with 1 check
-        assert (
-            len(p2_check_ids) == 1
-        ), f"Provider2 should have 1 check, got {len(p2_check_ids)}"
-        assert (
-            "cloudtrail_enabled" in p2_check_ids
-        ), "cloudtrail_enabled should be in provider2"
+        assert len(p2_check_ids) == 1, (
+            f"Provider2 should have 1 check, got {len(p2_check_ids)}"
+        )
+        assert "cloudtrail_enabled" in p2_check_ids, (
+            "cloudtrail_enabled should be in provider2"
+        )
 
     # Test provider_type filter actually filters data
     def test_finding_groups_provider_type_filter_actually_filters(
@@ -16891,9 +17062,9 @@ class TestFindingGroupViewSet:
             {"filter[inserted_at]": TODAY, "filter[provider_type]": "gcp"},
         )
         assert response_gcp.status_code == status.HTTP_200_OK
-        assert (
-            len(response_gcp.json()["data"]) == 0
-        ), "GCP filter should return 0 results"
+        assert len(response_gcp.json()["data"]) == 0, (
+            "GCP filter should return 0 results"
+        )
 
     def test_finding_groups_pagination(
         self, authenticated_client, finding_groups_fixture

@@ -2,6 +2,16 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+## [0.7.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- `prowler_app_get_resource_events` now requests the API's `text/plain` representation and returns a markdown report [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
+### 🗑️ Removed
+
+- `ResourceEvent`/`ResourceEventsResponse` models are removed since the tool no longer parses JSON:API for API `resources/{id}/events`
+
 ## [0.6.0] (Prowler v5.23.0)
 
 ### 🚀 Added

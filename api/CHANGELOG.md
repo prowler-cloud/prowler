@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
+- `GET /resources/{id}/events` now supports `Accept: text/plain` for LLM consumption [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
 
 ---
 
