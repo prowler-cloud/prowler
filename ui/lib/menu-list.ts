@@ -115,7 +115,7 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               label: "Alerts",
               icon: BellRing,
               active: isCloudEnv && pathname.startsWith("/alerts"),
-              highlight: isCloudEnv,
+              highlight: true,
               disabled: !isCloudEnv,
               cloudOnly: !isCloudEnv,
             },

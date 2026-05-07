@@ -10,7 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
+import { MenuFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { IconComponent } from "@/types";
 
 interface SubmenuItemProps {
@@ -63,25 +63,34 @@ export const SubmenuItem = ({
 
   if (disabled) {
     const tooltip = cloudOnly
-      ? "Available in Prowler Cloud."
+      ? "Available in Prowler Cloud"
       : `${label} is unavailable.`;
 
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="menu-inactive"
-            className="mt-1 w-[calc(100%-12px)] cursor-not-allowed justify-start py-1"
-            disabled
+          <span
+            className="group mt-1 inline-flex w-[calc(100%-12px)]"
+            tabIndex={0}
           >
-            <span className="mr-2">
-              <Icon size={16} />
-            </span>
-            <p className="flex max-w-[170px] items-center gap-2 truncate">
-              <span>{label}</span>
-              {cloudOnly && <CloudFeatureBadge label="Cloud" />}
-            </p>
-          </Button>
+            <Button
+              variant="menu-inactive"
+              className="text-text-neutral-tertiary w-full cursor-not-allowed justify-start py-1"
+              aria-disabled="true"
+              tabIndex={-1}
+              type="button"
+            >
+              <span className="mr-2">
+                <Icon size={16} />
+              </span>
+              <p className="flex max-w-[170px] items-center gap-2 truncate">
+                <span>{label}</span>
+                {highlight && (
+                  <MenuFeatureBadge label="New" variant="new" size="sm" />
+                )}
+              </p>
+            </Button>
+          </span>
         </TooltipTrigger>
         <TooltipContent side="right">{tooltip}</TooltipContent>
       </Tooltip>
@@ -107,11 +116,13 @@ export const SubmenuItem = ({
         <p className="flex max-w-[170px] items-center truncate">
           <span>{label}</span>
           {highlight && (
-            <span className="ml-2 rounded-sm bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-              NEW
-            </span>
+            <MenuFeatureBadge
+              label="New"
+              variant="new"
+              size="sm"
+              className="ml-2"
+            />
           )}
-          {cloudOnly && <CloudFeatureBadge label="Cloud" />}
         </p>
       </Link>
     </Button>

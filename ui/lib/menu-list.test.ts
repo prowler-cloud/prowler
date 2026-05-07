@@ -28,6 +28,7 @@ describe("getMenuList", () => {
         href: "/alerts",
         disabled: true,
         cloudOnly: true,
+        highlight: true,
         active: false,
       }),
     );
