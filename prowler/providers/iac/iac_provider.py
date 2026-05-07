@@ -228,7 +228,7 @@ class IacProvider(Provider):
                 "ResourceType": "iac",
                 "Description": finding_description,
                 "Risk": "This provider has not defined a risk for this check.",
-                "RelatedUrl": recommendation_url,
+                "RelatedUrl": "",
                 "Remediation": {
                     "Code": {
                         "NativeIaC": "",
