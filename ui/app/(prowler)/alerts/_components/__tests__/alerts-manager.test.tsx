@@ -167,7 +167,10 @@ describe("AlertsManager", () => {
     const findingsLink = screen.getByRole("link", { name: "Findings" });
 
     // Then
-    expect(findingsLink).toHaveAttribute("href", "/findings");
+    expect(findingsLink).toHaveAttribute(
+      "href",
+      "/findings?filter[muted]=false&filter[status__in]=FAIL",
+    );
     expect(findingsLink.closest("[data-variant='link']")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "here." })).toHaveAttribute(
       "href",

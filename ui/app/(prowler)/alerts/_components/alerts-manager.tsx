@@ -47,6 +47,9 @@ interface AlertsManagerProps {
   initialEditingAlert?: AlertRule | null;
 }
 
+const ALERTS_FINDINGS_HREF =
+  "/findings?filter[muted]=false&filter[status__in]=FAIL";
+
 export const AlertsManager = ({
   alerts,
   meta,
@@ -168,7 +171,7 @@ export const AlertsManager = ({
               className="h-auto p-0"
               asChild
             >
-              <Link href="/findings">Findings</Link>
+              <Link href={ALERTS_FINDINGS_HREF}>Findings</Link>
             </Button>
             <span>.</span>
             <span>Learn more about configuring the Alerts</span>
