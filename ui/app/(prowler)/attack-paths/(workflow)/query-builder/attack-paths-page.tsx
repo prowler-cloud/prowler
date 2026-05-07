@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Info, Maximize2, X } from "lucide-react";
+import { ArrowLeft, Info, Maximize2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -22,8 +22,6 @@ import {
   AlertDescription,
   AlertTitle,
   Button,
-  Card,
-  CardContent,
 } from "@/components/shadcn";
 import {
   Dialog,
@@ -33,9 +31,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/shadcn/dialog";
-import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { Modal } from "@/components/shadcn/modal/modal";
 import { useToast } from "@/components/ui";
-import { cn } from "@/lib/utils";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
@@ -50,7 +47,7 @@ import {
   GraphControls,
   GraphLegend,
   GraphLoading,
-  NodeDetailContent,
+  NodeDetailPanel as NodeDetailDrawer,
   QueryDescription,
   QueryExecutionError,
   QueryParametersForm,
@@ -62,98 +59,28 @@ import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
 import { exportGraphAsPNG } from "./_lib";
 
-const getNodeDisplayTitle = (node: GraphNode): string => {
-  const isFinding = node.labels.some((l) =>
-    l.toLowerCase().includes("finding"),
-  );
-  return String(
-    isFinding
-      ? node.properties?.check_title || node.properties?.id || "Unknown Finding"
-      : node.properties?.name || node.properties?.id || "Unknown Resource",
-  );
-};
+const NODE_ACTION_CONTEXT = {
+  RESOURCE_FINDINGS: "resource-findings",
+  FILTERED_PARENT: "filtered-parent",
+} as const;
 
-interface NodeDetailPanelProps {
+type NodeActionContext =
+  (typeof NODE_ACTION_CONTEXT)[keyof typeof NODE_ACTION_CONTEXT];
+
+interface NodeActionBase {
   node: GraphNode;
-  allNodes: GraphNode[];
-  onClose: () => void;
-  headingId: string;
-  compact?: boolean;
-  onViewFinding?: (findingId: string) => void;
-  viewFindingLoading?: boolean;
+  context: NodeActionContext;
 }
 
-const NodeDetailPanel = ({
-  node,
-  allNodes,
-  onClose,
-  headingId,
-  compact,
-  onViewFinding,
-  viewFindingLoading = false,
-}: NodeDetailPanelProps) => {
-  const isFinding = node.labels.some((label) =>
-    label.toLowerCase().includes("finding"),
-  );
-  const findingId = String(node.properties?.id || node.id);
+interface ResourceFindingsNodeAction extends NodeActionBase {
+  context: typeof NODE_ACTION_CONTEXT.RESOURCE_FINDINGS;
+}
 
-  return (
-    <>
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <h3
-            id={headingId}
-            className={
-              compact ? "text-sm font-semibold" : "text-lg font-semibold"
-            }
-          >
-            Node Details
-          </h3>
-          <p
-            className={cn(
-              "text-text-neutral-secondary",
-              compact ? "mb-4 text-xs" : "mt-1 text-sm",
-            )}
-          >
-            {getNodeDisplayTitle(node)}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {!compact && isFinding && onViewFinding && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => onViewFinding(findingId)}
-              disabled={viewFindingLoading}
-              aria-label={`View finding ${findingId}`}
-            >
-              {viewFindingLoading ? (
-                <Spinner className="size-4" />
-              ) : (
-                "View Finding"
-              )}
-            </Button>
-          )}
-          <Button
-            onClick={onClose}
-            variant="ghost"
-            size="sm"
-            className={compact ? "h-6 w-6 p-0" : "h-8 w-8 p-0"}
-            aria-label="Close node details"
-          >
-            <X size={16} />
-          </Button>
-        </div>
-      </div>
-      <NodeDetailContent
-        node={node}
-        allNodes={allNodes}
-        onViewFinding={onViewFinding}
-        viewFindingLoading={viewFindingLoading}
-      />
-    </>
-  );
-};
+interface FilteredParentNodeAction extends NodeActionBase {
+  context: typeof NODE_ACTION_CONTEXT.FILTERED_PARENT;
+}
+
+type NodeActionState = ResourceFindingsNodeAction | FilteredParentNodeAction;
 
 /**
  * Attack Paths
@@ -171,10 +98,10 @@ export default function AttackPathsPage() {
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+  const [nodeAction, setNodeAction] = useState<NodeActionState | null>(null);
   const graphRef = useRef<GraphHandle>(null);
   const fullscreenGraphRef = useRef<GraphHandle>(null);
   const hasResetRef = useRef(false);
-  const nodeDetailsRef = useRef<HTMLDivElement>(null);
   const graphContainerRef = useRef<HTMLDivElement>(null);
 
   const [queries, setQueries] = useState<AttackPathQuery[]>([]);
@@ -385,27 +312,44 @@ export default function AttackPathsPage() {
   };
 
   const handleNodeClick = (node: GraphNode) => {
-    // Always select the node (opens detail panel)
-    graphState.selectNode(node.id);
-
     const isFinding = node.labels.some((label) =>
       label.toLowerCase().includes("finding"),
     );
 
-    // Tier 2: clicking a finding node OR any node in filtered view → enter filtered view
-    if (isFinding || graphState.isFilteredView) {
+    if (isFinding) {
+      // Findings skip the intermediate node-details modal. The finding drawer
+      // is the useful destination, so open it directly from the graph click.
       graphState.enterFilteredView(node.id);
+      // enterFilteredView stores the filtered node as selected so the graph can
+      // highlight it. Clear the selection right after for findings so the node
+      // details modal does not open before the finding drawer.
+      graphState.selectNode(null);
+      handleViewFinding(String(node.properties?.id || node.id));
+      return;
     }
 
-    // Scroll to details section for findings
-    if (isFinding) {
-      setTimeout(() => {
-        nodeDetailsRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }, 100);
+    if (graphState.isFilteredView) {
+      setNodeAction({ node, context: NODE_ACTION_CONTEXT.FILTERED_PARENT });
+      return;
     }
+
+    const sourceData = graphState.fullData || graphState.data;
+    const hasFindings = sourceData?.edges?.some((edge) => {
+      if (edge.source !== node.id && edge.target !== node.id) return false;
+      const otherId = edge.source === node.id ? edge.target : edge.source;
+      const otherNode = sourceData.nodes?.find(({ id }) => id === otherId);
+      return otherNode?.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+    });
+
+    if (hasFindings) {
+      setNodeAction({ node, context: NODE_ACTION_CONTEXT.RESOURCE_FINDINGS });
+      return;
+    }
+
+    finding.resetFindingDetails();
+    graphState.selectNode(node.id);
   };
 
   const handleBackToFullView = () => {
@@ -416,10 +360,33 @@ export default function AttackPathsPage() {
     graphState.selectNode(null);
   };
 
+  const handleShowNodeFindings = () => {
+    if (!nodeAction) return;
+    graphState.toggleExpandedResource(nodeAction.node.id);
+    setNodeAction(null);
+  };
+
+  const handleOpenNodeDetails = () => {
+    if (!nodeAction) return;
+    finding.resetFindingDetails();
+    graphState.selectNode(nodeAction.node.id);
+    setNodeAction(null);
+  };
+
+  const handleReturnToFullGraph = () => {
+    graphState.exitFilteredView();
+    graphState.selectNode(null);
+    setNodeAction(null);
+  };
+
   const handleViewFinding = (findingId: string) => {
     if (!findingId) return;
     void finding.navigateToFinding(findingId);
   };
+
+  const actionNodeFindingsExpanded = nodeAction
+    ? graphState.expandedResources.has(nodeAction.node.id)
+    : false;
 
   const handleGraphExport = async (target: "main" | "fullscreen") => {
     const ref = target === "fullscreen" ? fullscreenGraphRef : graphRef;
@@ -674,34 +641,8 @@ export default function AttackPathsPage() {
                                   expandedResources={
                                     graphState.expandedResources
                                   }
-                                  onResourceToggle={
-                                    graphState.toggleExpandedResource
-                                  }
                                 />
                               </div>
-                              {/* Node Detail Panel - Side by side */}
-                              {graphState.selectedNode && graphState.data && (
-                                <section
-                                  aria-labelledby="fullscreen-node-details-heading"
-                                  className="w-full overflow-y-auto lg:w-96"
-                                >
-                                  <Card>
-                                    <CardContent className="p-4">
-                                      <NodeDetailPanel
-                                        node={graphState.selectedNode}
-                                        allNodes={graphState.data.nodes}
-                                        onClose={handleCloseDetails}
-                                        onViewFinding={handleViewFinding}
-                                        viewFindingLoading={
-                                          finding.findingDetailLoading
-                                        }
-                                        headingId="fullscreen-node-details-heading"
-                                        compact
-                                      />
-                                    </CardContent>
-                                  </Card>
-                                </section>
-                              )}
                             </div>
                           </DialogContent>
                         </Dialog>
@@ -721,7 +662,6 @@ export default function AttackPathsPage() {
                       selectedNodeId={graphState.selectedNodeId}
                       isFilteredView={graphState.isFilteredView}
                       expandedResources={graphState.expandedResources}
-                      onResourceToggle={graphState.toggleExpandedResource}
                     />
                   </div>
 
@@ -734,21 +674,48 @@ export default function AttackPathsPage() {
             </div>
           )}
 
-          {/* Node Detail Panel - Below Graph */}
-          {graphState.selectedNode && graphState.data && (
-            <div
-              ref={nodeDetailsRef}
-              className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4"
+          {/* Node Detail Drawer */}
+          {graphState.data && (
+            <NodeDetailDrawer
+              node={graphState.selectedNode}
+              allNodes={graphState.data.nodes}
+              onClose={handleCloseDetails}
+              onViewFinding={handleViewFinding}
+              viewFindingLoading={finding.findingDetailLoading}
+            />
+          )}
+
+          {nodeAction && (
+            <Modal
+              open={!!nodeAction}
+              onOpenChange={(open) => {
+                if (!open) setNodeAction(null);
+              }}
+              size="md"
+              title="Choose node action"
+              description={
+                nodeAction.context === NODE_ACTION_CONTEXT.FILTERED_PARENT
+                  ? "You're viewing a filtered path. Choose whether to return to the full graph or inspect this node."
+                  : "This node has related findings. Choose whether to reveal them in the graph or inspect the node metadata."
+              }
             >
-              <NodeDetailPanel
-                node={graphState.selectedNode}
-                allNodes={graphState.data.nodes}
-                onClose={handleCloseDetails}
-                onViewFinding={handleViewFinding}
-                viewFindingLoading={finding.findingDetailLoading}
-                headingId="node-details-heading"
-              />
-            </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <Button variant="outline" onClick={handleOpenNodeDetails}>
+                  View node details
+                </Button>
+                {nodeAction.context === NODE_ACTION_CONTEXT.FILTERED_PARENT ? (
+                  <Button onClick={handleReturnToFullGraph}>
+                    Back to full graph
+                  </Button>
+                ) : (
+                  <Button onClick={handleShowNodeFindings}>
+                    {actionNodeFindingsExpanded
+                      ? "Hide findings"
+                      : "Show findings"}
+                  </Button>
+                )}
+              </div>
+            </Modal>
           )}
 
           {finding.findingDetails && (
