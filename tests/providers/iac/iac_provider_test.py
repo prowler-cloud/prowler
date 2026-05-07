@@ -67,7 +67,7 @@ class TestIacProvider:
         assert report.check_metadata.CheckTitle == SAMPLE_FAILED_CHECK["Title"]
         assert report.check_metadata.Severity == "low"
         assert report.check_metadata.Remediation.Recommendation.Url == expected_url
-        assert report.check_metadata.RelatedUrl == expected_url
+        assert report.check_metadata.RelatedUrl == ""
         assert report.check_metadata.AdditionalURLs == [expected_url]
 
     def test_iac_provider_process_finding_passed(self):
@@ -112,10 +112,7 @@ class TestIacProvider:
             report.check_metadata.Remediation.Recommendation.Url
             == "https://www.cve.org/CVERecord?id=CVE-2023-1234"
         )
-        assert (
-            report.check_metadata.RelatedUrl
-            == "https://www.cve.org/CVERecord?id=CVE-2023-1234"
-        )
+        assert report.check_metadata.RelatedUrl == ""
         assert report.check_metadata.AdditionalURLs == [
             "https://www.cve.org/CVERecord?id=CVE-2023-1234"
         ]
@@ -136,10 +133,7 @@ class TestIacProvider:
             report.check_metadata.Remediation.Recommendation.Url
             == "https://www.cve.org/CVERecord?id=CVE-2023-5678"
         )
-        assert (
-            report.check_metadata.RelatedUrl
-            == "https://www.cve.org/CVERecord?id=CVE-2023-5678"
-        )
+        assert report.check_metadata.RelatedUrl == ""
         assert report.check_metadata.AdditionalURLs == [
             "https://www.cve.org/CVERecord?id=CVE-2023-5678"
         ]
@@ -160,10 +154,7 @@ class TestIacProvider:
             report.check_metadata.Remediation.Recommendation.Url
             == "https://www.cve.org/CVERecord?id=CVE-2023-9012"
         )
-        assert (
-            report.check_metadata.RelatedUrl
-            == "https://www.cve.org/CVERecord?id=CVE-2023-9012"
-        )
+        assert report.check_metadata.RelatedUrl == ""
         assert report.check_metadata.AdditionalURLs == [
             "https://www.cve.org/CVERecord?id=CVE-2023-9012"
         ]
@@ -185,7 +176,7 @@ class TestIacProvider:
             f"{SAMPLE_TRIVY_NON_CVE_VULNERABILITY['VulnerabilityID'].upper()}"
         )
         assert report.check_metadata.Remediation.Recommendation.Url == expected_url
-        assert report.check_metadata.RelatedUrl == expected_url
+        assert report.check_metadata.RelatedUrl == ""
         assert report.check_metadata.AdditionalURLs == [expected_url]
 
     @patch("subprocess.run")
