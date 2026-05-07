@@ -448,12 +448,19 @@ def prowler():
 
             findings = global_provider.run_scan(streaming_callback=streaming_callback)
         else:
-            # Original behavior for IAC and Image
-            try:
+            if provider == "image":
+                try:
+                    findings = global_provider.run()
+                except ImageBaseException as error:
+                    logger.critical(f"{error}")
+                    sys.exit(1)
+            else:
+                # IAC and external tool-wrapper providers registered via entry
+                # points. Unexpected failures propagate to the outer except
+                # Exception backstop further down in this file — keeping the
+                # branch free of an Image-specific catch that would otherwise
+                # mislead plug-in authors reading this code.
                 findings = global_provider.run()
-            except ImageBaseException as error:
-                logger.critical(f"{error}")
-                sys.exit(1)
             # Note: External tool providers don't support granular progress tracking since
             # they run external tools as a black box and return all findings at once.
             # Progress tracking would just be 0% → 100%.
