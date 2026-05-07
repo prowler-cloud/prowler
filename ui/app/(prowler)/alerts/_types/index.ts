@@ -1,6 +1,4 @@
-import { FINDING_DELTA } from "@/types/components";
-import { PROVIDER_TYPES, type ProviderType } from "@/types/providers";
-import { SEVERITY_LEVELS, type SeverityLevel } from "@/types/severities";
+import { SEVERITY_LEVELS } from "@/types/severities";
 
 // Canonical DSL vocabulary and resource types for the Alerts UI.
 // Mirrors api/src/backend/alerts/dsl.py — every constant declared here MUST
@@ -14,8 +12,6 @@ export const ALERT_BOOLEAN_OPS = {
   OR: "or",
   NOT: "not",
 } as const;
-export type AlertBooleanOp =
-  (typeof ALERT_BOOLEAN_OPS)[keyof typeof ALERT_BOOLEAN_OPS];
 
 export const ALERT_AGGREGATE_OPS = {
   COUNT_GTE: "count_gte",
@@ -23,15 +19,6 @@ export const ALERT_AGGREGATE_OPS = {
   ANY: "any",
   NONE: "none",
 } as const;
-export type AlertAggregateOp =
-  (typeof ALERT_AGGREGATE_OPS)[keyof typeof ALERT_AGGREGATE_OPS];
-
-export const ALERT_BOOLEAN_OP_VALUES = Object.values(
-  ALERT_BOOLEAN_OPS,
-) as readonly AlertBooleanOp[];
-export const ALERT_AGGREGATE_OP_VALUES = Object.values(
-  ALERT_AGGREGATE_OPS,
-) as readonly AlertAggregateOp[];
 
 // ---- filter field vocabulary --------------------------------------------
 
@@ -52,90 +39,13 @@ export const ALERT_FILTER_FIELDS = {
 export type AlertFilterField =
   (typeof ALERT_FILTER_FIELDS)[keyof typeof ALERT_FILTER_FIELDS];
 
-export const ALERT_FILTER_FIELD_VALUES = Object.values(
-  ALERT_FILTER_FIELDS,
-) as readonly AlertFilterField[];
-
-// Field-kind classification — drives the value editor rendered by the
-// condition builder and the runtime type checks in the validator.
-export const ALERT_FILTER_FIELD_KIND = {
-  ENUM_LIST: "enum_list",
-  BOOLEAN: "boolean",
-  UUID_LIST: "uuid_list",
-  STRING_LIST: "string_list",
-} as const;
-export type AlertFilterFieldKind =
-  (typeof ALERT_FILTER_FIELD_KIND)[keyof typeof ALERT_FILTER_FIELD_KIND];
-
-export const ALERT_FILTER_FIELD_KIND_BY_FIELD: Readonly<
-  Record<AlertFilterField, AlertFilterFieldKind>
-> = {
-  severity: ALERT_FILTER_FIELD_KIND.ENUM_LIST,
-  delta: ALERT_FILTER_FIELD_KIND.ENUM_LIST,
-  provider_type: ALERT_FILTER_FIELD_KIND.ENUM_LIST,
-  provider_id: ALERT_FILTER_FIELD_KIND.UUID_LIST,
-  check_id: ALERT_FILTER_FIELD_KIND.STRING_LIST,
-  finding_group_id: ALERT_FILTER_FIELD_KIND.STRING_LIST,
-  categories: ALERT_FILTER_FIELD_KIND.STRING_LIST,
-  resource_regions: ALERT_FILTER_FIELD_KIND.STRING_LIST,
-  resource_services: ALERT_FILTER_FIELD_KIND.STRING_LIST,
-  resource_types: ALERT_FILTER_FIELD_KIND.STRING_LIST,
-  resource_uid: ALERT_FILTER_FIELD_KIND.STRING_LIST,
-  resource_groups: ALERT_FILTER_FIELD_KIND.STRING_LIST,
-};
-
-// Closed enums for fields whose values are bounded. Builder uses them to
-// render multi-selects; validator uses them to reject out-of-range inputs.
+// Closed enum for severity, the only filter field whose values are bounded
+// and consumed by the seed flow.
 export const ALERT_SEVERITY_VALUES = SEVERITY_LEVELS;
-export type AlertSeverity = SeverityLevel;
-
-export const ALERT_DELTA_VALUES = [
-  FINDING_DELTA.NEW,
-  FINDING_DELTA.CHANGED,
-] as const;
-export type AlertDelta = (typeof ALERT_DELTA_VALUES)[number];
-
-// Mirrors api.models.Provider.ProviderChoices. Keep in sync if a new
-// platform is registered there; the API rejects values outside this set.
-export const ALERT_PROVIDER_TYPE_VALUES = PROVIDER_TYPES;
-export type AlertProviderType = ProviderType;
-
-export const ALERT_ENUM_VALUES_BY_FIELD = {
-  severity: ALERT_SEVERITY_VALUES,
-  delta: ALERT_DELTA_VALUES,
-  provider_type: ALERT_PROVIDER_TYPE_VALUES,
-} as const;
-
-// Forbidden filter fields — the validator rejects these with a clear error
-// instead of "unknown field". Mirrors `dsl.py::FORBIDDEN_FILTER_FIELDS`.
-export const ALERT_FORBIDDEN_FILTER_FIELDS = [
-  "inserted_at",
-  "inserted_at__gte",
-  "inserted_at__lte",
-  "inserted_at__date",
-  "updated_at",
-  "updated_at__gte",
-  "updated_at__lte",
-  "first_seen_at",
-  "first_seen_at__gte",
-  "first_seen_at__lte",
-  "search",
-  "sort",
-  "page",
-  "page[number]",
-  "page[size]",
-  "include",
-] as const;
-export type AlertForbiddenFilterField =
-  (typeof ALERT_FORBIDDEN_FILTER_FIELDS)[number];
 
 // ---- limits --------------------------------------------------------------
 
 export const ALERT_SCHEMA_VERSION = 1 as const;
-export const ALERT_MAX_DEPTH = 5 as const;
-export const ALERT_MAX_NODES = 100 as const;
-export const ALERT_AGGREGATE_VALUE_MIN = 1 as const;
-export const ALERT_AGGREGATE_VALUE_MAX = 1_000_000 as const;
 
 // ---- triggers ------------------------------------------------------------
 
@@ -161,10 +71,6 @@ export const ALERT_RECIPIENT_STATUS = {
 } as const;
 export type AlertRecipientStatus =
   (typeof ALERT_RECIPIENT_STATUS)[keyof typeof ALERT_RECIPIENT_STATUS];
-
-export const ALERT_RECIPIENT_STATUS_VALUES = Object.values(
-  ALERT_RECIPIENT_STATUS,
-) as readonly AlertRecipientStatus[];
 
 // ---- discriminated condition union --------------------------------------
 

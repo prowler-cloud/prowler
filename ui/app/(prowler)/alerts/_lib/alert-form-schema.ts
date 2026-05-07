@@ -23,5 +23,3 @@ export const alertFormSchema = z.object({
     .default([]),
   enabled: z.boolean(),
 });
-
-export type AlertFormSchemaValues = z.infer<typeof alertFormSchema>;

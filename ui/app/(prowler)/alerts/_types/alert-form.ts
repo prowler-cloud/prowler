@@ -33,14 +33,6 @@ export const ALERT_FILTER_FIELDS = {
 export type AlertFormFilterField =
   (typeof ALERT_FILTER_FIELDS)[keyof typeof ALERT_FILTER_FIELDS];
 
-export const ALERT_FINDING_TYPES = {
-  NEW: "new",
-  ALL: "all",
-} as const;
-
-export type AlertFormFindingType =
-  (typeof ALERT_FINDING_TYPES)[keyof typeof ALERT_FINDING_TYPES];
-
 export interface AlertFormFilterItem {
   kind: "filter";
   field: AlertFormFilterField;
@@ -64,13 +56,6 @@ export const ALERT_NOTIFICATION_METHODS = {
 export type AlertNotificationMethod =
   (typeof ALERT_NOTIFICATION_METHODS)[keyof typeof ALERT_NOTIFICATION_METHODS];
 
-export const ALERT_NOTIFICATION_METHOD_OPTIONS = [
-  {
-    value: ALERT_NOTIFICATION_METHODS.EMAIL,
-    label: "Email",
-  },
-] as const;
-
 export interface AlertFormValues {
   name: string;
   description: string;
@@ -90,5 +75,3 @@ export interface AlertFormSubmitResult {
   alertId?: string;
   error?: string;
 }
-
-export type AlertFormFindingFilterBag = Record<string, string | string[]>;
