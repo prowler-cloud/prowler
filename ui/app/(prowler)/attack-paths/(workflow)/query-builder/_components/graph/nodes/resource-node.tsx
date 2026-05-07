@@ -4,9 +4,9 @@ import { type NodeProps } from "@xyflow/react";
 
 import type { GraphNode } from "@/types/attack-paths";
 
-import { resolveNodeColors, truncateLabel } from "../../../_lib";
-import { formatNodeLabel } from "../../../_lib/format";
+import { resolveNodeColors, resolveNodeVisual } from "../../../_lib";
 import { HiddenHandles } from "./hidden-handles";
+import { getNodeLabelLines } from "./node-label-lines";
 
 interface ResourceNodeData {
   graphNode: GraphNode;
@@ -14,10 +14,29 @@ interface ResourceNodeData {
   [key: string]: unknown;
 }
 
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 50;
-const NODE_RADIUS = 25;
-const NAME_MAX_CHARS = 22;
+const NODE_WIDTH = 136;
+const NODE_HEIGHT = 112;
+const NAME_MAX_CHARS = 16;
+const NAME_MAX_LINES = 2;
+const BADGE_SIZE = 44;
+const BADGE_RADIUS = BADGE_SIZE / 2;
+const BADGE_CENTER_X = NODE_WIDTH / 2;
+const BADGE_CENTER_Y = 26;
+const BADGE_LEFT_X = BADGE_CENTER_X - BADGE_RADIUS;
+const BADGE_RIGHT_INSET = NODE_WIDTH - (BADGE_CENTER_X + BADGE_RADIUS);
+const ICON_SIZE = 28;
+const ICON_X = BADGE_CENTER_X - ICON_SIZE / 2;
+const ICON_Y = BADGE_CENTER_Y - ICON_SIZE / 2;
+const TEXT_X = BADGE_CENTER_X;
+const NAME_Y = 66;
+const NAME_LINE_HEIGHT = 13;
+const TYPE_Y = 94;
+
+const toIconTestId = (description: string): string =>
+  `attack-path-node-icon-${description
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")}`;
 
 export const ResourceNode = ({ data, selected }: NodeProps) => {
   const { graphNode, hasFindings } = data as ResourceNodeData;
@@ -27,58 +46,88 @@ export const ResourceNode = ({ data, selected }: NodeProps) => {
     selected,
     hasFindings,
   });
-  const strokeWidth = selected ? 4 : hasFindings ? 2.5 : 1.5;
+  const badgeStrokeWidth = selected ? 4 : hasFindings ? 3 : 1.5;
+  const glowRadius = selected ? 31 : hasFindings ? 29 : 0;
+  const glowOpacity = selected ? 0.32 : hasFindings ? 0.26 : 0;
+  const visual = resolveNodeVisual(graphNode);
+  const Icon = visual.Icon;
 
-  const name = String(
-    graphNode.properties?.name ||
-      graphNode.properties?.id ||
-      (graphNode.labels.length > 0
-        ? formatNodeLabel(graphNode.labels[0])
-        : "Unknown"),
+  const displayNameLines = getNodeLabelLines(
+    visual.displayName,
+    NAME_MAX_CHARS,
+    NAME_MAX_LINES,
   );
-  const displayName = truncateLabel(name, NAME_MAX_CHARS);
-
-  const typeLabel =
-    graphNode.labels.length > 0 ? formatNodeLabel(graphNode.labels[0]) : "";
+  const typeLabel = visual.description;
+  const iconLabel = `${visual.description} icon`;
 
   return (
     <>
-      <HiddenHandles />
+      <HiddenHandles
+        sourceStyle={{ right: BADGE_RIGHT_INSET }}
+        style={{ top: BADGE_CENTER_Y }}
+        targetStyle={{ left: BADGE_LEFT_X }}
+      />
       <svg width={NODE_WIDTH} height={NODE_HEIGHT} className="overflow-visible">
-        <rect
-          x={0}
-          y={0}
-          width={NODE_WIDTH}
-          height={NODE_HEIGHT}
-          rx={NODE_RADIUS}
-          ry={NODE_RADIUS}
+        {glowRadius > 0 && (
+          <circle
+            cx={BADGE_CENTER_X}
+            cy={BADGE_CENTER_Y}
+            r={glowRadius}
+            fill={borderColor}
+            fillOpacity={glowOpacity}
+            pointerEvents="none"
+          />
+        )}
+        <circle
+          cx={BADGE_CENTER_X}
+          cy={BADGE_CENTER_Y}
+          r={BADGE_RADIUS}
           fill={fillColor}
-          fillOpacity={0.85}
+          fillOpacity={0.92}
           stroke={borderColor}
-          strokeWidth={strokeWidth}
+          strokeWidth={badgeStrokeWidth}
           className={selected ? "selected-node" : undefined}
         />
+        <g
+          aria-label={iconLabel}
+          data-testid={toIconTestId(visual.description)}
+          role="img"
+          transform={`translate(${ICON_X}, ${ICON_Y})`}
+        >
+          <Icon
+            aria-hidden="true"
+            className="rounded-md"
+            focusable="false"
+            height={ICON_SIZE}
+            role="presentation"
+            size={ICON_SIZE}
+            width={ICON_SIZE}
+          />
+        </g>
         <text
-          x={NODE_WIDTH / 2}
-          y={NODE_HEIGHT / 2}
+          x={TEXT_X}
+          y={NAME_Y}
           textAnchor="middle"
           dominantBaseline="middle"
           fill="#ffffff"
           style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
           pointerEvents="none"
         >
-          <tspan
-            x={NODE_WIDTH / 2}
-            dy="-0.3em"
-            fontSize="11px"
-            fontWeight="600"
-          >
-            {displayName}
-          </tspan>
+          {displayNameLines.map((line, index) => (
+            <tspan
+              key={`${line}-${index}`}
+              x={TEXT_X}
+              y={NAME_Y + index * NAME_LINE_HEIGHT}
+              fontSize="11px"
+              fontWeight="600"
+            >
+              {line}
+            </tspan>
+          ))}
           {typeLabel && (
             <tspan
-              x={NODE_WIDTH / 2}
-              dy="1.3em"
+              x={TEXT_X}
+              y={TYPE_Y}
               fontSize="9px"
               fill="rgba(255,255,255,0.8)"
             >

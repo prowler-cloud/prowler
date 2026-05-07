@@ -1,19 +1,44 @@
 import {
   AlertTriangle,
+  Bot,
   Box,
+  Braces,
+  CircleAlert,
+  FileKey2,
   Globe2,
+  Info,
   KeyRound,
-  Network,
+  Route,
   Server,
-  UserRound,
+  Shield,
+  ShieldCheck,
+  Siren,
+  UserCog,
+  Waypoints,
 } from "lucide-react";
 import type { ElementType } from "react";
 
 import {
+  AlibabaCloudProviderBadge,
+  AWSProviderBadge,
+  AzureProviderBadge,
+  CloudflareProviderBadge,
+  GCPProviderBadge,
+  GitHubProviderBadge,
+  GoogleWorkspaceProviderBadge,
+  IacProviderBadge,
+  ImageProviderBadge,
+  KS8ProviderBadge,
+  M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
+  OpenStackProviderBadge,
+  OracleCloudProviderBadge,
+  VercelProviderBadge,
+} from "@/components/icons/providers-badge";
+import {
   AmazonEC2Icon,
   AmazonS3Icon,
   AmazonVPCIcon,
-  AWSAccountIcon,
   AWSIAMIcon,
 } from "@/components/icons/services/IconServices";
 import type { GraphNode, GraphNodePropertyValue } from "@/types/attack-paths";
@@ -49,7 +74,102 @@ const KNOWN_NODE_VISUALS = {
   awsaccount: {
     category: NODE_CATEGORY.ACCOUNT,
     description: "AWS Account",
-    Icon: AWSAccountIcon,
+    Icon: AWSProviderBadge,
+  },
+  azureaccount: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Azure Account",
+    Icon: AzureProviderBadge,
+  },
+  azuretenant: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Azure Tenant",
+    Icon: AzureProviderBadge,
+  },
+  gcpaccount: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Google Cloud Account",
+    Icon: GCPProviderBadge,
+  },
+  gcpproject: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Google Cloud Project",
+    Icon: GCPProviderBadge,
+  },
+  googlecloudaccount: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Google Cloud Account",
+    Icon: GCPProviderBadge,
+  },
+  kubernetescluster: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Kubernetes Cluster",
+    Icon: KS8ProviderBadge,
+  },
+  k8scluster: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Kubernetes Cluster",
+    Icon: KS8ProviderBadge,
+  },
+  githubaccount: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "GitHub Account",
+    Icon: GitHubProviderBadge,
+  },
+  githuborganization: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "GitHub Organization",
+    Icon: GitHubProviderBadge,
+  },
+  m365tenant: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Microsoft 365 Tenant",
+    Icon: M365ProviderBadge,
+  },
+  googleworkspace: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Google Workspace",
+    Icon: GoogleWorkspaceProviderBadge,
+  },
+  iac: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Infrastructure as Code",
+    Icon: IacProviderBadge,
+  },
+  containerregistry: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Container Registry",
+    Icon: ImageProviderBadge,
+  },
+  oraclecloudaccount: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Oracle Cloud Account",
+    Icon: OracleCloudProviderBadge,
+  },
+  mongodbatlas: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "MongoDB Atlas",
+    Icon: MongoDBAtlasProviderBadge,
+  },
+  alibabacloudaccount: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Alibaba Cloud Account",
+    Icon: AlibabaCloudProviderBadge,
+  },
+  cloudflareaccount: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Cloudflare Account",
+    Icon: CloudflareProviderBadge,
+  },
+  openstackaccount: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "OpenStack Account",
+    Icon: OpenStackProviderBadge,
+  },
+  vercelaccount: {
+    category: NODE_CATEGORY.ACCOUNT,
+    description: "Vercel Account",
+    Icon: VercelProviderBadge,
   },
   s3bucket: {
     category: NODE_CATEGORY.STORAGE,
@@ -69,22 +189,22 @@ const KNOWN_NODE_VISUALS = {
   subnet: {
     category: NODE_CATEGORY.NETWORK,
     description: "Subnet",
-    Icon: Network,
+    Icon: Waypoints,
   },
   securitygroup: {
     category: NODE_CATEGORY.NETWORK,
     description: "Security Group",
-    Icon: Network,
+    Icon: Shield,
   },
   internetgateway: {
     category: NODE_CATEGORY.NETWORK,
     description: "Internet Gateway",
-    Icon: Globe2,
+    Icon: Route,
   },
   defaultgateway: {
     category: NODE_CATEGORY.NETWORK,
     description: "Default Gateway",
-    Icon: Globe2,
+    Icon: Route,
   },
   ec2instance: {
     category: NODE_CATEGORY.COMPUTE,
@@ -111,10 +231,50 @@ const KNOWN_NODE_VISUALS = {
     description: "IAM User",
     Icon: AWSIAMIcon,
   },
+  awsuser: {
+    category: NODE_CATEGORY.IDENTITY,
+    description: "AWS User",
+    Icon: UserCog,
+  },
   iamrole: {
     category: NODE_CATEGORY.IDENTITY,
     description: "IAM Role",
     Icon: AWSIAMIcon,
+  },
+  awsrole: {
+    category: NODE_CATEGORY.IDENTITY,
+    description: "AWS Role",
+    Icon: ShieldCheck,
+  },
+  permissionrole: {
+    category: NODE_CATEGORY.IDENTITY,
+    description: "Permission Role",
+    Icon: ShieldCheck,
+  },
+  awsmanagedpolicy: {
+    category: NODE_CATEGORY.IDENTITY,
+    description: "AWS Managed Policy",
+    Icon: FileKey2,
+  },
+  awspolicy: {
+    category: NODE_CATEGORY.IDENTITY,
+    description: "AWS Policy",
+    Icon: FileKey2,
+  },
+  policy: {
+    category: NODE_CATEGORY.IDENTITY,
+    description: "Policy",
+    Icon: FileKey2,
+  },
+  awspolicystatement: {
+    category: NODE_CATEGORY.IDENTITY,
+    description: "AWS Policy Statement",
+    Icon: Braces,
+  },
+  policystatement: {
+    category: NODE_CATEGORY.IDENTITY,
+    description: "Policy Statement",
+    Icon: Braces,
   },
   accesskey: {
     category: NODE_CATEGORY.SECRET,
@@ -129,7 +289,7 @@ const KNOWN_NODE_VISUALS = {
   serviceaccount: {
     category: NODE_CATEGORY.IDENTITY,
     description: "Service Account",
-    Icon: UserRound,
+    Icon: Bot,
   },
 } as const satisfies Record<string, KnownNodeVisualMapping>;
 
@@ -146,6 +306,26 @@ const isFindingLabel = (label: string): boolean =>
 
 const isInternetLabel = (label: string): boolean =>
   normalizeLabel(label) === "internet";
+
+const FINDING_SEVERITY = {
+  CRITICAL: "critical",
+  HIGH: "high",
+  MEDIUM: "medium",
+  LOW: "low",
+  INFO: "info",
+  INFORMATIONAL: "informational",
+} as const;
+
+type FindingSeverity = (typeof FINDING_SEVERITY)[keyof typeof FINDING_SEVERITY];
+
+const FINDING_SEVERITY_ICONS = {
+  [FINDING_SEVERITY.CRITICAL]: Siren,
+  [FINDING_SEVERITY.HIGH]: AlertTriangle,
+  [FINDING_SEVERITY.MEDIUM]: CircleAlert,
+  [FINDING_SEVERITY.LOW]: Info,
+  [FINDING_SEVERITY.INFO]: Info,
+  [FINDING_SEVERITY.INFORMATIONAL]: Info,
+} as const satisfies Record<FindingSeverity, ElementType>;
 
 const stringifyProperty = (
   value: GraphNodePropertyValue,
@@ -181,6 +361,23 @@ const resolveFindingDisplayName = (node: GraphNode): string =>
   firstDefinedProperty(node, ["check_title", "title", "name", "id"]) ??
   getPrimaryFormattedLabel(node);
 
+const resolveFindingSeverity = (
+  node: GraphNode,
+): FindingSeverity | undefined => {
+  const severity = firstDefinedProperty(node, ["severity"]);
+  if (!severity) return undefined;
+
+  const normalizedSeverity = severity.toLowerCase();
+  return normalizedSeverity in FINDING_SEVERITY_ICONS
+    ? (normalizedSeverity as FindingSeverity)
+    : undefined;
+};
+
+const resolveFindingIcon = (node: GraphNode): ElementType => {
+  const severity = resolveFindingSeverity(node);
+  return severity ? FINDING_SEVERITY_ICONS[severity] : AlertTriangle;
+};
+
 const resolveKnownMapping = (
   labels: string[],
 ): KnownNodeVisualMapping | undefined => {
@@ -200,7 +397,7 @@ export const resolveNodeVisual = (node: GraphNode): NodeVisual => {
       category: NODE_CATEGORY.FINDING,
       displayName: resolveFindingDisplayName(node),
       description: "Prowler Finding",
-      Icon: AlertTriangle,
+      Icon: resolveFindingIcon(node),
       fallbackUsed: false,
     };
   }
