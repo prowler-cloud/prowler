@@ -498,7 +498,7 @@ const GraphCanvas = ({
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         fitView
-        fitViewOptions={{ padding: 0.2, includeHiddenNodes: true }}
+        fitViewOptions={{ ...AUTO_FIT_OPTIONS, includeHiddenNodes: true }}
         // Supported React Flow behavior: wheel over the graph zooms the
         // viewport. The surrounding UX avoids using node details as inline
         // content, so this no longer fights a below-graph details section.

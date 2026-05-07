@@ -1,11 +1,32 @@
-import { Globe2, KeyRound, Network, Server, UserRound } from "lucide-react";
+import {
+  AlertTriangle,
+  Bot,
+  Braces,
+  CircleAlert,
+  FileKey2,
+  Globe2,
+  Info,
+  KeyRound,
+  Route,
+  Server,
+  Shield,
+  ShieldCheck,
+  Siren,
+  UserCog,
+  Waypoints,
+} from "lucide-react";
 import { describe, expect, it } from "vitest";
 
+import {
+  AWSProviderBadge,
+  AzureProviderBadge,
+  GCPProviderBadge,
+  KS8ProviderBadge,
+} from "@/components/icons/providers-badge";
 import {
   AmazonEC2Icon,
   AmazonS3Icon,
   AmazonVPCIcon,
-  AWSAccountIcon,
   AWSIAMIcon,
 } from "@/components/icons/services/IconServices";
 import type { GraphNode } from "@/types/attack-paths";
@@ -34,7 +55,44 @@ describe("resolveNodeVisual", () => {
         description: "AWS Account",
         fallbackUsed: false,
       });
-      expect(visual.Icon).toBe(AWSAccountIcon);
+      expect(visual.Icon).toBe(AWSProviderBadge);
+    });
+
+    it("should resolve cloud provider root nodes to provider badges", () => {
+      // Given
+      const providerNodes = [
+        {
+          label: "AzureTenant",
+          description: "Azure Tenant",
+          Icon: AzureProviderBadge,
+        },
+        {
+          label: "GCPProject",
+          description: "Google Cloud Project",
+          Icon: GCPProviderBadge,
+        },
+        {
+          label: "KubernetesCluster",
+          description: "Kubernetes Cluster",
+          Icon: KS8ProviderBadge,
+        },
+      ];
+
+      for (const providerNode of providerNodes) {
+        // When
+        const visual = resolveNodeVisual(
+          buildNode([providerNode.label], { name: providerNode.description }),
+        );
+
+        // Then
+        expect(visual).toMatchObject({
+          category: NODE_CATEGORY.ACCOUNT,
+          displayName: providerNode.description,
+          description: providerNode.description,
+          fallbackUsed: false,
+        });
+        expect(visual.Icon).toBe(providerNode.Icon);
+      }
     });
 
     it("should resolve S3Bucket nodes to storage metadata", () => {
@@ -55,14 +113,14 @@ describe("resolveNodeVisual", () => {
     });
 
     it.each([
-      ["AWSAccount", NODE_CATEGORY.ACCOUNT, "AWS Account", AWSAccountIcon],
+      ["AWSAccount", NODE_CATEGORY.ACCOUNT, "AWS Account", AWSProviderBadge],
       ["S3Bucket", NODE_CATEGORY.STORAGE, "S3 Bucket", AmazonS3Icon],
       ["S3", NODE_CATEGORY.STORAGE, "S3", AmazonS3Icon],
       ["VPC", NODE_CATEGORY.NETWORK, "VPC", AmazonVPCIcon],
-      ["Subnet", NODE_CATEGORY.NETWORK, "Subnet", Network],
-      ["SecurityGroup", NODE_CATEGORY.NETWORK, "Security Group", Network],
-      ["InternetGateway", NODE_CATEGORY.NETWORK, "Internet Gateway", Globe2],
-      ["DefaultGateway", NODE_CATEGORY.NETWORK, "Default Gateway", Globe2],
+      ["Subnet", NODE_CATEGORY.NETWORK, "Subnet", Waypoints],
+      ["SecurityGroup", NODE_CATEGORY.NETWORK, "Security Group", Shield],
+      ["InternetGateway", NODE_CATEGORY.NETWORK, "Internet Gateway", Route],
+      ["DefaultGateway", NODE_CATEGORY.NETWORK, "Default Gateway", Route],
       ["EC2Instance", NODE_CATEGORY.COMPUTE, "EC2 Instance", AmazonEC2Icon],
       [
         "VirtualMachine",
@@ -74,7 +132,7 @@ describe("resolveNodeVisual", () => {
       ["NIC", NODE_CATEGORY.COMPUTE, "NIC", Server],
       ["IAMUser", NODE_CATEGORY.IDENTITY, "IAM User", AWSIAMIcon],
       ["IAMRole", NODE_CATEGORY.IDENTITY, "IAM Role", AWSIAMIcon],
-      ["ServiceAccount", NODE_CATEGORY.IDENTITY, "Service Account", UserRound],
+      ["ServiceAccount", NODE_CATEGORY.IDENTITY, "Service Account", Bot],
       ["AccessKey", NODE_CATEGORY.SECRET, "Access Key", KeyRound],
       ["Secret", NODE_CATEGORY.SECRET, "Secret", KeyRound],
     ] as const)(
@@ -131,6 +189,49 @@ describe("resolveNodeVisual", () => {
       });
     });
 
+    it("should resolve finding icons from severity", () => {
+      // Given
+      const findingNodes = [
+        { severity: "critical", Icon: Siren },
+        { severity: "high", Icon: AlertTriangle },
+        { severity: "medium", Icon: CircleAlert },
+        { severity: "low", Icon: Info },
+        { severity: "informational", Icon: Info },
+      ];
+
+      for (const findingNode of findingNodes) {
+        // When
+        const visual = resolveNodeVisual(
+          buildNode(["ProwlerFinding"], {
+            check_title: `${findingNode.severity} finding`,
+            severity: findingNode.severity,
+          }),
+        );
+
+        // Then
+        expect(visual).toMatchObject({
+          category: NODE_CATEGORY.FINDING,
+          description: "Prowler Finding",
+          fallbackUsed: false,
+        });
+        expect(visual.Icon).toBe(findingNode.Icon);
+      }
+    });
+
+    it("should use the generic alert icon when finding severity is unknown", () => {
+      // Given
+      const node = buildNode(["ProwlerFinding"], {
+        check_title: "Unknown risk",
+        severity: "unknown",
+      });
+
+      // When
+      const visual = resolveNodeVisual(node);
+
+      // Then
+      expect(visual.Icon).toBe(AlertTriangle);
+    });
+
     it("should resolve Internet nodes to internet metadata", () => {
       // Given
       const node = buildNode(["Internet"]);
@@ -180,6 +281,48 @@ describe("resolveNodeVisual", () => {
         description: "Access Key",
         fallbackUsed: false,
       });
+    });
+
+    it("should resolve AWS identity and policy labels to distinct icons", () => {
+      // Given
+      const identityNodes = [
+        {
+          label: "AWSUser",
+          description: "AWS User",
+          Icon: UserCog,
+        },
+        {
+          label: "AWSManagedPolicy",
+          description: "AWS Managed Policy",
+          Icon: FileKey2,
+        },
+        {
+          label: "AWSPolicyStatement",
+          description: "AWS Policy Statement",
+          Icon: Braces,
+        },
+        {
+          label: "PermissionRole",
+          description: "Permission Role",
+          Icon: ShieldCheck,
+        },
+      ];
+
+      for (const identityNode of identityNodes) {
+        // When
+        const visual = resolveNodeVisual(
+          buildNode([identityNode.label], { name: identityNode.description }),
+        );
+
+        // Then
+        expect(visual).toMatchObject({
+          category: NODE_CATEGORY.IDENTITY,
+          displayName: identityNode.description,
+          description: identityNode.description,
+          fallbackUsed: false,
+        });
+        expect(visual.Icon).toBe(identityNode.Icon);
+      }
     });
   });
 

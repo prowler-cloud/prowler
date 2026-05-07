@@ -8,11 +8,11 @@ import type { Edge, Node } from "@xyflow/react";
 
 import type { GraphEdge, GraphNode } from "@/types/attack-paths";
 
-// Node dimensions matching the original D3 implementation
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 50;
-const HEXAGON_WIDTH = 200;
-const HEXAGON_HEIGHT = 55;
+// Node dimensions matching the rendered React Flow custom nodes.
+const RESOURCE_NODE_WIDTH = 136;
+const RESOURCE_NODE_HEIGHT = 112;
+const FINDING_NODE_WIDTH = 150;
+const FINDING_NODE_HEIGHT = 112;
 const INTERNET_DIAMETER = 80; // NODE_HEIGHT * 0.8 * 2
 
 // Container relationships that get reversed for proper hierarchy
@@ -49,10 +49,10 @@ const getNodeDimensions = (
   type: NodeType,
 ): { width: number; height: number } => {
   if (type === NODE_TYPE.FINDING)
-    return { width: HEXAGON_WIDTH, height: HEXAGON_HEIGHT };
+    return { width: FINDING_NODE_WIDTH, height: FINDING_NODE_HEIGHT };
   if (type === NODE_TYPE.INTERNET)
     return { width: INTERNET_DIAMETER, height: INTERNET_DIAMETER };
-  return { width: NODE_WIDTH, height: NODE_HEIGHT };
+  return { width: RESOURCE_NODE_WIDTH, height: RESOURCE_NODE_HEIGHT };
 };
 
 /**
