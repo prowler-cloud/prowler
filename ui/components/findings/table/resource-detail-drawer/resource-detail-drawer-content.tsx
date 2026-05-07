@@ -70,6 +70,7 @@ import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
 import { cn } from "@/lib/utils";
+import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
 
@@ -85,6 +86,10 @@ function stripCodeFences(code: string): string {
     .replace(/^```\w*\n?/, "")
     .replace(/\n?```\s*$/, "")
     .trim();
+}
+
+function isNonEmptyString(value: string | null | undefined): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function resolveNativeIacConfig(providerType: string | undefined): {
@@ -427,6 +432,19 @@ export function ResourceDetailDrawerContent({
   const showOverviewFindingContent = Boolean(f);
   const resourceDetailHref = f?.resourceId
     ? buildResourceDetailHref(f.resourceId)
+    : null;
+  const findingRecommendationUrl = f?.remediation.recommendation.url;
+  const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
+  const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
+    ? findingRecommendationUrl
+    : isNonEmptyString(checkRecommendationUrl)
+      ? checkRecommendationUrl
+      : null;
+  const recommendationLink = recommendationUrl
+    ? {
+        href: recommendationUrl,
+        label: getRecommendationLinkLabel(recommendationUrl),
+      }
     : null;
   const overviewStatusExtended = f?.statusExtended;
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
@@ -855,28 +873,32 @@ export function ResourceDetailDrawerContent({
 
                 {/* Card 2: Remediation + Commands */}
                 {(checkMeta.remediation.recommendation.text ||
+                  recommendationLink ||
                   checkMeta.remediation.code.cli ||
                   checkMeta.remediation.code.terraform ||
                   checkMeta.remediation.code.nativeiac) && (
                   <Card variant="inner">
-                    {checkMeta.remediation.recommendation.text && (
+                    {(checkMeta.remediation.recommendation.text ||
+                      recommendationLink) && (
                       <div className="flex flex-col gap-1">
                         <span className="text-text-neutral-secondary text-xs">
                           Remediation:
                         </span>
                         <div className="flex items-start gap-3">
-                          <div className="text-text-neutral-primary flex-1 text-sm">
-                            <MarkdownContainer>
-                              {checkMeta.remediation.recommendation.text}
-                            </MarkdownContainer>
-                          </div>
-                          {checkMeta.remediation.recommendation.url && (
+                          {checkMeta.remediation.recommendation.text && (
+                            <div className="text-text-neutral-primary flex-1 text-sm">
+                              <MarkdownContainer>
+                                {checkMeta.remediation.recommendation.text}
+                              </MarkdownContainer>
+                            </div>
+                          )}
+                          {recommendationLink && (
                             <CustomLink
-                              href={checkMeta.remediation.recommendation.url}
+                              href={recommendationLink.href}
                               size="sm"
                               className="shrink-0"
                             >
-                              View in Prowler Hub
+                              {recommendationLink.label}
                             </CustomLink>
                           )}
                         </div>

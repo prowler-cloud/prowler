@@ -19,6 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - AWS CodeBuild service now batches `BatchGetProjects` and `BatchGetBuilds` calls per region (up to 100 items per call) to reduce API call volume and prevent throttling-induced false positives in `codebuild_project_not_publicly_accessible` [(#10639)](https://github.com/prowler-cloud/prowler/pull/10639)
 - `display_compliance_table` dispatch switched from substring `in` checks to `startswith` to prevent false matches between similarly named frameworks (e.g. `cisa` vs `cis`) [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
 - Restore the `ec2-imdsv1` category for EC2 IMDS checks to keep Attack Surface and findings filters aligned [(#10998)](https://github.com/prowler-cloud/prowler/pull/10998)
+- Container image CVE findings and IaC findings now use official CVE, Prowler Hub, or GitHub Security Advisory URLs instead of Aqua advisory URLs in remediation and references; Trivy rule IDs map to Prowler Hub without the `AVD-` prefix so links resolve [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
 
 ### 🐞 Fixed
 
