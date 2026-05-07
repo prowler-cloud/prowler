@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 import { getLatestMetadataInfo } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
@@ -50,7 +50,7 @@ const toAlertsSearchParams = (
 
 export default async function AlertsPage({ searchParams }: AlertsPageProps) {
   if (!isAlertsEnabled()) {
-    notFound();
+    redirect("/");
   }
 
   const resolvedSearchParams = await searchParams;
