@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 from azure.core.credentials import AccessToken
+from azure.core.exceptions import HttpResponseError
 from azure.identity import DefaultAzureCredential
 from mock import MagicMock
 
@@ -432,8 +433,29 @@ class TestAzureProvider:
             )
 
     def test_test_connection_with_ClientAuthenticationError(self):
-        with pytest.raises(AzureHTTPResponseError) as exception:
-            tenant_id = str(uuid4())
+        tenant_id = str(uuid4())
+        error_message = (
+            "Authentication failed: Unable to get authority configuration for "
+            f"https://login.microsoftonline.com/{tenant_id}."
+        )
+
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.AzureProvider.setup_session"
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient"
+            ) as mock_subscription_client,
+            pytest.raises(AzureHTTPResponseError) as exception,
+        ):
+            mock_setup_session.return_value = MagicMock()
+            mock_client = MagicMock()
+            mock_client.subscriptions = MagicMock()
+            mock_client.subscriptions.list.side_effect = HttpResponseError(
+                message=error_message
+            )
+            mock_subscription_client.return_value = mock_client
+
             AzureProvider.test_connection(
                 browser_auth=True,
                 tenant_id=tenant_id,
@@ -441,9 +463,8 @@ class TestAzureProvider:
             )
 
         assert exception.type == AzureHTTPResponseError
-        assert (
-            exception.value.args[0]
-            == f"[2010] Error in HTTP response from Azure - Authentication failed: Unable to get authority configuration for https://login.microsoftonline.com/{tenant_id}. Authority would typically be in a format of https://login.microsoftonline.com/your_tenant or https://tenant_name.ciamlogin.com or https://tenant_name.b2clogin.com/tenant.onmicrosoft.com/policy.  Also please double check your tenant name or GUID is correct."
+        assert exception.value.args[0] == (
+            f"[2010] Error in HTTP response from Azure - {error_message}"
         )
 
     def test_test_connection_without_any_method(self):
