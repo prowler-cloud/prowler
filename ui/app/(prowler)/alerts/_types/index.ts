@@ -309,5 +309,3 @@ export interface AlertRecipient {
 // ---- seeding payloads ----------------------------------------------------
 
 export type AlertsFilterBag = Record<string, string | string[]>;
-
-export type { AlertPublicResponse } from "./public";
