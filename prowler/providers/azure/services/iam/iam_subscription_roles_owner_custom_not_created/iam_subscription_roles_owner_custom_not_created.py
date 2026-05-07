@@ -8,20 +8,21 @@ class iam_subscription_roles_owner_custom_not_created(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, roles in iam_client.custom_roles.items():
+            subscription_name = iam_client.subscriptions.get(subscription, subscription)
             for custom_role in roles.values():
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=custom_role
                 )
                 report.subscription = subscription
                 report.status = "PASS"
-                report.status_extended = f"Role {custom_role.name} from subscription {subscription} is not a custom owner role."
+                report.status_extended = f"Role {custom_role.name} from subscription {subscription_name} ({subscription}) is not a custom owner role."
                 for scope in custom_role.assignable_scopes:
                     if search("^/.*", scope):
                         for permission_item in custom_role.permissions:
                             for action in permission_item.actions:
                                 if action == "*":
                                     report.status = "FAIL"
-                                    report.status_extended = f"Role {custom_role.name} from subscription {subscription} is a custom owner role."
+                                    report.status_extended = f"Role {custom_role.name} from subscription {subscription_name} ({subscription}) is a custom owner role."
                                     break
 
                 findings.append(report)

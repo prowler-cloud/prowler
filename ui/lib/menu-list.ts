@@ -107,7 +107,7 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
           label: "Configuration",
           icon: Settings,
           submenus: [
-            { href: "/providers", label: "Cloud Providers", icon: CloudCog },
+            { href: "/providers", label: "Providers", icon: CloudCog },
             {
               href: "/mutelist",
               label: "Mutelist",

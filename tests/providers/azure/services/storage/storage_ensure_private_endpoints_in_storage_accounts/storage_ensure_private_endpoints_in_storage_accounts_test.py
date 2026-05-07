@@ -7,7 +7,9 @@ from prowler.providers.azure.services.storage.storage_service import (
     PrivateEndpointConnection,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -15,6 +17,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_storage_ensure_private_endpoints_in_storage_accounts:
     def test_storage_ensure_private_endpoints_in_storage_accounts(self):
         storage_client = mock.MagicMock
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {}
 
         with (
@@ -41,6 +44,7 @@ class Test_storage_ensure_private_endpoints_in_storage_accounts:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -82,7 +86,7 @@ class Test_storage_ensure_private_endpoints_in_storage_accounts:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} does not have private endpoint connections."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} does not have private endpoint connections."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name
@@ -95,6 +99,7 @@ class Test_storage_ensure_private_endpoints_in_storage_accounts:
         storage_account_id = str(uuid4())
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
+        storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
@@ -142,7 +147,7 @@ class Test_storage_ensure_private_endpoints_in_storage_accounts:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_ID} has private endpoint connections."
+                == f"Storage account {storage_account_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has private endpoint connections."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == storage_account_name

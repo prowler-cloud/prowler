@@ -4,7 +4,7 @@ from tabulate import tabulate
 from prowler.config.config import orange_color
 
 
-def get_essential_eight_table(
+def get_asd_essential_eight_table(
     findings: list,
     bulk_checks_metadata: dict,
     compliance_framework: str,
@@ -13,7 +13,7 @@ def get_essential_eight_table(
     compliance_overview: bool,
 ):
     sections = {}
-    essential_eight_compliance_table = {
+    asd_essential_eight_compliance_table = {
         "Provider": [],
         "Section": [],
         "Status": [],
@@ -26,7 +26,7 @@ def get_essential_eight_table(
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
-            if compliance.Framework == "Essential-Eight":
+            if compliance.Framework == "ASD-Essential-Eight":
                 for requirement in compliance.Requirements:
                     for attribute in requirement.Attributes:
                         section = attribute.Section
@@ -50,19 +50,19 @@ def get_essential_eight_table(
 
     sections = dict(sorted(sections.items()))
     for section in sections:
-        essential_eight_compliance_table["Provider"].append(compliance.Provider)
-        essential_eight_compliance_table["Section"].append(section)
+        asd_essential_eight_compliance_table["Provider"].append(compliance.Provider)
+        asd_essential_eight_compliance_table["Section"].append(section)
         if sections[section]["FAIL"] > 0:
-            essential_eight_compliance_table["Status"].append(
+            asd_essential_eight_compliance_table["Status"].append(
                 f"{Fore.RED}FAIL({sections[section]['FAIL']}){Style.RESET_ALL}"
             )
         elif sections[section]["PASS"] > 0:
-            essential_eight_compliance_table["Status"].append(
+            asd_essential_eight_compliance_table["Status"].append(
                 f"{Fore.GREEN}PASS({sections[section]['PASS']}){Style.RESET_ALL}"
             )
         else:
-            essential_eight_compliance_table["Status"].append("-")
-        essential_eight_compliance_table["Muted"].append(
+            asd_essential_eight_compliance_table["Status"].append("-")
+        asd_essential_eight_compliance_table["Muted"].append(
             f"{orange_color}{sections[section]['Muted']}{Style.RESET_ALL}"
         )
     if len(fail_count) + len(pass_count) + len(muted_count) > 1:
@@ -84,7 +84,7 @@ def get_essential_eight_table(
             )
             print(
                 tabulate(
-                    essential_eight_compliance_table,
+                    asd_essential_eight_compliance_table,
                     headers="keys",
                     tablefmt="rounded_grid",
                 )
