@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 
 import {
+  ALERT_ERROR_CODES,
   ALERT_SCHEMA_VERSION,
   type AlertCondition,
   type AlertPreviewResponse,
@@ -124,7 +125,7 @@ export const seedAlertRule = async (
     return {
       ok: false,
       error: {
-        code: "unknown",
+        code: ALERT_ERROR_CODES.UNKNOWN,
         detail:
           error instanceof Error ? error.message : "Seed response is invalid.",
       },

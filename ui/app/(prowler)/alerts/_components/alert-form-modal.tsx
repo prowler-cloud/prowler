@@ -374,7 +374,6 @@ const AlertFormModalContent = ({
   const [selectedRecipientEmails, setSelectedRecipientEmails] = useState(
     () => new Set(defaults.recipientEmails.map(normalizeEmail)),
   );
-  const [enabled] = useState(defaults.enabled);
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -405,7 +404,7 @@ const AlertFormModalContent = ({
     frequency,
     condition,
     recipientEmails: getRecipientEmails(selectedRecipientEmails),
-    enabled,
+    enabled: defaults.enabled,
   });
 
   const handlePreview = async () => {

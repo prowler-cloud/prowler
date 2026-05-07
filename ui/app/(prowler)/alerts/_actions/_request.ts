@@ -142,10 +142,14 @@ export const alertsRequest = async <T>(
     >[1] & { data?: unknown };
     return buildSuccessResult((parsed ?? null) as T, parsed);
   } catch (error) {
-    Sentry.captureException(error, {
-      tags: { error_source: "alerts.request", method },
-      level: "error",
-    });
+    const isAbort =
+      error instanceof DOMException && error.name === "AbortError";
+    if (!isAbort) {
+      Sentry.captureException(error, {
+        tags: { error_source: "alerts.request", method },
+        level: "error",
+      });
+    }
     return {
       ok: false,
       error: buildUnexpectedError(
