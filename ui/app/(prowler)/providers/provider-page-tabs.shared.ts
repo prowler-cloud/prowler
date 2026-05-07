@@ -1,6 +1,6 @@
 const PROVIDER_TAB = {
-  ACCOUNTS: "accounts",
-  ACCOUNT_GROUPS: "account-groups",
+  PROVIDERS: "providers",
+  PROVIDER_GROUPS: "provider-groups",
 } as const;
 
 type ProviderTab = (typeof PROVIDER_TAB)[keyof typeof PROVIDER_TAB];
@@ -11,10 +11,10 @@ function isProviderTab(value: string): value is ProviderTab {
 
 function getProviderTab(value: string | string[] | undefined): ProviderTab {
   if (typeof value !== "string") {
-    return PROVIDER_TAB.ACCOUNTS;
+    return PROVIDER_TAB.PROVIDERS;
   }
 
-  return isProviderTab(value) ? value : PROVIDER_TAB.ACCOUNTS;
+  return isProviderTab(value) ? value : PROVIDER_TAB.PROVIDERS;
 }
 
 export type { ProviderTab };

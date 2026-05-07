@@ -3853,6 +3853,7 @@ class TestAggregateAttackSurface:
             in result["privilege-escalation"]
         )
         assert "ec2_instance_imdsv2_enabled" in result["ec2-imdsv1"]
+        assert "ec2_instance_account_imdsv2_enabled" in result["ec2-imdsv1"]
 
     @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.Finding.all_objects.filter")

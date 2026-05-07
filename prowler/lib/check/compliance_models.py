@@ -102,7 +102,7 @@ class CIS_Requirement_Attribute(BaseModel):
     References: str
 
 
-class EssentialEight_Requirement_Attribute_MaturityLevel(str, Enum):
+class ASDEssentialEight_Requirement_Attribute_MaturityLevel(str, Enum):
     """ASD Essential Eight Maturity Level"""
 
     ML1 = "ML1"
@@ -110,14 +110,14 @@ class EssentialEight_Requirement_Attribute_MaturityLevel(str, Enum):
     ML3 = "ML3"
 
 
-class EssentialEight_Requirement_Attribute_AssessmentStatus(str, Enum):
+class ASDEssentialEight_Requirement_Attribute_AssessmentStatus(str, Enum):
     """Essential Eight Requirement Attribute Assessment Status"""
 
     Manual = "Manual"
     Automated = "Automated"
 
 
-class EssentialEight_Requirement_Attribute_CloudApplicability(str, Enum):
+class ASDEssentialEight_Requirement_Attribute_CloudApplicability(str, Enum):
     """How well the ASD control maps to AWS cloud infrastructure."""
 
     Full = "full"
@@ -127,13 +127,13 @@ class EssentialEight_Requirement_Attribute_CloudApplicability(str, Enum):
 
 
 # Essential Eight Requirement Attribute
-class EssentialEight_Requirement_Attribute(BaseModel):
+class ASDEssentialEight_Requirement_Attribute(BaseModel):
     """ASD Essential Eight Requirement Attribute"""
 
     Section: str
-    MaturityLevel: EssentialEight_Requirement_Attribute_MaturityLevel
-    AssessmentStatus: EssentialEight_Requirement_Attribute_AssessmentStatus
-    CloudApplicability: EssentialEight_Requirement_Attribute_CloudApplicability
+    MaturityLevel: ASDEssentialEight_Requirement_Attribute_MaturityLevel
+    AssessmentStatus: ASDEssentialEight_Requirement_Attribute_AssessmentStatus
+    CloudApplicability: ASDEssentialEight_Requirement_Attribute_CloudApplicability
     MitigatedThreats: list[str]
     Description: str
     RationaleStatement: str
@@ -292,7 +292,7 @@ class Compliance_Requirement(BaseModel):
     Name: Optional[str] = None
     Attributes: list[
         Union[
-            EssentialEight_Requirement_Attribute,
+            ASDEssentialEight_Requirement_Attribute,
             CIS_Requirement_Attribute,
             ENS_Requirement_Attribute,
             ISO27001_2013_Requirement_Attribute,

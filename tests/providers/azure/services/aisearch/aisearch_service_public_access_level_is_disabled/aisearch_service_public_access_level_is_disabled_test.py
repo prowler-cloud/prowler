@@ -3,7 +3,9 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.aisearch.aisearch_service import AISearchService
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_AISearch_service_not_publicly_accessible:
     def test_aisearch_sevice_no_aisearch_services(self):
         aisearch_client = mock.MagicMock
+        aisearch_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         aisearch_client.aisearch_services = {}
 
         with (
@@ -35,6 +38,7 @@ class Test_AISearch_service_not_publicly_accessible:
         aisearch_service_id = str(uuid4())
         aisearch_service_name = "Test AISearch Service"
         aisearch_client = mock.MagicMock
+        aisearch_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         aisearch_client.aisearch_services = {
             AZURE_SUBSCRIPTION_ID: {
                 aisearch_service_id: AISearchService(
@@ -66,7 +70,7 @@ class Test_AISearch_service_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"AISearch Service {aisearch_service_name} from subscription {AZURE_SUBSCRIPTION_ID} allows public access."
+                == f"AISearch Service {aisearch_service_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} allows public access."
             )
             assert result[0].resource_id == aisearch_service_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
@@ -77,6 +81,7 @@ class Test_AISearch_service_not_publicly_accessible:
         aisearch_service_id = str(uuid4())
         aisearch_service_name = "Test Search Service"
         aisearch_client = mock.MagicMock
+        aisearch_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         aisearch_client.aisearch_services = {
             AZURE_SUBSCRIPTION_ID: {
                 aisearch_service_id: AISearchService(
@@ -108,7 +113,7 @@ class Test_AISearch_service_not_publicly_accessible:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"AISearch Service {aisearch_service_name} from subscription {AZURE_SUBSCRIPTION_ID} does not allows public access."
+                == f"AISearch Service {aisearch_service_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} does not allows public access."
             )
             assert result[0].resource_id == aisearch_service_id
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
