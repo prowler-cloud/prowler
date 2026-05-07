@@ -150,9 +150,9 @@ def get_available_compliance_frameworks(provider=None):
         if os.path.isdir(path):
             for file in os.scandir(path):
                 if file.is_file() and file.name.endswith(".json"):
-                    available_compliance_frameworks.append(
-                        file.name.removesuffix(".json")
-                    )
+                    name = file.name.removesuffix(".json")
+                    if name not in available_compliance_frameworks:
+                        available_compliance_frameworks.append(name)
     return available_compliance_frameworks
 
 
