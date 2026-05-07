@@ -10,7 +10,6 @@ import {
 
 import {
   ALERT_NOTIFICATION_METHODS,
-  type AlertFormDefaults,
   type AlertFormValues,
 } from "../_types/alert-form";
 
@@ -37,7 +36,7 @@ export const toAlertPayload = (values: AlertFormValues): AlertPayload => ({
 export const getEmptyAlertFormDefaults = (
   frequency: AlertFormValues["frequency"] = ALERT_TRIGGER_KINDS.AFTER_SCAN,
   condition: AlertCondition = DEFAULT_CONDITION,
-): AlertFormDefaults => ({
+): AlertFormValues => ({
   name: "",
   description: "",
   method: ALERT_NOTIFICATION_METHODS.EMAIL,
@@ -45,10 +44,9 @@ export const getEmptyAlertFormDefaults = (
   condition,
   recipientEmails: [],
   enabled: true,
-  advancedCondition: null,
 });
 
-export const getAlertFormDefaults = (alert: AlertRule): AlertFormDefaults => ({
+export const getAlertFormDefaults = (alert: AlertRule): AlertFormValues => ({
   name: alert.attributes.name,
   description: alert.attributes.description,
   method: ALERT_NOTIFICATION_METHODS.EMAIL,
@@ -56,7 +54,6 @@ export const getAlertFormDefaults = (alert: AlertRule): AlertFormDefaults => ({
   condition: alert.attributes.condition,
   recipientEmails: alert.attributes.recipient_emails ?? [],
   enabled: alert.attributes.enabled,
-  advancedCondition: null,
 });
 
 const SIMPLE_FIELD_TO_FINDINGS_FILTER: Partial<

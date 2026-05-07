@@ -83,7 +83,6 @@ describe("simple alert adapter", () => {
       condition,
       recipientEmails: ["alerts@example.com"],
       enabled: false,
-      advancedCondition: null,
     });
   });
 
