@@ -64,15 +64,15 @@ Select **Clear filters** to reset both the region filter and any other applied f
 
 ### Reviewing the Prowler ThreatScore Card
 
-When the selected scan includes Prowler ThreatScore data, a dedicated card appears at the top of the overview (visible in the screenshot above), showing:
+When the selected scan includes Prowler ThreatScore data, a dedicated card appears at the top of the overview, showing:
 
 * The overall ThreatScore (0–100) with a color-coded indicator.
 * A progress bar reflecting current posture.
 * Per-pillar bars for IAM, Attack Surface, and Logging and Monitoring.
 
-Selecting the card opens the ThreatScore framework detail page with a per-pillar breakdown, requirements status, top failed sections, and a complete requirement accordion:
+<img src="/images/compliance/prowler-app-compliance-threatscore-card.png" alt="Prowler ThreatScore badge on the Compliance overview showing the overall score and per-pillar bars" width="900" />
 
-<img src="/images/compliance/prowler-app-compliance-threatscore-card.png" alt="Prowler ThreatScore framework detail page with breakdown, requirements status, top failed sections, and accordion" width="900" />
+Selecting the card opens the ThreatScore framework detail page, covered in [Working With the Framework Detail Page](#working-with-the-framework-detail-page).
 
 For a complete explanation of the methodology, formula, and weighting, see [Prowler ThreatScore Documentation](/user-guide/compliance/tutorials/threatscore).
 
@@ -104,9 +104,13 @@ The header shows the framework name, version, the provider scan being reviewed, 
 
 * **Requirements Status:** Donut chart with `Pass`, `Fail`, and `Manual` counts plus the total number of requirements.
 * **Top Failed Sections:** Ranks the sections or pillars with the highest number of failing requirements.
-* **ThreatScore Breakdown:** Appears only on the ThreatScore framework. It shows the overall score and per-pillar scores aligned with the ThreatScore pillars (IAM, Attack Surface, Logging and Monitoring, Encryption). See the ThreatScore detail screenshot above.
+* **ThreatScore Breakdown:** Appears only on the ThreatScore framework. It shows the overall score and per-pillar scores aligned with the ThreatScore pillars (IAM, Attack Surface, Logging and Monitoring, Encryption).
 
-<img src="/images/compliance/prowler-app-compliance-detail-header.png" alt="CIS framework detail page showing the title, scan info, CSV/PDF download buttons, Requirements Status donut, Top Failed Sections card, and the requirements accordion list" width="900" />
+The same layout applies to every compliance framework. ThreatScore is the only framework that includes the extra Breakdown card on the left; for any other framework, the Requirements Status and Top Failed Sections cards span the full row.
+
+<img src="/images/compliance/prowler-app-compliance-threatscore-detail.png" alt="Prowler ThreatScore detail page including the extra Breakdown card alongside Requirements Status and Top Failed Sections" width="900" />
+
+<img src="/images/compliance/prowler-app-compliance-detail-header.png" alt="CIS framework detail page showing only the Requirements Status donut and the Top Failed Sections card, without the ThreatScore Breakdown" width="900" />
 
 #### Requirements Accordion
 
