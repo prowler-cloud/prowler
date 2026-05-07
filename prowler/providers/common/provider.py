@@ -153,13 +153,13 @@ class Provider(ABC):
         """
         raise NotImplementedError(f"{cls.__name__} has not implemented from_cli_args()")
 
-    def get_output_options(self, arguments, bulk_checks_metadata):
+    def get_output_options(self, arguments, _bulk_checks_metadata):
         """Create the provider-specific OutputOptions."""
         raise NotImplementedError(
             f"{self.__class__.__name__} has not implemented get_output_options()"
         )
 
-    def get_stdout_detail(self, finding) -> str:
+    def get_stdout_detail(self, _finding) -> str:
         """Return the detail string for stdout reporting (region, location, etc.)."""
         raise NotImplementedError(
             f"{self.__class__.__name__} has not implemented get_stdout_detail()"
@@ -189,10 +189,10 @@ class Provider(ABC):
 
     def generate_compliance_output(
         self,
-        findings,
-        bulk_compliance_frameworks,
+        _findings,
+        _bulk_compliance_frameworks,
         _input_compliance_frameworks,
-        output_options,
+        _output_options,
         _generated_outputs,
     ) -> None:
         """Generate compliance CSV output for this provider's frameworks."""
@@ -213,9 +213,9 @@ class Provider(ABC):
 
     def display_compliance_table(
         self,
-        findings: list,
-        bulk_checks_metadata: dict,
-        compliance_framework: str,
+        _findings: list,
+        _bulk_checks_metadata: dict,
+        _compliance_framework: str,
         _output_filename: str,
         _output_directory: str,
         _compliance_overview: bool,
@@ -626,7 +626,12 @@ class Provider(ABC):
 
     @staticmethod
     def _load_ep_provider(name: str):
-        """Load an external provider class from entry points, with cache."""
+        """Load an external provider class from entry points, with cache.
+
+        Caches both hits and misses so repeated lookups for unknown names do
+        not re-iterate entry_points(). Symmetric with
+        tool_wrapper._ep_class_cache.
+        """
         if name in Provider._ep_providers:
             return Provider._ep_providers[name]
         for ep in importlib.metadata.entry_points(group="prowler.providers"):
@@ -639,6 +644,7 @@ class Provider(ABC):
                     logger.warning(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+        Provider._ep_providers[name] = None
         return None
 
     @staticmethod

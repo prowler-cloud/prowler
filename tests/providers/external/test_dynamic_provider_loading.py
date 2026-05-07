@@ -302,6 +302,21 @@ class TestProviderDiscovery:
         # load() should only be called once due to caching
         mock_ep.return_value[0].load.assert_called_once()
 
+    @patch("prowler.providers.common.provider.importlib.metadata.entry_points")
+    def test_load_ep_provider_caches_misses(self, mock_ep):
+        """A miss (unknown provider) must also be cached so repeated lookups
+        do not re-iterate entry_points(). Aligns with tool_wrapper._ep_class_cache,
+        which already caches None on miss."""
+        mock_ep.return_value = []
+
+        first = Provider._load_ep_provider("nonexistent")
+        second = Provider._load_ep_provider("nonexistent")
+
+        assert first is None
+        assert second is None
+        # entry_points() should only be called once across the two lookups
+        mock_ep.assert_called_once()
+
     @patch("prowler.providers.common.provider.Provider._load_ep_provider")
     @patch("prowler.providers.common.provider.Provider.get_available_providers")
     def test_get_providers_help_text_reads_cli_help_text(
