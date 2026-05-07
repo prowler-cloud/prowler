@@ -53,11 +53,7 @@ interface AttackPathGraphProps {
   selectedNodeId?: string | null;
   isFilteredView?: boolean;
   initialNodeId?: string;
-  // Tier 1 expansion state — controlled by the parent (lives in the graph
-  // store) so it survives filtered-view enter/exit. If omitted, no resource
-  // expansion is tracked and findings stay hidden in the full view.
   expandedResources?: Set<string>;
-  onResourceToggle?: (resourceId: string) => void;
   onNodeClick?: (node: GraphNode) => void;
   onInitialFilter?: (filteredData: AttackPathGraphData) => void;
   ref?: Ref<GraphHandle>;
@@ -144,18 +140,61 @@ const GraphDefs = () => (
 
 type GraphCanvasProps = Omit<AttackPathGraphProps, "className">;
 
+// Mask covers the area NOT currently in view; the cut-out rectangle is the
+// viewport. To make the viewport rectangle stand out we darken the mask and
+// give its border high contrast against the minimap background.
 const MINIMAP_COLORS = {
   light: {
     bg: "#f8fafc",
-    mask: "rgba(241, 245, 249, 0.6)",
-    maskStroke: "#cbd5e1",
+    mask: "rgba(15, 23, 42, 0.45)",
+    maskStroke: "#0f172a",
   },
   dark: {
     bg: "#0f172a",
-    mask: "rgba(15, 23, 42, 0.6)",
-    maskStroke: "#475569",
+    mask: "rgba(0, 0, 0, 0.7)",
+    maskStroke: "#cbd5e1",
   },
 } as const;
+
+const MINIMAP_VIEWPORT_STROKE_WIDTH = 3;
+
+// Animated re-fit shared by every auto-fit trigger. We deliberately do not
+// cap maxZoom — for small subgraphs (e.g. a finding's filtered view with 3
+// nodes) the user expects the result to fill the canvas; an artificial cap
+// looks like a layout error.
+//
+// Padding is asymmetric: the minimap sits in the bottom-right corner of the
+// canvas (default 200×150 panel + offset), so a fit with uniform padding
+// can drop nodes underneath it. Generous bottom/right padding keeps the
+// fitted graph clear of the minimap.
+const AUTO_FIT_OPTIONS = {
+  padding: { top: "32px", left: "32px", right: "240px", bottom: "180px" },
+  duration: 300,
+} as const;
+
+const MEASURED_FIT_MAX_ATTEMPTS = 30;
+
+const scheduleMeasuredFit = (
+  isMeasured: () => boolean,
+  onMeasured: () => void,
+) => {
+  let frame = 0;
+  let attempts = 0;
+
+  const tryFit = () => {
+    if (isMeasured() || attempts >= MEASURED_FIT_MAX_ATTEMPTS) {
+      onMeasured();
+      return;
+    }
+
+    attempts += 1;
+    frame = requestAnimationFrame(tryFit);
+  };
+
+  frame = requestAnimationFrame(tryFit);
+
+  return () => cancelAnimationFrame(frame);
+};
 
 const GraphCanvas = ({
   data,
@@ -163,13 +202,19 @@ const GraphCanvas = ({
   isFilteredView,
   initialNodeId,
   expandedResources,
-  onResourceToggle,
   onNodeClick,
   onInitialFilter,
   ref,
 }: GraphCanvasProps) => {
-  const { zoomIn, zoomOut, fitView, getZoom, getNodes, getNodesBounds } =
-    useReactFlow();
+  const {
+    zoomIn,
+    zoomOut,
+    fitView,
+    getZoom,
+    getNodes,
+    getNodesBounds,
+    getViewport,
+  } = useReactFlow();
   const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
@@ -212,6 +257,112 @@ const GraphCanvas = ({
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- one-time init
 
+  // --- Auto-fit triggers ---
+  //
+  // Filter toggles (finding click → filtered view, "Back to Full View" →
+  // full graph) swap the data prop, which leaves the previous viewport
+  // pointing at coordinates that no longer contain the new layout. Re-fit
+  // once React Flow has applied the new layout (next animation frame).
+  //
+  // Resource expansion fits ONLY when a newly revealed finding sits
+  // entirely outside the current viewport (i.e. its full bounding box
+  // is past one of the viewport edges). This intentionally lets
+  // partially-clipped edge nodes through without re-fitting — hidden
+  // findings contribute zero size to the initial bbox, so a finding's
+  // far edge often peeks past the padded viewport on the first reveal,
+  // and a "partially outside" check would re-fit on every expand. The
+  // user's "no cabe visualmente" complaint is about findings that
+  // appear completely off-screen after the user has panned away, which
+  // the strict check captures.
+  const filteredFitInitRef = useRef(false);
+  const previousFilteredRef = useRef(isFilteredView);
+  const previousExpandedRef = useRef<ReadonlySet<string>>(expanded);
+  // Captured every render so the expand-fit effect can resolve a resource
+  // ID to its connected finding IDs without recomputing the lookup.
+  // The map itself is built later in this render — see assignment below
+  // the layout-derivation block.
+  const resourceToFindingsRef = useRef<Map<string, Set<string>>>(new Map());
+
+  useEffect(() => {
+    if (!filteredFitInitRef.current) {
+      filteredFitInitRef.current = true;
+      previousFilteredRef.current = isFilteredView;
+      return;
+    }
+    if (previousFilteredRef.current === isFilteredView) return;
+    previousFilteredRef.current = isFilteredView;
+    // React Flow measures node sizes asynchronously via ResizeObserver after
+    // the data swap. A single rAF runs while measured.width is still 0, so
+    // fitView computes a degenerate bbox and the viewport keeps the user's
+    // previous zoom — most visibly when leaving a filtered view in which the
+    // user had zoomed in. Poll until visible nodes are measured (or give up
+    // after ~500ms so we never block on a stuck observer).
+    return scheduleMeasuredFit(
+      () => {
+        const visibleNodes = getNodes().filter((n) => !n.hidden);
+        return (
+          visibleNodes.length > 0 &&
+          visibleNodes.every((n) => (n.measured?.width ?? 0) > 0)
+        );
+      },
+      () => fitView(AUTO_FIT_OPTIONS),
+    );
+  }, [isFilteredView, fitView, getNodes]);
+
+  useEffect(() => {
+    const previous = previousExpandedRef.current;
+    previousExpandedRef.current = expanded;
+    if (previous === expanded) return;
+    const newResourceIds = Array.from(expanded).filter(
+      (id) => !previous.has(id),
+    );
+    // Only fit on growth — collapsing intentionally leaves the user's
+    // current framing alone.
+    if (newResourceIds.length === 0) return;
+
+    const newFindingIds = new Set<string>();
+    for (const resourceId of newResourceIds) {
+      const findings = resourceToFindingsRef.current.get(resourceId);
+      if (!findings) continue;
+      findings.forEach((id) => newFindingIds.add(id));
+    }
+    if (newFindingIds.size === 0) return;
+
+    // Findings transition from hidden to visible on expand, and React Flow
+    // measures them asynchronously. Poll before checking whether their full
+    // bounding boxes sit entirely past a viewport edge; collapsing and
+    // partially clipped findings preserve the user's current frame.
+    return scheduleMeasuredFit(
+      () => {
+        const targets = getNodes().filter((n) => newFindingIds.has(n.id));
+        return (
+          targets.length === newFindingIds.size &&
+          targets.every((n) => (n.measured?.width ?? 0) > 0)
+        );
+      },
+      () => {
+        const targets = getNodes().filter((n) => newFindingIds.has(n.id));
+        const containerEl = containerRef.current;
+        if (!containerEl) return;
+        const { width, height } = containerEl.getBoundingClientRect();
+        if (width === 0 || height === 0) return;
+        const { x, y, zoom } = getViewport();
+        const minX = -x / zoom;
+        const minY = -y / zoom;
+        const maxX = minX + width / zoom;
+        const maxY = minY + height / zoom;
+        const anyOutside = targets.some((node) => {
+          const nx = node.position.x;
+          const ny = node.position.y;
+          const nw = node.measured?.width ?? 0;
+          const nh = node.measured?.height ?? 0;
+          return nx + nw < minX || nx > maxX || ny + nh < minY || ny > maxY;
+        });
+        if (anyOutside) fitView(AUTO_FIT_OPTIONS);
+      },
+    );
+  }, [expanded, fitView, getNodes, getViewport]);
+
   const nodes = effectiveData.nodes ?? [];
   const edges = effectiveData.edges ?? [];
 
@@ -253,6 +404,9 @@ const GraphCanvas = ({
       findingToResources.set(edge.target, resources);
     }
   });
+
+  // Refresh the expand-fit effect's lookup with the latest mapping.
+  resourceToFindingsRef.current = resourceToFindings;
 
   // Tier 1: compute which finding nodes are hidden (not expanded)
   const hiddenFindingIds = new Set<string>();
@@ -321,13 +475,6 @@ const GraphCanvas = ({
   const handleNodeClick = (_event: MouseEvent, node: Node) => {
     const graphNode = (node.data as { graphNode: GraphNode }).graphNode;
 
-    // Tier 1: clicking resource in full view toggles connected findings
-    if (!isFilteredView && !isFindingNode(graphNode.labels)) {
-      if (resourcesWithFindings.has(node.id)) {
-        onResourceToggle?.(node.id);
-      }
-    }
-
     // Always fire parent callback (handles selection + Tier 2 filtered view)
     onNodeClick?.(graphNode);
   };
@@ -351,11 +498,15 @@ const GraphCanvas = ({
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
-        zoomOnScroll={false}
+        fitViewOptions={{ padding: 0.2, includeHiddenNodes: true }}
+        // Supported React Flow behavior: wheel over the graph zooms the
+        // viewport. The surrounding UX avoids using node details as inline
+        // content, so this no longer fights a below-graph details section.
+        zoomOnScroll={true}
         zoomOnPinch={true}
         zoomOnDoubleClick={false}
         panOnScroll={false}
+        preventScrolling={true}
         minZoom={0.1}
         maxZoom={10}
         proOptions={{ hideAttribution: true }}
@@ -368,6 +519,7 @@ const GraphCanvas = ({
           bgColor={minimapColors.bg}
           maskColor={minimapColors.mask}
           maskStrokeColor={minimapColors.maskStroke}
+          maskStrokeWidth={MINIMAP_VIEWPORT_STROKE_WIDTH}
           nodeColor={(node) => {
             const graphNode = (node.data as { graphNode?: GraphNode })
               .graphNode;
@@ -394,7 +546,6 @@ export const AttackPathGraph = ({
   isFilteredView,
   initialNodeId,
   expandedResources,
-  onResourceToggle,
   onNodeClick,
   onInitialFilter,
   ref,
@@ -419,7 +570,6 @@ export const AttackPathGraph = ({
           isFilteredView={isFilteredView}
           initialNodeId={initialNodeId}
           expandedResources={expandedResources}
-          onResourceToggle={onResourceToggle}
           onNodeClick={onNodeClick}
           onInitialFilter={onInitialFilter}
         />
