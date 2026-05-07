@@ -11,7 +11,7 @@ from tests.providers.azure.azure_fixtures import (
 
 class Test_monitor_alert_create_update_nsg:
     def test_monitor_alert_create_update_nsg_no_subscriptions(self):
-        monitor_client = mock.MagicMock
+        monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {}
         with (
             mock.patch(
@@ -64,7 +64,7 @@ class Test_monitor_alert_create_update_nsg:
             )
 
     def test_alert_rules_configured(self):
-        monitor_client = mock.MagicMock
+        monitor_client = mock.MagicMock()
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

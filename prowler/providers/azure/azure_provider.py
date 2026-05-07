@@ -1088,7 +1088,7 @@ class AzureProvider(Provider):
 
         return set(chain.from_iterable(locations.values()))
 
-    def validate_resource_groups(self, resource_groups: list) -> dict:
+    def validate_resource_groups(self, resource_groups: list) -> dict[str, list[str]]:
         resource_groups = [r for r in resource_groups if r and r.strip()]
         if not resource_groups:
             return {}

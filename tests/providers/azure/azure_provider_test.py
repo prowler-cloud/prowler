@@ -534,7 +534,7 @@ class TestAzureProviderValidateResourceGroups:
         "prowler.providers.azure.azure_provider.AzureProvider.__init__",
         return_value=None,
     )
-    def _make_provider(self, mock_init, subscriptions=None):
+    def _make_provider(self, subscriptions=None):
         provider = AzureProvider()
         provider._identity = MagicMock()
         provider._identity.subscriptions = subscriptions or {"Sub": str(uuid4())}
@@ -544,12 +544,13 @@ class TestAzureProviderValidateResourceGroups:
     @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
     def test_validate_resource_groups_exact_match(self, mock_rm_client):
         provider = self._make_provider()
-        list(provider._identity.subscriptions.values())[0]
         sub_name = list(provider._identity.subscriptions.keys())[0]
 
         mock_rg = MagicMock()
         mock_rg.name = "mygroup"
-        mock_rm_client.return_value.resource_groups.list.return_value = [mock_rg]
+        mock_resource_groups = MagicMock()
+        mock_resource_groups.list.return_value = [mock_rg]
+        mock_rm_client.return_value.resource_groups = mock_resource_groups
 
         result = provider.validate_resource_groups(["mygroup"])
 
@@ -562,11 +563,14 @@ class TestAzureProviderValidateResourceGroups:
 
         mock_rg = MagicMock()
         mock_rg.name = "MyGroup"
-        mock_rm_client.return_value.resource_groups.list.return_value = [mock_rg]
+        mock_resource_groups = MagicMock()
+        mock_resource_groups.list.return_value = [mock_rg]
+        mock_rm_client.return_value.resource_groups = mock_resource_groups
 
         result = provider.validate_resource_groups(["mygroup"])
 
-        assert result[sub_name] == ["mygroup"]
+        assert result[sub_name] == ["MyGroup"]
+        mock_resource_groups.list.assert_called_once()
 
     @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
     def test_validate_resource_groups_multiple_rgs(self, mock_rm_client):
@@ -576,7 +580,9 @@ class TestAzureProviderValidateResourceGroups:
         rg1, rg2 = MagicMock(), MagicMock()
         rg1.name = "rg1"
         rg2.name = "rg2"
-        mock_rm_client.return_value.resource_groups.list.return_value = [rg1, rg2]
+        mock_resource_groups = MagicMock()
+        mock_resource_groups.list.return_value = [rg1, rg2]
+        mock_rm_client.return_value.resource_groups = mock_resource_groups
 
         result = provider.validate_resource_groups(["rg1", "rg2"])
 
@@ -589,7 +595,9 @@ class TestAzureProviderValidateResourceGroups:
 
         mock_rg = MagicMock()
         mock_rg.name = "existing"
-        mock_rm_client.return_value.resource_groups.list.return_value = [mock_rg]
+        mock_resource_groups = MagicMock()
+        mock_resource_groups.list.return_value = [mock_rg]
+        mock_rm_client.return_value.resource_groups = mock_resource_groups
 
         result = provider.validate_resource_groups(["nonexistent"])
 

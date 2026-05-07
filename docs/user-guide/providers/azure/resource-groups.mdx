@@ -40,6 +40,7 @@ When `--azure-resource-group` is provided, Prowler validates each specified reso
 - If a resource group is found in one or more subscriptions, it will be scanned in those subscriptions only.
 - If a resource group is **not found in any** subscription, Prowler logs a warning and skips it.
 - If **none** of the provided resource groups are found across any subscription, Prowler logs a warning and no resource group scoped checks will run.
+- Resource group names are matched case-insensitively — `MyGroup` and `mygroup` are treated as the same group, mirroring Azure's own behavior.
 
 <Warning>
 Even if no resource groups are found, passing the --azure-resource-group flag disables subscription-only scoped scans.

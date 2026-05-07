@@ -7,11 +7,8 @@ class monitor_alert_delete_public_ip_address_rule(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
 
-        for (
-            subscription_name,
-            activity_log_alerts,
-        ) in monitor_client.alert_rules.items():
-            if monitor_client.resource_groups:
+        if monitor_client.resource_groups:
+            for subscription_name in monitor_client.subscriptions:
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription_name
                 report.resource_name = subscription_name
@@ -21,7 +18,12 @@ class monitor_alert_delete_public_ip_address_rule(Check):
                 report.status = "MANUAL"
                 report.status_extended = f"Subscription '{subscription_name}': alert-rule checks are subscription-scoped and cannot be accurately evaluated with resource group filtering enabled. Re-run without --azure-resource-group to get accurate results."
                 findings.append(report)
-                continue
+            return findings
+
+        for (
+            subscription_name,
+            activity_log_alerts,
+        ) in monitor_client.alert_rules.items():
             for alert_rule in activity_log_alerts:
                 if check_alert_rule(
                     alert_rule, "Microsoft.Network/publicIPAddresses/delete"

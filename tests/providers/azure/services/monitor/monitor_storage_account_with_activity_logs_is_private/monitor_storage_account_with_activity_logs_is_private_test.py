@@ -10,7 +10,7 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
     def test_monitor_storage_account_with_activity_logs_is_private_no_subscriptions(
         self,
     ):
-        monitor_client = mock.MagicMock
+        monitor_client = mock.MagicMock()
         monitor_client.diagnostics_settings = {}
 
         with (
@@ -32,7 +32,7 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
             assert len(result) == 0
 
     def test_no_diagnostic_settings(self):
-        monitor_client = mock.MagicMock
+        monitor_client = mock.MagicMock()
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION_ID: []}
         with (
             mock.patch(
@@ -53,9 +53,8 @@ class Test_monitor_storage_account_with_activity_logs_is_private:
             assert len(result) == 0
 
     def test_diagnostic_settings_configured(self):
-        monitor_client = mock.MagicMock
-        storage_client = mock.MagicMock
-
+        monitor_client = mock.MagicMock()
+        storage_client = mock.MagicMock()
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

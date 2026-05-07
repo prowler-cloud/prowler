@@ -10,7 +10,7 @@ from tests.providers.azure.azure_fixtures import (
 
 class Test_monitor_alert_delete_policy_assignment:
     def test_monitor_alert_delete_policy_assignment_no_subscriptions(self):
-        monitor_client = mock.MagicMock
+        monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {}
 
         with (
@@ -33,7 +33,7 @@ class Test_monitor_alert_delete_policy_assignment:
             assert len(result) == 0
 
     def test_no_alert_rules(self):
-        monitor_client = mock.MagicMock
+        monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {AZURE_SUBSCRIPTION_ID: []}
         monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
         monitor_client.resource_groups = None
@@ -64,8 +64,7 @@ class Test_monitor_alert_delete_policy_assignment:
             )
 
     def test_alert_rules_configured(self):
-        monitor_client = mock.MagicMock
-
+        monitor_client = mock.MagicMock()
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

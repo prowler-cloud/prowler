@@ -10,7 +10,7 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
     def test_monitor_diagnostic_setting_with_appropriate_categories_no_subscriptions(
         self,
     ):
-        monitor_client = mock.MagicMock
+        monitor_client = mock.MagicMock()
         monitor_client.diagnostics_settings = {}
 
         with (
@@ -32,7 +32,7 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
             assert len(result) == 0
 
     def test_no_diagnostic_settings(self):
-        monitor_client = mock.MagicMock
+        monitor_client = mock.MagicMock()
         monitor_client.diagnostics_settings = {AZURE_SUBSCRIPTION_ID: []}
         monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
         with (
@@ -62,8 +62,7 @@ class Test_monitor_diagnostic_setting_with_appropriate_categories:
             )
 
     def test_diagnostic_settings_configured(self):
-        monitor_client = mock.MagicMock
-
+        monitor_client = mock.MagicMock()
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
