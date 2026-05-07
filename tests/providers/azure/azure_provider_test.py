@@ -534,7 +534,7 @@ class TestAzureProviderValidateResourceGroups:
         "prowler.providers.azure.azure_provider.AzureProvider.__init__",
         return_value=None,
     )
-    def _make_provider(self, subscriptions=None):
+    def _make_provider(self, _mock_init, subscriptions=None):
         provider = AzureProvider()
         provider._identity = MagicMock()
         provider._identity.subscriptions = subscriptions or {"Sub": str(uuid4())}

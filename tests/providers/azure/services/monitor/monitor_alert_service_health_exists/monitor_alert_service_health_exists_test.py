@@ -10,6 +10,7 @@ class Test_monitor_alert_service_health_exists:
     def test_monitor_alert_service_health_exists_no_subscriptions(self):
         monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {}
+        monitor_client.subscriptions = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -100,6 +101,9 @@ class Test_monitor_alert_service_health_exists:
                         description="desc1",
                     ),
                 ]
+            }
+            monitor_client.subscriptions = {
+                AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID
             }
             monitor_client.resource_groups = None
             check = monitor_alert_service_health_exists()

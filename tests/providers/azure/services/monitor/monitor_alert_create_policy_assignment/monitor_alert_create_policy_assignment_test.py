@@ -12,6 +12,7 @@ class Test_monitor_alert_create_policy_assignment:
     def test_monitor_alert_create_policy_assignment_no_subscriptions(self):
         monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {}
+        monitor_client.subscriptions = {}
 
         with (
             mock.patch(
@@ -116,6 +117,9 @@ class Test_monitor_alert_create_policy_assignment:
                         description="description2",
                     ),
                 ]
+            }
+            monitor_client.subscriptions = {
+                AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID
             }
             monitor_client.resource_groups = None
             check = monitor_alert_create_policy_assignment()

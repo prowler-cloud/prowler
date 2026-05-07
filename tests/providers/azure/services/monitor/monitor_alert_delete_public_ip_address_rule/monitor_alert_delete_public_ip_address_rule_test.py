@@ -12,6 +12,7 @@ class Test_monitor_alert_create_update_security_solution:
     def test_monitor_alert_delete_public_ip_address_rule_no_subscriptions(self):
         monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {}
+        monitor_client.subscriptions = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -116,6 +117,9 @@ class Test_monitor_alert_create_update_security_solution:
                         description="description2",
                     ),
                 ]
+            }
+            monitor_client.subscriptions = {
+                AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID
             }
             monitor_client.resource_groups = None
             check = monitor_alert_delete_public_ip_address_rule()
