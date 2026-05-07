@@ -5,7 +5,6 @@ import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { getAlert, listAlerts } from "@/app/(prowler)/alerts/_actions";
 import { AlertsManager } from "@/app/(prowler)/alerts/_components/alerts-manager";
-import { isAlertsEnabled } from "@/app/(prowler)/alerts/_lib/env";
 import { ContentLayout } from "@/components/ui";
 import { createScanDetailsMapping } from "@/lib";
 import type { MetaDataProps, ScanEntity, ScanProps } from "@/types";
@@ -24,7 +23,7 @@ const getParamValue = (
 
 const toAlertsSearchParams = (
   resolvedSearchParams: Awaited<AlertsPageProps["searchParams"]>,
-): URLSearchParams => {
+): Record<string, string> => {
   const page = Number.parseInt(
     getParamValue(resolvedSearchParams, "page") ?? "1",
     10,
@@ -38,18 +37,19 @@ const toAlertsSearchParams = (
   const enabledFilter = getParamValue(resolvedSearchParams, "filter[enabled]");
   const triggerFilter = getParamValue(resolvedSearchParams, "filter[trigger]");
 
-  const params = new URLSearchParams();
-  params.set("page[number]", String(page));
-  params.set("page[size]", String(pageSize));
-  params.set("sort", sort);
-  if (search) params.set("filter[search]", search);
-  if (enabledFilter) params.set("filter[enabled]", enabledFilter);
-  if (triggerFilter) params.set("filter[trigger]", triggerFilter);
+  const params: Record<string, string> = {
+    "page[number]": String(page),
+    "page[size]": String(pageSize),
+    sort,
+  };
+  if (search) params["filter[search]"] = search;
+  if (enabledFilter) params["filter[enabled]"] = enabledFilter;
+  if (triggerFilter) params["filter[trigger]"] = triggerFilter;
   return params;
 };
 
 export default async function AlertsPage({ searchParams }: AlertsPageProps) {
-  if (!isAlertsEnabled()) {
+  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true") {
     redirect("/");
   }
 
@@ -63,9 +63,10 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
       getLatestMetadataInfo({}),
       editAlertId ? getAlert(editAlertId) : Promise.resolve(null),
     ]);
-  const alerts = result.ok ? result.data.data : [];
-  const apiMeta = result.ok ? result.data.meta : undefined;
-  const loadError = !result.ok ? result.error.detail : null;
+  const hasError = result && "error" in result;
+  const alerts = !hasError ? result.data : [];
+  const apiMeta = !hasError ? result.meta : undefined;
+  const loadError = hasError ? result.error : null;
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
@@ -85,7 +86,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
     providersData,
   ) as { [uid: string]: ScanEntity }[];
   const editingAlert =
-    editResult && editResult.ok ? editResult.data.data : null;
+    editResult && !("error" in editResult) ? editResult.data : null;
   const meta: MetaDataProps | undefined = apiMeta?.pagination
     ? {
         pagination: {

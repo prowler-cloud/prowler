@@ -207,11 +207,8 @@ const createEditingAlert = (
 
 const mockRecipientsList = () => {
   recipientsActionMocks.listAlertRecipients.mockResolvedValue({
-    ok: true,
-    data: {
-      data: [confirmedRecipient, pendingRecipient],
-      meta: { pagination: { page: 1, pages: 1, count: 2 } },
-    },
+    data: [confirmedRecipient, pendingRecipient],
+    meta: { pagination: { page: 1, pages: 1, count: 2 } },
   });
 };
 
@@ -250,14 +247,15 @@ describe("AlertFormModal", () => {
     alertsActionMocks.previewAlertCondition.mockReset();
     alertsActionMocks.seedAlertRule.mockReset();
     alertsActionMocks.seedAlertRule.mockResolvedValue({
-      ok: true,
       data: {
-        condition: {
-          op: ALERT_AGGREGATE_OPS.ANY,
-          filter: { provider_type: ["gcp"] },
+        attributes: {
+          condition: {
+            op: ALERT_AGGREGATE_OPS.ANY,
+            filter: { provider_type: ["gcp"] },
+          },
+          schema_version: 1,
+          warnings: [],
         },
-        schemaVersion: 1,
-        warnings: [],
       },
     });
   });
@@ -362,9 +360,9 @@ describe("AlertFormModal", () => {
       ),
     );
     const recipientsParams = recipientsActionMocks.listAlertRecipients.mock
-      .calls[0][0] as URLSearchParams;
-    expect(recipientsParams.get("filter[status]")).toBeNull();
-    expect(recipientsParams.get("page[size]")).toBe("100");
+      .calls[0][0] as Record<string, string>;
+    expect(recipientsParams["filter[status]"]).toBeUndefined();
+    expect(recipientsParams["page[size]"]).toBe("100");
   });
 
   it("should submit the configured alert frequency", async () => {
@@ -580,16 +578,17 @@ describe("AlertFormModal", () => {
     // Given
     const user = userEvent.setup();
     alertsActionMocks.previewAlertCondition.mockResolvedValue({
-      ok: true,
       data: {
-        would_fire: true,
-        summary: {
-          finding_count_total: 7,
-          top_severity: "critical",
+        attributes: {
+          would_fire: true,
+          summary: {
+            finding_count_total: 7,
+            top_severity: "critical",
+          },
+          sample_finding_ids: [],
+          evaluation_failed: false,
+          duration_ms: 42,
         },
-        sample_finding_ids: [],
-        evaluation_failed: false,
-        duration_ms: 42,
       },
     });
     mockRecipientsList();
@@ -649,14 +648,15 @@ describe("AlertFormModal", () => {
     // Given
     const user = userEvent.setup();
     alertsActionMocks.previewAlertCondition.mockResolvedValue({
-      ok: true,
       data: {
-        would_fire: false,
-        summary: {
-          finding_count_total: 0,
+        attributes: {
+          would_fire: false,
+          summary: {
+            finding_count_total: 0,
+          },
+          sample_finding_ids: [],
+          evaluation_failed: false,
         },
-        sample_finding_ids: [],
-        evaluation_failed: false,
       },
     });
     mockRecipientsList();
@@ -677,8 +677,7 @@ describe("AlertFormModal", () => {
     // Given
     const user = userEvent.setup();
     alertsActionMocks.previewAlertCondition.mockResolvedValue({
-      ok: false,
-      error: { detail: "Invalid condition" },
+      error: "Invalid condition",
     });
     mockRecipientsList();
     renderCreateModal({ editingAlert: createEditingAlert() });
@@ -707,14 +706,15 @@ describe("AlertFormModal", () => {
       .fn()
       .mockResolvedValue({ ok: true, alertId: "alert-1" });
     alertsActionMocks.seedAlertRule.mockResolvedValue({
-      ok: true,
       data: {
-        condition: {
-          op: ALERT_AGGREGATE_OPS.ANY,
-          filter: { severity: ["critical"] },
+        attributes: {
+          condition: {
+            op: ALERT_AGGREGATE_OPS.ANY,
+            filter: { severity: ["critical"] },
+          },
+          schema_version: 1,
+          warnings: [],
         },
-        schemaVersion: 1,
-        warnings: [],
       },
     });
     mockRecipientsList();

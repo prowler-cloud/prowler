@@ -118,10 +118,7 @@ describe("AlertsManager", () => {
     // Given
     const user = userEvent.setup();
     const alert = makeAlert(true);
-    actionMocks.disableAlert.mockResolvedValue({
-      ok: true,
-      data: { data: alert },
-    });
+    actionMocks.disableAlert.mockResolvedValue({ data: alert });
     renderManager([alert]);
 
     // When
@@ -143,10 +140,7 @@ describe("AlertsManager", () => {
     // Given
     const user = userEvent.setup();
     const alert = makeAlert(false);
-    actionMocks.enableAlert.mockResolvedValue({
-      ok: true,
-      data: { data: alert },
-    });
+    actionMocks.enableAlert.mockResolvedValue({ data: alert });
     renderManager([alert]);
 
     // When

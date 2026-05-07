@@ -86,13 +86,13 @@ export const AlertsManager = ({
     }
     const payload = toAlertPayload(values);
     const result = await updateAlert(editingAlert.id, payload);
-    if (!result.ok) return { ok: false, error: result.error.detail };
+    if (result?.error) return { ok: false, error: result.error };
     toast({
       title: "Alert updated",
-      description: result.data.data.attributes.name,
+      description: result.data.attributes.name,
     });
     refresh();
-    return { ok: true, alertId: result.data.data.id };
+    return { ok: true, alertId: result.data.id };
   };
 
   const toggleAlert = async (alert: AlertRule) => {
@@ -101,17 +101,17 @@ export const AlertsManager = ({
       ? await disableAlert(alert.id)
       : await enableAlert(alert.id);
     setMutatingId(null);
-    if (!result.ok) {
+    if (result?.error) {
       toast({
         variant: "destructive",
         title: "Alert update failed",
-        description: result.error.detail,
+        description: result.error,
       });
       return;
     }
     toast({
       title: alert.attributes.enabled ? "Alert disabled" : "Alert enabled",
-      description: result.data.data.attributes.name,
+      description: result.data.attributes.name,
     });
     refresh();
   };
@@ -121,11 +121,11 @@ export const AlertsManager = ({
     setMutatingId(pendingDelete.id);
     const result = await deleteAlert(pendingDelete.id);
     setMutatingId(null);
-    if (!result.ok) {
+    if (result?.error) {
       toast({
         variant: "destructive",
         title: "Alert delete failed",
-        description: result.error.detail,
+        description: result.error,
       });
       return;
     }
@@ -141,7 +141,7 @@ export const AlertsManager = ({
             Alerts
           </h1>
           <p className="text-text-neutral-secondary text-sm">
-            Manage alerts for finding conditions.
+            Get notified when findings match the conditions you define.
           </p>
         </div>
       </div>

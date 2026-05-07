@@ -159,7 +159,7 @@ export const SeedFromFindingsButton = ({
     setSeeding(true);
     const result = await seedAlertRule(withDefaultAlertSeedFilters(filterBag));
     setSeeding(false);
-    if (!result.ok) {
+    if (result?.error) {
       toast({
         variant: "destructive",
         title: "Alert seed failed",
@@ -168,10 +168,11 @@ export const SeedFromFindingsButton = ({
       return;
     }
 
-    setSeededCondition(result.data.condition);
+    const condition = result.data.attributes.condition as AlertCondition;
+    setSeededCondition(condition);
     setSelectedFindingsFilterChips(
       buildFindingsFilterChips(
-        getFindingsFiltersFromAlertCondition(result.data.condition),
+        getFindingsFiltersFromAlertCondition(condition),
         { providers, scans },
       ),
     );
@@ -182,10 +183,10 @@ export const SeedFromFindingsButton = ({
     values: AlertFormValues,
   ): Promise<AlertFormSubmitResult> => {
     const result = await createAlert(toAlertPayload(values));
-    if (!result.ok) return { ok: false, error: result.error.detail };
+    if (result?.error) return { ok: false, error: result.error };
     toast({
       title: "Alert created",
-      description: result.data.data.attributes.name,
+      description: result.data.attributes.name,
       action: (
         <ToastAction altText="View alerts" asChild>
           <Link href="/alerts">View Alerts</Link>
@@ -193,7 +194,7 @@ export const SeedFromFindingsButton = ({
       ),
     });
     router.refresh();
-    return { ok: true, alertId: result.data.data.id };
+    return { ok: true, alertId: result.data.id };
   };
 
   const button = (

@@ -4,7 +4,6 @@ import {
   ALERT_PUBLIC_ACTIONS,
   AlertPublicAction,
 } from "@/app/(auth)/alerts/_components/alert-public-action";
-import { isAlertsEnabled } from "@/app/(prowler)/alerts/_lib/env";
 
 // NOT FOR THE MVP: recipient changes are managed inside the tenant product.
 // Keep only if alert emails need public unsubscribe links.
@@ -15,7 +14,7 @@ interface AlertsUnsubscribePageProps {
 export default async function AlertsUnsubscribePage({
   searchParams,
 }: AlertsUnsubscribePageProps) {
-  if (!isAlertsEnabled()) {
+  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true") {
     notFound();
   }
 

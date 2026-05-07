@@ -260,19 +260,18 @@ const AlertRecipientsSelect = ({
   const [error, setError] = useState<string | null>(null);
 
   useMountEffect(() => {
-    const params = new URLSearchParams();
-    params.set("page[size]", "100");
-    params.set("sort", "email");
-
-    listAlertRecipients(params).then((result) => {
+    listAlertRecipients({
+      "page[size]": "100",
+      sort: "email",
+    }).then((result) => {
       setLoading(false);
-      if (result.ok) {
-        setRecipients(result.data.data);
-        setError(null);
+      if (result?.error) {
+        setRecipients([]);
+        setError(result.error);
         return;
       }
-      setRecipients([]);
-      setError(result.error.detail);
+      setRecipients(result.data);
+      setError(null);
     });
   });
 
@@ -411,7 +410,7 @@ const AlertFormModalContent = ({
     if (!editingAlert) return;
 
     const seedResult = await seedAlertRule(pendingFilters);
-    if (!seedResult.ok) {
+    if (seedResult?.error) {
       setPreview({
         status: "error",
         error: ALERT_SEED_ERROR,
@@ -419,7 +418,7 @@ const AlertFormModalContent = ({
       return;
     }
 
-    const values = buildCurrentValues(seedResult.data.condition);
+    const values = buildCurrentValues(seedResult.data.attributes.condition);
     const parsed = alertFormSchema.safeParse(values);
     if (!parsed.success) {
       setPreview({
@@ -435,33 +434,34 @@ const AlertFormModalContent = ({
     });
     setPreviewLoading(false);
 
-    if (!result.ok) {
-      setPreview({ status: "error", error: result.error.detail });
+    if (result?.error) {
+      setPreview({ status: "error", error: result.error });
       return;
     }
 
-    if (result.data.evaluation_failed) {
+    const previewData = result.data.attributes as AlertPreviewResponse;
+    if (previewData.evaluation_failed) {
       setPreview({
         status: "error",
-        error: result.data.last_error ?? "Preview evaluation failed.",
+        error: previewData.last_error ?? "Preview evaluation failed.",
       });
       return;
     }
 
-    setPreview({ status: "success", data: result.data });
+    setPreview({ status: "success", data: previewData });
   };
 
   const handleSubmit = async () => {
     const seedResult = editingAlert
       ? await seedAlertRule(pendingFilters)
       : null;
-    if (seedResult && !seedResult.ok) {
+    if (seedResult?.error) {
       setErrors({ root: ALERT_SEED_ERROR });
       return;
     }
 
     const values = buildCurrentValues(
-      seedResult?.data.condition ?? defaults.condition,
+      seedResult?.data.attributes.condition ?? defaults.condition,
     );
     const parsed = alertFormSchema.safeParse(values);
     if (!parsed.success) {

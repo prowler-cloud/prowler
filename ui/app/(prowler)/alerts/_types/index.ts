@@ -166,47 +166,6 @@ export const ALERT_RECIPIENT_STATUS_VALUES = Object.values(
   ALERT_RECIPIENT_STATUS,
 ) as readonly AlertRecipientStatus[];
 
-// ---- error codes ---------------------------------------------------------
-
-export const ALERT_ERROR_CODES = {
-  UNKNOWN_OPERATOR: "unknown_operator",
-  UNKNOWN_FILTER_FIELD: "unknown_filter_field",
-  FORBIDDEN_FILTER_FIELD: "forbidden_filter_field",
-  INVALID_VALUE: "invalid_value",
-  INVALID_SHAPE: "invalid_shape",
-  CROSS_TENANT_REFERENCE: "cross_tenant_reference",
-  CONDITION_TOO_COMPLEX: "condition_too_complex",
-  UNKNOWN_SCHEMA_VERSION: "unknown_schema_version",
-  THROTTLED: "throttled",
-  NOT_FOUND: "not_found",
-  FORBIDDEN: "forbidden",
-  CONFLICT: "conflict",
-  INVALID_TOKEN: "invalid_token",
-  EXPIRED_TOKEN: "expired_token",
-  UNKNOWN: "unknown",
-} as const;
-export type AlertsErrorCode =
-  (typeof ALERT_ERROR_CODES)[keyof typeof ALERT_ERROR_CODES];
-
-// ---- seeding warnings ----------------------------------------------------
-
-export const ALERT_SEEDING_WARNINGS = {
-  NON_PORTABLE_DATE_FILTER: "non_portable_date_filter",
-  TEXT_SEARCH_NOT_PORTABLE: "text_search_not_portable",
-  ORDERING_NOT_SUPPORTED: "ordering_not_supported",
-  PAGINATION_NOT_SUPPORTED: "pagination_not_supported",
-  SIDELOADING_NOT_SUPPORTED: "sideloading_not_supported",
-  UNKNOWN_OR_NON_PORTABLE_FIELD: "unknown_or_non_portable_field",
-  INVALID_VALUE_DROPPED: "invalid_value_dropped",
-} as const;
-export type AlertSeedingWarning =
-  (typeof ALERT_SEEDING_WARNINGS)[keyof typeof ALERT_SEEDING_WARNINGS];
-
-export interface AlertSeedWarning {
-  field: string;
-  reason: AlertSeedingWarning;
-}
-
 // ---- discriminated condition union --------------------------------------
 
 // Leaf filter is a partial mapping from a whitelisted field name to its
@@ -346,26 +305,6 @@ export interface AlertRecipient {
     rules?: JsonApiRelationship;
   };
 }
-
-// ---- typed action result -------------------------------------------------
-
-export interface AlertsActionErrorSource {
-  pointer?: string;
-  parameter?: string;
-}
-
-export interface AlertsActionError {
-  code: AlertsErrorCode;
-  detail: string;
-  source?: AlertsActionErrorSource;
-  status?: number;
-  retryAfterSeconds?: number;
-  warnings?: AlertSeedingWarning[];
-}
-
-export type AlertsActionResult<T> =
-  | { ok: true; data: T; warnings?: AlertSeedingWarning[] }
-  | { ok: false; error: AlertsActionError };
 
 // ---- seeding payloads ----------------------------------------------------
 

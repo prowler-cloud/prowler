@@ -34,7 +34,6 @@ const captureFetchArgs = (status: number, body: unknown) => {
 
 beforeEach(() => {
   vi.unstubAllGlobals();
-  process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "true";
 });
 
 afterEach(() => {
@@ -42,18 +41,6 @@ afterEach(() => {
 });
 
 describe("confirmRecipient", () => {
-  it("returns a controlled response without fetching when alerts are disabled", async () => {
-    process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "false";
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-
-    const result = await confirmRecipient("token-123");
-
-    expect(result.state).toBe("network_error");
-    expect(result.message).toMatch(/Prowler Cloud/i);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
   it("does NOT attach Authorization header (public endpoint)", async () => {
     const calls = captureFetchArgs(200, {
       state: "confirmed",

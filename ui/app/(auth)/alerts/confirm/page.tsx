@@ -4,7 +4,6 @@ import {
   ALERT_PUBLIC_ACTIONS,
   AlertPublicAction,
 } from "@/app/(auth)/alerts/_components/alert-public-action";
-import { isAlertsEnabled } from "@/app/(prowler)/alerts/_lib/env";
 
 // NOT FOR THE MVP: tenant-owned recipients are treated as already confirmed.
 // Keep only if we reintroduce public recipient consent links.
@@ -15,7 +14,7 @@ interface AlertsConfirmPageProps {
 export default async function AlertsConfirmPage({
   searchParams,
 }: AlertsConfirmPageProps) {
-  if (!isAlertsEnabled()) {
+  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true") {
     notFound();
   }
 

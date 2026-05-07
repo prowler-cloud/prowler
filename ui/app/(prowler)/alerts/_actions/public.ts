@@ -2,10 +2,6 @@
 
 import { apiBaseUrl } from "@/lib";
 
-import {
-  buildAlertsDisabledPublicResponse,
-  isAlertsEnabled,
-} from "../_lib/env";
 import type { AlertPublicResponse } from "../_types";
 
 // NOT FOR THE MVP: public confirm/unsubscribe endpoints are only needed for
@@ -16,10 +12,6 @@ const _call = async (
   endpoint: "confirm" | "unsubscribe",
   token: string,
 ): Promise<AlertPublicResponse> => {
-  if (!isAlertsEnabled()) {
-    return buildAlertsDisabledPublicResponse();
-  }
-
   if (!apiBaseUrl) {
     return {
       state: "network_error",

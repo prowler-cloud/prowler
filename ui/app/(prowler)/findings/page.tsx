@@ -9,7 +9,6 @@ import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScan, getScans } from "@/actions/scans";
 import { SeedFromFindingsButton } from "@/app/(prowler)/alerts/_components";
-import { isAlertsEnabled } from "@/app/(prowler)/alerts/_lib/env";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   FindingsGroupTable,
@@ -82,7 +81,7 @@ export default async function Findings({
     completedScans || [],
     providersData,
   ) as { [uid: string]: ScanEntity }[];
-  const alertsEnabled = isAlertsEnabled();
+  const alertsEnabled = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
   return (
     <ContentLayout title="Findings" icon="lucide:tag">

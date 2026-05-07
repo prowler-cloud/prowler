@@ -151,8 +151,13 @@ describe("SeedFromFindingsButton", () => {
       },
     };
     actionMocks.seedAlertRule.mockResolvedValue({
-      ok: true,
-      data: { condition: seededCondition, schemaVersion: 1, warnings: [] },
+      data: {
+        attributes: {
+          condition: seededCondition,
+          schema_version: 1,
+          warnings: [],
+        },
+      },
     });
     const filterBag = {
       "filter[status__in]": "FAIL",
@@ -191,8 +196,13 @@ describe("SeedFromFindingsButton", () => {
       filter: { severity: ["critical", "high"] },
     };
     actionMocks.seedAlertRule.mockResolvedValue({
-      ok: true,
-      data: { condition: seededCondition, schemaVersion: 1, warnings: [] },
+      data: {
+        attributes: {
+          condition: seededCondition,
+          schema_version: 1,
+          warnings: [],
+        },
+      },
     });
     const filterBag = {
       "filter[status__in]": "FAIL",
@@ -230,16 +240,18 @@ describe("SeedFromFindingsButton", () => {
       filter: { severity: ["critical"] },
     };
     actionMocks.seedAlertRule.mockResolvedValue({
-      ok: true,
-      data: { condition: seededCondition, schemaVersion: 1, warnings: [] },
+      data: {
+        attributes: {
+          condition: seededCondition,
+          schema_version: 1,
+          warnings: [],
+        },
+      },
     });
     actionMocks.createAlert.mockResolvedValue({
-      ok: true,
       data: {
-        data: {
-          id: "alert-1",
-          attributes: { name: "Findings filter alert" },
-        },
+        id: "alert-1",
+        attributes: { name: "Findings filter alert" },
       },
     });
     render(
@@ -278,20 +290,18 @@ describe("SeedFromFindingsButton", () => {
     // Given
     const user = userEvent.setup();
     actionMocks.seedAlertRule.mockResolvedValue({
-      ok: true,
       data: {
-        condition: { op: "any", filter: { severity: ["critical"] } },
-        schemaVersion: 1,
-        warnings: [],
+        attributes: {
+          condition: { op: "any", filter: { severity: ["critical"] } },
+          schema_version: 1,
+          warnings: [],
+        },
       },
     });
     actionMocks.createAlert.mockResolvedValue({
-      ok: true,
       data: {
-        data: {
-          id: "alert-1",
-          attributes: { name: "Findings filter alert" },
-        },
+        id: "alert-1",
+        attributes: { name: "Findings filter alert" },
       },
     });
     render(
@@ -320,8 +330,7 @@ describe("SeedFromFindingsButton", () => {
     // Given
     const user = userEvent.setup();
     actionMocks.seedAlertRule.mockResolvedValue({
-      ok: false,
-      error: { detail: "invalid_shape" },
+      error: "invalid_shape",
     });
     render(
       <SeedFromFindingsButton

@@ -1,29 +1,30 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const {
+  fetchMock,
+  getAuthHeadersMock,
+  handleApiErrorMock,
+  handleApiResponseMock,
+} = vi.hoisted(() => ({
+  fetchMock: vi.fn(),
+  getAuthHeadersMock: vi.fn(),
+  handleApiErrorMock: vi.fn(),
+  handleApiResponseMock: vi.fn(),
+}));
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.test/api/v1",
-  getAuthHeaders: vi.fn(async () => ({
-    Accept: "application/vnd.api+json",
-    Authorization: "Bearer test-token",
-    "Content-Type": "application/vnd.api+json",
-  })),
+  getAuthHeaders: getAuthHeadersMock,
+  getErrorMessage: (error: unknown) =>
+    error instanceof Error ? error.message : String(error),
 }));
 
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
-  unstable_cache: <T extends (...args: unknown[]) => unknown>(fn: T) => fn,
+vi.mock("@/lib/server-actions-helper", () => ({
+  handleApiError: handleApiErrorMock,
+  handleApiResponse: handleApiResponseMock,
 }));
 
-vi.mock("@sentry/nextjs", () => ({
-  addBreadcrumb: vi.fn(),
-  captureException: vi.fn(),
-}));
-
-import {
-  ALERT_AGGREGATE_OPS,
-  ALERT_ERROR_CODES,
-  ALERT_TRIGGER_KINDS,
-} from "../_types";
+import { ALERT_AGGREGATE_OPS, ALERT_TRIGGER_KINDS } from "../_types";
 import {
   createAlert,
   deleteAlert,
@@ -35,91 +36,65 @@ import {
   updateAlert,
 } from "./alerts";
 
-const mockFetchOnce = (
-  status: number,
-  body: unknown,
-  headers: Record<string, string> = {},
-) => {
-  const response = new Response(body === null ? null : JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/vnd.api+json",
-      ...headers,
-    },
-  });
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async () => response),
-  );
-};
-
-const captureFetchArgs = (status: number, body: unknown) => {
-  const calls: Array<{ url: string; init: RequestInit }> = [];
-  const fetchMock = vi.fn(async (url: RequestInfo, init?: RequestInit) => {
-    calls.push({ url: url.toString(), init: init ?? {} });
-    return new Response(body === null ? null : JSON.stringify(body), {
-      status,
-      headers: { "Content-Type": "application/vnd.api+json" },
-    });
-  });
-  vi.stubGlobal("fetch", fetchMock);
-  return calls;
+const lastFetchCall = (): { url: string; init: RequestInit } => {
+  const call = fetchMock.mock.calls.at(-1);
+  if (!call) throw new Error("fetch was not called");
+  const [url, init] = call;
+  return { url: String(url), init: (init ?? {}) as RequestInit };
 };
 
 beforeEach(() => {
-  vi.unstubAllGlobals();
-  process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "true";
-});
-
-afterEach(() => {
   vi.clearAllMocks();
+  vi.stubGlobal("fetch", fetchMock);
+  fetchMock.mockResolvedValue(
+    new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { "Content-Type": "application/vnd.api+json" },
+    }),
+  );
+  getAuthHeadersMock.mockResolvedValue({
+    Accept: "application/vnd.api+json",
+    Authorization: "Bearer test-token",
+    "Content-Type": "application/vnd.api+json",
+  });
+  handleApiResponseMock.mockResolvedValue({ data: [] });
+  handleApiErrorMock.mockReturnValue({ error: "Unexpected error." });
 });
 
 describe("listAlerts", () => {
-  it("returns a controlled error without fetching when alerts are disabled", async () => {
-    process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "false";
-    const fetchMock = vi.fn();
-    vi.stubGlobal("fetch", fetchMock);
-
-    const result = await listAlerts();
-
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe(ALERT_ERROR_CODES.FORBIDDEN);
-      expect(result.error.status).toBe(403);
-    }
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("returns the parsed list payload on success", async () => {
-    mockFetchOnce(200, { data: [], meta: { pagination: { count: 0 } } });
-    const result = await listAlerts(
-      new URLSearchParams("filter[enabled]=true"),
-    );
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.data.data).toEqual([]);
-      expect(result.data.meta?.pagination?.count).toBe(0);
-    }
+  it("returns whatever handleApiResponse returns", async () => {
+    handleApiResponseMock.mockResolvedValue({
+      data: [],
+      meta: { pagination: { count: 0 } },
+    });
+    const result = await listAlerts({ "filter[enabled]": "true" });
+    expect(result).toEqual({ data: [], meta: { pagination: { count: 0 } } });
   });
 
   it("forwards searchParams as query string", async () => {
-    const calls = captureFetchArgs(200, { data: [] });
-    await listAlerts(new URLSearchParams("filter[trigger]=daily"));
-    expect(calls[0].url).toContain("filter%5Btrigger%5D=daily");
+    await listAlerts({ "filter[trigger]": "daily" });
+    expect(lastFetchCall().url).toContain("filter%5Btrigger%5D=daily");
+  });
+
+  it("delegates network errors to handleApiError", async () => {
+    fetchMock.mockRejectedValueOnce(new Error("boom"));
+    handleApiErrorMock.mockReturnValueOnce({ error: "boom" });
+    const result = await listAlerts();
+    expect(handleApiErrorMock).toHaveBeenCalled();
+    expect(result).toEqual({ error: "boom" });
   });
 });
 
 describe("createAlert", () => {
-  it("posts a JSON:API envelope and returns the new alert", async () => {
-    const calls = captureFetchArgs(201, {
+  it("posts a JSON:API envelope with schema_version", async () => {
+    handleApiResponseMock.mockResolvedValue({
       data: {
         id: "alert-1",
         type: "alert-rules",
         attributes: { name: "n", trigger: "after_scan" },
       },
     });
-    const result = await createAlert({
+    await createAlert({
       name: "Daily critical",
       trigger: ALERT_TRIGGER_KINDS.AFTER_SCAN,
       condition: {
@@ -127,45 +102,14 @@ describe("createAlert", () => {
         filter: { severity: ["critical"] },
       },
     });
-    expect(result.ok).toBe(true);
-    expect(calls[0].init.method).toBe("POST");
-    const body = JSON.parse((calls[0].init.body as string) ?? "{}");
+    const { init } = lastFetchCall();
+    expect(init.method).toBe("POST");
+    const body = JSON.parse(init.body as string);
     expect(body.data.type).toBe("alert-rules");
     expect(body.data.attributes.schema_version).toBe(1);
   });
 
-  it("surfaces JSON:API validation errors with the API code", async () => {
-    mockFetchOnce(400, {
-      errors: [
-        {
-          code: "unknown_filter_field",
-          detail: "Unknown filter field 'foo'.",
-          source: { pointer: "/data/attributes/condition/filter/foo" },
-        },
-      ],
-    });
-    const result = await createAlert({
-      name: "x",
-      trigger: ALERT_TRIGGER_KINDS.AFTER_SCAN,
-      condition: {
-        op: ALERT_AGGREGATE_OPS.ANY,
-        filter: { severity: ["high"] },
-      },
-    });
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe(ALERT_ERROR_CODES.UNKNOWN_FILTER_FIELD);
-    }
-  });
-
   it("sends an empty recipient list when provided", async () => {
-    const calls = captureFetchArgs(201, {
-      data: {
-        id: "alert-1",
-        type: "alert-rules",
-        attributes: { name: "n", trigger: "after_scan" },
-      },
-    });
     await createAlert({
       name: "No recipients yet",
       trigger: ALERT_TRIGGER_KINDS.AFTER_SCAN,
@@ -175,87 +119,33 @@ describe("createAlert", () => {
       },
       recipientEmails: [],
     });
-
-    const body = JSON.parse((calls[0].init.body as string) ?? "{}");
+    const body = JSON.parse(lastFetchCall().init.body as string);
     expect(body.data.attributes.recipient_emails).toEqual([]);
   });
 });
 
 describe("seedAlertRule", () => {
-  it("posts a JSON:API seeding envelope and normalizes the seed response", async () => {
-    // Given
-    const calls = captureFetchArgs(200, {
-      data: {
-        id: "seed",
-        type: "alert-rule-seedings",
-        attributes: {
-          condition: {
-            op: ALERT_AGGREGATE_OPS.ANY,
-            filter: { severity: ["critical"] },
-          },
-          schema_version: 1,
-          warnings: [{ field: "sort", reason: "ordering_not_supported" }],
-        },
-      },
-    });
+  it("posts a JSON:API seeding envelope to /seed", async () => {
     const filterBag = {
       "filter[severity__in]": "critical",
       "filter[sort]": "-severity",
     };
-
-    // When
-    const result = await seedAlertRule(filterBag);
-
-    // Then
-    expect(result.ok).toBe(true);
-    expect(calls[0].url).toMatch(/\/alerts\/rules\/seed$/);
-    expect(calls[0].init.method).toBe("POST");
-    expect(JSON.parse((calls[0].init.body as string) ?? "{}")).toEqual({
+    await seedAlertRule(filterBag);
+    const { url, init } = lastFetchCall();
+    expect(url).toMatch(/\/alerts\/rules\/seed$/);
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body as string)).toEqual({
       data: {
         type: "alert-rule-seedings",
         attributes: { filter_bag: filterBag },
       },
     });
-    if (result.ok) {
-      expect(result.data).toEqual({
-        condition: {
-          op: ALERT_AGGREGATE_OPS.ANY,
-          filter: { severity: ["critical"] },
-        },
-        schemaVersion: 1,
-        warnings: [{ field: "sort", reason: "ordering_not_supported" }],
-      });
-    }
-  });
-
-  it("surfaces invalid seed errors from the API", async () => {
-    // Given
-    mockFetchOnce(400, {
-      errors: [
-        {
-          code: "invalid_shape",
-          detail: "At least one portable filter is required.",
-        },
-      ],
-    });
-
-    // When
-    const result = await seedAlertRule({});
-
-    // Then
-    expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error.code).toBe(ALERT_ERROR_CODES.INVALID_SHAPE);
-    }
   });
 });
 
 describe("updateAlert", () => {
   it("PATCHes the alert with the id in the URL", async () => {
-    const calls = captureFetchArgs(200, {
-      data: { id: "alert-1", type: "alert-rules", attributes: {} },
-    });
-    const result = await updateAlert("alert-1", {
+    await updateAlert("alert-1", {
       name: "Updated",
       trigger: ALERT_TRIGGER_KINDS.DAILY,
       condition: {
@@ -263,31 +153,28 @@ describe("updateAlert", () => {
         filter: { severity: ["critical"] },
       },
     });
-    expect(result.ok).toBe(true);
-    expect(calls[0].url).toContain("/alerts/rules/alert-1");
-    expect(calls[0].init.method).toBe("PATCH");
+    const { url, init } = lastFetchCall();
+    expect(url).toContain("/alerts/rules/alert-1");
+    expect(init.method).toBe("PATCH");
   });
 });
 
 describe("deleteAlert", () => {
-  it("returns ok on 204 without body", async () => {
-    const calls = captureFetchArgs(204, null);
-    const result = await deleteAlert("alert-1");
-    expect(result.ok).toBe(true);
-    expect(calls[0].init.method).toBe("DELETE");
+  it("issues a DELETE against the alert id", async () => {
+    handleApiResponseMock.mockResolvedValue({ success: true, status: 204 });
+    await deleteAlert("alert-1");
+    const { init } = lastFetchCall();
+    expect(init.method).toBe("DELETE");
   });
 });
 
 describe("enable / disable", () => {
   it("PATCHes enabled true to the alert rule endpoint", async () => {
-    const calls = captureFetchArgs(200, {
-      data: { id: "alert-1", type: "alert-rules", attributes: {} },
-    });
     await enableAlert("alert-1");
-    expect(calls[0].url).toMatch(/\/alerts\/rules\/alert-1$/);
-    expect(calls[0].init.method).toBe("PATCH");
-    const body = JSON.parse((calls[0].init.body as string) ?? "{}");
-    expect(body).toEqual({
+    const { url, init } = lastFetchCall();
+    expect(url).toMatch(/\/alerts\/rules\/alert-1$/);
+    expect(init.method).toBe("PATCH");
+    expect(JSON.parse(init.body as string)).toEqual({
       data: {
         type: "alert-rules",
         id: "alert-1",
@@ -297,14 +184,11 @@ describe("enable / disable", () => {
   });
 
   it("PATCHes enabled false to the alert rule endpoint", async () => {
-    const calls = captureFetchArgs(200, {
-      data: { id: "alert-1", type: "alert-rules", attributes: {} },
-    });
     await disableAlert("alert-1");
-    expect(calls[0].url).toMatch(/\/alerts\/rules\/alert-1$/);
-    expect(calls[0].init.method).toBe("PATCH");
-    const body = JSON.parse((calls[0].init.body as string) ?? "{}");
-    expect(body).toEqual({
+    const { url, init } = lastFetchCall();
+    expect(url).toMatch(/\/alerts\/rules\/alert-1$/);
+    expect(init.method).toBe("PATCH");
+    expect(JSON.parse(init.body as string)).toEqual({
       data: {
         type: "alert-rules",
         id: "alert-1",
@@ -316,61 +200,25 @@ describe("enable / disable", () => {
 
 describe("previewAlertCondition", () => {
   it("posts a JSON:API preview envelope to /preview", async () => {
-    const calls = captureFetchArgs(200, { data: { attributes: {} } });
     const condition = {
       op: ALERT_AGGREGATE_OPS.ANY,
       filter: { severity: ["critical"] },
     };
-    await previewAlertCondition({
-      condition,
-    });
-    expect(calls[0].url).toMatch(/\/alerts\/rules\/preview$/);
-    expect(calls[0].init.method).toBe("POST");
-    expect(calls[0].init.headers).toEqual(
+    await previewAlertCondition({ condition });
+    const { url, init } = lastFetchCall();
+    expect(url).toMatch(/\/alerts\/rules\/preview$/);
+    expect(init.method).toBe("POST");
+    expect(init.headers).toEqual(
       expect.objectContaining({
         Accept: "application/vnd.api+json",
         "Content-Type": "application/vnd.api+json",
       }),
     );
-    const body = JSON.parse((calls[0].init.body as string) ?? "{}");
-    expect(body).toEqual({
+    expect(JSON.parse(init.body as string)).toEqual({
       data: {
         type: "alert-rule-previews",
         attributes: { condition },
       },
     });
-  });
-
-  it("unwraps JSON:API preview attributes into the preview model", async () => {
-    mockFetchOnce(200, {
-      data: {
-        type: "alert-rule-previews",
-        id: "preview",
-        attributes: {
-          would_fire: true,
-          summary: {
-            finding_count_total: 7,
-            top_severity: "critical",
-          },
-          sample_finding_ids: [],
-          evaluation_failed: false,
-          duration_ms: 42,
-        },
-      },
-    });
-
-    const result = await previewAlertCondition({
-      condition: {
-        op: ALERT_AGGREGATE_OPS.ANY,
-        filter: { severity: ["critical"] },
-      },
-    });
-
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.data.would_fire).toBe(true);
-      expect(result.data.summary.finding_count_total).toBe(7);
-      expect(result.data.duration_ms).toBe(42);
-    }
   });
 });
