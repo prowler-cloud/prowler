@@ -1,5 +1,6 @@
 from unittest import mock
 
+import pytest
 from boto3 import client
 from moto import mock_aws
 
@@ -725,3 +726,99 @@ class Test_cloudtrail_bedrock_logging_enabled:
             result = check.execute()
 
             assert len(result) == 0
+
+    @mock_aws
+    @pytest.mark.parametrize(
+        ("selector", "expected"),
+        [
+            pytest.param(
+                {"Equals": ["bedrock.amazonaws.com"]},
+                True,
+                id="equals-match",
+            ),
+            pytest.param(
+                {"Equals": ["ec2.amazonaws.com"]},
+                False,
+                id="equals-mismatch",
+            ),
+            pytest.param(
+                {"NotEquals": ["ec2.amazonaws.com"]},
+                True,
+                id="not-equals-match",
+            ),
+            pytest.param(
+                {"NotEquals": ["bedrock.amazonaws.com"]},
+                False,
+                id="not-equals-mismatch",
+            ),
+            pytest.param(
+                {"StartsWith": ["bedrock."]},
+                True,
+                id="starts-with-match",
+            ),
+            pytest.param(
+                {"StartsWith": ["ec2."]},
+                False,
+                id="starts-with-mismatch",
+            ),
+            pytest.param(
+                {"NotStartsWith": ["ec2."]},
+                True,
+                id="not-starts-with-match",
+            ),
+            pytest.param(
+                {"NotStartsWith": ["bedrock."]},
+                False,
+                id="not-starts-with-mismatch",
+            ),
+            pytest.param(
+                {"EndsWith": [".amazonaws.com"]},
+                True,
+                id="ends-with-match",
+            ),
+            pytest.param(
+                {"EndsWith": [".amazonaws.org"]},
+                False,
+                id="ends-with-mismatch",
+            ),
+            pytest.param(
+                {"NotEndsWith": [".amazonaws.org"]},
+                True,
+                id="not-ends-with-match",
+            ),
+            pytest.param(
+                {"NotEndsWith": [".amazonaws.com"]},
+                False,
+                id="not-ends-with-mismatch",
+            ),
+            pytest.param({}, True, id="no-conditions"),
+        ],
+    )
+    def test_field_selector_matches_value(self, selector, expected):
+        """Test advanced field selector operators against the Bedrock event source."""
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        aws_provider = set_mocked_aws_provider()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_bedrock_logging_enabled.cloudtrail_bedrock_logging_enabled import (
+                cloudtrail_bedrock_logging_enabled,
+            )
+
+            assert (
+                cloudtrail_bedrock_logging_enabled._field_selector_matches_value(
+                    "bedrock.amazonaws.com", selector
+                )
+                is expected
+            )
