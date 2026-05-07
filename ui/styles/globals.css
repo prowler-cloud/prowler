@@ -86,7 +86,10 @@
   --gradient-lighthouse: linear-gradient(96deg, #2EE59B 3.55%, #62DFF0 98.85%);
 }
 
-/* ===== DARK THEME ===== */
+/* ===== DARK THEME =====
+ * Editorial contrast tweaks: pure-black canvas, pure-white primary text,
+ * and one tier brighter primary border for clearer element separation.
+ */
 .dark {
   /* Button Colors */
   --bg-button-primary: var(--color-emerald-300);
@@ -103,30 +106,30 @@
   --bg-neutral-map: var(--color-gray-800);
 
   /* Input Colors */
-  --bg-input-primary: var(--color-neutral-900);
-  --border-input-primary: var(--color-neutral-800);
-  --border-input-primary-press: var(--color-neutral-800);
+  --bg-input-primary: #0a0a0a;
+  --border-input-primary: var(--color-zinc-700);
+  --border-input-primary-press: var(--color-zinc-500);
   --border-input-primary-pressed: #A7F3D0;
-  --border-input-primary-fill: var(--color-neutral-300);
+  --border-input-primary-fill: var(--color-zinc-200);
 
   /* Text Colors */
-  --text-neutral-primary: var(--color-zinc-100);
-  --text-neutral-secondary: var(--color-zinc-300);
+  --text-neutral-primary: #ffffff;
+  --text-neutral-secondary: var(--color-zinc-200);
   --text-neutral-tertiary: var(--color-zinc-400);
-  --text-error-primary: var(--color-red-500);
-  --text-warning-primary: var(--color-orange-500);
+  --text-error-primary: var(--color-red-400);
+  --text-warning-primary: var(--color-orange-400);
   --text-success-primary: var(--color-green-500);
 
   /* Border Colors */
   --border-error-primary: var(--color-red-400);
-  --border-neutral-primary: var(--color-zinc-800);
-  --border-neutral-secondary: var(--color-zinc-900);
-  --border-neutral-tertiary: var(--color-zinc-900);
+  --border-neutral-primary: var(--color-zinc-700);
+  --border-neutral-secondary: var(--color-zinc-800);
+  --border-neutral-tertiary: var(--color-zinc-700);
   --border-tag-primary: var(--color-slate-700);
-  --border-data-emphasis: rgba(255, 255, 255, 0.1);
+  --border-data-emphasis: rgba(255, 255, 255, 0.14);
 
   /* Background Colors */
-  --bg-neutral-primary: var(--color-zinc-950);
+  --bg-neutral-primary: #000000;
   --bg-neutral-secondary: var(--color-stone-950);
   --bg-neutral-tertiary: #121110;
   --bg-tag-primary: var(--color-slate-950);
