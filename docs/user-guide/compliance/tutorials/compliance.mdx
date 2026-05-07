@@ -86,9 +86,9 @@ Below ThreatScore, the framework grid shows one card per supported compliance fr
 * **Passing Requirements:** A `passed / total` counter for additional context.
 * **Download dropdown:** Quick access to the CSV report and, when supported, the PDF report.
 
-<img src="/images/compliance/prowler-app-compliance-detail-toolbar.png" alt="Top of a framework detail page showing the breadcrumb, scan info, level and region filters, and the CSV and PDF download buttons" width="900" />
+<img src="/images/compliance/prowler-app-compliance-card-download.png" alt="Download dropdown on a framework card showing CSV and PDF report options" width="500" />
 
-Select any card to open the framework detail page, where the same scan, the same filters, and CSV / PDF download buttons stay one click away.
+Select any card to open the framework detail page.
 
 <Note>
 Score color coding follows three thresholds: red for severely low compliance, amber for partial compliance, and green for healthy posture. Hover over the score for the exact percentage.
@@ -144,21 +144,11 @@ Prowler Cloud and App expose two formats:
 * **CSV report:** Every requirement, every check, and every finding for the selected scan and filters. Available for all supported frameworks.
 * **PDF report:** Curated executive-style report. Currently supported for Prowler ThreatScore, ENS RD2022, NIS2, and CSA CCM. Additional PDF reports are added in subsequent Prowler releases.
 
-#### Downloading From the Overview
-
-To download a report without leaving the overview, follow these steps:
-
-1. Locate the framework card.
-2. Open the **Download** dropdown next to the framework logo.
-3. Select **Download CSV report** or **Download PDF report**.
-
-<img src="/images/compliance/prowler-app-compliance-card-download.png" alt="Download dropdown on a framework card showing CSV and PDF report options" width="500" />
-
 #### Downloading From the Detail Page
 
-Inside any framework detail page, the **CSV** and **PDF** buttons in the header trigger the same downloads as the overview. The PDF button only appears for frameworks that support it.
+Inside any framework detail page, the **CSV** and **PDF** buttons in the header trigger the same downloads as the overview dropdown. The PDF button only appears for frameworks that support it.
 
-<img src="/images/compliance/prowler-app-compliance-detail-toolbar.png" alt="Top of a framework detail page showing the CSV and PDF download buttons in the header" width="900" />
+<img src="/images/compliance/prowler-app-compliance-detail-download.png" alt="Top of a framework detail page showing the CSV and PDF download buttons in the header" width="900" />
 
 <Note>
 Region filters disable the per-card download dropdown to avoid generating partial reports. Open the framework detail page when downloads scoped to a region are required, or remove the region filter to download the full report.
