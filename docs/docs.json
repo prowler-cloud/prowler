@@ -331,6 +331,7 @@
           {
             "group": "Compliance",
             "pages": [
+              "user-guide/compliance/tutorials/prowler-app-compliance",
               "user-guide/compliance/tutorials/threatscore"
             ]
           },
