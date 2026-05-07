@@ -9,6 +9,7 @@ import {
   ActionDropdownDangerZone,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { DateWithTime } from "@/components/ui/entities";
 import { DataTable } from "@/components/ui/table/data-table";
 import { DataTableColumnHeader } from "@/components/ui/table/data-table-column-header";
 import type { MetaDataProps } from "@/types";
@@ -100,28 +101,15 @@ const getAlertsTableColumns = ({
     ),
     cell: ({ row }) => {
       const alert = row.original;
-      const isMutating = mutatingId === alert.id;
       return (
         <div className="flex w-[320px] max-w-[320px] min-w-0 flex-col gap-1">
-          <ActionDropdown
-            align="start"
-            trigger={
-              <button
-                type="button"
-                className="hover:text-button-tertiary block w-full min-w-0 truncate text-left font-medium transition-colors"
-              >
-                {alert.attributes.name}
-              </button>
-            }
+          <button
+            type="button"
+            className="hover:text-button-tertiary block w-full min-w-0 truncate text-left font-medium transition-colors"
+            onClick={() => onEdit(alert)}
           >
-            <AlertActionsItems
-              alert={alert}
-              isMutating={isMutating}
-              onEdit={onEdit}
-              onToggleEnabled={onToggleEnabled}
-              onDelete={onDelete}
-            />
-          </ActionDropdown>
+            {alert.attributes.name}
+          </button>
           {alert.attributes.description && (
             <span
               className="text-text-neutral-secondary block w-full truncate text-xs"
@@ -168,6 +156,42 @@ const getAlertsTableColumns = ({
       <DataTableColumnHeader column={column} title="Recipients" />
     ),
     cell: ({ row }) => formatRecipients(row.original),
+  },
+  {
+    id: "inserted_at",
+    size: 170,
+    minSize: 150,
+    accessorFn: (alert) => alert.attributes.inserted_at,
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title="Created at"
+        param="inserted_at"
+      />
+    ),
+    cell: ({ row }) => (
+      <div className="w-[150px]">
+        <DateWithTime dateTime={row.original.attributes.inserted_at} />
+      </div>
+    ),
+  },
+  {
+    id: "updated_at",
+    size: 170,
+    minSize: 150,
+    accessorFn: (alert) => alert.attributes.updated_at,
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title="Updated at"
+        param="updated_at"
+      />
+    ),
+    cell: ({ row }) => (
+      <div className="w-[150px]">
+        <DateWithTime dateTime={row.original.attributes.updated_at} />
+      </div>
+    ),
   },
   {
     id: "actions",

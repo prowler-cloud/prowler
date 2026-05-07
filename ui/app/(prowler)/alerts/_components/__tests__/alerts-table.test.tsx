@@ -103,8 +103,8 @@ const makeRule = (overrides: AlertRuleOverrides = {}): AlertRule => ({
     },
     schema_version: 1,
     recipient_emails: ["security@example.com"],
-    inserted_at: "2026-01-01T00:00:00Z",
-    updated_at: "2026-01-01T00:00:00Z",
+    inserted_at: "2026-01-01T10:00:00Z",
+    updated_at: "2026-01-02T11:30:00Z",
     ...overrides.attributes,
   },
 });
@@ -147,6 +147,16 @@ describe("AlertsTable", () => {
       "data-size",
       "320",
     );
+    expect(screen.getByTestId("column-inserted_at")).toHaveAttribute(
+      "data-size",
+      "170",
+    );
+    expect(screen.getByTestId("column-updated_at")).toHaveAttribute(
+      "data-size",
+      "170",
+    );
+    expect(screen.getByText("Jan 01, 2026")).toBeVisible();
+    expect(screen.getByText("Jan 02, 2026")).toBeVisible();
     expect(
       screen.queryByRole("button", { name: /run preview|test/i }),
     ).not.toBeInTheDocument();
@@ -216,14 +226,16 @@ describe("AlertsTable", () => {
     expect(onDelete).toHaveBeenCalledWith(alert);
   });
 
-  it("should open the action dropdown when clicking the alert name", async () => {
+  it("should edit the alert directly when clicking the alert name", async () => {
     // Given
     const user = userEvent.setup();
+    const alert = makeRule();
+    const onEdit = vi.fn();
     render(
       <AlertsTable
-        alerts={[makeRule()]}
+        alerts={[alert]}
         mutatingId={null}
-        onEdit={vi.fn()}
+        onEdit={onEdit}
         onToggleEnabled={vi.fn()}
         onDelete={vi.fn()}
       />,
@@ -233,8 +245,9 @@ describe("AlertsTable", () => {
     await user.click(screen.getByRole("button", { name: "Critical findings" }));
 
     // Then
-    expect(screen.getByRole("menuitem", { name: /edit/i })).toBeVisible();
-    expect(screen.getByRole("menuitem", { name: /disable/i })).toBeVisible();
-    expect(screen.getByRole("menuitem", { name: /delete/i })).toBeVisible();
+    expect(onEdit).toHaveBeenCalledWith(alert);
+    expect(screen.queryByRole("menuitem", { name: /edit/i })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: /disable/i })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: /delete/i })).toBeNull();
   });
 });
