@@ -23,6 +23,7 @@ class gmail_groups_spoofing_protection_enabled(Check):
 
             enabled = gmail_client.policies.detect_groups_spoofing
             consequence = gmail_client.policies.groups_spoofing_consequence
+            visibility_type = gmail_client.policies.groups_spoofing_visibility_type
 
             if enabled is False:
                 report.status = "FAIL"
@@ -51,17 +52,28 @@ class gmail_groups_spoofing_protection_enabled(Check):
                 )
             elif consequence is None:
                 report.status = "PASS"
+                scope = (
+                    "private groups only"
+                    if visibility_type == "PRIVATE_GROUPS_ONLY"
+                    else "all groups"
+                )
                 report.status_extended = (
                     f"Protection of groups from inbound emails spoofing your "
-                    f"domain is enabled in domain "
+                    f"domain is enabled for {scope} in domain "
                     f"{gmail_client.provider.identity.domain}."
                 )
             else:
                 report.status = "PASS"
+                scope = (
+                    "private groups only"
+                    if visibility_type == "PRIVATE_GROUPS_ONLY"
+                    else "all groups"
+                )
                 report.status_extended = (
                     f"Protection of groups from inbound emails spoofing your "
-                    f"domain is enabled with consequence '{consequence}' "
-                    f"in domain {gmail_client.provider.identity.domain}."
+                    f"domain is enabled for {scope} with consequence "
+                    f"'{consequence}' in domain "
+                    f"{gmail_client.provider.identity.domain}."
                 )
 
             findings.append(report)

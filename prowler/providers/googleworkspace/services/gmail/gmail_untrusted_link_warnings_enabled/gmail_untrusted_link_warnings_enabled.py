@@ -32,11 +32,13 @@ class gmail_untrusted_link_warnings_enabled(Check):
                     f"in domain {gmail_client.provider.identity.domain}."
                 )
             elif warnings_enabled is None:
-                report.status = "PASS"
+                report.status = "FAIL"
                 report.status_extended = (
-                    f"Warning prompts for clicks on untrusted domain links uses Google's "
-                    f"secure default configuration (enabled) "
-                    f"in domain {gmail_client.provider.identity.domain}."
+                    f"Warning prompts for clicks on untrusted domain links "
+                    f"are not configured and use Google's insecure default "
+                    f"(disabled) in domain "
+                    f"{gmail_client.provider.identity.domain}. "
+                    f"Untrusted link warnings should be enabled to protect users."
                 )
             else:
                 report.status = "FAIL"

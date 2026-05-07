@@ -119,6 +119,9 @@ class Gmail(GoogleWorkspaceService):
                             self.policies.detect_groups_spoofing = value.get(
                                 "detectGroupsSpoofing"
                             )
+                            self.policies.groups_spoofing_visibility_type = value.get(
+                                "groupsSpoofingVisibilityType"
+                            )
                             self.policies.groups_spoofing_consequence = value.get(
                                 "groupsSpoofingConsequence"
                             )
@@ -223,6 +226,7 @@ class GmailPolicies(BaseModel):
     detect_unauthenticated_emails: Optional[bool] = None
     unauthenticated_email_consequence: Optional[str] = None
     detect_groups_spoofing: Optional[bool] = None
+    groups_spoofing_visibility_type: Optional[str] = None
     groups_spoofing_consequence: Optional[str] = None
 
     # gmail.pop_access
