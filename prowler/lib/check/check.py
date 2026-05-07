@@ -750,6 +750,11 @@ def execute(
                     is_finding_muted_args["account_id"] = finding.account_id
                 if global_provider.type == "azure":
                     is_finding_muted_args["subscription_id"] = finding.subscription
+                    is_finding_muted_args["subscription_name"] = (
+                        global_provider.identity.subscriptions.get(
+                            finding.subscription, finding.subscription
+                        )
+                    )
                 is_finding_muted_args["finding"] = finding
                 finding.muted = global_provider.mutelist.is_finding_muted(
                     **is_finding_muted_args
