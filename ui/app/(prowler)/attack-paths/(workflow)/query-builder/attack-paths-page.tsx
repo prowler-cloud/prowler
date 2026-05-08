@@ -418,12 +418,9 @@ export default function AttackPathsPage() {
         onRefresh={refreshScans}
       />
 
-      {/* Header */}
+      {/* Page introduction */}
       <div>
-        <h2 className="dark:text-prowler-theme-pale/90 text-xl font-semibold">
-          Attack Paths
-        </h2>
-        <p className="text-text-neutral-secondary mt-2 text-sm">
+        <p className="text-text-neutral-secondary text-sm">
           Select a scan, build a query, and visualize Attack Paths in your
           infrastructure.
         </p>
