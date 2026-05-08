@@ -121,6 +121,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
         label: "Team ID",
         placeholder: "e.g. team_xxxxxxxxxxxxxxxxxxxxxxxx",
       };
+    case "lovable":
+      return {
+        label: "Workspace ID",
+        placeholder: "e.g. my-workspace or ws_xxxxxxxx",
+      };
     default:
       return {
         label: "Provider UID",

@@ -1,0 +1,39 @@
+{
+  "Provider": "lovable",
+  "CheckID": "published_app_uses_https",
+  "CheckTitle": "Published Lovable apps must be served over HTTPS",
+  "CheckType": [],
+  "ServiceName": "published",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "LovablePublishedApp",
+  "ResourceGroup": "network",
+  "Description": "Every published Lovable app must be served exclusively over HTTPS so that user credentials, session tokens, and application data are protected from network eavesdropping and tampering.",
+  "Risk": "An app served over plain HTTP exposes credentials, JWTs, and user data to passive sniffing and active man-in-the-middle attacks. Modern browsers also block many security-relevant features on insecure origins.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://web.dev/why-https-matters/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Confirm the custom domain has a valid TLS certificate\n2. Force HTTPS redirects at the edge\n3. Enable HSTS with includeSubDomains and preload\n4. Disable any HTTP-only listeners",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Always serve published apps over HTTPS, redirect HTTP to HTTPS, and enable HSTS to prevent downgrade attacks.",
+      "Url": "https://hub.prowler.com/check/published_app_uses_https"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "published_app_security_headers_configured"
+  ],
+  "Notes": ""
+}

@@ -1,0 +1,39 @@
+{
+  "Provider": "lovable",
+  "CheckID": "apps_supabase_edge_functions_authenticated",
+  "CheckTitle": "Supabase Edge Functions must enforce authentication",
+  "CheckType": [],
+  "ServiceName": "apps",
+  "SubServiceName": "supabase",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "LovableApp",
+  "ResourceGroup": "serverless",
+  "Description": "Edge Functions are the server-side boundary for Lovable apps. Authentication, authorization, and validation must be enforced server-side in every Edge Function, not in the browser.",
+  "Risk": "Unauthenticated Edge Functions let attackers invoke business logic, read protected data, or modify resources by simply calling the function URL. Lovable's guidance is explicit: 'critical behavior never reaches the browser and every request is evaluated consistently'.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/functions/auth"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase dashboard for the project\n2. For each Edge Function, validate the JWT and reject requests with no Authorization header\n3. Check the user's role / permissions before performing privileged actions\n4. Add automated tests that hit the function without a token and assert HTTP 401",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Verify the user session in every Edge Function using supabase-js getUser(), check role/permission claims, and never rely on frontend-only authorization. Treat any function that can mutate data as a sensitive endpoint.",
+      "Url": "https://hub.prowler.com/check/apps_supabase_edge_functions_authenticated"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "apps_supabase_rls_enabled_on_all_tables"
+  ],
+  "Notes": ""
+}

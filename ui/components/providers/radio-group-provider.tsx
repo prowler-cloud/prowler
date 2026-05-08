@@ -19,6 +19,7 @@ import {
   IacProviderBadge,
   ImageProviderBadge,
   KS8ProviderBadge,
+  LovableProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
   OpenStackProviderBadge,
@@ -102,6 +103,11 @@ const PROVIDERS = [
     value: "vercel",
     label: "Vercel",
     badge: VercelProviderBadge,
+  },
+  {
+    value: "lovable",
+    label: "Lovable",
+    badge: LovableProviderBadge,
   },
 ] as const;
 

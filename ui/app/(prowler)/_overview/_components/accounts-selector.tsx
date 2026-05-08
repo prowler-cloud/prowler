@@ -14,6 +14,7 @@ import {
   IacProviderBadge,
   ImageProviderBadge,
   KS8ProviderBadge,
+  LovableProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
   OpenStackProviderBadge,
@@ -51,6 +52,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   cloudflare: <CloudflareProviderBadge width={18} height={18} />,
   openstack: <OpenStackProviderBadge width={18} height={18} />,
   vercel: <VercelProviderBadge width={18} height={18} />,
+  lovable: <LovableProviderBadge width={18} height={18} />,
 };
 
 /** Common props shared by both batch and instant modes. */

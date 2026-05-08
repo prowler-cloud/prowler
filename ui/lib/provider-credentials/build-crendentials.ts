@@ -260,6 +260,20 @@ export const buildVercelSecret = (formData: FormData) => {
   return filterEmptyValues(secret);
 };
 
+export const buildLovableSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.LOVABLE_API_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.LOVABLE_API_TOKEN,
+    ),
+    [ProviderCredentialFields.LOVABLE_SUPABASE_ACCESS_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.LOVABLE_SUPABASE_ACCESS_TOKEN,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildOpenStackSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: getFormValue(
@@ -512,6 +526,10 @@ export const buildSecretConfig = (
     vercel: () => ({
       secretType: "static",
       secret: buildVercelSecret(formData),
+    }),
+    lovable: () => ({
+      secretType: "static",
+      secret: buildLovableSecret(formData),
     }),
   };
 

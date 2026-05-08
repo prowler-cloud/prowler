@@ -6,6 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🚀 Added
 
+- Support for the new `lovable` provider type: provider choice, UID workspace ID validator, secret schema (`api_token` plus optional `supabase_access_token`), connection-test wiring, and the `0091_lovable_provider` migration
 - New `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
 - ASD Essential Eight (AWS) compliance framework support [(#10982)](https://github.com/prowler-cloud/prowler/pull/10982)
 - `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)

@@ -1,0 +1,39 @@
+{
+  "Provider": "lovable",
+  "CheckID": "apps_supabase_storage_buckets_not_public",
+  "CheckTitle": "Supabase storage buckets backing Lovable apps must not be public",
+  "CheckType": [],
+  "ServiceName": "apps",
+  "SubServiceName": "supabase",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "LovableApp",
+  "ResourceGroup": "storage",
+  "Description": "Lovable apps must keep Supabase storage buckets that hold user content private. Only buckets serving truly public assets (logos, marketing images) should be marked public.",
+  "Risk": "Public buckets allow anyone with the URL to enumerate and download files, which can leak user uploads, PII, and private documents.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/storage/security/access-control"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase dashboard\n2. Navigate to Storage > Buckets\n3. For every bucket containing user content, switch Visibility to Private\n4. Add storage RLS policies that scope reads/writes to the owning user\n5. Generate signed URLs for legitimate downloads",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Default Supabase storage buckets to Private and use storage RLS plus signed URLs for downloads. Only keep buckets public if they serve assets that anyone may legitimately access.",
+      "Url": "https://hub.prowler.com/check/apps_supabase_storage_buckets_not_public"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "apps_supabase_rls_enabled_on_all_tables"
+  ],
+  "Notes": ""
+}

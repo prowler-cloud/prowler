@@ -389,6 +389,12 @@ export type VercelCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type LovableCredentials = {
+  [ProviderCredentialFields.LOVABLE_API_TOKEN]: string;
+  [ProviderCredentialFields.LOVABLE_SUPABASE_ACCESS_TOKEN]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -406,7 +412,8 @@ export type CredentialsFormSchema =
   | CloudflareCredentials
   | OpenStackCredentials
   | GoogleWorkspaceCredentials
-  | VercelCredentials;
+  | VercelCredentials
+  | LovableCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

@@ -248,6 +248,12 @@ export const useCredentialsForm = ({
           ...baseDefaults,
           [ProviderCredentialFields.VERCEL_API_TOKEN]: "",
         };
+      case "lovable":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.LOVABLE_API_TOKEN]: "",
+          [ProviderCredentialFields.LOVABLE_SUPABASE_ACCESS_TOKEN]: "",
+        };
       default:
         return baseDefaults;
     }

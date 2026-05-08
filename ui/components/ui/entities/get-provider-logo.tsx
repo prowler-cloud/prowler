@@ -9,6 +9,7 @@ import {
   IacProviderBadge,
   ImageProviderBadge,
   KS8ProviderBadge,
+  LovableProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
   OpenStackProviderBadge,
@@ -49,6 +50,8 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <OpenStackProviderBadge width={35} height={35} />;
     case "vercel":
       return <VercelProviderBadge width={35} height={35} />;
+    case "lovable":
+      return <LovableProviderBadge width={35} height={35} />;
     default:
       return null;
   }
@@ -86,6 +89,8 @@ export const getProviderName = (provider: ProviderType): string => {
       return "OpenStack";
     case "vercel":
       return "Vercel";
+    case "lovable":
+      return "Lovable";
     default:
       return "Unknown Provider";
   }

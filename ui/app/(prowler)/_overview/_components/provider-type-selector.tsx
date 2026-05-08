@@ -89,6 +89,11 @@ const VercelProviderBadge = lazy(() =>
     default: m.VercelProviderBadge,
   })),
 );
+const LovableProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.LovableProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -159,6 +164,10 @@ const PROVIDER_DATA: Record<
   vercel: {
     label: "Vercel",
     icon: VercelProviderBadge,
+  },
+  lovable: {
+    label: "Lovable",
+    icon: LovableProviderBadge,
   },
 };
 

@@ -1,0 +1,40 @@
+{
+  "Provider": "lovable",
+  "CheckID": "apps_supabase_rls_enabled_on_all_tables",
+  "CheckTitle": "Supabase tables backing Lovable apps must have RLS enabled",
+  "CheckType": [],
+  "ServiceName": "apps",
+  "SubServiceName": "supabase",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "LovableApp",
+  "ResourceGroup": "database",
+  "Description": "Lovable apps backed by Supabase must enable Row Level Security on every table containing user data, so that even if frontend or backend logic fails, the database itself enforces tenant isolation.",
+  "Risk": "Tables without RLS allow any authenticated client to read or modify any row using the public anon key. This is the single most common cause of catastrophic Lovable app data leaks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/database/postgres/row-level-security",
+    "https://meetcyber.net/security-best-practices-for-lovable-apps-2026-be0350cc87e1"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER TABLE <table> ENABLE ROW LEVEL SECURITY;\nCREATE POLICY <name> ON <table> FOR SELECT USING (auth.uid() = user_id);",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase dashboard for the project\n2. Navigate to Authentication > Policies\n3. Enable RLS on every table containing user data\n4. Add policies that scope SELECT/INSERT/UPDATE/DELETE to the appropriate user, team, or organization\n5. Test that an unauthenticated session cannot read sensitive data",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Row Level Security on every Supabase table and add policies that match your access model (per-user, per-team, per-org). Treat RLS as the final layer of defence behind frontend and backend checks.",
+      "Url": "https://hub.prowler.com/check/apps_supabase_rls_enabled_on_all_tables"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "apps_pre_publication_security_review_completed"
+  ],
+  "Notes": ""
+}

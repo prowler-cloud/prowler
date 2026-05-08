@@ -12,6 +12,7 @@ import { GoogleWorkspaceProviderBadge } from "./googleworkspace-provider-badge";
 import { IacProviderBadge } from "./iac-provider-badge";
 import { ImageProviderBadge } from "./image-provider-badge";
 import { KS8ProviderBadge } from "./ks8-provider-badge";
+import { LovableProviderBadge } from "./lovable-provider-badge";
 import { M365ProviderBadge } from "./m365-provider-badge";
 import { MongoDBAtlasProviderBadge } from "./mongodbatlas-provider-badge";
 import { OpenStackProviderBadge } from "./openstack-provider-badge";
@@ -29,6 +30,7 @@ export {
   IacProviderBadge,
   ImageProviderBadge,
   KS8ProviderBadge,
+  LovableProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
   OpenStackProviderBadge,
@@ -53,4 +55,5 @@ export const PROVIDER_BADGE_BY_NAME: Record<string, FC<IconSvgProps>> = {
   Cloudflare: CloudflareProviderBadge,
   OpenStack: OpenStackProviderBadge,
   Vercel: VercelProviderBadge,
+  Lovable: LovableProviderBadge,
 };

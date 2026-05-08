@@ -1,0 +1,40 @@
+{
+  "Provider": "lovable",
+  "CheckID": "published_app_strict_csp_configured",
+  "CheckTitle": "Published Lovable apps must use a strict Content-Security-Policy",
+  "CheckType": [],
+  "ServiceName": "published",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "LovablePublishedApp",
+  "ResourceGroup": "security",
+  "Description": "Published Lovable apps must serve a strict Content-Security-Policy: a default-src directive must be set and the policy must not use wildcards or 'unsafe-inline'/'unsafe-eval' for script execution.",
+  "Risk": "A permissive CSP undermines XSS mitigation: 'unsafe-inline' lets attacker-injected payloads execute, wildcard sources allow loading scripts from any origin, and a missing default-src leaves directives unconstrained.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://content-security-policy.com/",
+    "https://web.dev/articles/strict-csp"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Define a default-src directive (e.g., default-src 'self')\n2. Replace 'unsafe-inline' / 'unsafe-eval' with nonces or hashes\n3. Restrict script-src, style-src, frame-ancestors, and connect-src to known origins\n4. Test the CSP in report-only mode before enforcing\n5. Monitor CSP violation reports",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Adopt a strict CSP based on the W3C recommended pattern (nonces or hashes) and avoid 'unsafe-inline' / 'unsafe-eval'. Roll out via Content-Security-Policy-Report-Only first, then enforce.",
+      "Url": "https://hub.prowler.com/check/published_app_strict_csp_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "vulnerabilities"
+  ],
+  "DependsOn": [
+    "published_app_security_headers_configured"
+  ],
+  "RelatedTo": [],
+  "Notes": ""
+}

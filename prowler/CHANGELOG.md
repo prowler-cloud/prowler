@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- New `lovable` provider with `apps` and `published` services, 12 security checks covering Lovable best practices (workspace visibility, pre-publication review, Supabase RLS, Edge Function authentication, storage privacy, CAPTCHA, password policy, auth rate limiting, HTTPS, security headers, strict CSP, no secrets in frontend bundle), and the Prowler ThreatScore for Lovable compliance framework
 - `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
 - Universal compliance pipeline integrated into the CLI: `--list-compliance` and `--list-compliance-requirements` show universal frameworks, and CSV plus OCSF outputs are generated for any framework declaring a `TableConfig` [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
 - ASD Essential Eight Maturity Model compliance framework for AWS (Maturity Level One, Nov 2023) [(#10808)](https://github.com/prowler-cloud/prowler/pull/10808)
