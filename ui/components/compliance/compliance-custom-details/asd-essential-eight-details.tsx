@@ -16,117 +16,127 @@ interface ASDEssentialEightDetailsProps {
   requirement: Requirement;
 }
 
+// Each requirement's References field is a single URL or a comma/space
+// separated list of URLs. The regex matches both http:// and https:// so
+// plain-http references aren't silently dropped.
+const URL_REGEX = /https?:\/\/[^\s,]+/g;
+
+const extractUrls = (references: Requirement[keyof Requirement]): string[] => {
+  if (typeof references !== "string") return [];
+  return references.match(URL_REGEX) ?? [];
+};
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === "string");
+
 export const ASDEssentialEightCustomDetails = ({
   requirement,
 }: ASDEssentialEightDetailsProps) => {
-  const processReferences = (
-    references: string | number | boolean | string[] | object[] | undefined,
-  ): string[] => {
-    if (typeof references !== "string") return [];
+  const {
+    description,
+    implementation_notes,
+    maturity_level,
+    assessment_status,
+    cloud_applicability,
+    mitigated_threats,
+    rationale_statement,
+    impact_statement,
+    remediation_procedure,
+    audit_procedure,
+    additional_information,
+    references,
+  } = requirement;
 
-    // Each requirement's References field is a single URL or a comma/space
-    // separated list of https URLs — match every https URL up to the next
-    // separator.
-    const urlRegex = /https:\/\/[^\s,]+/g;
-    return references.match(urlRegex) || [];
-  };
+  const referenceUrls = extractUrls(references);
 
   return (
     <ComplianceDetailContainer>
-      {requirement.description && (
+      {description && (
         <ComplianceDetailSection title="Description">
-          <ComplianceDetailText>{requirement.description}</ComplianceDetailText>
+          <ComplianceDetailText>{description}</ComplianceDetailText>
         </ComplianceDetailSection>
       )}
 
-      {requirement.aws_description && (
-        <ComplianceDetailSection title="AWS Implementation Notes">
-          <ComplianceDetailText>
-            {requirement.aws_description as string}
-          </ComplianceDetailText>
+      {typeof implementation_notes === "string" && implementation_notes && (
+        <ComplianceDetailSection title="Implementation Notes">
+          <ComplianceDetailText>{implementation_notes}</ComplianceDetailText>
         </ComplianceDetailSection>
       )}
 
       <ComplianceBadgeContainer>
-        {requirement.maturity_level && (
+        {typeof maturity_level === "string" && maturity_level && (
           <ComplianceBadge
             label="Maturity Level"
-            value={requirement.maturity_level as string}
+            value={maturity_level}
             color="purple"
           />
         )}
 
-        {requirement.assessment_status && (
+        {typeof assessment_status === "string" && assessment_status && (
           <ComplianceBadge
             label="Assessment"
-            value={requirement.assessment_status as string}
+            value={assessment_status}
             color="blue"
           />
         )}
 
-        {requirement.cloud_applicability && (
+        {typeof cloud_applicability === "string" && cloud_applicability && (
           <ComplianceBadge
             label="Cloud Applicability"
-            value={requirement.cloud_applicability as string}
+            value={cloud_applicability}
             color="orange"
           />
         )}
       </ComplianceBadgeContainer>
 
-      {/* `Array.isArray` narrows the index-signature union; `ComplianceChipContainer` itself returns null on empty arrays, so no length check needed here. */}
-      {Array.isArray(requirement.mitigated_threats) && (
+      {/* `isStringArray` narrows the index-signature union to string[], so no cast is needed. `ComplianceChipContainer` returns null on empty arrays, so no length check is needed here either. */}
+      {isStringArray(mitigated_threats) && (
         <ComplianceChipContainer
           title="Mitigated Threats"
-          items={requirement.mitigated_threats as string[]}
+          items={mitigated_threats}
         />
       )}
 
-      {requirement.rationale_statement && (
+      {typeof rationale_statement === "string" && rationale_statement && (
         <ComplianceDetailSection title="Rationale Statement">
-          <ComplianceDetailText>
-            {requirement.rationale_statement as string}
-          </ComplianceDetailText>
+          <ComplianceDetailText>{rationale_statement}</ComplianceDetailText>
         </ComplianceDetailSection>
       )}
 
-      {requirement.impact_statement && (
+      {typeof impact_statement === "string" && impact_statement && (
         <ComplianceDetailSection title="Impact Statement">
-          <ComplianceDetailText>
-            {requirement.impact_statement as string}
-          </ComplianceDetailText>
+          <ComplianceDetailText>{impact_statement}</ComplianceDetailText>
         </ComplianceDetailSection>
       )}
 
-      {requirement.remediation_procedure &&
-        typeof requirement.remediation_procedure === "string" && (
-          <ComplianceDetailSection title="Remediation Procedure">
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown>{requirement.remediation_procedure}</ReactMarkdown>
-            </div>
-          </ComplianceDetailSection>
-        )}
+      {typeof remediation_procedure === "string" && remediation_procedure && (
+        <ComplianceDetailSection title="Remediation Procedure">
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown>{remediation_procedure}</ReactMarkdown>
+          </div>
+        </ComplianceDetailSection>
+      )}
 
-      {requirement.audit_procedure &&
-        typeof requirement.audit_procedure === "string" && (
-          <ComplianceDetailSection title="Audit Procedure">
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown>{requirement.audit_procedure}</ReactMarkdown>
-            </div>
-          </ComplianceDetailSection>
-        )}
+      {typeof audit_procedure === "string" && audit_procedure && (
+        <ComplianceDetailSection title="Audit Procedure">
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown>{audit_procedure}</ReactMarkdown>
+          </div>
+        </ComplianceDetailSection>
+      )}
 
-      {requirement.additional_information && (
+      {typeof additional_information === "string" && additional_information && (
         <ComplianceDetailSection title="Additional Information">
           <ComplianceDetailText className="whitespace-pre-wrap">
-            {requirement.additional_information as string}
+            {additional_information}
           </ComplianceDetailText>
         </ComplianceDetailSection>
       )}
 
-      {requirement.references && (
+      {referenceUrls.length > 0 && (
         <ComplianceDetailSection title="References">
           <div className="flex flex-col gap-1">
-            {processReferences(requirement.references).map((url: string) => (
+            {referenceUrls.map((url) => (
               // URLs are unique within this list, so they outperform the
               // positional index as a React key (avoids reconciliation
               // glitches if the order ever shifts).

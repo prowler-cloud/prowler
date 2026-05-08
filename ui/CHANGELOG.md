@@ -6,7 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- ASD Essential Eight compliance framework support [(#11071)](https://github.com/prowler-cloud/prowler/pull/11071)
+- ASD Essential Eight compliance framework support: AWS scans now surface the Essential Eight overview card, accordion view (Sections normalised to `N. <name>`, controls grouped per ML1 clause) and a dedicated requirement detail panel with maturity level, assessment, cloud applicability, mitigated threats and References [(#11071)](https://github.com/prowler-cloud/prowler/pull/11071)
 
 ### 🔄 Changed
 

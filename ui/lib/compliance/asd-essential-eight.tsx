@@ -10,7 +10,6 @@ import {
   Requirement,
   REQUIREMENT_STATUS,
   RequirementsData,
-  RequirementStatus,
 } from "@/types/compliance";
 
 import {
@@ -21,12 +20,12 @@ import {
   updateCounters,
 } from "./commons";
 
-// `_filter` is reserved for future Maturity Level filtering (analogous to
-// CIS's Profile filter). Today the JSON only contains ML1 requirements, so
-// the parameter is a no-op; once ML2/ML3 ship, mirror the CIS pattern of
-// skipping requirements whose `attrs.MaturityLevel` !== filter. The leading
-// underscore tells eslint and TypeScript-ESLint that the parameter is
-// intentionally unused.
+// TODO(PROWLER-1470): `_filter` is reserved for future Maturity Level
+// filtering (analogous to CIS's Profile filter). Today the JSON only
+// contains ML1 requirements, so the parameter is a no-op; once ML2/ML3
+// ship, mirror the CIS pattern of skipping requirements whose
+// `attrs.MaturityLevel` !== filter. The leading underscore tells eslint
+// and TypeScript-ESLint that the parameter is intentionally unused.
 export const mapComplianceData = (
   attributesData: AttributesData,
   requirementsData: RequirementsData,
@@ -49,13 +48,10 @@ export const mapComplianceData = (
     if (!requirementData) continue;
 
     const frameworkName = attributeItem.attributes.framework;
-    // Defensive fallback: the JSON schema guarantees `Section` is a string,
-    // but a backend regression that drops the field would otherwise crash
-    // the `.replace` call below.
-    const sectionName = attrs.Section ?? "Uncategorized";
+    const sectionName = attrs.Section;
     const description = attributeItem.attributes.description;
-    const status = requirementData.attributes.status || "";
-    const checks = attributeItem.attributes.attributes.check_ids || [];
+    const status = requirementData.attributes.status;
+    const checks = attributeItem.attributes.attributes.check_ids;
     const requirementName = id;
 
     // Find or create framework using common helper
@@ -76,9 +72,11 @@ export const mapComplianceData = (
     // the framework's clause-level granularity visible in the accordion.
     // The accordion title and the requirement.description must surface the
     // *literal ASD clause* (`description`, the canonical standard text).
-    // The Attributes[].Description field carries Prowler's AWS-specific
-    // implementation note; we expose it separately as `aws_description` so
-    // the details panel can render it under "AWS Implementation Notes".
+    // The Attributes[].Description field carries Prowler's
+    // provider-specific implementation note; we expose it separately as
+    // `implementation_notes` so the details panel can render it under
+    // "Implementation Notes" without coupling the field to a single
+    // provider.
     const controlLabel = `${id} - ${description}`;
     const control = {
       label: controlLabel,
@@ -88,20 +86,19 @@ export const mapComplianceData = (
       requirements: [] as Requirement[],
     };
 
-    const finalStatus: RequirementStatus = status as RequirementStatus;
     const requirement: Requirement = {
       name: requirementName,
       description: description,
-      status: finalStatus,
+      status: status,
       check_ids: checks,
-      pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
-      fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
-      manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
+      pass: status === REQUIREMENT_STATUS.PASS ? 1 : 0,
+      fail: status === REQUIREMENT_STATUS.FAIL ? 1 : 0,
+      manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
       maturity_level: attrs.MaturityLevel,
       assessment_status: attrs.AssessmentStatus,
       cloud_applicability: attrs.CloudApplicability,
-      mitigated_threats: attrs.MitigatedThreats || [],
-      aws_description: attrs.Description,
+      mitigated_threats: attrs.MitigatedThreats,
+      implementation_notes: attrs.Description,
       rationale_statement: attrs.RationaleStatement,
       impact_statement: attrs.ImpactStatement,
       remediation_procedure: attrs.RemediationProcedure,
