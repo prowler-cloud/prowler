@@ -6,14 +6,17 @@ class cosmosdb_account_firewall_use_selected_networks(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, accounts in cosmosdb_client.accounts.items():
+            subscription_name = cosmosdb_client.subscriptions.get(
+                subscription, subscription
+            )
             for account in accounts:
                 report = Check_Report_Azure(metadata=self.metadata(), resource=account)
                 report.subscription = subscription
                 report.status = "FAIL"
-                report.status_extended = f"CosmosDB account {account.name} from subscription {subscription} has firewall rules that allow access from all networks."
+                report.status_extended = f"CosmosDB account {account.name} from subscription {subscription_name} ({subscription}) has firewall rules that allow access from all networks."
                 if account.is_virtual_network_filter_enabled:
                     report.status = "PASS"
-                    report.status_extended = f"CosmosDB account {account.name} from subscription {subscription} has firewall rules that allow access only from selected networks."
+                    report.status_extended = f"CosmosDB account {account.name} from subscription {subscription_name} ({subscription}) has firewall rules that allow access only from selected networks."
                 findings.append(report)
 
         return findings

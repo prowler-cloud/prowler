@@ -44,13 +44,13 @@ class AzureService:
 
         return results
 
-    def list_with_rg_scope(self, subscription_name, list_all_fn, list_by_rg_fn):
+    def list_with_rg_scope(self, subscription_id, list_all_fn, list_by_rg_fn):
         if not self.resource_groups:
             return list(list_all_fn())
-        resource_groups = self.resource_groups.get(subscription_name, [])
+        resource_groups = self.resource_groups.get(subscription_id, [])
         if not resource_groups:
             logger.info(
-                f"No valid resource groups for subscription {subscription_name}, skipping."
+                f"No valid resource groups for subscription {subscription_id}, skipping."
             )
             return []
         output = []
@@ -59,7 +59,7 @@ class AzureService:
                 output += list(list_by_rg_fn(resource_group_name=resource_group))
             except Exception as error:
                 logger.warning(
-                    f"Subscription name: {subscription_name} -- Resource Group: {resource_group} -- "
+                    f"Subscription ID: {subscription_id} -- Resource Group: {resource_group} -- "
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return output
@@ -70,15 +70,15 @@ class AzureService:
             if "GraphServiceClient" in str(service):
                 clients.update({identity.tenant_domain: service(credentials=session)})
             elif "LogsQueryClient" in str(service):
-                for display_name, id in identity.subscriptions.items():
-                    clients.update({display_name: service(credential=session)})
+                for subscription_id, display_name in identity.subscriptions.items():
+                    clients.update({subscription_id: service(credential=session)})
             else:
-                for display_name, id in identity.subscriptions.items():
+                for subscription_id, display_name in identity.subscriptions.items():
                     clients.update(
                         {
-                            display_name: service(
+                            subscription_id: service(
                                 credential=session,
-                                subscription_id=id,
+                                subscription_id=subscription_id,
                                 base_url=region_config.base_url,
                                 credential_scopes=region_config.credential_scopes,
                             )

@@ -7,6 +7,7 @@ from prowler.providers.azure.services.network.network_service import (
     RetentionPolicy,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
@@ -17,6 +18,7 @@ class Test_network_flow_log_captured_sent:
     def test_no_network_watchers(self):
         network_client = mock.MagicMock()
         network_client.resource_groups = None
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_client.network_watchers = {}
 
         with (
@@ -43,6 +45,7 @@ class Test_network_flow_log_captured_sent:
     def test_network_network_watchers_no_flow_logs(self):
         network_client = mock.MagicMock()
         network_client.resource_groups = None
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -80,7 +83,7 @@ class Test_network_flow_log_captured_sent:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has no flow logs"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has no flow logs"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
@@ -90,6 +93,7 @@ class Test_network_flow_log_captured_sent:
     def test_network_network_watchers_flow_logs_disabled(self):
         network_client = mock.MagicMock()
         network_client.resource_groups = None
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -135,7 +139,7 @@ class Test_network_flow_log_captured_sent:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has flow logs disabled"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has flow logs disabled"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name
@@ -145,6 +149,7 @@ class Test_network_flow_log_captured_sent:
     def test_network_network_watchers_flow_logs_well_configured(self):
         network_client = mock.MagicMock()
         network_client.resource_groups = None
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -194,12 +199,13 @@ class Test_network_flow_log_captured_sent:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
             )
 
     def test_network_network_watchers_traffic_analytics_without_workspace(self):
         network_client = mock.MagicMock()
         network_client.resource_groups = None
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -247,12 +253,13 @@ class Test_network_flow_log_captured_sent:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
             )
 
     def test_network_network_watchers_mixed_flow_logs_fails(self):
         network_client = mock.MagicMock()
         network_client.resource_groups = None
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -309,12 +316,13 @@ class Test_network_flow_log_captured_sent:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has enabled flow logs that are not configured to send traffic analytics to a Log Analytics workspace"
             )
 
     def test_network_network_watchers_vnet_flow_logs_well_configured(self):
         network_client = mock.MagicMock()
         network_client.resource_groups = None
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         network_watcher_name = "Network Watcher Name"
         network_watcher_id = str(uuid4())
 
@@ -363,7 +371,7 @@ class Test_network_flow_log_captured_sent:
             assert result[0].location == "location"
             assert (
                 result[0].status_extended
-                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_ID} has flow logs that are captured and sent to Log Analytics workspace"
+                == f"Network Watcher {network_watcher_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has flow logs that are captured and sent to Log Analytics workspace"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == network_watcher_name

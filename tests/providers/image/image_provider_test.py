@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from prowler.lib.check.models import CheckReportImage
+from prowler.providers.common.provider import Provider
 from prowler.providers.image.exceptions.exceptions import (
     ImageInvalidConfigScannerError,
     ImageInvalidNameError,
@@ -20,14 +21,16 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageScanError,
     ImageTrivyBinaryNotFoundError,
 )
-from prowler.providers.common.provider import Provider
 from prowler.providers.image.image_provider import ImageProvider
 from tests.providers.image.image_fixtures import (
+    SAMPLE_CVE_WITHOUT_REFERENCES_FINDING,
     SAMPLE_IMAGE_SHA,
     SAMPLE_MISCONFIGURATION_FINDING,
+    SAMPLE_NON_CVE_VULNERABILITY_FINDING,
     SAMPLE_SECRET_FINDING,
     SAMPLE_UNKNOWN_SEVERITY_FINDING,
     SAMPLE_VULNERABILITY_FINDING,
+    SAMPLE_VULNERABILITY_WITHOUT_CVE_ORG_REFERENCE,
     get_empty_trivy_output,
     get_invalid_trivy_output,
     get_multi_type_trivy_output,
@@ -147,6 +150,77 @@ class TestImageProvider:
         assert report.region == "container"
         assert report.check_metadata.Categories == ["vulnerabilities"]
         assert report.check_metadata.RelatedUrl == ""
+
+    def test_process_finding_vulnerability_prefers_cve_reference_and_filters_aqua(self):
+        """Test CVE findings use cve.org and exclude Aqua references."""
+        provider = _make_provider()
+
+        report = provider._process_finding(
+            SAMPLE_VULNERABILITY_FINDING,
+            "alpine:3.18",
+            "alpine:3.18 (alpine 3.18.0)",
+        )
+
+        assert (
+            report.check_metadata.Remediation.Recommendation.Url
+            == "https://www.cve.org/CVERecord?id=CVE-2024-1234"
+        )
+        assert report.check_metadata.AdditionalURLs == [
+            "https://www.cve.org/CVERecord?id=CVE-2024-1234"
+        ]
+
+    def test_process_finding_vulnerability_builds_cve_org_when_only_nvd_reference(
+        self,
+    ):
+        """Test official CVE URL is built when only NVD is provided."""
+        provider = _make_provider()
+
+        report = provider._process_finding(
+            SAMPLE_VULNERABILITY_WITHOUT_CVE_ORG_REFERENCE,
+            "alpine:3.18",
+            "alpine:3.18 (alpine 3.18.0)",
+        )
+
+        assert (
+            report.check_metadata.Remediation.Recommendation.Url
+            == "https://www.cve.org/CVERecord?id=CVE-2024-5678"
+        )
+        assert report.check_metadata.AdditionalURLs == [
+            "https://www.cve.org/CVERecord?id=CVE-2024-5678"
+        ]
+
+    def test_process_finding_vulnerability_builds_cve_org_when_references_missing(self):
+        """Test CVE URL is built from VulnerabilityID when references are absent."""
+        provider = _make_provider()
+
+        report = provider._process_finding(
+            SAMPLE_CVE_WITHOUT_REFERENCES_FINDING,
+            "alpine:3.18",
+            "alpine:3.18 (alpine 3.18.0)",
+        )
+
+        assert (
+            report.check_metadata.Remediation.Recommendation.Url
+            == "https://www.cve.org/CVERecord?id=CVE-2024-9012"
+        )
+        assert report.check_metadata.AdditionalURLs == [
+            "https://www.cve.org/CVERecord?id=CVE-2024-9012"
+        ]
+
+    def test_process_finding_non_cve_vulnerability_does_not_fallback_to_aqua(self):
+        """Test non-CVE vulnerabilities do not keep Aqua links."""
+        provider = _make_provider()
+
+        report = provider._process_finding(
+            SAMPLE_NON_CVE_VULNERABILITY_FINDING,
+            "alpine:3.18",
+            "alpine:3.18 (alpine 3.18.0)",
+        )
+
+        assert report.check_metadata.Remediation.Recommendation.Url == ""
+        assert report.check_metadata.AdditionalURLs == [
+            "https://github.com/advisories/GHSA-abcd-1234-efgh"
+        ]
 
     def test_process_finding_secret(self):
         """Test processing a secret finding (identified by RuleID)."""
@@ -339,6 +413,24 @@ class TestImageProvider:
         assert result.is_connected is True
         mock_factory.assert_called_once_with(
             registry_url="docker.io/andoniaf",
+            username=None,
+            password=None,
+            token=None,
+        )
+        mock_adapter.list_repositories.assert_called_once()
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_test_connection_registry_url_with_https_scheme(self, mock_factory):
+        """Registry URL with https:// scheme is normalised before adapter creation."""
+        mock_adapter = MagicMock()
+        mock_adapter.list_repositories.return_value = ["repo1"]
+        mock_factory.return_value = mock_adapter
+
+        result = ImageProvider.test_connection(image="https://my-registry.example.com")
+
+        assert result.is_connected is True
+        mock_factory.assert_called_once_with(
+            registry_url="my-registry.example.com",
             username=None,
             password=None,
             token=None,
@@ -659,6 +751,27 @@ class TestImageProviderRegistryAuth:
             assert "Docker login" in output
 
 
+class TestStripScheme:
+    @pytest.mark.parametrize(
+        "raw,expected",
+        [
+            ("https://my-registry.example.com", "my-registry.example.com"),
+            ("http://my-registry.example.com", "my-registry.example.com"),
+            ("HTTPS://My-Registry.Example.Com", "My-Registry.Example.Com"),
+            ("Http://localhost:5000", "localhost:5000"),
+            ("my-registry.example.com", "my-registry.example.com"),
+            ("https://", ""),
+            ("https://https://nested.example.com", "https://nested.example.com"),
+            (
+                "ftp://not-a-supported-scheme.example.com",
+                "ftp://not-a-supported-scheme.example.com",
+            ),
+        ],
+    )
+    def test_strip_scheme(self, raw, expected):
+        assert ImageProvider._strip_scheme(raw) == expected
+
+
 class TestExtractRegistry:
     def test_docker_hub_simple(self):
         assert ImageProvider._extract_registry("alpine:3.18") is None
@@ -698,6 +811,24 @@ class TestExtractRegistry:
     def test_bare_image_name(self):
         assert ImageProvider._extract_registry("nginx") is None
 
+    def test_https_scheme_bare_hostname_returns_none(self):
+        """Bare scheme-prefixed hostname has no image path, so no registry is extracted."""
+        assert (
+            ImageProvider._extract_registry("https://my-registry.example.com") is None
+        )
+
+    def test_http_scheme_with_port_stripped(self):
+        assert (
+            ImageProvider._extract_registry("http://localhost:5000/myimage:latest")
+            == "localhost:5000"
+        )
+
+    def test_https_scheme_with_path_stripped(self):
+        assert (
+            ImageProvider._extract_registry("https://ghcr.io/org/image:tag")
+            == "ghcr.io"
+        )
+
 
 class TestIsRegistryUrl:
     def test_bare_ecr_hostname(self):
@@ -727,6 +858,16 @@ class TestIsRegistryUrl:
 
     def test_dockerhub_namespace(self):
         assert not ImageProvider._is_registry_url("library/alpine")
+
+    def test_https_scheme_bare_hostname(self):
+        assert ImageProvider._is_registry_url("https://my-registry.example.com")
+
+    def test_http_scheme_bare_hostname_with_port(self):
+        assert ImageProvider._is_registry_url("http://my-registry.example.com:5000")
+
+    def test_https_scheme_image_reference_not_registry(self):
+        """A scheme-prefixed full image reference is still an image, not a registry URL."""
+        assert not ImageProvider._is_registry_url("https://ghcr.io/myorg/repo:tag")
 
 
 class TestTestRegistryConnection:

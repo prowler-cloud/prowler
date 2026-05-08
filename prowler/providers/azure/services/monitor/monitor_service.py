@@ -28,13 +28,13 @@ class Monitor(AzureService):
                     continue
                 diagnostics_settings_list = self.diagnostic_settings_with_uri(
                     subscription,
-                    f"subscriptions/{self.subscriptions[subscription]}/",
+                    f"subscriptions/{subscription}/",
                     client,
                 )
                 diagnostics_settings.update({subscription: diagnostics_settings_list})
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return diagnostics_settings
 
@@ -66,7 +66,7 @@ class Monitor(AzureService):
                 )
         except Exception as error:
             logger.error(
-                f"Subscription id: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return diagnostics_settings
 
@@ -102,7 +102,7 @@ class Monitor(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return alert_rules
 

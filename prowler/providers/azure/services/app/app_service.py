@@ -20,11 +20,11 @@ class App(AzureService):
         logger.info("App - Getting apps...")
         apps = {}
 
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
-                apps.update({subscription_name: {}})
+                apps.update({subscription_id: {}})
                 apps_list = self.list_with_rg_scope(
-                    subscription_name,
+                    subscription_id,
                     client.web_apps.list,
                     client.web_apps.list_by_resource_group,
                 )
@@ -45,7 +45,7 @@ class App(AzureService):
                             resource_group_name=app.resource_group, name=app.name
                         )
 
-                        apps[subscription_name].update(
+                        apps[subscription_id].update(
                             {
                                 app.id: WebApp(
                                     resource_id=app.id,
@@ -85,7 +85,7 @@ class App(AzureService):
                                         getattr(app, "client_cert_mode", "Ignore"),
                                     ),
                                     monitor_diagnostic_settings=self._get_app_monitor_settings(
-                                        app.name, app.resource_group, subscription_name
+                                        app.name, app.resource_group, subscription_id
                                     ),
                                     https_only=getattr(app, "https_only", False),
                                     identity=ManagedServiceIdentity(
@@ -110,7 +110,7 @@ class App(AzureService):
                         )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         return apps
@@ -119,11 +119,11 @@ class App(AzureService):
         logger.info("Function - Getting functions...")
         functions = {}
 
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
-                functions.update({subscription_name: {}})
+                functions.update({subscription_id: {}})
                 functions_list = self.list_with_rg_scope(
-                    subscription_name,
+                    subscription_id,
                     client.web_apps.list,
                     client.web_apps.list_by_resource_group,
                 )
@@ -133,7 +133,7 @@ class App(AzureService):
                     if getattr(function, "kind", "").startswith("functionapp"):
                         # List host keys
                         host_keys = self._get_function_host_keys(
-                            subscription_name, function.resource_group, function.name
+                            subscription_id, function.resource_group, function.name
                         )
                         if host_keys is not None:
                             function_keys = getattr(host_keys, "function_keys", {})
@@ -141,16 +141,16 @@ class App(AzureService):
                             function_keys = None
 
                         application_settings = self._list_application_settings(
-                            subscription_name, function.resource_group, function.name
+                            subscription_id, function.resource_group, function.name
                         )
 
                         function_config = self._get_function_config(
-                            subscription_name,
+                            subscription_id,
                             function.resource_group,
                             function.name,
                         )
 
-                        functions[subscription_name].update(
+                        functions[subscription_id].update(
                             {
                                 function.id: FunctionApp(
                                     id=function.id,
@@ -183,7 +183,7 @@ class App(AzureService):
                         )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         return functions
@@ -208,13 +208,13 @@ class App(AzureService):
         monitor_diagnostics_settings = []
         try:
             monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
-                self.subscriptions[subscription],
-                f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.Web/sites/{app_name}",
+                subscription,
+                f"subscriptions/{subscription}/resourceGroups/{resource_group}/providers/Microsoft.Web/sites/{app_name}",
                 monitor_client.clients[subscription],
             )
         except Exception as error:
             logger.error(
-                f"Subscription name: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return monitor_diagnostics_settings
 

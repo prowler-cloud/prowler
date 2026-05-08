@@ -25,8 +25,8 @@ from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
     AWS_REGION_US_EAST_1,
     AWS_STS_GLOBAL_ENDPOINT_REGION,
-    BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
+    get_default_session_config,
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAccessKeyIDInvalidError,
@@ -227,14 +227,15 @@ class AwsProvider(Provider):
 
         # TODO: Use AwsSetUpSession ?????
         # Configure the initial AWS Session using the local credentials: profile or environment variables
+        session_config = self.set_session_config(retries_max_attempts)
         aws_session = self.setup_session(
             mfa=mfa,
             profile=profile,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
             aws_session_token=aws_session_token,
+            session_config=session_config,
         )
-        session_config = self.set_session_config(retries_max_attempts)
         # Current session and the original session points to the same session object until we get a new one, if needed
         self._session = AWSSession(
             current_session=aws_session,
@@ -630,6 +631,7 @@ class AwsProvider(Provider):
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
+        session_config: Optional[Config] = None,
     ) -> Session:
         """
         setup_session sets up an AWS session using the provided credentials.
@@ -640,6 +642,9 @@ class AwsProvider(Provider):
             - aws_access_key_id: The AWS access key ID.
             - aws_secret_access_key: The AWS secret access key.
             - aws_session_token: The AWS session token, optional.
+            - session_config: Botocore Config applied as the session's default
+              client config so every client created from the session inherits
+              the Prowler user agent and retry settings.
 
         Returns:
             - Session: The AWS session.
@@ -649,6 +654,9 @@ class AwsProvider(Provider):
         """
         try:
             logger.debug("Creating original session ...")
+
+            if session_config is None:
+                session_config = AwsProvider.set_session_config(None)
 
             session_arguments = {}
             if profile:
@@ -661,6 +669,7 @@ class AwsProvider(Provider):
 
             if mfa:
                 session = Session(**session_arguments)
+                session._session.set_default_client_config(session_config)
                 sts_client = session.client("sts")
 
                 # TODO: pass values from the input
@@ -673,7 +682,7 @@ class AwsProvider(Provider):
                 session_credentials = sts_client.get_session_token(
                     **get_session_token_arguments
                 )
-                return Session(
+                mfa_session = Session(
                     aws_access_key_id=session_credentials["Credentials"]["AccessKeyId"],
                     aws_secret_access_key=session_credentials["Credentials"][
                         "SecretAccessKey"
@@ -682,8 +691,12 @@ class AwsProvider(Provider):
                         "SessionToken"
                     ],
                 )
+                mfa_session._session.set_default_client_config(session_config)
+                return mfa_session
             else:
-                return Session(**session_arguments)
+                session = Session(**session_arguments)
+                session._session.set_default_client_config(session_config)
+                return session
         except Exception as error:
             logger.critical(
                 f"AWSSetUpSessionError[{error.__traceback__.tb_lineno}]: {error}"
@@ -698,6 +711,7 @@ class AwsProvider(Provider):
         identity: AWSIdentityInfo,
         assumed_role_configuration: AWSAssumeRoleConfiguration,
         session: AWSSession,
+        session_config: Optional[Config] = None,
     ) -> Session:
         """
         Sets up an assumed session using the provided assumed role credentials.
@@ -742,6 +756,13 @@ class AwsProvider(Provider):
             assumed_session = BotocoreSession()
             assumed_session._credentials = assumed_refreshable_credentials
             assumed_session.set_config_variable("region", identity.profile_region)
+            if session_config is None:
+                session_config = (
+                    session.session_config
+                    if session is not None
+                    else AwsProvider.set_session_config(None)
+                )
+            assumed_session.set_default_client_config(session_config)
             return Session(
                 profile_name=identity.profile,
                 botocore_session=assumed_session,
@@ -870,7 +891,7 @@ class AwsProvider(Provider):
 
             for region in enabled_regions:
                 regional_client = self._session.current_session.client(
-                    service, region_name=region, config=self._session.session_config
+                    service, region_name=region
                 )
                 regional_client.region = region
                 regional_clients[region] = regional_client
@@ -1140,21 +1161,16 @@ class AwsProvider(Provider):
         Returns:
             - Config: The botocore Config object
         """
-        # Set the maximum retries for the standard retrier config
-        default_session_config = Config(
-            retries={"max_attempts": 3, "mode": "standard"},
-            user_agent_extra=BOTO3_USER_AGENT_EXTRA,
-        )
+        default_session_config = get_default_session_config()
         if retries_max_attempts:
-            # Create the new config
-            config = Config(
-                retries={
-                    "max_attempts": retries_max_attempts,
-                    "mode": "standard",
-                },
+            default_session_config = default_session_config.merge(
+                Config(
+                    retries={
+                        "max_attempts": retries_max_attempts,
+                        "mode": "standard",
+                    },
+                )
             )
-            # Merge the new configuration
-            default_session_config = default_session_config.merge(config)
 
         return default_session_config
 
@@ -1424,6 +1440,9 @@ class AwsProvider(Provider):
                     aws_session_token=assumed_role_credentials.aws_session_token,
                     region_name=aws_region,
                     profile_name=profile,
+                )
+                session._session.set_default_client_config(
+                    AwsProvider.set_session_config(None)
                 )
 
             caller_identity = AwsProvider.validate_credentials(session, aws_region)

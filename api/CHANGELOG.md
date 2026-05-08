@@ -2,6 +2,29 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.27.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- New `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
+- ASD Essential Eight (AWS) compliance framework support [(#10982)](https://github.com/prowler-cloud/prowler/pull/10982)
+- `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
+
+### 🔐 Security
+
+- `trivy` binary from 0.69.2 to 0.70.0 and `cryptography` from 46.0.6 to 46.0.7 (transitive via prowler SDK) in the API image for CVE-2026-33186 and CVE-2026-39892 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
+
+---
+
+## [1.26.1] (Prowler v5.25.1)
+
+### 🐞 Fixed
+
+- Attack Paths: AWS scans no longer fail when enabled regions cannot be retrieved, and scans stuck in `scheduled` state are now cleaned up after the stale threshold [(#10917)](https://github.com/prowler-cloud/prowler/pull/10917)
+- Scan report and compliance downloads now redirect to a presigned S3 URL instead of streaming through the API worker, preventing gunicorn timeouts on large files [(#10927)](https://github.com/prowler-cloud/prowler/pull/10927)
+
+---
+
 ## [1.26.0] (Prowler v5.25.0)
 
 ### 🚀 Added
@@ -12,7 +35,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔄 Changed
 
-- Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+- Allows tenant owners to expel users from their organizations [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 - `aggregate_findings`, `aggregate_attack_surface`, `aggregate_scan_resource_group_summaries` and `aggregate_scan_category_summaries` now upsert via `bulk_create(update_conflicts=True, ...)` instead of the prior `ignore_conflicts=True` / plain INSERT / `already backfilled` short-circuit. Re-runs triggered by the post-mute reaggregation pipeline no longer trip the `unique_*_per_scan` constraints nor silently drop updates, and are race-safe under concurrent writers (e.g. scan completion overlapping with a fresh mute rule) [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
 - Rename the scan-category and scan-resource-group summary aggregators from `backfill_*` to `aggregate_*` [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
 

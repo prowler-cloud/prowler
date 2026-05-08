@@ -30,19 +30,20 @@ class Defender(AzureService):
     def _get_pricings(self):
         logger.info("Defender - Getting pricings...")
         pricings = {}
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
                 if self.resource_groups:
                     logger.warning(
-                        f"Subscription name: {subscription_name} -- Pricings are subscription-scoped and cannot be filtered by resource group. Skipping."
+                        f"Subscription ID: {subscription_id} -- Pricings are subscription-scoped and cannot be filtered by resource group. Skipping."
                     )
+                    pricings.update({subscription_id: {}})
                     continue
-                pricings.update({subscription_name: {}})
+                pricings.update({subscription_id: {}})
                 pricings_list = client.pricings.list(
-                    scope_id=f"subscriptions/{self.subscriptions[subscription_name]}"
+                    scope_id=f"subscriptions/{subscription_id}"
                 )
                 for pricing in pricings_list.value:
-                    pricings[subscription_name].update(
+                    pricings[subscription_id].update(
                         {
                             pricing.name: Pricing(
                                 resource_id=pricing.id,
@@ -65,28 +66,29 @@ class Defender(AzureService):
             except ResourceNotFoundError as error:
                 if "Subscription Not Registered" in error.message:
                     logger.error(
-                        f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
+                        f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return pricings
 
     def _get_auto_provisioning_settings(self):
         logger.info("Defender - Getting auto provisioning settings...")
         auto_provisioning = {}
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
                 if self.resource_groups:
                     logger.warning(
-                        f"Subscription name: {subscription_name} -- Auto provisioning settings are subscription-scoped and cannot be filtered by resource group. Skipping."
+                        f"Subscription ID: {subscription_id} -- Auto provisioning settings are subscription-scoped and cannot be filtered by resource group. Skipping."
                     )
+                    auto_provisioning.update({subscription_id: {}})
                     continue
-                auto_provisioning.update({subscription_name: {}})
+                auto_provisioning.update({subscription_id: {}})
                 auto_provisioning_settings = client.auto_provisioning_settings.list()
                 for ap in auto_provisioning_settings:
-                    auto_provisioning[subscription_name].update(
+                    auto_provisioning[subscription_id].update(
                         {
                             ap.name: AutoProvisioningSetting(
                                 resource_id=ap.id,
@@ -99,30 +101,31 @@ class Defender(AzureService):
             except ClientAuthenticationError as error:
                 if "Subscription Not Registered" in error.message:
                     logger.error(
-                        f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
+                        f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return auto_provisioning
 
     def _get_assessments(self):
         logger.info("Defender - Getting assessments...")
         assessments = {}
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
                 if self.resource_groups:
                     logger.warning(
-                        f"Subscription name: {subscription_name} -- Assessments are subscription-scoped and cannot be filtered by resource group. Skipping."
+                        f"Subscription ID: {subscription_id} -- Assessments are subscription-scoped and cannot be filtered by resource group. Skipping."
                     )
+                    assessments.update({subscription_id: {}})
                     continue
-                assessments.update({subscription_name: {}})
+                assessments.update({subscription_id: {}})
                 assessments_list = client.assessments.list(
-                    f"subscriptions/{self.subscriptions[subscription_name]}"
+                    f"subscriptions/{subscription_id}"
                 )
                 for assessment in assessments_list:
-                    assessments[subscription_name].update(
+                    assessments[subscription_id].update(
                         {
                             assessment.display_name: Assesment(
                                 resource_id=assessment.id,
@@ -135,24 +138,25 @@ class Defender(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return assessments
 
     def _get_settings(self):
         logger.info("Defender - Getting settings...")
         settings = {}
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
                 if self.resource_groups:
                     logger.warning(
-                        f"Subscription name: {subscription_name} -- Defender settings are subscription-scoped and cannot be filtered by resource group. Skipping."
+                        f"Subscription ID: {subscription_id} -- Defender settings are subscription-scoped and cannot be filtered by resource group. Skipping."
                     )
+                    settings.update({subscription_id: {}})
                     continue
-                settings.update({subscription_name: {}})
+                settings.update({subscription_id: {}})
                 settings_list = client.settings.list()
                 for setting in settings_list:
-                    settings[subscription_name].update(
+                    settings[subscription_id].update(
                         {
                             setting.name: Setting(
                                 resource_id=setting.id,
@@ -166,11 +170,11 @@ class Defender(AzureService):
             except ClientAuthenticationError as error:
                 if "Subscription Not Registered" in error.message:
                     logger.error(
-                        f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
+                        f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: Subscription Not Registered - Please register to Microsoft.Security in order to view your security status"
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return settings
 
@@ -186,12 +190,13 @@ class Defender(AzureService):
         """
         logger.info("Defender - Getting security contacts...")
         security_contacts = {}
-        for subscription_name, subscription_id in self.subscriptions.items():
+        for subscription_id, display_name in self.subscriptions.items():
             try:
                 if self.resource_groups:
                     logger.warning(
-                        f"Subscription name: {subscription_name} -- Security contacts are subscription-scoped and cannot be filtered by resource group. Skipping."
+                        f"Subscription ID: {subscription_id} -- Security contacts are subscription-scoped and cannot be filtered by resource group. Skipping."
                     )
+                    security_contacts[subscription_id] = {}
                     continue
                 url = f"https://management.azure.com/subscriptions/{subscription_id}/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
                 headers = {
@@ -201,7 +206,7 @@ class Defender(AzureService):
                 response = requests.get(url, headers=headers)
                 response.raise_for_status()
                 contact_configurations = response.json().get("value", [])
-                security_contacts[subscription_name] = {}
+                security_contacts[subscription_id] = {}
                 for contact_configuration in contact_configurations:
                     props = contact_configuration.get("properties", {})
 
@@ -229,7 +234,7 @@ class Defender(AzureService):
                             if value is not None:
                                 alert_minimal_severity = value
 
-                    security_contacts[subscription_name][
+                    security_contacts[subscription_id][
                         contact_configuration.get("name", "default")
                     ] = SecurityContactConfiguration(
                         id=contact_configuration.get("id", ""),
@@ -246,23 +251,23 @@ class Defender(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return security_contacts
 
     def _get_iot_security_solutions(self):
         logger.info("Defender - Getting IoT Security Solutions...")
         iot_security_solutions = {}
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
                 iot_security_solutions_list = self.list_with_rg_scope(
-                    subscription_name,
+                    subscription_id,
                     client.iot_security_solution.list_by_subscription,
                     client.iot_security_solution.list_by_resource_group,
                 )
-                iot_security_solutions.update({subscription_name: {}})
+                iot_security_solutions.update({subscription_id: {}})
                 for iot_security_solution in iot_security_solutions_list:
-                    iot_security_solutions[subscription_name].update(
+                    iot_security_solutions[subscription_id].update(
                         {
                             iot_security_solution.id: IoTSecuritySolution(
                                 resource_id=iot_security_solution.id,
@@ -273,7 +278,7 @@ class Defender(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return iot_security_solutions
 
@@ -284,18 +289,18 @@ class Defender(AzureService):
         Returns:
             A dictionary of JIT policies for each subscription. The format will be:
             {
-                "subscription_name": {
+                "subscription_id": {
                     "jit_policy_id": JITPolicy
                 }
             }
         """
         logger.info("Defender - Getting JIT policies...")
         jit_policies = {}
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
-                jit_policies[subscription_name] = {}
+                jit_policies[subscription_id] = {}
                 policies_list = self.list_with_rg_scope(
-                    subscription_name,
+                    subscription_id,
                     client.jit_network_access_policies.list,
                     client.jit_network_access_policies.list_by_resource_group,
                 )
@@ -304,7 +309,7 @@ class Defender(AzureService):
                     vm_ids = set()
                     for vm in getattr(policy, "virtual_machines", []):
                         vm_ids.add(vm.id)
-                    jit_policies[subscription_name].update(
+                    jit_policies[subscription_id].update(
                         {
                             policy.id: JITPolicy(
                                 id=policy.id,
@@ -316,7 +321,7 @@ class Defender(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return jit_policies
 

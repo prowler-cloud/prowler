@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
+from py_ocsf_models.events.base_event import StatusID as EventStatusID
 from py_ocsf_models.events.findings.compliance_finding import ComplianceFinding
 from py_ocsf_models.events.findings.compliance_finding_type_id import (
     ComplianceFindingTypeID,
@@ -18,6 +19,7 @@ from prowler.lib.check.compliance_models import (
 )
 from prowler.lib.outputs.compliance.universal.ocsf_compliance import (
     OCSFComplianceOutput,
+    _sanitize_resource_data,
 )
 
 
@@ -473,3 +475,159 @@ class TestOCSFComplianceOutput:
         cf = output.data[0]
         assert cf.unmapped["requirement_attributes"]["section"] == "Logging"
         assert "internal_note" not in cf.unmapped["requirement_attributes"]
+
+
+class TestSanitizeResourceData:
+    """Unit tests for the _sanitize_resource_data helper.
+
+    Service resources may carry non-JSON-serializable objects (e.g. raw
+    Pydantic models such as ``Trail`` or ``LifecyclePolicy``). The helper
+    must convert them so the resulting ComplianceFinding can be serialized.
+    """
+
+    def test_dict_passthrough(self):
+        result = _sanitize_resource_data("details", {"a": 1, "b": "two"})
+        assert result == {"details": "details", "metadata": {"a": 1, "b": "two"}}
+
+    def test_none_metadata(self):
+        result = _sanitize_resource_data("details", None)
+        assert result == {"details": "details", "metadata": None}
+
+    def test_pydantic_v2_model_dump(self):
+        class FakeV2Model:
+            def model_dump(self):
+                return {"name": "trail-1", "region": "us-east-1"}
+
+        result = _sanitize_resource_data("d", {"trail": FakeV2Model()})
+        assert result["metadata"]["trail"] == {
+            "name": "trail-1",
+            "region": "us-east-1",
+        }
+
+    def test_pydantic_v1_dict(self):
+        class FakeV1Model:
+            def dict(self):
+                return {"name": "policy-1", "schedule": "daily"}
+
+        result = _sanitize_resource_data("d", {"policy": FakeV1Model()})
+        assert result["metadata"]["policy"] == {
+            "name": "policy-1",
+            "schedule": "daily",
+        }
+
+    def test_nested_pydantic_in_list(self):
+        class FakeModel:
+            def model_dump(self):
+                return {"id": "x"}
+
+        result = _sanitize_resource_data("d", {"items": [FakeModel(), FakeModel()]})
+        assert result["metadata"]["items"] == [{"id": "x"}, {"id": "x"}]
+
+    def test_nested_dict_recursion(self):
+        class FakeInner:
+            def model_dump(self):
+                return {"k": "v"}
+
+        result = _sanitize_resource_data(
+            "d", {"outer": {"inner": FakeInner(), "x": [1, 2]}}
+        )
+        assert result["metadata"]["outer"]["inner"] == {"k": "v"}
+        assert result["metadata"]["outer"]["x"] == [1, 2]
+
+    def test_tuple_to_list(self):
+        result = _sanitize_resource_data("d", {"t": (1, 2, "three")})
+        assert result["metadata"]["t"] == [1, 2, "three"]
+
+    def test_non_string_dict_keys_coerced(self):
+        result = _sanitize_resource_data("d", {1: "a", 2: "b"})
+        assert result["metadata"] == {"1": "a", "2": "b"}
+
+    def test_unknown_object_falls_back_to_str(self):
+        class Opaque:
+            def __str__(self):
+                return "opaque-repr"
+
+        result = _sanitize_resource_data("d", {"thing": Opaque()})
+        assert result["metadata"]["thing"] == "opaque-repr"
+
+    def test_circular_reference_falls_back_to_empty(self):
+        a = {}
+        a["self"] = a
+        # json.dumps raises ValueError on recursion → fallback to empty metadata
+        result = _sanitize_resource_data("d", a)
+        assert result == {"details": "d", "metadata": {}}
+
+    def test_serializes_via_full_finding_pipeline(self):
+        """End-to-end: a finding with a non-serializable resource_metadata
+        produces a JSON-serializable ComplianceFinding."""
+
+        class TrailLike:
+            def __init__(self):
+                self.name = "trail-A"
+                self.kms_key_id = "arn:aws:kms:..."
+
+            def model_dump(self):
+                return {"name": self.name, "kms_key_id": self.kms_key_id}
+
+        finding = _make_finding("check_a")
+        finding.resource_metadata = {"trail": TrailLike()}
+        req = _simple_requirement()
+        fw = _make_framework([req])
+
+        output = OCSFComplianceOutput(findings=[finding], framework=fw, provider="aws")
+
+        # Serialize the resulting ComplianceFinding — must NOT raise
+        cf = output.data[0]
+        if hasattr(cf, "model_dump_json"):
+            json_output = cf.model_dump_json(exclude_none=True)
+        else:
+            json_output = cf.json(exclude_none=True)
+        payload = json.loads(json_output)
+
+        # Confirm the trail object made it through as a plain dict
+        assert payload["resources"][0]["data"]["metadata"]["trail"]["name"] == "trail-A"
+
+
+class TestEventStatusInline:
+    """Tests for the inlined event_status logic that replaced
+    OCSF.get_finding_status_id() to break the cyclic import."""
+
+    def test_unmuted_finding_status_new(self):
+        finding = _make_finding("check_a")
+        finding.muted = False
+        req = _simple_requirement()
+        fw = _make_framework([req])
+
+        output = OCSFComplianceOutput(findings=[finding], framework=fw, provider="aws")
+        cf = output.data[0]
+
+        assert cf.status_id == EventStatusID.New.value
+        assert cf.status == EventStatusID.New.name
+
+    def test_muted_finding_status_suppressed(self):
+        finding = _make_finding("check_a")
+        finding.muted = True
+        req = _simple_requirement()
+        fw = _make_framework([req])
+
+        output = OCSFComplianceOutput(findings=[finding], framework=fw, provider="aws")
+        cf = output.data[0]
+
+        assert cf.status_id == EventStatusID.Suppressed.value
+        assert cf.status == EventStatusID.Suppressed.name
+
+
+class TestNoTopLevelOCSFImport:
+    """Regression test: the top-level OCSF/Finding imports were removed
+    to break the CodeQL cyclic-import warnings. Ensure they stay out of
+    the runtime namespace of the module (TYPE_CHECKING block only)."""
+
+    def test_finding_not_in_runtime_namespace(self):
+        import prowler.lib.outputs.compliance.universal.ocsf_compliance as mod
+
+        assert "Finding" not in dir(mod)
+
+    def test_ocsf_class_not_imported(self):
+        import prowler.lib.outputs.compliance.universal.ocsf_compliance as mod
+
+        assert "OCSF" not in dir(mod)

@@ -52,7 +52,7 @@ class ApiConfig(AppConfig):
             "check_and_fix_socialaccount_sites_migration",
         ]
 
-        # Skip Neo4j initialization during tests, some Django commands, and Celery
+        # Skip eager Neo4j init for tests, some Django commands, and Celery (prefork pool: driver must stay lazy, no post_fork hook)
         if getattr(settings, "TESTING", False) or (
             len(sys.argv) > 1
             and (
@@ -64,7 +64,7 @@ class ApiConfig(AppConfig):
             )
         ):
             logger.info(
-                "Skipping Neo4j initialization because tests, some Django commands or Celery"
+                "Skipping eager Neo4j init: tests, some Django commands, or Celery prefork pool (driver stays lazy)"
             )
 
         else:

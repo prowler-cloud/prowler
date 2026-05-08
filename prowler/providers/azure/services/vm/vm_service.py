@@ -20,15 +20,14 @@ class VirtualMachines(AzureService):
         logger.info("VirtualMachines - Getting virtual machines...")
         virtual_machines = {}
 
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
+                virtual_machines.update({subscription_id: {}})
                 virtual_machines_list = self.list_with_rg_scope(
-                    subscription_name,
+                    subscription_id,
                     client.virtual_machines.list_all,
                     client.virtual_machines.list,
                 )
-
-                virtual_machines.update({subscription_name: {}})
 
                 for vm in virtual_machines_list:
                     storage_profile = getattr(vm, "storage_profile", None)
@@ -103,7 +102,7 @@ class VirtualMachines(AzureService):
                             uefi_settings=uefi_settings,
                         )
 
-                    virtual_machines[subscription_name].update(
+                    virtual_machines[subscription_id].update(
                         {
                             vm.id: VirtualMachine(
                                 resource_id=vm.id,
@@ -149,7 +148,7 @@ class VirtualMachines(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         return virtual_machines
@@ -158,15 +157,14 @@ class VirtualMachines(AzureService):
         logger.info("VirtualMachines - Getting disks...")
         disks = {}
 
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
+                disks.update({subscription_id: {}})
                 disks_list = self.list_with_rg_scope(
-                    subscription_name,
+                    subscription_id,
                     client.disks.list,
                     client.disks.list_by_resource_group,
                 )
-
-                disks.update({subscription_name: {}})
 
                 for disk in disks_list:
                     vms_attached = []
@@ -174,7 +172,7 @@ class VirtualMachines(AzureService):
                         vms_attached.append(disk.managed_by)
                     if disk.managed_by_extended:
                         vms_attached.extend(disk.managed_by_extended)
-                    disks[subscription_name].update(
+                    disks[subscription_id].update(
                         {
                             disk.unique_id: Disk(
                                 resource_id=disk.id,
@@ -189,7 +187,7 @@ class VirtualMachines(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         return disks
@@ -201,7 +199,7 @@ class VirtualMachines(AzureService):
         Returns:
             A nested dictionary with the following structure:
             {
-                "subscription_name": {
+                "subscription_id": {
                     "vm_scale_set_id": VirtualMachineScaleSet()
                 }
             }
@@ -210,15 +208,14 @@ class VirtualMachines(AzureService):
             "VirtualMachines - Getting VM scale sets and their load balancer associations..."
         )
         vm_scale_sets = {}
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
+                vm_scale_sets[subscription_id] = {}
                 scale_sets_list = self.list_with_rg_scope(
-                    subscription_name,
+                    subscription_id,
                     client.virtual_machine_scale_sets.list_all,
                     client.virtual_machine_scale_sets.list,
                 )
-
-                vm_scale_sets[subscription_name] = {}
                 for scale_set in scale_sets_list:
                     backend_pools = []
                     nic_configs = []
@@ -250,9 +247,9 @@ class VirtualMachines(AzureService):
                                         backend_pools.append(pool.id)
                     # Get instance IDs using the private method
                     instance_ids = self._get_vmss_instance_ids(
-                        subscription_name, scale_set.id
+                        subscription_id, scale_set.id
                     )
-                    vm_scale_sets[subscription_name][scale_set.id] = (
+                    vm_scale_sets[subscription_id][scale_set.id] = (
                         VirtualMachineScaleSet(
                             resource_id=scale_set.id,
                             resource_name=scale_set.name,
@@ -263,28 +260,28 @@ class VirtualMachines(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return vm_scale_sets
 
     def _get_vmss_instance_ids(
-        self, subscription_name: str, scale_set_id: str
+        self, subscription_id: str, scale_set_id: str
     ) -> list[str]:
         """
         Given a subscription and scale set ID, return the list of VM instance IDs in the scale set.
 
         Args:
-            subscription_name: The name of the subscription.
+            subscription_id: The name of the subscription.
             scale_set_id: The ID of the scale set.
 
         Returns:
             A list of VM instance IDs that compose the scale set.
         """
         logger.info(
-            f"VirtualMachines - Getting VM scale set instance IDs for {scale_set_id} in {subscription_name}..."
+            f"VirtualMachines - Getting VM scale set instance IDs for {scale_set_id} in {subscription_id}..."
         )
         vm_instance_ids = []
-        client = self.clients.get(subscription_name, None)
+        client = self.clients.get(subscription_id, None)
         try:
             resource_id_parts = scale_set_id.split("/")
             resource_group = ""

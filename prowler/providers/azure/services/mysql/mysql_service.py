@@ -16,17 +16,16 @@ class MySQL(AzureService):
     def _get_flexible_servers(self):
         logger.info("MySQL - Getting servers...")
         servers = {}
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
+                servers.update({subscription_id: {}})
                 servers_list = self.list_with_rg_scope(
-                    subscription_name,
+                    subscription_id,
                     client.servers.list,
                     client.servers.list_by_resource_group,
                 )
-
-                servers.update({subscription_name: {}})
                 for server in servers_list:
-                    servers[subscription_name].update(
+                    servers[subscription_id].update(
                         {
                             server.id: FlexibleServer(
                                 resource_id=server.id,
@@ -41,7 +40,7 @@ class MySQL(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return servers
 

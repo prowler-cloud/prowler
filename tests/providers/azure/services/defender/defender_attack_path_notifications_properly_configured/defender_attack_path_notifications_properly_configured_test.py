@@ -6,7 +6,9 @@ from prowler.providers.azure.services.defender.defender_service import (
     SecurityContactConfiguration,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -15,6 +17,7 @@ class Test_defender_attack_path_notifications_properly_configured:
     def test_no_subscriptions(self):
         defender_client = mock.MagicMock()
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {}
         defender_client.audit_config = {}
         with (
@@ -40,6 +43,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         contact_name = "default"
         defender_client = mock.MagicMock()
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -76,7 +80,7 @@ class Test_defender_attack_path_notifications_properly_configured:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                f"Attack path notifications are not enabled in subscription {AZURE_SUBSCRIPTION_ID} for security contact {contact_name}."
+                f"Attack path notifications are not enabled in subscription {AZURE_SUBSCRIPTION_DISPLAY} for security contact {contact_name}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == contact_name
@@ -88,6 +92,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         contact_name = "default"
         defender_client = mock.MagicMock()
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -126,7 +131,7 @@ class Test_defender_attack_path_notifications_properly_configured:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                f"Attack path notifications are enabled with minimal risk level Medium in subscription {AZURE_SUBSCRIPTION_ID} for security contact {contact_name}."
+                f"Attack path notifications are enabled with minimal risk level Medium in subscription {AZURE_SUBSCRIPTION_DISPLAY} for security contact {contact_name}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == contact_name
@@ -138,6 +143,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         contact_name = "default"
         defender_client = mock.MagicMock()
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -176,7 +182,7 @@ class Test_defender_attack_path_notifications_properly_configured:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                f"Attack path notifications are enabled with minimal risk level Medium in subscription {AZURE_SUBSCRIPTION_ID} for security contact {contact_name}."
+                f"Attack path notifications are enabled with minimal risk level Medium in subscription {AZURE_SUBSCRIPTION_DISPLAY} for security contact {contact_name}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == contact_name
@@ -188,6 +194,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         contact_name = "default"
         defender_client = mock.MagicMock()
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -224,7 +231,7 @@ class Test_defender_attack_path_notifications_properly_configured:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                f"Attack path notifications are enabled with minimal risk level Low in subscription {AZURE_SUBSCRIPTION_ID} for security contact {contact_name}."
+                f"Attack path notifications are enabled with minimal risk level Low in subscription {AZURE_SUBSCRIPTION_DISPLAY} for security contact {contact_name}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == contact_name
@@ -236,6 +243,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         contact_name = "default"
         defender_client = mock.MagicMock()
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -272,7 +280,7 @@ class Test_defender_attack_path_notifications_properly_configured:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                f"Attack path notifications are enabled with minimal risk level Medium in subscription {AZURE_SUBSCRIPTION_ID} for security contact {contact_name}."
+                f"Attack path notifications are enabled with minimal risk level Medium in subscription {AZURE_SUBSCRIPTION_DISPLAY} for security contact {contact_name}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == contact_name
@@ -284,6 +292,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         contact_name = "default"
         defender_client = mock.MagicMock()
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -320,7 +329,7 @@ class Test_defender_attack_path_notifications_properly_configured:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].status_extended == (
-                f"Attack path notifications are enabled with minimal risk level High in subscription {AZURE_SUBSCRIPTION_ID} for security contact {contact_name}."
+                f"Attack path notifications are enabled with minimal risk level High in subscription {AZURE_SUBSCRIPTION_DISPLAY} for security contact {contact_name}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == contact_name
@@ -332,6 +341,7 @@ class Test_defender_attack_path_notifications_properly_configured:
         contact_name = "default"
         defender_client = mock.MagicMock()
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -368,7 +378,7 @@ class Test_defender_attack_path_notifications_properly_configured:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].status_extended == (
-                f"Attack path notifications are enabled with minimal risk level Critical in subscription {AZURE_SUBSCRIPTION_ID} for security contact {contact_name}."
+                f"Attack path notifications are enabled with minimal risk level Critical in subscription {AZURE_SUBSCRIPTION_DISPLAY} for security contact {contact_name}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == contact_name

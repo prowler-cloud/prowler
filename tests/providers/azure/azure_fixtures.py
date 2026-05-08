@@ -8,6 +8,7 @@ from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 
 AZURE_SUBSCRIPTION_ID = str(uuid4())
 AZURE_SUBSCRIPTION_NAME = "Subscription Name"
+AZURE_SUBSCRIPTION_DISPLAY = f"{AZURE_SUBSCRIPTION_NAME} ({AZURE_SUBSCRIPTION_ID})"
 RESOURCE_GROUP = "rg"
 RESOURCE_GROUP_LIST = [RESOURCE_GROUP, "rg2"]
 

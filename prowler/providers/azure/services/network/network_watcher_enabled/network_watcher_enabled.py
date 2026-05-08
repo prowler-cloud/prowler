@@ -6,19 +6,20 @@ class network_watcher_enabled(Check):
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
         for subscription, network_watchers in network_client.network_watchers.items():
+            subscription_name = network_client.subscriptions.get(
+                subscription, subscription
+            )
             if network_client.resource_groups:
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription
                 report.resource_name = subscription
-                report.resource_id = (
-                    f"/subscriptions/{network_client.subscriptions[subscription]}"
-                )
+                report.resource_id = f"/subscriptions/{subscription}"
                 report.location = "global"
                 report.status = "MANUAL"
                 report.status_extended = (
-                    f"Subscription '{subscription}': flow-log checks require "
+                    f"Subscription '{subscription_name}' ({subscription}): flow-log checks require "
                     f"subscription-wide Network Watcher access. Re-run without "
-                    f"--azure-resource-group, to evaluate flow log coverage."
+                    f"--azure-resource-group to evaluate flow log coverage."
                 )
                 findings.append(report)
                 continue
@@ -32,12 +33,10 @@ class network_watcher_enabled(Check):
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription
                 report.resource_name = subscription
-                report.resource_id = (
-                    f"/subscriptions/{network_client.subscriptions[subscription]}"
-                )
+                report.resource_id = f"/subscriptions/{subscription}"
                 report.location = "global"
                 report.status = "FAIL"
-                report.status_extended = f"Network Watcher is not enabled for the following locations in subscription '{subscription}': {', '.join(missing_locations)}."
+                report.status_extended = f"Network Watcher is not enabled for the following locations in subscription '{subscription_name} ({subscription})': {', '.join(missing_locations)}."
                 findings.append(report)
             else:
                 # Report each network watcher that exists
@@ -47,7 +46,7 @@ class network_watcher_enabled(Check):
                     )
                     report.subscription = subscription
                     report.status = "PASS"
-                    report.status_extended = f"Network Watcher {network_watcher.name} is enabled in location {network_watcher.location} in subscription '{subscription}'."
+                    report.status_extended = f"Network Watcher {network_watcher.name} is enabled in location {network_watcher.location} in subscription '{subscription_name} ({subscription})'."
                     findings.append(report)
 
         return findings

@@ -5,7 +5,9 @@ from prowler.providers.azure.services.defender.defender_service import (
     IoTSecuritySolution,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -14,6 +16,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
     def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.iot_security_solutions = {}
 
         with (
@@ -38,7 +41,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         defender_client = mock.MagicMock
         defender_client.resource_groups = {}
         defender_client.iot_security_solutions = {AZURE_SUBSCRIPTION_ID: {}}
-        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -60,7 +63,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"No IoT Security Solutions found in the subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"No IoT Security Solutions found in the subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
@@ -69,6 +72,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.iot_security_solutions = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: IoTSecuritySolution(
@@ -97,7 +101,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"The security solution iot_sec_solution is disabled in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"The security solution iot_sec_solution is disabled in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )
             assert result[0].resource_name == "iot_sec_solution"
             assert result[0].resource_id == resource_id
@@ -106,6 +110,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.iot_security_solutions = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: IoTSecuritySolution(
@@ -134,7 +139,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"The security solution iot_sec_solution is enabled in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"The security solution iot_sec_solution is enabled in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].resource_name == "iot_sec_solution"
             assert result[0].resource_id == resource_id
@@ -145,6 +150,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         resource_id_disabled = str(uuid4())
         defender_client = mock.MagicMock
         defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.iot_security_solutions = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id_enabled: IoTSecuritySolution(
@@ -180,7 +186,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"The security solution iot_sec_solution_enabled is enabled in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"The security solution iot_sec_solution_enabled is enabled in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].resource_name == "iot_sec_solution_enabled"
             assert result[0].resource_id == resource_id_enabled
@@ -189,7 +195,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == f"The security solution iot_sec_solution_disabled is disabled in subscription {AZURE_SUBSCRIPTION_ID}"
+                == f"The security solution iot_sec_solution_disabled is disabled in subscription {AZURE_SUBSCRIPTION_DISPLAY}"
             )
             assert result[1].resource_name == "iot_sec_solution_disabled"
             assert result[1].resource_id == resource_id_disabled

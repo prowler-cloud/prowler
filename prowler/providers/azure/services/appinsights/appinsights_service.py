@@ -15,17 +15,17 @@ class AppInsights(AzureService):
         logger.info("AppInsights - Getting components...")
         components = {}
 
-        for subscription_name, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
-                components.update({subscription_name: {}})
+                components.update({subscription_id: {}})
                 components_list = self.list_with_rg_scope(
-                    subscription_name,
+                    subscription_id,
                     client.components.list,
                     client.components.list_by_resource_group,
                 )
 
                 for component in components_list:
-                    components[subscription_name].update(
+                    components[subscription_id].update(
                         {
                             component.app_id: Component(
                                 resource_id=component.id,
@@ -39,7 +39,7 @@ class AppInsights(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
         return components

@@ -3,7 +3,9 @@ from unittest import mock
 from azure.mgmt.monitor.models import AlertRuleAnyOfOrLeafCondition
 
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -36,7 +38,7 @@ class Test_monitor_alert_delete_policy_assignment:
     def test_no_alert_rules(self):
         monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {AZURE_SUBSCRIPTION_ID: []}
-        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         monitor_client.resource_groups = None
         with (
             mock.patch(
@@ -61,7 +63,7 @@ class Test_monitor_alert_delete_policy_assignment:
             assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
             assert (
                 result[0].status_extended
-                == f"There is not an alert for deleting policy assignment in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is not an alert for deleting policy assignment in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_alert_rules_configured(self):
@@ -119,7 +121,7 @@ class Test_monitor_alert_delete_policy_assignment:
                 ]
             }
             monitor_client.subscriptions = {
-                AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID
+                AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
             }
             monitor_client.resource_groups = None
             check = monitor_alert_delete_policy_assignment()
@@ -131,13 +133,13 @@ class Test_monitor_alert_delete_policy_assignment:
             assert result[0].resource_id == "id2"
             assert (
                 result[0].status_extended
-                == f"There is an alert configured for deleting policy assignment in subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is an alert configured for deleting policy assignment in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
 
     def test_alert_rules_manual_when_resource_group_filter_active(self):
         monitor_client = mock.MagicMock()
         monitor_client.alert_rules = {AZURE_SUBSCRIPTION_ID: []}
-        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_ID}
+        monitor_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         monitor_client.resource_groups = {AZURE_SUBSCRIPTION_ID: ["rg"]}
         with (
             mock.patch(
