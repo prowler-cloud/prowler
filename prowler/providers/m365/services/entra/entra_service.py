@@ -83,6 +83,7 @@ class Entra(M365Service):
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
+                self._get_service_principals(),
             )
         )
 
@@ -98,6 +99,7 @@ class Entra(M365Service):
         self.authentication_method_configurations: Dict[
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
+        self.service_principals = attributes[10]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -1055,6 +1057,165 @@ OAuthAppInfo
             )
         return authentication_method_configurations
 
+    async def _get_service_principals(self):
+        logger.info("Entra - Getting privileged service principals...")
+
+        # Microsoft first-party tenant IDs to skip
+        MICROSOFT_TENANT_IDS = {
+            "f8cdef31-a31e-4b4a-93e4-5f571e91255a",  # Microsoft Services
+            "72f988bf-86f1-41af-91ab-2d7cd011db47",  # Microsoft Corporation
+        }
+
+        # Privileged role template IDs we care about (subset of AdminRoles enum)
+        PRIVILEGED_ROLE_IDS = {
+            AdminRoles.GLOBAL_ADMINISTRATOR.value,
+            AdminRoles.APPLICATION_ADMINISTRATOR.value,
+            AdminRoles.PRIVILEGED_ROLE_ADMINISTRATOR.value,
+            AdminRoles.PRIVILEGED_AUTHENTICATION_ADMINISTRATOR.value,
+            AdminRoles.CLOUD_APPLICATION_ADMINISTRATOR.value,
+            AdminRoles.AUTHENTICATION_ADMINISTRATOR.value,
+            AdminRoles.CONDITIONAL_ACCESS_ADMINISTRATOR.value,
+            AdminRoles.SECURITY_ADMINISTRATOR.value,
+            AdminRoles.USER_ADMINISTRATOR.value,
+        }
+
+        service_principals = {}
+
+        try:
+            for tenant, client in self.clients.items():
+                service_principals[tenant] = {}
+
+                # Step 1: Get all role assignments and expand the principal
+                try:
+                    role_assignments = await client.role_management.directory.role_assignments.get(
+                        request_configuration=None
+                    )
+                except ODataError as error:
+                    logger.warning(
+                        f"Could not retrieve role assignments for tenant {tenant}: {error}"
+                    )
+                    service_principals[tenant] = None
+                    continue
+
+                # Build a map: sp_id -> list of privileged role names
+                sp_privileged_roles: Dict[str, List[str]] = {}
+
+                for assignment in getattr(role_assignments, "value", []) or []:
+                    role_def_id = getattr(assignment, "role_definition_id", None)
+                    principal_id = getattr(assignment, "principal_id", None)
+
+                    if not role_def_id or not principal_id:
+                        continue
+
+                    # Normalize to str for comparison
+                    role_def_id_str = str(role_def_id)
+                    if role_def_id_str not in PRIVILEGED_ROLE_IDS:
+                        continue
+
+                    # Get the principal to check if it's a service principal
+                    try:
+                        principal = await client.directory_objects.by_directory_object_id(
+                            principal_id
+                        ).get()
+                    except ODataError:
+                        continue
+
+                    odata_type = getattr(principal, "odata_type", "") or ""
+                    if "#microsoft.graph.servicePrincipal" not in odata_type:
+                        continue
+
+                    # Map role ID back to a human-readable name
+                    role_name = next(
+                        (r.name for r in AdminRoles if r.value == role_def_id_str),
+                        role_def_id_str,
+                    )
+
+                    if principal_id not in sp_privileged_roles:
+                        sp_privileged_roles[principal_id] = []
+                    sp_privileged_roles[principal_id].append(role_name)
+
+                # Step 2: For each privileged SP, fetch full details + owners
+                for sp_id, roles in sp_privileged_roles.items():
+                    try:
+                        sp = await client.service_principals.by_service_principal_id(
+                            sp_id
+                        ).get()
+                    except ODataError as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        continue
+
+                    # Skip Microsoft first-party SPs
+                    app_owner_org = str(
+                        getattr(sp, "app_owner_organization_id", None) or ""
+                    )
+                    if app_owner_org in MICROSOFT_TENANT_IDS:
+                        continue
+
+                    # Skip disabled SPs
+                    if not getattr(sp, "account_enabled", True):
+                        continue
+
+                    # Fetch SP owners
+                    sp_owner_ids = []
+                    try:
+                        sp_owners = await client.service_principals.by_service_principal_id(
+                            sp_id
+                        ).owners.get()
+                        sp_owner_ids = [
+                            owner.id
+                            for owner in getattr(sp_owners, "value", []) or []
+                            if owner.id
+                        ]
+                    except ODataError as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
+                    # Fetch parent app owners (if app exists in this tenant)
+                    app_owner_ids = []
+                    app_id = getattr(sp, "app_id", None)
+                    if app_id:
+                        try:
+                            apps = await client.applications.get()
+                            matching_app = next(
+                                (
+                                    a
+                                    for a in getattr(apps, "value", []) or []
+                                    if getattr(a, "app_id", None) == app_id
+                                ),
+                                None,
+                            )
+                            if matching_app:
+                                app_owners = await client.applications.by_application_id(
+                                    matching_app.id
+                                ).owners.get()
+                                app_owner_ids = [
+                                    owner.id
+                                    for owner in getattr(app_owners, "value", []) or []
+                                    if owner.id
+                                ]
+                        except ODataError as error:
+                            logger.error(
+                                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+
+                    service_principals[tenant][sp_id] = ServicePrincipal(
+                        id=sp_id,
+                        name=getattr(sp, "display_name", sp_id) or sp_id,
+                        app_id=app_id or "",
+                        app_owner_organization_id=app_owner_org or None,
+                        account_enabled=getattr(sp, "account_enabled", True),
+                        privileged_roles=roles,
+                        sp_owner_ids=sp_owner_ids,
+                        app_owner_ids=app_owner_ids,
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+     return service_principals
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -1486,3 +1647,28 @@ class OAuthApp(BaseModel):
     is_admin_consented: bool = False
     last_used_time: Optional[str] = None
     app_origin: str = ""
+
+class ServicePrincipal(BaseModel):
+    """Model representing a Microsoft Entra service principal with a privileged directory role.
+
+    Attributes:
+        id: The service principal's unique object ID.
+        name: The service principal's display name.
+        app_id: The application ID (client ID) of the associated application.
+        app_owner_organization_id: The tenant ID of the organization that owns the app.
+            Used to identify and skip Microsoft first-party service principals.
+        account_enabled: Whether the service principal is enabled.
+        privileged_roles: List of privileged directory role names assigned to this SP.
+        sp_owner_ids: List of owner principal IDs on the service principal itself.
+        app_owner_ids: List of owner principal IDs on the parent application registration.
+    """
+
+    id: str
+    name: str
+    app_id: str
+    app_owner_organization_id: Optional[str] = None
+    account_enabled: bool = True
+    privileged_roles: List[str] = []
+    sp_owner_ids: List[str] = []
+    app_owner_ids: List[str] = []
+    

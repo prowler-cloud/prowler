@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_service_principal_privileged_role_no_owners",
+  "CheckTitle": "Service principals with privileged roles should have no owners",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Ensures that no service principal holding a privileged Microsoft Entra directory role (such as Global Administrator or Privileged Role Administrator) has any owner on either the service principal or its parent application registration. An owner can rotate credentials and effectively inherit the privileged role outside of PIM approval flows.",
+  "Risk": "An owner of a service principal with a privileged role can mint new credentials, sign in as the service principal, and inherit its privileges. This is a well-known privilege escalation path that bypasses Privileged Identity Management and Conditional Access policies targeting user accounts.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/concept-understand-roles",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/rbacapplication-list-roleassignments?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/serviceprincipal-list-owners?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/application-list-owners?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Identity > Applications > Enterprise applications\n3. Find the flagged service principal and open its Properties\n4. Under Owners, remove all listed owners\n5. Repeat for the parent App Registration under Identity > Applications > App registrations",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove all owners from service principals that hold privileged Entra directory roles. Manage privileged service principals exclusively through PIM-eligible role assignments and break-glass controls.",
+      "Url": "https://hub.prowler.com/check/entra_service_principal_privileged_role_no_owners"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires Directory.Read.All permission. Microsoft first-party service principals and disabled service principals are excluded from evaluation."
+}
