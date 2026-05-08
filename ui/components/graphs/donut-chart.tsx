@@ -175,7 +175,7 @@ export function DonutChart({
   );
 
   // Grows the hovered slice up to the original outerRadius so tiny segments
-  // (e.g. 1% fail) are easy to see and target with the cursor (PROWLER-1477).
+  // (e.g. 1% fail) are easy to see and target with the cursor.
   const renderActiveShape = (props: SectorProps) => (
     <Sector {...props} outerRadius={(props.outerRadius ?? 0) + ACTIVE_GROW} />
   );
