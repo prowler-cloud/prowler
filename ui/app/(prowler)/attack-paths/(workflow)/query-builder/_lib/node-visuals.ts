@@ -13,7 +13,9 @@ import {
   Shield,
   ShieldCheck,
   Siren,
+  Tags,
   UserCog,
+  Users,
   Waypoints,
 } from "lucide-react";
 import type { ElementType } from "react";
@@ -37,9 +39,11 @@ import {
 } from "@/components/icons/providers-badge";
 import {
   AmazonEC2Icon,
+  AmazonRDSIcon,
   AmazonS3Icon,
   AmazonVPCIcon,
   AWSIAMIcon,
+  AWSLambdaIcon,
 } from "@/components/icons/services/IconServices";
 import type { GraphNode, GraphNodePropertyValue } from "@/types/attack-paths";
 
@@ -196,6 +200,36 @@ const KNOWN_NODE_VISUALS = {
     description: "Security Group",
     Icon: Shield,
   },
+  ec2securitygroup: {
+    category: NODE_CATEGORY.NETWORK,
+    description: "EC2 Security Group",
+    Icon: Shield,
+  },
+  ippermissioninbound: {
+    category: NODE_CATEGORY.NETWORK,
+    description: "Inbound IP Permission",
+    Icon: Shield,
+  },
+  iprange: {
+    category: NODE_CATEGORY.NETWORK,
+    description: "IP Range",
+    Icon: Globe2,
+  },
+  elasticipaddress: {
+    category: NODE_CATEGORY.NETWORK,
+    description: "Elastic IP Address",
+    Icon: Globe2,
+  },
+  ec2privateip: {
+    category: NODE_CATEGORY.NETWORK,
+    description: "EC2 Private IP",
+    Icon: Waypoints,
+  },
+  networkinterface: {
+    category: NODE_CATEGORY.NETWORK,
+    description: "Network Interface",
+    Icon: Waypoints,
+  },
   internetgateway: {
     category: NODE_CATEGORY.NETWORK,
     description: "Internet Gateway",
@@ -206,15 +240,55 @@ const KNOWN_NODE_VISUALS = {
     description: "Default Gateway",
     Icon: Route,
   },
+  loadbalancer: {
+    category: NODE_CATEGORY.NETWORK,
+    description: "Load Balancer",
+    Icon: Route,
+  },
+  loadbalancerv2: {
+    category: NODE_CATEGORY.NETWORK,
+    description: "Load Balancer V2",
+    Icon: Route,
+  },
+  elblistener: {
+    category: NODE_CATEGORY.NETWORK,
+    description: "ELB Listener",
+    Icon: Route,
+  },
+  elbv2listener: {
+    category: NODE_CATEGORY.NETWORK,
+    description: "ELB V2 Listener",
+    Icon: Route,
+  },
   ec2instance: {
     category: NODE_CATEGORY.COMPUTE,
     description: "EC2 Instance",
     Icon: AmazonEC2Icon,
   },
+  launchtemplate: {
+    category: NODE_CATEGORY.COMPUTE,
+    description: "Launch Template",
+    Icon: Server,
+  },
+  awslambda: {
+    category: NODE_CATEGORY.COMPUTE,
+    description: "AWS Lambda",
+    Icon: AWSLambdaIcon,
+  },
+  awssagemakernotebookinstance: {
+    category: NODE_CATEGORY.COMPUTE,
+    description: "SageMaker Notebook Instance",
+    Icon: Bot,
+  },
   virtualmachine: {
     category: NODE_CATEGORY.COMPUTE,
     description: "Virtual Machine",
     Icon: AmazonEC2Icon,
+  },
+  rdsinstance: {
+    category: NODE_CATEGORY.STORAGE,
+    description: "RDS Instance",
+    Icon: AmazonRDSIcon,
   },
   compute: {
     category: NODE_CATEGORY.COMPUTE,
@@ -235,6 +309,16 @@ const KNOWN_NODE_VISUALS = {
     category: NODE_CATEGORY.IDENTITY,
     description: "AWS User",
     Icon: UserCog,
+  },
+  awsgroup: {
+    category: NODE_CATEGORY.IDENTITY,
+    description: "AWS Group",
+    Icon: Users,
+  },
+  awsprincipal: {
+    category: NODE_CATEGORY.IDENTITY,
+    description: "AWS Principal",
+    Icon: ShieldCheck,
   },
   iamrole: {
     category: NODE_CATEGORY.IDENTITY,
@@ -290,6 +374,11 @@ const KNOWN_NODE_VISUALS = {
     category: NODE_CATEGORY.IDENTITY,
     description: "Service Account",
     Icon: Bot,
+  },
+  awstag: {
+    category: NODE_CATEGORY.MISC,
+    description: "AWS Tag",
+    Icon: Tags,
   },
 } as const satisfies Record<string, KnownNodeVisualMapping>;
 

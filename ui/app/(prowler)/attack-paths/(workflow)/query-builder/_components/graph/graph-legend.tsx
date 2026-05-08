@@ -13,6 +13,8 @@ import {
 import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
 import {
+  getNodeBorderColor,
+  getNodeColor,
   GRAPH_ALERT_BORDER_COLOR,
   GRAPH_EDGE_COLOR_DARK,
   GRAPH_EDGE_COLOR_LIGHT,
@@ -75,6 +77,16 @@ interface LegendItemProps {
 
 interface GraphLegendProps {
   data?: AttackPathGraphData;
+  expandedResources?: ReadonlySet<string>;
+  isFilteredView?: boolean;
+}
+
+interface GraphLegendState {
+  visibleNodes: GraphNode[];
+  visibleNodeIds: Set<string>;
+  visibleFindingIds: Set<string>;
+  visibleEdges: Array<{ source: string; target: string }>;
+  resourcesWithFindings: Set<string>;
 }
 
 const buildNode = (
@@ -109,44 +121,6 @@ const providerRootItem = buildVisualItem(
   GRAPH_NODE_COLORS.awsAccount,
   GRAPH_NODE_BORDER_COLORS.awsAccount,
 );
-
-const resourceCategoryItems: LegendVisualItem[] = [
-  buildVisualItem(
-    "Storage",
-    "Data stores such as buckets and object storage.",
-    buildNode(["S3Bucket"], { name: NODE_CATEGORY.STORAGE }),
-    GRAPH_NODE_COLORS.s3Bucket,
-    GRAPH_NODE_BORDER_COLORS.s3Bucket,
-  ),
-  buildVisualItem(
-    "Network",
-    "VPCs, security boundaries, gateways, and reachable network resources.",
-    buildNode(["VPC"], { name: NODE_CATEGORY.NETWORK }),
-    GRAPH_NODE_COLORS.securityGroup,
-    GRAPH_NODE_BORDER_COLORS.securityGroup,
-  ),
-  buildVisualItem(
-    "Compute",
-    "Instances, virtual machines, functions, and execution surfaces.",
-    buildNode(["EC2Instance"], { name: NODE_CATEGORY.COMPUTE }),
-    GRAPH_NODE_COLORS.ec2Instance,
-    GRAPH_NODE_BORDER_COLORS.ec2Instance,
-  ),
-  buildVisualItem(
-    "Identity",
-    "Users, roles, policies, and permission-bearing principals.",
-    buildNode(["IAMRole"], { name: NODE_CATEGORY.IDENTITY }),
-    GRAPH_NODE_COLORS.iamRole,
-    GRAPH_NODE_BORDER_COLORS.iamRole,
-  ),
-  buildVisualItem(
-    "Secret / misc",
-    "Secrets, access keys, or fallback resources that do not map to a known category.",
-    buildNode(["AccessKey"], { name: NODE_CATEGORY.SECRET }),
-    GRAPH_NODE_COLORS.default,
-    GRAPH_NODE_BORDER_COLORS.default,
-  ),
-];
 
 const findingRiskItems: LegendVisualItem[] = [
   buildVisualItem(
@@ -220,8 +194,128 @@ const edgeItems: LegendEdgeItem[] = [
   },
 ];
 
-const hasLegendData = (data?: AttackPathGraphData): boolean =>
-  (data?.nodes.length ?? 0) > 0;
+const isFindingNode = (node: GraphNode): boolean =>
+  node.labels.some((label) => label.toLowerCase().includes("finding"));
+
+const getGraphEdges = (
+  data: AttackPathGraphData,
+): Array<{ source: string; target: string }> =>
+  data.relationships ?? data.edges ?? [];
+
+const resolveLegendState = (
+  data: AttackPathGraphData,
+  expandedResources: ReadonlySet<string>,
+  isFilteredView: boolean,
+): GraphLegendState => {
+  const findingNodeIds = new Set(
+    data.nodes.filter(isFindingNode).map((node) => node.id),
+  );
+  const findingToResources = new Map<string, Set<string>>();
+  const resourcesWithFindings = new Set<string>();
+  const graphEdges = getGraphEdges(data);
+
+  for (const edge of graphEdges) {
+    const sourceIsFinding = findingNodeIds.has(edge.source);
+    const targetIsFinding = findingNodeIds.has(edge.target);
+
+    if (sourceIsFinding) {
+      resourcesWithFindings.add(edge.target);
+      const resources = findingToResources.get(edge.source) ?? new Set();
+      resources.add(edge.target);
+      findingToResources.set(edge.source, resources);
+    }
+
+    if (targetIsFinding) {
+      resourcesWithFindings.add(edge.source);
+      const resources = findingToResources.get(edge.target) ?? new Set();
+      resources.add(edge.source);
+      findingToResources.set(edge.target, resources);
+    }
+  }
+
+  const hiddenFindingIds = new Set<string>();
+  if (!isFilteredView) {
+    for (const findingId of Array.from(findingNodeIds)) {
+      const connectedResources = findingToResources.get(findingId);
+      const isVisible = connectedResources
+        ? Array.from(connectedResources).some((resourceId) =>
+            expandedResources.has(resourceId),
+          )
+        : false;
+
+      if (!isVisible) hiddenFindingIds.add(findingId);
+    }
+  }
+
+  const visibleNodes = data.nodes.filter(
+    (node) => !hiddenFindingIds.has(node.id),
+  );
+  const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
+  const visibleFindingIds = new Set(
+    visibleNodes.filter(isFindingNode).map((node) => node.id),
+  );
+  const visibleEdges = graphEdges.filter(
+    (edge) =>
+      visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target),
+  );
+
+  return {
+    visibleNodes,
+    visibleNodeIds,
+    visibleFindingIds,
+    visibleEdges,
+    resourcesWithFindings,
+  };
+};
+
+const resolveNodeTypeItems = (
+  visibleNodes: GraphNode[],
+): LegendVisualItem[] => {
+  const itemsByType = new Map<string, LegendVisualItem>();
+
+  for (const node of visibleNodes) {
+    if (isFindingNode(node)) continue;
+
+    const visual = resolveNodeVisual(node);
+    if (visual.category === NODE_CATEGORY.ACCOUNT) continue;
+
+    const key = `${visual.category}:${visual.description}`;
+
+    if (!itemsByType.has(key)) {
+      itemsByType.set(key, {
+        label: visual.description,
+        description: `${visual.description} node`,
+        Icon: visual.Icon,
+        fillColor: getNodeColor(node.labels),
+        borderColor: getNodeBorderColor(node.labels),
+      });
+    }
+  }
+
+  return Array.from(itemsByType.values());
+};
+
+const resolveFindingRiskItems = (
+  visibleNodes: GraphNode[],
+): LegendVisualItem[] => {
+  const visibleSeverities = new Set(
+    visibleNodes
+      .filter(isFindingNode)
+      .map((node) => String(node.properties.severity ?? "").toLowerCase()),
+  );
+
+  return findingRiskItems.filter((item) => {
+    if (item.label === "Low / Info") {
+      return (
+        visibleSeverities.has("low") ||
+        visibleSeverities.has("info") ||
+        visibleSeverities.has("informational")
+      );
+    }
+
+    return visibleSeverities.has(item.label.toLowerCase());
+  });
+};
 
 const LegendSection = ({ title, children }: LegendSectionProps) => (
   <section className="bg-bg-neutral-secondary/60 border-border-neutral-primary flex w-full min-w-0 flex-col gap-2 rounded-lg border p-3 sm:w-fit sm:max-w-full">
@@ -375,10 +469,57 @@ const EdgePreview = ({
 /**
  * Compact semantic legend for the Attack Paths graph visual language.
  */
-export const GraphLegend = ({ data }: GraphLegendProps) => {
+export const GraphLegend = ({
+  data,
+  expandedResources = new Set(),
+  isFilteredView = false,
+}: GraphLegendProps) => {
   const { resolvedTheme } = useTheme();
 
-  if (!hasLegendData(data)) {
+  if (!data || data.nodes.length === 0) {
+    return null;
+  }
+
+  const legendState = resolveLegendState(
+    data,
+    expandedResources,
+    isFilteredView,
+  );
+  const providerItem = legendState.visibleNodes.some(
+    (node) => resolveNodeVisual(node).category === NODE_CATEGORY.ACCOUNT,
+  )
+    ? providerRootItem
+    : null;
+  const visibleNodeTypeItems = resolveNodeTypeItems(legendState.visibleNodes);
+  const visibleFindingRiskItems = resolveFindingRiskItems(
+    legendState.visibleNodes,
+  );
+  const visibleStateItems = stateItems.filter(
+    (item) =>
+      item.label === "Selected node" ||
+      Array.from(legendState.resourcesWithFindings).some((resourceId) =>
+        legendState.visibleNodeIds.has(resourceId),
+      ),
+  );
+  const visibleEdgeItems = edgeItems.filter((item) => {
+    if (item.variant === EDGE_VARIANT.FINDING) {
+      return legendState.visibleEdges.some(
+        (edge) =>
+          legendState.visibleFindingIds.has(edge.source) ||
+          legendState.visibleFindingIds.has(edge.target),
+      );
+    }
+
+    return legendState.visibleEdges.length > 0;
+  });
+
+  if (
+    !providerItem &&
+    visibleNodeTypeItems.length === 0 &&
+    visibleFindingRiskItems.length === 0 &&
+    visibleStateItems.length === 0 &&
+    visibleEdgeItems.length === 0
+  ) {
     return null;
   }
 
@@ -390,43 +531,53 @@ export const GraphLegend = ({ data }: GraphLegendProps) => {
       <CardContent className="p-3">
         <TooltipProvider>
           <div className="flex w-full flex-wrap items-stretch gap-2">
-            <LegendSection title="Provider roots">
-              <LegendItem {...providerRootItem}>
-                <BadgePreview {...providerRootItem} />
-              </LegendItem>
-            </LegendSection>
-
-            <LegendSection title="Resource categories">
-              {resourceCategoryItems.map((item) => (
-                <LegendItem key={item.label} {...item}>
-                  <BadgePreview {...item} />
+            {providerItem && (
+              <LegendSection title="Provider roots">
+                <LegendItem {...providerItem}>
+                  <BadgePreview {...providerItem} />
                 </LegendItem>
-              ))}
-            </LegendSection>
+              </LegendSection>
+            )}
 
-            <LegendSection title="Findings by risk">
-              {findingRiskItems.map((item) => (
-                <LegendItem key={item.label} {...item}>
-                  <BadgePreview {...item} />
-                </LegendItem>
-              ))}
-            </LegendSection>
+            {visibleNodeTypeItems.length > 0 && (
+              <LegendSection title="Node types">
+                {visibleNodeTypeItems.map((item) => (
+                  <LegendItem key={item.label} {...item}>
+                    <BadgePreview {...item} />
+                  </LegendItem>
+                ))}
+              </LegendSection>
+            )}
 
-            <LegendSection title="States">
-              {stateItems.map((item) => (
-                <LegendItem key={item.label} {...item}>
-                  <StatePreview {...item} />
-                </LegendItem>
-              ))}
-            </LegendSection>
+            {visibleFindingRiskItems.length > 0 && (
+              <LegendSection title="Findings by risk">
+                {visibleFindingRiskItems.map((item) => (
+                  <LegendItem key={item.label} {...item}>
+                    <BadgePreview {...item} />
+                  </LegendItem>
+                ))}
+              </LegendSection>
+            )}
 
-            <LegendSection title="Edges">
-              {edgeItems.map((item) => (
-                <LegendItem key={item.label} {...item}>
-                  <EdgePreview variant={item.variant} edgeColor={edgeColor} />
-                </LegendItem>
-              ))}
-            </LegendSection>
+            {visibleStateItems.length > 0 && (
+              <LegendSection title="States">
+                {visibleStateItems.map((item) => (
+                  <LegendItem key={item.label} {...item}>
+                    <StatePreview {...item} />
+                  </LegendItem>
+                ))}
+              </LegendSection>
+            )}
+
+            {visibleEdgeItems.length > 0 && (
+              <LegendSection title="Edges">
+                {visibleEdgeItems.map((item) => (
+                  <LegendItem key={item.label} {...item}>
+                    <EdgePreview variant={item.variant} edgeColor={edgeColor} />
+                  </LegendItem>
+                ))}
+              </LegendSection>
+            )}
           </div>
         </TooltipProvider>
       </CardContent>
