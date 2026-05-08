@@ -22,6 +22,7 @@ import {
   GRAPH_NODE_BORDER_COLORS,
   GRAPH_NODE_COLORS,
 } from "../../_lib/graph-colors";
+import { resolveHiddenFindingIds } from "../../_lib/graph-utils";
 import { NODE_CATEGORY, resolveNodeVisual } from "../../_lib/node-visuals";
 
 const LEGEND_PREVIEW = {
@@ -115,7 +116,7 @@ const buildVisualItem = (
 });
 
 const providerRootItem = buildVisualItem(
-  "Provider / account root",
+  "Provider",
   "Cloud account, tenant, project, organization, or cluster entry point.",
   buildNode(["AWSAccount"], { name: "Provider root" }),
   GRAPH_NODE_COLORS.awsAccount,
@@ -234,19 +235,12 @@ const resolveLegendState = (
     }
   }
 
-  const hiddenFindingIds = new Set<string>();
-  if (!isFilteredView) {
-    for (const findingId of Array.from(findingNodeIds)) {
-      const connectedResources = findingToResources.get(findingId);
-      const isVisible = connectedResources
-        ? Array.from(connectedResources).some((resourceId) =>
-            expandedResources.has(resourceId),
-          )
-        : false;
-
-      if (!isVisible) hiddenFindingIds.add(findingId);
-    }
-  }
+  const hiddenFindingIds = resolveHiddenFindingIds({
+    expandedResources,
+    findingNodeIds,
+    findingToResources,
+    isFilteredView,
+  });
 
   const visibleNodes = data.nodes.filter(
     (node) => !hiddenFindingIds.has(node.id),

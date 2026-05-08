@@ -22,8 +22,8 @@ const BADGE_SIZE = 44;
 const BADGE_RADIUS = BADGE_SIZE / 2;
 const BADGE_CENTER_X = NODE_WIDTH / 2;
 const BADGE_CENTER_Y = 26;
-const BADGE_BOTTOM_Y = BADGE_CENTER_Y + BADGE_RADIUS;
-const BADGE_TOP_Y = BADGE_CENTER_Y - BADGE_RADIUS;
+const BADGE_LEFT_X = BADGE_CENTER_X - BADGE_RADIUS;
+const BADGE_RIGHT_X = BADGE_CENTER_X + BADGE_RADIUS;
 const ICON_SIZE = 28;
 const ICON_X = BADGE_CENTER_X - ICON_SIZE / 2;
 const ICON_Y = BADGE_CENTER_Y - ICON_SIZE / 2;
@@ -63,11 +63,10 @@ export const ResourceNode = ({ data, selected }: NodeProps) => {
   return (
     <>
       <HiddenHandles
-        sourcePosition={Position.Bottom}
-        sourceStyle={{ top: BADGE_BOTTOM_Y }}
-        style={{ left: BADGE_CENTER_X }}
-        targetPosition={Position.Top}
-        targetStyle={{ top: BADGE_TOP_Y }}
+        sourcePosition={Position.Right}
+        sourceStyle={{ left: BADGE_RIGHT_X, top: BADGE_CENTER_Y }}
+        targetPosition={Position.Left}
+        targetStyle={{ left: BADGE_LEFT_X, top: BADGE_CENTER_Y }}
       />
       <svg width={NODE_WIDTH} height={NODE_HEIGHT} className="overflow-visible">
         {glowRadius > 0 && (

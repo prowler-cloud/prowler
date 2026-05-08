@@ -1,14 +1,14 @@
-name: 'UI: Tests'
+name: "UI: Tests"
 
 on:
   push:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
   pull_request:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,7 +16,7 @@ concurrency:
 
 env:
   UI_WORKING_DIR: ./ui
-  NODE_VERSION: '24.13.0'
+  NODE_VERSION: "24.13.0"
 
 permissions: {}
 
@@ -135,7 +135,7 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed == 'true'
         run: |
           echo "Critical paths changed - running ALL unit tests"
-          pnpm run test:run
+          pnpm run test:unit
 
       - name: Run unit tests (related to changes only)
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files != ''
@@ -144,7 +144,7 @@ jobs:
           echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}"
           # Convert space-separated to vitest related format (remove ui/ prefix for relative paths)
           CHANGED_FILES=$(echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | sed 's|^ui/||' | tr '\n' ' ')
-          pnpm exec vitest related $CHANGED_FILES --run
+          pnpm exec vitest related $CHANGED_FILES --run --project unit
         env:
           STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-source.outputs.all_changed_files }}
 
@@ -152,7 +152,7 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files == ''
         run: |
           echo "Only test files changed - running ALL unit tests"
-          pnpm run test:run
+          pnpm run test:unit
 
       - name: Cache Playwright browsers
         if: steps.check-changes.outputs.any_changed == 'true'

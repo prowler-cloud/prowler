@@ -4,6 +4,42 @@
 
 import type { AttackPathGraphData } from "@/types/attack-paths";
 
+export const resolveHiddenFindingIds = ({
+  expandedResources,
+  findingNodeIds,
+  findingToResources,
+  isFilteredView,
+}: {
+  expandedResources: ReadonlySet<string>;
+  findingNodeIds: ReadonlySet<string>;
+  findingToResources: ReadonlyMap<string, ReadonlySet<string>>;
+  isFilteredView: boolean;
+}): Set<string> => {
+  const hiddenFindingIds = new Set<string>();
+
+  if (isFilteredView) {
+    return hiddenFindingIds;
+  }
+
+  findingNodeIds.forEach((findingId) => {
+    const connectedResources = findingToResources.get(findingId);
+
+    if (!connectedResources) {
+      return;
+    }
+
+    const anyExpanded = Array.from(connectedResources).some((resourceId) =>
+      expandedResources.has(resourceId),
+    );
+
+    if (!anyExpanded) {
+      hiddenFindingIds.add(findingId);
+    }
+  });
+
+  return hiddenFindingIds;
+};
+
 /**
  * Compute a filtered subgraph containing only the path through the target node.
  * This follows the directed graph structure of attack paths:

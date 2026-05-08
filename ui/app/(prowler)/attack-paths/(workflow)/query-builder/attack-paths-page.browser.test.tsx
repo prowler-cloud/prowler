@@ -10,13 +10,33 @@
  * If you find yourself reaching for a DOM query in a test, push it into the harness.
  */
 
-import { beforeEach, describe, expect, test as base } from "vitest";
+import { beforeEach, describe, expect, test as base, vi } from "vitest";
 
 import { handlersForFixture } from "@/__tests__/msw/handlers/attack-paths";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
 
+const { getFindingByIdMock } = vi.hoisted(() => ({
+  getFindingByIdMock: vi.fn(),
+}));
+
+vi.mock("@/actions/findings", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/actions/findings")>(
+      "@/actions/findings",
+    );
+
+  getFindingByIdMock.mockImplementation(actual.getFindingById);
+
+  return {
+    ...actual,
+    getFindingById: getFindingByIdMock,
+  };
+});
+
 import { useGraphStore } from "./_hooks/use-graph-state";
+import { getPathEdges } from "./_lib";
+import { isFindingNode, layoutWithDagre } from "./_lib/layout";
 import AttackPathsPage from "./attack-paths-page";
 import { fixtures, type PageFixture } from "./attack-paths-page.fixtures";
 import { AttackPathPageHarness } from "./attack-paths-page.harness";
@@ -30,6 +50,7 @@ interface Fixtures {
 // one (selection, filtered view, expanded resources, etc.).
 beforeEach(() => {
   useGraphStore.getState().reset();
+  getFindingByIdMock.mockClear();
 });
 
 const test = base.extend<Fixtures>({
@@ -121,8 +142,9 @@ describe("running a query", () => {
 
     const edgeIds = graph.renderedEdgeIds;
     expect(edgeIds.length).toBeGreaterThan(0);
+    expect(new Set(edgeIds).size).toBe(edgeIds.length);
     for (const id of edgeIds) {
-      expect(id).toMatch(/^[\w-]+-[\w-]+$/);
+      expect(id.length).toBeGreaterThan(0);
     }
   });
 
@@ -175,19 +197,56 @@ describe("running a query", () => {
     expect(graph.resourceNodes.length).toBe(3);
   });
 
-  test("findings without a connected resource are hidden by default", async ({
+  test("findings without a connected resource stay visible in the full graph", async ({
     mountWith,
   }) => {
-    // Tier 1 view: unattached findings stay hidden until the user expands
-    // their adjacent resource — none here, so nothing renders.
     const graph = await mountWith(fixtures.findingsOnly());
-    try {
-      await graph.executeQuery();
-    } catch {
-      /* expected: nothing visible, layout never stabilizes */
-    }
-    expect(graph.findingNodes.length).toBe(0);
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    expect(graph.findingNodes.length).toBe(3);
     expect(graph.resourceNodes.length).toBe(0);
+  });
+
+  test("hidden findings do not reserve layout space until expanded", async ({
+    mountWith,
+  }) => {
+    // Given - a graph whose findings are hidden in the initial tier-1 view.
+    // The initial rendered positions should match a layout computed from only
+    // visible resources/edges, not from hidden finding nodes.
+    const fixture = fixtures.typical();
+    if (!fixture.queryResult) throw new Error("Expected graph fixture data");
+
+    const visibleNodes = fixture.queryResult.nodes.filter(
+      (node) => !isFindingNode(node.labels),
+    );
+    const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
+    const visibleEdges = (fixture.queryResult.relationships ?? [])
+      .filter(
+        (edge) =>
+          visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target),
+      )
+      .map((edge) => ({
+        ...edge,
+        type: edge.label,
+      }));
+    const expectedPositions = Object.fromEntries(
+      layoutWithDagre(visibleNodes, visibleEdges).rfNodes.map((node) => [
+        node.id,
+        node.position,
+      ]),
+    );
+
+    const graph = await mountWith(fixture);
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    // Then - hidden findings do not influence initial resource coordinates.
+    for (const node of visibleNodes) {
+      expect(graph.nodePositionsById[node.id]).toEqual(
+        expectedPositions[node.id],
+      );
+    }
   });
 
   test("self-loops, cycles, long labels, unicode, and duplicate edges all render", async ({
@@ -203,7 +262,9 @@ describe("running a query", () => {
 });
 
 describe("exploring the graph", () => {
-  test("clicking a finding opens the filtered view", async ({ mountWith }) => {
+  test("clicking a finding opens the filtered view and finding details", async ({
+    mountWith,
+  }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
@@ -211,40 +272,48 @@ describe("exploring the graph", () => {
 
     expect(graph.isInFilteredView).toBe(false);
     await graph.clickFirstFindingNode();
+
     expect(graph.isInFilteredView).toBe(true);
+    expect(getFindingByIdMock).toHaveBeenCalledTimes(1);
     expect(graph.hasNodeDetailsModal).toBe(false);
+    expect(graph.hasNodeActionDialog).toBe(false);
   });
 
-  test("clicking a resource with findings opens the action selector", async ({
+  test("clicking a resource with findings directly reveals related finding nodes", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
+    expect(graph.findingNodes.length).toBe(0);
     expect(graph.hasNodeDetailsModal).toBe(false);
 
     await graph.clickFirstResourceNode();
-
-    expect(graph.hasNodeActionDialog).toBe(true);
-    expect(graph.hasNodeDetailsModal).toBe(false);
-  });
-
-  test("choosing Show findings reveals related finding nodes", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-
-    await graph.clickFirstResourceNode();
-    await graph.chooseShowFindingsAction();
 
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     expect(graph.hasNodeDetailsModal).toBe(false);
+    expect(graph.hasNodeActionDialog).toBe(false);
   });
 
-  test("choosing Show findings re-fits around the resource and its findings", async ({
+  test("clicking an expanded resource with findings hides its related finding nodes", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    await graph.clickFirstResourceNode();
+    expect(graph.findingNodes.length).toBeGreaterThan(0);
+
+    await graph.clickFirstResourceNode();
+
+    expect(graph.findingNodes.length).toBe(0);
+    expect(graph.hasNodeDetailsModal).toBe(false);
+    expect(graph.hasNodeActionDialog).toBe(false);
+  });
+
+  test("clicking a resource with findings re-fits around the resource and its findings", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -254,7 +323,6 @@ describe("exploring the graph", () => {
     const initialViewport = graph.viewportTransform;
 
     await graph.clickFirstResourceNode();
-    await graph.chooseShowFindingsAction();
 
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     await graph.waitFor(
@@ -271,8 +339,7 @@ describe("exploring the graph", () => {
       2000,
     );
   });
-
-  test("expanded resources offer Hide findings in the action selector", async ({
+  test("clicking an expanded resource re-fits the remaining visible graph", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -280,35 +347,12 @@ describe("exploring the graph", () => {
     await graph.waitForLayoutStable(3);
 
     await graph.clickFirstResourceNode();
-    await graph.chooseShowFindingsAction();
-    expect(graph.findingNodes.length).toBeGreaterThan(0);
-
-    await graph.clickFirstResourceNode();
-
-    expect(graph.hasNodeActionDialog).toBe(true);
-    expect(graph.containsText(/Hide findings/i)).toBe(true);
-
-    await graph.chooseHideFindingsAction();
-
-    expect(graph.findingNodes.length).toBe(0);
-  });
-
-  test("choosing Hide findings re-fits the remaining visible graph", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-
-    await graph.clickFirstResourceNode();
-    await graph.chooseShowFindingsAction();
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     await graph.waitForTransition();
 
     const expandedViewport = graph.viewportTransform;
 
     await graph.clickFirstResourceNode();
-    await graph.chooseHideFindingsAction();
 
     expect(graph.findingNodes.length).toBe(0);
     await graph.waitFor(
@@ -325,7 +369,6 @@ describe("exploring the graph", () => {
     await graph.waitForLayoutStable(16);
 
     await graph.clickFirstResourceNode();
-    await graph.chooseShowFindingsAction();
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     await graph.waitForTransition();
 
@@ -340,21 +383,7 @@ describe("exploring the graph", () => {
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     expect(graph.viewportTransform).toBeTruthy();
   });
-
-  test("choosing View node details opens node details in a modal", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-
-    await graph.clickFirstResourceNode();
-    await graph.chooseViewNodeDetailsAction();
-
-    expect(graph.hasNodeDetailsModal).toBe(true);
-  });
-
-  test("clicking a resource without findings opens node details in a modal", async ({
+  test("clicking a resource without findings does nothing", async ({
     mountWith,
   }) => {
     const graph = await mountWith();
@@ -362,30 +391,14 @@ describe("exploring the graph", () => {
     await graph.waitForLayoutStable(3);
 
     expect(graph.hasNodeDetailsModal).toBe(false);
+    expect(graph.hasNodeActionDialog).toBe(false);
+    expect(graph.findingNodes.length).toBe(0);
 
     await graph.clickFirstResourceNodeWithoutFindings();
 
-    expect(graph.hasNodeDetailsModal).toBe(true);
-  });
-
-  test("clicking a parent node in filtered view asks whether to go back or view details", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
-    await graph.expandAllFindings();
-    await graph.clickFirstFindingNode();
-    expect(graph.isInFilteredView).toBe(true);
-
-    await graph.clickFirstResourceNode();
-
-    expect(graph.hasNodeActionDialog).toBe(true);
-    expect(graph.containsText(/Back to full graph/i)).toBe(true);
-
-    await graph.chooseBackToFullGraphAction();
-
-    expect(graph.isInFilteredView).toBe(false);
+    expect(graph.findingNodes.length).toBe(0);
+    expect(graph.hasNodeDetailsModal).toBe(false);
+    expect(graph.hasNodeActionDialog).toBe(false);
   });
 
   test("exiting the filtered view restores the full graph", async ({
@@ -404,13 +417,36 @@ describe("exploring the graph", () => {
   });
 
   test("hovering a node highlights its path edges", async ({ mountWith }) => {
-    const graph = await mountWith();
+    const fixture = fixtures.typical();
+    const graph = await mountWith(fixture);
     await graph.executeQuery();
     await graph.waitForLayoutStable(3);
 
+    const hoveredNodeId = graph.resourceNodes[0]?.getAttribute("data-id");
+    expect(hoveredNodeId).toBeTruthy();
+
+    const findingIds = new Set(
+      (fixture.queryResult?.nodes ?? [])
+        .filter((node) => isFindingNode(node.labels))
+        .map((node) => node.id),
+    );
+    const visibleEdges = (fixture.queryResult?.relationships ?? [])
+      .filter(
+        (edge) => !findingIds.has(edge.source) && !findingIds.has(edge.target),
+      )
+      .map((edge) => ({ sourceId: edge.source, targetId: edge.target }));
+    const expectedPathKeys = getPathEdges(hoveredNodeId ?? "", visibleEdges);
+    const expectedHighlightedIds = (fixture.queryResult?.relationships ?? [])
+      .filter((edge) => expectedPathKeys.has(`${edge.source}-${edge.target}`))
+      .map((edge) => edge.id)
+      .sort();
+
     await graph.hoverFirstResourceNode();
     await graph.waitForTransition(120);
-    expect(graph.highlightedEdges.length).toBeGreaterThanOrEqual(0);
+
+    expect(
+      graph.highlightedEdges.map((edge) => edge.dataset.id ?? "").sort(),
+    ).toEqual(expectedHighlightedIds);
 
     await graph.unhoverNodes();
     await graph.waitForTransition(120);
@@ -449,7 +485,9 @@ describe("exploring the graph", () => {
     await graph.expandAllFindings();
 
     await graph.rapidlyClickFirstFindingNode(2);
+
     expect(graph.isInFilteredView).toBe(true);
+    expect(getFindingByIdMock).toHaveBeenCalledTimes(1);
   });
 
   test("double-clicking a node doesn't break state", async ({ mountWith }) => {
@@ -487,7 +525,6 @@ describe("auto-fitting the viewport", () => {
       await graph.zoomIn();
       await graph.waitForTransition(80);
     }
-
     // Hidden findings are not measured by the initial declarative fit, so
     // their positions can sit outside the framed viewport. Expanding the
     // resources should re-fit so the user does not have to hunt for the

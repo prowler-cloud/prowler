@@ -72,12 +72,9 @@ export const useGraphStore = create<GraphStore>((set) => ({
     }),
   toggleExpandedResource: (resourceId) =>
     set((state) => {
-      const next = new Set(state.expandedResources);
-      if (next.has(resourceId)) {
-        next.delete(resourceId);
-      } else {
-        next.add(resourceId);
-      }
+      const next = state.expandedResources.has(resourceId)
+        ? new Set<string>()
+        : new Set([resourceId]);
       return { expandedResources: next };
     }),
   reset: () => set(initialState),

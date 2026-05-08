@@ -32,7 +32,7 @@ const buildNodeProps = (graphNode: GraphNode): NodeProps =>
   }) as unknown as NodeProps;
 
 describe("FindingNode", () => {
-  it("positions graph handles for vertical top-to-bottom edges", () => {
+  it("positions graph handles for horizontal left-to-right edges", () => {
     // Given
     const props = buildNodeProps(
       buildFindingNode("critical", "Root key exposed"),
@@ -44,8 +44,10 @@ describe("FindingNode", () => {
     // Then
     expect(hiddenHandlesMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        sourcePosition: Position.Bottom,
-        targetPosition: Position.Top,
+        sourcePosition: Position.Right,
+        sourceStyle: { left: 97, top: 26 },
+        targetPosition: Position.Left,
+        targetStyle: { left: 53, top: 26 },
       }),
       undefined,
     );

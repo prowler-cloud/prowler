@@ -63,9 +63,9 @@ export const layoutWithDagre = (
   nodes: GraphNode[],
   edges: GraphEdge[],
 ): { rfNodes: Node<NodeData>[]; rfEdges: Edge[] } => {
-  const g = new Graph();
+  const g = new Graph({ multigraph: true });
   g.setGraph({
-    rankdir: "TB",
+    rankdir: "LR",
     nodesep: 80,
     ranksep: 150,
     marginx: 50,
@@ -90,10 +90,16 @@ export const layoutWithDagre = (
     }
 
     if (sourceId && targetId) {
-      g.setEdge(sourceId, targetId, {
-        originalSource: edge.source,
-        originalTarget: edge.target,
-      });
+      g.setEdge(
+        sourceId,
+        targetId,
+        {
+          id: edge.id,
+          originalSource: edge.source,
+          originalTarget: edge.target,
+        },
+        edge.id,
+      );
     }
   });
 
@@ -112,8 +118,8 @@ export const layoutWithDagre = (
         x: dagreNode.x - width / 2,
         y: dagreNode.y - height / 2,
       },
-      sourcePosition: Position.Bottom,
-      targetPosition: Position.Top,
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
       data: { graphNode: node },
       width,
       height,
@@ -121,31 +127,35 @@ export const layoutWithDagre = (
   });
 
   // Build RF edges from dagre edges (using layout order, not original)
-  const rfEdges: Edge[] = g.edges().map((e: { v: string; w: string }) => {
-    const edgeData = g.edge(e) as {
-      originalSource: string;
-      originalTarget: string;
-    };
+  const rfEdges: Edge[] = g
+    .edges()
+    .map((e: { v: string; w: string; name?: string }) => {
+      const edgeData = g.edge(e) as {
+        id?: string;
+        originalSource: string;
+        originalTarget: string;
+      };
 
-    // Check if either end is a finding node
-    const sourceNode = nodes.find((n) => n.id === e.v);
-    const targetNode = nodes.find((n) => n.id === e.w);
-    const hasFinding =
-      isFindingNode(sourceNode?.labels ?? []) ||
-      isFindingNode(targetNode?.labels ?? []);
+      // Check if either end is a finding node
+      const sourceNode = nodes.find((n) => n.id === e.v);
+      const targetNode = nodes.find((n) => n.id === e.w);
+      const hasFinding =
+        isFindingNode(sourceNode?.labels ?? []) ||
+        isFindingNode(targetNode?.labels ?? []);
 
-    return {
-      id: `${e.v}-${e.w}`,
-      source: e.v,
-      target: e.w,
-      animated: hasFinding,
-      className: hasFinding ? "finding-edge" : "resource-edge",
-      data: {
-        originalSource: edgeData.originalSource,
-        originalTarget: edgeData.originalTarget,
-      },
-    };
-  });
+      return {
+        id: edgeData.id ?? e.name ?? `${e.v}-${e.w}`,
+        source: e.v,
+        target: e.w,
+        animated: hasFinding,
+        className: hasFinding ? "finding-edge" : "resource-edge",
+        data: {
+          pathKey: `${e.v}-${e.w}`,
+          originalSource: edgeData.originalSource,
+          originalTarget: edgeData.originalTarget,
+        },
+      };
+    });
 
   return { rfNodes, rfEdges };
 };

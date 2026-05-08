@@ -29,7 +29,6 @@ describe("layoutWithDagre", () => {
     expect(result.rfNodes).toEqual([]);
     expect(result.rfEdges).toEqual([]);
   });
-
   it("assigns node types and dimensions from labels", () => {
     const { rfNodes } = layoutWithDagre(
       [findingNode, resourceNode, internetNode],
@@ -72,7 +71,7 @@ describe("layoutWithDagre", () => {
     expect(a).toEqual(b);
   });
 
-  it("spreads sibling nodes horizontally to use wide graph space", () => {
+  it("places connected children to the right and stacks siblings within the horizontal rank", () => {
     const rootNode: GraphNode = {
       id: "root",
       labels: ["AWSAccount"],
@@ -106,6 +105,9 @@ describe("layoutWithDagre", () => {
       })),
     );
 
+    const rootPosition = rfNodes.find(
+      (candidate) => candidate.id === "root",
+    )?.position;
     const siblingPositions = siblingNodes.map((node) => {
       const rfNode = rfNodes.find((candidate) => candidate.id === node.id);
 
@@ -121,10 +123,14 @@ describe("layoutWithDagre", () => {
       Math.max(...siblingPositions.map((position) => position.y)) -
       Math.min(...siblingPositions.map((position) => position.y));
 
-    expect(xSpread).toBeGreaterThan(ySpread);
+    expect(rootPosition).toBeDefined();
+    siblingPositions.forEach((position) => {
+      expect(position.x).toBeGreaterThan(rootPosition?.x ?? 0);
+    });
+    expect(ySpread).toBeGreaterThan(xSpread);
   });
 
-  it("connects edges through top and bottom node sides for vertical layout", () => {
+  it("connects edges through right and left node sides for horizontal layout", () => {
     const { rfNodes } = layoutWithDagre(
       [findingNode, resourceNode],
       [
@@ -138,8 +144,8 @@ describe("layoutWithDagre", () => {
     );
 
     rfNodes.forEach((node) => {
-      expect(node.sourcePosition).toBe(Position.Bottom);
-      expect(node.targetPosition).toBe(Position.Top);
+      expect(node.sourcePosition).toBe(Position.Right);
+      expect(node.targetPosition).toBe(Position.Left);
     });
   });
 
@@ -226,7 +232,7 @@ describe("layoutWithDagre", () => {
     });
   });
 
-  it("builds rf edge IDs as `${source}-${target}` after layout", () => {
+  it("preserves the original edge id when the graph has a single edge", () => {
     const { rfEdges } = layoutWithDagre(
       [findingNode, resourceNode],
       [
@@ -239,6 +245,31 @@ describe("layoutWithDagre", () => {
       ],
     );
 
-    expect(rfEdges[0]?.id).toBe("resource-1-finding-1");
+    expect(rfEdges[0]?.id).toBe("ignored-by-rf");
+  });
+
+  it("preserves parallel edges between the same nodes with unique ids", () => {
+    const { rfEdges } = layoutWithDagre(
+      [resourceNode, findingNode],
+      [
+        {
+          id: "edge-1",
+          source: "resource-1",
+          target: "finding-1",
+          type: "HAS_FINDING",
+        },
+        {
+          id: "edge-2",
+          source: "resource-1",
+          target: "finding-1",
+          type: "HAS_FINDING",
+        },
+      ],
+    );
+
+    expect(rfEdges).toHaveLength(2);
+    expect(rfEdges.map((edge) => edge.id)).toEqual(["edge-1", "edge-2"]);
+    expect(rfEdges.every((edge) => edge.source === "resource-1")).toBe(true);
+    expect(rfEdges.every((edge) => edge.target === "finding-1")).toBe(true);
   });
 });

@@ -26,12 +26,13 @@ import { cn } from "@/lib/utils";
 import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
 import {
+  computeFilteredSubgraph,
   getNodeBorderColor,
   getNodeColor,
   getPathEdges,
   GRAPH_EDGE_HIGHLIGHT_COLOR,
+  resolveHiddenFindingIds,
 } from "../../_lib";
-import { computeFilteredSubgraph } from "../../_lib/graph-utils";
 import { isFindingNode, layoutWithDagre } from "../../_lib/layout";
 import { FindingNode } from "./nodes/finding-node";
 import { InternetNode } from "./nodes/internet-node";
@@ -199,15 +200,21 @@ const scheduleMeasuredFit = (
 const GraphCanvas = ({
   data,
   selectedNodeId,
-  isFilteredView,
+  isFilteredView = false,
   initialNodeId,
   expandedResources,
   onNodeClick,
   onInitialFilter,
   ref,
 }: GraphCanvasProps) => {
-  const { zoomIn, zoomOut, fitView, getZoom, getNodes, getNodesBounds } =
-    useReactFlow();
+  const {
+    zoomIn,
+    zoomOut,
+    fitView,
+    getZoom,
+    getNodes,
+    getNodesBounds,
+  } = useReactFlow();
   const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
@@ -380,9 +387,6 @@ const GraphCanvas = ({
   const nodes = effectiveData.nodes ?? [];
   const edges = effectiveData.edges ?? [];
 
-  // Derive RF nodes and edges from data (pure computation in render body — D4)
-  const { rfNodes, rfEdges } = layoutWithDagre(nodes, edges);
-
   // Pre-compute which resources have findings connected (O(n+e))
   const findingNodeIds = new Set<string>();
   const resourceToFindings = new Map<string, Set<string>>();
@@ -423,23 +427,27 @@ const GraphCanvas = ({
   resourceToFindingsRef.current = resourceToFindings;
 
   // Tier 1: compute which finding nodes are hidden (not expanded)
-  const hiddenFindingIds = new Set<string>();
-  if (!isFilteredView) {
-    findingNodeIds.forEach((findingId) => {
-      // A finding is visible only if at least one of its connected resources is expanded
-      const connectedResources = findingToResources.get(findingId);
-      if (!connectedResources) {
-        hiddenFindingIds.add(findingId);
-        return;
-      }
-      const anyExpanded = Array.from(connectedResources).some((resId) =>
-        expanded.has(resId),
-      );
-      if (!anyExpanded) {
-        hiddenFindingIds.add(findingId);
-      }
-    });
-  }
+  const hiddenFindingIds = resolveHiddenFindingIds({
+    expandedResources: expanded,
+    findingNodeIds,
+    findingToResources,
+    isFilteredView,
+  });
+
+  const layoutNodeIds = new Set(
+    nodes
+      .filter((node) => !hiddenFindingIds.has(node.id))
+      .map((node) => node.id),
+  );
+  const layoutNodes = nodes.filter((node) => layoutNodeIds.has(node.id));
+  const layoutEdges = edges.filter(
+    (edge) => layoutNodeIds.has(edge.source) && layoutNodeIds.has(edge.target),
+  );
+
+  // Derive RF nodes and edges from visible data only. Hidden finding nodes are
+  // excluded before Dagre runs so the initial tier-1 graph does not reserve
+  // empty space for findings that the user has not expanded yet.
+  const { rfNodes, rfEdges } = layoutWithDagre(layoutNodes, layoutEdges);
 
   // Path highlight: compute highlighted edge IDs
   const activeHighlightNodeId = hoveredNodeId ?? selectedNodeId;
@@ -455,6 +463,13 @@ const GraphCanvas = ({
     ...node,
     selected: node.id === selectedNodeId,
     hidden: hiddenFindingIds.has(node.id),
+    className: cn(
+      node.className,
+      isFindingNode(node.data.graphNode.labels) ||
+        resourcesWithFindings.has(node.id)
+        ? "cursor-pointer"
+        : "cursor-default",
+    ),
     data: {
       ...node.data,
       hasFindings: resourcesWithFindings.has(node.id),
@@ -465,7 +480,12 @@ const GraphCanvas = ({
   const enrichedEdges = rfEdges.map((edge) => {
     const sourceHidden = hiddenFindingIds.has(edge.source);
     const targetHidden = hiddenFindingIds.has(edge.target);
-    const isHighlighted = highlightedEdgeIds.has(edge.id);
+    const pathKey =
+      typeof edge.data === "object" && edge.data && "pathKey" in edge.data
+        ? String((edge.data as { pathKey?: string }).pathKey)
+        : `${edge.source}-${edge.target}`;
+    const isHighlighted =
+      highlightedEdgeIds.has(edge.id) || highlightedEdgeIds.has(pathKey);
 
     return {
       ...edge,

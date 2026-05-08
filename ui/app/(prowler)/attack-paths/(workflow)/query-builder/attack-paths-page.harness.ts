@@ -112,6 +112,22 @@ export class AttackPathPageHarness {
     });
   }
 
+  get nodePositionsById(): Record<string, { x: number; y: number }> {
+    return Object.fromEntries(
+      this.nodes.map((el) => {
+        const id = el.getAttribute("data-id") ?? "";
+        const match = /translate\(\s*([-\d.]+)px?\s*,\s*([-\d.]+)px?\s*\)/.exec(
+          el.style.transform,
+        );
+
+        return [
+          id,
+          match ? { x: Number(match[1]), y: Number(match[2]) } : { x: 0, y: 0 },
+        ];
+      }),
+    );
+  }
+
   // --- Predicates ---
 
   get isInFilteredView(): boolean {
@@ -295,13 +311,21 @@ export class AttackPathPageHarness {
 
   // --- Action methods ---
 
+  private async clickElement(
+    element: HTMLElement,
+    options?: { fallbackToDomClick?: boolean },
+  ): Promise<void> {
+    try {
+      await this.user.click(element);
+    } catch (error) {
+      if (!options?.fallbackToDomClick) throw error;
+      element.click();
+    }
+  }
+
   private async clickGraphElement(element: HTMLElement): Promise<void> {
     await this.closeFindingDrawerIfOpen();
-    // React Flow nodes can be visually reachable while the surrounding scroll
-    // container or overlay intercepts browser-mode pointer events in large
-    // graphs. Use a bubbling DOM click so the component's onClick path is still
-    // exercised without depending on viewport scroll physics.
-    element.click();
+    await this.user.click(element);
   }
 
   async closeFindingDrawerIfOpen(): Promise<void> {
@@ -320,7 +344,7 @@ export class AttackPathPageHarness {
     ).find((button) => /^close$/i.test(button.textContent?.trim() ?? ""));
 
     if (closeButton) {
-      closeButton.click();
+      await this.clickElement(closeButton);
       await this.waitForTransition();
     }
   }
@@ -427,14 +451,44 @@ export class AttackPathPageHarness {
     return resource;
   }
 
+  async clickFirstResourceNodeWithoutFindings(): Promise<HTMLElement> {
+    const findingIds = new Set(
+      (this.fixture.queryResult?.nodes ?? [])
+        .filter((n) =>
+          n.labels.some((l) => l.toLowerCase().includes("finding")),
+        )
+        .map((n) => n.id),
+    );
+    const resourceWithFindingIds = new Set<string>();
+    for (const rel of this.fixture.queryResult?.relationships ?? []) {
+      if (findingIds.has(rel.source)) resourceWithFindingIds.add(rel.target);
+      if (findingIds.has(rel.target)) resourceWithFindingIds.add(rel.source);
+    }
+    const resource = this.resourceNodes.find((node) => {
+      const id = node.getAttribute("data-id");
+      return id && !resourceWithFindingIds.has(id);
+    });
+    if (!resource) {
+      throw new Error(
+        "clickFirstResourceNodeWithoutFindings: no resource without findings rendered",
+      );
+    }
+    await this.user.click(resource);
+    await this.waitForTransition();
+    return resource;
+  }
+
   /**
-   * Click the first finding `times` times back-to-back, with no transition
-   * waits between clicks. Used for rapid-click race tests.
+   * Dispatch same-tick clicks against the first finding node. This models the
+   * duplicate-click race before the drawer overlay can intercept later pointer
+   * actions, so it intentionally uses native DOM clicks instead of awaited
+   * user-event pointer interactions.
    */
   async rapidlyClickFirstFindingNode(times = 2): Promise<HTMLElement> {
     const [finding] = this.findingNodes;
     if (!finding)
       throw new Error("rapidlyClickFirstFindingNode: no finding rendered");
+    await this.closeFindingDrawerIfOpen();
     for (let i = 0; i < times; i++) {
       finding.click();
     }
@@ -485,9 +539,6 @@ export class AttackPathPageHarness {
       if (el) {
         await this.user.click(el);
         await this.waitForTransition(50);
-        if (this.hasNodeActionDialog) {
-          await this.chooseShowFindingsAction();
-        }
       }
     }
   }
@@ -533,57 +584,12 @@ export class AttackPathPageHarness {
     await this.user.click(btn);
   }
 
-  async closeNodeDetailsModal(): Promise<void> {
-    const btn = this.q('button[aria-label="Close node details"]');
-    if (!btn) throw new Error("closeNodeDetailsModal: modal not rendered");
-    await this.user.click(btn);
-    await this.waitForTransition();
-  }
-
-  async chooseShowFindingsAction(): Promise<void> {
-    const button = Array.from(
-      document.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((btn) => /show findings/i.test(btn.textContent ?? ""));
-    if (!button) throw new Error("chooseShowFindingsAction: button not found");
-    button.click();
-    await this.waitForTransition();
-  }
-
-  async chooseHideFindingsAction(): Promise<void> {
-    const button = Array.from(
-      document.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((btn) => /hide findings/i.test(btn.textContent ?? ""));
-    if (!button) throw new Error("chooseHideFindingsAction: button not found");
-    button.click();
-    await this.waitForTransition();
-  }
-
-  async chooseViewNodeDetailsAction(): Promise<void> {
-    const button = Array.from(
-      document.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((btn) => /view node details/i.test(btn.textContent ?? ""));
-    if (!button)
-      throw new Error("chooseViewNodeDetailsAction: button not found");
-    button.click();
-    await this.waitForTransition();
-  }
-
-  async chooseBackToFullGraphAction(): Promise<void> {
-    const button = Array.from(
-      document.querySelectorAll<HTMLButtonElement>("button"),
-    ).find((btn) => /back to full graph/i.test(btn.textContent ?? ""));
-    if (!button)
-      throw new Error("chooseBackToFullGraphAction: button not found");
-    button.click();
-    await this.waitForTransition();
-  }
-
   async exitFilteredView(): Promise<void> {
     await this.closeFindingDrawerIfOpen();
 
     const btn = this.toolbar.backToFullViewButton;
     if (!btn) throw new Error("exitFilteredView: not in filtered view");
-    btn.click();
+    await this.clickElement(btn);
     await this.waitForTransition();
   }
 

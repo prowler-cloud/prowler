@@ -12,10 +12,10 @@ interface HiddenHandlesProps {
 }
 
 export const HiddenHandles = ({
-  sourcePosition = Position.Bottom,
+  sourcePosition = Position.Right,
   sourceStyle,
   style,
-  targetPosition = Position.Top,
+  targetPosition = Position.Left,
   targetStyle,
 }: HiddenHandlesProps) => (
   <>
