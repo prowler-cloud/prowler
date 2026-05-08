@@ -6,6 +6,9 @@ class keyvault_rbac_secret_expiration_set(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, key_vaults in keyvault_client.key_vaults.items():
+            subscription_name = keyvault_client.subscriptions.get(
+                subscription, subscription
+            )
             for keyvault in key_vaults:
                 if keyvault.properties.enable_rbac_authorization:
                     for secret in keyvault.secrets or []:
@@ -17,9 +20,9 @@ class keyvault_rbac_secret_expiration_set(Check):
                         report.subscription = subscription
                         if not secret.attributes.expires:
                             report.status = "FAIL"
-                            report.status_extended = f"Secret {secret.name} in Key Vault {keyvault.name} from subscription {subscription} does not have an expiration date set."
+                            report.status_extended = f"Secret {secret.name} in Key Vault {keyvault.name} from subscription {subscription_name} ({subscription}) does not have an expiration date set."
                         else:
                             report.status = "PASS"
-                            report.status_extended = f"Secret {secret.name} in Key Vault {keyvault.name} from subscription {subscription} has an expiration date set."
+                            report.status_extended = f"Secret {secret.name} in Key Vault {keyvault.name} from subscription {subscription_name} ({subscription}) has an expiration date set."
                         findings.append(report)
         return findings

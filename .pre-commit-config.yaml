@@ -6,7 +6,7 @@
 #   P40 — security scanners
 #   P50 — dependency validation
 
-default_install_hook_types: [pre-commit, pre-push]
+default_install_hook_types: [pre-commit]
 
 repos:
   ## GENERAL (prek built-in — no external repo needed)
@@ -62,12 +62,7 @@ repos:
       - id: autoflake
         name: "SDK - autoflake"
         files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
-        args:
-          [
-            "--in-place",
-            "--remove-all-unused-imports",
-            "--remove-unused-variable",
-          ]
+        args: ["--in-place", "--remove-all-unused-imports", "--remove-unused-variable"]
         priority: 20
 
   - repo: https://github.com/pycqa/isort
@@ -179,8 +174,7 @@ repos:
         language: system
         types: [python]
         files: '.*\.py'
-        exclude:
-          { glob: ["{contrib,skills}/**", "**/.venv/**", "**/*_test.py"] }
+        exclude: { glob: ["{contrib,skills}/**", "**/.venv/**", "**/*_test.py"] }
         priority: 40
 
       - id: safety
@@ -190,16 +184,7 @@ repos:
         entry: safety check --policy-file .safety-policy.yml
         language: system
         pass_filenames: false
-        files:
-          {
-            glob:
-              [
-                "**/pyproject.toml",
-                "**/poetry.lock",
-                "**/requirements*.txt",
-                ".safety-policy.yml",
-              ],
-          }
+        files: { glob: ["**/pyproject.toml", "**/poetry.lock", "**/requirements*.txt", ".safety-policy.yml"] }
         priority: 40
 
       - id: vulture

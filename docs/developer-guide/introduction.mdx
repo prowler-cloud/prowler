@@ -134,6 +134,22 @@ prek installed at `.git/hooks/pre-commit`
 If pre-commit hooks were previously installed, run `prek install --overwrite` to replace the existing hook. Otherwise, both tools will run on each commit.
 </Warning>
 
+#### Enable TruffleHog as a Pre-Push Hook
+
+By default, only `pre-commit` hooks are installed. To enable [`TruffleHog`](https://github.com/trufflesecurity/trufflehog) secret scanning on every push, install the `pre-push` hook type explicitly:
+
+```shell
+prek install --hook-type pre-push
+```
+
+Successful installation should produce the following output:
+
+```shell
+prek installed at `.git/hooks/pre-push`
+```
+
+Once installed, TruffleHog runs before each push and blocks the operation when verified secrets are detected.
+
 ### Code Quality and Security Checks
 
 Before merging pull requests, several automated checks and utilities ensure code security and updated dependencies:

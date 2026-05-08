@@ -36,6 +36,9 @@ interface ResourcesFiltersProps {
 const countVisibleFilterKeys = (filters: Record<string, string[]>): number =>
   Object.values(filters).filter((values) => values.length > 0).length;
 
+const FILTER_CONTROL_COLUMN_CLASS =
+  "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
+
 export const ResourcesFilters = ({
   providers,
   uniqueRegions,
@@ -164,16 +167,17 @@ export const ResourcesFilters = ({
   return (
     <BatchFiltersLayout
       testIdPrefix="resources"
+      controlsClassName="gap-3"
       controls={
         <>
-          <div className="min-w-[200px] flex-1 md:max-w-[280px]">
+          <div className={FILTER_CONTROL_COLUMN_CLASS}>
             <ProviderTypeSelector
               providers={providers}
               onBatchChange={setPending}
               selectedValues={getFilterValue("filter[provider_type__in]")}
             />
           </div>
-          <div className="min-w-[200px] flex-1 md:max-w-[280px]">
+          <div className={FILTER_CONTROL_COLUMN_CLASS}>
             <AccountsSelector
               providers={providers}
               onBatchChange={setPending}

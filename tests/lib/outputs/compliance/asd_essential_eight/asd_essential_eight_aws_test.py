@@ -4,13 +4,13 @@ from unittest import mock
 from freezegun import freeze_time
 from mock import patch
 
-from prowler.lib.outputs.compliance.essential_eight.essential_eight_aws import (
-    EssentialEightAWS,
+from prowler.lib.outputs.compliance.asd_essential_eight.asd_essential_eight_aws import (
+    ASDEssentialEightAWS,
 )
-from prowler.lib.outputs.compliance.essential_eight.models import (
-    EssentialEightAWSModel,
+from prowler.lib.outputs.compliance.asd_essential_eight.models import (
+    ASDEssentialEightAWSModel,
 )
-from tests.lib.outputs.compliance.fixtures import ESSENTIAL_EIGHT_AWS
+from tests.lib.outputs.compliance.fixtures import ASD_ESSENTIAL_EIGHT_AWS
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
@@ -18,26 +18,26 @@ from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 # clause 8: removal of unsupported online services). The second Requirement is
 # E8-6.1 (Restrict Office macros, clause 1) which has no Checks and is therefore
 # emitted as a manual row.
-COMPLIANCE_NAME = "Essential-Eight-Nov 2023"
+COMPLIANCE_NAME = "ASD-Essential-Eight-Nov 2023"
 
 
-class TestEssentialEightAWS:
+class TestASDEssentialEightAWS:
     def test_output_transform(self):
         findings = [generate_finding_output(compliance={COMPLIANCE_NAME: "E8-1.8"})]
 
-        output = EssentialEightAWS(findings, ESSENTIAL_EIGHT_AWS)
+        output = ASDEssentialEightAWS(findings, ASD_ESSENTIAL_EIGHT_AWS)
         output_data = output.data[0]
-        assert isinstance(output_data, EssentialEightAWSModel)
+        assert isinstance(output_data, ASDEssentialEightAWSModel)
         assert output_data.Provider == "aws"
-        assert output_data.Framework == ESSENTIAL_EIGHT_AWS.Framework
-        assert output_data.Name == ESSENTIAL_EIGHT_AWS.Name
-        assert output_data.Description == ESSENTIAL_EIGHT_AWS.Description
+        assert output_data.Framework == ASD_ESSENTIAL_EIGHT_AWS.Framework
+        assert output_data.Name == ASD_ESSENTIAL_EIGHT_AWS.Name
+        assert output_data.Description == ASD_ESSENTIAL_EIGHT_AWS.Description
         assert output_data.AccountId == AWS_ACCOUNT_NUMBER
         assert output_data.Region == AWS_REGION_EU_WEST_1
         assert output_data.Requirements_Id == "E8-1.8"
         assert (
             output_data.Requirements_Description
-            == ESSENTIAL_EIGHT_AWS.Requirements[0].Description
+            == ASD_ESSENTIAL_EIGHT_AWS.Requirements[0].Description
         )
         assert output_data.Requirements_Attributes_Section == "1 Patch applications"
         assert output_data.Requirements_Attributes_MaturityLevel == "ML1"
@@ -49,7 +49,7 @@ class TestEssentialEightAWS:
         )
         assert (
             output_data.Requirements_Attributes_Description
-            == ESSENTIAL_EIGHT_AWS.Requirements[0].Attributes[0].Description
+            == ASD_ESSENTIAL_EIGHT_AWS.Requirements[0].Attributes[0].Description
         )
         assert output_data.Status == "PASS"
         assert output_data.StatusExtended == ""
@@ -60,7 +60,7 @@ class TestEssentialEightAWS:
 
     def test_manual_requirement(self):
         findings = [generate_finding_output(compliance={COMPLIANCE_NAME: "E8-1.8"})]
-        output = EssentialEightAWS(findings, ESSENTIAL_EIGHT_AWS)
+        output = ASDEssentialEightAWS(findings, ASD_ESSENTIAL_EIGHT_AWS)
 
         # E8-6.1 (macros) has no Checks -> emitted as a manual row, non-applicable
         manual_rows = [row for row in output.data if row.Status == "MANUAL"]
@@ -90,13 +90,13 @@ class TestEssentialEightAWS:
 
     @freeze_time("2025-01-01 00:00:00")
     @mock.patch(
-        "prowler.lib.outputs.compliance.essential_eight.essential_eight_aws.timestamp",
+        "prowler.lib.outputs.compliance.asd_essential_eight.asd_essential_eight_aws.timestamp",
         "2025-01-01 00:00:00",
     )
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [generate_finding_output(compliance={COMPLIANCE_NAME: "E8-1.8"})]
-        output = EssentialEightAWS(findings, ESSENTIAL_EIGHT_AWS)
+        output = ASDEssentialEightAWS(findings, ASD_ESSENTIAL_EIGHT_AWS)
         output._file_descriptor = mock_file
 
         with patch.object(mock_file, "close", return_value=None):

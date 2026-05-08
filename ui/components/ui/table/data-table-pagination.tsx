@@ -28,13 +28,14 @@ interface DataTablePaginationProps {
   paramPrefix?: string;
 
   /*
-   * Controlled mode: receive all three props together (parent contract is
-   * enforced at the DataTable boundary). Useful for tables in drawers/modals
-   * to avoid triggering page re-renders when paginating.
+   * Controlled mode: Use these props to manage pagination via React state
+   * instead of URL params. Useful for tables in drawers/modals to avoid
+   * triggering page re-renders when paginating.
    */
   controlledPage?: number;
   controlledPageSize?: number;
-  onPaginationChange?: (page: number, pageSize: number) => void;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (pageSize: number) => void;
 }
 
 const NAV_BUTTON_STYLES = {
@@ -50,26 +51,22 @@ export function DataTablePagination({
   paramPrefix = "",
   controlledPage,
   controlledPageSize,
-  onPaginationChange,
+  onPageChange,
+  onPageSizeChange,
 }: DataTablePaginationProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Determine if we're in controlled mode. The discriminated union on
-  // `DataTable`'s ControlledPaginationProps guarantees `controlledPageSize`
-  // is defined here whenever the other two are.
-  const isControlled =
-    controlledPage !== undefined &&
-    controlledPageSize !== undefined &&
-    onPaginationChange !== undefined;
+  // Determine if we're in controlled mode
+  const isControlled = controlledPage !== undefined && onPageChange;
 
   // Determine param names based on prefix
   const pageParam = paramPrefix ? `${paramPrefix}Page` : "page";
   const pageSizeParam = paramPrefix ? `${paramPrefix}PageSize` : "pageSize";
 
   const initialPageSize = isControlled
-    ? String(controlledPageSize)
+    ? String(controlledPageSize ?? 10)
     : (searchParams.get(pageSizeParam) ?? "10");
 
   const [selectedPageSize, setSelectedPageSize] = useState(initialPageSize);
@@ -115,7 +112,7 @@ export function DataTablePagination({
   // Handle page navigation for controlled mode
   const handlePageChange = (pageNumber: number) => {
     if (isControlled) {
-      onPaginationChange(pageNumber, controlledPageSize);
+      onPageChange(pageNumber);
     } else {
       const url = createPageUrl(pageNumber);
       if (disableScroll) {
@@ -144,7 +141,8 @@ export function DataTablePagination({
                 setSelectedPageSize(value);
 
                 if (isControlled) {
-                  onPaginationChange(1, parseInt(value, 10));
+                  onPageSizeChange?.(parseInt(value, 10));
+                  onPageChange(1); // Reset to first page
                   return;
                 }
 
