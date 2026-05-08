@@ -11,7 +11,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.25.3] (Prowler UNRELEASED)
+## [1.25.3] (Prowler v5.25.3)
 
 ### 🐞 Fixed
 
