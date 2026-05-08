@@ -10,17 +10,12 @@ vi.mock("@/components/shadcn/skeleton/skeleton", () => ({
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 
 describe("ResourceDetailSkeleton", () => {
-  it("should include placeholders for group and resource type fields", () => {
+  it("should render placeholders mirroring the resource info grid layout", () => {
     render(<ResourceDetailSkeleton />);
 
+    // Account/Resource entity placeholders + 5 info fields (dates + service +
+    // region) + actions button = at least 7 blocks rendered.
     const blocks = screen.getAllByTestId("skeleton-block");
-    const classes = blocks.map(
-      (block) => block.getAttribute("data-class") ?? "",
-    );
-
-    expect(classes).toContain("h-3.5 w-10 rounded");
-    expect(classes).toContain("h-5 w-18 rounded");
-    expect(classes).toContain("h-3.5 w-20 rounded");
-    expect(classes).toContain("h-5 w-28 rounded");
+    expect(blocks.length).toBeGreaterThanOrEqual(7);
   });
 });

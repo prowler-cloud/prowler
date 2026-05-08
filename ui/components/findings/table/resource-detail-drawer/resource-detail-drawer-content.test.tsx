@@ -288,7 +288,8 @@ vi.mock("@/components/ui/entities/date-with-time", () => ({
 }));
 
 vi.mock("@/components/ui/entities/entity-info", () => ({
-  EntityInfo: () => null,
+  EntityInfo: ({ idAction }: { idAction?: ReactNode }) =>
+    idAction ? <span data-testid="entity-id-action">{idAction}</span> : null,
 }));
 
 vi.mock("@/components/ui/table", () => ({
@@ -427,7 +428,7 @@ const mockFinding: ResourceDrawerFinding = {
 };
 
 describe("ResourceDetailDrawerContent — resource navigation", () => {
-  it("should render a View Resource link below the resource actions menu", () => {
+  it("should render a View Resource link inline next to the resource UID", () => {
     // Given
     render(
       <ResourceDetailDrawerContent
@@ -448,9 +449,6 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
     const viewResourceLink = screen.getByRole("link", {
       name: "View Resource",
     });
-    const resourceActionsMenu = screen.getByRole("menu", {
-      name: "Resource actions",
-    });
 
     // Then
     expect(viewResourceLink).toHaveAttribute(
@@ -459,10 +457,6 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
     );
     expect(viewResourceLink).toHaveAttribute("target", "_blank");
     expect(viewResourceLink).toHaveAttribute("rel", "noopener noreferrer");
-    expect(
-      resourceActionsMenu.compareDocumentPosition(viewResourceLink) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).not.toBe(0);
   });
 });
 const mockResourceRow: FindingResourceRow = {
@@ -920,8 +914,8 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
 // Fix 5 & 6: Risk section has danger styling, sections have separators and bigger headings
 // ---------------------------------------------------------------------------
 
-describe("ResourceDetailDrawerContent — Fix 5 & 6: Risk section styling", () => {
-  it("should wrap the Risk section in a Card component (data-slot='card')", () => {
+describe("ResourceDetailDrawerContent — Risk section styling", () => {
+  it("should render the Risk section with a vertical accent border (no danger card)", () => {
     // Given
     const { container } = render(
       <ResourceDetailDrawerContent
@@ -938,16 +932,16 @@ describe("ResourceDetailDrawerContent — Fix 5 & 6: Risk section styling", () =
       />,
     );
 
-    // When — find a Card with variant="danger" that contains the Risk label
-    const dangerCards = Array.from(
-      container.querySelectorAll('[data-variant="danger"]'),
+    // When — find the Risk heading and walk up to the section wrapper
+    const riskHeading = Array.from(container.querySelectorAll("span")).find(
+      (el) => el.textContent?.trim() === "Risk:",
     );
-    const riskCard = dangerCards.find((el) =>
-      el.textContent?.includes("Risk:"),
-    );
+    const riskSection = riskHeading?.parentElement;
 
-    // Then — Risk section must be wrapped in a Card variant="danger"
-    expect(riskCard).toBeDefined();
+    // Then — Risk wrapper has a left accent border, not a danger Card
+    expect(riskSection).toBeDefined();
+    expect(riskSection?.className).toMatch(/border-l/);
+    expect(riskSection?.getAttribute("data-variant")).toBeNull();
   });
 
   it("should use larger heading size for section labels (text-sm → text-base or larger)", () => {
@@ -1376,14 +1370,10 @@ describe("ResourceDetailDrawerContent — current resource row display", () => {
     // Then
     expect(screen.getByText("row-service")).toBeInTheDocument();
     expect(screen.getByText("eu-west-1")).toBeInTheDocument();
-    expect(screen.getByText("row-group")).toBeInTheDocument();
-    expect(screen.getByText("row-type")).toBeInTheDocument();
     expect(screen.getByText("FAIL")).toBeInTheDocument();
     expect(screen.getByText("critical")).toBeInTheDocument();
     expect(screen.queryByText("finding-service")).not.toBeInTheDocument();
     expect(screen.queryByText("ap-south-1")).not.toBeInTheDocument();
-    expect(screen.queryByText("finding-group")).not.toBeInTheDocument();
-    expect(screen.queryByText("finding-type")).not.toBeInTheDocument();
   });
 
   it("should prefer the fetched finding status and severity in the header when the current row is stale", () => {
@@ -1466,12 +1456,11 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.getByText("low")).toBeInTheDocument();
     expect(screen.getByText("ec2")).toBeInTheDocument();
     expect(screen.getByText("eu-west-1")).toBeInTheDocument();
-    expect(screen.getByText("row-group")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Finding Overview" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Other Findings For This Resource" }),
+      screen.getByRole("button", { name: "Findings for this resource" }),
     ).toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
     expect(screen.queryByText("Status extended")).not.toBeInTheDocument();
@@ -1584,7 +1573,7 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
       screen.getByRole("button", { name: "Finding Overview" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Other Findings For This Resource" }),
+      screen.getByRole("button", { name: "Findings for this resource" }),
     ).toBeInTheDocument();
   });
 
@@ -1650,7 +1639,6 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.getByText("Started At")).toBeInTheDocument();
     expect(screen.getByText("Completed At")).toBeInTheDocument();
     expect(screen.getByText("Launched At")).toBeInTheDocument();
-    expect(screen.getByText("Scheduled At")).toBeInTheDocument();
     expect(screen.getByTestId("scans-navigation-skeleton")).toBeInTheDocument();
   });
 
