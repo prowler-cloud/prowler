@@ -76,6 +76,7 @@ class Provider(str, Enum):
     OPENSTACK = "openstack"
     IMAGE = "image"
     VERCEL = "vercel"
+    OKTA = "okta"
 
 
 # Compliance

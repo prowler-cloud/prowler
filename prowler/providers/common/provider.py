@@ -403,6 +403,22 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "okta" in provider_class_name.lower():
+                    provider_class(
+                        okta_org_url=getattr(arguments, "okta_org_url", "") or "",
+                        okta_client_id=getattr(arguments, "okta_client_id", "") or "",
+                        okta_private_key=getattr(arguments, "okta_private_key", "")
+                        or "",
+                        okta_private_key_file=getattr(
+                            arguments, "okta_private_key_file", ""
+                        )
+                        or "",
+                        okta_scopes=getattr(arguments, "okta_scopes", "") or "",
+                        okta_kid=getattr(arguments, "okta_kid", "") or "",
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(
