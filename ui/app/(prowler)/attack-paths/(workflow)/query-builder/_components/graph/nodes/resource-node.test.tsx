@@ -1,13 +1,15 @@
 import { render, screen } from "@testing-library/react";
-import { type NodeProps } from "@xyflow/react";
+import { type NodeProps, Position } from "@xyflow/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { GraphNode } from "@/types/attack-paths";
 
 import { ResourceNode } from "./resource-node";
 
+const hiddenHandlesMock = vi.hoisted(() => vi.fn(() => null));
+
 vi.mock("./hidden-handles", () => ({
-  HiddenHandles: () => null,
+  HiddenHandles: hiddenHandlesMock,
 }));
 
 const buildGraphNode = (label: string, name: string): GraphNode => ({
@@ -30,6 +32,23 @@ const buildNodeProps = (graphNode: GraphNode): NodeProps =>
   }) as unknown as NodeProps;
 
 describe("ResourceNode", () => {
+  it("positions graph handles for vertical top-to-bottom edges", () => {
+    // Given
+    const props = buildNodeProps(buildGraphNode("S3Bucket", "logs"));
+
+    // When
+    render(<ResourceNode {...props} />);
+
+    // Then
+    expect(hiddenHandlesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourcePosition: Position.Bottom,
+        targetPosition: Position.Top,
+      }),
+      undefined,
+    );
+  });
+
   describe("node visual icons", () => {
     it("should render the S3 bucket icon with the resource label", () => {
       // Given

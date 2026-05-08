@@ -1,13 +1,15 @@
 import { render, screen } from "@testing-library/react";
-import { type NodeProps } from "@xyflow/react";
+import { type NodeProps, Position } from "@xyflow/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { GraphNode } from "@/types/attack-paths";
 
 import { FindingNode } from "./finding-node";
 
+const hiddenHandlesMock = vi.hoisted(() => vi.fn(() => null));
+
 vi.mock("./hidden-handles", () => ({
-  HiddenHandles: () => null,
+  HiddenHandles: hiddenHandlesMock,
 }));
 
 const buildFindingNode = (severity: string, title: string): GraphNode => ({
@@ -30,6 +32,25 @@ const buildNodeProps = (graphNode: GraphNode): NodeProps =>
   }) as unknown as NodeProps;
 
 describe("FindingNode", () => {
+  it("positions graph handles for vertical top-to-bottom edges", () => {
+    // Given
+    const props = buildNodeProps(
+      buildFindingNode("critical", "Root key exposed"),
+    );
+
+    // When
+    render(<FindingNode {...props} />);
+
+    // Then
+    expect(hiddenHandlesMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourcePosition: Position.Bottom,
+        targetPosition: Position.Top,
+      }),
+      undefined,
+    );
+  });
+
   describe("severity visuals", () => {
     it("should render the critical finding risk icon with readable text", () => {
       // Given

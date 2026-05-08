@@ -295,7 +295,39 @@ export class AttackPathPageHarness {
 
   // --- Action methods ---
 
+  private async clickGraphElement(element: HTMLElement): Promise<void> {
+    await this.closeFindingDrawerIfOpen();
+    // React Flow nodes can be visually reachable while the surrounding scroll
+    // container or overlay intercepts browser-mode pointer events in large
+    // graphs. Use a bubbling DOM click so the component's onClick path is still
+    // exercised without depending on viewport scroll physics.
+    element.click();
+  }
+
+  async closeFindingDrawerIfOpen(): Promise<void> {
+    const drawer = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="dialog"]'),
+    ).find((dialog) =>
+      /resource finding details|finding overview/i.test(
+        dialog.textContent ?? "",
+      ),
+    );
+
+    if (!drawer) return;
+
+    const closeButton = Array.from(
+      drawer.querySelectorAll<HTMLButtonElement>("button"),
+    ).find((button) => /^close$/i.test(button.textContent?.trim() ?? ""));
+
+    if (closeButton) {
+      closeButton.click();
+      await this.waitForTransition();
+    }
+  }
+
   async selectQuery(queryId?: string): Promise<void> {
+    await this.closeFindingDrawerIfOpen();
+
     const trigger = await this.waitFor<HTMLButtonElement>(
       () =>
         this.container.querySelector<HTMLButtonElement>(
@@ -347,14 +379,14 @@ export class AttackPathPageHarness {
   async clickNode(nodeId: string): Promise<void> {
     const el = this.getNodeById(nodeId);
     if (!el) throw new Error(`clickNode: node "${nodeId}" not found`);
-    await this.user.click(el);
+    await this.clickGraphElement(el);
     await this.waitForTransition();
   }
 
   async clickFirstFindingNode(): Promise<HTMLElement> {
     const [finding] = this.findingNodes;
     if (!finding) throw new Error("clickFirstFindingNode: no finding rendered");
-    await this.user.click(finding);
+    await this.clickGraphElement(finding);
     await this.waitForTransition();
     return finding;
   }
@@ -363,7 +395,7 @@ export class AttackPathPageHarness {
     const [resource] = this.resourceNodes;
     if (!resource)
       throw new Error("clickFirstResourceNode: no resource rendered");
-    await this.user.click(resource);
+    await this.clickGraphElement(resource);
     await this.waitForTransition();
     return resource;
   }
@@ -390,7 +422,7 @@ export class AttackPathPageHarness {
         "clickFirstResourceNodeWithoutFindings: no resource without findings rendered",
       );
     }
-    await this.user.click(resource);
+    await this.clickGraphElement(resource);
     await this.waitForTransition();
     return resource;
   }
@@ -404,7 +436,7 @@ export class AttackPathPageHarness {
     if (!finding)
       throw new Error("rapidlyClickFirstFindingNode: no finding rendered");
     for (let i = 0; i < times; i++) {
-      await this.user.click(finding);
+      finding.click();
     }
     await this.waitForTransition();
     return finding;
@@ -513,7 +545,7 @@ export class AttackPathPageHarness {
       document.querySelectorAll<HTMLButtonElement>("button"),
     ).find((btn) => /show findings/i.test(btn.textContent ?? ""));
     if (!button) throw new Error("chooseShowFindingsAction: button not found");
-    await this.user.click(button);
+    button.click();
     await this.waitForTransition();
   }
 
@@ -522,7 +554,7 @@ export class AttackPathPageHarness {
       document.querySelectorAll<HTMLButtonElement>("button"),
     ).find((btn) => /hide findings/i.test(btn.textContent ?? ""));
     if (!button) throw new Error("chooseHideFindingsAction: button not found");
-    await this.user.click(button);
+    button.click();
     await this.waitForTransition();
   }
 
@@ -532,7 +564,7 @@ export class AttackPathPageHarness {
     ).find((btn) => /view node details/i.test(btn.textContent ?? ""));
     if (!button)
       throw new Error("chooseViewNodeDetailsAction: button not found");
-    await this.user.click(button);
+    button.click();
     await this.waitForTransition();
   }
 
@@ -542,14 +574,16 @@ export class AttackPathPageHarness {
     ).find((btn) => /back to full graph/i.test(btn.textContent ?? ""));
     if (!button)
       throw new Error("chooseBackToFullGraphAction: button not found");
-    await this.user.click(button);
+    button.click();
     await this.waitForTransition();
   }
 
   async exitFilteredView(): Promise<void> {
+    await this.closeFindingDrawerIfOpen();
+
     const btn = this.toolbar.backToFullViewButton;
     if (!btn) throw new Error("exitFilteredView: not in filtered view");
-    await this.user.click(btn);
+    btn.click();
     await this.waitForTransition();
   }
 

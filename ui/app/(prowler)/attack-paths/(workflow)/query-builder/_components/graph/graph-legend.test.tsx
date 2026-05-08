@@ -74,6 +74,12 @@ describe("GraphLegend", () => {
     expect(screen.getByText("Normal edge")).toBeInTheDocument();
     expect(screen.getByText("Finding edge")).toBeInTheDocument();
     expect(screen.getByText("Highlighted path")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", {
+        name: /highlighted path: prowler green path/i,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/orange path/i)).not.toBeInTheDocument();
 
     expect(screen.queryByText(/ctrl/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/scroll to zoom/i)).not.toBeInTheDocument();
