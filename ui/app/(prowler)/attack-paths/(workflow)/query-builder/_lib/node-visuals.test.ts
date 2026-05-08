@@ -4,6 +4,7 @@ import {
   Braces,
   CircleAlert,
   FileKey2,
+  Globe2,
   Info,
   KeyRound,
   Route,
@@ -11,7 +12,9 @@ import {
   Shield,
   ShieldCheck,
   Siren,
+  Tags,
   UserCog,
+  Users,
   Waypoints,
 } from "lucide-react";
 import { describe, expect, it } from "vitest";
@@ -24,9 +27,11 @@ import {
 } from "@/components/icons/providers-badge";
 import {
   AmazonEC2Icon,
+  AmazonRDSIcon,
   AmazonS3Icon,
   AmazonVPCIcon,
   AWSIAMIcon,
+  AWSLambdaIcon,
 } from "@/components/icons/services/IconServices";
 import type { GraphNode } from "@/types/attack-paths";
 
@@ -321,6 +326,130 @@ describe("resolveNodeVisual", () => {
           fallbackUsed: false,
         });
         expect(visual.Icon).toBe(identityNode.Icon);
+      }
+    });
+
+    it("should resolve all AWS labels used by predefined Attack Paths queries", () => {
+      // Given
+      const awsQueryNodes = [
+        {
+          label: "AWSTag",
+          category: NODE_CATEGORY.MISC,
+          description: "AWS Tag",
+          Icon: Tags,
+        },
+        {
+          label: "EC2SecurityGroup",
+          category: NODE_CATEGORY.NETWORK,
+          description: "EC2 Security Group",
+          Icon: Shield,
+        },
+        {
+          label: "IpPermissionInbound",
+          category: NODE_CATEGORY.NETWORK,
+          description: "Inbound IP Permission",
+          Icon: Shield,
+        },
+        {
+          label: "IpRange",
+          category: NODE_CATEGORY.NETWORK,
+          description: "IP Range",
+          Icon: Globe2,
+        },
+        {
+          label: "AWSPrincipal",
+          category: NODE_CATEGORY.IDENTITY,
+          description: "AWS Principal",
+          Icon: ShieldCheck,
+        },
+        {
+          label: "AWSGroup",
+          category: NODE_CATEGORY.IDENTITY,
+          description: "AWS Group",
+          Icon: Users,
+        },
+        {
+          label: "RDSInstance",
+          category: NODE_CATEGORY.STORAGE,
+          description: "RDS Instance",
+          Icon: AmazonRDSIcon,
+        },
+        {
+          label: "LoadBalancer",
+          category: NODE_CATEGORY.NETWORK,
+          description: "Load Balancer",
+          Icon: Route,
+        },
+        {
+          label: "ELBListener",
+          category: NODE_CATEGORY.NETWORK,
+          description: "ELB Listener",
+          Icon: Route,
+        },
+        {
+          label: "LoadBalancerV2",
+          category: NODE_CATEGORY.NETWORK,
+          description: "Load Balancer V2",
+          Icon: Route,
+        },
+        {
+          label: "ELBV2Listener",
+          category: NODE_CATEGORY.NETWORK,
+          description: "ELB V2 Listener",
+          Icon: Route,
+        },
+        {
+          label: "ElasticIPAddress",
+          category: NODE_CATEGORY.NETWORK,
+          description: "Elastic IP Address",
+          Icon: Globe2,
+        },
+        {
+          label: "EC2PrivateIp",
+          category: NODE_CATEGORY.NETWORK,
+          description: "EC2 Private IP",
+          Icon: Waypoints,
+        },
+        {
+          label: "NetworkInterface",
+          category: NODE_CATEGORY.NETWORK,
+          description: "Network Interface",
+          Icon: Waypoints,
+        },
+        {
+          label: "LaunchTemplate",
+          category: NODE_CATEGORY.COMPUTE,
+          description: "Launch Template",
+          Icon: Server,
+        },
+        {
+          label: "AWSLambda",
+          category: NODE_CATEGORY.COMPUTE,
+          description: "AWS Lambda",
+          Icon: AWSLambdaIcon,
+        },
+        {
+          label: "AWSSageMakerNotebookInstance",
+          category: NODE_CATEGORY.COMPUTE,
+          description: "SageMaker Notebook Instance",
+          Icon: Bot,
+        },
+      ];
+
+      for (const awsQueryNode of awsQueryNodes) {
+        // When
+        const visual = resolveNodeVisual(
+          buildNode([awsQueryNode.label], { name: awsQueryNode.description }),
+        );
+
+        // Then
+        expect(visual).toMatchObject({
+          category: awsQueryNode.category,
+          displayName: awsQueryNode.description,
+          description: awsQueryNode.description,
+          fallbackUsed: false,
+        });
+        expect(visual.Icon).toBe(awsQueryNode.Icon);
       }
     });
   });

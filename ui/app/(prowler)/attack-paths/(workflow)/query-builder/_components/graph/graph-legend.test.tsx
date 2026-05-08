@@ -24,21 +24,28 @@ const graphData: AttackPathGraphData = {
       properties: { check_title: "Public bucket", severity: "critical" },
     },
   ],
+  relationships: [
+    { id: "r1", source: "aws-account", target: "bucket", label: "HAS" },
+    { id: "r2", source: "bucket", target: "vpc", label: "CAN_ACCESS" },
+    { id: "r3", source: "bucket", target: "finding", label: "HAS_FINDING" },
+  ],
 };
 
 describe("GraphLegend", () => {
-  it("should explain graph visuals by semantic groups instead of repeating node labels", () => {
+  it("should explain concrete visible node types without generic categories", () => {
     // Given - A graph with provider, resource, and finding nodes
 
     // When
-    render(<GraphLegend data={graphData} />);
+    render(
+      <GraphLegend data={graphData} expandedResources={new Set(["bucket"])} />,
+    );
 
     // Then
     expect(
       screen.getByRole("heading", { name: /provider roots/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /resource categories/i }),
+      screen.getByRole("heading", { name: /node types/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: /findings by risk/i }),
@@ -49,16 +56,18 @@ describe("GraphLegend", () => {
     expect(screen.getByRole("heading", { name: /edges/i })).toBeInTheDocument();
 
     expect(screen.getByText("Provider / account root")).toBeInTheDocument();
-    expect(screen.getByText("Storage")).toBeInTheDocument();
-    expect(screen.getByText("Network")).toBeInTheDocument();
-    expect(screen.getByText("Compute")).toBeInTheDocument();
-    expect(screen.getByText("Identity")).toBeInTheDocument();
-    expect(screen.getByText("Secret / misc")).toBeInTheDocument();
+    expect(screen.getByText("S3 Bucket")).toBeInTheDocument();
+    expect(screen.getByText("VPC")).toBeInTheDocument();
+    expect(screen.queryByText("Storage")).not.toBeInTheDocument();
+    expect(screen.queryByText("Network")).not.toBeInTheDocument();
+    expect(screen.queryByText("Compute")).not.toBeInTheDocument();
+    expect(screen.queryByText("Identity")).not.toBeInTheDocument();
+    expect(screen.queryByText("Secret / misc")).not.toBeInTheDocument();
 
     expect(screen.getByText("Critical")).toBeInTheDocument();
-    expect(screen.getByText("High")).toBeInTheDocument();
-    expect(screen.getByText("Medium")).toBeInTheDocument();
-    expect(screen.getByText("Low / Info")).toBeInTheDocument();
+    expect(screen.queryByText("High")).not.toBeInTheDocument();
+    expect(screen.queryByText("Medium")).not.toBeInTheDocument();
+    expect(screen.queryByText("Low / Info")).not.toBeInTheDocument();
 
     expect(screen.getByText("Selected node")).toBeInTheDocument();
     expect(screen.getByText("Node with findings")).toBeInTheDocument();
@@ -66,10 +75,64 @@ describe("GraphLegend", () => {
     expect(screen.getByText("Finding edge")).toBeInTheDocument();
     expect(screen.getByText("Highlighted path")).toBeInTheDocument();
 
-    expect(screen.queryByText("S3 Bucket")).not.toBeInTheDocument();
-    expect(screen.queryByText("VPC")).not.toBeInTheDocument();
     expect(screen.queryByText(/ctrl/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/scroll to zoom/i)).not.toBeInTheDocument();
+  });
+
+  it("should hide finding legend items when finding nodes are hidden", () => {
+    // Given - A resource has related findings, but it is not expanded yet
+
+    // When
+    render(<GraphLegend data={graphData} />);
+
+    // Then
+    expect(
+      screen.queryByRole("heading", { name: /findings by risk/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Finding edge")).not.toBeInTheDocument();
+    expect(screen.getByText("Node with findings")).toBeInTheDocument();
+  });
+
+  it("should list policy and role node types separately", () => {
+    // Given - A graph whose visible nodes are all identity-related, but distinct
+    const identityGraphData: AttackPathGraphData = {
+      nodes: [
+        {
+          id: "aws-account",
+          labels: ["AWSAccount"],
+          properties: { name: "Production" },
+        },
+        {
+          id: "role",
+          labels: ["PermissionRole"],
+          properties: { name: "prowler-pro-dev-gha-role" },
+        },
+        {
+          id: "policy",
+          labels: ["AWSPolicy"],
+          properties: { name: "IAMPermissions" },
+        },
+        {
+          id: "statement",
+          labels: ["AWSPolicyStatement"],
+          properties: { name: "policy statement" },
+        },
+      ],
+      relationships: [
+        { id: "r1", source: "aws-account", target: "role", label: "HAS" },
+        { id: "r2", source: "role", target: "policy", label: "HAS" },
+        { id: "r3", source: "policy", target: "statement", label: "HAS" },
+      ],
+    };
+
+    // When
+    render(<GraphLegend data={identityGraphData} />);
+
+    // Then
+    expect(screen.getByText("Permission Role")).toBeInTheDocument();
+    expect(screen.getByText("AWS Policy")).toBeInTheDocument();
+    expect(screen.getByText("AWS Policy Statement")).toBeInTheDocument();
+    expect(screen.queryByText("Identity")).not.toBeInTheDocument();
   });
 
   it("should stay hidden until graph nodes are available", () => {
