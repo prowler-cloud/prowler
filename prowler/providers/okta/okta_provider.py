@@ -271,11 +271,15 @@ class OktaProvider(Provider):
                 "clientId": session.client_id,
                 "scopes": session.scopes,
                 "privateKey": session.private_key,
+                # Send DPoP proofs on every token request. Required by tenants
+                # that enable "Demonstrating Proof of Possession" on the
+                # service app (or org-wide); harmless on tenants that don't.
+                "dpopEnabled": True,
             }
             if session.kid:
                 config["kid"] = session.kid
             client = OktaSDKClient(config)
-            return await client.list_policies(type="OKTA_SIGN_ON", limit=1)
+            return await client.list_policies(type="OKTA_SIGN_ON", limit="1")
 
         try:
             result = asyncio.run(_probe())

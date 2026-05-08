@@ -74,13 +74,17 @@ class Signon(OktaService):
         return result
 
     async def _fetch_rules(self, policy_id: str) -> list:
+        # Okta's `list_policy_rules` endpoint does not expose an `after`
+        # cursor in the SDK signature, so we call once with a generous
+        # `limit`. Tenants with more rules per policy than the limit would
+        # silently truncate; this is rare (most policies have <10 rules).
         rules_out: list[GlobalSessionPolicyRule] = []
-        all_rules, err = await self._paginate(
-            lambda after: self.client.list_policy_rules(policy_id, after=after)
-        )
+        result = await self.client.list_policy_rules(policy_id, limit="100")
+        err = result[-1]
         if err is not None:
             logger.error(f"Error listing rules for policy {policy_id}: {err}")
             return rules_out
+        all_rules = list(result[0] or [])
 
         for rule in all_rules:
             actions = getattr(rule, "actions", None)

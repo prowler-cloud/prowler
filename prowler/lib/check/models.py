@@ -940,6 +940,7 @@ class CheckReportOkta(Check_Report):
     resource_name: str
     resource_id: str
     org_url: str
+    region: str
 
     def __init__(
         self,
@@ -948,6 +949,7 @@ class CheckReportOkta(Check_Report):
         resource_name: str = None,
         resource_id: str = None,
         org_url: str = None,
+        region: str = "global",
     ) -> None:
         """Initialize the Okta Check's finding information.
 
@@ -957,11 +959,13 @@ class CheckReportOkta(Check_Report):
             resource_name: The name of the resource related with the finding.
             resource_id: The id of the resource related with the finding.
             org_url: The Okta organization URL related with the finding.
+            region: Always "global" — Okta has no regional concept.
         """
         super().__init__(metadata, resource)
         self.resource_name = resource_name or getattr(resource, "name", "")
         self.resource_id = resource_id or getattr(resource, "id", "")
         self.org_url = org_url or getattr(resource, "org_url", "")
+        self.region = region
 
 
 @dataclass

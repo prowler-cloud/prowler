@@ -29,6 +29,10 @@ class OktaService:
             "clientId": session.client_id,
             "scopes": session.scopes,
             "privateKey": session.private_key,
+            # Send DPoP proofs on every token request. Required by tenants
+            # that enable "Demonstrating Proof of Possession" on the service
+            # app (or org-wide); harmless on tenants that don't.
+            "dpopEnabled": True,
         }
         if session.kid:
             config["kid"] = session.kid
