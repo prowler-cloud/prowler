@@ -244,6 +244,34 @@ describe("exploring the graph", () => {
     expect(graph.hasNodeDetailsModal).toBe(false);
   });
 
+  test("choosing Show findings re-fits around the resource and its findings", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    const initialViewport = graph.viewportTransform;
+
+    await graph.clickFirstResourceNode();
+    await graph.chooseShowFindingsAction();
+
+    expect(graph.findingNodes.length).toBeGreaterThan(0);
+    await graph.waitFor(
+      () => graph.viewportTransform !== initialViewport,
+      2000,
+    );
+
+    const contextualViewport = graph.viewportTransform;
+
+    await graph.fit();
+
+    await graph.waitFor(
+      () => graph.viewportTransform !== contextualViewport,
+      2000,
+    );
+  });
+
   test("expanded resources offer Hide findings in the action selector", async ({
     mountWith,
   }) => {
@@ -263,6 +291,60 @@ describe("exploring the graph", () => {
     await graph.chooseHideFindingsAction();
 
     expect(graph.findingNodes.length).toBe(0);
+  });
+
+  test("choosing Hide findings re-fits the remaining visible graph", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    await graph.clickFirstResourceNode();
+    await graph.chooseShowFindingsAction();
+    expect(graph.findingNodes.length).toBeGreaterThan(0);
+    await graph.waitForTransition();
+
+    const expandedViewport = graph.viewportTransform;
+
+    await graph.clickFirstResourceNode();
+    await graph.chooseHideFindingsAction();
+
+    expect(graph.findingNodes.length).toBe(0);
+    await graph.waitFor(
+      () => graph.viewportTransform !== expandedViewport,
+      2000,
+    );
+  });
+
+  test("returning from a finding keeps the expanded findings context fitted", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.large(20));
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(16);
+
+    await graph.clickFirstResourceNode();
+    await graph.chooseShowFindingsAction();
+    expect(graph.findingNodes.length).toBeGreaterThan(0);
+    await graph.waitForTransition();
+
+    await graph.clickFirstFindingNode();
+    expect(graph.isInFilteredView).toBe(true);
+
+    await graph.exitFilteredView();
+
+    expect(graph.isInFilteredView).toBe(false);
+    await graph.waitForTransition();
+
+    const expandedContextViewport = graph.viewportTransform;
+
+    await graph.fit();
+
+    await graph.waitFor(
+      () => graph.viewportTransform !== expandedContextViewport,
+      2000,
+    );
   });
 
   test("choosing View node details opens node details in a modal", async ({
