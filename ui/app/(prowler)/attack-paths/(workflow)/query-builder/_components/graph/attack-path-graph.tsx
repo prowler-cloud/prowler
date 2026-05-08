@@ -97,7 +97,7 @@ const GRAPH_STYLES = `
 // --- SVG filter color constants ---
 
 const GRAPH_FINDING_GLOW_COLOR = "#ef4444";
-const GRAPH_SELECTED_GLOW_COLOR = "#f97316";
+const GRAPH_SELECTED_GLOW_COLOR = GRAPH_EDGE_HIGHLIGHT_COLOR;
 
 // --- SVG filter defs (shared by all node components) ---
 
@@ -122,7 +122,7 @@ const GraphDefs = () => (
           floodOpacity="0.6"
         />
       </filter>
-      {/* Orange glow for selected nodes */}
+      {/* Prowler green glow for selected nodes */}
       <filter id="selectedGlow">
         <feDropShadow
           dx="0"
@@ -442,9 +442,10 @@ const GraphCanvas = ({
   }
 
   // Path highlight: compute highlighted edge IDs
-  const highlightedEdgeIds = hoveredNodeId
+  const activeHighlightNodeId = hoveredNodeId ?? selectedNodeId;
+  const highlightedEdgeIds = activeHighlightNodeId
     ? getPathEdges(
-        hoveredNodeId,
+        activeHighlightNodeId,
         rfEdges.map((e) => ({ sourceId: e.source, targetId: e.target })),
       )
     : new Set<string>();

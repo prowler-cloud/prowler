@@ -4,7 +4,7 @@
  */
 
 import { Graph, layout as dagreLayout } from "@dagrejs/dagre";
-import type { Edge, Node } from "@xyflow/react";
+import { type Edge, type Node, Position } from "@xyflow/react";
 
 import type { GraphEdge, GraphNode } from "@/types/attack-paths";
 
@@ -65,7 +65,7 @@ export const layoutWithDagre = (
 ): { rfNodes: Node<NodeData>[]; rfEdges: Edge[] } => {
   const g = new Graph();
   g.setGraph({
-    rankdir: "LR",
+    rankdir: "TB",
     nodesep: 80,
     ranksep: 150,
     marginx: 50,
@@ -112,6 +112,8 @@ export const layoutWithDagre = (
         x: dagreNode.x - width / 2,
         y: dagreNode.y - height / 2,
       },
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Top,
       data: { graphNode: node },
       width,
       height,

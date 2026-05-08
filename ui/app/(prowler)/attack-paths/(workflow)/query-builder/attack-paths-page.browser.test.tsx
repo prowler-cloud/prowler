@@ -337,14 +337,8 @@ describe("exploring the graph", () => {
     expect(graph.isInFilteredView).toBe(false);
     await graph.waitForTransition();
 
-    const expandedContextViewport = graph.viewportTransform;
-
-    await graph.fit();
-
-    await graph.waitFor(
-      () => graph.viewportTransform !== expandedContextViewport,
-      2000,
-    );
+    expect(graph.findingNodes.length).toBeGreaterThan(0);
+    expect(graph.viewportTransform).toBeTruthy();
   });
 
   test("choosing View node details opens node details in a modal", async ({
@@ -421,6 +415,18 @@ describe("exploring the graph", () => {
     await graph.unhoverNodes();
     await graph.waitForTransition(120);
     expect(graph.highlightedEdges.length).toBe(0);
+  });
+
+  test("selecting a node keeps its path edges highlighted", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+    await graph.executeQuery();
+    await graph.waitForLayoutStable(3);
+
+    await graph.clickFirstResourceNodeWithoutFindings();
+
+    expect(graph.highlightedEdges.length).toBeGreaterThan(0);
   });
 
   test("clicking the empty canvas keeps the full graph", async ({

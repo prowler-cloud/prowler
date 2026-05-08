@@ -189,7 +189,8 @@ const edgeItems: LegendEdgeItem[] = [
   },
   {
     label: "Highlighted path",
-    description: "Orange path shown when hovering related graph nodes.",
+    description:
+      "Prowler green path shown when hovering or selecting related graph nodes.",
     variant: EDGE_VARIANT.HIGHLIGHTED,
   },
 ];
