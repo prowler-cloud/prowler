@@ -2,11 +2,11 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.25.3] (Prowler UNRELEASED)
+## [5.25.3] (Prowler v5.25.3)
 
 ### 🐞 Fixed
 
-- Oracle cloud identity scans now scan known or supplied regions to better support non ashburn tenancies [(#10529)](https://github.com/prowler-cloud/prowler/pull/10529)
+- Oracle Cloud identity scans known or supplied regions to better support non Ashburn tenancies [(#10529)](https://github.com/prowler-cloud/prowler/pull/10529)
 
 ---
 
