@@ -1,8 +1,6 @@
 ---
 name: skill-creator
-description: >
-  Creates new AI agent skills following the Agent Skills spec.
-  Trigger: When user asks to create a new skill, add agent instructions, or document patterns for AI.
+description: "Trigger: When user asks to create a new skill, add agent instructions, or document patterns for AI. Creates new AI agent skills following the Agent Skills spec."
 license: Apache-2.0
 metadata:
   author: prowler-cloud
@@ -12,160 +10,49 @@ metadata:
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
-## When to Create a Skill
+## Activation Contract
 
-Create a skill when:
-- A pattern is used repeatedly and AI needs guidance
-- Project-specific conventions differ from generic best practices
-- Complex workflows need step-by-step instructions
-- Decision trees help AI choose the right approach
+Use this skill when the task is to create a new skill or reshape rough agent guidance into a reusable skill package.
 
-**Don't create a skill when:**
-- Documentation already exists (create a reference instead)
-- Pattern is trivial or self-explanatory
-- It's a one-off task
+## Hard Rules
 
----
+- Create a skill only for reusable, non-trivial patterns.
+- Keep `description` on one quoted physical line with `Trigger:` first.
+- Use local references only; never point `references/` at web URLs.
+- Prefer short rules, decision tables, and minimal examples over tutorials.
+- Add `metadata.scope` and `metadata.auto_invoke` when the skill should surface in `AGENTS.md` auto-invoke tables.
+- Do not duplicate long docs inside the skill; point to local references instead.
 
-## Skill Structure
+## Decision Gates
 
-```
-skills/{skill-name}/
-├── SKILL.md              # Required - main skill file
-├── assets/               # Optional - templates, schemas, examples
-│   ├── template.py
-│   └── schema.json
-└── references/           # Optional - links to local docs
-    └── docs.md           # Points to docs/developer-guide/*.mdx
-```
+| Question | Action |
+|---|---|
+| Is the pattern already documented well enough? | Reuse or reference the existing doc instead of creating a new skill. |
+| Is the guidance specific to this repo or workflow? | Create a project-specific skill name such as `prowler-{component}` or `{action}-{target}`. |
+| Do you need templates, schemas, or example configs? | Put them in `assets/`. |
+| Do you need supporting documentation? | Link only local files from `references/`. |
+| Will the skill be auto-invoked from `AGENTS.md`? | Add or update `metadata.scope` and `metadata.auto_invoke`, then decide whether `skill-sync` must run. |
 
----
+## Execution Steps
 
-## SKILL.md Template
+1. Confirm the skill does not already exist under `skills/`.
+2. Choose a reusable name that matches the repo naming conventions.
+3. Create `skills/{skill-name}/SKILL.md` and required support folders only if needed (`assets/`, `references/`).
+4. Write frontmatter with `name`, one-line quoted `description`, `license`, and metadata.
+5. Write the body in this order: Activation Contract, Hard Rules, Decision Gates, Execution Steps, Output Contract, References.
+6. Keep the body compact: operational instructions first, examples only when they unblock execution.
+7. If auto-invoke metadata changed, run the `skill-sync` workflow appropriate to the scope.
+8. Update any non-generated skill index entries the repository expects.
 
-```markdown
----
-name: {skill-name}
-description: >
-  {One-line description of what this skill does}.
-  Trigger: {When the AI should load this skill}.
-license: Apache-2.0
-metadata:
-  author: prowler-cloud
-  version: "1.0"
----
+## Output Contract
 
-## When to Use
+- Return the created or updated skill path(s).
+- State whether auto-invoke metadata changed and whether `skill-sync` was run, dry-run, or intentionally skipped.
+- Summarize the reusable pattern the skill captures in 1-3 bullets.
+- Call out any follow-up files the human should review, such as `AGENTS.md` or assets/templates.
 
-{Bullet points of when to use this skill}
+## References
 
-## Critical Patterns
-
-{The most important rules - what AI MUST know}
-
-## Code Examples
-
-{Minimal, focused examples}
-
-## Commands
-
-```bash
-{Common commands}
-```
-
-## Resources
-
-- **Templates**: See [assets/](assets/) for {description}
-- **Documentation**: See [references/](references/) for local docs
-```
-
----
-
-## Naming Conventions
-
-| Type | Pattern | Examples |
-|------|---------|----------|
-| Generic skill | `{technology}` | `pytest`, `playwright`, `typescript` |
-| Prowler-specific | `prowler-{component}` | `prowler-api`, `prowler-ui`, `prowler-sdk-check` |
-| Testing skill | `prowler-test-{component}` | `prowler-test-sdk`, `prowler-test-api` |
-| Workflow skill | `{action}-{target}` | `skill-creator`, `jira-task` |
-
----
-
-## Decision: assets/ vs references/
-
-```
-Need code templates?        → assets/
-Need JSON schemas?          → assets/
-Need example configs?       → assets/
-Link to existing docs?      → references/
-Link to external guides?    → references/ (with local path)
-```
-
-**Key Rule**: `references/` should point to LOCAL files (`docs/developer-guide/*.mdx`), not web URLs.
-
----
-
-## Decision: Prowler-Specific vs Generic
-
-```
-Patterns apply to ANY project?     → Generic skill (e.g., pytest, typescript)
-Patterns are Prowler-specific?     → prowler-{name} skill
-Generic skill needs Prowler info?  → Add references/ pointing to Prowler docs
-```
-
----
-
-## Frontmatter Fields
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `name` | Yes | Skill identifier (lowercase, hyphens) |
-| `description` | Yes | What + Trigger in one block |
-| `license` | Yes | Always `Apache-2.0` for Prowler |
-| `metadata.author` | Yes | `prowler-cloud` |
-| `metadata.version` | Yes | Semantic version as string |
-
----
-
-## Content Guidelines
-
-### DO
-- Start with the most critical patterns
-- Use tables for decision trees
-- Keep code examples minimal and focused
-- Include Commands section with copy-paste commands
-
-### DON'T
-- Add Keywords section (agent searches frontmatter, not body)
-- Duplicate content from existing docs (reference instead)
-- Include lengthy explanations (link to docs)
-- Add troubleshooting sections (keep focused)
-- Use web URLs in references (use local paths)
-
----
-
-## Registering the Skill
-
-After creating the skill, add it to `AGENTS.md`:
-
-```markdown
-| `{skill-name}` | {Description} | [SKILL.md](skills/{skill-name}/SKILL.md) |
-```
-
----
-
-## Checklist Before Creating
-
-- [ ] Skill doesn't already exist (check `skills/`)
-- [ ] Pattern is reusable (not one-off)
-- [ ] Name follows conventions
-- [ ] Frontmatter is complete (description includes trigger keywords)
-- [ ] Critical patterns are clear
-- [ ] Code examples are minimal
-- [ ] Commands section exists
-- [ ] Added to AGENTS.md
-
-## Resources
-
-- **Templates**: See [assets/](assets/) for SKILL.md template
+- [Template](assets/SKILL-TEMPLATE.md)
+- [Skills overview](../README.md)
+- [Repository agent rules](../../AGENTS.md)
