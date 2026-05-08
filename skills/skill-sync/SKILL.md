@@ -1,8 +1,6 @@
 ---
 name: skill-sync
-description: >
-  Syncs skill metadata to AGENTS.md Auto-invoke sections.
-  Trigger: When updating skill metadata (metadata.scope/metadata.auto_invoke), regenerating Auto-invoke tables, or running ./skills/skill-sync/assets/sync.sh (including --dry-run/--scope).
+description: "Trigger: When updating skill metadata (metadata.scope/metadata.auto_invoke), regenerating Auto-invoke tables, or running ./skills/skill-sync/assets/sync.sh. Syncs skill metadata to AGENTS.md Auto-invoke sections."
 license: Apache-2.0
 metadata:
   author: prowler-cloud
@@ -15,107 +13,46 @@ metadata:
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 
-## Purpose
+## Activation Contract
 
-Keeps AGENTS.md Auto-invoke sections in sync with skill metadata. When you create or modify a skill, run the sync script to automatically update all affected AGENTS.md files.
+Use this skill when a skill's `metadata.scope` or `metadata.auto_invoke` changes, when auto-invoke tables need regeneration, or when a skill is missing from `AGENTS.md` auto-invoke output.
 
-## Required Skill Metadata
+## Hard Rules
 
-Each skill that should appear in Auto-invoke sections needs these fields in `metadata`.
+- Treat `./skills/skill-sync/assets/sync.sh` as the source of truth for generated auto-invoke tables.
+- Do not hand-edit generated auto-invoke sections unless the workflow itself is being fixed.
+- Run `--dry-run` first when you only need verification or when metadata impact is uncertain.
+- Only `metadata.scope` and `metadata.auto_invoke` should drive sync decisions.
+- Keep scope values aligned to real targets: `root`, `ui`, `api`, `sdk`, `mcp_server`.
 
-`auto_invoke` can be either a single string **or** a list of actions:
+## Decision Gates
 
-```yaml
-metadata:
-  author: prowler-cloud
-  version: "1.0"
-  scope: [ui]                                    # Which AGENTS.md: ui, api, sdk, root
+| Question | Action |
+|---|---|
+| Did `metadata.scope` or `metadata.auto_invoke` change? | Run `sync.sh` for real, or `--scope` if the blast radius is intentionally narrow. |
+| Did only body text or examples change? | Skip sync and say why; generated tables are unaffected. |
+| Are you checking expected output without modifying files? | Run `sync.sh --dry-run`. |
+| Is one surface affected? | Use `sync.sh --scope <scope>`. |
+| Is a skill missing from auto-invoke output? | Inspect its frontmatter first, then run `--dry-run` to confirm what the script sees. |
 
-  # Option A: single action
-  auto_invoke: "Creating/modifying components"
+## Execution Steps
 
-  # Option B: multiple actions
-  # auto_invoke:
-  #   - "Creating/modifying components"
-  #   - "Refactoring component folder placement"
-```
+1. Read the changed skill frontmatter and confirm `metadata.scope` and `metadata.auto_invoke` are present and well-formed.
+2. Decide whether the task needs a real sync, a dry-run, or a documented no-op.
+3. If validating only, run `./skills/skill-sync/assets/sync.sh --dry-run`.
+4. If updating one target, run `./skills/skill-sync/assets/sync.sh --scope <scope>`.
+5. If updating all affected targets, run `./skills/skill-sync/assets/sync.sh`.
+6. Verify the expected `AGENTS.md` surfaces changed only where metadata demanded it.
 
-### Scope Values
+## Output Contract
 
-| Scope | Updates |
-|-------|---------|
-| `root` | `AGENTS.md` (repo root) |
-| `ui` | `ui/AGENTS.md` |
-| `api` | `api/AGENTS.md` |
-| `sdk` | `prowler/AGENTS.md` |
-| `mcp_server` | `mcp_server/AGENTS.md` |
+- State whether sync was executed, dry-run only, or skipped as a no-op.
+- List the scope(s) evaluated and the `AGENTS.md` file(s) affected or intentionally untouched.
+- If the issue was missing auto-invoke output, explain the root cause in the skill metadata or script behavior.
+- Return the exact command used for verification or update.
 
-Skills can have multiple scopes: `scope: [ui, api]`
+## References
 
----
-
-## Usage
-
-### After Creating/Modifying a Skill
-
-```bash
-./skills/skill-sync/assets/sync.sh
-```
-
-### What It Does
-
-1. Reads all `skills/*/SKILL.md` files
-2. Extracts `metadata.scope` and `metadata.auto_invoke`
-3. Generates Auto-invoke tables for each AGENTS.md
-4. Updates the `### Auto-invoke Skills` section in each file
-
----
-
-## Example
-
-Given this skill metadata:
-
-```yaml
-# skills/prowler-ui/SKILL.md
-metadata:
-  author: prowler-cloud
-  version: "1.0"
-  scope: [ui]
-  auto_invoke: "Creating/modifying React components"
-```
-
-The sync script generates in `ui/AGENTS.md`:
-
-```markdown
-### Auto-invoke Skills
-
-When performing these actions, ALWAYS invoke the corresponding skill FIRST:
-
-| Action | Skill |
-|--------|-------|
-| Creating/modifying React components | `prowler-ui` |
-```
-
----
-
-## Commands
-
-```bash
-# Sync all AGENTS.md files
-./skills/skill-sync/assets/sync.sh
-
-# Dry run (show what would change)
-./skills/skill-sync/assets/sync.sh --dry-run
-
-# Sync specific scope only
-./skills/skill-sync/assets/sync.sh --scope ui
-```
-
----
-
-## Checklist After Modifying Skills
-
-- [ ] Added `metadata.scope` to new/modified skill
-- [ ] Added `metadata.auto_invoke` with action description
-- [ ] Ran `./skills/skill-sync/assets/sync.sh`
-- [ ] Verified AGENTS.md files updated correctly
+- [Sync script](assets/sync.sh)
+- [Sync script test helper](assets/sync_test.sh)
+- [Repository agent rules](../../AGENTS.md)
