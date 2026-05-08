@@ -1,8 +1,6 @@
 ---
 name: typescript
-description: >
-  TypeScript strict patterns and best practices.
-  Trigger: When implementing or refactoring TypeScript in .ts/.tsx (types, interfaces, generics, const maps, type guards, removing any, tightening unknown).
+description: "Trigger: When implementing or refactoring TypeScript in `.ts` or `.tsx`, including types, interfaces, generics, type guards, const maps, and stricter unknown handling. Enforces strict TypeScript modeling patterns."
 license: Apache-2.0
 metadata:
   author: prowler-cloud
@@ -12,131 +10,46 @@ metadata:
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
-## Const Types Pattern (REQUIRED)
+## Activation Contract
 
-```typescript
-// ✅ ALWAYS: Create const object first, then extract type
-const STATUS = {
-  ACTIVE: "active",
-  INACTIVE: "inactive",
-  PENDING: "pending",
-} as const;
+Use this skill when the work changes TypeScript types or when runtime behavior depends on better compile-time modeling.
 
-type Status = (typeof STATUS)[keyof typeof STATUS];
+## Hard Rules
 
-// ❌ NEVER: Direct union types
-type Status = "active" | "inactive" | "pending";
-```
+- Prefer strict, expressive types over `any`; use `unknown`, generics, or narrow unions instead.
+- Model reusable literals from `as const` objects when values exist at runtime.
+- Keep interfaces flat; extract nested object shapes into named types.
+- Use discriminated unions when props or fields are only valid in coordinated sets.
+- Import types with `import type` when only the type is needed.
 
-**Why?** Single source of truth, runtime values, autocomplete, easier refactoring.
+## Decision Gates
 
-## Flat Interfaces (REQUIRED)
+| Question | Action |
+|---|---|
+| Need both runtime values and a type union? | Create a const object and derive the type from it. |
+| Is a value shape deeply nested inline? | Extract dedicated named interfaces or types. |
+| Are multiple optional props semantically coupled? | Replace them with discriminated union branches. |
+| Is the input truly unknown? | Accept `unknown` and narrow with a type guard. |
+| Are you duplicating a mapped or transformed shape manually? | Reach for utility types before inventing parallel interfaces. |
 
-```typescript
-// ✅ ALWAYS: One level depth, nested objects → dedicated interface
-interface UserAddress {
-  street: string;
-  city: string;
-}
+## Execution Steps
 
-interface User {
-  id: string;
-  name: string;
-  address: UserAddress;  // Reference, not inline
-}
+1. Identify the domain shape that needs stronger typing.
+2. Replace `any` or weak optionals with precise unions, generics, or guards.
+3. Convert literal unions to const-derived types when runtime values matter.
+4. Flatten nested inline objects into named interfaces.
+5. Use utility types for projections, partials, and derived shapes.
+6. Re-check imports and convert type-only imports to `import type` where appropriate.
+7. Validate that invalid states are now rejected by the type system.
 
-interface Admin extends User {
-  permissions: string[];
-}
+## Output Contract
 
-// ❌ NEVER: Inline nested objects
-interface User {
-  address: { street: string; city: string };  // NO!
-}
-```
+- Summarize the type-system improvement made.
+- Call out any invalid state now prevented at compile time.
+- Mention the main pattern used: const-derived type, discriminated union, utility type, or type guard.
 
-## Never Use `any`
+## References
 
-```typescript
-// ✅ Use unknown for truly unknown types
-function parse(input: unknown): User {
-  if (isUser(input)) return input;
-  throw new Error("Invalid input");
-}
-
-// ✅ Use generics for flexible types
-function first<T>(arr: T[]): T | undefined {
-  return arr[0];
-}
-
-// ❌ NEVER
-function parse(input: any): any { }
-```
-
-## Utility Types
-
-```typescript
-Pick<User, "id" | "name">     // Select fields
-Omit<User, "id">              // Exclude fields
-Partial<User>                 // All optional
-Required<User>                // All required
-Readonly<User>                // All readonly
-Record<string, User>          // Object type
-Extract<Union, "a" | "b">     // Extract from union
-Exclude<Union, "a">           // Exclude from union
-NonNullable<T | null>         // Remove null/undefined
-ReturnType<typeof fn>         // Function return type
-Parameters<typeof fn>         // Function params tuple
-```
-
-## Type Guards
-
-```typescript
-function isUser(value: unknown): value is User {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "id" in value &&
-    "name" in value
-  );
-}
-```
-
-## Coupled Optional Props (REQUIRED)
-
-Do not model semantically coupled props as independent optionals — this allows invalid half-states that compile but break at runtime. Use discriminated unions with `never` to make invalid combinations impossible.
-
-```typescript
-// ❌ BEFORE: Independent optionals — half-states allowed
-interface PaginationProps {
-  onPageChange?: (page: number) => void;
-  pageSize?: number;
-  currentPage?: number;
-}
-
-// ✅ AFTER: Discriminated union — shape is all-or-nothing
-type ControlledPagination = {
-  controlled: true;
-  currentPage: number;
-  pageSize: number;
-  onPageChange: (page: number) => void;
-};
-
-type UncontrolledPagination = {
-  controlled: false;
-  currentPage?: never;
-  pageSize?: never;
-  onPageChange?: never;
-};
-
-type PaginationProps = ControlledPagination | UncontrolledPagination;
-```
-
-**Key rule:** If two or more props are only meaningful together, they belong to the same discriminated union branch. Mixing them as independent optionals shifts correctness responsibility from the type system to runtime guards.
-
-## Import Types
-
-```typescript
-import type { User } from "./types";
-import { createUser, type Config } from "./utils";
-```
+- [React 19 skill](../react-19/SKILL.md)
+- [Zod 4 skill](../zod-4/SKILL.md)
+- [Repository agent rules](../../AGENTS.md)

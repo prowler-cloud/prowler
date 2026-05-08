@@ -1,8 +1,6 @@
 ---
 name: react-19
-description: >
-  React 19 patterns with React Compiler.
-  Trigger: When writing React 19 components/hooks in .tsx (React Compiler rules, hook patterns, refs as props). If using Next.js App Router/Server Actions, also use nextjs-15.
+description: "Trigger: When writing React 19 components, hooks, or `.tsx` files, especially with React Compiler, `use()`, actions, or ref-as-prop patterns. Applies React 19 runtime and composition rules."
 license: Apache-2.0
 metadata:
   author: prowler-cloud
@@ -12,113 +10,46 @@ metadata:
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
-## No Manual Memoization (REQUIRED)
+## Activation Contract
 
-```typescript
-// ✅ React Compiler handles optimization automatically
-function Component({ items }) {
-  const filtered = items.filter(x => x.active);
-  const sorted = filtered.sort((a, b) => a.name.localeCompare(b.name));
+Use this skill when the change is inside React 19 component code and the agent must choose between Server Components, Client Components, compiler-friendly patterns, or modern hook APIs.
 
-  const handleClick = (id) => {
-    console.log(id);
-  };
+## Hard Rules
 
-  return <List items={sorted} onClick={handleClick} />;
-}
+- Do not add `useMemo` or `useCallback` for routine render-path optimization; React Compiler handles the common case.
+- Prefer Server Components by default; add `"use client"` only for client-only behavior.
+- Import named React APIs; do not use default `React` imports.
+- Use `ref` as a prop in React 19 instead of introducing `forwardRef` by habit.
+- If the task also involves App Router or Server Actions integration details, load `nextjs-15` too.
 
-// ❌ NEVER: Manual memoization
-const filtered = useMemo(() => items.filter(x => x.active), [items]);
-const handleClick = useCallback((id) => console.log(id), []);
-```
+## Decision Gates
 
-## Imports (REQUIRED)
+| Question | Action |
+|---|---|
+| Does the component use state, effects, browser APIs, or event handlers? | Mark it as a Client Component with `"use client"`. |
+| Does the component only fetch or compose data for rendering? | Keep it as a Server Component. |
+| Are you reading a promise or conditional context? | Consider `use()` instead of older workarounds. |
+| Are you wiring form actions or pending state? | Prefer actions and `useActionState`. |
+| Are you about to add memoization for performance? | Stop and justify it; default to compiler-friendly plain code first. |
 
-```typescript
-// ✅ ALWAYS: Named imports
-import { useState, useEffect, useRef } from "react";
+## Execution Steps
 
-// ❌ NEVER
-import React from "react";
-import * as React from "react";
-```
+1. Identify whether the file should stay server-side or become client-side.
+2. Remove legacy React imports and manual memoization unless there is a proven exception.
+3. Keep render logic direct and compiler-friendly.
+4. Use `use()` for supported promise/context reads when it simplifies the flow.
+5. Use action-based form patterns for mutation flows when relevant.
+6. Pass refs as props in new React 19 component APIs.
+7. Validate that the final component model matches the feature's runtime needs.
 
-## Server Components First
+## Output Contract
 
-```typescript
-// ✅ Server Component (default) - no directive
-export default async function Page() {
-  const data = await fetchData();
-  return <ClientComponent data={data} />;
-}
+- State whether the component is server or client and why.
+- Call out any React 19 modernization applied, such as removing manual memoization, using `use()`, or replacing `forwardRef`.
+- Mention whether `nextjs-15` was also required.
 
-// ✅ Client Component - only when needed
-"use client";
-export function Interactive() {
-  const [state, setState] = useState(false);
-  return <button onClick={() => setState(!state)}>Toggle</button>;
-}
-```
+## References
 
-## When to use "use client"
-
-- useState, useEffect, useRef, useContext
-- Event handlers (onClick, onChange)
-- Browser APIs (window, localStorage)
-
-## use() Hook
-
-```typescript
-import { use } from "react";
-
-// Read promises (suspends until resolved)
-function Comments({ promise }) {
-  const comments = use(promise);
-  return comments.map(c => <div key={c.id}>{c.text}</div>);
-}
-
-// Conditional context (not possible with useContext!)
-function Theme({ showTheme }) {
-  if (showTheme) {
-    const theme = use(ThemeContext);
-    return <div style={{ color: theme.primary }}>Themed</div>;
-  }
-  return <div>Plain</div>;
-}
-```
-
-## Actions & useActionState
-
-```typescript
-"use server";
-async function submitForm(formData: FormData) {
-  await saveToDatabase(formData);
-  revalidatePath("/");
-}
-
-// With pending state
-import { useActionState } from "react";
-
-function Form() {
-  const [state, action, isPending] = useActionState(submitForm, null);
-  return (
-    <form action={action}>
-      <button disabled={isPending}>
-        {isPending ? "Saving..." : "Save"}
-      </button>
-    </form>
-  );
-}
-```
-
-## ref as Prop (No forwardRef)
-
-```typescript
-// ✅ React 19: ref is just a prop
-function Input({ ref, ...props }) {
-  return <input ref={ref} {...props} />;
-}
-
-// ❌ Old way (unnecessary now)
-const Input = forwardRef((props, ref) => <input ref={ref} {...props} />);
-```
+- [Next.js 15 skill](../nextjs-15/SKILL.md)
+- [TypeScript skill](../typescript/SKILL.md)
+- [Repository agent rules](../../AGENTS.md)

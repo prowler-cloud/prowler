@@ -1,8 +1,6 @@
 ---
 name: vitest
-description: >
-  Vitest unit testing patterns with React Testing Library.
-  Trigger: When writing unit tests for React components, hooks, or utilities.
+description: "Trigger: When writing or refactoring Vitest tests for React components, hooks, or UI utilities. Defines unit and integration testing patterns with React Testing Library."
 license: Apache-2.0
 metadata:
   author: prowler-cloud
@@ -16,186 +14,48 @@ metadata:
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, Task
 ---
 
-> **For E2E tests**: Use `prowler-test-ui` skill (Playwright).
-> This skill covers **unit/integration tests** with Vitest + React Testing Library.
+## Activation Contract
 
-## Test Structure (REQUIRED)
+Use this skill for UI unit and integration tests built with Vitest and React Testing Library; for browser E2E flows, switch to `prowler-test-ui` instead.
 
-Use **Given/When/Then** (AAA) pattern with comments:
+## Hard Rules
 
-```typescript
-it("should update user name when form is submitted", async () => {
-  // Given - Arrange
-  const user = userEvent.setup();
-  const onSubmit = vi.fn();
-  render(<UserForm onSubmit={onSubmit} />);
+- Structure tests with Given/When/Then intent.
+- Prefer behavior-oriented `describe` blocks grouped by condition, not by implementation method.
+- Query the screen by accessibility priority first: role, label, placeholder, text, then test id.
+- Use `userEvent` for interactions unless a lower-level event is explicitly required.
+- Keep async assertions focused: one expectation per `waitFor` block.
+- Restore mocks between tests.
 
-  // When - Act
-  await user.type(screen.getByLabelText(/name/i), "John");
-  await user.click(screen.getByRole("button", { name: /submit/i }));
+## Decision Gates
 
-  // Then - Assert
-  expect(onSubmit).toHaveBeenCalledWith({ name: "John" });
-});
-```
+| Question | Action |
+|---|---|
+| Testing a browser flow across pages? | Use `prowler-test-ui`, not Vitest. |
+| Need to interact like a user? | Use `userEvent.setup()` and await the interaction. |
+| Element appears later? | Use `findBy*` or `waitFor` appropriately. |
+| Need a selector? | Prefer accessible queries before `getByTestId`. |
+| Thinking about testing internals? | Stop and assert user-visible behavior instead. |
 
----
+## Execution Steps
 
-## Describe Block Organization
+1. Confirm the test belongs in unit/integration scope, not Playwright.
+2. Read nearby tests to match file placement and helper patterns.
+3. Write or update the spec using AAA comments when clarity helps.
+4. Render through public component APIs and interact through accessible queries.
+5. Use `userEvent` for user actions and async queries for delayed UI.
+6. Isolate mocks and restore them after each test.
+7. Run only the relevant Vitest target and verify the expected behavior.
 
-```typescript
-describe("ComponentName", () => {
-  describe("when [condition]", () => {
-    it("should [expected behavior]", () => {});
-  });
-});
-```
+## Output Contract
 
-**Group by behavior, NOT by method.**
+- State whether the test covers a component, hook, or utility.
+- Report the main query and interaction patterns used.
+- Mention the exact Vitest command or filter used for validation.
+- Call out if E2E coverage was intentionally out of scope.
 
----
+## References
 
-## Query Priority (REQUIRED)
-
-| Priority | Query | Use Case |
-|----------|-------|----------|
-| 1 | `getByRole` | Buttons, inputs, headings |
-| 2 | `getByLabelText` | Form fields |
-| 3 | `getByPlaceholderText` | Inputs without label |
-| 4 | `getByText` | Static text |
-| 5 | `getByTestId` | Last resort only |
-
-```typescript
-// ✅ GOOD
-screen.getByRole("button", { name: /submit/i });
-screen.getByLabelText(/email/i);
-
-// ❌ BAD
-container.querySelector(".btn-primary");
-```
-
----
-
-## userEvent over fireEvent (REQUIRED)
-
-```typescript
-// ✅ ALWAYS use userEvent
-const user = userEvent.setup();
-await user.click(button);
-await user.type(input, "hello");
-
-// ❌ NEVER use fireEvent for interactions
-fireEvent.click(button);
-```
-
----
-
-## Async Testing Patterns
-
-```typescript
-// ✅ findBy for elements that appear async
-const element = await screen.findByText(/loaded/i);
-
-// ✅ waitFor for assertions
-await waitFor(() => {
-  expect(screen.getByText(/success/i)).toBeInTheDocument();
-});
-
-// ✅ ONE assertion per waitFor
-await waitFor(() => expect(mockFn).toHaveBeenCalled());
-await waitFor(() => expect(screen.getByText(/done/i)).toBeVisible());
-
-// ❌ NEVER multiple assertions in waitFor
-await waitFor(() => {
-  expect(mockFn).toHaveBeenCalled();
-  expect(screen.getByText(/done/i)).toBeVisible(); // Slower failures
-});
-```
-
----
-
-## Mocking
-
-```typescript
-// Basic mock
-const handleClick = vi.fn();
-
-// Mock with return value
-const fetchUser = vi.fn().mockResolvedValue({ name: "John" });
-
-// Always clean up
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-```
-
-### vi.spyOn vs vi.mock
-
-| Method | When to Use |
-|--------|-------------|
-| `vi.spyOn` | Observe without replacing (PREFERRED) |
-| `vi.mock` | Replace entire module (use sparingly) |
-
----
-
-## Common Matchers
-
-```typescript
-// Presence
-expect(element).toBeInTheDocument();
-expect(element).toBeVisible();
-
-// State
-expect(button).toBeDisabled();
-expect(input).toHaveValue("text");
-expect(checkbox).toBeChecked();
-
-// Content
-expect(element).toHaveTextContent(/hello/i);
-expect(element).toHaveAttribute("href", "/home");
-
-// Functions
-expect(fn).toHaveBeenCalledWith(arg1, arg2);
-expect(fn).toHaveBeenCalledTimes(2);
-```
-
----
-
-## What NOT to Test
-
-```typescript
-// ❌ Internal state
-expect(component.state.isLoading).toBe(true);
-
-// ❌ Third-party libraries
-expect(axios.get).toHaveBeenCalled();
-
-// ❌ Static content (unless conditional)
-expect(screen.getByText("Welcome")).toBeInTheDocument();
-
-// ✅ User-visible behavior
-expect(screen.getByRole("button")).toBeDisabled();
-```
-
----
-
-## File Organization
-
-```
-components/
-├── Button/
-│   ├── Button.tsx
-│   ├── Button.test.tsx    # Co-located
-│   └── index.ts
-```
-
----
-
-## Commands
-
-```bash
-pnpm test                    # Watch mode
-pnpm test:run               # Single run
-pnpm test:coverage          # With coverage
-pnpm test Button            # Filter by name
-```
+- [TDD skill](../tdd/SKILL.md)
+- [Prowler UI E2E skill](../prowler-test-ui/SKILL.md)
+- [Repository agent rules](../../AGENTS.md)
