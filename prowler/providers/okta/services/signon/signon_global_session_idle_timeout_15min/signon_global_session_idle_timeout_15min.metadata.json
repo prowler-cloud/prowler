@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "signon_global_session_idle_timeout_15min",
+  "CheckTitle": "Default Global Session Policy enforces 15-minute idle timeout",
+  "CheckType": [],
+  "ServiceName": "signon",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OktaPolicy",
+  "ResourceGroup": "governance",
+  "Description": "The Default Global Session Policy must contain at least one non-default rule that limits the **Maximum Okta global session idle time** to 15 minutes or less. The catch-all Default Rule cannot enforce this constraint, so an explicit, non-default rule is required. The threshold defaults to 15 minutes per STIG and is overridable via the `okta_max_session_idle_minutes` key in the audit config.",
+  "Risk": "Without a 15-minute idle timeout, an unattended workstation leaves an authenticated Okta session open indefinitely, allowing an attacker physical or remote access to take over the user's identity and pivot into every downstream application that trusts Okta SSO.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-global-session-policies.htm",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Okta Admin Console as a Super Admin\n2. Go to Security > Global Session Policy\n3. Open the Default Policy\n4. Add or edit a non-default rule\n5. Set 'Maximum Okta global session idle time' to 15 minutes or less\n6. Save the rule and ensure it precedes the catch-all Default Rule",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the Default Global Session Policy with at least one non-default rule that sets the Maximum Okta global session idle time to 15 minutes or less, in line with DISA STIG OKTA-APP-000020 (V-273186).",
+      "Url": "https://hub.prowler.com/check/signon_global_session_idle_timeout_15min"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "STIG V-273186 / OKTA-APP-000020"
+}

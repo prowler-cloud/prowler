@@ -934,6 +934,37 @@ class CheckReportGithub(Check_Report):
 
 
 @dataclass
+class CheckReportOkta(Check_Report):
+    """Contains the Okta Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    org_url: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        org_url: str = None,
+    ) -> None:
+        """Initialize the Okta Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            org_url: The Okta organization URL related with the finding.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.org_url = org_url or getattr(resource, "org_url", "")
+
+
+@dataclass
 class CheckReportGoogleWorkspace(Check_Report):
     """Contains the Google Workspace Check's finding information."""
 

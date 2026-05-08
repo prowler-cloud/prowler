@@ -1,0 +1,102 @@
+---
+title: 'Getting Started with Okta'
+---
+
+This guide covers setting up Okta security scanning with Prowler. The Okta provider authenticates with **OAuth 2.0 (private-key JWT)** as a service application — no end-user login, fully read-only by scope.
+
+<Note>
+**Phase 1 scope**
+
+The initial Okta provider release ships with one check (`signon_global_session_idle_timeout_15min`, mapped to DISA STIG V-273186). Additional services and checks land in subsequent releases.
+</Note>
+
+## Prerequisites
+
+- An Okta organization on **Identity Engine** (Classic orgs are not supported).
+- A **Super Administrator** account on that organization to perform the one-time service-app setup.
+- Python 3.10+ and Prowler 5.26.0 or later installed locally.
+
+## 1. Create the Okta service app
+
+1. In the Okta Admin Console, go to **Applications → Applications → Create App Integration**.
+2. Pick **API Services** as the sign-in method, name it (for example, `Prowler Scanner`), and create the app.
+3. On the new app's **General** tab, switch **Client authentication** to **Public key / Private key**.
+4. Either upload an existing public JWK or click **Add key** to let Okta generate one. Download / copy the **private key** material (PEM or JWK) — Okta only shows it once.
+
+<Warning>
+**Disable the "Public client app admins" org setting**
+
+Under **Security → General → Default org settings**, ensure **Public client app admins** is **off**. When enabled, every newly created service app is auto-assigned the Super Admin role, which would silently grant Prowler far more privilege than required.
+</Warning>
+
+## 2. Grant the required OAuth scopes
+
+In the service app's **Okta API Scopes** tab, click **Grant** on every scope Prowler needs. For Phase 1 only one scope is strictly required:
+
+- `okta.policies.read`
+
+The full list of scopes used by future checks (grant any you want pre-provisioned):
+
+| Scope | Used by |
+|---|---|
+| `okta.policies.read` | Sign-on / password / authentication policies |
+| `okta.apps.read` | Application sign-on policies |
+| `okta.authenticators.read` | Smart Card, Okta Verify FIPS settings |
+| `okta.idps.read` | Identity provider checks |
+| `okta.networkZones.read` | Network zone checks |
+| `okta.logStreams.read` | Log streaming checks |
+| `okta.brands.read` | Sign-in widget / DOD banner check |
+| `okta.users.read` | Future user-related checks |
+| `okta.roles.read` | API token role checks |
+| `okta.apiTokens.read` | API token checks |
+
+## 3. Assign the Read-Only Administrator role
+
+In **Admin assignments** for the service app, assign the built-in **Read-Only Administrator** role. This further constrains what the granted scopes can do at runtime, in line with least privilege.
+
+## 4. Configure Prowler
+
+Set the following environment variables. Using env vars is preferred over passing the values on the CLI.
+
+```bash
+export OKTA_ORG_URL="https://acme.okta.com"
+export OKTA_CLIENT_ID="0oa1234567890abcdef"
+export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
+# Optional — defaults to "okta.policies.read"
+export OKTA_SCOPES="okta.policies.read"
+# Optional — only needed when the JWK does not embed kid
+# export OKTA_KID="abc123"
+```
+
+The private key file may contain either a PEM-encoded RSA key or a JWK JSON document.
+
+### Supplying the Private Key as Content
+
+For automated environments where writing the key to disk is not desirable (Prowler App, CI runners, container secrets, etc.), the private key may be passed directly as a string:
+
+```bash
+export OKTA_ORG_URL="https://acme.okta.com"
+export OKTA_CLIENT_ID="0oa1234567890abcdef"
+export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
+```
+
+`OKTA_PRIVATE_KEY` takes precedence over `OKTA_PRIVATE_KEY_FILE` when both are set. The same flag is available on the CLI as `--okta-private-key`, but env-var usage is strongly preferred.
+
+## 5. Run a scan
+
+```bash
+# Run all Okta checks
+poetry run python prowler-cli.py okta
+
+# Run a specific check
+poetry run python prowler-cli.py okta --check signon_global_session_idle_timeout_15min
+```
+
+Prowler will print a summary table; full findings are written to the configured output formats.
+
+## Troubleshooting
+
+- **`OktaInvalidOrgURLError`** — the org URL must be `https://<org>.okta.com` (or `oktapreview.com` / `okta-emea.com`) with no trailing slash.
+- **`OktaPrivateKeyFileError`** — confirm the file is readable and contains a non-empty PEM or JWK body.
+- **`OktaInvalidCredentialsError`** — Prowler verifies credentials by listing one sign-on policy at provider initialization. A failure here is usually a missing `okta.policies.read` scope grant, an unassigned admin role on the service app, or a private key that does not match the public JWK uploaded to Okta.
+- **Token requests failing for an unknown scope** — the app was granted a narrower scope set than `OKTA_SCOPES` requests. Either narrow `OKTA_SCOPES` or grant the missing scopes in the Admin Console.
