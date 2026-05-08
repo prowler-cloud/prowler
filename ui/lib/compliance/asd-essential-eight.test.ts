@@ -221,6 +221,19 @@ describe("mapComplianceData (ASD Essential Eight)", () => {
     expect(requirementOut.references).toBe("https://example.com/x");
   });
 
+  it("skips attributes whose ASD metadata does not match the typed model", () => {
+    const attribute = buildAttribute("E8-BAD-1", "Invalid metadata.", {
+      ...baseMetadata(),
+      MaturityLevel: "ML4",
+    } as unknown as ASDEssentialEightAttributesMetadata);
+    const requirement = buildRequirement("E8-BAD-1");
+    const { attributesData, requirementsData } = buildInputs([
+      { attribute, requirement },
+    ]);
+
+    expect(mapComplianceData(attributesData, requirementsData)).toEqual([]);
+  });
+
   it("derives counters from RequirementStatus, not from metadata flags", () => {
     const cases: Array<{
       status: RequirementStatus;

@@ -1,7 +1,12 @@
 import ReactMarkdown from "react-markdown";
 
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { Requirement } from "@/types/compliance";
+import {
+  isASDAssessmentStatus,
+  isASDCloudApplicability,
+  isASDMaturityLevel,
+  type Requirement,
+} from "@/types/compliance";
 
 import {
   ComplianceBadge,
@@ -21,10 +26,13 @@ interface ASDEssentialEightDetailsProps {
 // plain-http references aren't silently dropped.
 const URL_REGEX = /https?:\/\/[^\s,]+/g;
 
-const extractUrls = (references: Requirement[keyof Requirement]): string[] => {
+const extractUrls = (references: unknown): string[] => {
   if (typeof references !== "string") return [];
   return references.match(URL_REGEX) ?? [];
 };
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === "string" && value.length > 0;
 
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === "string");
@@ -48,6 +56,15 @@ export const ASDEssentialEightCustomDetails = ({
   } = requirement;
 
   const referenceUrls = extractUrls(references);
+  const maturityLevel = isASDMaturityLevel(maturity_level)
+    ? maturity_level
+    : undefined;
+  const assessmentStatus = isASDAssessmentStatus(assessment_status)
+    ? assessment_status
+    : undefined;
+  const cloudApplicability = isASDCloudApplicability(cloud_applicability)
+    ? cloud_applicability
+    : undefined;
 
   return (
     <ComplianceDetailContainer>
@@ -57,33 +74,33 @@ export const ASDEssentialEightCustomDetails = ({
         </ComplianceDetailSection>
       )}
 
-      {typeof implementation_notes === "string" && implementation_notes && (
+      {isNonEmptyString(implementation_notes) && (
         <ComplianceDetailSection title="Implementation Notes">
           <ComplianceDetailText>{implementation_notes}</ComplianceDetailText>
         </ComplianceDetailSection>
       )}
 
       <ComplianceBadgeContainer>
-        {typeof maturity_level === "string" && maturity_level && (
+        {maturityLevel && (
           <ComplianceBadge
             label="Maturity Level"
-            value={maturity_level}
+            value={maturityLevel}
             color="purple"
           />
         )}
 
-        {typeof assessment_status === "string" && assessment_status && (
+        {assessmentStatus && (
           <ComplianceBadge
             label="Assessment"
-            value={assessment_status}
+            value={assessmentStatus}
             color="blue"
           />
         )}
 
-        {typeof cloud_applicability === "string" && cloud_applicability && (
+        {cloudApplicability && (
           <ComplianceBadge
             label="Cloud Applicability"
-            value={cloud_applicability}
+            value={cloudApplicability}
             color="orange"
           />
         )}
@@ -97,19 +114,19 @@ export const ASDEssentialEightCustomDetails = ({
         />
       )}
 
-      {typeof rationale_statement === "string" && rationale_statement && (
+      {isNonEmptyString(rationale_statement) && (
         <ComplianceDetailSection title="Rationale Statement">
           <ComplianceDetailText>{rationale_statement}</ComplianceDetailText>
         </ComplianceDetailSection>
       )}
 
-      {typeof impact_statement === "string" && impact_statement && (
+      {isNonEmptyString(impact_statement) && (
         <ComplianceDetailSection title="Impact Statement">
           <ComplianceDetailText>{impact_statement}</ComplianceDetailText>
         </ComplianceDetailSection>
       )}
 
-      {typeof remediation_procedure === "string" && remediation_procedure && (
+      {isNonEmptyString(remediation_procedure) && (
         <ComplianceDetailSection title="Remediation Procedure">
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <ReactMarkdown>{remediation_procedure}</ReactMarkdown>
@@ -117,7 +134,7 @@ export const ASDEssentialEightCustomDetails = ({
         </ComplianceDetailSection>
       )}
 
-      {typeof audit_procedure === "string" && audit_procedure && (
+      {isNonEmptyString(audit_procedure) && (
         <ComplianceDetailSection title="Audit Procedure">
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <ReactMarkdown>{audit_procedure}</ReactMarkdown>
@@ -125,7 +142,7 @@ export const ASDEssentialEightCustomDetails = ({
         </ComplianceDetailSection>
       )}
 
-      {typeof additional_information === "string" && additional_information && (
+      {isNonEmptyString(additional_information) && (
         <ComplianceDetailSection title="Additional Information">
           <ComplianceDetailText className="whitespace-pre-wrap">
             {additional_information}

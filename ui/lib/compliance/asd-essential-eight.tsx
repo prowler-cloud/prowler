@@ -1,15 +1,16 @@
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
 import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
-import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
-import { FindingStatus } from "@/components/ui/table/status-finding-badge";
+import type { AccordionItemProps } from "@/components/ui/accordion/Accordion";
+import type { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
-  ASDEssentialEightAttributesMetadata,
-  AttributesData,
-  Framework,
-  Requirement,
+  type ASDEssentialEightRequirement,
+  type AttributesData,
+  type Framework,
+  isASDEssentialEightAttributesMetadata,
+  type Requirement,
   REQUIREMENT_STATUS,
-  RequirementsData,
+  type RequirementsData,
 } from "@/types/compliance";
 
 import {
@@ -38,10 +39,9 @@ export const mapComplianceData = (
   // Process attributes and merge with requirements data
   for (const attributeItem of attributes) {
     const id = attributeItem.id;
-    const metadataArray = attributeItem.attributes?.attributes
-      ?.metadata as unknown as ASDEssentialEightAttributesMetadata[];
+    const metadataArray = attributeItem.attributes?.attributes?.metadata;
     const attrs = metadataArray?.[0];
-    if (!attrs) continue;
+    if (!isASDEssentialEightAttributesMetadata(attrs)) continue;
 
     // Get corresponding requirement data
     const requirementData = requirementsMap.get(id);
@@ -86,7 +86,7 @@ export const mapComplianceData = (
       requirements: [] as Requirement[],
     };
 
-    const requirement: Requirement = {
+    const requirement = {
       name: requirementName,
       description: description,
       status: status,
@@ -105,7 +105,7 @@ export const mapComplianceData = (
       audit_procedure: attrs.AuditProcedure,
       additional_information: attrs.AdditionalInformation,
       references: attrs.References,
-    };
+    } satisfies ASDEssentialEightRequirement;
 
     control.requirements.push(requirement);
 

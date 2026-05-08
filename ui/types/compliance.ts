@@ -263,6 +263,65 @@ export interface ASDEssentialEightAttributesMetadata {
   References: string;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isOneOf = <T extends string>(
+  values: Record<string, T>,
+  value: unknown,
+): value is T => (Object.values(values) as T[]).includes(value as T);
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === "string");
+
+const ASD_METADATA_STRING_FIELDS = [
+  "Section",
+  "Description",
+  "RationaleStatement",
+  "ImpactStatement",
+  "RemediationProcedure",
+  "AuditProcedure",
+  "AdditionalInformation",
+  "References",
+] as const satisfies readonly (keyof ASDEssentialEightAttributesMetadata)[];
+
+export const isASDMaturityLevel = (value: unknown): value is ASDMaturityLevel =>
+  isOneOf(ASD_MATURITY_LEVEL, value);
+
+export const isASDAssessmentStatus = (
+  value: unknown,
+): value is ASDAssessmentStatus => isOneOf(ASD_ASSESSMENT_STATUS, value);
+
+export const isASDCloudApplicability = (
+  value: unknown,
+): value is ASDCloudApplicability => isOneOf(ASD_CLOUD_APPLICABILITY, value);
+
+export const isASDEssentialEightAttributesMetadata = (
+  value: unknown,
+): value is ASDEssentialEightAttributesMetadata =>
+  isRecord(value) &&
+  ASD_METADATA_STRING_FIELDS.every(
+    (field) => typeof value[field] === "string",
+  ) &&
+  isASDMaturityLevel(value.MaturityLevel) &&
+  isASDAssessmentStatus(value.AssessmentStatus) &&
+  isASDCloudApplicability(value.CloudApplicability) &&
+  isStringArray(value.MitigatedThreats);
+
+export interface ASDEssentialEightRequirement extends Requirement {
+  maturity_level: ASDEssentialEightAttributesMetadata["MaturityLevel"];
+  assessment_status: ASDEssentialEightAttributesMetadata["AssessmentStatus"];
+  cloud_applicability: ASDEssentialEightAttributesMetadata["CloudApplicability"];
+  mitigated_threats: ASDEssentialEightAttributesMetadata["MitigatedThreats"];
+  implementation_notes: ASDEssentialEightAttributesMetadata["Description"];
+  rationale_statement: ASDEssentialEightAttributesMetadata["RationaleStatement"];
+  impact_statement: ASDEssentialEightAttributesMetadata["ImpactStatement"];
+  remediation_procedure: ASDEssentialEightAttributesMetadata["RemediationProcedure"];
+  audit_procedure: ASDEssentialEightAttributesMetadata["AuditProcedure"];
+  additional_information: ASDEssentialEightAttributesMetadata["AdditionalInformation"];
+  references: ASDEssentialEightAttributesMetadata["References"];
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;

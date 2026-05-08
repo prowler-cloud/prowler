@@ -12,11 +12,15 @@ vi.mock("@/components/ui/custom/custom-link", () => ({
   ),
 }));
 
-import { Requirement, REQUIREMENT_STATUS } from "@/types/compliance";
+import {
+  type ASDEssentialEightRequirement,
+  type Requirement,
+  REQUIREMENT_STATUS,
+} from "@/types/compliance";
 
 import { ASDEssentialEightCustomDetails } from "./asd-essential-eight-details";
 
-const fullRequirement: Requirement = {
+const fullRequirement: ASDEssentialEightRequirement = {
   name: "E8-PA-1",
   description: "Apply patches to internet-facing applications.",
   status: REQUIREMENT_STATUS.PASS,
@@ -79,6 +83,25 @@ describe("ASDEssentialEightCustomDetails", () => {
 
       expect(screen.getByText("Cloud Applicability:")).toBeInTheDocument();
       expect(screen.getByText("full")).toBeInTheDocument();
+    });
+
+    it("does not render invalid ASD classification values", () => {
+      render(
+        <ASDEssentialEightCustomDetails
+          requirement={{
+            ...fullRequirement,
+            maturity_level: "ML4",
+            assessment_status: "Partially automated",
+            cloud_applicability: "hybrid",
+          }}
+        />,
+      );
+
+      expect(screen.queryByText("Maturity Level:")).not.toBeInTheDocument();
+      expect(screen.queryByText("Assessment:")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("Cloud Applicability:"),
+      ).not.toBeInTheDocument();
     });
 
     it("renders mitigated threats as individual chips", () => {
