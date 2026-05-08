@@ -3,27 +3,27 @@ import Link from "next/link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { Button } from "@/components/shadcn";
 
-import { unsubscribeAlertRecipient } from "./unsubscribe-alert-recipient";
+import { confirmAlertRecipient } from "./confirm-alert-recipient";
 
-interface AlertsUnsubscribePageProps {
+interface AlertsConfirmPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 const getParamValue = (
-  params: Awaited<AlertsUnsubscribePageProps["searchParams"]>,
+  params: Awaited<AlertsConfirmPageProps["searchParams"]>,
   key: string,
 ): string | undefined => {
   const value = params[key];
   return Array.isArray(value) ? value[0] : value;
 };
 
-export default async function AlertsUnsubscribePage({
+export default async function AlertsConfirmPage({
   searchParams,
-}: AlertsUnsubscribePageProps) {
+}: AlertsConfirmPageProps) {
   const resolvedSearchParams = await searchParams;
   const token = getParamValue(resolvedSearchParams, "token");
-  const result = await unsubscribeAlertRecipient(token);
-  const title = result.ok ? "Unsubscribed" : "Subscription link";
+  const result = await confirmAlertRecipient(token);
+  const title = result.ok ? "Subscription confirmed" : "Subscription link";
 
   return (
     <AuthLayout title={title}>
