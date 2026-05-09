@@ -12,6 +12,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update Vercel checks to return personalized finding status extended depending on billing plan and classify them with billing-plan categories [(#10663)](https://github.com/prowler-cloud/prowler/pull/10663)
 - `bedrock_prompt_management_exists` check for AWS provider [(#10878)](https://github.com/prowler-cloud/prowler/pull/10878)
 - 8 Gmail attachment safety and spoofing protection checks for Google Workspace provider using the Cloud Identity Policy API [(#10980)](https://github.com/prowler-cloud/prowler/pull/10980)
+- `entra_service_principal_privileged_role_no_owners` - Added new M365 check to detect service principals with privileged Entra directory roles that have owners, closing a known privilege escalation path [#11070](https://github.com/prowler-cloud/prowler/pull/11093)
 
 ### 🔄 Changed
 
