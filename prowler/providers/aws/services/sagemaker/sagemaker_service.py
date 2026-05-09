@@ -15,6 +15,7 @@ class SageMaker(AWSService):
         self.sagemaker_notebook_instances = []
         self.sagemaker_models = []
         self.sagemaker_training_jobs = []
+        self.sagemaker_domains = []
         self.endpoint_configs = {}
 
         # Retrieve resources concurrently
@@ -22,6 +23,7 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_models)
         self.__threading_call__(self._list_training_jobs)
         self.__threading_call__(self._list_endpoint_configs)
+        self.__threading_call__(self._list_domains)
 
         # Describe resources concurrently
         self.__threading_call__(self._describe_model, self.sagemaker_models)
@@ -33,6 +35,9 @@ class SageMaker(AWSService):
         )
         self.__threading_call__(
             self._describe_endpoint_config, list(self.endpoint_configs.values())
+        )
+        self.__threading_call__(
+            self._describe_domain, self.sagemaker_domains
         )
 
         # List tags concurrently for each resource collection
@@ -46,6 +51,9 @@ class SageMaker(AWSService):
         )
         self.__threading_call__(
             self._list_tags_for_resource, list(self.endpoint_configs.values())
+        )
+        self.__threading_call__(
+            self._list_tags_for_resource, self.sagemaker_domains
         )
 
     def _list_notebook_instances(self, regional_client):
@@ -218,6 +226,44 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_domains(self, regional_client):
+        logger.info("SageMaker - listing domains...")
+        try:
+            list_domains_paginator = regional_client.get_paginator("list_domains")
+            for page in list_domains_paginator.paginate():
+                for domain in page["Domains"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            domain["DomainArn"], self.audit_resources
+                        )
+                    ):
+                        self.sagemaker_domains.append(
+                            Domain(
+                                domain_id=domain["DomainId"],
+                                name=domain["DomainName"],
+                                region=regional_client.region,
+                                arn=domain["DomainArn"],
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_domain(self, domain):
+        logger.info("SageMaker - describing domain...")
+        try:
+            regional_client = self.regional_clients[domain.region]
+            describe_domain = regional_client.describe_domain(
+                DomainId=domain.domain_id
+            )
+            if "AuthMode" in describe_domain:
+                domain.auth_mode = describe_domain["AuthMode"]
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_endpoint_configs(self, regional_client):
         logger.info("SageMaker - listing endpoint configs...")
         try:
@@ -301,6 +347,15 @@ class TrainingJob(BaseModel):
 class ProductionVariant(BaseModel):
     name: str
     initial_instance_count: int
+
+
+class Domain(BaseModel):
+    domain_id: str
+    name: str
+    region: str
+    arn: str
+    auth_mode: Optional[str] = None
+    tags: Optional[list] = []
 
 
 class EndpointConfig(BaseModel):
