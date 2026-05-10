@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_directory_sync_object_takeover_blocked",
+  "CheckTitle": "Microsoft Entra directory sync must block object takeover (soft- and hard-matching)",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "When on-premises directory synchronization is enabled, both blockSoftMatchEnabled and blockCloudObjectTakeoverThroughHardMatchEnabled must be true. Without these blocks, an attacker who can write to on-premises AD can craft an object that matches a privileged cloud account and take it over.",
+  "Risk": "An attacker with write access to on-premises Active Directory can create an object whose UPN, SMTP address, or ImmutableID matches an existing cloud-only account (e.g. Global Administrator). When the sync engine processes this object, it merges the on-premises identity into the cloud account, effectively granting the attacker full control of that privileged account.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-syncservice-features",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/onpremisesdirectorysynchronizationfeature?view=graph-rest-1.0"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open Microsoft Entra admin center\n2. Navigate to Identity > Hybrid management > Microsoft Entra Connect > Connect Sync\n3. Enable 'Block soft match' and 'Block cloud object takeover through hard match'\n4. Alternatively, use Microsoft Graph API to set both features to true on the onPremisesDirectorySynchronization resource",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable both blockSoftMatchEnabled and blockCloudObjectTakeoverThroughHardMatchEnabled on the on-premises directory synchronization configuration. These should remain enabled permanently except during time-boxed migration windows.",
+      "Url": "https://hub.prowler.com/check/entra_directory_sync_object_takeover_blocked"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_password_hash_sync_enabled",
+    "entra_seamless_sso_disabled"
+  ],
+  "Notes": "This check only applies to hybrid tenants with on-premises directory synchronization enabled. Cloud-only tenants receive a PASS since the attack path does not exist."
+}
