@@ -83,6 +83,7 @@ class Entra(M365Service):
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
+                self._get_app_registrations(),
             )
         )
 
@@ -98,6 +99,7 @@ class Entra(M365Service):
         self.authentication_method_configurations: Dict[
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
+        self.app_registrations: Dict[str, AppRegistration] = attributes[10]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -1055,6 +1057,53 @@ OAuthAppInfo
             )
         return authentication_method_configurations
 
+    async def _get_app_registrations(self):
+        """Retrieve application registrations from Microsoft Entra.
+
+        Fetches all application registrations and their password credentials
+        to identify apps using client secrets instead of certificates or
+        federated identity credentials.
+
+        Returns:
+            Dict[str, AppRegistration]: Dictionary of app registrations keyed by app ID.
+        """
+        logger.info("Entra - Getting app registrations...")
+        app_registrations = {}
+        try:
+            apps_data = await self.client.applications.get()
+            if apps_data and apps_data.value:
+                for app in apps_data.value:
+                    app_id = getattr(app, "app_id", None) or getattr(app, "id", "")
+                    display_name = getattr(app, "display_name", "") or ""
+                    object_id = getattr(app, "id", "")
+
+                    password_creds = []
+                    for cred in getattr(app, "password_credentials", []) or []:
+                        password_creds.append(
+                            PasswordCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                                start_date_time=str(getattr(cred, "start_date_time", ""))
+                                if getattr(cred, "start_date_time", None)
+                                else None,
+                                end_date_time=str(getattr(cred, "end_date_time", ""))
+                                if getattr(cred, "end_date_time", None)
+                                else None,
+                            )
+                        )
+
+                    app_registrations[object_id] = AppRegistration(
+                        id=object_id,
+                        app_id=app_id,
+                        name=display_name,
+                        password_credentials=password_creds,
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return app_registrations
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -1486,3 +1535,21 @@ class OAuthApp(BaseModel):
     is_admin_consented: bool = False
     last_used_time: Optional[str] = None
     app_origin: str = ""
+
+
+class PasswordCredential(BaseModel):
+    """Model for a password credential (client secret) on an app registration."""
+
+    key_id: str = ""
+    display_name: Optional[str] = None
+    start_date_time: Optional[str] = None
+    end_date_time: Optional[str] = None
+
+
+class AppRegistration(BaseModel):
+    """Model for a Microsoft Entra application registration."""
+
+    id: str
+    app_id: str = ""
+    name: str = ""
+    password_credentials: List[PasswordCredential] = []
