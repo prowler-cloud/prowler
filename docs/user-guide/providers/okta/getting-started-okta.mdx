@@ -80,7 +80,7 @@ export OKTA_CLIENT_ID="0oa1234567890abcdef"
 export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 ```
 
-`OKTA_PRIVATE_KEY` takes precedence over `OKTA_PRIVATE_KEY_FILE` when both are set. The same flag is available on the CLI as `--okta-private-key`, but env-var usage is strongly preferred.
+`OKTA_PRIVATE_KEY` takes precedence over `OKTA_PRIVATE_KEY_FILE` when both are set. The private key is intentionally not exposed as a CLI flag — secrets must be supplied via environment variables only.
 
 ## 5. Run a scan
 

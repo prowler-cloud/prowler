@@ -97,20 +97,14 @@ class Signon(OktaService):
                     id=getattr(rule, "id", "") or "",
                     name=getattr(rule, "name", "") or "",
                     is_default=bool(getattr(rule, "system", False)),
-                    max_session_idle_minutes=(
-                        getattr(session, "max_session_idle_minutes", None)
-                        if session
-                        else None
+                    max_session_idle_minutes=getattr(
+                        session, "max_session_idle_minutes", None
                     ),
-                    max_session_lifetime_minutes=(
-                        getattr(session, "max_session_lifetime_minutes", None)
-                        if session
-                        else None
+                    max_session_lifetime_minutes=getattr(
+                        session, "max_session_lifetime_minutes", None
                     ),
-                    use_persistent_cookie=(
-                        getattr(session, "use_persistent_cookie", None)
-                        if session
-                        else None
+                    use_persistent_cookie=getattr(
+                        session, "use_persistent_cookie", None
                     ),
                     network_zones_include=list(getattr(network, "include", None) or []),
                     network_zones_exclude=list(getattr(network, "exclude", None) or []),

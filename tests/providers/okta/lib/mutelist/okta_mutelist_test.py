@@ -52,11 +52,12 @@ class TestOktaMutelist:
         mutelist = OktaMutelist(mutelist_content=mutelist_content)
 
         finding = MagicMock()
+        finding.org_url = "https://acme.okta.com"
         finding.check_metadata.CheckID = "signon_global_session_idle_timeout_15min"
         finding.resource_name = "pol-default"
         finding.resource_tags = []
 
-        assert mutelist.is_finding_muted(finding, "https://acme.okta.com") is True
+        assert mutelist.is_finding_muted(finding) is True
 
     def test_is_finding_muted_no_match(self):
         mutelist_content = {
@@ -74,8 +75,9 @@ class TestOktaMutelist:
         mutelist = OktaMutelist(mutelist_content=mutelist_content)
 
         finding = MagicMock()
+        finding.org_url = "https://acme.okta.com"
         finding.check_metadata.CheckID = "signon_global_session_idle_timeout_15min"
         finding.resource_name = "pol-other"
         finding.resource_tags = []
 
-        assert mutelist.is_finding_muted(finding, "https://acme.okta.com") is False
+        assert mutelist.is_finding_muted(finding) is False

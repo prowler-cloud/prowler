@@ -1,13 +1,16 @@
-SENSITIVE_ARGUMENTS = frozenset({"--okta-private-key", "--okta-private-key-file"})
-
-
 def init_parser(self):
-    """Init the Okta Provider CLI parser"""
+    """Init the Okta Provider CLI parser.
+
+    The Okta provider authenticates with OAuth 2.0 (private-key JWT). The
+    private key is intentionally not exposed as a CLI flag — secrets must
+    be supplied via the `OKTA_PRIVATE_KEY` or `OKTA_PRIVATE_KEY_FILE`
+    environment variable. Non-secret values (org URL, client ID, scopes,
+    kid) are flag-configurable.
+    """
     okta_parser = self.subparsers.add_parser(
         "okta", parents=[self.common_providers_parser], help="Okta Provider"
     )
     okta_auth_subparser = okta_parser.add_argument_group("Authentication")
-    # OAuth 2.0 service app (private-key JWT) — the only supported flow in v1
     okta_auth_subparser.add_argument(
         "--okta-org-url",
         nargs="?",
@@ -21,28 +24,6 @@ def init_parser(self):
         help="Okta service app Client ID for OAuth 2.0 (private-key JWT)",
         default=None,
         metavar="OKTA_CLIENT_ID",
-    )
-    okta_auth_subparser.add_argument(
-        "--okta-private-key",
-        nargs="?",
-        help=(
-            "Okta service app private key as raw content (PEM or JWK). "
-            "Use OKTA_PRIVATE_KEY env var instead of passing directly. "
-            "Takes precedence over --okta-private-key-file when both are set."
-        ),
-        default=None,
-        metavar="OKTA_PRIVATE_KEY",
-    )
-    okta_auth_subparser.add_argument(
-        "--okta-private-key-file",
-        nargs="?",
-        help=(
-            "Path to a file containing the Okta service app private key "
-            "(PEM or JWK). Use OKTA_PRIVATE_KEY_FILE env var instead of "
-            "passing directly."
-        ),
-        default=None,
-        metavar="OKTA_PRIVATE_KEY_FILE",
     )
     okta_auth_subparser.add_argument(
         "--okta-scopes",

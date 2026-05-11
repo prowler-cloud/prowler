@@ -22,8 +22,9 @@ class signon_global_session_idle_timeout_15min(Check):
         )
         org_url = signon_client.provider.identity.org_url
         for policy in signon_client.global_session_policies.values():
-            report = CheckReportOkta(metadata=self.metadata(), resource=policy)
-            report.org_url = org_url
+            report = CheckReportOkta(
+                metadata=self.metadata(), resource=policy, org_url=org_url
+            )
 
             non_default_rules = [r for r in policy.rules if not r.is_default]
             compliant_rules = [
