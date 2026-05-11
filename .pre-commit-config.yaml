@@ -44,11 +44,8 @@ repos:
     rev: v1.24.1
     hooks:
       - id: zizmor
-        # Scope to the inputs zizmor actually audits: workflows, composite
-        # actions, and dependabot config. The previous `^\.github/` regex
-        # also matched issue templates / labeler / CODEOWNERS, which made
-        # zizmor exit 3 ("no audit was performed") on commits that touch
-        # those files.
+        # zizmor only audits workflows, composite actions and dependabot
+        # config; broader paths trip exit 3 ("no audit was performed").
         files: ^\.github/(workflows|actions)/.+\.ya?ml$|^\.github/dependabot\.ya?ml$
         priority: 30
 
