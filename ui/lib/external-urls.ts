@@ -100,6 +100,11 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help connecting your Vercel team?",
         link: "https://goto.prowler.com/provider-vercel",
       };
+    case "lovable":
+      return {
+        text: "Need help connecting your Lovable workspace?",
+        link: "https://docs.lovable.dev/tips-tricks/security-best-practices",
+      };
     default:
       return {
         text: "How to setup a provider?",

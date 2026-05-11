@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from prowler.providers.openstack.openstack_provider import OpenstackProvider
     from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
     from prowler.providers.vercel.vercel_provider import VercelProvider
+    from prowler.providers.lovable.lovable_provider import LovableProvider
 
 
 class CustomOAuth2Client(OAuth2Client):
@@ -96,6 +97,7 @@ def return_prowler_provider(
     | OpenstackProvider
     | OraclecloudProvider
     | VercelProvider
+    | LovableProvider
 ):
     """Return the Prowler provider class based on the given provider type.
 
@@ -181,6 +183,10 @@ def return_prowler_provider(
             from prowler.providers.vercel.vercel_provider import VercelProvider
 
             prowler_provider = VercelProvider
+        case Provider.ProviderChoices.LOVABLE.value:
+            from prowler.providers.lovable.lovable_provider import LovableProvider
+
+            prowler_provider = LovableProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -246,6 +252,11 @@ def get_prowler_provider_kwargs(
             **prowler_provider_kwargs,
             "team_id": provider.uid,
         }
+    elif provider.provider == Provider.ProviderChoices.LOVABLE.value:
+        prowler_provider_kwargs = {
+            **prowler_provider_kwargs,
+            "workspace_id": provider.uid,
+        }
     elif provider.provider == Provider.ProviderChoices.IMAGE.value:
         # Detect whether uid is a registry URL (e.g. "docker.io/andoniaf") or
         # a concrete image reference (e.g. "docker.io/andoniaf/myimage:latest").
@@ -293,6 +304,7 @@ def initialize_prowler_provider(
     | OpenstackProvider
     | OraclecloudProvider
     | VercelProvider
+    | LovableProvider
 ):
     """Initialize a Prowler provider instance based on the given provider type.
 
@@ -351,6 +363,14 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
             "raise_on_exception": False,
         }
         return prowler_provider.test_connection(**vercel_kwargs)
+    elif provider.provider == Provider.ProviderChoices.LOVABLE.value:
+        lovable_kwargs = {
+            **prowler_provider_kwargs,
+            "workspace_id": provider.uid,
+            "raise_on_exception": False,
+            "provider_id": provider.uid,
+        }
+        return prowler_provider.test_connection(**lovable_kwargs)
     elif provider.provider == Provider.ProviderChoices.IMAGE.value:
         image_kwargs = {
             "image": provider.uid,

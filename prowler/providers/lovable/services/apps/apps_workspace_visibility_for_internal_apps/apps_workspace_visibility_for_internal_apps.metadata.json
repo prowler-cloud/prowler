@@ -1,0 +1,37 @@
+{
+  "Provider": "lovable",
+  "CheckID": "apps_workspace_visibility_for_internal_apps",
+  "CheckTitle": "Internal Lovable apps must use workspace visibility",
+  "CheckType": [],
+  "ServiceName": "apps",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "LovableApp",
+  "ResourceGroup": "governance",
+  "Description": "Lovable apps that are not intended for public consumption must be set to workspace visibility so that authentication is required and the app is not exposed to anonymous visitors on the public internet.",
+  "Risk": "Apps tagged as internal but published with public visibility expose admin tooling, internal dashboards, or staging environments to anyone on the internet. Attackers can reach login screens, perform credential stuffing, or exploit weakly-protected admin functionality.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.lovable.dev/tips-tricks/security-best-practices#workspace-security"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Lovable dashboard\n2. Select the app and navigate to Settings > Project access\n3. Change the visibility from Public to Workspace\n4. Confirm only intended workspace members retain access\n5. Re-publish the app",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set internal Lovable apps to Workspace visibility, require authentication, and audit workspace member access regularly. Reserve Public visibility for apps that are intentionally exposed to the internet.",
+      "Url": "https://hub.prowler.com/check/apps_workspace_visibility_for_internal_apps"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

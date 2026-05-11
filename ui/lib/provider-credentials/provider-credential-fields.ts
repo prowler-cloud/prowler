@@ -91,6 +91,10 @@ export const ProviderCredentialFields = {
 
   // Vercel fields
   VERCEL_API_TOKEN: "api_token",
+
+  // Lovable fields
+  LOVABLE_API_TOKEN: "api_token",
+  LOVABLE_SUPABASE_ACCESS_TOKEN: "supabase_access_token",
 } as const;
 
 // Type for credential field values
@@ -150,6 +154,9 @@ export const ErrorPointers = {
     "/data/attributes/secret/credentials_content",
   GOOGLEWORKSPACE_DELEGATED_USER: "/data/attributes/secret/delegated_user",
   VERCEL_API_TOKEN: "/data/attributes/secret/api_token",
+  LOVABLE_API_TOKEN: "/data/attributes/secret/api_token",
+  LOVABLE_SUPABASE_ACCESS_TOKEN:
+    "/data/attributes/secret/supabase_access_token",
 } as const;
 
 export type ErrorPointer = (typeof ErrorPointers)[keyof typeof ErrorPointers];

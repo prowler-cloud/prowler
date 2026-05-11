@@ -108,6 +108,13 @@ def display_summary_table(
                 )
             else:
                 audited_entities = provider.identity.username or "Personal Account"
+        elif provider.type == "lovable":
+            entity_type = "Workspace"
+            if provider.identity.workspace:
+                ws = provider.identity.workspace
+                audited_entities = ws.name or ws.slug or ws.id
+            else:
+                audited_entities = provider.identity.username or "Personal Account"
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

@@ -427,6 +427,23 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = "global"
 
+            elif provider.type == "lovable":
+                output_data["auth_method"] = "api_token"
+                workspace = get_nested_attribute(provider, "identity.workspace")
+                output_data["account_uid"] = (
+                    workspace.id
+                    if workspace
+                    else get_nested_attribute(provider, "identity.user_id")
+                )
+                output_data["account_name"] = (
+                    workspace.name or workspace.slug
+                    if workspace
+                    else get_nested_attribute(provider, "identity.username")
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = "global"
+
             elif provider.type == "alibabacloud":
                 output_data["auth_method"] = get_nested_attribute(
                     provider, "identity.identity_arn"

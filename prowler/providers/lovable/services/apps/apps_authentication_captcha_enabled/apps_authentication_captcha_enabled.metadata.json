@@ -1,0 +1,39 @@
+{
+  "Provider": "lovable",
+  "CheckID": "apps_authentication_captcha_enabled",
+  "CheckTitle": "CAPTCHA must be enabled on Lovable auth forms",
+  "CheckType": [],
+  "ServiceName": "apps",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "LovableApp",
+  "ResourceGroup": "IAM",
+  "Description": "Lovable apps that expose authentication must require CAPTCHA on signup and login forms to deter automated bot attacks.",
+  "Risk": "Without CAPTCHA, attackers can automate signup spam, credential stuffing, brute force attacks, and account-takeover attempts at scale.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://meetcyber.net/security-best-practices-for-lovable-apps-2026-be0350cc87e1"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Lovable dashboard\n2. Navigate to project Settings > Authentication\n3. Enable CAPTCHA / Bot Protection on signup, login, and password reset forms\n4. Test that the CAPTCHA challenge is presented on each form",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable CAPTCHA on every authentication-facing form so automated tools cannot enumerate users or brute-force credentials.",
+      "Url": "https://hub.prowler.com/check/apps_authentication_captcha_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "apps_authentication_rate_limit_enabled"
+  ],
+  "Notes": ""
+}

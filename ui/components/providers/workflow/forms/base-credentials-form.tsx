@@ -26,6 +26,7 @@ import {
   IacCredentials,
   ImageCredentials,
   KubernetesCredentials,
+  LovableCredentials,
   M365CertificateCredentials,
   M365ClientSecretCredentials,
   MongoDBAtlasCredentials,
@@ -58,6 +59,7 @@ import { GoogleWorkspaceCredentialsForm } from "./via-credentials/googleworkspac
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { ImageCredentialsForm } from "./via-credentials/image-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
+import { LovableCredentialsForm } from "./via-credentials/lovable-credentials-form";
 import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
 import { OpenStackCredentialsForm } from "./via-credentials/openstack-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
@@ -277,6 +279,11 @@ export const BaseCredentialsForm = ({
         {providerType === "vercel" && (
           <VercelCredentialsForm
             control={form.control as unknown as Control<VercelCredentials>}
+          />
+        )}
+        {providerType === "lovable" && (
+          <LovableCredentialsForm
+            control={form.control as unknown as Control<LovableCredentials>}
           />
         )}
 

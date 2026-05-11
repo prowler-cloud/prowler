@@ -1575,6 +1575,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = ImageProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.VERCEL.value:
                 serializer = VercelProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.LOVABLE.value:
+                serializer = LovableProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1783,6 +1785,23 @@ class ImageProviderSecret(serializers.Serializer):
 
 class VercelProviderSecret(serializers.Serializer):
     api_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class LovableProviderSecret(serializers.Serializer):
+    api_token = serializers.CharField(
+        help_text="Lovable Cloud API token used to authenticate against the Lovable Cloud API.",
+    )
+    supabase_access_token = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text=(
+            "Optional Supabase Management API token used for deeper RLS / "
+            "auth posture checks on Supabase-backed Lovable apps."
+        ),
+    )
 
     class Meta:
         resource_name = "provider-secrets"

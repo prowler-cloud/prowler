@@ -403,6 +403,21 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "lovable" in provider_class_name.lower():
+                    provider_class(
+                        api_token=getattr(arguments, "lovable_api_token", None),
+                        workspace_id=getattr(arguments, "lovable_workspace_id", None),
+                        supabase_access_token=getattr(
+                            arguments, "supabase_access_token", None
+                        ),
+                        projects=getattr(arguments, "project", None),
+                        published_app_urls=getattr(
+                            arguments, "published_app_url", None
+                        ),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(

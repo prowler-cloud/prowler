@@ -415,6 +415,21 @@ from rest_framework_json_api import serializers
                 },
                 "required": ["api_token"],
             },
+            {
+                "type": "object",
+                "title": "Lovable API Token",
+                "properties": {
+                    "api_token": {
+                        "type": "string",
+                        "description": "Lovable Cloud API token used to authenticate against the Lovable Cloud API.",
+                    },
+                    "supabase_access_token": {
+                        "type": "string",
+                        "description": "Optional Supabase Management API token for deeper RLS / auth posture checks on Supabase-backed Lovable apps.",
+                    },
+                },
+                "required": ["api_token"],
+            },
         ]
     }
 )

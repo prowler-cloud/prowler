@@ -1283,6 +1283,42 @@ class CheckReportVercel(Check_Report):
         return "global"
 
 
+@dataclass
+class CheckReportLovable(Check_Report):
+    """Contains the Lovable Check's finding information.
+
+    Lovable is a global platform - workspace_id is the scoping context.
+    All resource-related attributes are derived from the resource object.
+    """
+
+    resource_name: str
+    resource_id: str
+    workspace_id: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        workspace_id: str = None,
+    ) -> None:
+        """Initialize the Lovable Check's finding information."""
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+        self.workspace_id = workspace_id or getattr(resource, "workspace_id", "")
+
+    @property
+    def region(self) -> str:
+        """Lovable is global - return 'global'."""
+        return "global"
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
     """

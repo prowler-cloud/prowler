@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.26.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- Lovable provider option in the connect-account flow: provider radio choice, brand badge, workspace UID input, credentials form (Lovable API token plus optional Supabase access token), and findings/overview wiring
+
 ### 🔄 Changed
 
 - Standardized "Providers" wording across UI and documentation, replacing legacy "Cloud Providers" / "Accounts" / "Account Groups" copy [(#10971)](https://github.com/prowler-cloud/prowler/pull/10971)

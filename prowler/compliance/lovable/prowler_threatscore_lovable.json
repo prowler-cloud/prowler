@@ -1,0 +1,225 @@
+{
+  "Framework": "ProwlerThreatScore",
+  "Name": "Prowler ThreatScore Compliance Framework for Lovable",
+  "Version": "1.0",
+  "Provider": "Lovable",
+  "Description": "Prowler ThreatScore Compliance Framework for Lovable assesses the security posture of AI-built apps published from Lovable across four pillars: Identity and Access Management (auth, password policy, RLS), Attack Surface (workspace visibility, security headers, HTTPS), Secrets Management (no secrets in frontend, pre-publication review), and Application Hardening (Edge Function auth, CSP, storage privacy).",
+  "Requirements": [
+    {
+      "Id": "1.1.1",
+      "Description": "CAPTCHA / bot protection is enabled on Lovable auth forms",
+      "Checks": [
+        "apps_authentication_captcha_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Bot protection on auth forms",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Signup, login, and password reset forms in Lovable apps must require CAPTCHA so that automated tools cannot spam accounts, enumerate users, or perform credential stuffing at scale.",
+          "AdditionalInformation": "Lovable's documented best practice is to enable CAPTCHA on every authentication-facing form. Combined with rate limiting, CAPTCHA dramatically reduces the success rate of automated attacks.",
+          "LevelOfRisk": 3,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.2",
+      "Description": "Lovable apps enforce a strong password policy",
+      "Checks": [
+        "apps_authentication_strong_password_policy"
+      ],
+      "Attributes": [
+        {
+          "Title": "Strong password policy",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Lovable apps using password authentication must require at least 8 characters and include uppercase, lowercase, and numeric characters.",
+          "AdditionalInformation": "Weak password policies enable trivial credential-stuffing and brute-force attacks. The minimum baseline mirrors the Lovable Cyber best-practices guidance.",
+          "LevelOfRisk": 3,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.3",
+      "Description": "Authentication endpoints are rate-limited",
+      "Checks": [
+        "apps_authentication_rate_limit_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Auth rate limiting",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "Signup, login, and password reset endpoints must enforce rate limits to slow down credential stuffing, account enumeration, and brute-force attacks.",
+          "AdditionalInformation": "Rate limits should be applied per-IP and per-user in the Edge Function backing the auth flow, returning HTTP 429 once exceeded.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.1",
+      "Description": "Row Level Security is enabled on every Supabase table backing the app",
+      "Checks": [
+        "apps_supabase_rls_enabled_on_all_tables"
+      ],
+      "Attributes": [
+        {
+          "Title": "RLS on all tables",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "RLS is the final layer of defence behind frontend and backend logic. Every Supabase table containing user data must have RLS enabled and a matching policy that scopes rows to the authenticated user, team, or organization.",
+          "AdditionalInformation": "Tables without RLS are reachable through the public anon key; this is the single most common cause of catastrophic Lovable app data leaks.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.2.2",
+      "Description": "Supabase Edge Functions enforce authentication",
+      "Checks": [
+        "apps_supabase_edge_functions_authenticated"
+      ],
+      "Attributes": [
+        {
+          "Title": "Edge Function authentication",
+          "Section": "1. Identity and Access Management",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Every Supabase Edge Function backing a Lovable app must validate the JWT and apply role/permission checks server-side. Critical behaviour must never rely on browser-only enforcement.",
+          "AdditionalInformation": "Lovable's guidance is explicit: 'critical behaviour never reaches the browser and every request is evaluated consistently.'",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.1.1",
+      "Description": "Internal Lovable apps use workspace visibility, not public",
+      "Checks": [
+        "apps_workspace_visibility_for_internal_apps"
+      ],
+      "Attributes": [
+        {
+          "Title": "Workspace-only access for internal apps",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Exposure",
+          "AttributeDescription": "Apps tagged as internal must use Workspace visibility rather than Public so that only authenticated workspace members can reach them.",
+          "AdditionalInformation": "Public visibility for internal tooling exposes admin dashboards, staging environments, and weakly-protected functionality to the entire internet.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2",
+      "Description": "Published apps are served over HTTPS",
+      "Checks": [
+        "published_app_uses_https"
+      ],
+      "Attributes": [
+        {
+          "Title": "HTTPS enforcement",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Exposure",
+          "AttributeDescription": "Every published Lovable app must be reachable only over HTTPS so that credentials, JWTs, and user data are encrypted in transit.",
+          "AdditionalInformation": "Pair HTTPS with HSTS (preload + includeSubDomains) to prevent downgrade attacks.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.2.1",
+      "Description": "Required HTTP security headers are configured",
+      "Checks": [
+        "published_app_security_headers_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "Baseline security headers",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Hardening",
+          "AttributeDescription": "Published apps must respond with Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, and Referrer-Policy.",
+          "AdditionalInformation": "These headers mitigate XSS, clickjacking, MIME sniffing, downgrade, and referrer leak attacks.",
+          "LevelOfRisk": 3,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.2.2",
+      "Description": "Content-Security-Policy is strict",
+      "Checks": [
+        "published_app_strict_csp_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "Strict CSP",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Hardening",
+          "AttributeDescription": "The CSP returned by the published app must define default-src and must not contain wildcards or 'unsafe-inline'/'unsafe-eval' for script execution.",
+          "AdditionalInformation": "A permissive CSP is a permissive lie: it gives the appearance of XSS protection while still allowing attacker-injected scripts to execute.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.2.3",
+      "Description": "Public storage buckets are not used for private user content",
+      "Checks": [
+        "apps_supabase_storage_buckets_not_public"
+      ],
+      "Attributes": [
+        {
+          "Title": "Storage bucket privacy",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Hardening",
+          "AttributeDescription": "Supabase storage buckets must be Private by default. Only buckets serving genuinely public assets should remain Public.",
+          "AdditionalInformation": "Public buckets allow any visitor with the URL to enumerate and download files. Combine Private buckets with storage RLS and signed URLs for downloads.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.1.1",
+      "Description": "No secrets are bundled into the published frontend",
+      "Checks": [
+        "published_app_no_secrets_in_frontend_bundle"
+      ],
+      "Attributes": [
+        {
+          "Title": "No secrets in browser bundle",
+          "Section": "3. Secrets Management",
+          "SubSection": "3.1 Frontend exposure",
+          "AttributeDescription": "Service-role keys, third-party API tokens, and private keys must never appear in the JavaScript bundle delivered to the browser.",
+          "AdditionalInformation": "A leaked Supabase service-role key bypasses RLS entirely. Anything shipped to the browser must be considered compromised the moment it ships.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "3.2.1",
+      "Description": "Lovable's pre-publication security review has been completed",
+      "Checks": [
+        "apps_pre_publication_security_review_completed"
+      ],
+      "Attributes": [
+        {
+          "Title": "Pre-publication security review",
+          "Section": "3. Secrets Management",
+          "SubSection": "3.2 Governance",
+          "AttributeDescription": "Lovable's built-in 'Review Security' workflow must be run, and every reported finding must be resolved, before an app is published.",
+          "AdditionalInformation": "The historical wave of Lovable app data leaks was driven by skipped pre-publication reviews; treating it as a release gate prevents the most common failure modes.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    }
+  ]
+}

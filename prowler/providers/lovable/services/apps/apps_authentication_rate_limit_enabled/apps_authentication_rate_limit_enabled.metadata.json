@@ -1,0 +1,39 @@
+{
+  "Provider": "lovable",
+  "CheckID": "apps_authentication_rate_limit_enabled",
+  "CheckTitle": "Lovable apps must rate-limit authentication endpoints",
+  "CheckType": [],
+  "ServiceName": "apps",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "LovableApp",
+  "ResourceGroup": "IAM",
+  "Description": "Signup, login, and password reset endpoints in Lovable apps must be rate-limited to prevent automated credential stuffing, account enumeration, and brute-force attacks.",
+  "Risk": "Without rate limits, attackers can iterate through credentials, enumerate valid users, or trigger password reset spam at near-unlimited speed.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.lovable.dev/tips-tricks/security-best-practices"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Implement rate limiting in Supabase Edge Functions backing the auth flow\n2. Apply per-IP and per-user limits to signup, login, and password reset endpoints\n3. Return HTTP 429 with Retry-After when limits are exceeded\n4. Monitor authentication metrics for abnormal spikes",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Rate-limit authentication and other sensitive endpoints in Edge Functions. Combine with CAPTCHA, anomaly detection, and account-lockout policies for defense in depth.",
+      "Url": "https://hub.prowler.com/check/apps_authentication_rate_limit_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "apps_authentication_captcha_enabled"
+  ],
+  "Notes": ""
+}

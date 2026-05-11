@@ -1,0 +1,39 @@
+{
+  "Provider": "lovable",
+  "CheckID": "published_app_security_headers_configured",
+  "CheckTitle": "Published Lovable apps must set the required HTTP security headers",
+  "CheckType": [],
+  "ServiceName": "published",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "LovablePublishedApp",
+  "ResourceGroup": "network",
+  "Description": "Published Lovable apps must respond with HTTP security headers (Content-Security-Policy, Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Referrer-Policy) to mitigate XSS, clickjacking, MIME sniffing, downgrade, and referrer-leak attacks.",
+  "Risk": "Missing security headers allow common browser-based attacks such as clickjacking, MIME-sniffing, cross-site scripting injection via inline scripts, downgrade to HTTP, and leakage of sensitive URLs through Referer headers.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://owasp.org/www-project-secure-headers/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Configure security headers at the edge or Edge Function gateway\n2. Set Content-Security-Policy with a strict default-src and explicit allowlists\n3. Set Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\n4. Set X-Content-Type-Options: nosniff\n5. Set X-Frame-Options: DENY (or use frame-ancestors in CSP)\n6. Set Referrer-Policy: strict-origin-when-cross-origin",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add a baseline security header configuration to every published Lovable app and verify it after deploys with an external scanner.",
+      "Url": "https://hub.prowler.com/check/published_app_security_headers_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "published_app_strict_csp_configured"
+  ],
+  "Notes": ""
+}

@@ -163,6 +163,17 @@ export const addProviderFormSchema = z
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string().trim().min(1, "Team ID is required"),
       }),
+      z.object({
+        providerType: z.literal("lovable"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z
+          .string()
+          .trim()
+          .regex(
+            /^[a-zA-Z0-9][a-zA-Z0-9_-]{2,63}$/,
+            "Workspace ID must be 3-64 alphanumeric characters, dashes, or underscores",
+          ),
+      }),
     ]),
   );
 
@@ -391,7 +402,20 @@ export const addCredentialsFormSchema = (
                                             .trim()
                                             .min(1, "API Token is required"),
                                       }
-                                    : {}),
+                                    : providerType === "lovable"
+                                      ? {
+                                          [ProviderCredentialFields.LOVABLE_API_TOKEN]:
+                                            z
+                                              .string()
+                                              .trim()
+                                              .min(
+                                                1,
+                                                "Lovable API Token is required",
+                                              ),
+                                          [ProviderCredentialFields.LOVABLE_SUPABASE_ACCESS_TOKEN]:
+                                            z.string().trim().optional(),
+                                        }
+                                      : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {

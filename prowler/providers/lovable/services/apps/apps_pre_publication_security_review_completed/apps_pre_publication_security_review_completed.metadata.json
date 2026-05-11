@@ -1,0 +1,40 @@
+{
+  "Provider": "lovable",
+  "CheckID": "apps_pre_publication_security_review_completed",
+  "CheckTitle": "Lovable security review must be completed before publishing",
+  "CheckType": [],
+  "ServiceName": "apps",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "LovableApp",
+  "ResourceGroup": "governance",
+  "Description": "Lovable provides a built-in 'Review Security' workflow that scans for missing RLS, exposed secrets, missing auth, and similar issues. Apps must run this review and resolve all findings before publishing.",
+  "Risk": "Publishing without running the security review allows apps with missing RLS, exposed service-role keys, or unauthenticated Edge Functions to reach the public internet. The historical Lovable incident wave was driven exactly by skipped pre-publication reviews.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://meetcyber.net/security-best-practices-for-lovable-apps-2026-be0350cc87e1"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Lovable dashboard for the project\n2. Click Review Security\n3. Resolve every reported finding (RLS, auth, secrets, etc.)\n4. Re-run the review until it returns zero findings\n5. Republish only after the review passes cleanly",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Run Lovable's Review Security workflow as the final gate before publishing every app, and re-run it any time you add a feature, change auth, or modify data access.",
+      "Url": "https://hub.prowler.com/check/apps_pre_publication_security_review_completed"
+    }
+  },
+  "Categories": [
+    "vulnerabilities",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "apps_supabase_rls_enabled_on_all_tables",
+    "apps_no_hardcoded_secrets_in_frontend_bundle"
+  ],
+  "Notes": ""
+}

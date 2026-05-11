@@ -296,6 +296,7 @@ class Provider(RowLevelSecurityProtectedModel):
         IMAGE = "image", _("Image")
         GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
         VERCEL = "vercel", _("Vercel")
+        LOVABLE = "lovable", _("Lovable")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -445,6 +446,17 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Vercel provider ID must be a valid Vercel Team ID (e.g., team_xxxxxxxxxxxxxxxxxxxxxxxx).",
                 code="vercel-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_lovable_uid(value):
+        # Lovable workspace IDs are alphanumeric (with optional dashes/underscores),
+        # commonly between 8 and 64 characters. Accept both raw IDs and slugs.
+        if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{2,63}$", value):
+            raise ModelValidationError(
+                detail="Lovable provider ID must be a valid workspace ID or slug (3-64 alphanumeric characters, dashes, or underscores).",
+                code="lovable-uid",
                 pointer="/data/attributes/uid",
             )
 
