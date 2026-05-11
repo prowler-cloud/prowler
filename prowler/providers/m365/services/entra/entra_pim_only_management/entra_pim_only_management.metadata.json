@@ -1,0 +1,35 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_pim_only_management",
+  "CheckTitle": "PIM-only management ensures privileged role assignments are governed and auditable",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Checks whether all privileged role assignments in Microsoft Entra ID are managed through Privileged Identity Management (PIM). Detects active PIM alerts for role assignments made directly, bypassing PIM governance controls such as approval workflows, justification requirements, and time-bound access.",
+  "Risk": "Role assignments made outside PIM bypass governance controls, removing audit trails, approval workflows, and time-bound access. This may indicate an active attack or privilege escalation, as adversaries can silently grant persistent administrative access without detection, impacting confidentiality, integrity, and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure",
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-configure-security-alerts"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center > Identity Governance > Privileged Identity Management > Microsoft Entra roles > Alerts\n2. Review the 'Roles are being assigned outside of Privileged Identity Management' alert\n3. For each affected assignment, click the alert to view details\n4. Remove the direct role assignments and re-create them as PIM-eligible assignments\n5. Ensure all future role assignments are made through PIM",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **PIM-only management** by ensuring all privileged role assignments are made through Privileged Identity Management. Remove any direct (permanent) role assignments that bypass PIM and replace them with eligible assignments. Configure PIM alerts to monitor for assignments made outside PIM and review them regularly.",
+      "Url": "https://hub.prowler.com/check/entra_pim_only_management"
+    }
+  },
+  "Categories": ["identity-access"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
