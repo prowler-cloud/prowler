@@ -676,11 +676,11 @@ export function ResourceDetailDrawerContent({
             <div className="flex items-start gap-4">
               {/* Resource info grid — 4 data columns */}
               <div className="@container flex min-w-0 flex-1 flex-col gap-4">
-                {/* Row 1: Account (cols 1-2), Resource (cols 3-5) */}
+                {/* Row 1: Provider (cols 1-2), Resource (cols 3-5) */}
                 <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-5 @md:gap-x-8">
                   <div className="flex min-w-0 flex-col gap-1 @md:col-span-2">
                     <span className="text-text-neutral-secondary text-[10px] whitespace-nowrap">
-                      Account
+                      Provider
                     </span>
                     <EntityInfo
                       cloudProvider={providerType}
