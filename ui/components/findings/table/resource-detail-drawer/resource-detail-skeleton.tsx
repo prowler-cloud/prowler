@@ -9,7 +9,7 @@ export function ResourceDetailSkeleton() {
   return (
     <div className="flex items-start gap-4">
       <div className="@container flex min-w-0 flex-1 flex-col gap-4">
-        {/* Row 1: Account, Resource */}
+        {/* Row 1: Provider, Resource */}
         <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] @md:gap-x-8">
           <EntityInfoSkeleton hasIcon labelWidth="w-12" />
           <EntityInfoSkeleton labelWidth="w-14" />
