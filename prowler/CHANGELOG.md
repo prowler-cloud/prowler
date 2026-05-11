@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.27.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `entra_pim_stale_sign_in_alert` check for m365 provider [(#10798)](https://github.com/prowler-cloud/prowler/pull/10798)
+
+---
+
 ## [5.26.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
@@ -96,10 +104,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ---
 
 ## [5.24.1] (Prowler v5.24.1)
-
-### 🚀 Added
-
-- `entra_pim_stale_sign_in_alert` check for m365 provider [(#10798)](https://github.com/prowler-cloud/prowler/pull/10798)
 
 ### 🔄 Changed
 
