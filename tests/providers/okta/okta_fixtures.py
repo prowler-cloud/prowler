@@ -1,4 +1,4 @@
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from prowler.providers.okta.models import OktaIdentityInfo, OktaSession
 

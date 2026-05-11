@@ -4,9 +4,9 @@ from prowler.lib.outputs.utils import unroll_dict, unroll_tags
 
 
 class OktaMutelist(Mutelist):
-    def is_finding_muted(self, finding: CheckReportOkta) -> bool:
+    def is_finding_muted(self, finding: CheckReportOkta, org_url: str) -> bool:
         return self.is_muted(
-            finding.org_url,
+            org_url,
             finding.check_metadata.CheckID,
             "*",
             finding.resource_name,

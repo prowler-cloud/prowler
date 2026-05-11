@@ -122,9 +122,6 @@ export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 # Optional — defaults to "okta.policies.read"
 export OKTA_SCOPES="okta.policies.read"
 
-# Optional — only when the JWK does not embed `kid`
-# export OKTA_KID="abc123"
-
 poetry run python prowler-cli.py okta
 ```
 
@@ -137,7 +134,6 @@ Non-secret values are also available as CLI flags for ergonomic overrides:
 | `--okta-org-url` | `OKTA_ORG_URL` |
 | `--okta-client-id` | `OKTA_CLIENT_ID` |
 | `--okta-scopes` | `OKTA_SCOPES` |
-| `--okta-kid` | `OKTA_KID` |
 
 Run a single check directly:
 

@@ -5,7 +5,7 @@ title: 'Getting Started with Okta'
 This guide covers setting up Okta security scanning with Prowler. The Okta provider authenticates with **OAuth 2.0 (private-key JWT)** as a service application — no end-user login, fully read-only by scope.
 
 <Note>
-**Phase 1 scope**
+**Initial release scope**
 
 The initial Okta provider release ships with one check (`signon_global_session_idle_timeout_15min`, mapped to DISA STIG V-273186). Additional services and checks land in subsequent releases.
 </Note>
@@ -31,7 +31,7 @@ Under **Security → General → Default org settings**, ensure **Public client 
 
 ## 2. Grant the required OAuth scopes
 
-In the service app's **Okta API Scopes** tab, click **Grant** on every scope Prowler needs. For Phase 1 only one scope is strictly required:
+In the service app's **Okta API Scopes** tab, click **Grant** on every scope Prowler needs. For the initial release only one scope is strictly required:
 
 - `okta.policies.read`
 
@@ -96,7 +96,7 @@ Prowler will print a summary table; full findings are written to the configured 
 
 ### Default Scopes
 
-Prowler requests a fixed set of OAuth scopes on every token exchange. The default is a single scope that covers the bundled Phase 1 check:
+Prowler requests a fixed set of OAuth scopes on every token exchange. The default is a single scope that covers the bundled initial check:
 
 - `okta.policies.read`
 

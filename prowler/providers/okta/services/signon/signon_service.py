@@ -78,13 +78,23 @@ class Signon(OktaService):
         # cursor in the SDK signature, so we call once with a generous
         # `limit`. Tenants with more rules per policy than the limit would
         # silently truncate; this is rare (most policies have <10 rules).
+        rule_fetch_limit = 100
         rules_out: list[GlobalSessionPolicyRule] = []
-        result = await self.client.list_policy_rules(policy_id, limit="100")
+        result = await self.client.list_policy_rules(
+            policy_id, limit=str(rule_fetch_limit)
+        )
         err = result[-1]
         if err is not None:
             logger.error(f"Error listing rules for policy {policy_id}: {err}")
             return rules_out
         all_rules = list(result[0] or [])
+        if len(all_rules) >= rule_fetch_limit:
+            logger.warning(
+                f"Policy {policy_id} returned {len(all_rules)} rules — the "
+                f"per-policy fetch limit ({rule_fetch_limit}) was hit; any "
+                "rules beyond this limit are not evaluated by Prowler. "
+                "Review the policy in the Okta Admin Console."
+            )
 
         for rule in all_rules:
             actions = getattr(rule, "actions", None)

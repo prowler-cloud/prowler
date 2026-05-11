@@ -4,6 +4,7 @@ import pytest
 
 from prowler.providers.okta.exceptions.exceptions import (
     OktaEnvironmentVariableError,
+    OktaInsufficientPermissionsError,
     OktaInvalidCredentialsError,
     OktaInvalidOrgURLError,
     OktaPrivateKeyFileError,
@@ -239,6 +240,40 @@ class Test_OktaProvider_setup_identity:
             mocked.list_policies = failing_list_policies
             mocked_client_cls.return_value = mocked
             with pytest.raises(OktaInvalidCredentialsError):
+                OktaProvider.setup_identity(session)
+
+    def test_raises_insufficient_permissions_on_scope_error(
+        self, _clear_okta_env, tmp_path
+    ):
+        session = self._session(tmp_path)
+
+        async def failing_list_policies(*_a, **_k):
+            return ([], None, Exception("invalid_scope: policies.read missing"))
+
+        with mock.patch(
+            "prowler.providers.okta.okta_provider.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_policies = failing_list_policies
+            mocked_client_cls.return_value = mocked
+            with pytest.raises(OktaInsufficientPermissionsError):
+                OktaProvider.setup_identity(session)
+
+    def test_raises_insufficient_permissions_on_forbidden(
+        self, _clear_okta_env, tmp_path
+    ):
+        session = self._session(tmp_path)
+
+        async def failing_list_policies(*_a, **_k):
+            return ([], None, Exception("403 Forbidden"))
+
+        with mock.patch(
+            "prowler.providers.okta.okta_provider.OktaSDKClient"
+        ) as mocked_client_cls:
+            mocked = mock.MagicMock()
+            mocked.list_policies = failing_list_policies
+            mocked_client_cls.return_value = mocked
+            with pytest.raises(OktaInsufficientPermissionsError):
                 OktaProvider.setup_identity(session)
 
     def test_wraps_unexpected_errors_in_setup_identity_error(

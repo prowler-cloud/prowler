@@ -21,7 +21,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "1. Sign in to the Okta Admin Console as a Super Admin\n2. Go to Security > Global Session Policy\n3. Open the Default Policy\n4. Add or edit a non-default rule\n5. Set 'Maximum Okta global session idle time' to 15 minutes or less\n6. Save the rule and ensure it precedes the catch-all Default Rule",
-      "Terraform": ""
+      "Terraform": "resource \"okta_policy_rule_signon\" \"prowler_idle_timeout_15min\" {\n  policy_id           = okta_policy_signon.default.id\n  name                = \"Prowler-enforced idle timeout\"\n  status              = \"ACTIVE\"\n  session_idle        = 15\n  session_persistent  = false\n}\n"
     },
     "Recommendation": {
       "Text": "Configure the Default Global Session Policy with at least one non-default rule that sets the Maximum Okta global session idle time to 15 minutes or less, in line with DISA STIG OKTA-APP-000020 (V-273186).",

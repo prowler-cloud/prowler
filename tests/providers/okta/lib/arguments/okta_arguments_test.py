@@ -40,7 +40,6 @@ class TestOktaArguments:
             "--okta-org-url",
             "--okta-client-id",
             "--okta-scopes",
-            "--okta-kid",
         }
 
     def test_secret_flags_not_registered(self):

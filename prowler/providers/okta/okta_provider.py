@@ -19,6 +19,7 @@ from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.okta.exceptions.exceptions import (
     OktaEnvironmentVariableError,
+    OktaInsufficientPermissionsError,
     OktaInvalidCredentialsError,
     OktaInvalidOrgURLError,
     OktaPrivateKeyFileError,
@@ -55,6 +56,7 @@ class OktaProvider(Provider):
     _session: OktaSession
     _identity: OktaIdentityInfo
     _audit_config: dict
+    _fixer_config: dict
     _mutelist: Mutelist
     audit_metadata: Audit_Metadata
 
@@ -205,7 +207,11 @@ class OktaProvider(Provider):
             if not ORG_URL_RE.match(org_url):
                 raise OktaInvalidOrgURLError(
                     file=os.path.basename(__file__),
-                    message=f"Invalid Okta org URL: '{org_url}'. Expected https://<org>.okta.com (no trailing slash).",
+                    message=(
+                        f"Invalid Okta org URL: '{org_url}'. Expected an "
+                        "HTTPS URL such as https://<org>.okta.com (or a "
+                        "custom Okta domain) with no trailing slash."
+                    ),
                 )
 
             if private_key:
@@ -270,18 +276,7 @@ class OktaProvider(Provider):
         """
 
         async def _probe():
-            config = {
-                "orgUrl": session.org_url,
-                "authorizationMode": "PrivateKey",
-                "clientId": session.client_id,
-                "scopes": session.scopes,
-                "privateKey": session.private_key,
-                # Send DPoP proofs on every token request. Required by tenants
-                # that enable "Demonstrating Proof of Possession" on the
-                # service app (or org-wide); harmless on tenants that don't.
-                "dpopEnabled": True,
-            }
-            client = OktaSDKClient(config)
+            client = OktaSDKClient(session.to_sdk_config())
             return await client.list_policies(type="OKTA_SIGN_ON", limit="1")
 
         try:
@@ -290,6 +285,23 @@ class OktaProvider(Provider):
             # only on early request-creation errors. The error is always last.
             err = result[-1]
             if err is not None:
+                err_text = str(err).lower()
+                # Distinguish scope/role failures from generic credential
+                # failures — different remediation paths in the docs.
+                permission_signals = (
+                    "invalid_scope",
+                    "forbidden",
+                    "not authorized",
+                    "permission",
+                )
+                if any(signal in err_text for signal in permission_signals):
+                    raise OktaInsufficientPermissionsError(
+                        file=os.path.basename(__file__),
+                        message=(
+                            "Okta rejected the credential probe with a "
+                            f"permission-related error: {err}"
+                        ),
+                    )
                 raise OktaInvalidCredentialsError(
                     file=os.path.basename(__file__),
                     message=f"Failed to authenticate against Okta: {err}",
@@ -298,7 +310,7 @@ class OktaProvider(Provider):
                 org_url=session.org_url,
                 client_id=session.client_id,
             )
-        except OktaInvalidCredentialsError:
+        except (OktaInvalidCredentialsError, OktaInsufficientPermissionsError):
             raise
         except Exception as error:
             logger.critical(

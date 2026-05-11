@@ -486,3 +486,8 @@ m365:
   # Exchange Mailbox Settings
   # m365.exchange_mailbox_properties_auditing_enabled
   audit_log_age: 90 # maximum number of days to keep audit logs
+
+okta:
+  # Okta Sign-On Policies
+  # okta.signon_global_session_idle_timeout_15min
+  okta_max_session_idle_minutes: 15

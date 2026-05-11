@@ -146,30 +146,3 @@ class Test_Signon_service:
             service = Signon(provider)
 
         assert service.global_session_policies == {}
-
-    def test_passes_kid_to_sdk_client_when_set(self):
-        from prowler.providers.okta.models import OktaSession
-
-        provider = set_mocked_okta_provider(
-            session=OktaSession(
-                org_url="https://acme.okta.com",
-                client_id="cid",
-                scopes=["okta.policies.read"],
-                private_key="-----BEGIN-----",
-                kid="kid-123",
-            )
-        )
-
-        async def empty(*_a, **_k):
-            return ([], _resp({}), None)
-
-        with mock.patch(
-            "prowler.providers.okta.lib.service.service.OktaSDKClient"
-        ) as mocked_client_cls:
-            mocked = mock.MagicMock()
-            mocked.list_policies = empty
-            mocked_client_cls.return_value = mocked
-            Signon(provider)
-
-        config_arg = mocked_client_cls.call_args.args[0]
-        assert config_arg["kid"] == "kid-123"

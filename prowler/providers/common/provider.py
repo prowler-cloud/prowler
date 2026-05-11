@@ -411,7 +411,7 @@ class Provider(ABC):
                         okta_private_key_file=getattr(
                             arguments, "okta_private_key_file", ""
                         ),
-                        okta_scopes=getattr(arguments, "okta_scopes", ""),
+                        okta_scopes=getattr(arguments, "okta_scopes", None),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

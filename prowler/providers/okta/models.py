@@ -10,6 +10,22 @@ class OktaSession(BaseModel):
     scopes: list[str]
     private_key: str
 
+    def to_sdk_config(self) -> dict:
+        # Shared by the credential probe (OktaProvider.setup_identity) and
+        # the service-level client (OktaService.__set_client__). Keeping the
+        # builder in one place stops the two SDK config dicts from drifting.
+        # DPoP proofs are sent on every token request — required by tenants
+        # with "Demonstrating Proof of Possession" enabled on the service
+        # app (or org-wide), harmless on tenants that don't.
+        return {
+            "orgUrl": self.org_url,
+            "authorizationMode": "PrivateKey",
+            "clientId": self.client_id,
+            "scopes": self.scopes,
+            "privateKey": self.private_key,
+            "dpopEnabled": True,
+        }
+
 
 class OktaIdentityInfo(BaseModel):
     org_url: str

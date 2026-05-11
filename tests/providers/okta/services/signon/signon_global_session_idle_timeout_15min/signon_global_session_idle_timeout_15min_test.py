@@ -104,6 +104,39 @@ class Test_signon_global_session_idle_timeout_15min:
             assert findings[0].status == "FAIL"
             assert "no non-default rules" in findings[0].status_extended
 
+    def test_fail_when_non_default_rule_has_null_idle(self):
+        # Rules without a session block leave max_session_idle_minutes as
+        # None. The check must treat those as non-compliant — they cannot
+        # enforce any timeout.
+        policy = _default_policy(
+            [
+                _default_rule(),
+                GlobalSessionPolicyRule(
+                    id="rule-no-session",
+                    name="No Session Block",
+                    is_default=False,
+                    max_session_idle_minutes=None,
+                ),
+            ]
+        )
+        signon_client = _build_signon_client({"pol-default": policy})
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_okta_provider(),
+            ),
+            mock.patch(CHECK_PATH, new=signon_client),
+        ):
+            from prowler.providers.okta.services.signon.signon_global_session_idle_timeout_15min.signon_global_session_idle_timeout_15min import (
+                signon_global_session_idle_timeout_15min,
+            )
+
+            findings = signon_global_session_idle_timeout_15min().execute()
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "No Session Block" in findings[0].status_extended
+            assert "none enforces" in findings[0].status_extended
+
     def test_fail_when_non_default_rule_exceeds_threshold(self):
         policy = _default_policy(
             [

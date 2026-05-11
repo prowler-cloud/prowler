@@ -1,9 +1,12 @@
 import asyncio
+from typing import TYPE_CHECKING
 
 from okta.client import Client as OktaSDKClient
 
 from prowler.providers.okta.models import OktaSession
-from prowler.providers.okta.okta_provider import OktaProvider
+
+if TYPE_CHECKING:
+    from prowler.providers.okta.okta_provider import OktaProvider
 
 
 class OktaService:
@@ -14,7 +17,7 @@ class OktaService:
     the OAuth access token; nothing to manage here.
     """
 
-    def __init__(self, service: str, provider: OktaProvider):
+    def __init__(self, service: str, provider: "OktaProvider"):
         self.provider = provider
         self.service = service
         self.client = self.__set_client__(provider.session)
@@ -23,18 +26,7 @@ class OktaService:
 
     @staticmethod
     def __set_client__(session: OktaSession) -> OktaSDKClient:
-        config = {
-            "orgUrl": session.org_url,
-            "authorizationMode": "PrivateKey",
-            "clientId": session.client_id,
-            "scopes": session.scopes,
-            "privateKey": session.private_key,
-            # Send DPoP proofs on every token request. Required by tenants
-            # that enable "Demonstrating Proof of Possession" on the service
-            # app (or org-wide); harmless on tenants that don't.
-            "dpopEnabled": True,
-        }
-        return OktaSDKClient(config)
+        return OktaSDKClient(session.to_sdk_config())
 
     @staticmethod
     def _run(coro):

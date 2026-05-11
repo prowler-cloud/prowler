@@ -647,3 +647,11 @@ vercel:
     - "_PASSWORD"
     - "_API_KEY"
     - "_PRIVATE_KEY"
+
+okta:
+  # Okta Sign-On Policies
+  # okta.signon_global_session_idle_timeout_15min
+  # Maximum acceptable Global Session idle timeout, in minutes. Defaults to
+  # 15 per DISA STIG V-273186 (OKTA-APP-000020); raise it only with an
+  # explicit risk acceptance.
+  okta_max_session_idle_minutes: 15
