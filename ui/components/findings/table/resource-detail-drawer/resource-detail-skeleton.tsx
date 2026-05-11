@@ -8,26 +8,21 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 export function ResourceDetailSkeleton() {
   return (
     <div className="flex items-start gap-4">
-      <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
-        {/* Row 1: Account, Resource, Service, Region */}
-        <EntityInfoSkeleton hasIcon />
-        <EntityInfoSkeleton />
-        <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-20" />
-        <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-24" />
+      <div className="@container flex min-w-0 flex-1 flex-col gap-4">
+        {/* Row 1: Account, Resource */}
+        <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] @md:gap-x-8">
+          <EntityInfoSkeleton hasIcon labelWidth="w-12" />
+          <EntityInfoSkeleton labelWidth="w-14" />
+        </div>
 
-        {/* Row 2: Last detected, First seen, Failing for, Group */}
-        <InfoFieldSkeleton labelWidth="w-20" valueWidth="w-32" />
-        <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-32" />
-        <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-16" />
-        <InfoFieldSkeleton labelWidth="w-10" valueWidth="w-18" />
-
-        {/* Row 3: Check ID, Finding ID, Finding UID */}
-        <InfoFieldSkeleton labelWidth="w-14" valueWidth="w-36" />
-        <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-36" />
-        <InfoFieldSkeleton labelWidth="w-20" valueWidth="w-36" />
-
-        {/* Row 4: Resource type */}
-        <InfoFieldSkeleton labelWidth="w-20" valueWidth="w-28" />
+        {/* Row 2: Last detected, First seen, Failing for, Service, Region */}
+        <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-5 @md:gap-x-8">
+          <InfoFieldSkeleton labelWidth="w-20" valueWidth="w-32" />
+          <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-32" />
+          <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-16" />
+          <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-20" />
+          <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-24" />
+        </div>
       </div>
 
       {/* Actions button */}
@@ -36,16 +31,25 @@ export function ResourceDetailSkeleton() {
   );
 }
 
-function EntityInfoSkeleton({ hasIcon = false }: { hasIcon?: boolean }) {
+function EntityInfoSkeleton({
+  hasIcon = false,
+  labelWidth,
+}: {
+  hasIcon?: boolean;
+  labelWidth?: string;
+}) {
   return (
-    <div className="flex items-center gap-4">
-      {hasIcon && <Skeleton className="size-9 shrink-0 rounded-md" />}
-      <div className="flex flex-col gap-0.5">
-        <div className="flex items-center gap-1.5">
-          <Skeleton className="size-4 rounded" />
-          <Skeleton className="h-5 w-28 rounded" />
+    <div className="flex flex-col gap-1">
+      {labelWidth && <Skeleton className={`h-3 ${labelWidth} rounded`} />}
+      <div className="flex items-center gap-4">
+        {hasIcon && <Skeleton className="size-9 shrink-0 rounded-md" />}
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-1.5">
+            <Skeleton className="size-4 rounded" />
+            <Skeleton className="h-5 w-28 rounded" />
+          </div>
+          <Skeleton className="h-6 w-24 rounded-full" />
         </div>
-        <Skeleton className="h-6 w-24 rounded-full" />
       </div>
     </div>
   );
