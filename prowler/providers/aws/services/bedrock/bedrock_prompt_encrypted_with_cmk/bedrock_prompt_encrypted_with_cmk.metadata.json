@@ -21,13 +21,13 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws bedrock-agent update-prompt --prompt-identifier <prompt_id> --name <prompt_name> --customer-encryption-key-arn <kms_key_arn>",
+      "CLI": "# Retrieve the current DRAFT prompt first and note the existing fields you want to preserve, such as description, defaultVariant, and variants:\naws bedrock-agent get-prompt --prompt-identifier <prompt_id> --prompt-version DRAFT --output json\n# Then update the prompt and include the existing fields you want to keep alongside the CMK change:\naws bedrock-agent update-prompt --prompt-identifier <prompt_id> --name <prompt_name> --description <current_or_new_description> --default-variant <current_default_variant> --variants <current_or_updated_variants_json> --customer-encryption-key-arn <kms_key_arn>",
       "NativeIaC": "",
       "Other": "1. Open the Amazon Bedrock console\n2. Navigate to Prompt management\n3. Select the prompt\n4. Edit the prompt and choose a customer-managed KMS key for encryption\n5. Save the prompt",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Encrypt every Bedrock prompt with a **customer-managed KMS key** to retain control over key access, rotation, and lifecycle. Restrict the key policy to the principals that legitimately need to author or invoke prompts, and align rotation cadence with your encryption policy.",
+      "Text": "Encrypt every Bedrock prompt with a **customer-managed KMS key** to retain control over key access, rotation, and lifecycle. When using `update-prompt`, first retrieve the current draft and carry forward the fields you want to preserve, such as the existing description, `defaultVariant`, and `variants`, so the encryption change does not unintentionally overwrite prompt configuration.",
       "Url": "https://hub.prowler.com/check/bedrock_prompt_encrypted_with_cmk"
     }
   },
