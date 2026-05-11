@@ -62,10 +62,17 @@ function hardenMswServiceWorker() {
     return;
   }
 
-  fs.writeFileSync(
-    workerPath,
-    workerSource.replace(messageHandlerStart, hardenedMessageHandlerStart),
+  const workerStats = fs.statSync(workerPath);
+  const hardenedWorkerSource = workerSource.replace(
+    messageHandlerStart,
+    hardenedMessageHandlerStart,
   );
+
+  if (fs.statSync(workerPath).mtimeMs !== workerStats.mtimeMs) {
+    throw new Error("MSW service worker changed while applying hardening");
+  }
+
+  fs.writeFileSync(workerPath, hardenedWorkerSource);
   console.log("Hardened MSW service worker message origin handling");
 }
 
