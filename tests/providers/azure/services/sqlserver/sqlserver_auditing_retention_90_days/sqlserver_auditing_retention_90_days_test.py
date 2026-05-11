@@ -5,7 +5,9 @@ from azure.mgmt.sql.models import ServerBlobAuditingPolicy
 
 from prowler.providers.azure.services.sqlserver.sqlserver_service import Server
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -13,6 +15,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_sqlserver_auditing_retention_90_days:
     def test_no_sql_servers(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sqlserver_client.sql_servers = {}
 
         with (
@@ -35,6 +40,9 @@ class Test_sqlserver_auditing_retention_90_days:
 
     def test_sql_servers_auditing_policy_disabled(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
@@ -74,7 +82,7 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has auditing disabled."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has auditing disabled."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
@@ -83,6 +91,9 @@ class Test_sqlserver_auditing_retention_90_days:
 
     def test_sql_servers_auditing_retention_less_than_90_days(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
@@ -124,7 +135,7 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has auditing retention less than 91 days."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has auditing retention less than 91 days."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
@@ -133,6 +144,9 @@ class Test_sqlserver_auditing_retention_90_days:
 
     def test_sql_servers_auditing_retention_greater_than_90_days(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
@@ -174,7 +188,7 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has auditing retention greater than 90 days."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has auditing retention greater than 90 days."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
@@ -185,6 +199,9 @@ class Test_sqlserver_auditing_retention_90_days:
         self,
     ):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
@@ -227,7 +244,7 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has auditing retention greater than 90 days."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has auditing retention greater than 90 days."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
@@ -238,6 +255,9 @@ class Test_sqlserver_auditing_retention_90_days:
         self,
     ):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
@@ -280,7 +300,7 @@ class Test_sqlserver_auditing_retention_90_days:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has auditing retention less than 91 days."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has auditing retention less than 91 days."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name

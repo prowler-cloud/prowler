@@ -20,7 +20,7 @@ export class ScansPage extends BasePage {
     super(page);
 
     // Scan provider selection elements
-    this.scanProviderSelect = page.getByRole('combobox').filter({ hasText: 'Choose a cloud provider' })
+    this.scanProviderSelect = page.getByRole('combobox').filter({ hasText: 'Choose a provider' })
     this.scanAliasInput = page.getByRole("textbox", { name: "Scan label (optional)" });
     this.startNowButton = page.getByRole("button", { name: /Start now|Start scan now/i });
 
@@ -107,7 +107,7 @@ export class ScansPage extends BasePage {
     // Scan Table exists
     await expect(this.scanTable).toBeVisible();
 
-    // Find a row that contains the account ID (provider UID in Cloud Provider column)
+    // Find a row that contains the account ID (provider UID in Provider column)
     // Note: Use a more specific locator strategy if possible in the future
     const rowWithAccountId = this.scanTable
       .locator("tbody tr")

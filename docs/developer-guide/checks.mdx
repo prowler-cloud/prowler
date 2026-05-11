@@ -27,14 +27,28 @@ The most common high level steps to create a new check are:
 
 ### Naming Format for Checks
 
-Checks must be named following the format: `service_subservice_resource_action`.
+If you already know the check name when creating a request or implementing a check, use a descriptive identifier with lowercase letters and underscores only.
+
+Recommended patterns:
+
+- `<service>_<resource>_<best_practice>`
 
 The name components are:
 
-- `service` – The main service being audited (e.g., ec2, entra, iam, etc.)
-- `subservice` – An individual component or subset of functionality within the service that is being audited. This may correspond to a shortened version of the class attribute accessed within the check. If there is no subservice, just omit.
-- `resource` – The specific resource type being evaluated (e.g., instance, policy, role, etc.)
-- `action` – The security aspect or configuration being checked (e.g., public, encrypted, enabled, etc.)
+- `service` – The main service or product area being audited (e.g., ec2, entra, iam, bedrock).
+- `resource` – The resource, feature, or configuration being evaluated. It can be a single word or a compound phrase joined with underscores (e.g., instance, policy, guardrail, sensitive_information_filter).
+- `best_practice` – The expected secure state or best practice being checked (e.g., enabled, encrypted, restricted, configured, not_publicly_accessible).
+
+Additional guidance:
+
+- Use underscores only. Do not use hyphens.
+- Keep the name specific enough to describe the behavior of the check.
+- The first segment should match the service or product area whenever possible.
+
+Examples:
+
+- `s3_bucket_versioning_enabled`
+- `bedrock_guardrail_sensitive_information_filter_enabled`
 
 ### File Creation
 

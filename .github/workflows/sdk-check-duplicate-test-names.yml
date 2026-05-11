@@ -5,6 +5,9 @@ on:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'tests/providers/**/*_test.py'
+      - '.github/workflows/sdk-check-duplicate-test-names.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

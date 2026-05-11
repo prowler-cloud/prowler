@@ -4,8 +4,6 @@ on:
   pull_request:
     branches:
       - 'master'
-      - 'v3'
-      - 'v4.*'
       - 'v5.*'
     types:
       - 'opened'

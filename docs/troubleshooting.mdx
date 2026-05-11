@@ -159,6 +159,40 @@ When these environment variables are set, the API will use them directly instead
 A fix addressing this permission issue is being evaluated in [PR #9953](https://github.com/prowler-cloud/prowler/pull/9953).
 </Note>
 
+### Scan Stuck in Executing State After Worker Crash
+
+When running Prowler App via Docker Compose, a scan may remain indefinitely in the `executing` state if the worker process crashes (for example, due to an Out of Memory condition) before it can update the scan status. Since it is not currently possible to cancel a scan in `executing` state through the UI, the workaround is to manually update the scan record in the database.
+
+**Root Cause:**
+
+The Celery worker process terminates unexpectedly (OOM, node failure, etc.) before transitioning the scan state to `completed` or `failed`. The scan record remains in `executing` with no active process to advance it.
+
+**Solution:**
+
+Connect to the database using the `prowler_admin` user. Due to Row-Level Security (RLS), the default database user cannot see scan records — you must use `prowler_admin`:
+
+```bash
+psql -U prowler_admin -d prowler_db
+```
+
+Identify the stuck scan by filtering for scans in `executing` state:
+
+```sql
+SELECT id, name, state, started_at FROM scans WHERE state = 'executing';
+```
+
+Update the scan state to `failed` using the scan ID:
+
+```sql
+UPDATE scans SET state = 'failed' WHERE id = '<scan-id>';
+```
+
+After this change, the scan will appear as failed in the UI and you can launch a new scan.
+
+<Note>
+A feature to cancel executing scans directly from the UI is being tracked in [GitHub Issue #6893](https://github.com/prowler-cloud/prowler/issues/6893).
+</Note>
+
 ### SAML/OAuth ACS URL Incorrect When Running Behind a Proxy or Load Balancer
 
 See [GitHub Issue #9724](https://github.com/prowler-cloud/prowler/issues/9724) for more details.

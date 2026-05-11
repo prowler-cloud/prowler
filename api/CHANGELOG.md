@@ -2,13 +2,25 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.27.0] (Prowler UNRELEASED)
+## [1.28.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
-- New `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
 - Attack Paths: AWS Neptune is now supported as the persistent sink database, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`). Cartography's per-scan staging database stays on Neo4j on all deployments; OSS and local dev continue to use Neo4j as the sink.
 - `python manage.py list_neo4j_tenant_dbs` management command to inspect legacy Neo4j tenant databases that still hold data, to help decide when phase 2 of the migration can ship.
+
+---
+
+## [1.27.0] (Prowler v5.26.0)
+
+### 🚀 Added
+
+- `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
+- ASD Essential Eight (AWS) compliance framework support [(#10982)](https://github.com/prowler-cloud/prowler/pull/10982)
+
+### 🔐 Security
+
+- `trivy` binary from 0.69.2 to 0.70.0 and `cryptography` from 46.0.6 to 46.0.7 (transitive via prowler SDK) in the API image for CVE-2026-33186 and CVE-2026-39892 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
 
 ---
 

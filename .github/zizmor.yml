@@ -8,6 +8,7 @@ rules:
       - docs-bump-version.yml
       - issue-triage.lock.yml
       - mcp-container-build-push.yml
+      - nightly-arm64-container-builds.yml
       - pr-merged.yml
       - prepare-release.yml
       - sdk-bump-version.yml

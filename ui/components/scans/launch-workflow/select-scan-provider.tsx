@@ -47,12 +47,12 @@ export const SelectScanProvider = <
         return (
           <div className="flex flex-col gap-2">
             <span className="text-text-neutral-primary text-sm font-medium">
-              Select a cloud provider to launch a scan
+              Select a provider to launch a scan
             </span>
             <FormControl>
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose a cloud provider">
+                  <SelectValue placeholder="Choose a provider">
                     {selectedItem ? (
                       <EntityInfo
                         cloudProvider={
@@ -67,7 +67,7 @@ export const SelectScanProvider = <
                         showCopyAction={false}
                       />
                     ) : (
-                      "Choose a cloud provider"
+                      "Choose a provider"
                     )}
                   </SelectValue>
                 </SelectTrigger>

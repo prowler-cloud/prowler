@@ -385,9 +385,8 @@ export const permissionFormFields: PermissionInfo[] = [
   },
   {
     field: "manage_providers",
-    label: "Manage Cloud Providers",
-    description:
-      "Allows configuration and management of cloud provider connections",
+    label: "Manage Providers",
+    description: "Allows configuration and management of provider connections",
   },
   {
     field: "manage_integrations",
@@ -399,6 +398,11 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "manage_scans",
     label: "Manage Scans",
     description: "Allows launching and configuring scans security scans",
+  },
+  {
+    field: "manage_alerts",
+    label: "Manage Alerts",
+    description: "Allows creating and managing custom alerts",
   },
 
   {
