@@ -1086,22 +1086,18 @@ OAuthAppInfo
                     incidents = alert.get("alertIncidents", [])
                     affected_items = []
                     for incident in incidents:
-                        assignee_display_name = incident.get(
-                            "assigneeDisplayName", ""
-                        ) or incident.get("subject", "")
-                        assignee_id = incident.get("assigneeId", "") or incident.get(
-                            "id", ""
-                        )
-                        role_display_name = incident.get("roleDisplayName", "")
-                        last_sign_in = incident.get(
-                            "lastSignInDateTime", ""
-                        ) or incident.get("createdDateTime", "")
                         affected_items.append(
                             PimAlertIncident(
-                                assignee_display_name=assignee_display_name,
-                                assignee_id=assignee_id,
-                                role_display_name=role_display_name,
-                                last_sign_in_date_time=last_sign_in,
+                                assignee_display_name=incident.get(
+                                    "assigneeDisplayName", ""
+                                ),
+                                assignee_id=incident.get("assigneeId", ""),
+                                role_display_name=incident.get(
+                                    "roleDisplayName", ""
+                                ),
+                                last_sign_in_date_time=incident.get(
+                                    "lastSignInDateTime", ""
+                                ),
                             )
                         )
                     pim_alerts[alert_definition_id] = PimAlert(
