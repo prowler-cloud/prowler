@@ -1110,47 +1110,42 @@ OAuthAppInfo
                     next_link
                 ).get()
 
-            # Fetch directory role assignments to identify permanent Tier 0 assignments
-            directory_roles = await self.client.directory_roles.get()
-
-            async def fetch_role_members(directory_role):
-                """Fetch every member of a directory role, following odata_next_link.
-
-                Roles can have more members than fit in a single Graph response, so
-                pagination is required to avoid silently dropping assignments.
-                """
-                members = []
-                members_response = (
-                    await self.client.directory_roles.by_directory_role_id(
-                        directory_role.id
-                    ).members.get()
-                )
-                while members_response:
-                    members.extend(getattr(members_response, "value", []) or [])
-                    next_link = getattr(members_response, "odata_next_link", None)
-                    if not next_link:
-                        break
-                    members_response = (
-                        await self.client.directory_roles.by_directory_role_id(
-                            directory_role.id
-                        )
-                        .members.with_url(next_link)
-                        .get()
+            # Identify permanent Tier 0 directory role assignments via the unified
+            # role management endpoint. ``directoryRoles/{id}/members`` mixes
+            # permanent direct assignments with PIM-activated temporary ones, so
+            # using it would mark just-in-time elevations as "permanent" and emit
+            # false positives. ``roleManagement/directory/roleAssignments``
+            # exposes only the durable, statically-assigned principals, which is
+            # exactly what the Tier 0 check needs.
+            role_assignments_response = (
+                await self.client.role_management.directory.role_assignments.get()
+            )
+            while role_assignments_response:
+                for assignment in (
+                    getattr(role_assignments_response, "value", []) or []
+                ):
+                    principal_id = getattr(assignment, "principal_id", None)
+                    role_definition_id = getattr(
+                        assignment, "role_definition_id", None
                     )
-                return directory_role.role_template_id, members
-
-            tasks = [
-                fetch_role_members(role)
-                for role in getattr(directory_roles, "value", []) or []
-            ]
-            roles_members_list = await asyncio.gather(*tasks)
-
-            for role_template_id, members in roles_members_list:
-                for member in members:
-                    if member.id in service_principals:
+                    if (
+                        principal_id in service_principals
+                        and role_definition_id in TIER_0_ROLE_TEMPLATE_IDS
+                    ):
                         service_principals[
-                            member.id
-                        ].directory_role_template_ids.append(role_template_id)
+                            principal_id
+                        ].directory_role_template_ids.append(role_definition_id)
+
+                next_link = getattr(
+                    role_assignments_response, "odata_next_link", None
+                )
+                if not next_link:
+                    break
+                role_assignments_response = (
+                    await self.client.role_management.directory.role_assignments.with_url(
+                        next_link
+                    ).get()
+                )
 
         except Exception as error:
             logger.error(
