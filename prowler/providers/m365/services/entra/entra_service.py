@@ -7,8 +7,9 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
-from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import \
-    RunHuntingQueryPostRequestBody
+from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
+    RunHuntingQueryPostRequestBody,
+)
 from pydantic.v1 import BaseModel, validator
 
 from prowler.lib.logger import logger
@@ -1121,13 +1122,9 @@ OAuthAppInfo
                 await self.client.role_management.directory.role_assignments.get()
             )
             while role_assignments_response:
-                for assignment in (
-                    getattr(role_assignments_response, "value", []) or []
-                ):
+                for assignment in getattr(role_assignments_response, "value", []) or []:
                     principal_id = getattr(assignment, "principal_id", None)
-                    role_definition_id = getattr(
-                        assignment, "role_definition_id", None
-                    )
+                    role_definition_id = getattr(assignment, "role_definition_id", None)
                     if (
                         principal_id in service_principals
                         and role_definition_id in TIER_0_ROLE_TEMPLATE_IDS
@@ -1136,16 +1133,12 @@ OAuthAppInfo
                             principal_id
                         ].directory_role_template_ids.append(role_definition_id)
 
-                next_link = getattr(
-                    role_assignments_response, "odata_next_link", None
-                )
+                next_link = getattr(role_assignments_response, "odata_next_link", None)
                 if not next_link:
                     break
-                role_assignments_response = (
-                    await self.client.role_management.directory.role_assignments.with_url(
-                        next_link
-                    ).get()
-                )
+                role_assignments_response = await self.client.role_management.directory.role_assignments.with_url(
+                    next_link
+                ).get()
 
         except Exception as error:
             logger.error(
