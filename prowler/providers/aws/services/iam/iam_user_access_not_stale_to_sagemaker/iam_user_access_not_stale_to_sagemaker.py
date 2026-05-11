@@ -33,34 +33,22 @@ class iam_user_access_not_stale_to_sagemaker(Check):
             "max_unused_sagemaker_access_days", 90
         )
 
-        for (
-            user_data,
-            last_accessed_services,
-        ) in iam_client.last_accessed_services.items():
-            user_name = user_data[0]
-            user_arn = user_data[1]
-
+        for user in iam_client.users:
+            last_accessed_services = iam_client.last_accessed_services.get(
+                (user.name, user.arn), []
+            )
             sagemaker_service = find_sagemaker_service(last_accessed_services)
             if sagemaker_service is None:
                 continue
 
-            report = Check_Report_AWS(
-                metadata=self.metadata(),
-                resource={"name": user_name, "arn": user_arn},
-            )
-            report.resource_id = user_name
-            report.resource_arn = user_arn
+            report = Check_Report_AWS(metadata=self.metadata(), resource=user)
             report.region = iam_client.region
-            for iam_user in iam_client.users:
-                if iam_user.arn == user_arn:
-                    report.resource_tags = iam_user.tags
-                    break
 
             evaluate_sagemaker_staleness(
                 report,
                 sagemaker_service,
                 max_unused_sagemaker_days,
-                user_name,
+                user.name,
                 "User",
             )
             findings.append(report)

@@ -541,7 +541,7 @@ class Test_iam_user_access_not_stale_to_sagemaker:
 
     @mock_aws
     def test_user_arn_not_in_users_list(self):
-        """Finding is still generated even when user ARN is not in iam.users list."""
+        """No findings when last_accessed_services entries do not match any iam.users."""
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -571,13 +571,7 @@ class Test_iam_user_access_not_stale_to_sagemaker:
             )
 
             check = iam_user_access_not_stale_to_sagemaker()
-            result = check.execute()
-
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].resource_id == IAM_USER_NAME
-            assert result[0].resource_arn == IAM_USER_ARN
-            assert result[0].resource_tags == []
+            assert check.execute() == []
 
     @mock_aws
     def test_sagemaker_among_multiple_services(self):
