@@ -40,7 +40,12 @@ class entra_service_principal_no_secrets_for_permanent_tier0_roles(Check):
                 resource_id=sp.id,
             )
 
-            has_secrets = len(sp.password_credentials) > 0
+            active_secrets = [
+                credential
+                for credential in sp.password_credentials
+                if credential.is_active()
+            ]
+            has_secrets = len(active_secrets) > 0
             tier0_roles = [
                 role_id
                 for role_id in sp.directory_role_template_ids

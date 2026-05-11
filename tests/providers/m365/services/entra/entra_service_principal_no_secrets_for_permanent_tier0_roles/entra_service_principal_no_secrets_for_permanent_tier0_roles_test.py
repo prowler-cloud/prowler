@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from unittest import mock
 from uuid import uuid4
 
@@ -319,3 +320,105 @@ class Test_entra_service_principal_no_secrets_for_permanent_tier0_roles:
             statuses = {r.resource_id: r.status for r in result}
             assert statuses[sp_id_pass] == "PASS"
             assert statuses[sp_id_fail] == "FAIL"
+
+    def test_service_principal_only_expired_secrets_with_tier0_role(self):
+        """Service principal whose only client secrets are expired: expected PASS."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        sp_id = str(uuid4())
+        global_admin_role = "62e90394-69f5-4237-9190-012177145e10"
+        expired = datetime.now(timezone.utc) - timedelta(days=1)
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import (
+                entra_service_principal_no_secrets_for_permanent_tier0_roles,
+            )
+
+            entra_client.service_principals = {
+                sp_id: ServicePrincipal(
+                    id=sp_id,
+                    name="LegacyApp",
+                    app_id=str(uuid4()),
+                    password_credentials=[
+                        PasswordCredential(
+                            key_id=str(uuid4()),
+                            display_name="expired-secret",
+                            end_date_time=expired,
+                        )
+                    ],
+                    key_credentials=[],
+                    directory_role_template_ids=[global_admin_role],
+                )
+            }
+
+            check = entra_service_principal_no_secrets_for_permanent_tier0_roles()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "does not use client secrets" in result[0].status_extended
+
+    def test_service_principal_active_and_expired_secrets_with_tier0_role(self):
+        """Service principal with at least one active client secret: expected FAIL."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        sp_id = str(uuid4())
+        global_admin_role = "62e90394-69f5-4237-9190-012177145e10"
+        expired = datetime.now(timezone.utc) - timedelta(days=1)
+        future = datetime.now(timezone.utc) + timedelta(days=180)
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import (
+                entra_service_principal_no_secrets_for_permanent_tier0_roles,
+            )
+
+            entra_client.service_principals = {
+                sp_id: ServicePrincipal(
+                    id=sp_id,
+                    name="MixedSecretsApp",
+                    app_id=str(uuid4()),
+                    password_credentials=[
+                        PasswordCredential(
+                            key_id=str(uuid4()),
+                            display_name="old",
+                            end_date_time=expired,
+                        ),
+                        PasswordCredential(
+                            key_id=str(uuid4()),
+                            display_name="current",
+                            end_date_time=future,
+                        ),
+                    ],
+                    key_credentials=[],
+                    directory_role_template_ids=[global_admin_role],
+                )
+            }
+
+            check = entra_service_principal_no_secrets_for_permanent_tier0_roles()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "uses client secrets" in result[0].status_extended

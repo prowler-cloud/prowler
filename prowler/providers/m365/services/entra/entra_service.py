@@ -1,6 +1,7 @@
 import asyncio
 import json
 from asyncio import gather
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID
@@ -1081,6 +1082,7 @@ OAuthAppInfo
                             PasswordCredential(
                                 key_id=str(getattr(cred, "key_id", "")),
                                 display_name=getattr(cred, "display_name", None),
+                                end_date_time=getattr(cred, "end_date_time", None),
                             )
                         )
 
@@ -1578,10 +1580,24 @@ class PasswordCredential(BaseModel):
     Attributes:
         key_id: The unique identifier of the credential.
         display_name: The optional display name of the credential.
+        end_date_time: The expiration time of the credential. ``None`` indicates
+            the secret has no recorded expiry and is treated as active.
     """
 
     key_id: str
     display_name: Optional[str] = None
+    end_date_time: Optional[datetime] = None
+
+    def is_active(self, now: Optional[datetime] = None) -> bool:
+        """Return ``True`` when the credential has not expired.
+
+        A credential with no ``end_date_time`` is assumed to be active, matching
+        the behavior of the Microsoft Graph API when the field is omitted.
+        """
+        if self.end_date_time is None:
+            return True
+        reference = now or datetime.now(timezone.utc)
+        return self.end_date_time > reference
 
 
 class KeyCredential(BaseModel):
