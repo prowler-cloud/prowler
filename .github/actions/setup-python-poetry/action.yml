@@ -22,6 +22,10 @@ inputs:
     description: 'Run `poetry lock` during setup. Only enable when a prior step mutates pyproject.toml (e.g. API `@master` VCS rewrite). Default: false.'
     required: false
     default: 'false'
+  enable-cache:
+    description: 'Whether to enable Poetry dependency caching via actions/setup-python'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
@@ -64,19 +68,6 @@ runs:
         echo "Updated resolved_reference:"
         grep -A2 -B2 "resolved_reference" poetry.lock
 
-    - name: Update SDK resolved_reference to latest commit (prowler repo on push)
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'prowler-cloud/prowler'
-      shell: bash
-      working-directory: ${{ inputs.working-directory }}
-      run: |
-        LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
-        echo "Latest commit hash: $LATEST_COMMIT"
-        sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
-          s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
-        }' poetry.lock
-        echo "Updated resolved_reference:"
-        grep -A2 -B2 "resolved_reference" poetry.lock
-
     - name: Update poetry.lock (prowler repo only)
       if: github.repository == 'prowler-cloud/prowler' && inputs.update-lock == 'true'
       shell: bash
@@ -87,8 +78,10 @@ runs:
       uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
       with:
         python-version: ${{ inputs.python-version }}
-        cache: 'poetry'
-        cache-dependency-path: ${{ inputs.working-directory }}/poetry.lock
+        # Disable cache when callers skip dependency install: Poetry 2.3.4 creates
+        # the venv in a path setup-python can't hash, breaking the post-step save-cache.
+        cache: ${{ inputs.enable-cache == 'true' && 'poetry' || '' }}
+        cache-dependency-path: ${{ inputs.enable-cache == 'true' && format('{0}/poetry.lock', inputs.working-directory) || '' }}
 
     - name: Install Python dependencies
       if: inputs.install-dependencies == 'true'

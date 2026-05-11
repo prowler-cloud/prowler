@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 import { ComplianceScanInfo } from "@/components/compliance/compliance-header/compliance-scan-info";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
@@ -29,6 +30,10 @@ import {
 } from "@/types";
 import { DATA_TABLE_FILTER_MODE, DataTableFilterMode } from "@/types/filters";
 import { ProviderConnectionStatus } from "@/types/providers";
+
+function isNonEmptyString(value: string | null | undefined): value is string {
+  return Boolean(value);
+}
 
 export interface DataTableFilterCustomProps {
   filters: FilterOption[];
@@ -69,6 +74,15 @@ export const DataTableFilterCustom = ({
 }: DataTableFilterCustomProps) => {
   const { updateFilter } = useUrlFilters();
   const searchParams = useSearchParams();
+  const [openFilterKey, setOpenFilterKey] = useState<string | null>(null);
+
+  const buildSearchConfig = (filter: FilterOption) => {
+    const label = filter.labelCheckboxGroup.toLowerCase();
+    return {
+      placeholder: `Search ${label}...`,
+      emptyMessage: `No ${label} found.`,
+    };
+  };
 
   // Helper function to get entity from valueLabelMapping
   const getEntityForValue = (
@@ -122,6 +136,34 @@ export const DataTableFilterCustom = ({
         showCopyAction={false}
       />
     );
+  };
+
+  const getSearchKeywords = (
+    entity: FilterEntity | undefined,
+    value: string,
+    displayLabel: string,
+  ): string[] => {
+    if (!entity) {
+      return [displayLabel, value];
+    }
+
+    if (isScanEntity(entity as ScanEntity)) {
+      const label = getScanEntityLabel(entity as ScanEntity);
+      return [displayLabel, value, label].filter(isNonEmptyString);
+    }
+
+    if (isConnectionStatus(entity)) {
+      return [displayLabel, value, (entity as ProviderConnectionStatus).label];
+    }
+
+    const providerEntity = entity as ProviderEntity;
+    return [
+      displayLabel,
+      value,
+      providerEntity.alias,
+      providerEntity.uid,
+      providerEntity.provider,
+    ].filter(isNonEmptyString);
   };
 
   // Sort filters by index property, with fallback to original order for filters without index
@@ -195,6 +237,8 @@ export const DataTableFilterCustom = ({
         return (
           <MultiSelect
             key={filter.key}
+            open={openFilterKey === filter.key}
+            onOpenChange={(open) => setOpenFilterKey(open ? filter.key : null)}
             values={selectedValues}
             onValuesChange={(values) => pushDropdownFilter(filter, values)}
           >
@@ -204,7 +248,7 @@ export const DataTableFilterCustom = ({
               />
             </MultiSelectTrigger>
             <MultiSelectContent
-              search={false}
+              search={buildSearchConfig(filter)}
               width={filter.width ?? "default"}
             >
               <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
@@ -219,6 +263,7 @@ export const DataTableFilterCustom = ({
                     key={value}
                     value={value}
                     badgeLabel={getBadgeLabel(entity, displayLabel)}
+                    keywords={getSearchKeywords(entity, value, displayLabel)}
                   >
                     {entity ? renderEntityContent(entity) : displayLabel}
                   </MultiSelectItem>

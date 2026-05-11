@@ -556,7 +556,9 @@
     {
       "Id": "GWS.GMAIL.1.1",
       "Description": "Mail Delegation SHOULD be disabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_mail_delegation_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -647,7 +649,9 @@
     {
       "Id": "GWS.GMAIL.5.1",
       "Description": "Protect against encrypted attachments from untrusted senders SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_encrypted_attachment_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -660,7 +664,9 @@
     {
       "Id": "GWS.GMAIL.5.2",
       "Description": "Protect against attachments with scripts from untrusted senders SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_script_attachment_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -673,7 +679,9 @@
     {
       "Id": "GWS.GMAIL.5.3",
       "Description": "Protect against anomalous attachment types in emails SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_anomalous_attachment_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -725,7 +733,9 @@
     {
       "Id": "GWS.GMAIL.6.1",
       "Description": "Identify links behind shortened URLs SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_shortener_scanning_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -738,7 +748,9 @@
     {
       "Id": "GWS.GMAIL.6.2",
       "Description": "Scan linked images SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_external_image_scanning_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -751,7 +763,9 @@
     {
       "Id": "GWS.GMAIL.6.3",
       "Description": "Show warning prompt for any click on links to untrusted domains SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_untrusted_link_warnings_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -790,7 +804,9 @@
     {
       "Id": "GWS.GMAIL.7.1",
       "Description": "Protect against domain spoofing based on similar domain names SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_domain_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -803,7 +819,9 @@
     {
       "Id": "GWS.GMAIL.7.2",
       "Description": "Protect against spoofing of employee names SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_employee_name_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -816,7 +834,9 @@
     {
       "Id": "GWS.GMAIL.7.3",
       "Description": "Protect against inbound emails spoofing your domain SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_inbound_domain_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -829,7 +849,9 @@
     {
       "Id": "GWS.GMAIL.7.4",
       "Description": "Protect against any unauthenticated emails SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_unauthenticated_email_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -842,7 +864,9 @@
     {
       "Id": "GWS.GMAIL.7.5",
       "Description": "Protect your Groups from inbound emails spoofing your domain SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_groups_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -907,7 +931,9 @@
     {
       "Id": "GWS.GMAIL.9.1",
       "Description": "POP and IMAP access SHALL be disabled to protect sensitive agency or organization emails from being accessed through legacy applications or other third-party mail clients",
-      "Checks": [],
+      "Checks": [
+        "gmail_pop_imap_access_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -933,7 +959,9 @@
     {
       "Id": "GWS.GMAIL.11.1",
       "Description": "Automatic forwarding SHOULD be disabled, especially to external domains",
-      "Checks": [],
+      "Checks": [
+        "gmail_auto_forwarding_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -946,7 +974,9 @@
     {
       "Id": "GWS.GMAIL.12.1",
       "Description": "Using a per-user outbound gateway that is a mail server other than the Google Workspace (GWS) mail servers SHALL be disabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_per_user_outbound_gateway_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -985,7 +1015,9 @@
     {
       "Id": "GWS.GMAIL.15.1",
       "Description": "Enhanced pre-delivery message scanning SHALL be enabled to prevent phishing",
-      "Checks": [],
+      "Checks": [
+        "gmail_enhanced_pre_delivery_scanning_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -1037,7 +1069,9 @@
     {
       "Id": "GWS.GMAIL.17.1",
       "Description": "Comprehensive mail storage SHOULD be enabled to allow information traceability across applications",
-      "Checks": [],
+      "Checks": [
+        "gmail_comprehensive_mail_storage_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",

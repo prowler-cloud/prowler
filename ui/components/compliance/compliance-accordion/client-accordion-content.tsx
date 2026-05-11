@@ -10,7 +10,7 @@ import {
 } from "@/components/findings/table";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
-import { createDict } from "@/lib";
+import { createDict, FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
@@ -34,12 +34,16 @@ export const ClientAccordionContent = ({
   const pageNumber = searchParams.get("page") || "1";
   const complianceId = searchParams.get("complianceId");
   const openFindingId = searchParams.get("id");
-  const defaultSort = "severity,status,-inserted_at";
-  const sort = searchParams.get("sort") || defaultSort;
+  const sort = searchParams.get("sort") || FINDINGS_DEFAULT_SORT;
   const loadedPageRef = useRef<string | null>(null);
   const loadedSortRef = useRef<string | null>(null);
+  const loadedMutedRef = useRef<string | null>(null);
   const isExpandedRef = useRef(false);
   const region = searchParams.get("filter[region__in]") || "";
+  // Respect the user's muted preference from the URL; default to EXCLUDE
+  // so the requirement view stays consistent with every other findings
+  // surface in the app (findings page, resource drawer, overview widgets).
+  const mutedFilter = searchParams.get("filter[muted]") || MUTED_FILTER.EXCLUDE;
 
   useEffect(() => {
     async function loadFindings() {
@@ -49,10 +53,12 @@ export const ClientAccordionContent = ({
         requirement.status !== "No findings" &&
         (loadedPageRef.current !== pageNumber ||
           loadedSortRef.current !== sort ||
+          loadedMutedRef.current !== mutedFilter ||
           !isExpandedRef.current)
       ) {
         loadedPageRef.current = pageNumber;
         loadedSortRef.current = sort;
+        loadedMutedRef.current = mutedFilter;
         isExpandedRef.current = true;
 
         try {
@@ -62,7 +68,7 @@ export const ClientAccordionContent = ({
             filters: {
               "filter[check_id__in]": checkIds.join(","),
               "filter[scan]": scanId,
-              "filter[muted]": "false",
+              "filter[muted]": mutedFilter,
               ...(region && { "filter[region__in]": region }),
             },
             page: parseInt(pageNumber, 10),
@@ -101,7 +107,15 @@ export const ClientAccordionContent = ({
     }
 
     loadFindings();
-  }, [requirement, scanId, pageNumber, sort, region, disableFindings]);
+  }, [
+    requirement,
+    scanId,
+    pageNumber,
+    sort,
+    region,
+    mutedFilter,
+    disableFindings,
+  ]);
 
   const renderDetails = () => {
     if (!complianceId) {

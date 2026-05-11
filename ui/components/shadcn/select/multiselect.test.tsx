@@ -1,14 +1,17 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   MultiSelect,
   MultiSelectContent,
   MultiSelectItem,
+  MultiSelectSelectAll,
   MultiSelectTrigger,
   MultiSelectValue,
 } from "./multiselect";
+
+const scrollIntoViewMock = vi.fn();
 
 class ResizeObserverMock {
   observe() {}
@@ -25,10 +28,14 @@ Object.defineProperty(globalThis, "ResizeObserver", {
 Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
   writable: true,
   configurable: true,
-  value: () => {},
+  value: scrollIntoViewMock,
 });
 
 describe("MultiSelect", () => {
+  beforeEach(() => {
+    scrollIntoViewMock.mockClear();
+  });
+
   it("shows preselected labels before the popover opens", () => {
     // Given
     render(
@@ -107,6 +114,106 @@ describe("MultiSelect", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("scrolls the first visible match into view when filtering", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent
+          search={{
+            placeholder: "Search accounts...",
+            emptyMessage: "No accounts found.",
+          }}
+        >
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+    await user.type(screen.getByPlaceholderText("Search accounts..."), "aws");
+
+    await waitFor(() => {
+      expect(scrollIntoViewMock).toHaveBeenCalled();
+    });
+  });
+
+  it("clears the search input when reopening the popover", async () => {
+    const user = userEvent.setup();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent
+          search={{
+            placeholder: "Search accounts...",
+            emptyMessage: "No accounts found.",
+          }}
+        >
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+
+    const searchInput = screen.getByPlaceholderText(
+      "Search accounts...",
+    ) as HTMLInputElement;
+
+    await user.type(searchInput, "aws");
+    expect(searchInput).toHaveValue("aws");
+
+    await user.keyboard("{Escape}");
+    expect(
+      screen.queryByPlaceholderText("Search accounts..."),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("combobox"));
+
+    expect(screen.getByPlaceholderText("Search accounts...")).toHaveValue("");
+  });
+
+  it("closes the dropdown when clicking outside", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <div>
+        <MultiSelect values={[]} onValuesChange={() => {}}>
+          <MultiSelectTrigger>
+            <MultiSelectValue placeholder="Select accounts" />
+          </MultiSelectTrigger>
+          <MultiSelectContent
+            search={{
+              placeholder: "Search accounts...",
+              emptyMessage: "No accounts found.",
+            }}
+          >
+            <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          </MultiSelectContent>
+        </MultiSelect>
+        <button type="button">Outside target</button>
+      </div>,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox"));
+    expect(screen.getByPlaceholderText("Search accounts...")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: /outside target/i }));
+
+    // Then
+    expect(
+      screen.queryByPlaceholderText("Search accounts..."),
+    ).not.toBeInTheDocument();
+  });
+
   it("uses a normalized dropdown width instead of growing with the longest item", async () => {
     const user = userEvent.setup();
 
@@ -130,5 +237,80 @@ describe("MultiSelect", () => {
       "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))]",
     );
     expect(screen.getByRole("dialog")).toHaveClass("max-w-[24rem]");
+  });
+
+  it("keeps the legacy clear-all behavior by default", async () => {
+    const user = userEvent.setup();
+    const onValuesChange = vi.fn();
+
+    render(
+      <MultiSelect values={["aws-prod"]} onValuesChange={onValuesChange}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+    await user.click(screen.getByRole("button", { name: /select all/i }));
+
+    expect(onValuesChange).toHaveBeenCalledWith([]);
+  });
+
+  it("disables the legacy select all action when no filter is selected", async () => {
+    const user = userEvent.setup();
+    const onValuesChange = vi.fn();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={onValuesChange}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+
+    expect(
+      screen.getByRole("button", { name: /all selected/i }),
+    ).toBeDisabled();
+  });
+
+  it("selects every provided option when select mode is enabled", async () => {
+    const user = userEvent.setup();
+    const onValuesChange = vi.fn();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={onValuesChange}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectSelectAll
+            mode="select"
+            values={["aws-prod", "azure-dev"]}
+          >
+            Select All
+          </MultiSelectSelectAll>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    await user.click(screen.getByRole("combobox"));
+    await user.click(screen.getByRole("button", { name: /select all/i }));
+
+    expect(onValuesChange).toHaveBeenCalledWith(["aws-prod", "azure-dev"]);
   });
 });

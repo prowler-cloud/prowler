@@ -8,6 +8,7 @@ import { HorizontalBarChart } from "@/components/graphs/horizontal-bar-chart";
 import { ScatterPlot } from "@/components/graphs/scatter-plot";
 import { AlertPill } from "@/components/graphs/shared/alert-pill";
 import type { BarDataPoint } from "@/components/graphs/types";
+import { applyFailNonMutedFilters } from "@/lib";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
 // Score color thresholds (0-100 scale, higher = better)
@@ -50,11 +51,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
     // Add provider filter for the selected point
     params.set("filter[provider_id__in]", selectedPoint.providerId);
 
-    // Add exclude muted findings filter
-    params.set("filter[muted]", "false");
-
-    // Filter by FAIL findings
-    params.set("filter[status__in]", "FAIL");
+    applyFailNonMutedFilters(params);
 
     // Navigate to findings page
     router.push(`/findings?${params.toString()}`);

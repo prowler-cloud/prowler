@@ -1,0 +1,37 @@
+orphan: true
+
+repos:
+  - repo: local
+    hooks:
+      - id: ui-typecheck
+        name: UI - TypeScript Check
+        entry: pnpm run typecheck
+        language: system
+        files: '\.(ts|tsx|js|jsx)$'
+        pass_filenames: false
+        priority: 0
+
+      - id: ui-lint
+        name: UI - ESLint
+        entry: pnpm run lint:check
+        language: system
+        files: '\.(ts|tsx|js|jsx)$'
+        pass_filenames: false
+        priority: 0
+
+      - id: ui-tests
+        name: UI - Unit Tests
+        entry: pnpm exec vitest related --run
+        language: system
+        files: '\.(ts|tsx|js|jsx)$'
+        exclude: '\.test\.|\.spec\.|vitest\.config|vitest\.setup'
+        pass_filenames: true
+        priority: 1
+
+      - id: ui-build
+        name: UI - Build
+        entry: pnpm run build
+        language: system
+        files: '\.(ts|tsx|js|jsx|json|css)$'
+        pass_filenames: false
+        priority: 2

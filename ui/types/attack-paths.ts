@@ -67,9 +67,21 @@ export interface PaginationLinks {
   prev: string | null;
 }
 
+export interface AttackPathScansResponsePagination {
+  page: number;
+  pages: number;
+  count: number;
+}
+
+export interface AttackPathScansResponseMeta {
+  pagination: AttackPathScansResponsePagination;
+  version?: string;
+}
+
 export interface AttackPathScansResponse {
   data: AttackPathScan[];
   links: PaginationLinks;
+  meta?: AttackPathScansResponseMeta;
 }
 
 // Data type constants

@@ -85,6 +85,7 @@ export function getStandaloneFindingColumns({
             isMuted={finding.attributes.muted}
             mutedReason={finding.attributes.muted_reason}
             showDeltaWhenMuted
+            reserveMutedSlot
           />
         );
       },
@@ -168,7 +169,7 @@ export function getStandaloneFindingColumns({
     {
       accessorKey: "provider",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Cloud Provider" />
+        <DataTableColumnHeader column={column} title="Provider" />
       ),
       cell: ({ row }) => {
         const provider = getProviderData(row, "provider");

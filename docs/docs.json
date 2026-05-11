@@ -119,6 +119,7 @@
               "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-import-findings",
+              "user-guide/tutorials/prowler-app-alerts",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -162,6 +163,13 @@
                   "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
               }
+            ]
+          },
+          {
+            "group": "CI/CD",
+            "pages": [
+              "user-guide/tutorials/prowler-app-github-action",
+              "user-guide/cookbooks/cicd-pipeline"
             ]
           },
           {
@@ -358,7 +366,8 @@
               "developer-guide/security-compliance-framework",
               "developer-guide/lighthouse-architecture",
               "developer-guide/mcp-server",
-              "developer-guide/ai-skills"
+              "developer-guide/ai-skills",
+              "developer-guide/prowler-studio"
             ]
           },
           {

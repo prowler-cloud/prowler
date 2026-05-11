@@ -27,6 +27,11 @@ class admincenter_groups_not_public_visibility(Check):
         """
         findings = []
         for group in admincenter_client.groups.values():
+            # Only Microsoft 365 Groups (identified by the "Unified" group type) are in
+            # scope for this check per CIS M365 Foundations 1.2.1. Security,
+            # Distribution, and other group types are skipped.
+            if "Unified" not in group.group_types:
+                continue
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource=group,
