@@ -6,7 +6,7 @@ This guide explains how to add a new security compliance framework to Prowler, e
 
 ## Introduction
 
-A compliance framework in Prowler maps a public or custom control catalog (for example CIS, NIST 800-53, PCI DSS, HIPAA, ENS, CCC) to the security checks that Prowler already runs. Each requirement links to one or more Prowler checks. When a scan executes, findings are aggregated per requirement to produce the compliance report rendered by Prowler CLI and Prowler Cloud.
+A compliance framework in Prowler maps a public or custom control catalog (for example CIS, NIST 800-53, PCI DSS, HIPAA, ENS, CCC) to the security checks that Prowler already runs. Each requirement links to zero, one or more Prowler checks. When a scan executes, findings are aggregated per requirement to produce the compliance report rendered by Prowler CLI and Prowler Cloud.
 
 Prowler ships with 85+ compliance frameworks across All Providers. The catalog lives under `prowler/compliance/<provider>/`.
 
