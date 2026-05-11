@@ -26,7 +26,7 @@ aws:
   max_unused_access_keys_days: 45
   # aws.iam_user_console_access_unused --> CIS recommends 45 days
   max_console_access_days: 45
-  # aws.iam_user_access_not_stale_to_sagemaker --> default 90 days; flag IAM users whose last SageMaker access exceeds this threshold
+  # aws.iam_user_access_not_stale_to_sagemaker --> default 90 days
   max_unused_sagemaker_access_days: 90
 
   # AWS EC2 Configuration
