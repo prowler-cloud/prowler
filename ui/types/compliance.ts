@@ -60,6 +60,7 @@ export interface Category {
   fail: number;
   manual: number;
   controls: Control[];
+  percentualScore?: number;
 }
 
 export interface Framework {
@@ -89,6 +90,10 @@ export type TopFailedDataType =
 export interface TopFailedResult {
   items: FailedSection[];
   type: TopFailedDataType;
+  // True when items already cover every relevant category (zero-fill). The
+  // chart should render the supplied list as-is instead of falling back to
+  // severity placeholders when totals are zero.
+  prepopulated?: boolean;
 }
 
 export interface RequirementsTotals {

@@ -65,6 +65,7 @@ import {
   toAccordionItems as toMITREAccordionItems,
 } from "./mitre";
 import {
+  getTopFailedSections as getThreatScoreTopFailedSections,
   mapComplianceData as mapThetaComplianceData,
   toAccordionItems as toThetaAccordionItems,
 } from "./threat";
@@ -169,7 +170,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
   ProwlerThreatScore: {
     mapComplianceData: mapThetaComplianceData,
     toAccordionItems: toThetaAccordionItems,
-    getTopFailedSections,
+    getTopFailedSections: getThreatScoreTopFailedSections,
     calculateCategoryHeatmapData: (complianceData: Framework[]) =>
       calculateCategoryHeatmapData(complianceData),
     getDetailsComponent: (requirement: Requirement) =>
