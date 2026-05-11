@@ -202,6 +202,52 @@ class Test_entra_pim_stale_sign_in_alert:
             assert result[0].resource_name == "Contoso"
             assert result[0].location == "global"
 
+    def test_inactive_alert_with_lingering_affected_items(self):
+        """PASS: alert reports affected items but is not active."""
+        entra_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_pim_stale_sign_in_alert.entra_pim_stale_sign_in_alert.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_pim_stale_sign_in_alert.entra_pim_stale_sign_in_alert import (
+                entra_pim_stale_sign_in_alert,
+            )
+
+            entra_client.pim_alerts = {
+                "DirectoryRole_StaleSignInAlert": PimAlert(
+                    id="alert-resolved",
+                    alert_definition_id="DirectoryRole_StaleSignInAlert",
+                    scope_id="/",
+                    scope_type="DirectoryRole",
+                    is_active=False,
+                    number_of_affected_items=3,
+                    incident_count=3,
+                    affected_items=[
+                        PimAlertIncident(
+                            assignee_display_name="Resolved User",
+                            assignee_id="user-resolved",
+                            role_display_name="Global Administrator",
+                            last_sign_in_date_time="2024-01-01T00:00:00Z",
+                        )
+                    ],
+                )
+            }
+
+            check = entra_pim_stale_sign_in_alert()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "no stale accounts" in result[0].status_extended
+            assert result[0].resource_id == "alert-resolved"
+
     def test_empty_pim_alerts_no_organizations(self):
         """No findings when PIM alerts empty and no organizations."""
         entra_client = mock.MagicMock()

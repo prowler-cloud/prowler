@@ -40,7 +40,7 @@ class entra_pim_stale_sign_in_alert(Check):
                 resource_name="PIM Stale Sign-In Alert",
             )
 
-            if stale_alert.number_of_affected_items > 0:
+            if stale_alert.is_active and stale_alert.number_of_affected_items > 0:
                 affected_users = ", ".join(
                     incident.assignee_display_name or incident.assignee_id
                     for incident in stale_alert.affected_items[:5]
