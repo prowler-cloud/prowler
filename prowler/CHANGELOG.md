@@ -7,11 +7,12 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
-- Universal compliance pipeline integrated into the CLI: `--list-compliance` and `--list-compliance-requirements` show universal frameworks, and CSV plus OCSF outputs are generated for any framework declaring a `TableConfig` [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
+- Universal compliance with OCSF support [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
 - ASD Essential Eight Maturity Model compliance framework for AWS (Maturity Level One, Nov 2023) [(#10808)](https://github.com/prowler-cloud/prowler/pull/10808)
 - Update Vercel checks to return personalized finding status extended depending on billing plan and classify them with billing-plan categories [(#10663)](https://github.com/prowler-cloud/prowler/pull/10663)
 - `bedrock_prompt_management_exists` check for AWS provider [(#10878)](https://github.com/prowler-cloud/prowler/pull/10878)
 - 8 Gmail attachment safety and spoofing protection checks for Google Workspace provider using the Cloud Identity Policy API [(#10980)](https://github.com/prowler-cloud/prowler/pull/10980)
+- `bedrock_prompt_encrypted_with_cmk` check for AWS provider [(#10905)](https://github.com/prowler-cloud/prowler/pull/10905)
 - `entra_service_principal_no_secrets_for_permanent_tier0_roles` check for m365 provider [(#10788)](https://github.com/prowler-cloud/prowler/pull/10788)
 
 ### 🔄 Changed

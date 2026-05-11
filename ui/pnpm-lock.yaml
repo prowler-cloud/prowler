@@ -182,9 +182,6 @@ importers:
       ai:
         specifier: 5.0.109
         version: 5.0.109(zod@4.1.11)
-      alert:
-        specifier: 6.0.2
-        version: 6.0.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       class-variance-authority:
         specifier: 0.7.1
         version: 0.7.1
@@ -5634,12 +5631,6 @@ packages:
 
   ajv@8.18.0:
     resolution: {integrity: sha512-PlXPeEWMXMZ7sPYOHqmDyCJzcfNrUr3fGNKtezX14ykXOEIvyK81d+qydx89KY5O71FKMPaQ2vBfBFI5NHR63A==}
-
-  alert@6.0.2:
-    resolution: {integrity: sha512-Oi8u2HRNN6mzpjgKGii2Uuf9iOhyfbeUAHH/5MwnVmC8DS9GrEBjZBFpoavkNj+ZKnBr/Lqx+6YKLDKrggKfPA==}
-    peerDependencies:
-      react: 19.2.5
-      react-dom: 19.2.5
 
   ansi-regex@5.0.1:
     resolution: {integrity: sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==}
@@ -16662,11 +16653,6 @@ snapshots:
       fast-uri: 3.1.0
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
-
-  alert@6.0.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
-    dependencies:
-      react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
 
   ansi-regex@5.0.1: {}
 
