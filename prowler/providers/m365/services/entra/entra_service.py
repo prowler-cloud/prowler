@@ -1092,9 +1092,7 @@ OAuthAppInfo
                                     "assigneeDisplayName", ""
                                 ),
                                 assignee_id=incident.get("assigneeId", ""),
-                                role_display_name=incident.get(
-                                    "roleDisplayName", ""
-                                ),
+                                role_display_name=incident.get("roleDisplayName", ""),
                                 last_sign_in_date_time=incident.get(
                                     "lastSignInDateTime", ""
                                 ),
