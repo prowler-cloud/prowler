@@ -599,9 +599,6 @@ describe("exporting the graph", () => {
 
     expect(png.filename).toBe("attack-path-graph.png");
     expect(png.mimeType).toBe("image/png");
-    // Regressions in the viewport element passed to `domToPng`, the
-    // configured export size, or the bounds-driven viewport transform
-    // fail loudly here.
     expect(png.width).toBe(1920);
     expect(png.height).toBe(1080);
   });

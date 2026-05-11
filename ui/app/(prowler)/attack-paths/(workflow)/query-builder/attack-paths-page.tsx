@@ -346,6 +346,13 @@ export default function AttackPathsPage() {
       await exportGraphAsPNG(
         handle.getContainerElement(),
         handle.getNodesBounds(),
+        "attack-path-graph.png",
+        graphState.data,
+        {
+          expandedResources: graphState.expandedResources,
+          isFilteredView: graphState.isFilteredView,
+          selectedNodeId: graphState.selectedNodeId,
+        },
       );
       toast({
         title: "Success",
