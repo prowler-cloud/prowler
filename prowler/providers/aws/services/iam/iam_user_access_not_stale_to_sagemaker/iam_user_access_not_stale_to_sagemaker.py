@@ -1,9 +1,10 @@
+from datetime import datetime, timezone
+from typing import Optional
+
+from dateutil.parser import parse
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
-from prowler.providers.aws.services.iam.lib.policy import (
-    evaluate_sagemaker_staleness,
-    find_sagemaker_service,
-)
 
 
 class iam_user_access_not_stale_to_sagemaker(Check):
@@ -37,14 +38,14 @@ class iam_user_access_not_stale_to_sagemaker(Check):
             last_accessed_services = iam_client.last_accessed_services.get(
                 (user.name, user.arn), []
             )
-            sagemaker_service = find_sagemaker_service(last_accessed_services)
+            sagemaker_service = self._find_sagemaker_service(last_accessed_services)
             if sagemaker_service is None:
                 continue
 
             report = Check_Report_AWS(metadata=self.metadata(), resource=user)
             report.region = iam_client.region
 
-            evaluate_sagemaker_staleness(
+            self._evaluate_sagemaker_staleness(
                 report,
                 sagemaker_service,
                 max_unused_sagemaker_days,
@@ -54,3 +55,49 @@ class iam_user_access_not_stale_to_sagemaker(Check):
             findings.append(report)
 
         return findings
+
+    @staticmethod
+    def _find_sagemaker_service(
+        last_accessed_services: list[dict],
+    ) -> Optional[dict]:
+        """Return the SageMaker entry from a service last accessed list."""
+        for service in last_accessed_services:
+            if service.get("ServiceNamespace") == "sagemaker":
+                return service
+        return None
+
+    @staticmethod
+    def _evaluate_sagemaker_staleness(
+        report: Check_Report_AWS,
+        sagemaker_service: dict,
+        max_days: int,
+        identity_name: str,
+        identity_type: str,
+    ) -> None:
+        """Populate a check report based on SageMaker access recency."""
+        last_authenticated = sagemaker_service.get("LastAuthenticated")
+        if last_authenticated is None:
+            report.status = "FAIL"
+            report.status_extended = (
+                f"IAM {identity_type} {identity_name} has SageMaker permissions "
+                f"but has never used them."
+            )
+            return
+
+        if isinstance(last_authenticated, str):
+            last_authenticated = parse(last_authenticated)
+
+        days_since_access = (datetime.now(timezone.utc) - last_authenticated).days
+
+        if days_since_access > max_days:
+            report.status = "FAIL"
+            report.status_extended = (
+                f"IAM {identity_type} {identity_name} has not accessed SageMaker "
+                f"in {days_since_access} days (threshold: {max_days} days)."
+            )
+        else:
+            report.status = "PASS"
+            report.status_extended = (
+                f"IAM {identity_type} {identity_name} accessed SageMaker "
+                f"{days_since_access} days ago (threshold: {max_days} days)."
+            )
