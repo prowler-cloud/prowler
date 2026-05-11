@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - `iam_user_access_not_stale_to_sagemaker` check for aws provider with configurable `max_unused_sagemaker_access_days` (default 90) [(#11000)](https://github.com/prowler-cloud/prowler/pull/11000)
+- `cloudtrail_bedrock_logging_enabled` check for AWS provider [(#10858)](https://github.com/prowler-cloud/prowler/pull/10858)
 
 ---
 
@@ -21,7 +22,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `bedrock_prompt_management_exists` check for AWS provider [(#10878)](https://github.com/prowler-cloud/prowler/pull/10878)
 - 8 Gmail attachment safety and spoofing protection checks for Google Workspace provider using the Cloud Identity Policy API [(#10980)](https://github.com/prowler-cloud/prowler/pull/10980)
 - `bedrock_prompt_encrypted_with_cmk` check for AWS provider [(#10905)](https://github.com/prowler-cloud/prowler/pull/10905)
-- `cloudtrail_bedrock_logging_enabled` check for AWS provider [(#10858)](https://github.com/prowler-cloud/prowler/pull/10858)
 
 ### 🔄 Changed
 
