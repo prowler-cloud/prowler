@@ -4,8 +4,8 @@ def init_parser(self):
     The Okta provider authenticates with OAuth 2.0 (private-key JWT). The
     private key is intentionally not exposed as a CLI flag — secrets must
     be supplied via the `OKTA_PRIVATE_KEY` or `OKTA_PRIVATE_KEY_FILE`
-    environment variable. Non-secret values (org URL, client ID, scopes,
-    kid) are flag-configurable.
+    environment variable. Non-secret values (org URL, client ID, scopes)
+    are flag-configurable.
     """
     okta_parser = self.subparsers.add_parser(
         "okta", parents=[self.common_providers_parser], help="Okta Provider"
@@ -27,18 +27,12 @@ def init_parser(self):
     )
     okta_auth_subparser.add_argument(
         "--okta-scopes",
-        nargs="?",
+        nargs="+",
         help=(
-            "Comma-separated list of OAuth scopes. Defaults to the read "
-            "scopes required by the bundled checks."
+            "OAuth scopes to request, space-separated "
+            "(e.g. okta.policies.read okta.users.read). Defaults to the "
+            "read scopes required by the bundled checks."
         ),
         default=None,
         metavar="OKTA_SCOPES",
-    )
-    okta_auth_subparser.add_argument(
-        "--okta-kid",
-        nargs="?",
-        help="Optional JWK Key ID, only required if not embedded in the JWK",
-        default=None,
-        metavar="OKTA_KID",
     )

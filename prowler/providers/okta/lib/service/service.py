@@ -34,8 +34,6 @@ class OktaService:
             # app (or org-wide); harmless on tenants that don't.
             "dpopEnabled": True,
         }
-        if session.kid:
-            config["kid"] = session.kid
         return OktaSDKClient(config)
 
     @staticmethod

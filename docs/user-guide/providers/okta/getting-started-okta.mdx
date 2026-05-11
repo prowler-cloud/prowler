@@ -64,8 +64,6 @@ export OKTA_CLIENT_ID="0oa1234567890abcdef"
 export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
 # Optional — defaults to "okta.policies.read"
 export OKTA_SCOPES="okta.policies.read"
-# Optional — only needed when the JWK does not embed kid
-# export OKTA_KID="abc123"
 ```
 
 The private key file may contain either a PEM-encoded RSA key or a JWK JSON document.
@@ -95,6 +93,33 @@ poetry run python prowler-cli.py okta --check signon_global_session_idle_timeout
 Prowler will print a summary table; full findings are written to the configured output formats.
 
 ## Troubleshooting
+
+### Default Scopes
+
+Prowler requests a fixed set of OAuth scopes on every token exchange. The default is a single scope that covers the bundled Phase 1 check:
+
+- `okta.policies.read`
+
+The service app must have that scope granted in the **Okta API Scopes** tab. When the granted set is narrower than the requested set, the token request fails with an `invalid_scope` error and the scan stops at provider initialization.
+
+When additional checks are enabled — or when running against a service app that exposes a different scope set — override the default with `OKTA_SCOPES` (comma-separated string for the env var) or `--okta-scopes` (space-separated list for the CLI):
+
+```bash
+# Environment variable — comma-separated
+export OKTA_SCOPES="okta.policies.read,okta.apps.read,okta.users.read"
+
+# CLI flag — space-separated
+poetry run python prowler-cli.py okta \
+  --okta-scopes okta.policies.read okta.apps.read okta.users.read
+```
+
+For the full catalog of OAuth scopes exposed by the Okta Management API, refer to the [Okta OAuth 2.0 scopes documentation](https://developer.okta.com/docs/api/oauth2/).
+
+<Note>
+As new services and checks land in the Okta provider, the default scope list grows alongside them. Re-check the granted scopes on the service app after each Prowler upgrade and grant any newly required `okta.*.read` scopes in the Admin Console.
+</Note>
+
+### Common Errors
 
 - **`OktaInvalidOrgURLError`** — the org URL must be `https://<org>.okta.com` (or `oktapreview.com` / `okta-emea.com`) with no trailing slash.
 - **`OktaPrivateKeyFileError`** — confirm the file is readable and contains a non-empty PEM or JWK body.

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 from prowler.config.config import output_file_timestamp
@@ -11,7 +9,6 @@ class OktaSession(BaseModel):
     client_id: str
     scopes: list[str]
     private_key: str
-    kid: Optional[str] = None
 
 
 class OktaIdentityInfo(BaseModel):

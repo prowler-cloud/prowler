@@ -26,7 +26,6 @@ def _clear_okta_env(monkeypatch):
         "OKTA_PRIVATE_KEY",
         "OKTA_PRIVATE_KEY_FILE",
         "OKTA_SCOPES",
-        "OKTA_KID",
     ):
         monkeypatch.delenv(var, raising=False)
 
@@ -106,7 +105,6 @@ class Test_OktaProvider_setup_session:
         assert session.client_id == OKTA_CLIENT_ID
         assert session.private_key == OKTA_PRIVATE_KEY
         assert session.scopes == DEFAULT_SCOPES
-        assert session.kid is None
 
     def test_custom_scopes_parsed_from_csv(self, _clear_okta_env, tmp_path):
         key_file = tmp_path / "key.pem"
@@ -116,6 +114,39 @@ class Test_OktaProvider_setup_session:
             client_id=OKTA_CLIENT_ID,
             private_key_file=str(key_file),
             scopes="okta.policies.read, okta.apps.read ,okta.users.read",
+        )
+        assert session.scopes == [
+            "okta.policies.read",
+            "okta.apps.read",
+            "okta.users.read",
+        ]
+
+    def test_custom_scopes_accepts_list_input(self, _clear_okta_env, tmp_path):
+        key_file = tmp_path / "key.pem"
+        key_file.write_text(OKTA_PRIVATE_KEY)
+        session = OktaProvider.setup_session(
+            org_url=OKTA_ORG_URL,
+            client_id=OKTA_CLIENT_ID,
+            private_key_file=str(key_file),
+            scopes=["okta.policies.read", "okta.apps.read", "okta.users.read"],
+        )
+        assert session.scopes == [
+            "okta.policies.read",
+            "okta.apps.read",
+            "okta.users.read",
+        ]
+
+    def test_custom_scopes_flattens_mixed_list_and_csv(self, _clear_okta_env, tmp_path):
+        # Mirrors how argparse nargs="+" delivers values when a user
+        # passes "--okta-scopes a,b c" — a list whose first element still
+        # contains a comma.
+        key_file = tmp_path / "key.pem"
+        key_file.write_text(OKTA_PRIVATE_KEY)
+        session = OktaProvider.setup_session(
+            org_url=OKTA_ORG_URL,
+            client_id=OKTA_CLIENT_ID,
+            private_key_file=str(key_file),
+            scopes=["okta.policies.read,okta.apps.read", "okta.users.read"],
         )
         assert session.scopes == [
             "okta.policies.read",

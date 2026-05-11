@@ -2,6 +2,7 @@ import asyncio
 import os
 import re
 from os import environ
+from typing import Optional, Union
 
 from colorama import Fore, Style
 from okta.client import Client as OktaSDKClient
@@ -63,8 +64,7 @@ class OktaProvider(Provider):
         okta_client_id: str = "",
         okta_private_key: str = "",
         okta_private_key_file: str = "",
-        okta_scopes: str = "",
-        okta_kid: str = "",
+        okta_scopes: Optional[Union[str, list[str]]] = None,
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
@@ -86,7 +86,6 @@ class OktaProvider(Provider):
             private_key=okta_private_key,
             private_key_file=okta_private_key_file,
             scopes=okta_scopes,
-            kid=okta_kid,
         )
         self._identity = OktaProvider.setup_identity(self._session)
         self._auth_method = "OAuth 2.0 (private-key JWT)"
@@ -182,8 +181,7 @@ class OktaProvider(Provider):
         client_id: str = "",
         private_key: str = "",
         private_key_file: str = "",
-        scopes: str = "",
-        kid: str = "",
+        scopes: Optional[Union[str, list[str]]] = None,
     ) -> OktaSession:
         """Build an OktaSession from CLI args, falling back to environment variables.
 
@@ -200,8 +198,8 @@ class OktaProvider(Provider):
             private_key_file = private_key_file or environ.get(
                 "OKTA_PRIVATE_KEY_FILE", ""
             )
-            scopes = scopes or environ.get("OKTA_SCOPES", "")
-            kid = kid or environ.get("OKTA_KID", "")
+            if not scopes:
+                scopes = environ.get("OKTA_SCOPES", "")
 
             org_url = org_url.rstrip("/")
             if not ORG_URL_RE.match(org_url):
@@ -232,18 +230,25 @@ class OktaProvider(Provider):
                     ),
                 )
 
-            scope_list = (
-                [s.strip() for s in scopes.split(",") if s.strip()]
-                if scopes
-                else list(DEFAULT_SCOPES)
-            )
+            # Accept either a CSV string (from env var / legacy callers) or
+            # a list[str] (from programmatic callers and the CLI's nargs="+").
+            # List elements may themselves contain commas (e.g. "a,b") and
+            # are flattened to support mixed input.
+            if isinstance(scopes, str):
+                raw_items = scopes.split(",")
+            elif isinstance(scopes, list):
+                raw_items = [item for s in scopes for item in str(s).split(",")]
+            else:
+                raw_items = []
+            scope_list = [s.strip() for s in raw_items if s and s.strip()]
+            if not scope_list:
+                scope_list = list(DEFAULT_SCOPES)
 
             return OktaSession(
                 org_url=org_url,
                 client_id=client_id,
                 scopes=scope_list,
                 private_key=private_key,
-                kid=kid or None,
             )
 
         except (OktaInvalidOrgURLError, OktaPrivateKeyFileError):
@@ -276,8 +281,6 @@ class OktaProvider(Provider):
                 # service app (or org-wide); harmless on tenants that don't.
                 "dpopEnabled": True,
             }
-            if session.kid:
-                config["kid"] = session.kid
             client = OktaSDKClient(config)
             return await client.list_policies(type="OKTA_SIGN_ON", limit="1")
 
@@ -320,8 +323,7 @@ class OktaProvider(Provider):
         okta_client_id: str = "",
         okta_private_key: str = "",
         okta_private_key_file: str = "",
-        okta_scopes: str = "",
-        okta_kid: str = "",
+        okta_scopes: Optional[Union[str, list[str]]] = None,
         raise_on_exception: bool = True,
     ) -> Connection:
         """Test the connection to Okta with the provided OAuth credentials."""
@@ -338,7 +340,6 @@ class OktaProvider(Provider):
                 private_key=okta_private_key,
                 private_key_file=okta_private_key_file,
                 scopes=okta_scopes,
-                kid=okta_kid,
             )
             OktaProvider.setup_identity(session)
             return Connection(is_connected=True)
