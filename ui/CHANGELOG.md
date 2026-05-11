@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.27.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Slimmed `ui/` npm dependencies by removing 21 unused packages flagged by `knip` and tightened the `lint:knip` baseline to match [(#TBD)](https://github.com/prowler-cloud/prowler/pull/TBD)
+
+---
+
 ## [1.26.0] (Prowler v5.26.0)
 
 ### 🚀 Added
