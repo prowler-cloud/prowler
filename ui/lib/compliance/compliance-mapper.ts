@@ -1,5 +1,6 @@
 import { createElement, ReactNode } from "react";
 
+import { ASDEssentialEightCustomDetails } from "@/components/compliance/compliance-custom-details/asd-essential-eight-details";
 import { AWSWellArchitectedCustomDetails } from "@/components/compliance/compliance-custom-details/aws-well-architected-details";
 import { C5CustomDetails } from "@/components/compliance/compliance-custom-details/c5-details";
 import { CCCCustomDetails } from "@/components/compliance/compliance-custom-details/ccc-details";
@@ -21,6 +22,10 @@ import {
   TopFailedResult,
 } from "@/types/compliance";
 
+import {
+  mapComplianceData as mapASDEssentialEightComplianceData,
+  toAccordionItems as toASDEssentialEightAccordionItems,
+} from "./asd-essential-eight";
 import {
   mapComplianceData as mapAWSWellArchitectedComplianceData,
   toAccordionItems as toAWSWellArchitectedAccordionItems,
@@ -96,6 +101,15 @@ const getDefaultMapper = (): ComplianceMapper => ({
 });
 
 const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
+  "ASD-Essential-Eight": {
+    mapComplianceData: mapASDEssentialEightComplianceData,
+    toAccordionItems: toASDEssentialEightAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(ASDEssentialEightCustomDetails, { requirement }),
+  },
   C5: {
     mapComplianceData: mapC5ComplianceData,
     toAccordionItems: toC5AccordionItems,

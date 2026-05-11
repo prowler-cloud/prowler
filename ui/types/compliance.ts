@@ -224,6 +224,109 @@ export interface CCCAttributesMetadata {
   }>;
 }
 
+// ASD Essential Eight enums — modelled on the canonical Maturity Model
+// (Nov 2023). Only ML1 ships today; ML2/ML3 are scoped out of the framework
+// but kept here so the type covers any future expansion without a schema
+// edit. AssessmentStatus and CloudApplicability are exhaustive per the JSON
+// fixture; new variants must be added explicitly.
+export const ASD_MATURITY_LEVEL = {
+  ML1: "ML1",
+  ML2: "ML2",
+  ML3: "ML3",
+} as const;
+export type ASDMaturityLevel =
+  (typeof ASD_MATURITY_LEVEL)[keyof typeof ASD_MATURITY_LEVEL];
+
+export const ASD_ASSESSMENT_STATUS = {
+  AUTOMATED: "Automated",
+  MANUAL: "Manual",
+} as const;
+export type ASDAssessmentStatus =
+  (typeof ASD_ASSESSMENT_STATUS)[keyof typeof ASD_ASSESSMENT_STATUS];
+
+export const ASD_CLOUD_APPLICABILITY = {
+  FULL: "full",
+  PARTIAL: "partial",
+  LIMITED: "limited",
+  NON_APPLICABLE: "non-applicable",
+} as const;
+export type ASDCloudApplicability =
+  (typeof ASD_CLOUD_APPLICABILITY)[keyof typeof ASD_CLOUD_APPLICABILITY];
+
+export interface ASDEssentialEightAttributesMetadata {
+  Section: string;
+  MaturityLevel: ASDMaturityLevel;
+  AssessmentStatus: ASDAssessmentStatus;
+  CloudApplicability: ASDCloudApplicability;
+  MitigatedThreats: string[];
+  Description: string;
+  RationaleStatement: string;
+  ImpactStatement: string;
+  RemediationProcedure: string;
+  AuditProcedure: string;
+  AdditionalInformation: string;
+  References: string;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const isOneOf = <T extends string>(
+  values: Record<string, T>,
+  value: unknown,
+): value is T => (Object.values(values) as T[]).includes(value as T);
+
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === "string");
+
+const ASD_METADATA_STRING_FIELDS = [
+  "Section",
+  "Description",
+  "RationaleStatement",
+  "ImpactStatement",
+  "RemediationProcedure",
+  "AuditProcedure",
+  "AdditionalInformation",
+  "References",
+] as const satisfies readonly (keyof ASDEssentialEightAttributesMetadata)[];
+
+export const isASDMaturityLevel = (value: unknown): value is ASDMaturityLevel =>
+  isOneOf(ASD_MATURITY_LEVEL, value);
+
+export const isASDAssessmentStatus = (
+  value: unknown,
+): value is ASDAssessmentStatus => isOneOf(ASD_ASSESSMENT_STATUS, value);
+
+export const isASDCloudApplicability = (
+  value: unknown,
+): value is ASDCloudApplicability => isOneOf(ASD_CLOUD_APPLICABILITY, value);
+
+export const isASDEssentialEightAttributesMetadata = (
+  value: unknown,
+): value is ASDEssentialEightAttributesMetadata =>
+  isRecord(value) &&
+  ASD_METADATA_STRING_FIELDS.every(
+    (field) => typeof value[field] === "string",
+  ) &&
+  isASDMaturityLevel(value.MaturityLevel) &&
+  isASDAssessmentStatus(value.AssessmentStatus) &&
+  isASDCloudApplicability(value.CloudApplicability) &&
+  isStringArray(value.MitigatedThreats);
+
+export interface ASDEssentialEightRequirement extends Requirement {
+  maturity_level: ASDEssentialEightAttributesMetadata["MaturityLevel"];
+  assessment_status: ASDEssentialEightAttributesMetadata["AssessmentStatus"];
+  cloud_applicability: ASDEssentialEightAttributesMetadata["CloudApplicability"];
+  mitigated_threats: ASDEssentialEightAttributesMetadata["MitigatedThreats"];
+  implementation_notes: ASDEssentialEightAttributesMetadata["Description"];
+  rationale_statement: ASDEssentialEightAttributesMetadata["RationaleStatement"];
+  impact_statement: ASDEssentialEightAttributesMetadata["ImpactStatement"];
+  remediation_procedure: ASDEssentialEightAttributesMetadata["RemediationProcedure"];
+  audit_procedure: ASDEssentialEightAttributesMetadata["AuditProcedure"];
+  additional_information: ASDEssentialEightAttributesMetadata["AdditionalInformation"];
+  references: ASDEssentialEightAttributesMetadata["References"];
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -245,6 +348,7 @@ export interface AttributesItemData {
         | MITREAttributesMetadata[]
         | CCCAttributesMetadata[]
         | CSAAttributesMetadata[]
+        | ASDEssentialEightAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure
