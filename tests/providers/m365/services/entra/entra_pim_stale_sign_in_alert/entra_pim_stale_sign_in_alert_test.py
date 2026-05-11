@@ -160,7 +160,7 @@ class Test_entra_pim_stale_sign_in_alert:
             assert result[0].resource_id == "alert-001"
 
     def test_alert_not_configured(self):
-        """FAIL: PIM stale sign-in alert is not configured."""
+        """MANUAL: PIM stale sign-in alert is not available."""
         entra_client = mock.MagicMock()
 
         with (
@@ -183,15 +183,21 @@ class Test_entra_pim_stale_sign_in_alert:
                     id="org-001",
                     name="Contoso",
                     on_premises_sync_enabled=False,
-                )
+                ),
+                Organization(
+                    id="org-002",
+                    name="Contoso Two",
+                    on_premises_sync_enabled=False,
+                ),
             ]
 
             check = entra_pim_stale_sign_in_alert()
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "not configured or not available" in result[0].status_extended
+            assert result[0].status == "MANUAL"
+            assert "not available" in result[0].status_extended
+            assert "P2" in result[0].status_extended
             assert result[0].resource_id == "org-001"
             assert result[0].resource_name == "Contoso"
             assert result[0].location == "global"

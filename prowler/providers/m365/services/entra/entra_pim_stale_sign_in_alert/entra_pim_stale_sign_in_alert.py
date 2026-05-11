@@ -60,16 +60,22 @@ class entra_pim_stale_sign_in_alert(Check):
                 report.status_extended = "PIM stale sign-in alert reports no stale accounts in privileged roles."
 
             findings.append(report)
-        else:
-            for organization in entra_client.organizations:
-                report = CheckReportM365(
-                    self.metadata(),
-                    resource=organization,
-                    resource_id=organization.id,
-                    resource_name=organization.name,
-                )
-                report.status = "FAIL"
-                report.status_extended = "PIM stale sign-in alert is not configured or not available for the tenant."
-                findings.append(report)
+        elif entra_client.organizations:
+            organization = entra_client.organizations[0]
+            report = CheckReportM365(
+                self.metadata(),
+                resource=organization,
+                resource_id=organization.id,
+                resource_name=organization.name,
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                "PIM stale sign-in alert is not available. This can happen when "
+                "the tenant lacks Microsoft Entra ID P2, the alert is disabled, "
+                "or the running credentials cannot read PIM alerts. Review the "
+                "alert configuration in the Entra admin center under Identity "
+                "Governance > Privileged Identity Management > Alerts."
+            )
+            findings.append(report)
 
         return findings
