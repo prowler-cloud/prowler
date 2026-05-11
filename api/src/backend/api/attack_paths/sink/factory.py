@@ -33,7 +33,7 @@ _lock = threading.Lock()
 
 
 def _resolve_setting() -> SinkBackend:
-    raw = getattr(settings, "ATTACK_PATHS_SINK_DATABASE", SinkBackend.NEO4J).lower()
+    raw = settings.ATTACK_PATHS_SINK_DATABASE.lower()
     try:
         return SinkBackend(raw)
     except ValueError:
@@ -96,7 +96,7 @@ def get_backend() -> SinkDatabase:
 # Per-scan routing
 
 
-def get_backend_for_scan(scan: "AttackPathsScan") -> SinkDatabase:
+def get_backend_for_scan(scan: AttackPathsScan) -> SinkDatabase:
     """Route reads by the scan row's recorded sink, not by current settings.
 
     Scans written under Neo4j remain queryable via the Neo4j sink even when the
@@ -104,7 +104,7 @@ def get_backend_for_scan(scan: "AttackPathsScan") -> SinkDatabase:
 
     # TODO: drop after Neptune cutover
     """
-    if getattr(scan, "is_neptune", False):
+    if scan.is_neptune:
         if _resolve_setting() is not SinkBackend.NEPTUNE:
             return _build_backend_cached(SinkBackend.NEPTUNE)
         return get_backend()

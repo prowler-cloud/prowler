@@ -308,7 +308,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
 
         # TODO: drop after Neptune cutover
-        if getattr(settings, "ATTACK_PATHS_SINK_DATABASE", "neo4j") == "neptune":
+        if settings.ATTACK_PATHS_SINK_DATABASE == "neptune":
             legacy_drain.drain_legacy_neo4j_for_provider(
                 tenant_id=str(prowler_api_provider.tenant_id),
                 provider_id=str(prowler_api_provider.id),

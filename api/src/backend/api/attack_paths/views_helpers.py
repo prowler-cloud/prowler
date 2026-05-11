@@ -8,6 +8,7 @@ from rest_framework.exceptions import APIException, PermissionDenied, Validation
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
 from api.attack_paths import sink as sink_module
+from api.models import AttackPathsScan
 from api.attack_paths.cypher_sanitizer import (
     inject_provider_label,
     validate_custom_query,
@@ -109,16 +110,12 @@ def execute_query(
     definition: AttackPathsQueryDefinition,
     parameters: dict[str, Any],
     provider_id: str,
-    scan=None,
+    scan: AttackPathsScan,
 ) -> dict[str, Any]:
     try:
         # TODO: drop after Neptune cutover
         # Route reads by the scan row's recorded sink, not by current settings.
-        backend = (
-            sink_module.get_backend_for_scan(scan)
-            if scan is not None
-            else sink_module.get_backend()
-        )
+        backend = sink_module.get_backend_for_scan(scan)
         graph = backend.execute_read_query(database_name, definition.cypher, parameters)
         return _serialize_graph(graph, provider_id)
 
@@ -153,7 +150,7 @@ def execute_custom_query(
     database_name: str,
     cypher: str,
     provider_id: str,
-    scan=None,
+    scan: AttackPathsScan,
 ) -> dict[str, Any]:
     # Defense-in-depth for custom queries:
     # 1. neo4j.READ_ACCESS — prevents mutations at the driver level
@@ -167,15 +164,11 @@ def execute_custom_query(
     cypher = inject_provider_label(cypher, provider_id)
 
     # TODO: drop after Neptune cutover
-    backend = (
-        sink_module.get_backend_for_scan(scan)
-        if scan is not None
-        else sink_module.get_backend()
-    )
+    backend = sink_module.get_backend_for_scan(scan)
 
     # Neptune enforces a cluster-level query timeout; prepending the hint makes
     # the limit explicit and matches the client-side read timeout.
-    if scan is not None and getattr(scan, "is_neptune", False):
+    if scan.is_neptune:
         timeout_ms = _custom_query_timeout_ms()
         cypher = f"USING QUERY:TIMEOUTMILLISECONDS {timeout_ms}\n{cypher}"
 

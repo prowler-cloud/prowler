@@ -40,9 +40,7 @@ def create_attack_paths_scan(
         ).exists()
 
         # TODO: drop after Neptune cutover
-        is_neptune = (
-            getattr(settings, "ATTACK_PATHS_SINK_DATABASE", "neo4j") == "neptune"
-        )
+        is_neptune = settings.ATTACK_PATHS_SINK_DATABASE == "neptune"
 
         attack_paths_scan = ProwlerAPIAttackPathsScan.objects.create(
             tenant_id=tenant_id,

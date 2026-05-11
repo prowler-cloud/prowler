@@ -100,7 +100,7 @@ def get_driver() -> neo4j.Driver:
 
 def get_uri() -> str:
     """Return the sink URI. Retained for backwards compatibility."""
-    if getattr(settings, "ATTACK_PATHS_SINK_DATABASE", "neo4j") == "neptune":
+    if settings.ATTACK_PATHS_SINK_DATABASE == "neptune":
         cfg = settings.DATABASES["neptune"]
         return f"bolt+s://{cfg['WRITER_ENDPOINT']}:{cfg['PORT']}"
     cfg = settings.DATABASES["neo4j"]

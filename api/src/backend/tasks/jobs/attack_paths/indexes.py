@@ -15,7 +15,7 @@ logger = get_task_logger(__name__)
 
 
 def _sink_is_neptune() -> bool:
-    return getattr(settings, "ATTACK_PATHS_SINK_DATABASE", "neo4j") == "neptune"
+    return settings.ATTACK_PATHS_SINK_DATABASE == "neptune"
 
 
 # Indexes for Prowler Findings and resource lookups
