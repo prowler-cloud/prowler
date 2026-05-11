@@ -6,9 +6,8 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
-from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
-    RunHuntingQueryPostRequestBody,
-)
+from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import \
+    RunHuntingQueryPostRequestBody
 from pydantic.v1 import BaseModel, validator
 
 from prowler.lib.logger import logger
@@ -1597,12 +1596,29 @@ class KeyCredential(BaseModel):
     display_name: Optional[str] = None
 
 
-# Control Plane / Tier 0 role template IDs per EntraOps classification.
-# These roles grant the highest level of privilege in a Microsoft Entra tenant.
+# Control Plane (Tier 0) role template IDs.
+#
+# Roles included grant tenant-wide control over identity, authentication, or the
+# directory itself, so a credential compromise on any of them is equivalent to a
+# tenant takeover. References:
+#   https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/privileged-roles-permissions
+#   https://learn.microsoft.com/en-us/security/privileged-access-workstations/privileged-access-access-model
 TIER_0_ROLE_TEMPLATE_IDS = {
     "62e90394-69f5-4237-9190-012177145e10",  # Global Administrator
     "e8611ab8-c189-46e8-94e1-60213ab1f814",  # Privileged Role Administrator
     "7be44c8a-adaf-4e2a-84d6-ab2649e08a13",  # Privileged Authentication Administrator
+    "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3",  # Application Administrator
+    "158c047a-c907-4556-b7ef-446551a6b5f7",  # Cloud Application Administrator
+    "c4e39bd9-1100-46d3-8c65-fb160da0071f",  # Authentication Administrator
+    "0526716b-113d-4c15-b2c8-68e3c22b9f80",  # Authentication Policy Administrator
+    "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9",  # Conditional Access Administrator
+    "8329153b-31d0-4727-b945-745eb3bc5f31",  # Domain Name Administrator
+    "be2f45a1-457d-42af-a067-6ec1fa63bc45",  # External Identity Provider Administrator
+    "8ac3fc64-6eca-42ea-9e69-59f4c7b60eb2",  # Hybrid Identity Administrator
+    "194ae4cb-b126-40b2-bd5b-6091b380977d",  # Security Administrator
+    "fe930be7-5e62-47db-91af-98c3a49a38b1",  # User Administrator
+    "d29b2b05-8046-44ba-8758-1e26182fcf32",  # Directory Synchronization Accounts
+    "e00e864a-17c5-4a4b-9c06-f5b95a8d5bd8",  # Partner Tier2 Support
 }
 
 
