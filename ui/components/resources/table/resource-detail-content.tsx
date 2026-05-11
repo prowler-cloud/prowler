@@ -1,7 +1,7 @@
 "use client";
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
-import { Container, CornerDownRight, ExternalLink, Link } from "lucide-react";
+import { Container, CornerDownRight, Link } from "lucide-react";
 import { useState } from "react";
 
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
@@ -22,6 +22,7 @@ import {
 } from "@/components/shadcn/info-field/info-field";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import { ExternalResourceLink } from "@/components/shared/external-resource-link";
 import {
   QUERY_EDITOR_LANGUAGE,
   QueryCodeEditor,
@@ -31,7 +32,6 @@ import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable } from "@/components/ui/table";
 import { getGroupLabel } from "@/lib/categories";
-import { buildGitFileUrl } from "@/lib/iac-utils";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
 
@@ -190,16 +190,6 @@ export const ResourceDetailContent = ({
     handleMuteComplete,
   );
 
-  const gitUrl =
-    providerData.provider === "iac"
-      ? buildGitFileUrl(
-          providerData.uid,
-          attributes.name,
-          "",
-          attributes.region,
-        )
-      : null;
-
   const findingTitle =
     findingDetails?.attributes?.check_metadata?.checktitle || "Finding Detail";
   const resourceName =
@@ -268,25 +258,13 @@ export const ResourceDetailContent = ({
               </TooltipTrigger>
               <TooltipContent>Copy resource link to clipboard</TooltipContent>
             </Tooltip>
-            {providerData.provider === "iac" && gitUrl && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a
-                    href={gitUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-bg-data-info inline-flex items-center gap-1 text-sm"
-                    aria-label="Open resource in repository"
-                  >
-                    <ExternalLink size={16} />
-                    View in Repository
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Go to Resource in the Repository
-                </TooltipContent>
-              </Tooltip>
-            )}
+            <ExternalResourceLink
+              providerType={providerData.provider}
+              resourceUid={attributes.uid}
+              providerUid={providerData.uid}
+              resourceName={attributes.name}
+              region={attributes.region}
+            />
           </div>
         </div>
       </div>
