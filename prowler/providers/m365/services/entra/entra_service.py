@@ -1114,13 +1114,30 @@ OAuthAppInfo
             directory_roles = await self.client.directory_roles.get()
 
             async def fetch_role_members(directory_role):
-                """Fetch members for a given directory role."""
+                """Fetch every member of a directory role, following odata_next_link.
+
+                Roles can have more members than fit in a single Graph response, so
+                pagination is required to avoid silently dropping assignments.
+                """
+                members = []
                 members_response = (
                     await self.client.directory_roles.by_directory_role_id(
                         directory_role.id
                     ).members.get()
                 )
-                return directory_role.role_template_id, members_response.value
+                while members_response:
+                    members.extend(getattr(members_response, "value", []) or [])
+                    next_link = getattr(members_response, "odata_next_link", None)
+                    if not next_link:
+                        break
+                    members_response = (
+                        await self.client.directory_roles.by_directory_role_id(
+                            directory_role.id
+                        )
+                        .members.with_url(next_link)
+                        .get()
+                    )
+                return directory_role.role_template_id, members
 
             tasks = [
                 fetch_role_members(role)
