@@ -5,7 +5,9 @@ from prowler.providers.azure.services.defender.defender_service import (
     AutoProvisioningSetting,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -13,6 +15,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
     def test_defender_no_app_services(self):
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.auto_provisioning_settings = {}
 
         with (
@@ -36,6 +39,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
     def test_defender_auto_provisioning_log_analytics_off(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.auto_provisioning_settings = {
             AZURE_SUBSCRIPTION_ID: {
                 "default": AutoProvisioningSetting(
@@ -67,7 +71,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Defender Auto Provisioning Log Analytics Agents from subscription {AZURE_SUBSCRIPTION_ID} is set to OFF."
+                == f"Defender Auto Provisioning Log Analytics Agents from subscription {AZURE_SUBSCRIPTION_DISPLAY} is set to OFF."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
@@ -76,6 +80,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
     def test_defender_auto_provisioning_log_analytics_on(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.auto_provisioning_settings = {
             AZURE_SUBSCRIPTION_ID: {
                 "default": AutoProvisioningSetting(
@@ -107,7 +112,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Defender Auto Provisioning Log Analytics Agents from subscription {AZURE_SUBSCRIPTION_ID} is set to ON."
+                == f"Defender Auto Provisioning Log Analytics Agents from subscription {AZURE_SUBSCRIPTION_DISPLAY} is set to ON."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
@@ -116,6 +121,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
     def test_defender_auto_provisioning_log_analytics_on_and_off(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.auto_provisioning_settings = {
             AZURE_SUBSCRIPTION_ID: {
                 "default": AutoProvisioningSetting(
@@ -153,7 +159,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Defender Auto Provisioning Log Analytics Agents from subscription {AZURE_SUBSCRIPTION_ID} is set to ON."
+                == f"Defender Auto Provisioning Log Analytics Agents from subscription {AZURE_SUBSCRIPTION_DISPLAY} is set to ON."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
@@ -162,7 +168,7 @@ class Test_defender_auto_provisioning_log_analytics_agent_vms_on:
             assert result[1].status == "FAIL"
             assert (
                 result[1].status_extended
-                == f"Defender Auto Provisioning Log Analytics Agents from subscription {AZURE_SUBSCRIPTION_ID} is set to OFF."
+                == f"Defender Auto Provisioning Log Analytics Agents from subscription {AZURE_SUBSCRIPTION_DISPLAY} is set to OFF."
             )
             assert result[1].subscription == AZURE_SUBSCRIPTION_ID
             assert result[1].resource_name == "default2"

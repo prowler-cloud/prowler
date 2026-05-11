@@ -441,8 +441,8 @@ class AzureProvider(Provider):
             None
         """
         printed_subscriptions = []
-        for key, value in self._identity.subscriptions.items():
-            intermediate = key + ": " + value
+        for subscription_id, display_name in self._identity.subscriptions.items():
+            intermediate = display_name + ": " + subscription_id
             printed_subscriptions.append(intermediate)
         report_lines = [
             f"Azure Tenant Domain: {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} Azure Tenant ID: {Fore.YELLOW}{self._identity.tenant_ids[0]}{Style.RESET_ALL}",
@@ -969,19 +969,30 @@ class AzureProvider(Provider):
             )
             if not subscription_ids:
                 logger.info("Scanning all the Azure subscriptions...")
-                for subscription in subscriptions_client.subscriptions.list():
-                    # TODO: get tags or labels
-                    # TODO: fill with AzureSubscription
-                    identity.subscriptions.update(
-                        {subscription.display_name: subscription.subscription_id}
-                    )
+                # TODO: get tags or labels
+                # TODO: fill with AzureSubscription
+                subscription_pairs = [
+                    (subscription.display_name, subscription.subscription_id)
+                    for subscription in subscriptions_client.subscriptions.list()
+                ]
             else:
                 logger.info("Scanning the subscriptions passed as argument ...")
-                for id in subscription_ids:
-                    subscription = subscriptions_client.subscriptions.get(
-                        subscription_id=id
+                subscription_pairs = [
+                    (
+                        subscriptions_client.subscriptions.get(
+                            subscription_id=id
+                        ).display_name,
+                        id,
                     )
-                    identity.subscriptions.update({subscription.display_name: id})
+                    for id in subscription_ids
+                ]
+
+            # Key the subscriptions dict by subscription ID (which is
+            # guaranteed unique) and store the display name as the value.
+            # This avoids collisions when multiple subscriptions share
+            # the same display name.
+            for display_name, subscription_id in subscription_pairs:
+                identity.subscriptions[subscription_id] = display_name
 
             # If there are no subscriptions listed -> checks are not going to be run against any resource
             if not identity.subscriptions:
@@ -1017,28 +1028,28 @@ class AzureProvider(Provider):
 
         Returns:
             A dictionary containing the locations available for each subscription. The dictionary
-            has subscription display names as keys and lists of location names as values.
+            has subscription IDs as keys and lists of location names as values.
 
         Examples:
             >>> provider = AzureProvider(...)
             >>> provider.get_locations()
             {
-                'Subscription 1': ['eastus', 'eastus2', 'westus', 'westus2'],
-                'Subscription 2': ['eastus', 'eastus2', 'westus', 'westus2']
+                'sub-id-1': ['eastus', 'eastus2', 'westus', 'westus2'],
+                'sub-id-2': ['eastus', 'eastus2', 'westus', 'westus2']
             }
         """
         credentials = self.session
         subscription_client = SubscriptionClient(credentials)
         locations = {}
 
-        for display_name, subscription_id in self._identity.subscriptions.items():
-            locations[display_name] = []
+        for subscription_id, display_name in self._identity.subscriptions.items():
+            locations[subscription_id] = []
 
             # List locations for each subscription
             for location in subscription_client.subscriptions.list_locations(
                 subscription_id
             ):
-                locations[display_name].append(location.name)
+                locations[subscription_id].append(location.name)
 
         return locations
 
