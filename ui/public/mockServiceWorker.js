@@ -21,6 +21,11 @@ addEventListener('activate', function (event) {
 })
 
 addEventListener('message', async function (event) {
+  // Only accept messages from pages served from the same origin as this worker.
+  if (event.origin !== self.location.origin) {
+    return
+  }
+
   const clientId = Reflect.get(event.source || {}, 'id')
 
   if (!clientId || !self.clients) {
