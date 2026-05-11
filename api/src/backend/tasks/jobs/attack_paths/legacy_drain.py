@@ -19,18 +19,18 @@ deleted, at which point the Neptune scan path no longer needs a fallback.
 
 # TODO: drop after Neptune cutover
 """
-from __future__ import annotations
 
 import logging
+
 from uuid import UUID
 
-from tasks.jobs.attack_paths.config import (
-    PROVIDER_RESOURCE_LABEL,
-)
 
 from api.attack_paths.database import (
     GraphDatabaseQueryException,
     get_database_name,
+)
+from tasks.jobs.attack_paths.config import (
+    PROVIDER_RESOURCE_LABEL,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,9 +67,7 @@ def drain_legacy_neo4j_for_provider(
             )
 
         if _exists_and_empty(sink, tenant_db):
-            logger.info(
-                f"Legacy Neo4j tenant DB {tenant_db} is now empty; dropping"
-            )
+            logger.info(f"Legacy Neo4j tenant DB {tenant_db} is now empty; dropping")
             sink.drop_database(tenant_db)
 
         _close_silently(sink)
@@ -91,7 +89,9 @@ def _exists_and_empty(sink, database: str) -> bool:
     import neo4j
 
     try:
-        with sink.get_session(database, default_access_mode=neo4j.READ_ACCESS) as session:
+        with sink.get_session(
+            database, default_access_mode=neo4j.READ_ACCESS
+        ) as session:
             result = session.run(
                 f"MATCH (n:{PROVIDER_RESOURCE_LABEL}) RETURN 1 LIMIT 1"
             )

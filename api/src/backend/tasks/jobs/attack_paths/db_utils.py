@@ -4,13 +4,13 @@ from typing import Any
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
 from django.conf import settings
-from tasks.jobs.attack_paths.config import is_provider_available
 
 from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
 from api.models import AttackPathsScan as ProwlerAPIAttackPathsScan
 from api.models import Provider as ProwlerAPIProvider
 from api.models import StateChoices
+from tasks.jobs.attack_paths.config import is_provider_available
 
 logger = get_task_logger(__name__)
 
@@ -40,7 +40,9 @@ def create_attack_paths_scan(
         ).exists()
 
         # TODO: drop after Neptune cutover
-        is_neptune = getattr(settings, "ATTACK_PATHS_SINK_DATABASE", "neo4j") == "neptune"
+        is_neptune = (
+            getattr(settings, "ATTACK_PATHS_SINK_DATABASE", "neo4j") == "neptune"
+        )
 
         attack_paths_scan = ProwlerAPIAttackPathsScan.objects.create(
             tenant_id=tenant_id,

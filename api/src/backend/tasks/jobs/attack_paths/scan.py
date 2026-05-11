@@ -64,6 +64,12 @@ from cartography.intel import create_indexes as cartography_create_indexes
 from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
 from django.conf import settings
+
+from api.attack_paths import database as graph_database
+from api.db_utils import rls_transaction
+from api.models import Provider as ProwlerAPIProvider
+from api.models import StateChoices
+from api.utils import initialize_prowler_provider
 from tasks.jobs.attack_paths import (
     db_utils,
     findings,
@@ -74,12 +80,6 @@ from tasks.jobs.attack_paths import (
     utils,
 )
 from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
-
-from api.attack_paths import database as graph_database
-from api.db_utils import rls_transaction
-from api.models import Provider as ProwlerAPIProvider
-from api.models import StateChoices
-from api.utils import initialize_prowler_provider
 
 # Without this Celery goes crazy with Cartography logging
 logging.getLogger("cartography").setLevel(logging.ERROR)

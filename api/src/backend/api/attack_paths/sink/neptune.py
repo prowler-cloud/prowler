@@ -11,27 +11,28 @@ the sync step already writes on every node (see tasks/jobs/attack_paths/sync.py)
 SigV4 auth lives at the bottom of this file as `neptune_auth_provider`. The
 neo4j driver invokes the returned callable on each token refresh.
 """
-from __future__ import annotations
 
 import atexit
 import datetime
 import json
 import logging
 import threading
-from contextlib import AbstractContextManager, contextmanager
+
+from contextlib import contextmanager
 from typing import Any, Callable, Iterator
 
 import neo4j
 import neo4j.exceptions
+
 from botocore.auth import SigV4Auth, _host_from_url
 from botocore.awsrequest import AWSRequest
 from botocore.session import Session as BotoSession
-from config.env import env
 from django.conf import settings
-from neo4j import ExpiringAuth
+from neo4j.auth_management import ExpiringAuth
 
 from api.attack_paths.retryable_session import RetryableSession
 from api.attack_paths.sink.base import SinkDatabase
+from config.env import env
 
 logging.getLogger("neo4j").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False
@@ -244,7 +245,9 @@ class NeptuneSink(SinkDatabase):
                     {"batch_size": BATCH_SIZE},
                 )
                 record = result.single()
-                deleted_count = (record or {}).get("deleted_nodes_count", 0) if record else 0
+                deleted_count = (
+                    (record or {}).get("deleted_nodes_count", 0) if record else 0
+                )
                 deleted_nodes += deleted_count
 
         return deleted_nodes
@@ -278,6 +281,7 @@ class NeptuneSink(SinkDatabase):
 
 # SigV4 auth provider
 
+
 class _NeptuneAuthToken(neo4j.Auth):
     """Neo4j Auth backed by a SigV4-signed GET to `/opencypher`."""
 
@@ -297,7 +301,12 @@ class _NeptuneAuthToken(neo4j.Auth):
 
         auth_obj = {
             header: request.headers[header]
-            for header in ("Authorization", "X-Amz-Date", "X-Amz-Security-Token", "Host")
+            for header in (
+                "Authorization",
+                "X-Amz-Date",
+                "X-Amz-Security-Token",
+                "Host",
+            )
             if header in request.headers
         }
         auth_obj["HttpMethod"] = "GET"

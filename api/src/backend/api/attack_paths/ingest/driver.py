@@ -10,15 +10,17 @@ admin ops they need (CREATE / DROP DATABASE).
 import atexit
 import logging
 import threading
+
 from contextlib import contextmanager
 from typing import Any, Iterator
 
 import neo4j
 import neo4j.exceptions
-from config.env import env
+
 from django.conf import settings
 
 from api.attack_paths.retryable_session import RetryableSession
+from config.env import env
 
 logging.getLogger("neo4j").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False
@@ -26,15 +28,9 @@ logging.getLogger("neo4j").propagate = False
 SERVICE_UNAVAILABLE_MAX_RETRIES = env.int(
     "ATTACK_PATHS_SERVICE_UNAVAILABLE_MAX_RETRIES", default=3
 )
-CONN_ACQUISITION_TIMEOUT = env.int(
-    "NEO4J_CONN_ACQUISITION_TIMEOUT", default=15
-)
-MAX_CONNECTION_LIFETIME = env.int(
-    "NEO4J_MAX_CONNECTION_LIFETIME", default=7200
-)
-MAX_CONNECTION_POOL_SIZE = env.int(
-    "NEO4J_MAX_CONNECTION_POOL_SIZE", default=50
-)
+CONN_ACQUISITION_TIMEOUT = env.int("NEO4J_CONN_ACQUISITION_TIMEOUT", default=15)
+MAX_CONNECTION_LIFETIME = env.int("NEO4J_MAX_CONNECTION_LIFETIME", default=7200)
+MAX_CONNECTION_POOL_SIZE = env.int("NEO4J_MAX_CONNECTION_POOL_SIZE", default=50)
 
 _driver: neo4j.Driver | None = None
 _lock = threading.Lock()

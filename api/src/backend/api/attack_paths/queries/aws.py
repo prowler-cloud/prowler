@@ -7,7 +7,6 @@ from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
 
 
 # Custom Attack Path Queries
-# --------------------------
 
 AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
     id="aws-internet-exposed-ec2-sensitive-s3-access",
@@ -60,7 +59,6 @@ AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
 
 
 # Basic Resource Queries
-# ----------------------
 
 AWS_RDS_INSTANCES = AttackPathsQueryDefinition(
     id="aws-rds-instances",
@@ -204,7 +202,6 @@ AWS_IAM_STATEMENTS_ALLOW_CREATE_ACTIONS = AttackPathsQueryDefinition(
 
 
 # Network Exposure Queries
-# ------------------------
 
 AWS_EC2_INSTANCES_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     id="aws-ec2-instances-internet-exposed",
@@ -344,7 +341,6 @@ AWS_PUBLIC_IP_RESOURCE_LOOKUP = AttackPathsQueryDefinition(
 
 # Privilege Escalation Queries (based on pathfinding.cloud research)
 # https://github.com/DataDog/pathfinding.cloud
-# -------------------------------------------------------------------
 
 # APPRUNNER-001
 AWS_APPRUNNER_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
@@ -3727,7 +3723,6 @@ AWS_STS_PRIVESC_ASSUME_ROLE = AttackPathsQueryDefinition(
 )
 
 # AWS Queries List
-# ----------------
 
 AWS_QUERIES: list[AttackPathsQueryDefinition] = [
     AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS,

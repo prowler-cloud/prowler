@@ -8,7 +8,6 @@ AWS Neptune (hosted dev/staging/prod). Backend is picked by the
 This package exposes the public factory API; the implementation lives in
 `api.attack_paths.sink.factory`.
 """
-from __future__ import annotations
 
 from api.attack_paths.sink.factory import (
     SinkBackend,

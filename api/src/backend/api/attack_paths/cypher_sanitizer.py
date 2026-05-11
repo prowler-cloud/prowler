@@ -136,9 +136,7 @@ def inject_provider_label(cypher: str, provider_id: str) -> str:
     return work
 
 
-# ---------------------------------------------------------------------------
 # Validation
-# ---------------------------------------------------------------------------
 
 # Patterns that indicate SSRF or dangerous procedure calls
 # Defense-in-depth layer - the primary control is `neo4j.READ_ACCESS`

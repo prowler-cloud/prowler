@@ -9,41 +9,52 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+# Prime patch-target resolution. `api.attack_paths.sink/__init__.py` doesn't
+# eagerly import these submodules (they're loaded on demand inside the
+# factory), so `mock.patch("api.attack_paths.sink.<sub>.…")` would fail with
+# AttributeError on first call. Importing here registers them as attributes
+# of the package before any decorator runs.
+import api.attack_paths.sink.neo4j  # noqa: F401
+import api.attack_paths.sink.neptune  # noqa: F401
+
 
 @pytest.fixture(autouse=True)
 def reset_sink_state():
-    """Reset the module-level backend singletons around each test."""
-    from api.attack_paths import sink as sink_module
+    """Reset the module-level backend singletons around each test.
 
-    original_backend = sink_module._backend
-    original_secondary = dict(sink_module._secondary_backends)
-    sink_module._backend = None
-    sink_module._secondary_backends.clear()
+    The cache lives in `api.attack_paths.sink.factory`, not on the package.
+    """
+    from api.attack_paths.sink import factory
+
+    original_backend = factory._backend
+    original_secondary = dict(factory._secondary_backends)
+    factory._backend = None
+    factory._secondary_backends.clear()
     yield
-    sink_module._backend = original_backend
-    sink_module._secondary_backends.clear()
-    sink_module._secondary_backends.update(original_secondary)
+    factory._backend = original_backend
+    factory._secondary_backends.clear()
+    factory._secondary_backends.update(original_secondary)
 
 
 class TestSinkFactory:
     def test_default_resolves_to_neo4j(self, settings):
-        from api.attack_paths import sink as sink_module
+        from api.attack_paths.sink import factory
 
         settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
-        assert sink_module._resolve_setting() == "neo4j"
+        assert factory._resolve_setting() == "neo4j"
 
     def test_neptune_resolves_correctly(self, settings):
-        from api.attack_paths import sink as sink_module
+        from api.attack_paths.sink import factory
 
         settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
-        assert sink_module._resolve_setting() == "neptune"
+        assert factory._resolve_setting() == "neptune"
 
     def test_invalid_value_raises(self, settings):
-        from api.attack_paths import sink as sink_module
+        from api.attack_paths.sink import factory
 
         settings.ATTACK_PATHS_SINK_DATABASE = "foo"
         with pytest.raises(RuntimeError, match="ATTACK_PATHS_SINK_DATABASE"):
-            sink_module._resolve_setting()
+            factory._resolve_setting()
 
     @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
     def test_init_builds_neo4j_backend_by_default(self, mock_driver, settings):

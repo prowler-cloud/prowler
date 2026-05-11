@@ -1715,6 +1715,36 @@ def attack_paths_query_definition_factory():
 
 
 @pytest.fixture
+def sink_backend_stub():
+    """Install a stub `SinkDatabase` into the sink factory for the test's duration.
+
+    The sink factory caches a process-wide backend and lazily initializes it
+    against `settings.DATABASES["neo4j"]` / `["neptune"]`. Tests that don't
+    want to stand up a real Bolt driver can yield this fixture's mock and
+    configure its return values directly:
+
+        sink_backend_stub.execute_read_query.return_value = some_graph
+
+    Both the active backend and the secondary-backend cache are restored on
+    teardown so tests stay isolated.
+    """
+    from api.attack_paths.sink import factory
+    from api.attack_paths.sink.base import SinkDatabase
+
+    stub = MagicMock(spec=SinkDatabase)
+    previous_backend = factory._backend
+    previous_secondary = dict(factory._secondary_backends)
+    factory._backend = stub
+    factory._secondary_backends.clear()
+    try:
+        yield stub
+    finally:
+        factory._backend = previous_backend
+        factory._secondary_backends.clear()
+        factory._secondary_backends.update(previous_secondary)
+
+
+@pytest.fixture
 def attack_paths_graph_stub_classes():
     """Provide lightweight graph element stubs for Attack Paths serialization tests."""
 

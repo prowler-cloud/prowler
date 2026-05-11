@@ -1,5 +1,4 @@
 """Protocol every sink backend must implement."""
-from __future__ import annotations
 
 from contextlib import AbstractContextManager
 from typing import Any, Protocol

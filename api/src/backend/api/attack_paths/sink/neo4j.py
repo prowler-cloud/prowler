@@ -4,21 +4,22 @@ Owns a Neo4j driver independent from the staging driver. On OSS and local dev
 this is the only sink; on hosted deployments it runs only as a legacy read
 path while phase-1 drains tenant DBs.
 """
-from __future__ import annotations
 
 import atexit
 import logging
 import threading
+
 from contextlib import AbstractContextManager, contextmanager
 from typing import Any, Iterator
 
 import neo4j
 import neo4j.exceptions
-from config.env import env
+
 from django.conf import settings
 
 from api.attack_paths.retryable_session import RetryableSession
 from api.attack_paths.sink.base import SinkDatabase
+from config.env import env
 
 logging.getLogger("neo4j").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False
@@ -49,7 +50,7 @@ class Neo4jSink(SinkDatabase):
         self._lock = threading.Lock()
         self._atexit_registered = False
 
-    # ------------------------------------------------------------------ driver
+    # Driver
 
     def _config(self) -> dict:
         return settings.DATABASES["neo4j"]
@@ -95,7 +96,7 @@ class Neo4jSink(SinkDatabase):
                 finally:
                     self._driver = None
 
-    # ------------------------------------------------------------------ sessions
+    # Sessions
 
     @contextmanager
     def get_session(
@@ -138,7 +139,7 @@ class Neo4jSink(SinkDatabase):
             if session_wrapper is not None:
                 session_wrapper.close()
 
-    # ------------------------------------------------------------------ operations
+    # Operations
 
     def execute_read_query(
         self,
@@ -146,7 +147,9 @@ class Neo4jSink(SinkDatabase):
         cypher: str,
         parameters: dict[str, Any] | None = None,
     ) -> neo4j.graph.Graph:
-        with self.get_session(database, default_access_mode=neo4j.READ_ACCESS) as session:
+        with self.get_session(
+            database, default_access_mode=neo4j.READ_ACCESS
+        ) as session:
 
             def _run(tx: neo4j.ManagedTransaction) -> neo4j.graph.Graph:
                 result = tx.run(

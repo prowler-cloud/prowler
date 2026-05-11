@@ -1117,7 +1117,7 @@ class TestFailAttackPathsScan:
             fail_attack_paths_scan(str(tenant.id), "nonexistent", "setup exploded")
 
     def test_fail_recovers_graph_data_ready_when_data_exists(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, providers_fixture, scans_fixture, sink_backend_stub
     ):
         from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
@@ -1136,16 +1136,18 @@ class TestFailAttackPathsScan:
             state=StateChoices.EXECUTING,
         )
 
+        # `recover_graph_data_ready` routes `has_provider_data` through
+        # `sink_module.get_backend_for_scan(scan)`. With `is_neptune=False`
+        # and the default `ATTACK_PATHS_SINK_DATABASE=neo4j`, the factory
+        # returns the active backend, which `sink_backend_stub` replaces.
+        sink_backend_stub.has_provider_data.return_value = True
+
         with (
             patch(
                 "tasks.jobs.attack_paths.db_utils.retrieve_attack_paths_scan",
                 return_value=attack_paths_scan,
             ),
             patch("tasks.jobs.attack_paths.db_utils.graph_database.drop_database"),
-            patch(
-                "tasks.jobs.attack_paths.db_utils.graph_database.has_provider_data",
-                return_value=True,
-            ),
             patch(
                 "tasks.jobs.attack_paths.db_utils.set_provider_graph_data_ready"
             ) as mock_set_ready,
@@ -1155,7 +1157,7 @@ class TestFailAttackPathsScan:
         mock_set_ready.assert_called_once_with(attack_paths_scan, True)
 
     def test_fail_leaves_graph_data_ready_false_when_no_data(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, providers_fixture, scans_fixture, sink_backend_stub
     ):
         from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
@@ -1174,16 +1176,14 @@ class TestFailAttackPathsScan:
             state=StateChoices.EXECUTING,
         )
 
+        sink_backend_stub.has_provider_data.return_value = False
+
         with (
             patch(
                 "tasks.jobs.attack_paths.db_utils.retrieve_attack_paths_scan",
                 return_value=attack_paths_scan,
             ),
             patch("tasks.jobs.attack_paths.db_utils.graph_database.drop_database"),
-            patch(
-                "tasks.jobs.attack_paths.db_utils.graph_database.has_provider_data",
-                return_value=False,
-            ),
             patch(
                 "tasks.jobs.attack_paths.db_utils.set_provider_graph_data_ready"
             ) as mock_set_ready,

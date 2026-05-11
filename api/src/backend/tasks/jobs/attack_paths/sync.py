@@ -11,7 +11,10 @@ from collections import defaultdict
 from typing import Any
 
 import neo4j
+
 from celery.utils.log import get_task_logger
+
+from api.attack_paths import database as graph_database
 from tasks.jobs.attack_paths.config import (
     PROVIDER_ISOLATION_PROPERTIES,
     PROVIDER_RESOURCE_LABEL,
@@ -26,8 +29,6 @@ from tasks.jobs.attack_paths.queries import (
     RELATIONSHIPS_FETCH_QUERY,
     render_cypher_template,
 )
-
-from api.attack_paths import database as graph_database
 
 logger = get_task_logger(__name__)
 

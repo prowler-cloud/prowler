@@ -3,7 +3,6 @@ import logging
 from typing import Any, Iterable
 
 import neo4j
-from config.env import env
 
 from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 
@@ -19,6 +18,7 @@ from api.attack_paths.queries.schema import (
     get_cartography_schema_query,
 )
 from config.custom_logging import BackendLogger
+from config.env import env
 from tasks.jobs.attack_paths.config import (
     INTERNAL_LABELS,
     INTERNAL_PROPERTIES,
@@ -119,9 +119,7 @@ def execute_query(
             if scan is not None
             else sink_module.get_backend()
         )
-        graph = backend.execute_read_query(
-            database_name, definition.cypher, parameters
-        )
+        graph = backend.execute_read_query(database_name, definition.cypher, parameters)
         return _serialize_graph(graph, provider_id)
 
     except graph_database.WriteQueryNotAllowedException:

@@ -21,7 +21,6 @@ def render_cypher_template(template: str, replacements: dict[str, str]) -> str:
 
 
 # Findings queries (used by findings.py)
-# ---------------------------------------
 
 ADD_RESOURCE_LABEL_TEMPLATE = """
     MATCH (account:__ROOT_LABEL__ {id: $provider_uid})-->(r)
@@ -88,7 +87,6 @@ INSERT_FINDING_TEMPLATE = f"""
 """
 
 # Internet queries (used by internet.py)
-# ---------------------------------------
 
 CREATE_INTERNET_NODE = f"""
     MERGE (internet:{INTERNET_NODE_LABEL} {{id: 'Internet'}})
@@ -119,7 +117,6 @@ CREATE_CAN_ACCESS_RELATIONSHIPS_TEMPLATE = f"""
 """
 
 # Sync queries (used by sync.py)
-# -------------------------------
 
 NODE_FETCH_QUERY = """
     MATCH (n)

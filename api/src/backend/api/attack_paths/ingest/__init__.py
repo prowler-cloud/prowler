@@ -3,7 +3,6 @@
 Public surface for the per-scan Neo4j temp database driver. Implementation
 lives in `api.attack_paths.ingest.driver`.
 """
-from __future__ import annotations
 
 from api.attack_paths.ingest.driver import (
     clear_cache,

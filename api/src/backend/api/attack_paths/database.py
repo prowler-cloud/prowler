@@ -11,26 +11,27 @@ dispatches to the right module by database-name prefix.
 A database name starting with `db-tmp-scan-` is a cartography temp DB and
 routes to ingest. Everything else routes to the configured sink.
 """
-from __future__ import annotations
 
 import atexit  # noqa: F401 - kept for tests that patch api.attack_paths.database.atexit
+
 from contextlib import AbstractContextManager
 from typing import Any
 from uuid import UUID
 
 import neo4j  # noqa: F401 - kept for tests that patch api.attack_paths.database.neo4j
-from config.env import env
+
 from django.conf import settings  # noqa: F401 - kept for tests that patch ...database.settings
 
 from api.attack_paths import ingest
 from api.attack_paths import sink as sink_module
+from config.env import env
 
 MAX_CUSTOM_QUERY_NODES = env.int("ATTACK_PATHS_MAX_CUSTOM_QUERY_NODES", default=250)
 
 TEMP_DB_PREFIX = "db-tmp-scan-"
 
 
-# ---------------------------------------------------------------- exceptions
+# Exceptions
 
 
 class GraphDatabaseQueryException(Exception):
@@ -53,14 +54,14 @@ class ClientStatementException(GraphDatabaseQueryException):
     pass
 
 
-# ---------------------------------------------------------------- routing
+# Routing
 
 
 def _is_ingest_database(database: str | None) -> bool:
     return bool(database) and database.startswith(TEMP_DB_PREFIX)
 
 
-# ---------------------------------------------------------------- driver lifecycle
+# Driver lifecycle
 
 
 def init_driver() -> Any:
@@ -87,11 +88,13 @@ def get_driver() -> neo4j.Driver:
     legacy call-sites; prefer `get_session` for new code.
     """
     backend = sink_module.get_backend()
+
     # Neo4jSink exposes get_driver(); NeptuneSink exposes get_writer()
     if hasattr(backend, "get_driver"):
         return backend.get_driver()
     if hasattr(backend, "get_writer"):
         return backend.get_writer()
+
     raise RuntimeError("Active sink backend does not expose a driver handle")
 
 
@@ -104,7 +107,7 @@ def get_uri() -> str:
     return f"bolt://{cfg['HOST']}:{cfg['PORT']}"
 
 
-# ---------------------------------------------------------------- session API
+# Session API
 
 
 def get_session(
@@ -118,7 +121,10 @@ def get_session(
     - Any other name → sink.
     """
     if _is_ingest_database(database) or database is None:
-        return ingest.get_session(database=database, default_access_mode=default_access_mode)
+        return ingest.get_session(
+            database=database, default_access_mode=default_access_mode
+        )
+
     return sink_module.get_backend().get_session(
         database=database, default_access_mode=default_access_mode
     )
@@ -143,6 +149,7 @@ def create_database(database: str) -> None:
     if _is_ingest_database(database):
         ingest.create_database(database)
         return
+
     sink_module.get_backend().create_database(database)
 
 
@@ -151,6 +158,7 @@ def drop_database(database: str) -> None:
     if _is_ingest_database(database):
         ingest.drop_database(database)
         return
+
     sink_module.get_backend().drop_database(database)
 
 
@@ -166,10 +174,11 @@ def clear_cache(database: str) -> None:
     if _is_ingest_database(database):
         ingest.clear_cache(database)
         return
+
     sink_module.get_backend().clear_cache(database)
 
 
-# ---------------------------------------------------------------- name helper
+# Name helper
 
 
 def get_database_name(entity_id: str | UUID, temporary: bool = False) -> str:

@@ -2,16 +2,16 @@ from datetime import datetime, timedelta, timezone
 
 from celery import current_app, states
 from celery.utils.log import get_task_logger
-from config.django.base import ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES
-from tasks.jobs.attack_paths.db_utils import (
-    _mark_scan_finished,
-    recover_graph_data_ready,
-)
 
 from api.attack_paths import database as graph_database
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.models import AttackPathsScan, StateChoices
+from config.django.base import ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES
+from tasks.jobs.attack_paths.db_utils import (
+    _mark_scan_finished,
+    recover_graph_data_ready,
+)
 
 logger = get_task_logger(__name__)
 

@@ -94,7 +94,9 @@ def test_prepare_parameters_validates_cast(
 
 
 def test_execute_query_serializes_graph(
-    attack_paths_query_definition_factory, attack_paths_graph_stub_classes
+    attack_paths_query_definition_factory,
+    attack_paths_graph_stub_classes,
+    sink_backend_stub,
 ):
     definition = attack_paths_query_definition_factory(
         id="aws-rds",
@@ -137,18 +139,13 @@ def test_execute_query_serializes_graph(
 
     database_name = "db-tenant-test-tenant-id"
 
-    with patch(
-        "api.attack_paths.views_helpers.graph_database.execute_read_query",
-        return_value=graph_result,
-    ) as mock_execute_read_query:
-        result = views_helpers.execute_query(
-            database_name, definition, parameters, provider_id=provider_id
-        )
+    sink_backend_stub.execute_read_query.return_value = graph_result
+    result = views_helpers.execute_query(
+        database_name, definition, parameters, provider_id=provider_id
+    )
 
-    mock_execute_read_query.assert_called_once_with(
-        database=database_name,
-        cypher=definition.cypher,
-        parameters=parameters,
+    sink_backend_stub.execute_read_query.assert_called_once_with(
+        database_name, definition.cypher, parameters
     )
     assert result["nodes"][0]["id"] == "node-1"
     assert result["nodes"][0]["properties"]["complex"]["items"][0] == "value"
@@ -157,6 +154,7 @@ def test_execute_query_serializes_graph(
 
 def test_execute_query_wraps_graph_errors(
     attack_paths_query_definition_factory,
+    sink_backend_stub,
 ):
     definition = attack_paths_query_definition_factory(
         id="aws-rds",
@@ -169,13 +167,10 @@ def test_execute_query_wraps_graph_errors(
     database_name = "db-tenant-test-tenant-id"
     parameters = {"provider_uid": "123"}
 
-    with (
-        patch(
-            "api.attack_paths.views_helpers.graph_database.execute_read_query",
-            side_effect=graph_database.GraphDatabaseQueryException("boom"),
-        ),
-        patch("api.attack_paths.views_helpers.logger") as mock_logger,
-    ):
+    sink_backend_stub.execute_read_query.side_effect = (
+        graph_database.GraphDatabaseQueryException("boom")
+    )
+    with patch("api.attack_paths.views_helpers.logger") as mock_logger:
         with pytest.raises(APIException):
             views_helpers.execute_query(
                 database_name, definition, parameters, provider_id="test-provider-123"
@@ -186,6 +181,7 @@ def test_execute_query_wraps_graph_errors(
 
 def test_execute_query_raises_permission_denied_on_read_only(
     attack_paths_query_definition_factory,
+    sink_backend_stub,
 ):
     definition = attack_paths_query_definition_factory(
         id="aws-rds",
@@ -198,17 +194,16 @@ def test_execute_query_raises_permission_denied_on_read_only(
     database_name = "db-tenant-test-tenant-id"
     parameters = {"provider_uid": "123"}
 
-    with patch(
-        "api.attack_paths.views_helpers.graph_database.execute_read_query",
-        side_effect=graph_database.WriteQueryNotAllowedException(
+    sink_backend_stub.execute_read_query.side_effect = (
+        graph_database.WriteQueryNotAllowedException(
             message="Read query not allowed",
             code="Neo.ClientError.Statement.AccessMode",
-        ),
-    ):
-        with pytest.raises(PermissionDenied):
-            views_helpers.execute_query(
-                database_name, definition, parameters, provider_id="test-provider-123"
-            )
+        )
+    )
+    with pytest.raises(PermissionDenied):
+        views_helpers.execute_query(
+            database_name, definition, parameters, provider_id="test-provider-123"
+        )
 
 
 def test_serialize_graph_filters_by_provider_label(attack_paths_graph_stub_classes):
@@ -442,6 +437,7 @@ def test_normalize_custom_query_payload_passthrough_for_flat_dict():
 
 def test_execute_custom_query_serializes_graph(
     attack_paths_graph_stub_classes,
+    sink_backend_stub,
 ):
     provider_id = "test-provider-123"
     plabel = get_provider_label(provider_id)
@@ -455,47 +451,40 @@ def test_execute_custom_query_serializes_graph(
     graph_result.nodes = [node_1, node_2]
     graph_result.relationships = [relationship]
 
-    with patch(
-        "api.attack_paths.views_helpers.graph_database.execute_read_query",
-        return_value=graph_result,
-    ) as mock_execute:
-        result = views_helpers.execute_custom_query(
-            "db-tenant-test", "MATCH (n) RETURN n", provider_id
-        )
+    sink_backend_stub.execute_read_query.return_value = graph_result
+    result = views_helpers.execute_custom_query(
+        "db-tenant-test", "MATCH (n) RETURN n", provider_id
+    )
 
-    mock_execute.assert_called_once()
-    call_kwargs = mock_execute.call_args[1]
-    assert call_kwargs["database"] == "db-tenant-test"
+    sink_backend_stub.execute_read_query.assert_called_once()
+    call_args = sink_backend_stub.execute_read_query.call_args[0]
+    assert call_args[0] == "db-tenant-test"
     # The cypher is rewritten with the provider label injection
-    assert plabel in call_kwargs["cypher"]
+    assert plabel in call_args[1]
     assert len(result["nodes"]) == 2
     assert result["relationships"][0]["label"] == "OWNS"
     assert result["truncated"] is False
     assert result["total_nodes"] == 2
 
 
-def test_execute_custom_query_raises_permission_denied_on_write():
-    with patch(
-        "api.attack_paths.views_helpers.graph_database.execute_read_query",
-        side_effect=graph_database.WriteQueryNotAllowedException(
+def test_execute_custom_query_raises_permission_denied_on_write(sink_backend_stub):
+    sink_backend_stub.execute_read_query.side_effect = (
+        graph_database.WriteQueryNotAllowedException(
             message="Read query not allowed",
             code="Neo.ClientError.Statement.AccessMode",
-        ),
-    ):
-        with pytest.raises(PermissionDenied):
-            views_helpers.execute_custom_query(
-                "db-tenant-test", "CREATE (n) RETURN n", "provider-1"
-            )
+        )
+    )
+    with pytest.raises(PermissionDenied):
+        views_helpers.execute_custom_query(
+            "db-tenant-test", "CREATE (n) RETURN n", "provider-1"
+        )
 
 
-def test_execute_custom_query_wraps_graph_errors():
-    with (
-        patch(
-            "api.attack_paths.views_helpers.graph_database.execute_read_query",
-            side_effect=graph_database.GraphDatabaseQueryException("boom"),
-        ),
-        patch("api.attack_paths.views_helpers.logger") as mock_logger,
-    ):
+def test_execute_custom_query_wraps_graph_errors(sink_backend_stub):
+    sink_backend_stub.execute_read_query.side_effect = (
+        graph_database.GraphDatabaseQueryException("boom")
+    )
+    with patch("api.attack_paths.views_helpers.logger") as mock_logger:
         with pytest.raises(APIException):
             views_helpers.execute_custom_query(
                 "db-tenant-test", "MATCH (n) RETURN n", "provider-1"
@@ -563,13 +552,33 @@ def test_truncate_graph_empty_graph():
 
 @pytest.fixture
 def mock_neo4j_session():
-    """Mock the Neo4j driver so execute_read_query uses a fake session."""
+    """Install a Neo4jSink with a mocked Bolt driver into the sink factory.
+
+    The yielded mock is the `neo4j.Session` that the Neo4jSink will obtain via
+    `driver.session(...)`. Tests configure `mock_neo4j_session.execute_read`
+    return values / side effects to exercise the read-mode error translation
+    path on the real `Neo4jSink.execute_read_query` and `get_session` code.
+    """
+    from api.attack_paths.sink import factory
+    from api.attack_paths.sink.neo4j import Neo4jSink
+
     mock_session = MagicMock(spec=neo4j.Session)
     mock_driver = MagicMock(spec=neo4j.Driver)
     mock_driver.session.return_value = mock_session
 
-    with patch("api.attack_paths.database.get_driver", return_value=mock_driver):
+    sink = Neo4jSink()
+    sink._driver = mock_driver
+
+    previous_backend = factory._backend
+    previous_secondary = dict(factory._secondary_backends)
+    factory._backend = sink
+    factory._secondary_backends.clear()
+    try:
         yield mock_session
+    finally:
+        factory._backend = previous_backend
+        factory._secondary_backends.clear()
+        factory._secondary_backends.update(previous_secondary)
 
 
 def test_execute_read_query_succeeds_with_select(mock_neo4j_session):

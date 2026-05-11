@@ -6755,7 +6755,7 @@ uuid6 = "2024.7.10"
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
 reference = "master"
-resolved_reference = "16798e293da365965120961e6539e3a9756564f9"
+resolved_reference = "0b26c1a39c69d5e92313fa93f5d17cf81d6bbf43"
 
 [[package]]
 name = "psutil"

@@ -6,21 +6,19 @@ scans written under the previous configuration, and tears them all down on
 process shutdown. Imported via `from api.attack_paths import sink as
 sink_module`.
 """
-from __future__ import annotations
 
 import threading
+
 from enum import StrEnum, auto
-from typing import TYPE_CHECKING
 
 from django.conf import settings
 
+from api.models import AttackPathsScan
 from api.attack_paths.sink.base import SinkDatabase
-
-if TYPE_CHECKING:
-    from api.models import AttackPathsScan
 
 
 # Backend names
+
 
 class SinkBackend(StrEnum):
     NEO4J = auto()
@@ -59,6 +57,7 @@ def _build_backend(name: SinkBackend) -> SinkDatabase:
 
 # Lifecycle
 
+
 def init(name: SinkBackend | str | None = None) -> SinkDatabase:
     """Initialize the configured sink backend. Idempotent."""
     global _backend
@@ -77,7 +76,9 @@ def close() -> None:
     """Close the active backend and every cached secondary backend."""
     global _backend
     with _lock:
-        backends = [b for b in (_backend, *_secondary_backends.values()) if b is not None]
+        backends = [
+            b for b in (_backend, *_secondary_backends.values()) if b is not None
+        ]
         _backend = None
         _secondary_backends.clear()
     for backend in backends:
@@ -93,6 +94,7 @@ def get_backend() -> SinkDatabase:
 
 
 # Per-scan routing
+
 
 def get_backend_for_scan(scan: "AttackPathsScan") -> SinkDatabase:
     """Route reads by the scan row's recorded sink, not by current settings.
