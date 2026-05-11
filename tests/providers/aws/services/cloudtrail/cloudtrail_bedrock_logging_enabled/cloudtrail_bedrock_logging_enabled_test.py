@@ -344,6 +344,14 @@ class Test_cloudtrail_bedrock_logging_enabled:
                 "bedrock-agent-runtime.amazonaws.com",
                 id="bedrock-agent-runtime",
             ),
+            pytest.param(
+                "bedrock-data-automation.amazonaws.com",
+                id="bedrock-data-automation",
+            ),
+            pytest.param(
+                "bedrock-data-automation-runtime.amazonaws.com",
+                id="bedrock-data-automation-runtime",
+            ),
         ],
     )
     def test_trail_with_advanced_management_events_bedrock_event_sources(
@@ -615,6 +623,61 @@ class Test_cloudtrail_bedrock_logging_enabled:
             EventSelectors=[
                 {
                     "ReadWriteType": "WriteOnly",
+                    "IncludeManagementEvents": True,
+                    "DataResources": [],
+                }
+            ],
+        )
+
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        aws_provider = set_mocked_aws_provider()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_bedrock_logging_enabled.cloudtrail_bedrock_logging_enabled import (
+                cloudtrail_bedrock_logging_enabled,
+            )
+
+            check = cloudtrail_bedrock_logging_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Trail {trail_name} from home region {AWS_REGION_US_EAST_1} has management events enabled to log Amazon Bedrock control-plane API calls."
+            )
+            assert result[0].resource_id == trail_name
+            assert result[0].resource_arn == trail["TrailARN"]
+            assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_trail_with_classic_management_events_default_read_write_type(self):
+        """Test PASS when a classic selector omits ReadWriteType and uses the AWS default."""
+        cloudtrail_client_us = client("cloudtrail", region_name=AWS_REGION_US_EAST_1)
+        s3_client_us = client("s3", region_name=AWS_REGION_US_EAST_1)
+        trail_name = "trail_test"
+        bucket_name = "bucket_test"
+        s3_client_us.create_bucket(Bucket=bucket_name)
+        trail = cloudtrail_client_us.create_trail(
+            Name=trail_name, S3BucketName=bucket_name, IsMultiRegionTrail=False
+        )
+        cloudtrail_client_us.start_logging(Name=trail_name)
+        cloudtrail_client_us.put_event_selectors(
+            TrailName=trail_name,
+            EventSelectors=[
+                {
                     "IncludeManagementEvents": True,
                     "DataResources": [],
                 }

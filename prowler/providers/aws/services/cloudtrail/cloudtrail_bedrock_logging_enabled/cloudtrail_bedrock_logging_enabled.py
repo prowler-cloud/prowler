@@ -31,12 +31,15 @@ class cloudtrail_bedrock_logging_enabled(Check):
             "AWS::Bedrock::Prompt",
         }
     )
+    # Bedrock control-plane event sources, including Bedrock Data Automation.
     BEDROCK_EVENT_SOURCES = frozenset(
         {
             "bedrock.amazonaws.com",
             "bedrock-agent.amazonaws.com",
             "bedrock-runtime.amazonaws.com",
             "bedrock-agent-runtime.amazonaws.com",
+            "bedrock-data-automation.amazonaws.com",
+            "bedrock-data-automation-runtime.amazonaws.com",
         }
     )
 
@@ -120,8 +123,8 @@ class cloudtrail_bedrock_logging_enabled(Check):
     def _logs_classic_management_events(event_selector: dict) -> bool:
         """Check whether a classic selector logs Bedrock control-plane events."""
         return event_selector.get(
-            "IncludeManagementEvents", False
-        ) and event_selector.get("ReadWriteType") in ("All", "WriteOnly")
+            "IncludeManagementEvents", True
+        ) and event_selector.get("ReadWriteType", "All") in ("All", "WriteOnly")
 
     def _logs_advanced_management_events(self, field_selectors: list[dict]) -> bool:
         """Check whether advanced selectors log Bedrock control-plane events."""
