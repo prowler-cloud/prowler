@@ -666,30 +666,6 @@ export function ResourceDetailDrawerContent({
         </div>
       </div>
 
-      {/* Status Extended — context above the resource */}
-      {showOverviewStatusExtended && (
-        <Card
-          variant={
-            findingStatus === "PASS"
-              ? "success"
-              : findingStatus === "MANUAL"
-                ? "warning"
-                : "danger"
-          }
-          className={
-            findingStatus === "MUTED"
-              ? "border-border-neutral-tertiary bg-bg-neutral-tertiary"
-              : findingStatus === "MANUAL"
-                ? "bg-orange-100 dark:bg-[color-mix(in_oklch,var(--bg-warning-secondary)_90%,white)]"
-                : undefined
-          }
-        >
-          <p className="text-text-neutral-primary text-sm leading-relaxed break-words">
-            {overviewStatusExtended}
-          </p>
-        </Card>
-      )}
-
       {/* Resource card */}
       <div className="border-border-neutral-secondary bg-bg-neutral-secondary minimal-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-lg border p-4">
         {/* Resource info — shows loading when currentFinding is not yet available */}
@@ -797,6 +773,30 @@ export function ResourceDetailDrawerContent({
                 )}
               </div>
             </div>
+
+            {/* Status Extended — context below the resource */}
+            {showOverviewStatusExtended && (
+              <Card
+                variant={
+                  findingStatus === "PASS"
+                    ? "success"
+                    : findingStatus === "MANUAL"
+                      ? "warning"
+                      : "danger"
+                }
+                className={
+                  findingStatus === "MUTED"
+                    ? "border-border-neutral-tertiary bg-bg-neutral-tertiary"
+                    : findingStatus === "MANUAL"
+                      ? "bg-orange-100 dark:bg-[color-mix(in_oklch,var(--bg-warning-secondary)_90%,white)]"
+                      : undefined
+                }
+              >
+                <p className="text-text-neutral-primary text-sm leading-relaxed break-words">
+                  {overviewStatusExtended}
+                </p>
+              </Card>
+            )}
           </>
         )}
 
