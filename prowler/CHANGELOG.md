@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.27.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `iam_user_access_not_stale_to_sagemaker` check for aws provider with configurable `max_unused_sagemaker_access_days` (default 90) [(#11000)](https://github.com/prowler-cloud/prowler/pull/11000)
+
+---
+
 ## [5.26.0] (Prowler v5.26.0)
 
 ### 🚀 Added
