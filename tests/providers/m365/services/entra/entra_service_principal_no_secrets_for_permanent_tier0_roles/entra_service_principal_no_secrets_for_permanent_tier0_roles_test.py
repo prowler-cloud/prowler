@@ -2,7 +2,10 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.m365.services.entra.entra_service import (
-    KeyCredential, PasswordCredential, ServicePrincipal)
+    KeyCredential,
+    PasswordCredential,
+    ServicePrincipal,
+)
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
@@ -25,8 +28,9 @@ class Test_entra_service_principal_no_secrets_for_permanent_tier0_roles:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import \
-                entra_service_principal_no_secrets_for_permanent_tier0_roles
+            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import (
+                entra_service_principal_no_secrets_for_permanent_tier0_roles,
+            )
 
             entra_client.service_principals = {}
 
@@ -53,8 +57,9 @@ class Test_entra_service_principal_no_secrets_for_permanent_tier0_roles:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import \
-                entra_service_principal_no_secrets_for_permanent_tier0_roles
+            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import (
+                entra_service_principal_no_secrets_for_permanent_tier0_roles,
+            )
 
             entra_client.service_principals = {
                 sp_id: ServicePrincipal(
@@ -97,8 +102,9 @@ class Test_entra_service_principal_no_secrets_for_permanent_tier0_roles:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import \
-                entra_service_principal_no_secrets_for_permanent_tier0_roles
+            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import (
+                entra_service_principal_no_secrets_for_permanent_tier0_roles,
+            )
 
             entra_client.service_principals = {
                 sp_id: ServicePrincipal(
@@ -140,8 +146,9 @@ class Test_entra_service_principal_no_secrets_for_permanent_tier0_roles:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import \
-                entra_service_principal_no_secrets_for_permanent_tier0_roles
+            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import (
+                entra_service_principal_no_secrets_for_permanent_tier0_roles,
+            )
 
             entra_client.service_principals = {
                 sp_id: ServicePrincipal(
@@ -183,8 +190,9 @@ class Test_entra_service_principal_no_secrets_for_permanent_tier0_roles:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import \
-                entra_service_principal_no_secrets_for_permanent_tier0_roles
+            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import (
+                entra_service_principal_no_secrets_for_permanent_tier0_roles,
+            )
 
             entra_client.service_principals = {
                 sp_id: ServicePrincipal(
@@ -229,8 +237,9 @@ class Test_entra_service_principal_no_secrets_for_permanent_tier0_roles:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import \
-                entra_service_principal_no_secrets_for_permanent_tier0_roles
+            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import (
+                entra_service_principal_no_secrets_for_permanent_tier0_roles,
+            )
 
             entra_client.service_principals = {
                 sp_id: ServicePrincipal(
@@ -276,8 +285,9 @@ class Test_entra_service_principal_no_secrets_for_permanent_tier0_roles:
                 new=entra_client,
             ),
         ):
-            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import \
-                entra_service_principal_no_secrets_for_permanent_tier0_roles
+            from prowler.providers.m365.services.entra.entra_service_principal_no_secrets_for_permanent_tier0_roles.entra_service_principal_no_secrets_for_permanent_tier0_roles import (
+                entra_service_principal_no_secrets_for_permanent_tier0_roles,
+            )
 
             entra_client.service_principals = {
                 sp_id_pass: ServicePrincipal(
