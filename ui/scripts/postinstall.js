@@ -33,47 +33,53 @@ function hardenMswServiceWorker() {
     "mockServiceWorker.js",
   );
 
-  if (!fs.existsSync(workerPath)) {
-    console.log("Skip MSW service worker hardening (worker missing)");
-    return;
+  let workerFile;
+  try {
+    workerFile = fs.openSync(workerPath, "r+");
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      console.log("Skip MSW service worker hardening (worker missing)");
+      return;
+    }
+    throw error;
   }
 
-  const workerSource = fs.readFileSync(workerPath, "utf8");
-  const originGuard = "event.origin !== self.location.origin";
+  try {
+    const workerSource = fs.readFileSync(workerFile, "utf8");
+    const originGuard = "event.origin !== self.location.origin";
 
-  if (workerSource.includes(originGuard)) {
-    return;
-  }
+    if (workerSource.includes(originGuard)) {
+      return;
+    }
 
-  const messageHandlerStart =
-    "addEventListener('message', async function (event) {\n  const clientId = Reflect.get(event.source || {}, 'id')\n";
-  const hardenedMessageHandlerStart =
-    "addEventListener('message', async function (event) {\n" +
-    "  // Only accept messages from pages served from the same origin as this worker.\n" +
-    "  if (event.origin !== self.location.origin) {\n" +
-    "    return\n" +
-    "  }\n\n" +
-    "  const clientId = Reflect.get(event.source || {}, 'id')\n";
+    const messageHandlerStart =
+      "addEventListener('message', async function (event) {\n  const clientId = Reflect.get(event.source || {}, 'id')\n";
+    const hardenedMessageHandlerStart =
+      "addEventListener('message', async function (event) {\n" +
+      "  // Only accept messages from pages served from the same origin as this worker.\n" +
+      "  if (event.origin !== self.location.origin) {\n" +
+      "    return\n" +
+      "  }\n\n" +
+      "  const clientId = Reflect.get(event.source || {}, 'id')\n";
 
-  if (!workerSource.includes(messageHandlerStart)) {
-    console.warn(
-      "⚠️  Unable to harden MSW service worker: message handler changed",
+    if (!workerSource.includes(messageHandlerStart)) {
+      console.warn(
+        "⚠️  Unable to harden MSW service worker: message handler changed",
+      );
+      return;
+    }
+
+    const hardenedWorkerSource = workerSource.replace(
+      messageHandlerStart,
+      hardenedMessageHandlerStart,
     );
-    return;
+
+    fs.ftruncateSync(workerFile, 0);
+    fs.writeSync(workerFile, hardenedWorkerSource, 0, "utf8");
+    console.log("Hardened MSW service worker message origin handling");
+  } finally {
+    fs.closeSync(workerFile);
   }
-
-  const workerStats = fs.statSync(workerPath);
-  const hardenedWorkerSource = workerSource.replace(
-    messageHandlerStart,
-    hardenedMessageHandlerStart,
-  );
-
-  if (fs.statSync(workerPath).mtimeMs !== workerStats.mtimeMs) {
-    throw new Error("MSW service worker changed while applying hardening");
-  }
-
-  fs.writeFileSync(workerPath, hardenedWorkerSource);
-  console.log("Hardened MSW service worker message origin handling");
 }
 
 // Run dependency log update
