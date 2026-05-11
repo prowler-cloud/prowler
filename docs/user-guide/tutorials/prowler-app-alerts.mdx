@@ -1,0 +1,123 @@
+---
+title: 'Alerts'
+description: 'Create email alerts from Prowler Cloud findings filters to monitor relevant security changes after scans or in daily digests.'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.25.0" />
+
+Alerts notify recipients by email when security findings match saved filter conditions. Use Alerts to track high-priority findings, monitor specific providers or services, and keep teams informed when scan results meet the criteria that matter most.
+
+Alerts are available in **Prowler Cloud**.
+
+## Prerequisites
+
+Before creating Alerts, ensure that:
+
+* Prowler Cloud is enabled for the account.
+* At least one scan has completed and produced findings.
+* The user role includes the `MANAGE_ALERTS` permission.
+
+The `MANAGE_ALERTS` permission is required to create, edit, test, enable, disable, and delete Alerts.
+
+## How Alerts Work
+
+Alerts are created from findings filters. When an Alert runs, Prowler evaluates the saved conditions against findings and sends an email digest when matching findings exist.
+
+Alerts can run on three schedules:
+
+| Frequency | Description |
+|-----------|-------------|
+| **After Each Scan** | Evaluates the Alert after each completed scan. |
+| **Daily Digest** | Evaluates the Alert once per day and sends a digest when findings match. |
+| **After Each Scan And Daily** | Evaluates the Alert after scans and in the daily digest flow. |
+
+## Creating An Alert From Findings
+
+To create an Alert:
+
+1. Navigate to **Findings** in Prowler Cloud.
+2. Apply at least one filter to define the findings that should trigger the Alert.
+3. Click **Create Alert**.
+
+    ![Create Alert from Findings](/images/prowler-app/alerts/create-alert-from-findings.png)
+
+4. Configure the Alert settings:
+    * **Name:** Add a short, descriptive name.
+    * **Description:** Add optional context for the Alert.
+    * **Frequency:** Select when Prowler should evaluate the Alert.
+    * **Recipients:** Select the tenant users who should receive the email digest.
+
+    ![Create Alert modal](/images/prowler-app/alerts/create-alert-modal.png)
+
+5. Click **Create**.
+
+After the Alert is created, Prowler Cloud evaluates it based on the selected frequency.
+
+## Alert-Compatible Filters
+
+Alerts use the filters from the Findings page to build an alert condition. Filters such as provider, severity, region, service, resource type, category, resource group, check ID, finding group, and resource UID can be used to create Alerts.
+
+In the MVP, **Status** is not part of the Alerts condition language. If **Status** is the only filter applied, Prowler Cloud automatically uses all severities as the condition base so the Alert can still be created from the current Findings view.
+
+## Managing Alerts
+
+Navigate to **Alerts** to review and manage existing Alerts.
+
+The Alerts table shows:
+
+| Column | Description |
+|--------|-------------|
+| **Name** | Alert name and optional description. |
+| **Status** | Whether the Alert is enabled or disabled. |
+| **Frequency** | When the Alert is evaluated. |
+| **Recipients** | Email recipients attached to the Alert. |
+| **Created At** | When the Alert was created. |
+| **Updated At** | When the Alert was last changed. |
+
+![Alerts list](/images/prowler-app/alerts/alerts-list.png)
+
+Each Alert provides these actions:
+
+| Action | Description |
+|--------|-------------|
+| **Edit** | Update recipients, frequency, or filters. |
+| **Enable/Disable** | Start or stop Alert evaluation without deleting the Alert. |
+| **Delete** | Permanently remove the Alert. |
+
+## Testing Alert Filters
+
+When editing an Alert, click **Test** to preview whether the current filters match existing findings.
+
+The test result shows whether the filters match findings and includes a summary of the matching results.
+
+![Edit Alert test result](/images/prowler-app/alerts/edit-alert-test.png)
+
+## Recipients
+
+In the Prowler Cloud interface, Alert recipients are selected from users in the tenant.
+
+The API can attach additional email addresses as recipients. If a recipient unsubscribes from Alerts and is later added again through the API, Prowler sends a confirmation email before that address receives Alert digests again.
+
+## API Access
+
+Alerts can also be managed through the Prowler API. The main endpoints are:
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/api/v1/alerts/rules` | Create, list, update, enable, disable, and delete Alert rules. |
+| `/api/v1/alerts/rules/seed` | Convert a filter bag into an Alert condition. |
+| `/api/v1/alerts/rules/preview` | Test an Alert condition without saving changes. |
+| `/api/v1/alerts/events` | Review Alert event history. |
+| `/api/v1/alerts/recipients` | Manage Alert recipients. |
+
+For complete request and response details, see the [Prowler API Reference](https://api.prowler.com/api/v1/docs).
+
+## Best Practices
+
+* **Start with focused filters:** Create Alerts for specific high-priority scopes, such as critical findings, production providers, or important services.
+* **Use clear names:** Choose names that explain the intent of the Alert.
+* **Review recipients regularly:** Keep recipient lists aligned with current ownership.
+* **Test before saving edits:** Use **Test** after changing filters to confirm that the Alert matches the expected findings.
+* **Disable instead of deleting during tuning:** Disable Alerts temporarily when adjusting filters or recipients.
