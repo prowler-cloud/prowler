@@ -14,8 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-configure-security-alerts",
-    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-security-alerts",
-    "https://maester.dev/docs/tests/MT.1029"
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-security-alerts"
   ],
   "Remediation": {
     "Code": {
