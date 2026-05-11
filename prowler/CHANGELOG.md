@@ -2,11 +2,18 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.26.0] (Prowler v5.26.0)
+## [5.27.0] (Prowler v5.27.0)
 
 ### 🚀 Added
 
 - `iam_user_access_not_stale_to_sagemaker` check for aws provider with configurable `max_unused_sagemaker_access_days` (default 90) [(#11000)](https://github.com/prowler-cloud/prowler/pull/11000)
+
+---
+
+## [5.26.0] (Prowler v5.26.0)
+
+### 🚀 Added
+
 - `bedrock_guardrails_configured` check for AWS provider [(#10844)](https://github.com/prowler-cloud/prowler/pull/10844)
 - Universal compliance with OCSF support [(#10301)](https://github.com/prowler-cloud/prowler/pull/10301)
 - ASD Essential Eight Maturity Model compliance framework for AWS (Maturity Level One, Nov 2023) [(#10808)](https://github.com/prowler-cloud/prowler/pull/10808)
