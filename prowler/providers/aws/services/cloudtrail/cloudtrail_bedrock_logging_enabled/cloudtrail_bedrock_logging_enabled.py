@@ -11,10 +11,11 @@ class cloudtrail_bedrock_logging_enabled(Check):
     """Ensure CloudTrail is configured to log Amazon Bedrock API calls.
 
     This check verifies whether at least one CloudTrail trail is configured to
-    capture Amazon Bedrock API calls through management events or advanced event
-    selectors targeting Bedrock data events.
+    capture Amazon Bedrock control-plane API calls through management events or
+    Bedrock data events through advanced event selectors.
 
-    - PASS: A trail logs Bedrock API calls via management events or Bedrock-specific advanced event selectors.
+    - PASS: A trail logs Bedrock control-plane API calls via management events
+      or Bedrock data events via Bedrock-specific advanced event selectors.
     - FAIL: No CloudTrail trail is configured to log Bedrock API calls.
     """
 
@@ -33,6 +34,9 @@ class cloudtrail_bedrock_logging_enabled(Check):
     BEDROCK_EVENT_SOURCES = frozenset(
         {
             "bedrock.amazonaws.com",
+            "bedrock-agent.amazonaws.com",
+            "bedrock-runtime.amazonaws.com",
+            "bedrock-agent-runtime.amazonaws.com",
         }
     )
 
@@ -47,16 +51,34 @@ class cloudtrail_bedrock_logging_enabled(Check):
             for trail in cloudtrail_client.trails.values():
                 if trail.is_logging:
                     for data_event in trail.data_events:
-                        if self._logs_bedrock_events(data_event):
+                        match_type = self._get_bedrock_match_type(data_event)
+                        if match_type:
                             report = Check_Report_AWS(
                                 metadata=self.metadata(), resource=trail
                             )
                             report.region = trail.home_region
                             report.status = "PASS"
-                            if data_event.is_advanced:
-                                report.status_extended = f"Trail {trail.name} from home region {trail.home_region} has an advanced event selector to log Amazon Bedrock API calls."
+                            if match_type == "classic_management":
+                                report.status_extended = (
+                                    f"Trail {trail.name} from home region "
+                                    f"{trail.home_region} has management events "
+                                    "enabled to log Amazon Bedrock control-plane "
+                                    "API calls."
+                                )
+                            elif match_type == "advanced_management":
+                                report.status_extended = (
+                                    f"Trail {trail.name} from home region "
+                                    f"{trail.home_region} has an advanced "
+                                    "management event selector to log Amazon "
+                                    "Bedrock control-plane API calls."
+                                )
                             else:
-                                report.status_extended = f"Trail {trail.name} from home region {trail.home_region} has management events enabled to log Amazon Bedrock API calls."
+                                report.status_extended = (
+                                    f"Trail {trail.name} from home region "
+                                    f"{trail.home_region} has an advanced data "
+                                    "event selector to log Amazon Bedrock API "
+                                    "calls."
+                                )
                             findings.append(report)
                             break
             if not findings:
@@ -71,49 +93,71 @@ class cloudtrail_bedrock_logging_enabled(Check):
                 findings.append(report)
         return findings
 
-    def _logs_bedrock_events(self, data_event: Event_Selector) -> bool:
-        """Check if an event selector captures Bedrock API calls.
+    def _get_bedrock_match_type(self, data_event: Event_Selector) -> str | None:
+        """Return the Bedrock logging match type for an event selector.
 
         Args:
             data_event: An Event_Selector object from the trail.
 
         Returns:
-            True if the event selector logs Bedrock events, False otherwise.
+            The matching selector type, or None if the selector does not log
+            the Bedrock events covered by this check.
         """
         if not data_event.is_advanced:
-            # Classic event selectors: management events include Bedrock
-            # control-plane API calls when IncludeManagementEvents is True.
-            return data_event.event_selector.get(
-                "IncludeManagementEvents", False
-            ) and data_event.event_selector.get("ReadWriteType") in ("All", "WriteOnly")
-        else:
-            # Advanced event selectors: check for management events selector
-            # or Bedrock-specific data event resource types.
-            field_selectors = data_event.event_selector.get("FieldSelectors", [])
+            if self._logs_classic_management_events(data_event.event_selector):
+                return "classic_management"
+            return None
 
-            has_management_events = any(
-                field.get("Field") == "eventCategory"
-                and "Management" in field.get("Equals", [])
-                for field in field_selectors
-            )
-            if has_management_events:
-                has_read_only_restriction = any(
-                    field.get("Field") == "readOnly" and field.get("Equals") == ["true"]
-                    for field in field_selectors
-                )
-                if (
-                    not has_read_only_restriction
-                    and self._logs_bedrock_management_events(field_selectors)
-                ):
-                    return True
+        field_selectors = data_event.event_selector.get("FieldSelectors", [])
+        if self._logs_advanced_management_events(field_selectors):
+            return "advanced_management"
+        if self._logs_advanced_bedrock_data_events(field_selectors):
+            return "advanced_data"
 
-            for field in field_selectors:
-                # Advanced data event selectors targeting Bedrock resources.
-                if field.get("Field") == "resources.type":
-                    for value in field.get("Equals", []):
-                        if value in self.BEDROCK_RESOURCE_TYPES:
-                            return True
+        return None
+
+    @staticmethod
+    def _logs_classic_management_events(event_selector: dict) -> bool:
+        """Check whether a classic selector logs Bedrock control-plane events."""
+        return event_selector.get(
+            "IncludeManagementEvents", False
+        ) and event_selector.get("ReadWriteType") in ("All", "WriteOnly")
+
+    def _logs_advanced_management_events(self, field_selectors: list[dict]) -> bool:
+        """Check whether advanced selectors log Bedrock control-plane events."""
+        event_category_selectors = [
+            field for field in field_selectors if field.get("Field") == "eventCategory"
+        ]
+        if not self._selectors_match_value("Management", event_category_selectors):
             return False
+
+        read_only_selectors = [
+            field for field in field_selectors if field.get("Field") == "readOnly"
+        ]
+        has_read_only_restriction = bool(read_only_selectors) and not any(
+            self._field_selector_matches_value("false", selector)
+            for selector in read_only_selectors
+        )
+
+        return not has_read_only_restriction and self._logs_bedrock_management_events(
+            field_selectors
+        )
+
+    def _logs_advanced_bedrock_data_events(self, field_selectors: list[dict]) -> bool:
+        """Check whether advanced selectors log Bedrock data events."""
+        event_category_selectors = [
+            field for field in field_selectors if field.get("Field") == "eventCategory"
+        ]
+        if not self._selectors_match_value("Data", event_category_selectors):
+            return False
+
+        resource_type_selectors = [
+            field for field in field_selectors if field.get("Field") == "resources.type"
+        ]
+        return any(
+            self._selectors_match_value(resource_type, resource_type_selectors)
+            for resource_type in self.BEDROCK_RESOURCE_TYPES
+        )
 
     def _logs_bedrock_management_events(self, field_selectors: list[dict]) -> bool:
         """Check whether advanced management selectors include Bedrock sources."""
@@ -124,11 +168,15 @@ class cloudtrail_bedrock_logging_enabled(Check):
             return True
 
         return any(
-            all(
-                self._field_selector_matches_value(event_source, selector)
-                for selector in event_source_selectors
-            )
+            self._selectors_match_value(event_source, event_source_selectors)
             for event_source in self.BEDROCK_EVENT_SOURCES
+        )
+
+    def _selectors_match_value(self, value: str, selectors: list[dict]) -> bool:
+        """Check whether a candidate value satisfies all selectors for a field."""
+        return bool(selectors) and all(
+            self._field_selector_matches_value(value, selector)
+            for selector in selectors
         )
 
     @staticmethod

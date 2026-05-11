@@ -3460,8 +3460,8 @@
         }
       ],
       "Checks": [
-        "cloudtrail_bedrock_logging_enabled",
         "kinesis_stream_data_retention_period",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events"
       ]
     },
