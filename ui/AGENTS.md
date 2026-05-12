@@ -5,7 +5,7 @@
 > - [`prowler-test-ui`](../skills/prowler-test-ui/SKILL.md) - Playwright E2E testing (comprehensive)
 > - [`typescript`](../skills/typescript/SKILL.md) - Const types, flat interfaces
 > - [`react-19`](../skills/react-19/SKILL.md) - No useMemo/useCallback, compiler
-> - [`nextjs-15`](../skills/nextjs-15/SKILL.md) - App Router, Server Actions
+> - [`nextjs-16`](../skills/nextjs-16/SKILL.md) - App Router, Server Actions
 > - [`tailwind-4`](../skills/tailwind-4/SKILL.md) - cn() utility, no var() in className
 > - [`zod-4`](../skills/zod-4/SKILL.md) - New API (z.email(), z.uuid())
 > - [`zustand-5`](../skills/zustand-5/SKILL.md) - Selectors, persist middleware
@@ -21,7 +21,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
-| App Router / Server Actions | `nextjs-15` |
+| App Router / Server Actions | `nextjs-16` |
 | Building AI chat features | `ai-sdk-5` |
 | Committing changes | `prowler-commit` |
 | Create PR that requires changelog entry | `prowler-changelog` |
@@ -179,7 +179,7 @@ test("action works", { tag: ["@critical", "@feature"] }, async ({ page }) => {
 
 ## TECH STACK
 
-Next.js 15.5.9 | React 19.2.2 | Tailwind 4.1.13 | shadcn/ui
+Next.js 16.2.3 | React 19.2.5 | Tailwind 4.1.18 | shadcn/ui
 Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8 | NextAuth 5.0.0-beta.30 | Recharts 2.15.4
 
 > **Note**: HeroUI exists in `components/ui/` as legacy code. Do NOT add new components there.
