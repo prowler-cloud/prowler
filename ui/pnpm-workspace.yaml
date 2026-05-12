@@ -26,6 +26,8 @@ onlyBuiltDependencies:
   - "@heroui/shared-utils"
   # unrs-resolver: Rust module resolver (NAPI-RS). Verifies the correct native binding is available for the platform.
   - unrs-resolver
+  # msw: Copies mockServiceWorker.js into the directories listed in package.json's `msw.workerDirectory` (here: `public/`) so the runtime worker stays in sync with the installed msw version. Pure file copy — no native binary, no network access. Required for vitest browser tests to intercept fetches via the service worker.
+  - msw
 
 # --- Level 3: Trust Policy + Exotic Subdeps ---
 # Fail when a package's trust evidence is downgraded (e.g., new publisher).
