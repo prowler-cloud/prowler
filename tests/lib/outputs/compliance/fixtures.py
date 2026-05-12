@@ -1,4 +1,5 @@
 from prowler.lib.check.compliance_models import (
+    ASDEssentialEight_Requirement_Attribute,
     AWS_Well_Architected_Requirement_Attribute,
     CCC_Requirement_Attribute,
     CIS_Requirement_Attribute,
@@ -7,7 +8,6 @@ from prowler.lib.check.compliance_models import (
     ENS_Requirement_Attribute,
     ENS_Requirement_Attribute_Nivel,
     ENS_Requirement_Attribute_Tipos,
-    EssentialEight_Requirement_Attribute,
     Generic_Compliance_Requirement_Attribute,
     ISO27001_2013_Requirement_Attribute,
     KISA_ISMSP_Requirement_Attribute,
@@ -1191,8 +1191,8 @@ CCC_GCP_FIXTURE = Compliance(
     ],
 )
 
-ESSENTIAL_EIGHT_AWS = Compliance(
-    Framework="Essential-Eight",
+ASD_ESSENTIAL_EIGHT_AWS = Compliance(
+    Framework="ASD-Essential-Eight",
     Name="ASD Essential Eight Maturity Model - Maturity Level One (AWS)",
     Version="Nov 2023",
     Provider="AWS",
@@ -1202,7 +1202,7 @@ ESSENTIAL_EIGHT_AWS = Compliance(
             Id="E8-1.8",
             Description="Online services that are no longer supported by vendors are removed.",
             Attributes=[
-                EssentialEight_Requirement_Attribute(
+                ASDEssentialEight_Requirement_Attribute(
                     Section="1 Patch applications",
                     MaturityLevel="ML1",
                     AssessmentStatus="Automated",
@@ -1226,7 +1226,7 @@ ESSENTIAL_EIGHT_AWS = Compliance(
             Id="E8-6.1",
             Description="Microsoft Office macros are disabled for users that do not have a demonstrated business requirement.",
             Attributes=[
-                EssentialEight_Requirement_Attribute(
+                ASDEssentialEight_Requirement_Attribute(
                     Section="6 Restrict Microsoft Office macros",
                     MaturityLevel="ML1",
                     AssessmentStatus="Manual",

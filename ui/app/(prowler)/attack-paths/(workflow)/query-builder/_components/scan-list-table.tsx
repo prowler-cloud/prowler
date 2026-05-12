@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Check, Minus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRef } from "react";
 
 import {
   RadioGroup,
@@ -150,7 +151,7 @@ const getColumns = ({
   {
     accessorKey: "provider",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Account" />
+      <DataTableColumnHeader column={column} title="Provider" />
     ),
     cell: ({ row }) => (
       <EntityInfo
@@ -243,6 +244,8 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   const endIndex = startIndex + pageSize;
   const paginatedScans = scans.slice(startIndex, endIndex);
 
+  const suppressNextPageResetRef = useRef(false);
+
   const pushWithParams = (nextParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -257,9 +260,18 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
     pushWithParams({ scanId });
   };
 
-  const handlePaginationChange = (nextPage: number, nextPageSize: number) => {
+  const handlePageChange = (page: number) => {
+    if (suppressNextPageResetRef.current && page === 1) {
+      suppressNextPageResetRef.current = false;
+      return;
+    }
+    pushWithParams({ scanPage: page.toString() });
+  };
+
+  const handlePageSizeChange = (nextPageSize: number) => {
+    suppressNextPageResetRef.current = true;
     pushWithParams({
-      scanPage: nextPage.toString(),
+      scanPage: "1",
       scanPageSize: nextPageSize.toString(),
     });
   };
@@ -276,7 +288,8 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
         metadata={buildMetadata(scans.length, currentPage, totalPages)}
         controlledPage={currentPage}
         controlledPageSize={pageSize}
-        onPaginationChange={handlePaginationChange}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
         onRowClick={(row) => {
           if (row.original.attributes.graph_data_ready) {
             handleSelectScan(row.original.id);

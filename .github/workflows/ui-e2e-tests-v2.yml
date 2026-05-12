@@ -15,6 +15,10 @@ on:
       - 'ui/**'
       - 'api/**'  # API changes can affect UI E2E
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
@@ -266,7 +270,7 @@ jobs:
         with:
           name: playwright-report
           path: ui/playwright-report/
-          retention-days: 30
+          retention-days: 7
 
       - name: Cleanup services
         if: always()

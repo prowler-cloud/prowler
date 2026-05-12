@@ -54,6 +54,7 @@ const DEFAULT_PERMISSIONS: RolePermissionAttributes = {
   manage_scans: false,
   manage_integrations: false,
   manage_billing: false,
+  manage_alerts: false,
   unlimited_visibility: false,
 };
 

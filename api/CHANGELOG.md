@@ -2,16 +2,35 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.27.0] (Prowler UNRELEASED)
+## [1.27.1] (Prowler v5.26.1)
 
 ### 🚀 Added
 
-- `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
 - GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
 
 ### 🔄 Changed
 
 - Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+
+### 🐞 Fixed
+
+- `POST /api/v1/scans` was intermittently failing with `Scan matching query does not exist` in the `scan-perform` worker; the Celery task is now published via `transaction.on_commit` so the worker cannot read the Scan before the dispatch-wide transaction commits [(#11122)](https://github.com/prowler-cloud/prowler/pull/11122)
+
+---
+
+## [1.27.0] (Prowler v5.26.0)
+
+### 🚀 Added
+
+- `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
+
+### 🔄 Changed
+
+- ASD Essential Eight (AWS) compliance framework support [(#10982)](https://github.com/prowler-cloud/prowler/pull/10982)
+
+### 🔐 Security
+
+- `trivy` binary from 0.69.2 to 0.70.0 and `cryptography` from 46.0.6 to 46.0.7 (transitive via prowler SDK) in the API image for CVE-2026-33186 and CVE-2026-39892 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
 
 ---
 

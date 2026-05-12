@@ -14,6 +14,7 @@ class vm_scaleset_associated_with_load_balancer(Check):
     def execute(self):
         findings = []
         for subscription, scale_sets in vm_client.vm_scale_sets.items():
+            subscription_name = vm_client.subscriptions.get(subscription, subscription)
             for scale_set in scale_sets.values():
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=scale_set
@@ -28,9 +29,9 @@ class vm_scaleset_associated_with_load_balancer(Check):
                         pool.split("/")[-1]
                         for pool in scale_set.load_balancer_backend_pools
                     ]
-                    report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription}' is associated with load balancer backend pool(s): {', '.join(backend_pool_names)}."
+                    report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription_name} ({subscription})' is associated with load balancer backend pool(s): {', '.join(backend_pool_names)}."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription}' is not associated with any load balancer backend pool."
+                    report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription_name} ({subscription})' is not associated with any load balancer backend pool."
                 findings.append(report)
         return findings

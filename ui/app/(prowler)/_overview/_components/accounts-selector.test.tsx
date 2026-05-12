@@ -138,4 +138,13 @@ describe("AccountsSelector", () => {
       screen.getByText("Production AWS").closest("[data-value]"),
     ).toHaveAttribute("data-keywords", expect.stringContaining("123456789012"));
   });
+
+  it("disables select all when every account is already shown", () => {
+    render(<AccountsSelector providers={providers} />);
+
+    expect(
+      screen.getByRole("option", { name: /select all accounts/i }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("All selected")).toBeInTheDocument();
+  });
 });

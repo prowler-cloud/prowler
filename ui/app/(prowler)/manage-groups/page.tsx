@@ -11,8 +11,8 @@ export default async function ManageGroupsPage({
   const groupId = resolvedSearchParams.groupId;
 
   const target = groupId
-    ? `/providers?tab=account-groups&groupId=${groupId}`
-    : "/providers?tab=account-groups";
+    ? `/providers?tab=provider-groups&groupId=${groupId}`
+    : "/providers?tab=provider-groups";
 
   redirect(target);
 }

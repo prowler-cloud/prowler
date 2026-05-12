@@ -5,10 +5,22 @@ on:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'prowler/**'
+      - 'Dockerfile*'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/sdk-container-checks.yml'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
+    paths:
+      - 'prowler/**'
+      - 'Dockerfile*'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/sdk-container-checks.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -56,16 +68,7 @@ jobs:
 
   sdk-container-build-and-scan:
     if: github.repository == 'prowler-cloud/prowler'
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      matrix:
-        include:
-          - platform: linux/amd64
-            runner: ubuntu-latest
-            arch: amd64
-          - platform: linux/arm64
-            runner: ubuntu-24.04-arm
-            arch: arm64
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
@@ -132,23 +135,22 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
-      - name: Build SDK container for ${{ matrix.arch }}
+      - name: Build SDK container
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
           push: false
           load: true
-          platforms: ${{ matrix.platform }}
-          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}-${{ matrix.arch }}
-          cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }}
 
-      - name: Scan SDK container with Trivy for ${{ matrix.arch }}
+      - name: Scan SDK container with Trivy
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: ./.github/actions/trivy-scan
         with:
           image-name: ${{ env.IMAGE_NAME }}
-          image-tag: ${{ github.sha }}-${{ matrix.arch }}
+          image-tag: ${{ github.sha }}
           fail-on-critical: 'false'
           severity: 'CRITICAL'
