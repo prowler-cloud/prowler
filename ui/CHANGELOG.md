@@ -2,16 +2,6 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [1.27.0] (Prowler UNRELEASED)
-
-### 🔄 Changed
-
-- Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
-
----
-
 ## [1.26.1] (Prowler 5.26.1)
 
 ### 🐞 Fixed
@@ -19,10 +9,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Role form Cancel buttons now return to Roles [(#11125)](https://github.com/prowler-cloud/prowler/pull/11125)
 - Shared select dropdowns stay constrained and scrollable inside modals [(#11125)](https://github.com/prowler-cloud/prowler/pull/11125)
 
-
 ---
 
->>>>>>> 153610278 (fix(ui): fix role cancel and select dropdown scroll (#11125))
 ## [1.26.0] (Prowler v5.26.0)
 
 ### 🚀 Added
