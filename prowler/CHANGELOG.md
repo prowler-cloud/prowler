@@ -2,25 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-## [5.26.1] (Prowler UNRELEASED)
-=======
-## [5.27.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- `entra_service_principal_no_secrets_for_permanent_tier0_roles` check for M365 provider [(#10788)](https://github.com/prowler-cloud/prowler/pull/10788)
-- `iam_user_access_not_stale_to_sagemaker` check for AWS provider with configurable `max_unused_sagemaker_access_days` (default 90) [(#11000)](https://github.com/prowler-cloud/prowler/pull/11000)
-- `cloudtrail_bedrock_logging_enabled` check for AWS provider [(#10858)](https://github.com/prowler-cloud/prowler/pull/10858)
-
-### 🔄 Changed
-
-- `entra_emergency_access_exclusion` check for M365 provider now scopes the exclusion requirement to enabled Conditional Access policies with a `Block` grant control instead of every enabled policy, focusing on the lockout-relevant policy set [(#10849)](https://github.com/prowler-cloud/prowler/pull/10849)
-
----
-
 ## [5.26.1] (Prowler v5.26.1)
->>>>>>> 15bc317ec (chore(changelog): prepare changelog for v5.26.1 (#11127))
 
 ### 🐞 Fixed
 
