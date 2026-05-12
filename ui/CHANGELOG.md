@@ -8,6 +8,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
 
+### 🐞 Fixed
+
+- Launch Scan first-provider wizard continues after provider creation instead of resetting the Scans page [(#11136)](https://github.com/prowler-cloud/prowler/pull/11136)
+
 ---
 
 ## [1.26.1] (Prowler 5.26.1)
@@ -16,7 +20,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Role form Cancel buttons now return to Roles [(#11125)](https://github.com/prowler-cloud/prowler/pull/11125)
 - Shared select dropdowns stay constrained and scrollable inside modals [(#11125)](https://github.com/prowler-cloud/prowler/pull/11125)
-
 
 ---
 
