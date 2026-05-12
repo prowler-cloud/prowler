@@ -73,6 +73,7 @@ class Entra(M365Service):
             )
 
         self.tenant_domain = provider.identity.tenant_domain
+        self.tenant_id = getattr(provider.identity, "tenant_id", None)
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -1060,23 +1061,40 @@ OAuthAppInfo
         return authentication_method_configurations
 
     async def _get_service_principals(self):
-        """Retrieve service principals with their credentials and directory role assignments.
+        """Retrieve service principals owned by the audited tenant.
 
-        Fetches all service principals from Microsoft Graph API, including their
-        password credentials (client secrets) and key credentials (certificates).
-        Then maps permanent directory role assignments to each service principal.
+        Fetches all service principals from Microsoft Graph and keeps only the
+        ones whose ``appOwnerOrganizationId`` matches the audited tenant. Skips
+        Microsoft first-party service principals and multi-tenant ISV apps
+        consented from other publishers: their credentials live in the
+        publisher's tenant, not this one, so they are out of scope for any
+        check that evaluates secret hygiene or role assignments managed by the
+        customer.
 
         Returns:
-            Dict[str, ServicePrincipal]: Dictionary of service principals keyed by ID.
+            Dict[str, ServicePrincipal]: Customer-owned service principals
+                keyed by service principal ID.
         """
         logger.info("Entra - Getting service principals...")
         service_principals = {}
+        tenant_id_normalized = str(self.tenant_id).lower() if self.tenant_id else None
         try:
             sp_response = await self.client.service_principals.get()
 
             # Build a map of service principal IDs to their data
             while sp_response:
                 for sp in getattr(sp_response, "value", []) or []:
+                    raw_owner = getattr(sp, "app_owner_organization_id", None)
+                    app_owner_org_id = str(raw_owner).lower() if raw_owner else None
+                    if (
+                        tenant_id_normalized
+                        and app_owner_org_id != tenant_id_normalized
+                    ):
+                        # Skip Microsoft first-party SPs and consented
+                        # multi-tenant ISV apps; the customer cannot manage
+                        # their credentials.
+                        continue
+
                     password_credentials = []
                     for cred in getattr(sp, "password_credentials", []) or []:
                         password_credentials.append(
@@ -1100,6 +1118,7 @@ OAuthAppInfo
                         id=sp.id,
                         name=getattr(sp, "display_name", "") or "",
                         app_id=getattr(sp, "app_id", "") or "",
+                        app_owner_organization_id=app_owner_org_id,
                         password_credentials=password_credentials,
                         key_credentials=key_credentials,
                     )
@@ -1650,6 +1669,11 @@ class ServicePrincipal(BaseModel):
         id: The service principal's unique identifier.
         name: The service principal's display name.
         app_id: The application ID associated with the service principal.
+        app_owner_organization_id: Tenant ID of the application's publisher.
+            For customer-owned apps this matches the audited tenant; the
+            service-layer fetch uses this to filter out Microsoft first-party
+            and third-party multi-tenant service principals that the customer
+            cannot manage credentials for.
         password_credentials: List of password credentials (client secrets).
         key_credentials: List of key credentials (certificates).
         directory_role_template_ids: List of directory role template IDs permanently
@@ -1659,6 +1683,7 @@ class ServicePrincipal(BaseModel):
     id: str
     name: str
     app_id: str = ""
+    app_owner_organization_id: Optional[str] = None
     password_credentials: List[PasswordCredential] = []
     key_credentials: List[KeyCredential] = []
     directory_role_template_ids: List[str] = []
