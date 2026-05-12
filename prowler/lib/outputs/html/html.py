@@ -1411,7 +1411,7 @@ class HTML(Output):
         try:
             assessment_items = f"""
                             <li class="list-group-item">
-                                <b>Okta Org URL:</b> {provider.identity.org_url}
+                                <b>Okta Domain:</b> {provider.identity.org_domain}
                             </li>"""
 
             credentials_items = f"""
