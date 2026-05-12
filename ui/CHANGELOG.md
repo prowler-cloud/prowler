@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
 - Attack Paths graph now uses React Flow with improved layout, interactions, export, minimap, and browser test coverage [(#10686)](https://github.com/prowler-cloud/prowler/pull/10686)
+- SAML ACS URL is only shown if the email domain is configured [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
 
 ---
 
