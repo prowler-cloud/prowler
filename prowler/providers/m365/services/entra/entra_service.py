@@ -3,7 +3,7 @@ import json
 from asyncio import gather
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 from kiota_abstractions.base_request_configuration import RequestConfiguration
@@ -76,6 +76,7 @@ class Entra(M365Service):
 
         self.tenant_domain = provider.identity.tenant_domain
         self.tenant_id = getattr(provider.identity, "tenant_id", None)
+        self.user_registration_details_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -854,7 +855,9 @@ class Entra(M365Service):
                 for member in members:
                     user_roles_map.setdefault(member.id, []).append(role_template_id)
 
-            registration_details = await self._get_user_registration_details()
+            registration_details, self.user_registration_details_error = (
+                await self._get_user_registration_details()
+            )
 
             while users_response:
                 for user in getattr(users_response, "value", []) or []:
@@ -897,18 +900,24 @@ class Entra(M365Service):
             )
         return users
 
-    async def _get_user_registration_details(self):
+    async def _get_user_registration_details(
+        self,
+    ) -> Tuple[Dict[str, Dict[str, Any]], Optional[str]]:
         """Retrieve user authentication method registration details.
 
         Fetches registration details from the Microsoft Graph API, including
         MFA capability and the specific authentication methods each user has registered.
 
         Returns:
-            dict: A dictionary mapping user IDs to their registration details,
-                where each value is a dict with 'is_mfa_capable' (bool) and
-                'authentication_methods' (list of str).
+            A tuple containing:
+            - A dictionary mapping user IDs to their registration details,
+              where each value is a dict with 'is_mfa_capable' (bool) and
+              'authentication_methods' (list of str), or an empty dict if
+              retrieval fails.
+            - An error message string if there was an access error, None otherwise.
         """
         registration_details = {}
+        error_message = None
         try:
             registration_builder = (
                 self.client.reports.authentication_methods.user_registration_details
@@ -933,16 +942,25 @@ class Entra(M365Service):
                     next_link
                 ).get()
 
-        except Exception as error:
-            if (
-                error.__class__.__name__ == "ODataError"
-                and error.__dict__.get("response_status_code", None) == 403
-            ):
+        except ODataError as error:
+            error_code = getattr(error.error, "code", None) if error.error else None
+            if error_code == "Authorization_RequestDenied":
+                error_message = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error_message}"
+                )
+            else:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                error_message = str(error)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            error_message = f"Failed to retrieve user registration details: {error}"
 
-        return registration_details
+        return registration_details, error_message
 
     async def _get_oauth_apps(self) -> Optional[Dict[str, "OAuthApp"]]:
         """
