@@ -365,8 +365,9 @@ export function MultiSelectContent({
             ref={listRef}
             onWheelCapture={stopWheelPropagation}
             style={{
-              maxHeight:
-                "min(300px, var(--radix-popover-content-available-height, 300px))",
+              maxHeight: canSearch
+                ? "min(300px, calc(var(--radix-popover-content-available-height, 300px) - 37px))"
+                : "min(300px, var(--radix-popover-content-available-height, 300px))",
             }}
             className="minimal-scrollbar overflow-x-hidden overflow-y-auto overscroll-contain p-3"
           >
