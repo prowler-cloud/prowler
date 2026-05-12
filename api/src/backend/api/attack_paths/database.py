@@ -103,6 +103,7 @@ def get_uri() -> str:
     if settings.ATTACK_PATHS_SINK_DATABASE == "neptune":
         cfg = settings.DATABASES["neptune"]
         return f"bolt+s://{cfg['WRITER_ENDPOINT']}:{cfg['PORT']}"
+
     cfg = settings.DATABASES["neo4j"]
     return f"bolt://{cfg['HOST']}:{cfg['PORT']}"
 

@@ -36,6 +36,7 @@ def _resolve_setting() -> SinkBackend:
     raw = settings.ATTACK_PATHS_SINK_DATABASE.lower()
     try:
         return SinkBackend(raw)
+
     except ValueError:
         valid = sorted(b.value for b in SinkBackend)
         raise RuntimeError(

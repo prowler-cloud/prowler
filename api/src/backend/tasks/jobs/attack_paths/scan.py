@@ -60,7 +60,6 @@ from typing import Any
 
 from cartography.config import Config as CartographyConfig
 from cartography.intel import analysis as cartography_analysis
-from cartography.intel import create_indexes as cartography_create_indexes
 from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -202,7 +201,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             tmp_cartography_config.neo4j_database
         ) as tmp_neo4j_session:
             # Indexes creation
-            cartography_create_indexes.run(tmp_neo4j_session, tmp_cartography_config)
+            indexes.create_cartography_indexes(tmp_neo4j_session, tmp_cartography_config)
             indexes.create_findings_indexes(tmp_neo4j_session)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
 
@@ -267,7 +266,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         )
         graph_database.create_database(tenant_database_name)
         with graph_database.get_session(tenant_database_name) as tenant_neo4j_session:
-            cartography_create_indexes.run(
+            indexes.create_cartography_indexes(
                 tenant_neo4j_session, tenant_cartography_config
             )
             indexes.create_findings_indexes(tenant_neo4j_session)

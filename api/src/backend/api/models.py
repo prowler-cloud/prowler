@@ -780,7 +780,7 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
 
     # Records which sink database holds this scan's graph. Stamped at row
-    # creation from settings.ATTACK_PATHS_SINK_DATABASE so reads route to
+    # creation from `settings.ATTACK_PATHS_SINK_DATABASE` so reads route to
     # the right backend even after the setting changes for future scans.
     # TODO: drop after Neptune cutover
     is_neptune = models.BooleanField(default=False)

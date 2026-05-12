@@ -106,17 +106,17 @@ def sync_nodes(
         if batch_count == 0:
             break
 
-        with graph_database.get_session(target_database) as target_session:
-            for labels, batch in grouped.items():
-                label_set = set(labels)
-                label_set.add(PROVIDER_RESOURCE_LABEL)
-                label_set.add(get_tenant_label(tenant_id))
-                label_set.add(get_provider_label(provider_id))
-                node_labels = ":".join(f"`{label}`" for label in sorted(label_set))
+        for labels, batch in grouped.items():
+            label_set = set(labels)
+            label_set.add(PROVIDER_RESOURCE_LABEL)
+            label_set.add(get_tenant_label(tenant_id))
+            label_set.add(get_provider_label(provider_id))
+            node_labels = ":".join(f"`{label}`" for label in sorted(label_set))
 
-                query = render_cypher_template(
-                    NODE_SYNC_TEMPLATE, {"__NODE_LABELS__": node_labels}
-                )
+            query = render_cypher_template(
+                NODE_SYNC_TEMPLATE, {"__NODE_LABELS__": node_labels}
+            )
+            with graph_database.get_session(target_database) as target_session:
                 target_session.run(query, {"rows": batch})
 
         total_synced += batch_count
@@ -163,15 +163,15 @@ def sync_relationships(
             break
 
         provider_label = get_provider_label(provider_id)
-        with graph_database.get_session(target_database) as target_session:
-            for rel_type, batch in grouped.items():
-                query = render_cypher_template(
-                    RELATIONSHIP_SYNC_TEMPLATE,
-                    {
-                        "__REL_TYPE__": rel_type,
-                        "__PROVIDER_LABEL__": provider_label,
-                    },
-                )
+        for rel_type, batch in grouped.items():
+            query = render_cypher_template(
+                RELATIONSHIP_SYNC_TEMPLATE,
+                {
+                    "__REL_TYPE__": rel_type,
+                    "__PROVIDER_LABEL__": provider_label,
+                },
+            )
+            with graph_database.get_session(target_database) as target_session:
                 target_session.run(query, {"rows": batch})
 
         total_synced += batch_count

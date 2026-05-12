@@ -1,6 +1,7 @@
 import neo4j
 
 from cartography.client.core.tx import run_write_query
+from cartography.intel import create_indexes as cartography_create_indexes
 from celery.utils.log import get_task_logger
 from django.conf import settings
 
@@ -46,9 +47,23 @@ def create_findings_indexes(neo4j_session: neo4j.Session) -> None:
     if _sink_is_neptune():
         logger.info("Skipping findings indexes — Neptune auto-manages indexes")
         return
+
     logger.info("Creating indexes for Prowler Findings node types")
     for statement in FINDINGS_INDEX_STATEMENTS:
         run_write_query(neo4j_session, statement)
+
+
+def create_cartography_indexes(neo4j_session: neo4j.Session, config) -> None:
+    """Create Cartography's standard indexes for the session's database.
+
+    Neptune auto-manages indexes and does not support `CREATE INDEX`, so
+    this is a no-op when the sink is Neptune.
+    """
+    if _sink_is_neptune():
+        logger.info("Skipping Cartography indexes — Neptune auto-manages indexes")
+        return
+
+    cartography_create_indexes.run(neo4j_session, config)
 
 
 def create_sync_indexes(neo4j_session: neo4j.Session) -> None:
@@ -60,6 +75,7 @@ def create_sync_indexes(neo4j_session: neo4j.Session) -> None:
     if _sink_is_neptune():
         logger.info("Skipping sync indexes — Neptune auto-manages indexes")
         return
+
     logger.info("Ensuring ProviderResource indexes exist")
     for statement in SYNC_INDEX_STATEMENTS:
         neo4j_session.run(statement)
