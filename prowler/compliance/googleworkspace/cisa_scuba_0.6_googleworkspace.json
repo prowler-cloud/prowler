@@ -1450,7 +1450,9 @@
     {
       "Id": "GWS.CHAT.2.1",
       "Description": "External file sharing SHALL be disabled to protect sensitive information from unauthorized or accidental sharing",
-      "Checks": [],
+      "Checks": [
+        "chat_external_file_sharing_disabled"
+      ],
       "Attributes": [
         {
           "Section": "Chat",
@@ -1476,7 +1478,9 @@
     {
       "Id": "GWS.CHAT.4.1",
       "Description": "External chat messaging SHALL be restricted to allowlisted domains only",
-      "Checks": [],
+      "Checks": [
+        "chat_external_messaging_restricted"
+      ],
       "Attributes": [
         {
           "Section": "Chat",

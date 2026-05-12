@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "chat_incoming_webhooks_disabled",
+  "CheckTitle": "Incoming webhooks in Chat are disabled for users",
+  "CheckType": [],
+  "ServiceName": "chat",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Incoming webhooks let external applications post asynchronous messages into Google Chat spaces without being a Chat app. When enabled, users can configure webhooks and developers can call them to send content from external applications.",
+  "Risk": "Exposed webhook URLs allow **unauthorized content injection** into Chat spaces. Attackers can send **fraudulent or misleading messages** that appear to come from trusted services, creating a vector for **social engineering** and **phishing** within internal communications.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/6089179",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Google Chat and classic Hangouts**\n3. Click **Chat apps**\n4. Under Chat apps access settings, set **Allow users to add and use incoming webhooks** to **OFF**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable incoming webhooks to prevent unauthenticated external applications from injecting content into internal Chat spaces.",
+      "Url": "https://hub.prowler.com/check/chat_incoming_webhooks_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "chat_apps_installation_disabled"
+  ],
+  "Notes": ""
+}

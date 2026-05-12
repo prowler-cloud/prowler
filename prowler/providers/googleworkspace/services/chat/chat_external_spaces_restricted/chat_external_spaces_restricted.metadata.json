@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "chat_external_spaces_restricted",
+  "CheckTitle": "External spaces in Chat are restricted to allowed domains",
+  "CheckType": [],
+  "ServiceName": "chat",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Google Chat external spaces allow users to create or join collaborative spaces that include people outside the organization. If external spaces are allowed, they can optionally be restricted to only allowlisted domains to limit external participation.",
+  "Risk": "Unrestricted external spaces allow users to add **anyone from any domain** to persistent group conversations. This increases the risk of **confidential information exposure** in shared spaces and enables **unauthorized external access** to ongoing organizational discussions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/9540647",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Google Chat and classic Hangouts**\n3. Click **External Spaces**\n4. Set **Allow users to create and join spaces with people outside their organization** to **ON**\n5. Check **Only allow users to add people from allowlisted domains**\n6. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict external spaces to allowlisted domains only to control which external parties can participate in organizational Chat spaces.",
+      "Url": "https://hub.prowler.com/check/chat_external_spaces_restricted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "chat_external_messaging_restricted",
+    "drive_sharing_allowlisted_domains"
+  ],
+  "Notes": ""
+}

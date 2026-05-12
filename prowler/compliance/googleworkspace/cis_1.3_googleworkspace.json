@@ -1068,7 +1068,9 @@
     {
       "Id": "3.1.4.1.1",
       "Description": "Ensure external filesharing in Google Chat and Hangouts is disabled",
-      "Checks": [],
+      "Checks": [
+        "chat_external_file_sharing_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1089,7 +1091,9 @@
     {
       "Id": "3.1.4.1.2",
       "Description": "Ensure internal filesharing in Google Chat and Hangouts is disabled",
-      "Checks": [],
+      "Checks": [
+        "chat_internal_file_sharing_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1110,7 +1114,9 @@
     {
       "Id": "3.1.4.2.1",
       "Description": "Ensure Google Chat externally is restricted to allowed domains",
-      "Checks": [],
+      "Checks": [
+        "chat_external_messaging_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1131,7 +1137,9 @@
     {
       "Id": "3.1.4.3.1",
       "Description": "Ensure external spaces in Google Chat and Hangouts are restricted",
-      "Checks": [],
+      "Checks": [
+        "chat_external_spaces_restricted"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1152,7 +1160,9 @@
     {
       "Id": "3.1.4.4.1",
       "Description": "Ensure allow users to install Chat apps is disabled",
-      "Checks": [],
+      "Checks": [
+        "chat_apps_installation_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
@@ -1173,7 +1183,9 @@
     {
       "Id": "3.1.4.4.2",
       "Description": "Ensure allow users to add and use incoming webhooks is disabled",
-      "Checks": [],
+      "Checks": [
+        "chat_incoming_webhooks_disabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Apps",
