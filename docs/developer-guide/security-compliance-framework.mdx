@@ -2,24 +2,44 @@
 title: 'Creating a New Security Compliance Framework in Prowler'
 ---
 
+This guide explains how to add a new security compliance framework to Prowler, end to end. It covers directory layout, the two supported JSON schemas (universal and legacy), the Pydantic models that validate each framework, check mapping conventions, output formatting, local validation, testing, and the pull request process.
+
 ## Introduction
 
-To create or contribute a custom security framework for Prowler — or to integrate a public framework — you must ensure that the underlying Prowler checks already exist. If they are missing, they must be implemented before the framework can be mapped.
+A compliance framework in Prowler maps a public or custom control catalog (for example CIS, NIST 800-53, PCI DSS, HIPAA, ENS, CCC, DORA) to the security checks that Prowler already runs. Each requirement links to zero, one or more Prowler checks. When a scan executes, findings are aggregated per requirement to produce the compliance report rendered by Prowler CLI and Prowler Cloud.
 
-Prowler supports **two schemas** for compliance frameworks:
+Prowler ships 85+ compliance frameworks across all providers. The catalog lives under `prowler/compliance/<provider>/` (legacy, per-provider) or `prowler/compliance/` (universal, multi-provider).
+
+<Warning>
+A compliance framework must represent the **complete state** of the source catalog. Every requirement defined by the framework has to be present in the JSON file, even when no Prowler check can automate it. In that case, leave the requirement's check list empty, but do not omit the requirement.
+
+Requirement coverage feeds the compliance percentage calculations and the metadata surfaces (dashboards, widgets, exports). Missing requirements skew those metrics and break the report as a faithful snapshot of the framework.
+</Warning>
+
+### Two supported schemas
 
 | Schema | When to use | File location | Discovered as |
 | --- | --- | --- | --- |
-| **Universal (recommended)** | Multi-provider frameworks, or single-provider frameworks that benefit from declarative table/PDF rendering | `prowler/compliance/<framework>.json` (top-level) | Available for **every** provider whose key appears in any `requirement.checks` dict |
-| **Legacy provider-specific** | Single-provider frameworks with framework-specific attribute classes (e.g. CIS, ENS, ASD Essential Eight) that already exist in the codebase | `prowler/compliance/<provider>/<framework>_<version>_<provider>.json` | Available only under that provider |
+| **Universal (recommended for new frameworks)** | Multi-provider frameworks, or single-provider frameworks that benefit from declarative table/PDF rendering | `prowler/compliance/<framework>.json` (top-level) | Available for **every** provider whose key appears in any `requirement.checks` dict |
+| **Legacy provider-specific** | Single-provider frameworks with framework-specific attribute classes already declared in the codebase (CIS, ENS, ISO 27001, etc.) | `prowler/compliance/<provider>/<framework>_<version>_<provider>.json` | Available only under that provider |
 
-Auto-discovery happens in `get_bulk_compliance_frameworks_universal(provider)` (`prowler/lib/check/compliance_models.py:915`), which scans **both** the top-level `prowler/compliance/` directory and every per-provider sub-directory (`prowler/compliance/<provider>/`). Legacy frameworks are transparently converted to the universal `ComplianceFramework` model via `adapt_legacy_to_universal()` before being returned, so the rest of Prowler — CLI table rendering, CSV/OCSF outputs, PDF generation — works the same regardless of the source schema.
+Auto-discovery happens in `get_bulk_compliance_frameworks_universal(provider)` (`prowler/lib/check/compliance_models.py:915`), which scans **both** the top-level `prowler/compliance/` directory and every per-provider sub-directory. Legacy frameworks are transparently converted to the universal `ComplianceFramework` model via `adapt_legacy_to_universal()` before being returned, so the rest of Prowler — CLI table rendering, CSV/OCSF outputs, PDF generation — works the same regardless of the source schema.
 
 > The legacy entry-point `Compliance.get_bulk(provider)` (used by older code paths) only scans per-provider sub-directories. Universal top-level files are picked up exclusively via the universal loader; this matters if you are wiring a new code path against the legacy API.
 
-For new frameworks, **prefer the universal schema**: it requires no Python code changes, supports multiple providers in a single file, and the table and PDF rendering are driven entirely from declarative configuration inside the JSON.
+For **new** frameworks, prefer the universal schema: it requires no Python code changes, supports multiple providers in a single file, and table/PDF rendering is driven entirely from declarative configuration inside the JSON.
 
-> All Pydantic models in `compliance_models.py` are imported from `pydantic.v1` (Prowler is on Pydantic v1 internally for these models). Subclasses you add for the legacy schema must use `from pydantic.v1 import BaseModel`.
+> All Pydantic models in `compliance_models.py` are imported from `pydantic.v1`. Subclasses you add for the legacy schema must use `from pydantic.v1 import BaseModel`.
+
+### Prerequisites
+
+Before adding a new framework, complete the following checks:
+
+- **Verify the framework is not already supported.** Inspect `prowler/compliance/` and every `prowler/compliance/<provider>/` for an existing JSON file matching the name and version.
+- **Confirm the required checks exist.** Every requirement that can be automated must point to one or more existing Prowler checks. For each missing check, implement it first by following the [Prowler Checks](/developer-guide/checks) guide.
+- **Review a reference framework.** Use an existing framework with a similar structure as your template:
+  - Universal: `prowler/compliance/dora.json`, `prowler/compliance/csa_ccm_4.0.json`.
+  - Legacy: `prowler/compliance/aws/cis_2.0_aws.json` (canonical CIS shape), `prowler/compliance/aws/ccc_aws.json`, `prowler/compliance/aws/ens_rd2022_aws.json`, `prowler/compliance/aws/nist_800_53_revision_5_aws.json`.
 
 ## Universal Compliance Framework
 
@@ -33,7 +53,7 @@ prowler/compliance/<framework_name>.json
 
 Examples in the repository: `prowler/compliance/csa_ccm_4.0.json`, `prowler/compliance/dora.json`.
 
-The file is auto-discovered — there is **no** need to register it in any `__init__.py`, modify `prowler/lib/outputs/`, or update any other Python module.
+The file is auto-discovered — there is **no** need to register it in any `__init__.py`, modify `prowler/lib/outputs/`, or update any other Python module. The framework key Prowler CLI accepts via `--compliance` is the basename of the JSON file without `.json` (`dora.json` → `dora`).
 
 ### Top-level structure
 
@@ -192,51 +212,288 @@ No code changes, no new file, no registration step.
 
 ## Legacy Provider-Specific Compliance Framework
 
-The legacy schema is still supported for single-provider frameworks that rely on framework-specific attribute Pydantic classes already declared in `prowler/lib/check/compliance_models.py`. As of today, those classes are: `CIS_Requirement_Attribute`, `ENS_Requirement_Attribute`, `ASDEssentialEight_Requirement_Attribute`, `ISO27001_2013_Requirement_Attribute`, `AWS_Well_Architected_Requirement_Attribute`, `KISA_ISMSP_Requirement_Attribute`, `Prowler_ThreatScore_Requirement_Attribute`, `CCC_Requirement_Attribute`, `C5Germany_Requirement_Attribute`, `CSA_CCM_Requirement_Attribute`, and `Generic_Compliance_Requirement_Attribute` (fallback). Existing CIS, ENS, ASD, ISO 27001, FedRAMP, SOC2, etc. frameworks use this format. MITRE-style frameworks use the separate `Mitre_Requirement` model with `Tactics` / `SubTechniques` / `Platforms` / `TechniqueURL` at the requirement top level.
+The legacy schema is still fully supported and remains the format used by most frameworks shipped today (CIS, NIST, ISO 27001, FedRAMP, PCI DSS, GDPR, HIPAA, ENS, etc.). It binds a framework to a single provider and validates each requirement against a framework-specific Pydantic attribute class.
 
-### Where the file lives
+The legacy schema spans **four layers** — a complete contribution must touch every layer that applies:
+
+- **Layer 1 — Schema validation:** the Pydantic models in `prowler/lib/check/compliance_models.py` define the canonical schema for each attribute shape.
+- **Layer 2 — JSON catalog:** the framework JSON file in `prowler/compliance/<provider>/` lists every requirement and maps it to checks.
+- **Layer 3 — Output formatter:** the Python module in `prowler/lib/outputs/compliance/<framework>/` builds the CSV row model, the per-provider transformer, and the CLI summary table.
+- **Layer 4 — Output dispatchers:** the dispatchers in `prowler/lib/outputs/compliance/compliance.py` and `prowler/lib/outputs/compliance/compliance_output.py` route findings to the right formatter based on the framework identifier.
+
+The universal schema collapses Layers 3 and 4 into declarative configuration inside the JSON — that is the main reason it is preferred for new contributions.
+
+### Directory structure and file naming
+
+Compliance frameworks live at:
 
 ```
 prowler/compliance/<provider>/<framework>_<version>_<provider>.json
 ```
 
-Example: `prowler/compliance/aws/cis_5.0_aws.json`.
+The filename conventions are:
 
-### Top-level structure
+- All lowercase, words separated with underscores.
+- `<provider>` is a supported provider identifier (same lowercase list as the universal section above).
+- `<version>` is optional but recommended. Omit only when the framework has no versioning (e.g. `ccc_aws.json`).
+- The file basename (without `.json`) is the framework key that Prowler CLI accepts via `--compliance`.
 
-```json
+Examples:
+
+- `prowler/compliance/aws/cis_2.0_aws.json`
+- `prowler/compliance/aws/nist_800_53_revision_5_aws.json`
+- `prowler/compliance/azure/ens_rd2022_azure.json`
+- `prowler/compliance/kubernetes/cis_1.10_kubernetes.json`
+- `prowler/compliance/aws/ccc_aws.json`
+
+The output formatter directory mirrors the framework name:
+
+```
+prowler/lib/outputs/compliance/<framework>/
+├── <framework>.py            # CLI summary-table dispatcher
+├── <framework>_<provider>.py # Per-provider transformer class
+├── models.py                 # Pydantic CSV row model
+└── __init__.py
+```
+
+### JSON schema reference
+
+Every legacy compliance file is a JSON document with the following top-level keys. `Framework`, `Name` and `Provider` are validated non-empty by the root validator `framework_and_provider_must_not_be_empty` (`compliance_models.py:329`).
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `Framework` | string | Yes | Canonical framework identifier, for example `CIS`, `NIST-800-53-Revision-5`, `ENS`, `CCC`. |
+| `Name` | string | Yes | Human-readable framework name displayed by Prowler App. |
+| `Version` | string | Yes (recommended) | Framework version, e.g. `2.0`. See [Version Handling](#version-handling). |
+| `Provider` | string | Yes | Upper-cased provider identifier: `AWS`, `AZURE`, `GCP`, `KUBERNETES`, `M365`, `GITHUB`, `GOOGLEWORKSPACE`, and so on. |
+| `Description` | string | Yes | Short description of the framework's scope and purpose. |
+| `Requirements` | array | Yes | List of [requirement objects](#requirement-object). |
+
+#### Requirement Object
+
+Each entry in `Requirements` describes one control or requirement.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `Id` | string | Yes | Unique identifier within the framework, for example `1.10` or `CCC.Core.CN01.AR01`. |
+| `Name` | string | No | Optional human-readable name (frameworks like NIST distinguish control name from description). |
+| `Description` | string | Yes | Verbatim description from the source framework. |
+| `Attributes` | array | Yes | List of [attribute objects](#attribute-objects). The shape depends on the framework. |
+| `Checks` | array of strings | Yes | Prowler check identifiers that automate the requirement. Leave the list empty when the control cannot be automated. |
+
+#### Attribute Objects
+
+`Attributes` is parsed against the union declared in `Compliance_Requirement.Attributes` (`compliance_models.py:293`). Pydantic v1 tries each member of the union in declaration order and falls back to `Generic_Compliance_Requirement_Attribute` (the last entry) when nothing else matches — so a brand-new shape that doesn't match any existing class will silently be accepted as Generic, losing its specific fields.
+
+As of today, the registered attribute classes are: `CIS_Requirement_Attribute`, `ENS_Requirement_Attribute`, `ASDEssentialEight_Requirement_Attribute`, `ISO27001_2013_Requirement_Attribute`, `AWS_Well_Architected_Requirement_Attribute`, `KISA_ISMSP_Requirement_Attribute`, `Prowler_ThreatScore_Requirement_Attribute`, `CCC_Requirement_Attribute`, `C5Germany_Requirement_Attribute`, `CSA_CCM_Requirement_Attribute`, and `Generic_Compliance_Requirement_Attribute` (fallback). MITRE-style frameworks use the separate `Mitre_Requirement` model with `Tactics` / `SubTechniques` / `Platforms` / `TechniqueURL` at the requirement top level. The most common shapes are summarized below.
+
+##### CIS_Requirement_Attribute
+
+Used by every CIS benchmark.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `Section` | string | Yes | Top-level section, e.g. `1 Identity and Access Management`. |
+| `SubSection` | string | No | Optional second-level grouping. |
+| `Profile` | enum | Yes | One of `Level 1`, `Level 2`, `E3 Level 1`, `E3 Level 2`, `E5 Level 1`, `E5 Level 2`. |
+| `AssessmentStatus` | enum | Yes | `Manual` or `Automated`. |
+| `Description` | string | Yes | Control description. |
+| `RationaleStatement` | string | Yes | Reason the control exists. |
+| `ImpactStatement` | string | Yes | Impact of non-compliance. |
+| `RemediationProcedure` | string | Yes | Remediation steps. |
+| `AuditProcedure` | string | Yes | Audit steps. |
+| `AdditionalInformation` | string | Yes | Free-form notes. |
+| `DefaultValue` | string | No | Default configuration value, when relevant. |
+| `References` | string | Yes | Colon-separated list of reference URLs. |
+
+##### ENS_Requirement_Attribute
+
+Used by the Spanish ENS (Esquema Nacional de Seguridad) frameworks.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `IdGrupoControl` | string | Yes | Control group identifier. |
+| `Marco` | string | Yes | Framework block (`operacional`, `organizativo`, `proteccion`). |
+| `Categoria` | string | Yes | Control category. |
+| `DescripcionControl` | string | Yes | Control description in Spanish. |
+| `Tipo` | enum | Yes | `refuerzo`, `requisito`, `recomendacion`, `medida`. |
+| `Nivel` | enum | Yes | `opcional`, `bajo`, `medio`, `alto`. |
+| `Dimensiones` | array of enum | Yes | Subset of `confidencialidad`, `integridad`, `trazabilidad`, `autenticidad`, `disponibilidad`. |
+| `ModoEjecucion` | string | Yes | Execution mode (`manual`, `automático`, `híbrido`). |
+| `Dependencias` | array of strings | Yes | Ids of prerequisite controls. Empty list when none. |
+
+##### CCC_Requirement_Attribute
+
+Used by the Common Cloud Controls Catalog.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `FamilyName` | string | Yes | Control family, e.g. `Data`. |
+| `FamilyDescription` | string | Yes | Description of the family. |
+| `Section` | string | Yes | Section title. |
+| `SubSection` | string | Yes | Subsection title, or empty string. |
+| `SubSectionObjective` | string | Yes | Stated objective for the subsection. |
+| `Applicability` | array of strings | Yes | Applicability tags such as `tlp-green`, `tlp-amber`, `tlp-red`. |
+| `Recommendation` | string | Yes | Implementation recommendation. |
+| `SectionThreatMappings` | array of objects | Yes | Each entry has `ReferenceId` and `Identifiers`. |
+| `SectionGuidelineMappings` | array of objects | Yes | Each entry has `ReferenceId` and `Identifiers`. |
+
+##### Generic_Compliance_Requirement_Attribute
+
+The fallback attribute model used when no framework-specific schema applies (e.g. NIST 800-53, PCI DSS, GDPR, HIPAA). It is **always the last** element of the `Compliance_Requirement.Attributes` Union; that ordering is load-bearing.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `ItemId` | string | No | Item identifier. |
+| `Section` | string | No | Section name. |
+| `SubSection` | string | No | Subsection name. |
+| `SubGroup` | string | No | Subgroup name. |
+| `Service` | string | No | Affected service, e.g. `iam`. |
+| `Type` | string | No | Control type. |
+| `Comment` | string | No | Free-form comment. |
+
+For the remaining attribute classes (`AWS_Well_Architected_Requirement_Attribute`, `ISO27001_2013_Requirement_Attribute`, `Mitre_Requirement_Attribute_<Provider>`, `KISA_ISMSP_Requirement_Attribute`, `Prowler_ThreatScore_Requirement_Attribute`, `C5Germany_Requirement_Attribute`, `CSA_CCM_Requirement_Attribute`) consult `prowler/lib/check/compliance_models.py` for the full field sets.
+
+<Note>
+The `Attributes` field is a Pydantic `Union`. The generic attribute model **must** remain the last element of that Union — otherwise Pydantic v1 silently coerces every framework into the generic shape and your specialized fields are dropped. Adding a brand-new attribute shape requires inserting the Pydantic class **before** `Generic_Compliance_Requirement_Attribute`.
+</Note>
+
+#### Minimal working example
+
+The following snippet is a complete, valid framework file named `my_framework_1.0_aws.json`, saved at `prowler/compliance/aws/my_framework_1.0_aws.json`. It uses the generic attribute shape for simplicity.
+
+```json title="prowler/compliance/aws/my_framework_1.0_aws.json"
 {
-  "Framework": "CIS-AWS",
+  "Framework": "My-Framework",
+  "Name": "My Framework 1.0 for AWS",
+  "Version": "1.0",
   "Provider": "AWS",
-  "Version": "5.0",
-  "Description": "...",
+  "Description": "Internal baseline for AWS accounts.",
   "Requirements": [
     {
-      "Id": "<unique-id>",
-      "Description": "Full description of the requirement",
-      "Checks": [ "<prowler check name>" ],
+      "Id": "MF-1.1",
+      "Description": "Root account must have multi-factor authentication enabled.",
       "Attributes": [
         {
-          /* fields matching one of the *_Requirement_Attribute classes */
+          "ItemId": "MF-1.1",
+          "Section": "Identity and Access Management",
+          "SubSection": "Root Account",
+          "Service": "iam"
         }
+      ],
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "MF-2.1",
+      "Description": "S3 buckets must block public access at the account level.",
+      "Attributes": [
+        {
+          "ItemId": "MF-2.1",
+          "Section": "Data Protection",
+          "Service": "s3"
+        }
+      ],
+      "Checks": [
+        "s3_account_level_public_access_blocks"
       ]
     }
   ]
 }
 ```
 
-Field semantics are identical to the universal schema except that:
+### Mapping checks to requirements
 
-- `Framework`, `Name` and `Provider` are required and validated non-empty by the root validator `framework_and_provider_must_not_be_empty` (`compliance_models.py:329`). The framework is bound to that single provider.
-- `Attributes` is a `list` whose elements are parsed against the union declared in `Compliance_Requirement.Attributes` (`compliance_models.py:293`). Pydantic v1 tries each member of the union in declaration order and falls back to `Generic_Compliance_Requirement_Attribute` (the last entry) when nothing else matches — so a brand-new shape that doesn't match any existing class will silently be accepted as Generic, losing its specific fields.
-- Adding a brand-new attribute shape therefore requires adding a Pydantic `*_Requirement_Attribute(BaseModel)` subclass to `compliance_models.py` and registering it in the `Compliance_Requirement.Attributes` union **before** `Generic_Compliance_Requirement_Attribute`. **For new frameworks, prefer the universal schema instead** — it avoids the Python-side change.
-- Validation is **fail-fast**: `load_compliance_framework()` calls `sys.exit(1)` on any `ValidationError` (`compliance_models.py:464`). The universal loader `load_compliance_framework_universal()` is more lenient — it logs the error and returns `None`, so `get_bulk_compliance_frameworks_universal()` simply skips the broken file and keeps loading the rest.
+Each requirement links to the Prowler checks that, together, produce a PASS or FAIL verdict for that control.
+
+- **Include every requirement from the source catalog.** The framework file must mirror the full control list, one-to-one. Compliance percentages, dashboards, and exported metadata are computed against the total requirement count.
+- List every check by its canonical identifier — the value of `CheckID` inside the check's `.metadata.json` file.
+- One requirement can reference multiple checks. The requirement is evaluated as FAIL when any referenced check produces a FAIL finding for a resource in scope.
+- Leave `Checks` (legacy) or `checks.<provider>` (universal) as an empty array when the requirement cannot be automated. The requirement still appears in the report and contributes to the total.
+- Reuse checks across requirements when the same control applies in multiple places. Do not duplicate check logic to match framework structure.
+- Avoid referencing checks from a different provider. A legacy compliance file is bound to one provider, and cross-provider checks will never match findings in the scan.
+
+To discover available checks:
+
+```bash
+poetry run python prowler-cli.py <provider> --list-checks
+```
+
+### Supporting multiple providers (legacy)
+
+The legacy schema binds each file to a single provider. To cover several providers with the same framework, ship one JSON file per provider:
+
+```
+prowler/compliance/aws/cis_2.0_aws.json
+prowler/compliance/azure/cis_2.0_azure.json
+prowler/compliance/gcp/cis_2.0_gcp.json
+```
+
+Keep the `Framework` and `Version` values identical across the files so the dispatcher matches them; change only the `Provider`, `Checks`, and provider-specific metadata. The CIS output formatter already supports every provider listed above.
+
+For a brand-new framework that spans several providers, **prefer the universal schema** — it covers every provider from a single file. If you must use the legacy schema, add one transformer per provider in `prowler/lib/outputs/compliance/<framework>/` and extend the summary-table dispatcher accordingly. See [Output Formatter](#output-formatter).
+
+### Output formatter
+
+Legacy frameworks render in two forms: a detailed CSV report written to disk, and a summary table printed in the CLI. Both are produced by the output formatter package for the framework. Universal frameworks do **not** need a Python output formatter — the `outputs` config inside the JSON drives rendering — so this section applies only to the legacy schema.
+
+For a new legacy framework named `my_framework`, create:
+
+```
+prowler/lib/outputs/compliance/my_framework/
+├── __init__.py
+├── my_framework.py            # CLI summary table dispatcher
+├── my_framework_aws.py        # Per-provider transformer
+└── models.py                  # CSV row Pydantic model
+```
+
+#### Step 1 — Define the CSV row model
+
+In `models.py`, declare a Pydantic v1 model with one field per CSV column. Use existing models such as `AWSCISModel` in `prowler/lib/outputs/compliance/cis/models.py` as the reference. Fields typically include `Provider`, `Description`, `AccountId`, `Region`, `AssessmentDate`, `Requirements_Id`, `Requirements_Description`, one `Requirements_Attributes_*` field per attribute key, plus the finding fields `Status`, `StatusExtended`, `ResourceId`, `ResourceName`, `CheckId`, `Muted`, `Framework`, `Name`.
+
+#### Step 2 — Implement the transformer
+
+In `my_framework_aws.py`, subclass `ComplianceOutput` from `prowler.lib.outputs.compliance.compliance_output` and implement `transform(findings, compliance, compliance_name)`. Iterate over `findings`, match each finding to the requirements it satisfies through `finding.compliance.get(compliance_name, [])`, and append one row per attribute to `self._data`.
+
+#### Step 3 — Add the summary-table dispatcher
+
+In `my_framework.py`, implement `get_my_framework_table(findings, bulk_checks_metadata, compliance_framework, output_filename, output_directory, compliance_overview)` following the pattern in `prowler/lib/outputs/compliance/cis/cis.py`.
+
+#### Step 4 — Register the framework in the dispatchers
+
+- Add the dispatcher call in `prowler/lib/outputs/compliance/compliance.py`, inside `display_compliance_table`, with a branch such as `elif "my_framework" in compliance_framework:`.
+- Register the CSV model and transformer in `prowler/lib/outputs/compliance/compliance_output.py` so the CSV file is emitted during the scan.
+
+<Note>
+For NIST-style catalogs that use `Generic_Compliance_Requirement_Attribute`, no custom formatter is needed. The generic formatter in `prowler/lib/outputs/compliance/generic/` handles them automatically, provided the JSON validates against the generic attribute schema.
+</Note>
+
+### Legacy-to-universal adapter
 
 At load time, every legacy file is transparently adapted to a `ComplianceFramework` via `adapt_legacy_to_universal()` (`compliance_models.py:819`), which: (a) flattens the first element of `Attributes` into a flat `attributes` dict, (b) wraps `Checks` as `{provider_lower: [...]}`, (c) infers `attributes_metadata` from the matched Pydantic class via `_infer_attribute_metadata()`. The rest of Prowler (CSV/OCSF/PDF output, CLI table) then treats both formats identically.
 
+Loader-error behaviour differs between the two entry points:
+
+- `load_compliance_framework()` (legacy) is **fail-fast**: it calls `sys.exit(1)` on any `ValidationError` (`compliance_models.py:464`).
+- `load_compliance_framework_universal()` is more lenient — it logs the error and returns `None`, so `get_bulk_compliance_frameworks_universal()` simply skips the broken file and keeps loading the rest.
+
+## Version handling
+
+Prowler matches frameworks by concatenating `Framework` and `Version`. A missing or empty `Version` collapses several frameworks to the same key and breaks CLI filtering with `--compliance`.
+
+- Always set `Version` (or `version` for universal frameworks) to a non-empty string, even for frameworks that rename editions rather than version them. Use the edition identifier (for example `RD2022`, `v2025.10`, `4.0`, `2022/2554`).
+- When the source catalog has no version, use the first year of adoption or the release date.
+- For **legacy** files, make sure the version substring embedded in the filename matches `Version`, because the CLI dispatcher reads `compliance_framework.split("_")[1]` to select the correct version.
+
 ## Validating Your Framework
 
-Before opening a PR, validate the JSON loads cleanly against the model and that every referenced check actually exists. The framework key inside `bulk` is the **basename of the JSON file** (without `.json`); for the universal `prowler/compliance/dora.json` that key is `dora`, for the legacy `prowler/compliance/aws/cis_5.0_aws.json` it is `cis_5.0_aws`.
+Before opening a PR, validate the JSON loads cleanly against the model and that every referenced check actually exists.
+
+### 1. Schema validation
+
+For **universal** frameworks, load the file and inspect what was parsed. The framework key inside `bulk` is the **basename of the JSON file** (without `.json`); for `prowler/compliance/dora.json` that key is `dora`, for `prowler/compliance/aws/cis_5.0_aws.json` it is `cis_5.0_aws`.
 
 ```python
 from prowler.lib.check.compliance_models import (
@@ -252,7 +509,9 @@ bulk = get_bulk_compliance_frameworks_universal("aws")
 assert "<your_framework_filename_without_json>" in bulk
 ```
 
-Cross-check that every check name maps to a real check directory:
+### 2. Check existence cross-check
+
+There is **no automatic check-existence validation** at load time. Cross-check that every check name in your framework maps to a real check directory:
 
 ```python
 import os
@@ -266,24 +525,106 @@ for svc in os.listdir("prowler/providers/aws/services"):
             real.add(entry)
 
 referenced = {c for r in fw.requirements for c in r.checks.get("aws", [])}
-assert not (referenced - real), referenced - real
+missing = referenced - real
+assert not missing, f"checks referenced in framework but not found in repo: {sorted(missing)}"
 ```
 
-Run the universal compliance model test suite to confirm no regression:
+### 3. CLI smoke test
 
-```sh
-pytest tests/lib/check/universal_compliance_models_test.py -q
+```bash
+poetry run python prowler-cli.py <provider> --list-compliance
 ```
 
-## Running and Listing Your Framework
+The framework must appear in the output. A validation error indicates a schema mismatch.
+
+```bash
+poetry run python prowler-cli.py <provider> \
+  --compliance <framework_key> \
+  --log-level ERROR
+```
+
+Verify that:
+
+- Prowler produces a CSV file under `output/compliance/` with the expected name.
+- The CLI summary table lists every section / pillar of the framework.
+- Findings roll up under the expected requirements.
+
+### 4. Inspect the CSV output
+
+Open the generated CSV and confirm:
+
+- All columns defined in `models.py` (legacy) or in `attributes_metadata` (universal) appear.
+- Every requirement has at least one row per scanned resource (when there are findings).
+- Attribute values such as `Requirements_Attributes_Section` reflect the JSON content.
+
+### 5. Verify the framework in Prowler App
+
+Launch Prowler App locally (`docker compose up` from the repository root) and run a scan with the new compliance framework. Confirm the compliance page renders the requirements, sections, and status widgets correctly.
+
+## Testing
+
+Compliance contributions require two layers of tests.
+
+- **Schema tests** exercise the Pydantic models. Extend `tests/lib/check/universal_compliance_models_test.py` with a case that loads the new JSON file and asserts the attribute type matches the expected model.
+- **Output tests** (legacy frameworks only) exercise the transformer. Mirror the structure under `tests/lib/outputs/compliance/<framework>/` with fixtures that feed synthetic findings through the transformer and assert the resulting CSV rows.
+
+Run the suite with:
+
+```bash
+poetry run pytest -n auto tests/lib/check/universal_compliance_models_test.py \
+  tests/lib/outputs/compliance/
+```
+
+For guidance on writing Prowler SDK tests, refer to [Unit Testing](/developer-guide/unit-testing).
+
+## Running and listing your framework
 
 Once the file is in place, the CLI auto-discovers it:
 
 ```sh
-prowler <provider> --list-compliance                          # framework appears in the list
-prowler <provider> --compliance <framework_name> --list-checks
-prowler <provider> --compliance <framework_name>              # full scan + compliance report
-prowler <provider> --compliance <framework_name> --list-compliance-requirements <framework_name>
+prowler <provider> --list-compliance                                            # framework appears in the list
+prowler <provider> --compliance <framework_key> --list-checks
+prowler <provider> --compliance <framework_key>                                 # full scan + compliance report
+prowler <provider> --compliance <framework_key> --list-compliance-requirements <framework_key>
 ```
 
 For end-user-facing tutorials (recommended for high-profile frameworks), add a dedicated page under `docs/user-guide/compliance/tutorials/` and register it in the `"Compliance"` group of `docs/docs.json`. See `docs/user-guide/compliance/tutorials/threatscore.mdx` as a reference.
+
+## Submitting the pull request
+
+Before opening the pull request:
+
+1. Run the complete QA pipeline:
+    ```bash
+    poetry run pre-commit run --all-files
+    poetry run pytest -n auto
+    ```
+2. Add a changelog entry under the `### 🚀 Added` section of `prowler/CHANGELOG.md`, describing the new framework and the providers it covers.
+3. Follow the [Pull Request Template](https://github.com/prowler-cloud/prowler/blob/master/.github/pull_request_template.md) and set the PR title using Conventional Commits, e.g. `feat(compliance): add My Framework 1.0 for AWS`.
+4. Request review from the compliance codeowners listed in `.github/CODEOWNERS`.
+
+## Troubleshooting
+
+The following issues are the most common when contributing a compliance framework.
+
+- **`ValidationError: field required` during scan (legacy).** The JSON is missing a required attribute field. Re-check the matching Pydantic model in `prowler/lib/check/compliance_models.py`.
+- **All attributes collapse to `Generic_Compliance_Requirement_Attribute` values (legacy).** The Pydantic `Union` is ordered incorrectly, or the JSON matches only the generic shape. Keep the generic model in the last Union position and ensure every required field is present in the JSON.
+- **`attributes_metadata validation failed` (universal).** The root validator in `compliance_models.py:669` rejected the file. The error message lists each offending requirement; common causes are unknown attribute keys (typo or missing entry in `attributes_metadata`), enum violations, or missing required keys.
+- **`--compliance` filter does not find the framework.** For legacy: the filename does not match `<framework>_<version>_<provider>.json`, the version is empty, or the file lives outside `prowler/compliance/<provider>/`. For universal: the file is not at the top level of `prowler/compliance/` or it loaded as `None` (check logs for the validation error).
+- **CLI summary table is empty but the CSV is populated (legacy).** The dispatcher branch in `prowler/lib/outputs/compliance/compliance.py` is missing or its substring match does not catch the framework key.
+- **CSV file is missing after the scan (legacy).** The transformer class is not registered in `prowler/lib/outputs/compliance/compliance_output.py`, or `transform()` raises silently. Run the scan with `--log-level DEBUG`.
+- **Findings do not roll up under a requirement.** A check listed in `Checks` either does not exist for that provider or is spelled incorrectly. Run `--list-checks | grep <check_name>` to confirm, or run the check-existence cross-check from "Validating Your Framework".
+
+## Reference examples
+
+Use the following files as templates when modeling a new contribution.
+
+- `prowler/compliance/dora.json` — universal schema, single-provider populated (AWS), ready to extend with more providers.
+- `prowler/compliance/csa_ccm_4.0.json` — universal schema, multi-provider populated (AWS, Azure, GCP, AlibabaCloud, OracleCloud).
+- `prowler/compliance/aws/cis_2.0_aws.json` — legacy CIS attribute shape.
+- `prowler/compliance/aws/nist_800_53_revision_5_aws.json` — legacy generic attribute shape.
+- `prowler/compliance/aws/ccc_aws.json` — legacy CCC attribute shape.
+- `prowler/compliance/azure/ens_rd2022_azure.json` — legacy ENS attribute shape.
+- `prowler/lib/check/compliance_models.py` — canonical Pydantic schemas for both formats.
+- `prowler/lib/outputs/compliance/cis/` — reference implementation of a multi-provider legacy output formatter.
+- `prowler/lib/outputs/compliance/generic/` — reference implementation of a legacy generic output formatter.
