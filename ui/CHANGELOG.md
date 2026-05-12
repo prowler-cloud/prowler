@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
+- Lighthouse now accepts Prowler App Finding Groups MCP tools [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
 
 ---
 
