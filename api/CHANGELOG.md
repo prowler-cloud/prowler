@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.27.1] (Prowler v5.26.1)
+## [1.28.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
 
@@ -11,6 +11,10 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔄 Changed
 
 - Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+
+---
+
+## [1.27.1] (Prowler v5.26.1)
 
 ### 🐞 Fixed
 
