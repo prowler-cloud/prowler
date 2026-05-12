@@ -34,9 +34,7 @@ def create_parent_and_attach(apps, schema_editor):
                 [INDEX_NAME, child_idx],
             )
             if cursor.fetchone() is None:
-                cursor.execute(
-                    f"ALTER INDEX {INDEX_NAME} ATTACH PARTITION {child_idx}"
-                )
+                cursor.execute(f"ALTER INDEX {INDEX_NAME} ATTACH PARTITION {child_idx}")
 
 
 def drop_parent_index(apps, schema_editor):
