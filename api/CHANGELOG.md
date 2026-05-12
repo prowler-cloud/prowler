@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [1.27.1] (Prowler v5.26.1)
 
 ### 🚀 Added
@@ -20,7 +18,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
->>>>>>> 6dfa13575 (perf(api): add multi-column GIN index on findings array fields (#11001))
 ## [1.27.0] (Prowler v5.26.0)
 
 ### 🚀 Added
