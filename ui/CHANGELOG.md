@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.27.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
+
+---
+
 ## [1.26.1] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
