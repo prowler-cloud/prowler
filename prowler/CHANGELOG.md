@@ -2,26 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [5.27.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- `iam_user_access_not_stale_to_sagemaker` check for aws provider with configurable `max_unused_sagemaker_access_days` (default 90) [(#11000)](https://github.com/prowler-cloud/prowler/pull/11000)
-- `cloudtrail_bedrock_logging_enabled` check for AWS provider [(#10858)](https://github.com/prowler-cloud/prowler/pull/10858)
-
----
-
 ## [5.26.1] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
 
-- `entra_users_mfa_capable` no longer flags disabled guest users by requesting `accountEnabled` and `userType` from Microsoft Graph via `$select` and using Graph as the source of truth for `account_enabled` (EXO `Get-User` does not return guest users) [(#10921)](https://github.com/prowler-cloud/prowler/issues/10921)
+- `entra_users_mfa_capable` no longer flags disabled guest users by requesting `accountEnabled` and `userType` from Microsoft Graph via `$select` and using Graph as the source of truth for `account_enabled` (EXO `Get-User` does not return guest users) [(#11002)](https://github.com/prowler-cloud/prowler/issues/11002)
 
 ---
 
->>>>>>> 1b0e12ec5 (fix(m365): exclude disabled guest users from entra_users_mfa_capable (#11002))
 ## [5.26.0] (Prowler v5.26.0)
 
 ### 🚀 Added
