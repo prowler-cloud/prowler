@@ -9,6 +9,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
 - Attack Paths graph now uses React Flow with improved layout, interactions, export, minimap, and browser test coverage [(#10686)](https://github.com/prowler-cloud/prowler/pull/10686)
 
+### 🐞 Fixed
+
+- Finding drawer no longer renders literal backticks around inline code in Risk, Description and Remediation sections [(#11142)](https://github.com/prowler-cloud/prowler/pull/11142)
+
 ---
 
 ## [1.26.1] (Prowler 5.26.1)
