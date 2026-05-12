@@ -18,7 +18,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 |-----------|-------|----------|
 | SDK | Python 3.10+, Poetry | `prowler/` |
 | API | Django 5.1, DRF, Celery | `api/` |
-| UI | Next.js 15, React 19, Tailwind 4 | `ui/` |
+| UI | Next.js 16, React 19, Tailwind 4 | `ui/` |
 | MCP | FastMCP 2.13.1 | `mcp_server/` |
 
 ## Quick Commands
