@@ -73,11 +73,7 @@ class Entra(M365Service):
             )
 
         self.tenant_domain = provider.identity.tenant_domain
-<<<<<<< HEAD
-=======
-        self.tenant_id = getattr(provider.identity, "tenant_id", None)
         self.user_registration_details_error: Optional[str] = None
->>>>>>> 7f3dcdf02 (fix(m365): surface AuditLog.Read.All permission errors instead of false positives (#10907))
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
