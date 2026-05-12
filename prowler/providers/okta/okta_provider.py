@@ -164,10 +164,7 @@ class OktaProvider(Provider):
         if not client_id:
             missing.append("--okta-client-id / OKTA_CLIENT_ID")
         if not private_key and not private_key_file:
-            missing.append(
-                "--okta-private-key / OKTA_PRIVATE_KEY (or "
-                "--okta-private-key-file / OKTA_PRIVATE_KEY_FILE)"
-            )
+            missing.append("OKTA_PRIVATE_KEY (or OKTA_PRIVATE_KEY_FILE)")
         if missing:
             raise OktaEnvironmentVariableError(
                 file=os.path.basename(__file__),

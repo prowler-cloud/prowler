@@ -9,11 +9,18 @@ from prowler.providers.okta.services.signon.signon_service import (
 from tests.providers.okta.okta_fixtures import set_mocked_okta_provider
 
 
-def _fake_policy(policy_id: str, name: str, system: bool = True):
+def _fake_policy(
+    policy_id: str,
+    name: str,
+    system: bool = True,
+    priority: int | None = 1,
+    status: str = "ACTIVE",
+):
     p = mock.MagicMock()
     p.id = policy_id
     p.name = name
-    p.status = "ACTIVE"
+    p.priority = priority
+    p.status = status
     p.system = system
     return p
 
@@ -23,11 +30,15 @@ def _fake_rule(
     name: str,
     *,
     system: bool = False,
+    priority: int | None = 1,
+    status: str = "ACTIVE",
     max_session_idle_minutes: int = None,
 ):
     r = mock.MagicMock()
     r.id = rule_id
     r.name = name
+    r.priority = priority
+    r.status = status
     r.system = system
     r.actions.signon.session.max_session_idle_minutes = max_session_idle_minutes
     r.actions.signon.session.max_session_lifetime_minutes = None
@@ -94,10 +105,14 @@ class Test_Signon_service:
         policy_obj = service.global_session_policies["pol-default"]
         assert isinstance(policy_obj, GlobalSessionPolicy)
         assert policy_obj.is_default is True
+        assert policy_obj.priority == 1
+        assert policy_obj.status == "ACTIVE"
         assert len(policy_obj.rules) == 2
         rules_by_name = {r.name: r for r in policy_obj.rules}
         assert isinstance(rules_by_name["Default Rule"], GlobalSessionPolicyRule)
         assert rules_by_name["Default Rule"].is_default is True
+        assert rules_by_name["Default Rule"].priority == 1
+        assert rules_by_name["Default Rule"].status == "ACTIVE"
         assert rules_by_name["Strict 15min"].is_default is False
         assert rules_by_name["Strict 15min"].max_session_idle_minutes == 15
 

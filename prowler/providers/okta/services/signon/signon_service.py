@@ -67,6 +67,7 @@ class Signon(OktaService):
             result[policy.id] = GlobalSessionPolicy(
                 id=policy.id,
                 name=getattr(policy, "name", "") or "",
+                priority=getattr(policy, "priority", None),
                 status=getattr(policy, "status", "") or "",
                 is_default=bool(getattr(policy, "system", False)),
                 rules=rules,
@@ -106,6 +107,8 @@ class Signon(OktaService):
                 GlobalSessionPolicyRule(
                     id=getattr(rule, "id", "") or "",
                     name=getattr(rule, "name", "") or "",
+                    priority=getattr(rule, "priority", None),
+                    status=getattr(rule, "status", "") or "",
                     is_default=bool(getattr(rule, "system", False)),
                     max_session_idle_minutes=getattr(
                         session, "max_session_idle_minutes", None
@@ -156,6 +159,8 @@ class Signon(OktaService):
 class GlobalSessionPolicyRule(BaseModel):
     id: str
     name: str
+    priority: Optional[int] = None
+    status: str = ""
     is_default: bool = False
     max_session_idle_minutes: Optional[int] = None
     max_session_lifetime_minutes: Optional[int] = None
@@ -167,6 +172,7 @@ class GlobalSessionPolicyRule(BaseModel):
 class GlobalSessionPolicy(BaseModel):
     id: str
     name: str
+    priority: Optional[int] = None
     status: str = ""
     is_default: bool = False
     rules: list[GlobalSessionPolicyRule] = []

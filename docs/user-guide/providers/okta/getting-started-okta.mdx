@@ -12,7 +12,7 @@ The initial Okta provider release ships with one check (`signon_global_session_i
 
 ## Prerequisites
 
-- An Okta organization on **Identity Engine** (Classic orgs are not supported).
+- An Okta organization. The UI examples below use **Identity Engine** naming such as **Global Session Policy**; Classic Engine exposes the equivalent sign-on policy concepts under older names.
 - A **Super Administrator** account on that organization to perform the one-time service-app setup.
 - Python 3.10+ and Prowler 5.26.0 or later installed locally.
 
@@ -26,7 +26,7 @@ The initial Okta provider release ships with one check (`signon_global_session_i
 <Warning>
 **Disable the "Public client app admins" org setting**
 
-Under **Security → General → Default org settings**, ensure **Public client app admins** is **off**. When enabled, every newly created service app is auto-assigned the Super Admin role, which would silently grant Prowler far more privilege than required.
+Under **Settings → Account**, ensure **Public client app admins** is **off**. When enabled, newly created service apps can be auto-assigned the Super Admin role after scopes are granted, which would silently grant Prowler far more privilege than required.
 </Warning>
 
 ## 2. Grant the required OAuth scopes
@@ -93,6 +93,12 @@ poetry run python prowler-cli.py okta --check signon_global_session_idle_timeout
 Prowler will print a summary table; full findings are written to the configured output formats.
 
 ## Troubleshooting
+
+### STIG Rule Ordering
+
+The initial check is mapped to DISA STIG `V-273186` / `OKTA-APP-000020`. Prowler implements the STIG procedure as written: the **Default Policy** must have a **Priority 1** rule that is **not** `Default Rule`, and that rule must set **Maximum Okta global session idle time** to 15 minutes or less.
+
+This is stricter than simply finding the same timeout value somewhere else in the policy set. A compliant custom rule in another policy, or a compliant timeout on the built-in `Default Rule`, doesn't satisfy this STIG procedure.
 
 ### Default Scopes
 

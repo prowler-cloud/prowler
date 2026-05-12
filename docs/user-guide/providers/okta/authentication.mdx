@@ -8,7 +8,7 @@ Prowler authenticates to Okta as a **service application** using **OAuth 2.0 wit
 
 ### Prerequisites
 
-- An Okta organization on **Identity Engine** (Classic orgs are not supported).
+- An Okta organization. The UI examples below use **Identity Engine** terminology such as **Global Session Policy**; Classic Engine exposes equivalent sign-on policy concepts under older naming.
 - A **Super Administrator** account on that organization for the one-time service-app setup.
 - An **API Services** app integration created in the Okta Admin Console.
 
@@ -50,7 +50,7 @@ The service application must be assigned the built-in **Read-Only Administrator*
 
 ### 1. Disable the privilege-escalation bypass (org-wide, one-time)
 
-In the Okta Admin Console, go to **Security → General → App settings** and ensure **Public client app admins** is **off**. When enabled, every API Services app you create is silently auto-assigned the Super Administrator role — which would invalidate the read-only premise of this integration.
+In the Okta Admin Console, go to **Settings → Account → Public client app admins** and ensure it is **off**. When enabled, every API Services app can be auto-assigned the Super Administrator role after scopes are granted, which would invalidate the read-only premise of this integration.
 
 ![Okta — disable Public client app admins](/images/providers/okta-disable-public-client-app-admins.png)
 
