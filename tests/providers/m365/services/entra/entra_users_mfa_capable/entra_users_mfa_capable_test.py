@@ -468,7 +468,10 @@ class Test_entra_users_mfa_capable:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "Cannot verify MFA capability for user Test User" in result[0].status_extended
+            assert (
+                "Cannot verify MFA capability for user Test User"
+                in result[0].status_extended
+            )
             assert "AuditLog.Read.All" in result[0].status_extended
             assert result[0].resource == entra_client.users[user_id]
             assert result[0].resource_name == "Test User"

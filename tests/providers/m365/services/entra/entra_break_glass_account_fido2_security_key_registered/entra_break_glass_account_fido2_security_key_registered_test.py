@@ -552,7 +552,10 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "Cannot verify FIDO2 security key registration for break glass account BreakGlass1" in result[0].status_extended
+            assert (
+                "Cannot verify FIDO2 security key registration for break glass account BreakGlass1"
+                in result[0].status_extended
+            )
             assert "AuditLog.Read.All" in result[0].status_extended
             assert result[0].resource_name == "BreakGlass1"
             assert result[0].resource_id == bg_user_id
@@ -613,7 +616,10 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
             # One finding for the present user; the missing one is skipped.
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "Cannot verify FIDO2 security key registration for break glass account BreakGlass1" in result[0].status_extended
+            assert (
+                "Cannot verify FIDO2 security key registration for break glass account BreakGlass1"
+                in result[0].status_extended
+            )
             assert "AuditLog.Read.All" in result[0].status_extended
             assert result[0].resource == entra_client.users[present_user_id]
             assert result[0].resource_name == "BreakGlass1"
