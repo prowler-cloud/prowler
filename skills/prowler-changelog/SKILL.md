@@ -71,6 +71,8 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 - **Blank line after section header** before first entry
 - **Blank line between sections**
 - Be specific: what changed, not why (that's in the PR)
+- Keep entries readable: use spaces around inline code and product names, and wrap endpoints, commands, errors, task names, and file paths in backticks
+- Avoid long run-on sentences; split complex changes into one concise result plus one concise context clause
 - One entry per PR (can link multiple PRs for related changes)
 - No period at the end
 - Do NOT start with redundant verbs (section header already provides the action)
@@ -113,6 +115,21 @@ Prowler follows [semver.org](https://semver.org/):
 
 ---                                  # Horizontal rule between versions
 ```
+
+## Mandatory Changelog Preflight
+
+Before editing any `CHANGELOG.md`, always inspect the active release boundary:
+
+1. Read the UNRELEASED block plus the latest three released version blocks:
+   ```bash
+   awk '/^## \[/{n++} n<=4 {print}' ui/CHANGELOG.md
+   ```
+2. Identify the **only writable block**: the block whose header contains `(Prowler UNRELEASED)`.
+3. Treat every block whose header contains `(Prowler vX.Y.Z)` as immutable. Do not add, move, reword, reorder, or deduplicate entries there.
+4. If your PR's entry appears in any of the latest three released blocks, remove it from the released block and add it to the correct section in the UNRELEASED block.
+5. If there is no UNRELEASED block at the top, stop and ask before editing.
+
+**Do not trust the current topmost matching section name.** A released block can contain the same section heading (`### 🚀 Added`, `### 🔄 Changed`, etc.). Always anchor edits to the `Prowler UNRELEASED` version block first.
 
 ## Adding a Changelog Entry
 
@@ -175,6 +192,15 @@ This maintains chronological order within each section (oldest at top, newest at
 - Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs [(#9797)](https://github.com/prowler-cloud/prowler/pull/9797)
 ```
 
+### Readable Technical Entries
+
+```markdown
+# GOOD - Technical but readable
+### 🐞 Fixed
+- `POST /api/v1/scans` no longer intermittently fails with `Scan matching query does not exist`; scan dispatch now publishes the `scan-perform` Celery task after the transaction commits [(#11122)](https://github.com/prowler-cloud/prowler/pull/11122)
+- `entra_users_mfa_capable` no longer flags disabled guest users; Microsoft Graph is now the source of truth for `account_enabled` because EXO `Get-User` omits guest users [(#11002)](https://github.com/prowler-cloud/prowler/pull/11002)
+```
+
 ### Bad Entries
 
 ```markdown
@@ -189,6 +215,8 @@ This maintains chronological order within each section (oldest at top, newest at
 - Added new feature for users             # Missing PR link, redundant verb
 - Add search bar [(#123)]                 # Redundant verb (section already says "Added")
 - This PR adds a cool new thing (#123)    # Wrong link format, conversational
+- POST /api/v1/scanswas intermittently failing withScan matching query does not existin thescan-performworker (#11122)  # Missing spaces/backticks, unreadable
+- entra_users_mfa_capable no longer flags disabled guest users by requesting accountEnabled and userType from Microsoft Graph via $select and using Graph as the source of truth for account_enabled (EXO Get-User does not return guest users) (#11002)  # Run-on sentence, identifiers not formatted
 ```
 
 ## PR Changelog Gate
