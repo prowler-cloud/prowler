@@ -1,10 +1,15 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AddRoleForm } from "./add-role-form";
 
+const routerMocks = vi.hoisted(() => ({
+  push: vi.fn(),
+}));
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => routerMocks,
 }));
 
 vi.mock("@/actions/roles/roles", () => ({
@@ -73,6 +78,7 @@ vi.mock("@/components/ui", () => ({
 
 describe("AddRoleForm", () => {
   afterEach(() => {
+    routerMocks.push.mockClear();
     vi.unstubAllEnvs();
   });
 
@@ -98,5 +104,17 @@ describe("AddRoleForm", () => {
     // Then
     expect(screen.queryByText("Manage Alerts")).not.toBeInTheDocument();
     expect(screen.queryByText("Manage Billing")).not.toBeInTheDocument();
+  });
+
+  it("navigates back to roles when cancel is clicked", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[]} />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: /cancel/i }));
+
+    // Then
+    expect(routerMocks.push).toHaveBeenCalledWith("/roles");
   });
 });
