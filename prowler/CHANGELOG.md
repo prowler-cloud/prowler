@@ -10,6 +10,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `iam_user_access_not_stale_to_sagemaker` check for AWS provider with configurable `max_unused_sagemaker_access_days` (default 90) [(#11000)](https://github.com/prowler-cloud/prowler/pull/11000)
 - `cloudtrail_bedrock_logging_enabled` check for AWS provider [(#10858)](https://github.com/prowler-cloud/prowler/pull/10858)
 
+### 🔄 Changed
+
+- `entra_emergency_access_exclusion` check for M365 provider now scopes the exclusion requirement to enabled Conditional Access policies with a `Block` grant control instead of every enabled policy, focusing on the lockout-relevant policy set [(#10849)](https://github.com/prowler-cloud/prowler/pull/10849)
+
 ---
 
 ## [5.26.1] (Prowler UNRELEASED)
@@ -17,10 +21,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🐞 Fixed
 
 - `entra_users_mfa_capable` no longer flags disabled guest users by requesting `accountEnabled` and `userType` from Microsoft Graph via `$select` and using Graph as the source of truth for `account_enabled` (EXO `Get-User` does not return guest users) [(#11002)](https://github.com/prowler-cloud/prowler/pull/11002)
-
-### 🔄 Changed
-
-- `entra_emergency_access_exclusion` check for M365 provider now scopes the exclusion requirement to enabled Conditional Access policies with a `Block` grant control instead of every enabled policy, focusing on the lockout-relevant policy set [(#10849)](https://github.com/prowler-cloud/prowler/pull/10849)
 
 ---
 
