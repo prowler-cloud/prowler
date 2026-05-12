@@ -271,7 +271,11 @@ export const EditRoleForm = ({
             )}
           </div>
         )}
-        <FormButtons submitText="Update Role" isDisabled={isLoading} />
+        <FormButtons
+          submitText="Update Role"
+          isDisabled={isLoading}
+          onCancel={() => router.push("/roles")}
+        />
       </form>
     </Form>
   );
