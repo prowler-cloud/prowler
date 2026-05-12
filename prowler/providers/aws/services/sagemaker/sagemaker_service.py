@@ -261,7 +261,7 @@ class SageMaker(AWSService):
                 domain.auth_mode = describe_domain["AuthMode"]
         except Exception as error:
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _list_endpoint_configs(self, regional_client):
