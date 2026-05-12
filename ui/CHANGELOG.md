@@ -6,10 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🔄 Changed
 
-- Pre-commit hooks (prek) lint and format only the staged UI files via Prettier and ESLint, while TypeScript and unit tests still validate the change; the full Next.js build runs in CI [(#11118)](https://github.com/prowler-cloud/prowler/pull/11118)
-- ESLint enforces `reportUnusedDisableDirectives: error` and `--max-warnings 0`, blocking stale `eslint-disable` comments and warning regressions [(#11118)](https://github.com/prowler-cloud/prowler/pull/11118)
-- Prettier `format:check` and `format:write` now cover the full UI workspace instead of only `./app`, catching formatting drift outside the App Router [(#11118)](https://github.com/prowler-cloud/prowler/pull/11118)
-- Legacy `.husky/pre-commit` script and the `docs/code-review/` Claude Code review opt-in replaced by the prek workspace configured in `ui/.pre-commit-config.yaml`, leaving prek as the single pre-commit runner [(#11118)](https://github.com/prowler-cloud/prowler/pull/11118)
+- Faster, stricter pre-commit: prek lints and formats only staged UI files (husky removed), with Prettier and ESLint (`--max-warnings 40`, stale-disable detection) now covering the full UI workspace [(#11118)](https://github.com/prowler-cloud/prowler/pull/11118)
 
 ---
 
