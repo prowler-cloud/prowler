@@ -521,16 +521,107 @@ class Test_Entra_Service:
 
         assert len(users) == 6
         assert users_builder.get.await_count == 1
-        assert users_builder.get.await_args.kwargs == {}
+        # The Graph users.get() call must request accountEnabled, userType and
+        # onPremisesSyncEnabled via $select. They are not part of the default
+        # property set, and omitting them causes disabled guest users to leak
+        # into checks like entra_users_mfa_capable (issue #10921).
+        request_configuration = users_builder.get.await_args.kwargs[
+            "request_configuration"
+        ]
+        assert set(request_configuration.query_parameters.select) == {
+            "id",
+            "displayName",
+            "userType",
+            "accountEnabled",
+            "onPremisesSyncEnabled",
+        }
         with_url_mock.assert_called_once_with("next-link")
         assert users["user-1"].directory_roles_ids == ["role-template-1"]
         assert users["user-6"].directory_roles_ids == ["role-template-1"]
+        # When Graph does not return accountEnabled (legacy SimpleNamespace
+        # fixtures) we still honour the EXO PowerShell fallback for backwards
+        # compatibility.
         assert users["user-6"].account_enabled is False
         assert users["user-1"].is_mfa_capable is True
         assert users["user-2"].is_mfa_capable is False
         assert users["user-1"].authentication_methods == ["fido2SecurityKey"]
         assert users["user-6"].authentication_methods == ["mobilePhone"]
         assert users["user-2"].authentication_methods == []
+
+    def test__get_users_uses_graph_account_enabled_for_disabled_guests(self):
+        """Regression test for https://github.com/prowler-cloud/prowler/issues/10921.
+
+        Disabled guest users do not appear in EXO's ``Get-User`` output, so the
+        previous code resolved their ``account_enabled`` from the EXO map,
+        defaulted it to ``True`` and surfaced them as failing findings in
+        ``entra_users_mfa_capable``. The Graph ``accountEnabled`` value must be
+        used as the source of truth so disabled guests are excluded.
+        """
+        entra_service = Entra.__new__(Entra)
+        # Empty EXO map mirrors the production scenario where the disabled guest
+        # is absent from Get-User results.
+        entra_service.user_accounts_status = {}
+
+        graph_users = [
+            SimpleNamespace(
+                id="member-1",
+                display_name="Member User",
+                on_premises_sync_enabled=False,
+                account_enabled=True,
+                user_type="Member",
+            ),
+            SimpleNamespace(
+                id="guest-1",
+                display_name="Disabled Guest",
+                on_premises_sync_enabled=False,
+                account_enabled=False,
+                user_type="Guest",
+            ),
+            SimpleNamespace(
+                id="guest-2",
+                display_name="Enabled Guest",
+                on_premises_sync_enabled=False,
+                account_enabled=True,
+                user_type="Guest",
+            ),
+        ]
+        users_response = SimpleNamespace(
+            value=graph_users,
+            odata_next_link=None,
+        )
+        users_builder = SimpleNamespace(
+            get=AsyncMock(return_value=users_response),
+            with_url=MagicMock(),
+        )
+        directory_roles_builder = SimpleNamespace(
+            get=AsyncMock(return_value=SimpleNamespace(value=[])),
+            by_directory_role_id=MagicMock(),
+        )
+        registration_details_builder = SimpleNamespace(
+            get=AsyncMock(return_value=SimpleNamespace(value=[], odata_next_link=None)),
+            with_url=MagicMock(),
+        )
+        reports_builder = SimpleNamespace(
+            authentication_methods=SimpleNamespace(
+                user_registration_details=registration_details_builder
+            )
+        )
+
+        entra_service.client = SimpleNamespace(
+            users=users_builder,
+            directory_roles=directory_roles_builder,
+            reports=reports_builder,
+        )
+
+        users = asyncio.run(entra_service._get_users())
+
+        assert len(users) == 3
+        assert users["member-1"].account_enabled is True
+        assert users["member-1"].user_type == "Member"
+        assert users["guest-1"].account_enabled is False
+        assert users["guest-1"].user_type == "Guest"
+        assert users["guest-2"].account_enabled is True
+        assert users["guest-2"].user_type == "Guest"
 
     def test__get_user_registration_details_handles_pagination(self):
         entra_service = Entra.__new__(Entra)

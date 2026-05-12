@@ -8,13 +8,17 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - AWS findings and resource details now expose a "View in AWS Console" link that opens the resource directly in the AWS Console via the universal `/go/view` ARN resolver. The per-provider external link is rendered by a new shared `ExternalResourceLink` component, which also covers the existing IaC repository link [(#9172)](https://github.com/prowler-cloud/prowler/pull/9172)
 
+### 🔄 Changed
+
+- Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
+
 ---
 
 ## [1.26.0] (Prowler v5.26.0)
 
 ### 🚀 Added
 
-- ASD Essential Eight compliance framework support: AWS scans now surface the Essential Eight overview card, accordion view (Sections normalised to `N. <name>`, controls grouped per ML1 clause) and a dedicated requirement detail panel with maturity level, assessment, cloud applicability, mitigated threats and References [(#11071)](https://github.com/prowler-cloud/prowler/pull/11071)
+- ASD Essential Eight compliance framework support [(#11071)](https://github.com/prowler-cloud/prowler/pull/11071)
 
 ### 🔄 Changed
 
