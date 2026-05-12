@@ -1,1 +1,12 @@
 node_modules/
+.next/
+build/
+dist/
+esm/
+coverage/
+.now/
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+next-env.d.ts
+public/
