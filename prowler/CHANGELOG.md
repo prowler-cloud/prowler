@@ -6,7 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- `entra_users_mfa_capable` no longer flags disabled guest users by requesting `accountEnabled` and `userType` from Microsoft Graph via `$select` and using Graph as the source of truth for `account_enabled` (EXO `Get-User` does not return guest users) [(#11002)](https://github.com/prowler-cloud/prowler/issues/11002)
+- `entra_users_mfa_capable` no longer flags disabled guest users by requesting `accountEnabled` and `userType` from Microsoft Graph via `$select` and using Graph as the source of truth for `account_enabled` (EXO `Get-User` does not return guest users) [(#11002)](https://github.com/prowler-cloud/prowler/pull/11002)
 
 ---
 
