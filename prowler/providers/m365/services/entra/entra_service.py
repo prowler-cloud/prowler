@@ -1130,6 +1130,50 @@ OAuthAppInfo
                     next_link
                 ).get()
 
+            # Fold in credentials registered on the parent Application objects.
+            # Microsoft Graph stores secrets and certificates added through
+            # "Certificates & secrets" on /applications, not on the service
+            # principal itself, so /servicePrincipals.passwordCredentials is
+            # almost always empty for normal app registrations. Joining via
+            # appId is required for the check to see those credentials.
+            app_response = await self.client.applications.get()
+            while app_response:
+                for app in getattr(app_response, "value", []) or []:
+                    app_id = getattr(app, "app_id", None)
+                    if not app_id:
+                        continue
+                    target_sp = next(
+                        (
+                            sp
+                            for sp in service_principals.values()
+                            if sp.app_id == app_id
+                        ),
+                        None,
+                    )
+                    if target_sp is None:
+                        continue
+
+                    for cred in getattr(app, "password_credentials", []) or []:
+                        target_sp.password_credentials.append(
+                            PasswordCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                                end_date_time=getattr(cred, "end_date_time", None),
+                            )
+                        )
+                    for cred in getattr(app, "key_credentials", []) or []:
+                        target_sp.key_credentials.append(
+                            KeyCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                            )
+                        )
+
+                next_link = getattr(app_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                app_response = await self.client.applications.with_url(next_link).get()
+
             # Identify permanent Tier 0 directory role assignments via the unified
             # role management endpoint. ``directoryRoles/{id}/members`` mixes
             # permanent direct assignments with PIM-activated temporary ones, so

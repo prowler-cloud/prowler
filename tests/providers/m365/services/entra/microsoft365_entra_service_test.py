@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -661,14 +662,91 @@ class Test_Entra_Service:
             with_url=MagicMock(),
         )
 
+        # The /applications endpoint returns no entries for this case, so the
+        # service-level test just exercises the customer-owned filter, not the
+        # secret join.
+        applications_response = SimpleNamespace(value=[], odata_next_link=None)
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=applications_response),
+            with_url=MagicMock(),
+        )
+
         entra_service = Entra.__new__(Entra)
         entra_service.tenant_id = tenant_id_lower
         entra_service.client = SimpleNamespace(
             service_principals=service_principals_builder,
             role_management=role_management_builder,
+            applications=applications_builder,
         )
 
         result = asyncio.run(entra_service._get_service_principals())
 
         assert set(result.keys()) == {"sp-owned"}
         assert result["sp-owned"].app_owner_organization_id == tenant_id_lower
+
+    def test__get_service_principals_merges_application_credentials(self):
+        """Secrets registered on the parent Application must be attributed to the SP."""
+        tenant_id = "11111111-1111-1111-1111-111111111111"
+
+        # SP returned by Graph with NO password_credentials of its own (the
+        # common case in production when the secret was added through "App
+        # registrations > Certificates & secrets").
+        sp_without_sp_level_secret = SimpleNamespace(
+            id="sp-owned",
+            display_name="m365-dev",
+            app_id="app-owned",
+            app_owner_organization_id=tenant_id,
+            password_credentials=[],
+            key_credentials=[],
+        )
+        sp_response = SimpleNamespace(
+            value=[sp_without_sp_level_secret], odata_next_link=None
+        )
+
+        # The corresponding Application carries the actual secret.
+        future = datetime(2099, 1, 1, tzinfo=timezone.utc)
+        application = SimpleNamespace(
+            id="app-object",
+            app_id="app-owned",
+            password_credentials=[
+                SimpleNamespace(
+                    key_id="cred-app",
+                    display_name="app-level-secret",
+                    end_date_time=future,
+                ),
+            ],
+            key_credentials=[],
+        )
+        applications_response = SimpleNamespace(
+            value=[application], odata_next_link=None
+        )
+
+        empty_assignments_response = SimpleNamespace(value=[], odata_next_link=None)
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.tenant_id = tenant_id
+        entra_service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(
+                get=AsyncMock(return_value=sp_response),
+                with_url=MagicMock(),
+            ),
+            applications=SimpleNamespace(
+                get=AsyncMock(return_value=applications_response),
+                with_url=MagicMock(),
+            ),
+            role_management=SimpleNamespace(
+                directory=SimpleNamespace(
+                    role_assignments=SimpleNamespace(
+                        get=AsyncMock(return_value=empty_assignments_response),
+                    ),
+                )
+            ),
+        )
+
+        result = asyncio.run(entra_service._get_service_principals())
+
+        merged = result["sp-owned"]
+        assert len(merged.password_credentials) == 1
+        assert merged.password_credentials[0].key_id == "cred-app"
+        assert merged.password_credentials[0].display_name == "app-level-secret"
+        assert merged.password_credentials[0].is_active()
