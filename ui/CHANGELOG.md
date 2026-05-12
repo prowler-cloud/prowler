@@ -17,10 +17,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - ASD Essential Eight compliance framework support [(#11071)](https://github.com/prowler-cloud/prowler/pull/11071)
 
-### 🚀 Added
-
-- Browser test mode using Vitest with the Playwright provider, with initial coverage of the Attack Paths page and a new `pnpm test:browser` script wired into CI
-
 ### 🔄 Changed
 
 - Standardized "Providers" wording across UI and documentation, replacing legacy "Cloud Providers" / "Accounts" / "Account Groups" copy [(#10971)](https://github.com/prowler-cloud/prowler/pull/10971)
