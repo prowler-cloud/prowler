@@ -129,5 +129,6 @@ As new services and checks land in the Okta provider, the default scope list gro
 
 - **`OktaInvalidOrgURLError`** — the org URL must be `https://<org>.okta.com` (or `oktapreview.com` / `okta-emea.com`) with no trailing slash.
 - **`OktaPrivateKeyFileError`** — confirm the file is readable and contains a non-empty PEM or JWK body.
-- **`OktaInvalidCredentialsError`** — Prowler verifies credentials by listing one sign-on policy at provider initialization. A failure here is usually a missing `okta.policies.read` scope grant, an unassigned admin role on the service app, or a private key that does not match the public JWK uploaded to Okta.
+- **`OktaInsufficientPermissionsError`** — the credential probe reached Okta but the service app cannot perform the request. The error string carries `invalid_scope`, `Forbidden`, `not authorized`, or `permission`. Fix by granting the missing `okta.*.read` scope from **Okta API Scopes** and confirming the **Read-Only Administrator** role is assigned to the service app.
+- **`OktaInvalidCredentialsError`** — the credential probe reached Okta but Okta rejected the JWT. Typically the private key on disk does not match the public JWK uploaded to the service app, or the JWT signing parameters are wrong. Regenerate the keypair and re-upload the public JWK.
 - **Token requests failing for an unknown scope** — the app was granted a narrower scope set than `OKTA_SCOPES` requests. Either narrow `OKTA_SCOPES` or grant the missing scopes in the Admin Console.
