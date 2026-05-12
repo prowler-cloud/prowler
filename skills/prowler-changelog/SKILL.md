@@ -75,6 +75,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 - No period at the end
 - Do NOT start with redundant verbs (section header already provides the action)
 - **CRITICAL: Preserve section order** — when adding a new section to the UNRELEASED block, insert it in the correct position relative to existing sections (Added → Changed → Deprecated → Removed → Fixed → Security). Never append a new section at the top or bottom without checking order
+- **CRITICAL: ALWAYS link to the PR, NEVER to the issue.** Every entry MUST use `https://github.com/prowler-cloud/prowler/pull/N`. Linking to `/issues/N` is FORBIDDEN, even when the PR fixes an issue. The issue↔PR relationship belongs in the PR body (`Fixes #N`), not in the changelog. If a fix has no PR yet, do not add the entry until the PR exists.
 
 ### Semantic Versioning Rules
 
@@ -146,6 +147,8 @@ git diff main...HEAD --name-only
 
 **CRITICAL:** Add new entries at the BOTTOM of each section, NOT at the top.
 
+**CRITICAL:** The link MUST point to the PR (`/pull/N`). Linking to `/issues/N` is FORBIDDEN. If the PR closes an issue, that mapping goes in the PR body via `Fixes #N` — never in the changelog entry.
+
 ```markdown
 ## [1.17.0] (Prowler UNRELEASED)
 
@@ -189,6 +192,7 @@ This maintains chronological order within each section (oldest at top, newest at
 - Added new feature for users             # Missing PR link, redundant verb
 - Add search bar [(#123)]                 # Redundant verb (section already says "Added")
 - This PR adds a cool new thing (#123)    # Wrong link format, conversational
+- Some bug fix [(#123)](https://github.com/prowler-cloud/prowler/issues/123)   # FORBIDDEN: must link to /pull/N, never /issues/N
 ```
 
 ## PR Changelog Gate
