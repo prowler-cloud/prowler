@@ -946,7 +946,6 @@ class Resource(RowLevelSecurityProtectedModel):
                 OpClass(Upper("name"), name="gin_trgm_ops"),
                 name="res_name_trgm_idx",
             ),
-            GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
             models.Index(fields=["tenant_id", "id"], name="resources_tenant_id_idx"),
             models.Index(
                 fields=["tenant_id", "provider_id"],
@@ -1151,6 +1150,15 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id", "check_id"],
                 name="find_tenant_scan_check_idx",
+            ),
+            GinIndex(
+                fields=[
+                    "categories",
+                    "resource_services",
+                    "resource_regions",
+                    "resource_types",
+                ],
+                name="gin_find_arrays_idx",
             ),
         ]
 
