@@ -12,6 +12,7 @@ import {
   getScoreTextClass,
   SCORE_COLORS,
 } from "@/lib/compliance/score-utils";
+import { getOrderedPillars } from "@/lib/compliance/threatscore-pillars";
 
 export interface ThreatScoreBreakdownCardProps {
   overallScore: number;
@@ -25,17 +26,17 @@ export function ThreatScoreBreakdownCard({
   const scoreLevel = getScoreLevel(overallScore);
   const scoreColor = SCORE_COLORS[scoreLevel];
 
-  // Convert section scores to tooltip data for the radial chart
-  const tooltipData = Object.entries(sectionScores).map(([name, value]) => ({
-    name,
-    value,
-    color: SCORE_COLORS[getScoreLevel(value)],
-  }));
+  const pillars = getOrderedPillars(sectionScores);
 
-  // Sort sections by score (lowest first to highlight areas needing attention)
-  const sortedSections = Object.entries(sectionScores).sort(
-    ([, a], [, b]) => a - b,
-  );
+  // Tooltip preserves canonical order so the radial chart hover panel
+  // mirrors the breakdown list below it.
+  const tooltipData = pillars
+    .filter((p) => p.hasData)
+    .map(({ name, score }) => ({
+      name,
+      value: score,
+      color: SCORE_COLORS[getScoreLevel(score)],
+    }));
 
   return (
     <Card variant="base" className="flex h-full w-full flex-col">
@@ -76,19 +77,23 @@ export function ThreatScoreBreakdownCard({
             </span>
           </div>
           <div className="space-y-2">
-            {sortedSections.map(([section, score]) => (
-              <div key={section} className="space-y-0.5">
+            {pillars.map(({ name, score, hasData }) => (
+              <div key={name} className="space-y-0.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-default-700 truncate pr-2">
-                    {section}
-                  </span>
-                  <span className={`font-semibold ${getScoreTextClass(score)}`}>
-                    {score.toFixed(1)}%
+                  <span className="text-default-700 truncate pr-2">{name}</span>
+                  <span
+                    className={`font-semibold ${
+                      hasData
+                        ? getScoreTextClass(score)
+                        : "text-text-neutral-tertiary"
+                    }`}
+                  >
+                    {hasData ? `${score.toFixed(1)}%` : "—"}
                   </span>
                 </div>
                 <Progress
-                  aria-label={`${section} score`}
-                  value={score}
+                  aria-label={`${name} score`}
+                  value={hasData ? score : 0}
                   color={getScoreColor(score)}
                   size="md"
                   className="w-full"

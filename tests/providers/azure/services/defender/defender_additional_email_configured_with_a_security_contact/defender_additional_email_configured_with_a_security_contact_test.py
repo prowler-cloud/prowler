@@ -6,7 +6,9 @@ from prowler.providers.azure.services.defender.defender_service import (
     SecurityContactConfiguration,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -14,6 +16,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_additional_email_configured_with_a_security_contact:
     def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock()
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {}
 
         with (
@@ -37,6 +40,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
     def test_defender_no_additional_emails(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock()
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -74,7 +78,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"There is not another correct email configured for subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is not another correct email configured for subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"
@@ -83,6 +87,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
     def test_defender_additional_email_configured(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock()
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
                 resource_id: SecurityContactConfiguration(
@@ -120,7 +125,7 @@ class Test_defender_additional_email_configured_with_a_security_contact:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"There is another correct email configured for subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"There is another correct email configured for subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "default"

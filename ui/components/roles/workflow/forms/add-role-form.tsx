@@ -28,6 +28,12 @@ export const AddRoleForm = ({
 }) => {
   const { toast } = useToast();
   const router = useRouter();
+  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const visiblePermissionFormFields = permissionFormFields.filter(
+    (permission) =>
+      !["manage_billing", "manage_alerts"].includes(permission.field) ||
+      isCloudEnvironment,
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(addRoleFormSchema),
@@ -39,8 +45,9 @@ export const AddRoleForm = ({
       manage_scans: false,
       unlimited_visibility: false,
       groups: [],
-      ...(process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && {
+      ...(isCloudEnvironment && {
         manage_billing: false,
+        manage_alerts: false,
       }),
     },
   });
@@ -63,17 +70,8 @@ export const AddRoleForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSelectAllChange = (checked: boolean) => {
-    const permissions = [
-      "manage_users",
-      "manage_account",
-      "manage_billing",
-      "manage_providers",
-      "manage_integrations",
-      "manage_scans",
-      "unlimited_visibility",
-    ];
-    permissions.forEach((permission) => {
-      form.setValue(permission as keyof FormValues, checked, {
+    visiblePermissionFormFields.forEach(({ field }) => {
+      form.setValue(field as keyof FormValues, checked, {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true,
@@ -95,9 +93,10 @@ export const AddRoleForm = ({
       String(values.unlimited_visibility),
     );
 
-    // Conditionally append manage_account and manage_billing
-    if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+    // Conditionally append Prowler Cloud permissions.
+    if (isCloudEnvironment) {
       formData.append("manage_billing", String(values.manage_billing));
+      formData.append("manage_alerts", String(values.manage_alerts));
     }
 
     if (values.groups && values.groups.length > 0) {
@@ -166,7 +165,7 @@ export const AddRoleForm = ({
 
           {/* Select All Checkbox */}
           <Checkbox
-            isSelected={permissionFormFields.every((perm) =>
+            isSelected={visiblePermissionFormFields.every((perm) =>
               form.watch(perm.field as keyof FormValues),
             )}
             onChange={(e) => onSelectAllChange(e.target.checked)}
@@ -181,13 +180,8 @@ export const AddRoleForm = ({
 
           {/* Permissions Grid */}
           <div className="grid grid-cols-2 gap-4">
-            {permissionFormFields
-              .filter(
-                (permission) =>
-                  permission.field !== "manage_billing" ||
-                  process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true",
-              )
-              .map(({ field, label, description }) => (
+            {visiblePermissionFormFields.map(
+              ({ field, label, description }) => (
                 <div key={field} className="flex items-center gap-2">
                   <Checkbox
                     {...form.register(field as keyof FormValues)}
@@ -212,7 +206,8 @@ export const AddRoleForm = ({
                     </div>
                   </Tooltip>
                 </div>
-              ))}
+              ),
+            )}
           </div>
         </div>
         <Divider className="my-4" />
