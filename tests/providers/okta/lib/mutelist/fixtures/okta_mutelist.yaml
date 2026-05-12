@@ -1,6 +1,6 @@
 Mutelist:
   Accounts:
-    "https://acme.okta.com":
+    "acme.okta.com":
       Checks:
         "signon_global_session_idle_timeout_15min":
           Regions:

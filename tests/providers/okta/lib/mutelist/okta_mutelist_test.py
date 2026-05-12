@@ -40,11 +40,11 @@ class TestOktaMutelist:
     def test_is_finding_muted_match(self):
         mutelist_content = {
             "Accounts": {
-                "https://acme.okta.com": {
+                "acme.okta.com": {
                     "Checks": {
                         "signon_global_session_idle_timeout_15min": {
                             "Regions": ["*"],
-                            "Resources": ["pol-default"],
+                            "Resources": ["Default Policy"],
                         }
                     }
                 }
@@ -54,21 +54,19 @@ class TestOktaMutelist:
 
         finding = MagicMock()
         finding.check_metadata.CheckID = "signon_global_session_idle_timeout_15min"
-        finding.resource_name = "pol-default"
+        finding.resource_name = "Default Policy"
         finding.resource_tags = []
 
-        assert (
-            mutelist.is_finding_muted(finding, org_url="https://acme.okta.com") is True
-        )
+        assert mutelist.is_finding_muted(finding, org_domain="acme.okta.com") is True
 
     def test_is_finding_muted_no_match(self):
         mutelist_content = {
             "Accounts": {
-                "https://acme.okta.com": {
+                "acme.okta.com": {
                     "Checks": {
                         "signon_global_session_idle_timeout_15min": {
                             "Regions": ["*"],
-                            "Resources": ["pol-default"],
+                            "Resources": ["Default Policy"],
                         }
                     }
                 }
@@ -78,9 +76,29 @@ class TestOktaMutelist:
 
         finding = MagicMock()
         finding.check_metadata.CheckID = "signon_global_session_idle_timeout_15min"
-        finding.resource_name = "pol-other"
+        finding.resource_name = "Some Other Policy"
         finding.resource_tags = []
 
-        assert (
-            mutelist.is_finding_muted(finding, org_url="https://acme.okta.com") is False
-        )
+        assert mutelist.is_finding_muted(finding, org_domain="acme.okta.com") is False
+
+    def test_is_finding_muted_no_match_on_different_org(self):
+        mutelist_content = {
+            "Accounts": {
+                "acme.okta.com": {
+                    "Checks": {
+                        "signon_global_session_idle_timeout_15min": {
+                            "Regions": ["*"],
+                            "Resources": ["*"],
+                        }
+                    }
+                }
+            }
+        }
+        mutelist = OktaMutelist(mutelist_content=mutelist_content)
+
+        finding = MagicMock()
+        finding.check_metadata.CheckID = "signon_global_session_idle_timeout_15min"
+        finding.resource_name = "Default Policy"
+        finding.resource_tags = []
+
+        assert mutelist.is_finding_muted(finding, org_domain="other.okta.com") is False

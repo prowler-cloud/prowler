@@ -22,9 +22,9 @@ class OktaBaseException(ProwlerException):
             "message": "Okta credentials are not valid",
             "remediation": "Check the client ID and private key for the Okta service app.",
         },
-        (14004, "OktaInvalidOrgURLError"): {
-            "message": "Okta organization URL is not valid",
-            "remediation": "Provide an org URL in the form https://<org>.okta.com (no trailing slash).",
+        (14004, "OktaInvalidOrgDomainError"): {
+            "message": "Okta organization domain is not valid",
+            "remediation": "Provide an Okta-managed domain such as <org>.okta.com (or .oktapreview.com / .okta-emea.com / .okta-gov.com), with no scheme and no trailing slash.",
         },
         (14005, "OktaPrivateKeyFileError"): {
             "message": "Okta private key file could not be read",
@@ -85,7 +85,7 @@ class OktaInvalidCredentialsError(OktaCredentialsError):
         )
 
 
-class OktaInvalidOrgURLError(OktaCredentialsError):
+class OktaInvalidOrgDomainError(OktaCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             14004, file=file, original_exception=original_exception, message=message

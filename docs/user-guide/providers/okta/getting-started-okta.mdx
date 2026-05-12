@@ -59,7 +59,7 @@ In **Admin assignments** for the service app, assign the built-in **Read-Only Ad
 Set the following environment variables. Using env vars is preferred over passing the values on the CLI.
 
 ```bash
-export OKTA_ORG_URL="https://acme.okta.com"
+export OKTA_ORG_DOMAIN="acme.okta.com"
 export OKTA_CLIENT_ID="0oa1234567890abcdef"
 export OKTA_PRIVATE_KEY_FILE="/secure/path/to/prowler-okta.pem"
 # Optional — defaults to "okta.policies.read"
@@ -73,7 +73,7 @@ The private key file may contain either a PEM-encoded RSA key or a JWK JSON docu
 For automated environments where writing the key to disk is not desirable (Prowler App, CI runners, container secrets, etc.), the private key may be passed directly as a string:
 
 ```bash
-export OKTA_ORG_URL="https://acme.okta.com"
+export OKTA_ORG_DOMAIN="acme.okta.com"
 export OKTA_CLIENT_ID="0oa1234567890abcdef"
 export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 ```
@@ -127,7 +127,7 @@ As new services and checks land in the Okta provider, the default scope list gro
 
 ### Common Errors
 
-- **`OktaInvalidOrgURLError`** — the org URL must be `https://<org>.okta.com` (or `oktapreview.com` / `okta-emea.com`) with no trailing slash.
+- **`OktaInvalidOrgDomainError`** — the org domain must be `<org>.okta.com` (or `.oktapreview.com` / `.okta-emea.com` / `.okta-gov.com`). Pass the bare hostname only — no `https://` scheme, no path, no trailing slash.
 - **`OktaPrivateKeyFileError`** — confirm the file is readable and contains a non-empty PEM or JWK body.
 - **`OktaInsufficientPermissionsError`** — the credential probe reached Okta but the service app cannot perform the request. The error string carries `invalid_scope`, `Forbidden`, `not authorized`, or `permission`. Fix by granting the missing `okta.*.read` scope from **Okta API Scopes** and confirming the **Read-Only Administrator** role is assigned to the service app.
 - **`OktaInvalidCredentialsError`** — the credential probe reached Okta but Okta rejected the JWT. Typically the private key on disk does not match the public JWK uploaded to the service app, or the JWT signing parameters are wrong. Regenerate the keypair and re-upload the public JWK.

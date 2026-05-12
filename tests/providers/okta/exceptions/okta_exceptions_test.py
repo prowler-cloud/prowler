@@ -6,7 +6,7 @@ from prowler.providers.okta.exceptions.exceptions import (
     OktaEnvironmentVariableError,
     OktaInsufficientPermissionsError,
     OktaInvalidCredentialsError,
-    OktaInvalidOrgURLError,
+    OktaInvalidOrgDomainError,
     OktaPrivateKeyFileError,
     OktaSetUpIdentityError,
     OktaSetUpSessionError,
@@ -17,7 +17,7 @@ EXPECTED_CODES = {
     OktaSetUpSessionError: 14001,
     OktaSetUpIdentityError: 14002,
     OktaInvalidCredentialsError: 14003,
-    OktaInvalidOrgURLError: 14004,
+    OktaInvalidOrgDomainError: 14004,
     OktaPrivateKeyFileError: 14005,
     OktaInsufficientPermissionsError: 14006,
 }
@@ -49,9 +49,9 @@ class Test_OktaExceptions:
         assert exc.message == custom
 
     def test_str_format_includes_class_code_and_message(self):
-        exc = OktaInvalidOrgURLError(message="bad url")
+        exc = OktaInvalidOrgDomainError(message="bad url")
         rendered = str(exc)
-        assert "OktaInvalidOrgURLError" in rendered
+        assert "OktaInvalidOrgDomainError" in rendered
         assert "[14004]" in rendered
         assert "bad url" in rendered
 

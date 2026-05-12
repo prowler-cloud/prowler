@@ -21,7 +21,7 @@ from prowler.providers.okta.exceptions.exceptions import (
     OktaEnvironmentVariableError,
     OktaInsufficientPermissionsError,
     OktaInvalidCredentialsError,
-    OktaInvalidOrgURLError,
+    OktaInvalidOrgDomainError,
     OktaPrivateKeyFileError,
     OktaSetUpIdentityError,
     OktaSetUpSessionError,
@@ -30,7 +30,13 @@ from prowler.providers.okta.lib.mutelist.mutelist import OktaMutelist
 from prowler.providers.okta.models import OktaIdentityInfo, OktaSession
 
 DEFAULT_SCOPES = ["okta.policies.read"]
-ORG_URL_RE = re.compile(r"^https://[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,}$")
+# Accept only Okta-managed domains. Custom (vanity) domains are rejected on
+# purpose — they're a recurring source of typos and silent misconfig and
+# Prowler's audience overwhelmingly uses Okta-managed hosts. If a customer
+# with a custom domain shows up, lift this guard behind an explicit opt-in.
+ORG_DOMAIN_RE = re.compile(
+    r"^[a-z0-9][a-z0-9-]*\.(okta\.com|oktapreview\.com|okta-emea\.com|okta-gov\.com)$"
+)
 
 
 class OktaProvider(Provider):
@@ -62,7 +68,7 @@ class OktaProvider(Provider):
 
     def __init__(
         self,
-        okta_org_url: str = "",
+        okta_org_domain: str = "",
         okta_client_id: str = "",
         okta_private_key: str = "",
         okta_private_key_file: str = "",
@@ -77,13 +83,13 @@ class OktaProvider(Provider):
         logger.info("Instantiating Okta Provider...")
 
         OktaProvider.validate_arguments(
-            okta_org_url=okta_org_url,
+            okta_org_domain=okta_org_domain,
             okta_client_id=okta_client_id,
             okta_private_key=okta_private_key,
             okta_private_key_file=okta_private_key_file,
         )
         self._session = OktaProvider.setup_session(
-            org_url=okta_org_url,
+            org_domain=okta_org_domain,
             client_id=okta_client_id,
             private_key=okta_private_key,
             private_key_file=okta_private_key_file,
@@ -139,7 +145,7 @@ class OktaProvider(Provider):
 
     @staticmethod
     def validate_arguments(
-        okta_org_url: str = "",
+        okta_org_domain: str = "",
         okta_client_id: str = "",
         okta_private_key: str = "",
         okta_private_key_file: str = "",
@@ -151,7 +157,7 @@ class OktaProvider(Provider):
         content (preferred for API/UI integrations) or as a file path.
         Raises a single combined error if any required value is missing.
         """
-        org_url = okta_org_url or environ.get("OKTA_ORG_URL", "")
+        org_domain = okta_org_domain or environ.get("OKTA_ORG_DOMAIN", "")
         client_id = okta_client_id or environ.get("OKTA_CLIENT_ID", "")
         private_key = okta_private_key or environ.get("OKTA_PRIVATE_KEY", "")
         private_key_file = okta_private_key_file or environ.get(
@@ -159,8 +165,8 @@ class OktaProvider(Provider):
         )
 
         missing = []
-        if not org_url:
-            missing.append("--okta-org-url / OKTA_ORG_URL")
+        if not org_domain:
+            missing.append("--okta-org-domain / OKTA_ORG_DOMAIN")
         if not client_id:
             missing.append("--okta-client-id / OKTA_CLIENT_ID")
         if not private_key and not private_key_file:
@@ -176,7 +182,7 @@ class OktaProvider(Provider):
 
     @staticmethod
     def setup_session(
-        org_url: str = "",
+        org_domain: str = "",
         client_id: str = "",
         private_key: str = "",
         private_key_file: str = "",
@@ -191,7 +197,7 @@ class OktaProvider(Provider):
         API/UI integrations from having to write keys to disk.
         """
         try:
-            org_url = org_url or environ.get("OKTA_ORG_URL", "")
+            org_domain = org_domain or environ.get("OKTA_ORG_DOMAIN", "")
             client_id = client_id or environ.get("OKTA_CLIENT_ID", "")
             private_key = private_key or environ.get("OKTA_PRIVATE_KEY", "")
             private_key_file = private_key_file or environ.get(
@@ -200,14 +206,15 @@ class OktaProvider(Provider):
             if not scopes:
                 scopes = environ.get("OKTA_SCOPES", "")
 
-            org_url = org_url.rstrip("/")
-            if not ORG_URL_RE.match(org_url):
-                raise OktaInvalidOrgURLError(
+            org_domain = org_domain.strip().lower()
+            if not ORG_DOMAIN_RE.match(org_domain):
+                raise OktaInvalidOrgDomainError(
                     file=os.path.basename(__file__),
                     message=(
-                        f"Invalid Okta org URL: '{org_url}'. Expected an "
-                        "HTTPS URL such as https://<org>.okta.com (or a "
-                        "custom Okta domain) with no trailing slash."
+                        f"Invalid Okta org domain: '{org_domain}'. Expected "
+                        "an Okta-managed domain such as <org>.okta.com "
+                        "(or .oktapreview.com / .okta-emea.com / "
+                        ".okta-gov.com), with no scheme and no path."
                     ),
                 )
 
@@ -248,13 +255,13 @@ class OktaProvider(Provider):
                 scope_list = list(DEFAULT_SCOPES)
 
             return OktaSession(
-                org_url=org_url,
+                org_domain=org_domain,
                 client_id=client_id,
                 scopes=scope_list,
                 private_key=private_key,
             )
 
-        except (OktaInvalidOrgURLError, OktaPrivateKeyFileError):
+        except (OktaInvalidOrgDomainError, OktaPrivateKeyFileError):
             raise
         except Exception as error:
             logger.critical(
@@ -304,7 +311,7 @@ class OktaProvider(Provider):
                     message=f"Failed to authenticate against Okta: {err}",
                 )
             return OktaIdentityInfo(
-                org_url=session.org_url,
+                org_domain=session.org_domain,
                 client_id=session.client_id,
             )
         except (OktaInvalidCredentialsError, OktaInsufficientPermissionsError):
@@ -317,7 +324,7 @@ class OktaProvider(Provider):
 
     def print_credentials(self):
         report_lines = [
-            f"Okta Org URL: {Fore.YELLOW}{self.identity.org_url}{Style.RESET_ALL}",
+            f"Okta Domain: {Fore.YELLOW}{self.identity.org_domain}{Style.RESET_ALL}",
             f"Okta Client ID: {Fore.YELLOW}{self.identity.client_id}{Style.RESET_ALL}",
             f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
         ]
@@ -328,7 +335,7 @@ class OktaProvider(Provider):
 
     @staticmethod
     def test_connection(
-        okta_org_url: str = "",
+        okta_org_domain: str = "",
         okta_client_id: str = "",
         okta_private_key: str = "",
         okta_private_key_file: str = "",
@@ -338,13 +345,13 @@ class OktaProvider(Provider):
         """Test the connection to Okta with the provided OAuth credentials."""
         try:
             OktaProvider.validate_arguments(
-                okta_org_url=okta_org_url,
+                okta_org_domain=okta_org_domain,
                 okta_client_id=okta_client_id,
                 okta_private_key=okta_private_key,
                 okta_private_key_file=okta_private_key_file,
             )
             session = OktaProvider.setup_session(
-                org_url=okta_org_url,
+                org_domain=okta_org_domain,
                 client_id=okta_client_id,
                 private_key=okta_private_key,
                 private_key_file=okta_private_key_file,

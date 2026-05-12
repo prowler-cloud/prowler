@@ -405,7 +405,7 @@ class Provider(ABC):
                     )
                 elif "okta" in provider_class_name.lower():
                     provider_class(
-                        okta_org_url=getattr(arguments, "okta_org_url", ""),
+                        okta_org_domain=getattr(arguments, "okta_org_domain", ""),
                         okta_client_id=getattr(arguments, "okta_client_id", ""),
                         okta_private_key=getattr(arguments, "okta_private_key", ""),
                         okta_private_key_file=getattr(

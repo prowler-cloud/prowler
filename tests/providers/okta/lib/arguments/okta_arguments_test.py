@@ -37,7 +37,7 @@ class TestOktaArguments:
 
         registered = {call.args[0] for call in auth_group.add_argument.call_args_list}
         assert registered == {
-            "--okta-org-url",
+            "--okta-org-domain",
             "--okta-client-id",
             "--okta-scopes",
         }

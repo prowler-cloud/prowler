@@ -428,10 +428,10 @@ class Finding(BaseModel):
             elif provider.type == "okta":
                 output_data["auth_method"] = provider.auth_method
                 output_data["account_uid"] = get_nested_attribute(
-                    provider, "identity.org_url"
+                    provider, "identity.org_domain"
                 )
                 output_data["account_name"] = get_nested_attribute(
-                    provider, "identity.org_url"
+                    provider, "identity.org_domain"
                 )
                 output_data["account_organization_uid"] = get_nested_attribute(
                     provider, "identity.client_id"

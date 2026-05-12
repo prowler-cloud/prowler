@@ -5,7 +5,7 @@ from prowler.providers.common.models import ProviderOutputOptions
 
 
 class OktaSession(BaseModel):
-    org_url: str
+    org_domain: str
     client_id: str
     scopes: list[str]
     private_key: str
@@ -14,11 +14,13 @@ class OktaSession(BaseModel):
         # Shared by the credential probe (OktaProvider.setup_identity) and
         # the service-level client (OktaService.__set_client__). Keeping the
         # builder in one place stops the two SDK config dicts from drifting.
+        # The Okta SDK expects a fully-qualified `orgUrl`; we build it from
+        # the validated domain so user input stays scheme-free.
         # DPoP proofs are sent on every token request — required by tenants
         # with "Demonstrating Proof of Possession" enabled on the service
         # app (or org-wide), harmless on tenants that don't.
         return {
-            "orgUrl": self.org_url,
+            "orgUrl": f"https://{self.org_domain}",
             "authorizationMode": "PrivateKey",
             "clientId": self.client_id,
             "scopes": self.scopes,
@@ -28,7 +30,7 @@ class OktaSession(BaseModel):
 
 
 class OktaIdentityInfo(BaseModel):
-    org_url: str
+    org_domain: str
     client_id: str
 
 
@@ -39,11 +41,8 @@ class OktaOutputOptions(ProviderOutputOptions):
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
-            org_slug = (
-                identity.org_url.replace("https://", "")
-                .replace("http://", "")
-                .replace("/", "_")
+            self.output_filename = (
+                f"prowler-output-{identity.org_domain}-{output_file_timestamp}"
             )
-            self.output_filename = f"prowler-output-{org_slug}-{output_file_timestamp}"
         else:
             self.output_filename = arguments.output_filename

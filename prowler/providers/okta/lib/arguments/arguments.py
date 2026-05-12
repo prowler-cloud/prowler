@@ -12,11 +12,15 @@ def init_parser(self):
     )
     okta_auth_subparser = okta_parser.add_argument_group("Authentication")
     okta_auth_subparser.add_argument(
-        "--okta-org-url",
+        "--okta-org-domain",
         nargs="?",
-        help="Okta organization URL (e.g. https://acme.okta.com)",
+        help=(
+            "Okta organization domain (e.g. acme.okta.com). Must be an "
+            "Okta-managed domain (.okta.com / .oktapreview.com / "
+            ".okta-emea.com / .okta-gov.com), without scheme or path."
+        ),
         default=None,
-        metavar="OKTA_ORG_URL",
+        metavar="OKTA_ORG_DOMAIN",
     )
     okta_auth_subparser.add_argument(
         "--okta-client-id",

@@ -111,7 +111,7 @@ Prowler sends DPoP (Demonstrating Proof of Possession) proofs on every token req
 Private key material **must** be supplied via environment variables — Prowler does not accept secrets through CLI flags.
 
 ```bash
-export OKTA_ORG_URL="https://YOUR-ORG.okta.com"
+export OKTA_ORG_DOMAIN="YOUR-ORG.okta.com"
 export OKTA_CLIENT_ID="0oa1234567890abcdef"
 
 # Either of the two — content takes precedence over file when both are set.
@@ -131,7 +131,7 @@ Non-secret values are also available as CLI flags for ergonomic overrides:
 
 | Flag | Equivalent env var |
 |---|---|
-| `--okta-org-url` | `OKTA_ORG_URL` |
+| `--okta-org-domain` | `OKTA_ORG_DOMAIN` |
 | `--okta-client-id` | `OKTA_CLIENT_ID` |
 | `--okta-scopes` | `OKTA_SCOPES` |
 
@@ -143,9 +143,9 @@ poetry run python prowler-cli.py okta --check signon_global_session_idle_timeout
 
 ## Troubleshooting
 
-### `OktaInvalidOrgURLError`
+### `OktaInvalidOrgDomainError`
 
-The org URL must be `https://<org>.okta.com` (or `oktapreview.com` / `okta-emea.com` / a custom domain), with no trailing slash and an `https://` scheme.
+The org domain must be `<org>.okta.com` (or `.oktapreview.com` / `.okta-emea.com` / `.okta-gov.com`). Pass the bare hostname only — no `https://` scheme, no path, no trailing slash. Custom (vanity) domains are not currently accepted.
 
 ### `OktaPrivateKeyFileError`
 

@@ -6,7 +6,7 @@ from prowler.providers.okta.exceptions.exceptions import (
     OktaEnvironmentVariableError,
     OktaInsufficientPermissionsError,
     OktaInvalidCredentialsError,
-    OktaInvalidOrgURLError,
+    OktaInvalidOrgDomainError,
     OktaPrivateKeyFileError,
     OktaSetUpIdentityError,
 )
@@ -14,7 +14,7 @@ from prowler.providers.okta.models import OktaIdentityInfo, OktaSession
 from prowler.providers.okta.okta_provider import DEFAULT_SCOPES, OktaProvider
 from tests.providers.okta.okta_fixtures import (
     OKTA_CLIENT_ID,
-    OKTA_ORG_URL,
+    OKTA_ORG_DOMAIN,
     OKTA_PRIVATE_KEY,
 )
 
@@ -22,7 +22,7 @@ from tests.providers.okta.okta_fixtures import (
 @pytest.fixture
 def _clear_okta_env(monkeypatch):
     for var in (
-        "OKTA_ORG_URL",
+        "OKTA_ORG_DOMAIN",
         "OKTA_CLIENT_ID",
         "OKTA_PRIVATE_KEY",
         "OKTA_PRIVATE_KEY_FILE",
@@ -36,11 +36,11 @@ class Test_OktaProvider_validate_arguments:
         with pytest.raises(OktaEnvironmentVariableError) as exc:
             OktaProvider.validate_arguments()
         msg = str(exc.value)
-        assert "OKTA_ORG_URL" in msg
+        assert "OKTA_ORG_DOMAIN" in msg
         assert "OKTA_CLIENT_ID" in msg
         assert "OKTA_PRIVATE_KEY" in msg
 
-    def test_only_org_url_missing(self, _clear_okta_env, tmp_path):
+    def test_only_org_domain_missing(self, _clear_okta_env, tmp_path):
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
         with pytest.raises(OktaEnvironmentVariableError) as exc:
@@ -48,11 +48,11 @@ class Test_OktaProvider_validate_arguments:
                 okta_client_id=OKTA_CLIENT_ID,
                 okta_private_key_file=str(key_file),
             )
-        assert "OKTA_ORG_URL" in str(exc.value)
+        assert "OKTA_ORG_DOMAIN" in str(exc.value)
 
     def test_accepts_private_key_content_in_place_of_file(self, _clear_okta_env):
         OktaProvider.validate_arguments(
-            okta_org_url=OKTA_ORG_URL,
+            okta_org_domain=OKTA_ORG_DOMAIN,
             okta_client_id=OKTA_CLIENT_ID,
             okta_private_key=OKTA_PRIVATE_KEY,
         )
@@ -61,7 +61,7 @@ class Test_OktaProvider_validate_arguments:
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
         OktaProvider.validate_arguments(
-            okta_org_url=OKTA_ORG_URL,
+            okta_org_domain=OKTA_ORG_DOMAIN,
             okta_client_id=OKTA_CLIENT_ID,
             okta_private_key_file=str(key_file),
         )
@@ -69,27 +69,62 @@ class Test_OktaProvider_validate_arguments:
     def test_all_present_via_env(self, monkeypatch, tmp_path):
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
-        monkeypatch.setenv("OKTA_ORG_URL", OKTA_ORG_URL)
+        monkeypatch.setenv("OKTA_ORG_DOMAIN", OKTA_ORG_DOMAIN)
         monkeypatch.setenv("OKTA_CLIENT_ID", OKTA_CLIENT_ID)
         monkeypatch.setenv("OKTA_PRIVATE_KEY_FILE", str(key_file))
         OktaProvider.validate_arguments()
 
 
 class Test_OktaProvider_setup_session:
-    def test_invalid_org_url_raises(self, _clear_okta_env, tmp_path):
+    def test_rejects_domain_with_scheme(self, _clear_okta_env, tmp_path):
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
-        with pytest.raises(OktaInvalidOrgURLError):
+        with pytest.raises(OktaInvalidOrgDomainError):
             OktaProvider.setup_session(
-                org_url="acme.okta.com",
+                org_domain="https://acme.okta.com",
                 client_id=OKTA_CLIENT_ID,
                 private_key_file=str(key_file),
             )
 
+    def test_rejects_domain_with_trailing_slash(self, _clear_okta_env, tmp_path):
+        key_file = tmp_path / "key.pem"
+        key_file.write_text(OKTA_PRIVATE_KEY)
+        with pytest.raises(OktaInvalidOrgDomainError):
+            OktaProvider.setup_session(
+                org_domain="acme.okta.com/",
+                client_id=OKTA_CLIENT_ID,
+                private_key_file=str(key_file),
+            )
+
+    def test_rejects_non_okta_tld(self, _clear_okta_env, tmp_path):
+        key_file = tmp_path / "key.pem"
+        key_file.write_text(OKTA_PRIVATE_KEY)
+        with pytest.raises(OktaInvalidOrgDomainError):
+            OktaProvider.setup_session(
+                org_domain="login.example.com",
+                client_id=OKTA_CLIENT_ID,
+                private_key_file=str(key_file),
+            )
+
+    def test_accepts_oktapreview_emea_gov_tlds(self, _clear_okta_env, tmp_path):
+        key_file = tmp_path / "key.pem"
+        key_file.write_text(OKTA_PRIVATE_KEY)
+        for domain in (
+            "acme.oktapreview.com",
+            "acme.okta-emea.com",
+            "acme.okta-gov.com",
+        ):
+            session = OktaProvider.setup_session(
+                org_domain=domain,
+                client_id=OKTA_CLIENT_ID,
+                private_key_file=str(key_file),
+            )
+            assert session.org_domain == domain
+
     def test_unreadable_private_key_file_raises(self, _clear_okta_env):
         with pytest.raises(OktaPrivateKeyFileError):
             OktaProvider.setup_session(
-                org_url=OKTA_ORG_URL,
+                org_domain=OKTA_ORG_DOMAIN,
                 client_id=OKTA_CLIENT_ID,
                 private_key_file="/nonexistent/path.pem",
             )
@@ -98,11 +133,11 @@ class Test_OktaProvider_setup_session:
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
         session = OktaProvider.setup_session(
-            org_url=OKTA_ORG_URL,
+            org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
             private_key_file=str(key_file),
         )
-        assert session.org_url == OKTA_ORG_URL
+        assert session.org_domain == OKTA_ORG_DOMAIN
         assert session.client_id == OKTA_CLIENT_ID
         assert session.private_key == OKTA_PRIVATE_KEY
         assert session.scopes == DEFAULT_SCOPES
@@ -111,7 +146,7 @@ class Test_OktaProvider_setup_session:
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
         session = OktaProvider.setup_session(
-            org_url=OKTA_ORG_URL,
+            org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
             private_key_file=str(key_file),
             scopes="okta.policies.read, okta.apps.read ,okta.users.read",
@@ -126,7 +161,7 @@ class Test_OktaProvider_setup_session:
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
         session = OktaProvider.setup_session(
-            org_url=OKTA_ORG_URL,
+            org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
             private_key_file=str(key_file),
             scopes=["okta.policies.read", "okta.apps.read", "okta.users.read"],
@@ -144,7 +179,7 @@ class Test_OktaProvider_setup_session:
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
         session = OktaProvider.setup_session(
-            org_url=OKTA_ORG_URL,
+            org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
             private_key_file=str(key_file),
             scopes=["okta.policies.read,okta.apps.read", "okta.users.read"],
@@ -155,19 +190,23 @@ class Test_OktaProvider_setup_session:
             "okta.users.read",
         ]
 
-    def test_org_url_trailing_slash_stripped(self, _clear_okta_env, tmp_path):
+    def test_org_domain_normalized_lowercase_and_trimmed(
+        self, _clear_okta_env, tmp_path
+    ):
+        # The provider lowercases and strips whitespace so that
+        # "  ACME.okta.com  " is accepted as "acme.okta.com".
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
         session = OktaProvider.setup_session(
-            org_url="https://acme.okta.com/",
+            org_domain="  ACME.okta.com  ",
             client_id=OKTA_CLIENT_ID,
             private_key_file=str(key_file),
         )
-        assert session.org_url == OKTA_ORG_URL
+        assert session.org_domain == OKTA_ORG_DOMAIN
 
     def test_accepts_private_key_via_content_arg(self, _clear_okta_env):
         session = OktaProvider.setup_session(
-            org_url=OKTA_ORG_URL,
+            org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
             private_key=OKTA_PRIVATE_KEY,
         )
@@ -177,7 +216,7 @@ class Test_OktaProvider_setup_session:
         monkeypatch.setenv("OKTA_PRIVATE_KEY", OKTA_PRIVATE_KEY)
         monkeypatch.delenv("OKTA_PRIVATE_KEY_FILE", raising=False)
         session = OktaProvider.setup_session(
-            org_url=OKTA_ORG_URL,
+            org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
         )
         assert session.private_key == OKTA_PRIVATE_KEY
@@ -188,7 +227,7 @@ class Test_OktaProvider_setup_session:
         key_file.write_text("STALE CONTENT FROM FILE")
         fresh_key = "-----BEGIN PRIVATE KEY-----\nFRESH\n-----END PRIVATE KEY-----"
         session = OktaProvider.setup_session(
-            org_url=OKTA_ORG_URL,
+            org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
             private_key=fresh_key,
             private_key_file=str(key_file),
@@ -201,7 +240,7 @@ class Test_OktaProvider_setup_identity:
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
         return OktaProvider.setup_session(
-            org_url=OKTA_ORG_URL,
+            org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
             private_key_file=str(key_file),
         )
@@ -222,7 +261,7 @@ class Test_OktaProvider_setup_identity:
             mocked_client_cls.return_value = mocked
             identity = OktaProvider.setup_identity(session)
 
-        assert identity.org_url == OKTA_ORG_URL
+        assert identity.org_domain == OKTA_ORG_DOMAIN
         assert identity.client_id == OKTA_CLIENT_ID
 
     def test_raises_invalid_credentials_when_probe_returns_error(
@@ -297,12 +336,12 @@ class Test_OktaProvider_setup_identity:
 def _mock_setup_paths():
     """Patches that bypass the real SDK during provider construction."""
     session = OktaSession(
-        org_url=OKTA_ORG_URL,
+        org_domain=OKTA_ORG_DOMAIN,
         client_id=OKTA_CLIENT_ID,
         scopes=list(DEFAULT_SCOPES),
         private_key=OKTA_PRIVATE_KEY,
     )
-    identity = OktaIdentityInfo(org_url=OKTA_ORG_URL, client_id=OKTA_CLIENT_ID)
+    identity = OktaIdentityInfo(org_domain=OKTA_ORG_DOMAIN, client_id=OKTA_CLIENT_ID)
     return (
         mock.patch.object(OktaProvider, "validate_arguments"),
         mock.patch.object(OktaProvider, "setup_session", return_value=session),
@@ -315,14 +354,14 @@ class Test_OktaProvider_init:
         validate_p, session_p, identity_p = _mock_setup_paths()
         with validate_p, session_p, identity_p:
             provider = OktaProvider(
-                okta_org_url=OKTA_ORG_URL,
+                okta_org_domain=OKTA_ORG_DOMAIN,
                 okta_client_id=OKTA_CLIENT_ID,
                 okta_private_key_file="/tmp/key.pem",
             )
 
         assert provider.type == "okta"
         assert provider.auth_method == "OAuth 2.0 (private-key JWT)"
-        assert provider.identity.org_url == OKTA_ORG_URL
+        assert provider.identity.org_domain == OKTA_ORG_DOMAIN
         assert provider.identity.client_id == OKTA_CLIENT_ID
         assert provider.session.scopes == DEFAULT_SCOPES
         assert provider.audit_config is not None
@@ -334,7 +373,7 @@ class Test_OktaProvider_test_connection:
         validate_p, session_p, identity_p = _mock_setup_paths()
         with validate_p, session_p, identity_p:
             connection = OktaProvider.test_connection(
-                okta_org_url=OKTA_ORG_URL,
+                okta_org_domain=OKTA_ORG_DOMAIN,
                 okta_client_id=OKTA_CLIENT_ID,
                 okta_private_key_file="/tmp/key.pem",
             )
@@ -363,7 +402,7 @@ class Test_OktaProvider_print_credentials:
             ) as mock_print,
         ):
             provider = OktaProvider(
-                okta_org_url=OKTA_ORG_URL,
+                okta_org_domain=OKTA_ORG_DOMAIN,
                 okta_client_id=OKTA_CLIENT_ID,
                 okta_private_key_file="/tmp/key.pem",
             )
@@ -371,6 +410,6 @@ class Test_OktaProvider_print_credentials:
 
         mock_print.assert_called_once()
         rendered = " ".join(mock_print.call_args.args[0])
-        assert OKTA_ORG_URL in rendered
+        assert OKTA_ORG_DOMAIN in rendered
         assert OKTA_CLIENT_ID in rendered
         assert "OAuth 2.0" in rendered

@@ -1,5 +1,8 @@
 ### Account, Check and/or Region can be * to apply for all the cases.
-### Account == <Okta organization URL, e.g. https://acme.okta.com>
+### Account == <Okta organization domain, e.g. acme.okta.com>
+###    Bare domain only — no scheme, no path, no trailing slash.
+### Region is always "*" — Okta has no regional concept.
+### Resources matches against the policy name (e.g. "Default Policy"), not the id.
 ### Resources and tags are lists that can have either Regex or Keywords.
 ### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
 ### Use an alternation Regex to match one of multiple tags with "ORed" logic.
@@ -7,7 +10,7 @@
 ###########################  MUTELIST EXAMPLE  ###########################
 Mutelist:
   Accounts:
-    "https://acme.okta.com":
+    "acme.okta.com":
       Checks:
         "signon_global_session_idle_timeout_15min":
           Regions:

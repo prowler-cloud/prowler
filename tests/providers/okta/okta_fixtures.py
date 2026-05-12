@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 from prowler.providers.okta.models import OktaIdentityInfo, OktaSession
 
-OKTA_ORG_URL = "https://acme.okta.com"
+OKTA_ORG_DOMAIN = "acme.okta.com"
 OKTA_CLIENT_ID = "0oa1234567890abcdef"
 OKTA_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\nMOCK\n-----END PRIVATE KEY-----"
 
@@ -14,14 +14,14 @@ def set_mocked_okta_provider(
 ):
     if session is None:
         session = OktaSession(
-            org_url=OKTA_ORG_URL,
+            org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
             scopes=["okta.policies.read"],
             private_key=OKTA_PRIVATE_KEY,
         )
     if identity is None:
         identity = OktaIdentityInfo(
-            org_url=OKTA_ORG_URL,
+            org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
         )
 

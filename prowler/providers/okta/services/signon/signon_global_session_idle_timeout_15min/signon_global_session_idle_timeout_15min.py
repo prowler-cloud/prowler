@@ -20,10 +20,10 @@ class signon_global_session_idle_timeout_15min(Check):
         threshold = audit_config.get(
             "okta_max_session_idle_minutes", DEFAULT_THRESHOLD_MINUTES
         )
-        org_url = signon_client.provider.identity.org_url
+        org_domain = signon_client.provider.identity.org_domain
         policy = self._get_default_policy()
         report = CheckReportOkta(
-            metadata=self.metadata(), resource=policy, org_url=org_url
+            metadata=self.metadata(), resource=policy, org_domain=org_domain
         )
 
         if policy.id == "default-policy-missing":
