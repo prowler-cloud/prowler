@@ -4,6 +4,16 @@ AZURE_CHINA_CLOUD = "https://management.chinacloudapi.cn"
 AZURE_US_GOV_CLOUD = "https://management.usgovcloudapi.net"
 AZURE_GENERIC_CLOUD = "https://management.azure.com"
 
+AZURE_PUBLIC_LOGIN_ENDPOINT = "login.microsoftonline.com"
+
+AZURE_GENERIC_GRAPH_SCOPE = "https://graph.microsoft.com/.default"
+AZURE_CHINA_GRAPH_SCOPE = "https://microsoftgraph.chinacloudapi.cn/.default"
+AZURE_US_GOV_GRAPH_SCOPE = "https://graph.microsoft.us/.default"
+
+AZURE_GENERIC_LOGS_ENDPOINT = "https://api.loganalytics.io"
+AZURE_CHINA_LOGS_ENDPOINT = "https://api.loganalytics.azure.cn"
+AZURE_US_GOV_LOGS_ENDPOINT = "https://api.loganalytics.us"
+
 
 def get_regions_config(region):
     allowed_regions = {
@@ -11,16 +21,22 @@ def get_regions_config(region):
             "authority": None,
             "base_url": AZURE_GENERIC_CLOUD,
             "credential_scopes": [AZURE_GENERIC_CLOUD + "/.default"],
+            "graph_scope": AZURE_GENERIC_GRAPH_SCOPE,
+            "logs_endpoint": AZURE_GENERIC_LOGS_ENDPOINT,
         },
         "AzureChinaCloud": {
             "authority": AzureAuthorityHosts.AZURE_CHINA,
             "base_url": AZURE_CHINA_CLOUD,
             "credential_scopes": [AZURE_CHINA_CLOUD + "/.default"],
+            "graph_scope": AZURE_CHINA_GRAPH_SCOPE,
+            "logs_endpoint": AZURE_CHINA_LOGS_ENDPOINT,
         },
         "AzureUSGovernment": {
             "authority": AzureAuthorityHosts.AZURE_GOVERNMENT,
             "base_url": AZURE_US_GOV_CLOUD,
             "credential_scopes": [AZURE_US_GOV_CLOUD + "/.default"],
+            "graph_scope": AZURE_US_GOV_GRAPH_SCOPE,
+            "logs_endpoint": AZURE_US_GOV_LOGS_ENDPOINT,
         },
     }
     return allowed_regions[region]
