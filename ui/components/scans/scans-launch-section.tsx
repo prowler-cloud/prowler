@@ -7,20 +7,13 @@ import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { NoProvidersAdded } from "@/components/scans/no-providers-added";
 import { NoProvidersConnected } from "@/components/scans/no-providers-connected";
 import { CustomBanner } from "@/components/ui/custom/custom-banner";
-
-export interface ScanProviderInfo {
-  providerId: string;
-  alias: string;
-  providerType: string;
-  uid: string;
-  connected: boolean;
-}
+import { ScanProviderInfo } from "@/types";
 
 interface ScansLaunchSectionProps {
   providers: ScanProviderInfo[];
-  hasManageScansPermission?: boolean;
+  hasManageScansPermission: boolean;
   thereIsNoProviders: boolean;
-  thereIsNoProvidersConnected?: boolean;
+  thereIsNoProvidersConnected: boolean;
 }
 
 export function ScansLaunchSection({

@@ -56,9 +56,7 @@ describe("ScansLaunchSection", () => {
     );
 
     // Then
-    expect(screen.getByRole("dialog", { name: "" })).toHaveTextContent(
-      "Provider wizard",
-    );
+    expect(screen.getByRole("dialog")).toHaveTextContent("Provider wizard");
     expect(screen.getByText("Launch scan workflow")).toBeInTheDocument();
   });
 });

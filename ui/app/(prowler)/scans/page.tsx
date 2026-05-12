@@ -76,11 +76,15 @@ export default async function Scans({
   const thereIsNoProviders =
     !providersData?.data || providersData.data.length === 0;
 
-  const thereIsNoProvidersConnected = providersData?.data?.every(
-    (provider: ProviderProps) => !provider.attributes.connection.connected,
+  const thereIsNoProvidersConnected = Boolean(
+    providersData?.data?.every(
+      (provider: ProviderProps) => !provider.attributes.connection.connected,
+    ),
   );
 
-  const hasManageScansPermission = session?.user?.permissions?.manage_scans;
+  const hasManageScansPermission = Boolean(
+    session?.user?.permissions?.manage_scans,
+  );
 
   // Extract provider UIDs and create provider details mapping for filtering
   const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
