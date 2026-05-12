@@ -114,6 +114,21 @@ Prowler follows [semver.org](https://semver.org/):
 ---                                  # Horizontal rule between versions
 ```
 
+## Mandatory Changelog Preflight
+
+Before editing any `CHANGELOG.md`, always inspect the active release boundary:
+
+1. Read the UNRELEASED block plus the latest three released version blocks:
+   ```bash
+   awk '/^## \[/{n++} n<=4 {print}' ui/CHANGELOG.md
+   ```
+2. Identify the **only writable block**: the block whose header contains `(Prowler UNRELEASED)`.
+3. Treat every block whose header contains `(Prowler vX.Y.Z)` as immutable. Do not add, move, reword, reorder, or deduplicate entries there.
+4. If your PR's entry appears in any of the latest three released blocks, remove it from the released block and add it to the correct section in the UNRELEASED block.
+5. If there is no UNRELEASED block at the top, stop and ask before editing.
+
+**Do not trust the current topmost matching section name.** A released block can contain the same section heading (`### 🚀 Added`, `### 🔄 Changed`, etc.). Always anchor edits to the `Prowler UNRELEASED` version block first.
+
 ## Adding a Changelog Entry
 
 ### Step 1: Determine Affected Component(s)
