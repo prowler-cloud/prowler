@@ -20,15 +20,16 @@ import threading
 
 from contextlib import contextmanager
 from typing import Any, Callable, Iterator
+from urllib.parse import urlsplit
 
 import neo4j
 import neo4j.exceptions
 
-from botocore.auth import SigV4Auth, _host_from_url
+from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from botocore.session import Session as BotoSession
 from django.conf import settings
-from neo4j.auth_management import ExpiringAuth
+from neo4j.auth_management import AuthManagers, ExpiringAuth
 
 from api.attack_paths.retryable_session import RetryableSession
 from api.attack_paths.sink.base import SinkDatabase
@@ -91,8 +92,9 @@ class NeptuneSink(SinkDatabase):
             )
         return neo4j.GraphDatabase.driver(
             self._bolt_uri(endpoint, port),
-            auth=neptune_auth_provider(region, self._https_url(endpoint, port)),
-            encrypted=True,
+            auth=AuthManagers.bearer(
+                neptune_auth_provider(region, self._https_url(endpoint, port))
+            ),
             keep_alive=True,
             max_connection_lifetime=MAX_CONNECTION_LIFETIME,
             connection_acquisition_timeout=CONN_ACQUISITION_TIMEOUT,
@@ -296,7 +298,7 @@ class _NeptuneAuthToken(neo4j.Auth):
         credentials = credentials.get_frozen_credentials()
 
         request = AWSRequest(method="GET", url=url + "/opencypher")
-        request.headers.add_header("Host", _host_from_url(request.url))
+        request.headers.add_header("Host", urlsplit(url).hostname)
         SigV4Auth(credentials, "neptune-db", region).add_auth(request)
 
         auth_obj = {
@@ -311,7 +313,7 @@ class _NeptuneAuthToken(neo4j.Auth):
         }
         auth_obj["HttpMethod"] = "GET"
 
-        super().__init__("basic", "username", json.dumps(auth_obj), "realm")
+        super().__init__("basic", "username", json.dumps(auth_obj))
 
 
 def neptune_auth_provider(region: str, https_url: str) -> Callable[[], ExpiringAuth]:
@@ -319,9 +321,10 @@ def neptune_auth_provider(region: str, https_url: str) -> Callable[[], ExpiringA
 
     def _provider() -> ExpiringAuth:
         token = _NeptuneAuthToken(region, https_url)
-        expires_at = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
-            minutes=SIGV4_TOKEN_LIFETIME_MINUTES
-        )
+        expires_at = (
+            datetime.datetime.now(datetime.timezone.utc)
+            + datetime.timedelta(minutes=SIGV4_TOKEN_LIFETIME_MINUTES)
+        ).timestamp()
         return ExpiringAuth(auth=token, expires_at=expires_at)
 
     return _provider
