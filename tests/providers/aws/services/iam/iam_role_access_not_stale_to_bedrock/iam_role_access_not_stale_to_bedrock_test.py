@@ -191,6 +191,258 @@ class Test_iam_role_access_not_stale_to_bedrock:
             assert "Role" in result[0].status_extended
 
     @mock_aws
+    def test_no_roles_listed(self):
+        """No findings when iam.roles is None (short-circuit)."""
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+        iam.roles = None
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(f"{CHECK_MODULE}.iam_client", new=iam),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_access_not_stale_to_bedrock.iam_role_access_not_stale_to_bedrock import (
+                iam_role_access_not_stale_to_bedrock,
+            )
+
+            check = iam_role_access_not_stale_to_bedrock()
+            assert check.execute() == []
+
+    @mock_aws
+    def test_role_without_bedrock_permissions(self):
+        """Role with non-Bedrock services is skipped."""
+        from prowler.providers.aws.services.iam.iam_service import IAM, Role
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+
+        mock_role = Role(
+            name=IAM_ROLE_NAME,
+            arn=IAM_ROLE_ARN,
+            assume_role_policy={},
+            is_service_role=False,
+            attached_policies=[],
+            inline_policies=[],
+        )
+        iam.roles = [mock_role]
+        iam.role_last_accessed_services = {
+            ROLE_DATA: [
+                {"ServiceNamespace": "iam", "ServiceName": "IAM"},
+                {"ServiceNamespace": "s3", "ServiceName": "S3"},
+            ]
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(f"{CHECK_MODULE}.iam_client", new=iam),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_access_not_stale_to_bedrock.iam_role_access_not_stale_to_bedrock import (
+                iam_role_access_not_stale_to_bedrock,
+            )
+
+            check = iam_role_access_not_stale_to_bedrock()
+            assert len(check.execute()) == 0
+
+    @mock_aws
+    def test_role_bedrock_access_with_string_date(self):
+        """PASS when LastAuthenticated is an ISO string instead of a datetime object."""
+        from prowler.providers.aws.services.iam.iam_service import IAM, Role
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+
+        mock_role = Role(
+            name=IAM_ROLE_NAME,
+            arn=IAM_ROLE_ARN,
+            assume_role_policy={},
+            is_service_role=False,
+            attached_policies=[],
+            inline_policies=[],
+        )
+        iam.roles = [mock_role]
+
+        last_access_date = datetime.now(timezone.utc) - timedelta(days=5)
+        iam.role_last_accessed_services = {
+            ROLE_DATA: [
+                {
+                    "ServiceNamespace": "bedrock",
+                    "ServiceName": "Amazon Bedrock",
+                    "LastAuthenticated": last_access_date.isoformat(),
+                },
+            ]
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(f"{CHECK_MODULE}.iam_client", new=iam),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_access_not_stale_to_bedrock.iam_role_access_not_stale_to_bedrock import (
+                iam_role_access_not_stale_to_bedrock,
+            )
+
+            check = iam_role_access_not_stale_to_bedrock()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_role_bedrock_access_at_exact_threshold(self):
+        """PASS when role accessed Bedrock exactly at the 60-day boundary."""
+        from prowler.providers.aws.services.iam.iam_service import IAM, Role
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+
+        mock_role = Role(
+            name=IAM_ROLE_NAME,
+            arn=IAM_ROLE_ARN,
+            assume_role_policy={},
+            is_service_role=False,
+            attached_policies=[],
+            inline_policies=[],
+        )
+        iam.roles = [mock_role]
+
+        last_authenticated = datetime.now(timezone.utc) - timedelta(days=60)
+        iam.role_last_accessed_services = {
+            ROLE_DATA: [
+                {
+                    "ServiceNamespace": "bedrock",
+                    "ServiceName": "Amazon Bedrock",
+                    "LastAuthenticated": last_authenticated,
+                },
+            ]
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(f"{CHECK_MODULE}.iam_client", new=iam),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_access_not_stale_to_bedrock.iam_role_access_not_stale_to_bedrock import (
+                iam_role_access_not_stale_to_bedrock,
+            )
+
+            check = iam_role_access_not_stale_to_bedrock()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "60 days ago" in result[0].status_extended
+            assert "threshold: 60 days" in result[0].status_extended
+
+    @mock_aws
+    def test_role_bedrock_access_one_day_over_threshold(self):
+        """FAIL when role accessed Bedrock 61 days ago."""
+        from prowler.providers.aws.services.iam.iam_service import IAM, Role
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+
+        mock_role = Role(
+            name=IAM_ROLE_NAME,
+            arn=IAM_ROLE_ARN,
+            assume_role_policy={},
+            is_service_role=False,
+            attached_policies=[],
+            inline_policies=[],
+        )
+        iam.roles = [mock_role]
+
+        last_authenticated = datetime.now(timezone.utc) - timedelta(days=61)
+        iam.role_last_accessed_services = {
+            ROLE_DATA: [
+                {
+                    "ServiceNamespace": "bedrock",
+                    "ServiceName": "Amazon Bedrock",
+                    "LastAuthenticated": last_authenticated,
+                },
+            ]
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(f"{CHECK_MODULE}.iam_client", new=iam),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_access_not_stale_to_bedrock.iam_role_access_not_stale_to_bedrock import (
+                iam_role_access_not_stale_to_bedrock,
+            )
+
+            check = iam_role_access_not_stale_to_bedrock()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "61 days" in result[0].status_extended
+            assert "threshold: 60 days" in result[0].status_extended
+
+    @mock_aws
+    def test_custom_threshold_via_audit_config(self):
+        """Custom threshold from audit_config is respected for roles."""
+        from prowler.providers.aws.services.iam.iam_service import IAM, Role
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        iam = IAM(aws_provider)
+        iam.audit_config = {"max_unused_bedrock_access_days": 30}
+
+        mock_role = Role(
+            name=IAM_ROLE_NAME,
+            arn=IAM_ROLE_ARN,
+            assume_role_policy={},
+            is_service_role=False,
+            attached_policies=[],
+            inline_policies=[],
+        )
+        iam.roles = [mock_role]
+
+        last_authenticated = datetime.now(timezone.utc) - timedelta(days=45)
+        iam.role_last_accessed_services = {
+            ROLE_DATA: [
+                {
+                    "ServiceNamespace": "bedrock",
+                    "ServiceName": "Amazon Bedrock",
+                    "LastAuthenticated": last_authenticated,
+                },
+            ]
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(f"{CHECK_MODULE}.iam_client", new=iam),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_access_not_stale_to_bedrock.iam_role_access_not_stale_to_bedrock import (
+                iam_role_access_not_stale_to_bedrock,
+            )
+
+            check = iam_role_access_not_stale_to_bedrock()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "45 days" in result[0].status_extended
+            assert "threshold: 30 days" in result[0].status_extended
+
+    @mock_aws
     def test_role_tags_are_populated(self):
         """Verify resource_tags are populated from the role object."""
         from prowler.providers.aws.services.iam.iam_service import IAM, Role
