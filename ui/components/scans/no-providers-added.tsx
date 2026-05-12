@@ -7,8 +7,21 @@ import { Button, Card, CardContent } from "@/components/shadcn";
 
 import { InfoIcon } from "../icons/Icons";
 
-export const NoProvidersAdded = () => {
+interface NoProvidersAddedProps {
+  onOpenWizard?: () => void;
+}
+
+export const NoProvidersAdded = ({ onOpenWizard }: NoProvidersAddedProps) => {
   const [open, setOpen] = useState(false);
+
+  const handleOpenWizard = () => {
+    if (onOpenWizard) {
+      onOpenWizard();
+      return;
+    }
+
+    setOpen(true);
+  };
 
   return (
     <>
@@ -32,14 +45,16 @@ export const NoProvidersAdded = () => {
               aria-label="Open Add Provider modal"
               className="w-full max-w-xs justify-center"
               size="lg"
-              onClick={() => setOpen(true)}
+              onClick={handleOpenWizard}
             >
               Get Started
             </Button>
           </CardContent>
         </Card>
       </div>
-      <ProviderWizardModal open={open} onOpenChange={setOpen} />
+      {!onOpenWizard && (
+        <ProviderWizardModal open={open} onOpenChange={setOpen} />
+      )}
     </>
   );
 };

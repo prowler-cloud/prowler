@@ -4,16 +4,11 @@ import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { auth } from "@/auth.config";
 import { MutedFindingsConfigButton } from "@/components/providers";
-import {
-  NoProvidersAdded,
-  NoProvidersConnected,
-  ScansFilters,
-} from "@/components/scans";
-import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
+import { ScansFilters } from "@/components/scans";
+import { ScansLaunchSection } from "@/components/scans/scans-launch-section";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScansTableWithPolling } from "@/components/scans/table/scans";
 import { ContentLayout } from "@/components/ui";
-import { CustomBanner } from "@/components/ui/custom/custom-banner";
 import {
   createProviderDetailsMapping,
   extractProviderUIDs,
@@ -93,44 +88,30 @@ export default async function Scans({
     ? createProviderDetailsMapping(providerUIDs, providersData)
     : [];
 
-  if (thereIsNoProviders) {
-    return (
-      <ContentLayout title="Scans" icon="lucide:timer">
-        <NoProvidersAdded />
-      </ContentLayout>
-    );
-  }
-
   return (
     <ContentLayout title="Scans" icon="lucide:timer">
       <>
-        <>
-          {!hasManageScansPermission ? (
-            <CustomBanner
-              title={"Access Denied"}
-              message={"You don't have permission to launch the scan."}
+        <ScansLaunchSection
+          providers={providerInfo}
+          hasManageScansPermission={hasManageScansPermission}
+          thereIsNoProviders={thereIsNoProviders}
+          thereIsNoProvidersConnected={thereIsNoProvidersConnected}
+        />
+        {!thereIsNoProviders && (
+          <div className="flex flex-col gap-6">
+            <ScansFilters
+              providerUIDs={providerUIDs}
+              providerDetails={providerDetails}
+              completedScans={completedScans}
             />
-          ) : thereIsNoProvidersConnected ? (
-            <>
-              <NoProvidersConnected />
-            </>
-          ) : (
-            <LaunchScanWorkflow providers={providerInfo} />
-          )}
-        </>
-        <div className="flex flex-col gap-6">
-          <ScansFilters
-            providerUIDs={providerUIDs}
-            providerDetails={providerDetails}
-            completedScans={completedScans}
-          />
-          <div className="flex items-center justify-end">
-            <MutedFindingsConfigButton />
+            <div className="flex items-center justify-end">
+              <MutedFindingsConfigButton />
+            </div>
+            <Suspense fallback={<SkeletonTableScans />}>
+              <SSRDataTableScans searchParams={resolvedSearchParams} />
+            </Suspense>
           </div>
-          <Suspense fallback={<SkeletonTableScans />}>
-            <SSRDataTableScans searchParams={resolvedSearchParams} />
-          </Suspense>
-        </div>
+        )}
       </>
     </ContentLayout>
   );
