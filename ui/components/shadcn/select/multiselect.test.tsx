@@ -239,6 +239,46 @@ describe("MultiSelect", () => {
     expect(screen.getByRole("dialog")).toHaveClass("max-w-[24rem]");
   });
 
+  it("keeps long option lists scrollable inside the dropdown", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    render(
+      <MultiSelect values={[]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          {Array.from({ length: 20 }, (_, index) => (
+            <MultiSelectItem key={index} value={`account-${index}`}>
+              Account {index}
+            </MultiSelectItem>
+          ))}
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox"));
+
+    // Then
+    const list = screen
+      .getByRole("dialog")
+      .querySelector('[data-slot="command-list"]');
+
+    expect(screen.getByRole("dialog")).toHaveStyle({
+      maxHeight:
+        "min(360px, var(--radix-popover-content-available-height, 360px))",
+    });
+    expect(list).toHaveClass("minimal-scrollbar");
+    expect(list).toHaveStyle({
+      maxHeight:
+        "min(300px, var(--radix-popover-content-available-height, 300px))",
+    });
+    expect(list).toHaveClass("overflow-y-auto");
+    expect(list).toHaveClass("overscroll-contain");
+  });
+
   it("keeps the legacy clear-all behavior by default", async () => {
     const user = userEvent.setup();
     const onValuesChange = vi.fn();
