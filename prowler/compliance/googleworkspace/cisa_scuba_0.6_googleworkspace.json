@@ -649,7 +649,9 @@
     {
       "Id": "GWS.GMAIL.5.1",
       "Description": "Protect against encrypted attachments from untrusted senders SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_encrypted_attachment_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -662,7 +664,9 @@
     {
       "Id": "GWS.GMAIL.5.2",
       "Description": "Protect against attachments with scripts from untrusted senders SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_script_attachment_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -675,7 +679,9 @@
     {
       "Id": "GWS.GMAIL.5.3",
       "Description": "Protect against anomalous attachment types in emails SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_anomalous_attachment_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -798,7 +804,9 @@
     {
       "Id": "GWS.GMAIL.7.1",
       "Description": "Protect against domain spoofing based on similar domain names SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_domain_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -811,7 +819,9 @@
     {
       "Id": "GWS.GMAIL.7.2",
       "Description": "Protect against spoofing of employee names SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_employee_name_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -824,7 +834,9 @@
     {
       "Id": "GWS.GMAIL.7.3",
       "Description": "Protect against inbound emails spoofing your domain SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_inbound_domain_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -837,7 +849,9 @@
     {
       "Id": "GWS.GMAIL.7.4",
       "Description": "Protect against any unauthenticated emails SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_unauthenticated_email_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -850,7 +864,9 @@
     {
       "Id": "GWS.GMAIL.7.5",
       "Description": "Protect your Groups from inbound emails spoofing your domain SHALL be enabled",
-      "Checks": [],
+      "Checks": [
+        "gmail_groups_spoofing_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "Gmail",
