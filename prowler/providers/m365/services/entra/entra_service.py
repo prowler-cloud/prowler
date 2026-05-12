@@ -1171,20 +1171,19 @@ OAuthAppInfo
             # principal itself, so /servicePrincipals.passwordCredentials is
             # almost always empty for normal app registrations. Joining via
             # appId is required for the check to see those credentials.
+            #
+            # Index service principals by app_id once so the join below is
+            # O(N+M) instead of scanning all SPs for every Application page.
+            service_principals_by_app_id = {
+                sp.app_id: sp for sp in service_principals.values() if sp.app_id
+            }
             app_response = await self.client.applications.get()
             while app_response:
                 for app in getattr(app_response, "value", []) or []:
                     app_id = getattr(app, "app_id", None)
                     if not app_id:
                         continue
-                    target_sp = next(
-                        (
-                            sp
-                            for sp in service_principals.values()
-                            if sp.app_id == app_id
-                        ),
-                        None,
-                    )
+                    target_sp = service_principals_by_app_id.get(app_id)
                     if target_sp is None:
                         continue
 
