@@ -1311,6 +1311,7 @@
         "glue_development_endpoints_job_bookmark_encryption_enabled",
         "glue_ml_transform_encrypted_at_rest",
         "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk",
         "codebuild_project_s3_logs_encrypted",
         "codebuild_report_group_export_encrypted"
       ]
@@ -3100,6 +3101,7 @@
       "Checks": [
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_user_two_active_access_key"
@@ -3442,6 +3444,7 @@
       "Checks": [
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_user_no_setup_initial_access_key"
@@ -3551,6 +3554,7 @@
       "Checks": [
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_rotate_access_key_90_days",
@@ -5853,6 +5857,7 @@
         }
       ],
       "Checks": [
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events",
         "cloudtrail_s3_dataevents_read_enabled",
