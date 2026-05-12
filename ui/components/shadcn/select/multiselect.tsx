@@ -10,6 +10,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type WheelEvent,
 } from "react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
@@ -48,6 +49,10 @@ type MultiSelectContextType = {
   onValuesChange?: (values: string[]) => void;
 };
 const MultiSelectContext = createContext<MultiSelectContextType | null>(null);
+
+const stopWheelPropagation = (event: WheelEvent<HTMLElement>) => {
+  event.stopPropagation();
+};
 
 export function MultiSelect({
   children,
@@ -335,12 +340,16 @@ export function MultiSelectContent({
       <PopoverContent
         align="start"
         data-slot="multiselect-content"
+        style={{
+          maxHeight:
+            "min(360px, var(--radix-popover-content-available-height, 360px))",
+        }}
         className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-border-input-primary bg-bg-input-primary relative z-50 rounded-lg border p-0",
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-border-input-primary bg-bg-input-primary relative z-50 overflow-hidden rounded-lg border p-0",
           widthClasses,
         )}
       >
-        <Command {...props} className="rounded-lg">
+        <Command {...props} className="max-h-[inherit] rounded-lg">
           {canSearch ? (
             <CommandInput
               placeholder={
@@ -354,7 +363,12 @@ export function MultiSelectContent({
           )}
           <CommandList
             ref={listRef}
-            className="minimal-scrollbar max-h-[300px] overflow-x-hidden overflow-y-auto p-3"
+            onWheelCapture={stopWheelPropagation}
+            style={{
+              maxHeight:
+                "min(300px, var(--radix-popover-content-available-height, 300px))",
+            }}
+            className="minimal-scrollbar overflow-x-hidden overflow-y-auto overscroll-contain p-3"
           >
             {canSearch && (
               <CommandEmpty className="text-bg-button-secondary py-6 text-center text-sm">
