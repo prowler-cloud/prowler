@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.27.1] (Prowler v5.26.1)
+
+### 🐞 Fixed
+
+- `POST /api/v1/scans` was intermittently failing with `Scan matching query does not exist` in the `scan-perform` worker; the Celery task is now published via `transaction.on_commit` so the worker cannot read the Scan before the dispatch-wide transaction commits [(#11122)](https://github.com/prowler-cloud/prowler/pull/11122)
+
+---
+
 ## [1.27.0] (Prowler v5.26.0)
 
 ### 🚀 Added
