@@ -6,10 +6,12 @@ from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID
 
+from kiota_abstractions.base_request_configuration import RequestConfiguration
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
 )
+from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic.v1 import BaseModel, validator
 
 from prowler.lib.logger import logger
@@ -811,7 +813,29 @@ class Entra(M365Service):
         logger.info("Entra - Getting users...")
         users = {}
         try:
-            users_response = await self.client.users.get()
+            # Microsoft Graph's /users endpoint omits accountEnabled, userType and
+            # onPremisesSyncEnabled from the default property set, so we must request
+            # them explicitly via $select. Without this, disabled guest users surface
+            # as account_enabled=True (Pydantic default) and user_type=None, which
+            # bypasses the guest/disabled filters in checks like
+            # entra_users_mfa_capable (CIS 5.2.3.4). See issue #10921.
+            query_parameters = (
+                UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
+                    select=[
+                        "id",
+                        "displayName",
+                        "userType",
+                        "accountEnabled",
+                        "onPremisesSyncEnabled",
+                    ],
+                )
+            )
+            request_configuration = RequestConfiguration(
+                query_parameters=query_parameters,
+            )
+            users_response = await self.client.users.get(
+                request_configuration=request_configuration,
+            )
             directory_roles = await self.client.directory_roles.get()
 
             async def fetch_role_members(directory_role):
@@ -835,6 +859,19 @@ class Entra(M365Service):
             while users_response:
                 for user in getattr(users_response, "value", []) or []:
                     reg_info = registration_details.get(user.id, {})
+                    # Prefer Microsoft Graph as the source of truth for
+                    # accountEnabled: it covers every directory user including
+                    # guests, whereas EXO's Get-User only returns mail-enabled
+                    # accounts and silently drops disabled guests. Fall back to
+                    # the EXO PowerShell value only when Graph does not return a
+                    # value (e.g. older tenants or permission-restricted reads).
+                    graph_account_enabled = getattr(user, "account_enabled", None)
+                    if graph_account_enabled is None:
+                        account_enabled = not self.user_accounts_status.get(
+                            user.id, {}
+                        ).get("AccountDisabled", False)
+                    else:
+                        account_enabled = bool(graph_account_enabled)
                     users[user.id] = User(
                         id=user.id,
                         name=user.display_name,
@@ -843,9 +880,7 @@ class Entra(M365Service):
                         ),
                         directory_roles_ids=user_roles_map.get(user.id, []),
                         is_mfa_capable=reg_info.get("is_mfa_capable", False),
-                        account_enabled=not self.user_accounts_status.get(
-                            user.id, {}
-                        ).get("AccountDisabled", False),
+                        account_enabled=account_enabled,
                         authentication_methods=reg_info.get(
                             "authentication_methods", []
                         ),

@@ -44,7 +44,9 @@ repos:
     rev: v1.24.1
     hooks:
       - id: zizmor
-        files: ^\.github/
+        # zizmor only audits workflows, composite actions and dependabot
+        # config; broader paths trip exit 3 ("no audit was performed").
+        files: ^\.github/(workflows|actions)/.+\.ya?ml$|^\.github/dependabot\.ya?ml$
         priority: 30
 
   ## BASH
