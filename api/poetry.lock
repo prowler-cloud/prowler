@@ -6665,7 +6665,7 @@ files = [
 
 [[package]]
 name = "prowler"
-version = "5.27.0"
+version = "5.26.0"
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 optional = false
 python-versions = ">=3.10,<3.13"
@@ -6755,7 +6755,7 @@ uuid6 = "2024.7.10"
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
 reference = "master"
-resolved_reference = "759f7b84d6d39ea50d948c2b79f32df0afd375ff"
+resolved_reference = "16798e293da365965120961e6539e3a9756564f9"
 
 [[package]]
 name = "psutil"
