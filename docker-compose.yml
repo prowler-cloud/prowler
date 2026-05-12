@@ -47,11 +47,18 @@ services:
     env_file:
       - path: .env
         required: false
+    environment:
+      - PROWLER_API_HEALTH_URL=${PROWLER_API_HEALTH_URL:-http://api:8080/health/ready}
     ports:
       - ${UI_PORT:-3000}:${UI_PORT:-3000}
     depends_on:
       mcp-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:${UI_PORT:-3000}/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   postgres:
     image: postgres:16.3-alpine3.20
