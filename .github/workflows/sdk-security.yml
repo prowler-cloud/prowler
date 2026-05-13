@@ -9,10 +9,10 @@ on:
       - 'prowler/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - '.github/workflows/sdk-tests.yml'
       - '.github/workflows/sdk-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
   pull_request:
     branches:
       - 'master'
@@ -21,10 +21,10 @@ on:
       - 'prowler/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - '.github/workflows/sdk-tests.yml'
       - '.github/workflows/sdk-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -87,21 +87,21 @@ jobs:
             contrib/**
             **/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: '3.12'
 
       - name: Security scan with Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run bandit -q -lll -x '*_test.py,./contrib/,./api/,./ui' -r .
+        run: uv run bandit -q -lll -x '*_test.py,./contrib/,./api/,./ui' -r .
 
       - name: Security scan with Safety
         if: steps.check-changes.outputs.any_changed == 'true'
         # Accepted CVEs, severity threshold, and ignore expirations live in .safety-policy.yml
-        run: poetry run safety check -r pyproject.toml --policy-file .safety-policy.yml
+        run: uv run safety check -r pyproject.toml --policy-file .safety-policy.yml
 
       - name: Dead code detection with Vulture
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run vulture --exclude "contrib,api,ui" --min-confidence 100 .
+        run: uv run vulture --exclude "contrib,api,ui" --min-confidence 100 .

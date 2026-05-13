@@ -71,26 +71,26 @@ jobs:
             contrib/**
             **/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Check Poetry lock file
+      - name: Check uv lock file
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry check --lock
+        run: uv lock --check
 
       - name: Lint with flake8
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib,ui,api,skills,mcp_server
+        run: uv run flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib,ui,api,skills,mcp_server
 
       - name: Check format with black
         if: steps.check-changes.outputs.any_changed == 'true'
         # mcp_server has its own pyproject and uses ruff format, exclude it so SDK black
         # does not fight ruff over rules it never formatted.
-        run: poetry run black --exclude "api|ui|skills|mcp_server" --check .
+        run: uv run black --exclude "api|ui|skills|mcp_server" --check .
 
       - name: Lint with pylint
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run pylint --disable=W,C,R,E -j 0 -rn -sn prowler/
+        run: uv run pylint --disable=W,C,R,E -j 0 -rn -sn prowler/
