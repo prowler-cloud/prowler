@@ -81,7 +81,7 @@ describe("running a query", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     expect(graph.background).toBeTruthy();
     expect(graph.minimap).toBeTruthy();
@@ -91,7 +91,7 @@ describe("running a query", () => {
   test("nodes are laid out at distinct positions", async ({ mountWith }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     const positions = graph.nodePositions;
     expect(positions.some((p) => p.x !== 0 || p.y !== 0)).toBe(true);
@@ -102,7 +102,7 @@ describe("running a query", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(1);
+    await graph.waitForGraphStable(1);
 
     expect(graph.toolbar.zoomInButton).toBeTruthy();
     expect(graph.toolbar.zoomOutButton).toBeTruthy();
@@ -115,7 +115,7 @@ describe("running a query", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
 
     expect(graph.findingNodes.length).toBeGreaterThan(0);
@@ -128,7 +128,7 @@ describe("running a query", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
 
     expect(graph.findingEdges.length).toBeGreaterThan(0);
@@ -138,7 +138,7 @@ describe("running a query", () => {
   test("edges connect string source and target ids", async ({ mountWith }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(2);
+    await graph.waitForGraphStable(2, 1);
 
     const edgeIds = graph.renderedEdgeIds;
     expect(edgeIds.length).toBeGreaterThan(0);
@@ -153,7 +153,7 @@ describe("running a query", () => {
   }) => {
     const graph = await mountWith(fixtures.singleNode());
     await graph.executeQuery();
-    await graph.waitForLayoutStable(1);
+    await graph.waitForGraphStable(1);
     expect(graph.nodes).toHaveLength(1);
   });
 
@@ -175,7 +175,7 @@ describe("running a query", () => {
     const graph = await mountWith(fixtures.large(200));
     const start = performance.now();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(1);
+    await graph.waitForGraphStable(1);
     const elapsed = performance.now() - start;
     expect(elapsed).toBeLessThan(5000);
   });
@@ -183,7 +183,7 @@ describe("running a query", () => {
   test("disconnected components are both visible", async ({ mountWith }) => {
     const graph = await mountWith(fixtures.disconnected());
     await graph.executeQuery();
-    await graph.waitForLayoutStable(4);
+    await graph.waitForGraphStable(4);
     expect(graph.nodes.length).toBe(4);
   });
 
@@ -192,7 +192,7 @@ describe("running a query", () => {
   }) => {
     const graph = await mountWith(fixtures.resourcesOnly());
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     expect(graph.findingNodes.length).toBe(0);
     expect(graph.resourceNodes.length).toBe(3);
   });
@@ -202,7 +202,7 @@ describe("running a query", () => {
   }) => {
     const graph = await mountWith(fixtures.findingsOnly());
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     expect(graph.findingNodes.length).toBe(3);
     expect(graph.resourceNodes.length).toBe(0);
@@ -239,7 +239,7 @@ describe("running a query", () => {
 
     const graph = await mountWith(fixture);
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     // Then - hidden findings do not influence initial resource coordinates.
     for (const node of visibleNodes) {
@@ -254,7 +254,7 @@ describe("running a query", () => {
   }) => {
     const graph = await mountWith(fixtures.edgeCases());
     await graph.executeQuery();
-    await graph.waitForLayoutStable(5);
+    await graph.waitForGraphStable(5);
 
     expect(graph.nodes.length).toBe(7);
     expect(graph.containsText(/🔒-secure-bucket-日本語/)).toBe(true);
@@ -267,7 +267,7 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
 
     expect(graph.isInFilteredView).toBe(false);
@@ -284,7 +284,7 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     expect(graph.findingNodes.length).toBe(0);
     expect(graph.hasNodeDetailsModal).toBe(false);
@@ -301,7 +301,7 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     await graph.clickFirstResourceNode();
     expect(graph.findingNodes.length).toBeGreaterThan(0);
@@ -318,7 +318,7 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     const initialViewport = graph.viewportTransform;
 
@@ -344,7 +344,7 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     await graph.clickFirstResourceNode();
     expect(graph.findingNodes.length).toBeGreaterThan(0);
@@ -366,7 +366,7 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith(fixtures.large(20));
     await graph.executeQuery();
-    await graph.waitForLayoutStable(16);
+    await graph.waitForGraphStable(16);
 
     await graph.clickFirstResourceNode();
     expect(graph.findingNodes.length).toBeGreaterThan(0);
@@ -388,7 +388,7 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     expect(graph.hasNodeDetailsModal).toBe(false);
     expect(graph.hasNodeActionDialog).toBe(false);
@@ -406,13 +406,13 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
 
     const fullNodes = graph.nodes.length;
     await graph.clickFirstFindingNode();
     await graph.exitFilteredView();
-    await graph.waitForLayoutStable(fullNodes);
+    await graph.waitForGraphStable(fullNodes);
     expect(graph.isInFilteredView).toBe(false);
   });
 
@@ -420,7 +420,7 @@ describe("exploring the graph", () => {
     const fixture = fixtures.typical();
     const graph = await mountWith(fixture);
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     const hoveredNodeId = graph.resourceNodes[0]?.getAttribute("data-id");
     expect(hoveredNodeId).toBeTruthy();
@@ -458,7 +458,7 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     await graph.clickFirstResourceNodeWithoutFindings();
 
@@ -470,7 +470,7 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     await graph.clickEmptyCanvas();
     expect(graph.isInFilteredView).toBe(false);
@@ -481,7 +481,7 @@ describe("exploring the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
 
     await graph.rapidlyClickFirstFindingNode(2);
@@ -493,7 +493,7 @@ describe("exploring the graph", () => {
   test("double-clicking a node doesn't break state", async ({ mountWith }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     await graph.dblClickFirstResourceNode();
     expect(graph.nodes.length).toBeGreaterThan(0);
@@ -506,7 +506,7 @@ describe("auto-fitting the viewport", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     expect(graph.minimapMaskStrokeWidth).toBeGreaterThan(0);
   });
@@ -516,7 +516,7 @@ describe("auto-fitting the viewport", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     // Given - zoom into the current overview so newly revealed findings can
     // sit entirely outside the current frame. The expand auto-fit should then
@@ -543,7 +543,7 @@ describe("auto-fitting the viewport", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
 
     const beforeFilter = graph.viewportTransform;
@@ -561,7 +561,7 @@ describe("auto-fitting the viewport", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
     await graph.clickFirstFindingNode();
     expect(graph.isInFilteredView).toBe(true);
@@ -569,7 +569,7 @@ describe("auto-fitting the viewport", () => {
     const filterT = graph.viewportTransform;
 
     await graph.exitFilteredView();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     await graph.waitForTransition();
 
     expect(graph.viewportTransform).not.toBe(filterT);
@@ -582,7 +582,7 @@ describe("exporting the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
 
     expect(graph.toolbar.isExportButtonEnabled).toBe(true);
   });
@@ -592,7 +592,7 @@ describe("exporting the graph", () => {
   }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
 
     const png = await graph.captureExportPNG();
@@ -608,13 +608,13 @@ describe("running a different query", () => {
   test("the previous filtered view is cleared", async ({ mountWith }) => {
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
     await graph.clickFirstFindingNode();
     expect(graph.isInFilteredView).toBe(true);
 
     await graph.executeQuery();
-    await graph.waitForLayoutStable(3);
+    await graph.waitForGraphStable(3);
     expect(graph.isInFilteredView).toBe(false);
   });
 });
