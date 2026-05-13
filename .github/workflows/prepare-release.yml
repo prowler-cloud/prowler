@@ -341,7 +341,7 @@ jobs:
 
         # Update uv lock file
         echo "Updating uv.lock file..."
-        pip install --no-cache-dir uv==0.11.7
+        pip install --no-cache-dir uv==0.11.14
         cd api
         uv lock
         cd ..
