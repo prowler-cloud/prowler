@@ -148,7 +148,7 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 
 | Component | Location | Tech Stack |
 |-----------|----------|------------|
-| SDK | `prowler/` | Python 3.10+, Poetry 2.3+ |
+| SDK | `prowler/` | Python 3.10+, uv |
 | API | `api/` | Django 5.1, DRF, Celery |
 | UI | `ui/` | Next.js 16, React 19, Tailwind 4 |
 | MCP Server | `mcp_server/` | FastMCP, Python 3.12+ |
