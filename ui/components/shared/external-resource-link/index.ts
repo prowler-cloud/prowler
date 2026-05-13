@@ -1,1 +1,4 @@
-export { ExternalResourceLink } from "./external-resource-link";
+export {
+  ExternalResourceLink,
+  resolveExternalTarget,
+} from "./external-resource-link";

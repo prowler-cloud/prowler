@@ -25,7 +25,7 @@ interface ExternalResourceTarget {
   tooltip: string;
 }
 
-const resolveExternalTarget = ({
+export const resolveExternalTarget = ({
   providerType,
   resourceUid,
   providerUid,

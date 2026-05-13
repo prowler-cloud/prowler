@@ -44,7 +44,10 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
-import { ExternalResourceLink } from "@/components/shared/external-resource-link";
+import {
+  ExternalResourceLink,
+  resolveExternalTarget,
+} from "@/components/shared/external-resource-link";
 import {
   QUERY_EDITOR_LANGUAGE,
   QueryCodeEditor,
@@ -430,6 +433,16 @@ export function ResourceDetailDrawerContent({
   const resourceDetailHref = f?.resourceId
     ? buildResourceDetailHref(f.resourceId)
     : null;
+  const externalResourceTarget = resolveExternalTarget({
+    providerType,
+    resourceUid,
+    providerUid,
+    resourceName,
+    findingUid: f?.uid,
+    region: resourceRegion,
+  });
+  const hasIdAction =
+    Boolean(resourceDetailHref) || Boolean(externalResourceTarget);
   const findingRecommendationUrl = f?.remediation.recommendation.url;
   const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
   const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
@@ -700,28 +713,32 @@ export function ResourceDetailDrawerContent({
                       entityId={resourceUid}
                       idLabel="UID"
                       idAction={
-                        <span className="inline-flex items-center gap-2">
-                          {resourceDetailHref && (
-                            <Button variant="link" size="link-sm" asChild>
-                              <Link
-                                href={resourceDetailHref}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                View Resource
-                                <ExternalLink className="size-3" />
-                              </Link>
-                            </Button>
-                          )}
-                          <ExternalResourceLink
-                            providerType={providerType}
-                            resourceUid={resourceUid}
-                            providerUid={providerUid}
-                            resourceName={resourceName}
-                            findingUid={f?.uid}
-                            region={resourceRegion}
-                          />
-                        </span>
+                        hasIdAction ? (
+                          <span className="inline-flex items-center gap-2">
+                            {resourceDetailHref && (
+                              <Button variant="link" size="link-sm" asChild>
+                                <Link
+                                  href={resourceDetailHref}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  View Resource
+                                  <ExternalLink className="size-3" />
+                                </Link>
+                              </Button>
+                            )}
+                            {externalResourceTarget && (
+                              <ExternalResourceLink
+                                providerType={providerType}
+                                resourceUid={resourceUid}
+                                providerUid={providerUid}
+                                resourceName={resourceName}
+                                findingUid={f?.uid}
+                                region={resourceRegion}
+                              />
+                            )}
+                          </span>
+                        ) : undefined
                       }
                     />
                   </div>
