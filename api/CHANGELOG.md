@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.27.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: BEDROCK-001 and BEDROCK-002 now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
+
+---
+
 ## [1.27.1] (Prowler v5.26.1)
 
 ### 🐞 Fixed
