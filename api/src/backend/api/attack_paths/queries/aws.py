@@ -138,9 +138,8 @@ AWS_IAM_STATEMENTS_ALLOW_ALL_ACTIONS = AttackPathsQueryDefinition(
     description="Find IAM policy statements that allow all actions via '*' within the selected account.",
     provider="aws",
     cypher=f"""
-        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([x IN split(stmt.action, ",") WHERE x = '*' | x]) > 0
+        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([x IN split(stmt.action, ",") WHERE x = '*' | x]) > 0
 
         WITH collect(path) AS paths
         UNWIND paths AS p
@@ -162,9 +161,8 @@ AWS_IAM_STATEMENTS_ALLOW_DELETE_POLICY = AttackPathsQueryDefinition(
     description="Find IAM policy statements that allow the iam:DeletePolicy action within the selected account.",
     provider="aws",
     cypher=f"""
-        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([x IN split(stmt.action, ",") WHERE x = "iam:DeletePolicy" | x]) > 0
+        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([x IN split(stmt.action, ",") WHERE x = "iam:DeletePolicy" | x]) > 0
 
         WITH collect(path) AS paths
         UNWIND paths AS p
@@ -186,9 +184,8 @@ AWS_IAM_STATEMENTS_ALLOW_CREATE_ACTIONS = AttackPathsQueryDefinition(
     description="Find IAM policy statements that allow actions containing 'create' within the selected account.",
     provider="aws",
     cypher=f"""
-        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = "Allow"
-            AND size([x IN split(stmt.action, ",") WHERE toLower(x) CONTAINS "create" | x]) > 0
+        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([x IN split(stmt.action, ",") WHERE toLower(x) CONTAINS "create" | x]) > 0
 
         WITH collect(path) AS paths
         UNWIND paths AS p
@@ -358,18 +355,16 @@ AWS_APPRUNNER_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find apprunner:CreateService permission
-        MATCH (principal)--(apprunner_policy:AWSPolicy)--(stmt_apprunner:AWSPolicyStatement)
-        WHERE stmt_apprunner.effect = 'Allow'
-            AND size([action IN split(stmt_apprunner.action, ",") WHERE
+        MATCH (principal)--(apprunner_policy:AWSPolicy)--(stmt_apprunner:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_apprunner.action, ",") WHERE
                 toLower(action) = 'apprunner:createservice'
                 OR toLower(action) = 'apprunner:*'
                 OR action = '*'
@@ -410,9 +405,8 @@ AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with apprunner:UpdateService permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(update_policy:AWSPolicy)--(stmt_update:AWSPolicyStatement)
-        WHERE stmt_update.effect = 'Allow'
-            AND size([action IN split(stmt_update.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(update_policy:AWSPolicy)--(stmt_update:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_update.action, ",") WHERE
                 toLower(action) = 'apprunner:updateservice'
                 OR toLower(action) = 'apprunner:*'
                 OR action = '*'
@@ -448,36 +442,32 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find bedrock-agentcore:CreateCodeInterpreter permission
-        MATCH (principal)--(bedrock_policy:AWSPolicy)--(stmt_bedrock:AWSPolicyStatement)
-        WHERE stmt_bedrock.effect = 'Allow'
-            AND size([action IN split(stmt_bedrock.action, ",") WHERE
+        MATCH (principal)--(bedrock_policy:AWSPolicy)--(stmt_bedrock:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_bedrock.action, ",") WHERE
                 toLower(action) = 'bedrock-agentcore:createcodeinterpreter'
                 OR toLower(action) = 'bedrock-agentcore:*'
                 OR action = '*'
             | action]) > 0
 
         // Find bedrock-agentcore:StartCodeInterpreterSession permission
-        MATCH (principal)--(session_policy:AWSPolicy)--(stmt_session:AWSPolicyStatement)
-        WHERE stmt_session.effect = 'Allow'
-            AND size([action IN split(stmt_session.action, ",") WHERE
+        MATCH (principal)--(session_policy:AWSPolicy)--(stmt_session:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_session.action, ",") WHERE
                 toLower(action) = 'bedrock-agentcore:startcodeinterpretersession'
                 OR toLower(action) = 'bedrock-agentcore:*'
                 OR action = '*'
             | action]) > 0
 
         // Find bedrock-agentcore:InvokeCodeInterpreter permission
-        MATCH (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement)
-        WHERE stmt_invoke.effect = 'Allow'
-            AND size([action IN split(stmt_invoke.action, ",") WHERE
+        MATCH (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_invoke.action, ",") WHERE
                 toLower(action) = 'bedrock-agentcore:invokecodeinterpreter'
                 OR toLower(action) = 'bedrock-agentcore:*'
                 OR action = '*'
@@ -518,18 +508,16 @@ AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with bedrock-agentcore:StartCodeInterpreterSession permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(session_policy:AWSPolicy)--(stmt_session:AWSPolicyStatement)
-        WHERE stmt_session.effect = 'Allow'
-            AND size([action IN split(stmt_session.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(session_policy:AWSPolicy)--(stmt_session:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_session.action, ",") WHERE
                 toLower(action) = 'bedrock-agentcore:startcodeinterpretersession'
                 OR toLower(action) = 'bedrock-agentcore:*'
                 OR action = '*'
             | action]) > 0
 
         // Find bedrock-agentcore:InvokeCodeInterpreter permission
-        MATCH (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement)
-        WHERE stmt_invoke.effect = 'Allow'
-            AND size([action IN split(stmt_invoke.action, ",") WHERE
+        MATCH (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_invoke.action, ",") WHERE
                 toLower(action) = 'bedrock-agentcore:invokecodeinterpreter'
                 OR toLower(action) = 'bedrock-agentcore:*'
                 OR action = '*'
@@ -565,18 +553,16 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACK = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find cloudformation:CreateStack permission
-        MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement)
-        WHERE stmt_cfn.effect = 'Allow'
-            AND size([action IN split(stmt_cfn.action, ",") WHERE
+        MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_cfn.action, ",") WHERE
                 toLower(action) = 'cloudformation:createstack'
                 OR toLower(action) = 'cloudformation:*'
                 OR action = '*'
@@ -617,9 +603,8 @@ AWS_CLOUDFORMATION_PRIVESC_UPDATE_STACK = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with cloudformation:UpdateStack permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(update_policy:AWSPolicy)--(stmt_update:AWSPolicyStatement)
-        WHERE stmt_update.effect = 'Allow'
-            AND size([action IN split(stmt_update.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(update_policy:AWSPolicy)--(stmt_update:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_update.action, ",") WHERE
                 toLower(action) = 'cloudformation:updatestack'
                 OR toLower(action) = 'cloudformation:*'
                 OR action = '*'
@@ -655,27 +640,24 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACKSET = AttackPathsQueryDefinition
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find cloudformation:CreateStackSet permission
-        MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement)
-        WHERE stmt_cfn.effect = 'Allow'
-            AND size([action IN split(stmt_cfn.action, ",") WHERE
+        MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_cfn.action, ",") WHERE
                 toLower(action) = 'cloudformation:createstackset'
                 OR toLower(action) = 'cloudformation:*'
                 OR action = '*'
             | action]) > 0
 
         // Find cloudformation:CreateStackInstances permission
-        MATCH (principal)--(cfn_instances_policy:AWSPolicy)--(stmt_cfn_instances:AWSPolicyStatement)
-        WHERE stmt_cfn_instances.effect = 'Allow'
-            AND size([action IN split(stmt_cfn_instances.action, ",") WHERE
+        MATCH (principal)--(cfn_instances_policy:AWSPolicy)--(stmt_cfn_instances:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_cfn_instances.action, ",") WHERE
                 toLower(action) = 'cloudformation:createstackinstances'
                 OR toLower(action) = 'cloudformation:*'
                 OR action = '*'
@@ -716,18 +698,16 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_UPDATE_STACKSET = AttackPathsQueryDefinition
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find cloudformation:UpdateStackSet permission
-        MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement)
-        WHERE stmt_cfn.effect = 'Allow'
-            AND size([action IN split(stmt_cfn.action, ",") WHERE
+        MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_cfn.action, ",") WHERE
                 toLower(action) = 'cloudformation:updatestackset'
                 OR toLower(action) = 'cloudformation:*'
                 OR action = '*'
@@ -768,18 +748,16 @@ AWS_CLOUDFORMATION_PRIVESC_CHANGESET = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with cloudformation:CreateChangeSet permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
-        WHERE stmt_create.effect = 'Allow'
-            AND size([action IN split(stmt_create.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_create.action, ",") WHERE
                 toLower(action) = 'cloudformation:createchangeset'
                 OR toLower(action) = 'cloudformation:*'
                 OR action = '*'
             | action]) > 0
 
         // Find cloudformation:ExecuteChangeSet permission
-        MATCH (principal)--(exec_policy:AWSPolicy)--(stmt_exec:AWSPolicyStatement)
-        WHERE stmt_exec.effect = 'Allow'
-            AND size([action IN split(stmt_exec.action, ",") WHERE
+        MATCH (principal)--(exec_policy:AWSPolicy)--(stmt_exec:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_exec.action, ",") WHERE
                 toLower(action) = 'cloudformation:executechangeset'
                 OR toLower(action) = 'cloudformation:*'
                 OR action = '*'
@@ -815,27 +793,24 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find codebuild:CreateProject permission
-        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
-        WHERE stmt_create.effect = 'Allow'
-            AND size([action IN split(stmt_create.action, ",") WHERE
+        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_create.action, ",") WHERE
                 toLower(action) = 'codebuild:createproject'
                 OR toLower(action) = 'codebuild:*'
                 OR action = '*'
             | action]) > 0
 
         // Find codebuild:StartBuild permission
-        MATCH (principal)--(build_policy:AWSPolicy)--(stmt_build:AWSPolicyStatement)
-        WHERE stmt_build.effect = 'Allow'
-            AND size([action IN split(stmt_build.action, ",") WHERE
+        MATCH (principal)--(build_policy:AWSPolicy)--(stmt_build:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_build.action, ",") WHERE
                 toLower(action) = 'codebuild:startbuild'
                 OR toLower(action) = 'codebuild:*'
                 OR action = '*'
@@ -876,9 +851,8 @@ AWS_CODEBUILD_PRIVESC_START_BUILD = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with codebuild:StartBuild permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(build_policy:AWSPolicy)--(stmt_build:AWSPolicyStatement)
-        WHERE stmt_build.effect = 'Allow'
-            AND size([action IN split(stmt_build.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(build_policy:AWSPolicy)--(stmt_build:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_build.action, ",") WHERE
                 toLower(action) = 'codebuild:startbuild'
                 OR toLower(action) = 'codebuild:*'
                 OR action = '*'
@@ -914,9 +888,8 @@ AWS_CODEBUILD_PRIVESC_START_BUILD_BATCH = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with codebuild:StartBuildBatch permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(build_policy:AWSPolicy)--(stmt_build:AWSPolicyStatement)
-        WHERE stmt_build.effect = 'Allow'
-            AND size([action IN split(stmt_build.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(build_policy:AWSPolicy)--(stmt_build:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_build.action, ",") WHERE
                 toLower(action) = 'codebuild:startbuildbatch'
                 OR toLower(action) = 'codebuild:*'
                 OR action = '*'
@@ -952,27 +925,24 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT_BATCH = AttackPathsQueryDefinition
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find codebuild:CreateProject permission
-        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
-        WHERE stmt_create.effect = 'Allow'
-            AND size([action IN split(stmt_create.action, ",") WHERE
+        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_create.action, ",") WHERE
                 toLower(action) = 'codebuild:createproject'
                 OR toLower(action) = 'codebuild:*'
                 OR action = '*'
             | action]) > 0
 
         // Find codebuild:StartBuildBatch permission
-        MATCH (principal)--(batch_policy:AWSPolicy)--(stmt_batch:AWSPolicyStatement)
-        WHERE stmt_batch.effect = 'Allow'
-            AND size([action IN split(stmt_batch.action, ",") WHERE
+        MATCH (principal)--(batch_policy:AWSPolicy)--(stmt_batch:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_batch.action, ",") WHERE
                 toLower(action) = 'codebuild:startbuildbatch'
                 OR toLower(action) = 'codebuild:*'
                 OR action = '*'
@@ -1013,36 +983,32 @@ AWS_DATAPIPELINE_PRIVESC_PASSROLE_CREATE_PIPELINE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find datapipeline:CreatePipeline permission
-        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
-        WHERE stmt_create.effect = 'Allow'
-            AND size([action IN split(stmt_create.action, ",") WHERE
+        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_create.action, ",") WHERE
                 toLower(action) = 'datapipeline:createpipeline'
                 OR toLower(action) = 'datapipeline:*'
                 OR action = '*'
             | action]) > 0
 
         // Find datapipeline:PutPipelineDefinition permission
-        MATCH (principal)--(put_policy:AWSPolicy)--(stmt_put:AWSPolicyStatement)
-        WHERE stmt_put.effect = 'Allow'
-            AND size([action IN split(stmt_put.action, ",") WHERE
+        MATCH (principal)--(put_policy:AWSPolicy)--(stmt_put:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_put.action, ",") WHERE
                 toLower(action) = 'datapipeline:putpipelinedefinition'
                 OR toLower(action) = 'datapipeline:*'
                 OR action = '*'
             | action]) > 0
 
         // Find datapipeline:ActivatePipeline permission
-        MATCH (principal)--(activate_policy:AWSPolicy)--(stmt_activate:AWSPolicyStatement)
-        WHERE stmt_activate.effect = 'Allow'
-            AND size([action IN split(stmt_activate.action, ",") WHERE
+        MATCH (principal)--(activate_policy:AWSPolicy)--(stmt_activate:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_activate.action, ",") WHERE
                 toLower(action) = 'datapipeline:activatepipeline'
                 OR toLower(action) = 'datapipeline:*'
                 OR action = '*'
@@ -1084,18 +1050,16 @@ AWS_EC2_PRIVESC_PASSROLE_IAM = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ec2:RunInstances permission
-        MATCH (principal)--(ec2_policy:AWSPolicy)--(stmt_ec2:AWSPolicyStatement)
-        WHERE stmt_ec2.effect = 'Allow'
-            AND size([action IN split(stmt_ec2.action, ",") WHERE
+        MATCH (principal)--(ec2_policy:AWSPolicy)--(stmt_ec2:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_ec2.action, ",") WHERE
                 toLower(action) = 'ec2:runinstances'
                 OR toLower(action) = 'ec2:*'
                 OR action = '*'
@@ -1136,27 +1100,24 @@ AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with ec2:ModifyInstanceAttribute permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(modify_policy:AWSPolicy)--(stmt_modify:AWSPolicyStatement)
-        WHERE stmt_modify.effect = 'Allow'
-            AND size([action IN split(stmt_modify.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(modify_policy:AWSPolicy)--(stmt_modify:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_modify.action, ",") WHERE
                 toLower(action) = 'ec2:modifyinstanceattribute'
                 OR toLower(action) = 'ec2:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ec2:StopInstances permission (can be same or different policy)
-        MATCH (principal)--(stop_policy:AWSPolicy)--(stmt_stop:AWSPolicyStatement)
-        WHERE stmt_stop.effect = 'Allow'
-            AND size([action IN split(stmt_stop.action, ",") WHERE
+        MATCH (principal)--(stop_policy:AWSPolicy)--(stmt_stop:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_stop.action, ",") WHERE
                 toLower(action) = 'ec2:stopinstances'
                 OR toLower(action) = 'ec2:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ec2:StartInstances permission (can be same or different policy)
-        MATCH (principal)--(start_policy:AWSPolicy)--(stmt_start:AWSPolicyStatement)
-        WHERE stmt_start.effect = 'Allow'
-            AND size([action IN split(stmt_start.action, ",") WHERE
+        MATCH (principal)--(start_policy:AWSPolicy)--(stmt_start:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_start.action, ",") WHERE
                 toLower(action) = 'ec2:startinstances'
                 OR toLower(action) = 'ec2:*'
                 OR action = '*'
@@ -1192,18 +1153,16 @@ AWS_EC2_PRIVESC_PASSROLE_SPOT_INSTANCES = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ec2:RequestSpotInstances permission
-        MATCH (principal)--(spot_policy:AWSPolicy)--(stmt_spot:AWSPolicyStatement)
-        WHERE stmt_spot.effect = 'Allow'
-            AND size([action IN split(stmt_spot.action, ",") WHERE
+        MATCH (principal)--(spot_policy:AWSPolicy)--(stmt_spot:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_spot.action, ",") WHERE
                 toLower(action) = 'ec2:requestspotinstances'
                 OR toLower(action) = 'ec2:*'
                 OR action = '*'
@@ -1244,18 +1203,16 @@ AWS_EC2_PRIVESC_LAUNCH_TEMPLATE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with ec2:CreateLaunchTemplateVersion permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
-        WHERE stmt_create.effect = 'Allow'
-            AND size([action IN split(stmt_create.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_create.action, ",") WHERE
                 toLower(action) = 'ec2:createlaunchtemplateversion'
                 OR toLower(action) = 'ec2:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ec2:ModifyLaunchTemplate permission
-        MATCH (principal)--(modify_policy:AWSPolicy)--(stmt_modify:AWSPolicyStatement)
-        WHERE stmt_modify.effect = 'Allow'
-            AND size([action IN split(stmt_modify.action, ",") WHERE
+        MATCH (principal)--(modify_policy:AWSPolicy)--(stmt_modify:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_modify.action, ",") WHERE
                 toLower(action) = 'ec2:modifylaunchtemplate'
                 OR toLower(action) = 'ec2:*'
                 OR action = '*'
@@ -1291,9 +1248,8 @@ AWS_EC2INSTANCECONNECT_PRIVESC_SEND_SSH_PUBLIC_KEY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with ec2-instance-connect:SendSSHPublicKey permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(connect_policy:AWSPolicy)--(stmt_connect:AWSPolicyStatement)
-        WHERE stmt_connect.effect = 'Allow'
-            AND size([action IN split(stmt_connect.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(connect_policy:AWSPolicy)--(stmt_connect:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_connect.action, ",") WHERE
                 toLower(action) = 'ec2-instance-connect:sendsshpublickey'
                 OR toLower(action) = 'ec2-instance-connect:*'
                 OR action = '*'
@@ -1329,36 +1285,32 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
     ),
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:CreateCluster permission
-        MATCH (principal)--(cluster_policy:AWSPolicy)--(stmt_cluster:AWSPolicyStatement)
-        WHERE stmt_cluster.effect = 'Allow'
-            AND size([action IN split(stmt_cluster.action, ",") WHERE
+        MATCH (principal)--(cluster_policy:AWSPolicy)--(stmt_cluster:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_cluster.action, ",") WHERE
                 toLower(action) = 'ecs:createcluster'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:RegisterTaskDefinition permission
-        MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement)
-        WHERE stmt_taskdef.effect = 'Allow'
-            AND size([action IN split(stmt_taskdef.action, ",") WHERE
+        MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_taskdef.action, ",") WHERE
                 toLower(action) = 'ecs:registertaskdefinition'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:CreateService permission
-        MATCH (principal)--(service_policy:AWSPolicy)--(stmt_service:AWSPolicyStatement)
-        WHERE stmt_service.effect = 'Allow'
-            AND size([action IN split(stmt_service.action, ",") WHERE
+        MATCH (principal)--(service_policy:AWSPolicy)--(stmt_service:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_service.action, ",") WHERE
                 toLower(action) = 'ecs:createservice'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
@@ -1399,36 +1351,32 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:CreateCluster permission
-        MATCH (principal)--(cluster_policy:AWSPolicy)--(stmt_cluster:AWSPolicyStatement)
-        WHERE stmt_cluster.effect = 'Allow'
-            AND size([action IN split(stmt_cluster.action, ",") WHERE
+        MATCH (principal)--(cluster_policy:AWSPolicy)--(stmt_cluster:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_cluster.action, ",") WHERE
                 toLower(action) = 'ecs:createcluster'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:RegisterTaskDefinition permission
-        MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement)
-        WHERE stmt_taskdef.effect = 'Allow'
-            AND size([action IN split(stmt_taskdef.action, ",") WHERE
+        MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_taskdef.action, ",") WHERE
                 toLower(action) = 'ecs:registertaskdefinition'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:RunTask permission
-        MATCH (principal)--(runtask_policy:AWSPolicy)--(stmt_runtask:AWSPolicyStatement)
-        WHERE stmt_runtask.effect = 'Allow'
-            AND size([action IN split(stmt_runtask.action, ",") WHERE
+        MATCH (principal)--(runtask_policy:AWSPolicy)--(stmt_runtask:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_runtask.action, ",") WHERE
                 toLower(action) = 'ecs:runtask'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
@@ -1469,27 +1417,24 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE_EXISTING_CLUSTER = AttackPathsQueryDefin
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:RegisterTaskDefinition permission
-        MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement)
-        WHERE stmt_taskdef.effect = 'Allow'
-            AND size([action IN split(stmt_taskdef.action, ",") WHERE
+        MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_taskdef.action, ",") WHERE
                 toLower(action) = 'ecs:registertaskdefinition'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:CreateService permission
-        MATCH (principal)--(service_policy:AWSPolicy)--(stmt_service:AWSPolicyStatement)
-        WHERE stmt_service.effect = 'Allow'
-            AND size([action IN split(stmt_service.action, ",") WHERE
+        MATCH (principal)--(service_policy:AWSPolicy)--(stmt_service:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_service.action, ",") WHERE
                 toLower(action) = 'ecs:createservice'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
@@ -1530,27 +1475,24 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:RegisterTaskDefinition permission
-        MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement)
-        WHERE stmt_taskdef.effect = 'Allow'
-            AND size([action IN split(stmt_taskdef.action, ",") WHERE
+        MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_taskdef.action, ",") WHERE
                 toLower(action) = 'ecs:registertaskdefinition'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:RunTask permission
-        MATCH (principal)--(runtask_policy:AWSPolicy)--(stmt_runtask:AWSPolicyStatement)
-        WHERE stmt_runtask.effect = 'Allow'
-            AND size([action IN split(stmt_runtask.action, ",") WHERE
+        MATCH (principal)--(runtask_policy:AWSPolicy)--(stmt_runtask:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_runtask.action, ",") WHERE
                 toLower(action) = 'ecs:runtask'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
@@ -1591,27 +1533,24 @@ AWS_ECS_PRIVESC_PASSROLE_START_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinitio
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:RegisterTaskDefinition permission
-        MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement)
-        WHERE stmt_taskdef.effect = 'Allow'
-            AND size([action IN split(stmt_taskdef.action, ",") WHERE
+        MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_taskdef.action, ",") WHERE
                 toLower(action) = 'ecs:registertaskdefinition'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:StartTask permission
-        MATCH (principal)--(starttask_policy:AWSPolicy)--(stmt_starttask:AWSPolicyStatement)
-        WHERE stmt_starttask.effect = 'Allow'
-            AND size([action IN split(stmt_starttask.action, ",") WHERE
+        MATCH (principal)--(starttask_policy:AWSPolicy)--(stmt_starttask:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_starttask.action, ",") WHERE
                 toLower(action) = 'ecs:starttask'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
@@ -1652,18 +1591,16 @@ AWS_ECS_PRIVESC_EXECUTE_COMMAND = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with ecs:ExecuteCommand permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(exec_policy:AWSPolicy)--(stmt_exec:AWSPolicyStatement)
-        WHERE stmt_exec.effect = 'Allow'
-            AND size([action IN split(stmt_exec.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(exec_policy:AWSPolicy)--(stmt_exec:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_exec.action, ",") WHERE
                 toLower(action) = 'ecs:executecommand'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
             | action]) > 0
 
         // Find ecs:DescribeTasks permission (required by AWS CLI to get container runtime ID)
-        MATCH (principal)--(describe_policy:AWSPolicy)--(stmt_describe:AWSPolicyStatement)
-        WHERE stmt_describe.effect = 'Allow'
-            AND size([action IN split(stmt_describe.action, ",") WHERE
+        MATCH (principal)--(describe_policy:AWSPolicy)--(stmt_describe:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_describe.action, ",") WHERE
                 toLower(action) = 'ecs:describetasks'
                 OR toLower(action) = 'ecs:*'
                 OR action = '*'
@@ -1699,18 +1636,16 @@ AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find glue:CreateDevEndpoint permission
-        MATCH (principal)--(glue_policy:AWSPolicy)--(stmt_glue:AWSPolicyStatement)
-        WHERE stmt_glue.effect = 'Allow'
-            AND size([action IN split(stmt_glue.action, ",") WHERE
+        MATCH (principal)--(glue_policy:AWSPolicy)--(stmt_glue:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_glue.action, ",") WHERE
                 toLower(action) = 'glue:createdevendpoint'
                 OR toLower(action) = 'glue:*'
                 OR action = '*'
@@ -1751,9 +1686,8 @@ AWS_GLUE_PRIVESC_UPDATE_DEV_ENDPOINT = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with glue:UpdateDevEndpoint permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'glue:updatedevendpoint'
                 OR toLower(action) = 'glue:*'
                 OR action = '*'
@@ -1789,27 +1723,24 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find glue:CreateJob permission
-        MATCH (principal)--(createjob_policy:AWSPolicy)--(stmt_createjob:AWSPolicyStatement)
-        WHERE stmt_createjob.effect = 'Allow'
-            AND size([action IN split(stmt_createjob.action, ",") WHERE
+        MATCH (principal)--(createjob_policy:AWSPolicy)--(stmt_createjob:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_createjob.action, ",") WHERE
                 toLower(action) = 'glue:createjob'
                 OR toLower(action) = 'glue:*'
                 OR action = '*'
             | action]) > 0
 
         // Find glue:StartJobRun permission
-        MATCH (principal)--(startjob_policy:AWSPolicy)--(stmt_startjob:AWSPolicyStatement)
-        WHERE stmt_startjob.effect = 'Allow'
-            AND size([action IN split(stmt_startjob.action, ",") WHERE
+        MATCH (principal)--(startjob_policy:AWSPolicy)--(stmt_startjob:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_startjob.action, ",") WHERE
                 toLower(action) = 'glue:startjobrun'
                 OR toLower(action) = 'glue:*'
                 OR action = '*'
@@ -1850,27 +1781,24 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB_TRIGGER = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find glue:CreateJob permission
-        MATCH (principal)--(createjob_policy:AWSPolicy)--(stmt_createjob:AWSPolicyStatement)
-        WHERE stmt_createjob.effect = 'Allow'
-            AND size([action IN split(stmt_createjob.action, ",") WHERE
+        MATCH (principal)--(createjob_policy:AWSPolicy)--(stmt_createjob:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_createjob.action, ",") WHERE
                 toLower(action) = 'glue:createjob'
                 OR toLower(action) = 'glue:*'
                 OR action = '*'
             | action]) > 0
 
         // Find glue:CreateTrigger permission
-        MATCH (principal)--(trigger_policy:AWSPolicy)--(stmt_trigger:AWSPolicyStatement)
-        WHERE stmt_trigger.effect = 'Allow'
-            AND size([action IN split(stmt_trigger.action, ",") WHERE
+        MATCH (principal)--(trigger_policy:AWSPolicy)--(stmt_trigger:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_trigger.action, ",") WHERE
                 toLower(action) = 'glue:createtrigger'
                 OR toLower(action) = 'glue:*'
                 OR action = '*'
@@ -1911,27 +1839,24 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find glue:UpdateJob permission
-        MATCH (principal)--(updatejob_policy:AWSPolicy)--(stmt_updatejob:AWSPolicyStatement)
-        WHERE stmt_updatejob.effect = 'Allow'
-            AND size([action IN split(stmt_updatejob.action, ",") WHERE
+        MATCH (principal)--(updatejob_policy:AWSPolicy)--(stmt_updatejob:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_updatejob.action, ",") WHERE
                 toLower(action) = 'glue:updatejob'
                 OR toLower(action) = 'glue:*'
                 OR action = '*'
             | action]) > 0
 
         // Find glue:StartJobRun permission
-        MATCH (principal)--(startjob_policy:AWSPolicy)--(stmt_startjob:AWSPolicyStatement)
-        WHERE stmt_startjob.effect = 'Allow'
-            AND size([action IN split(stmt_startjob.action, ",") WHERE
+        MATCH (principal)--(startjob_policy:AWSPolicy)--(stmt_startjob:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_startjob.action, ",") WHERE
                 toLower(action) = 'glue:startjobrun'
                 OR toLower(action) = 'glue:*'
                 OR action = '*'
@@ -1972,27 +1897,24 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB_TRIGGER = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find glue:UpdateJob permission
-        MATCH (principal)--(updatejob_policy:AWSPolicy)--(stmt_updatejob:AWSPolicyStatement)
-        WHERE stmt_updatejob.effect = 'Allow'
-            AND size([action IN split(stmt_updatejob.action, ",") WHERE
+        MATCH (principal)--(updatejob_policy:AWSPolicy)--(stmt_updatejob:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_updatejob.action, ",") WHERE
                 toLower(action) = 'glue:updatejob'
                 OR toLower(action) = 'glue:*'
                 OR action = '*'
             | action]) > 0
 
         // Find glue:CreateTrigger permission
-        MATCH (principal)--(trigger_policy:AWSPolicy)--(stmt_trigger:AWSPolicyStatement)
-        WHERE stmt_trigger.effect = 'Allow'
-            AND size([action IN split(stmt_trigger.action, ",") WHERE
+        MATCH (principal)--(trigger_policy:AWSPolicy)--(stmt_trigger:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_trigger.action, ",") WHERE
                 toLower(action) = 'glue:createtrigger'
                 OR toLower(action) = 'glue:*'
                 OR action = '*'
@@ -2033,9 +1955,8 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:CreatePolicyVersion permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:createpolicyversion'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2076,9 +1997,8 @@ AWS_IAM_PRIVESC_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:CreateAccessKey permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:createaccesskey'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2119,18 +2039,16 @@ AWS_IAM_PRIVESC_DELETE_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:CreateAccessKey permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:createaccesskey'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find iam:DeleteAccessKey permission
-        MATCH (principal)--(delete_policy:AWSPolicy)--(stmt_delete:AWSPolicyStatement)
-        WHERE stmt_delete.effect = 'Allow'
-            AND size([action IN split(stmt_delete.action, ",") WHERE
+        MATCH (principal)--(delete_policy:AWSPolicy)--(stmt_delete:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_delete.action, ",") WHERE
                 toLower(action) = 'iam:deleteaccesskey'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2176,9 +2094,8 @@ AWS_IAM_PRIVESC_CREATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:CreateLoginProfile permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:createloginprofile'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2219,9 +2136,8 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find roles with iam:PutRolePolicy permission scoped to themselves
-        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(role:AWSRole)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(role:AWSRole)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:putrolepolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2259,9 +2175,8 @@ AWS_IAM_PRIVESC_UPDATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:UpdateLoginProfile permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:updateloginprofile'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2302,9 +2217,8 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find users with iam:PutUserPolicy permission scoped to themselves
-        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:putuserpolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2342,9 +2256,8 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find users with iam:AttachUserPolicy permission scoped to themselves
-        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:attachuserpolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2382,9 +2295,8 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find roles with iam:AttachRolePolicy permission scoped to themselves
-        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(role:AWSRole)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(role:AWSRole)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:attachrolepolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2422,9 +2334,8 @@ AWS_IAM_PRIVESC_ATTACH_GROUP_POLICY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find users with iam:AttachGroupPolicy permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:attachgrouppolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2465,9 +2376,8 @@ AWS_IAM_PRIVESC_PUT_GROUP_POLICY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find users with iam:PutGroupPolicy permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:putgrouppolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2508,9 +2418,8 @@ AWS_IAM_PRIVESC_UPDATE_ASSUME_ROLE_POLICY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:UpdateAssumeRolePolicy permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:updateassumerolepolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2551,9 +2460,8 @@ AWS_IAM_PRIVESC_ADD_USER_TO_GROUP = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:AddUserToGroup permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:addusertogroup'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2594,9 +2502,8 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:AttachRolePolicy permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:attachrolepolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2637,18 +2544,16 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinitio
     provider="aws",
     cypher=f"""
         // Find principals with iam:AttachUserPolicy permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:attachuserpolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find iam:CreateAccessKey permission
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND size([action INstmt2.action WHERE
+        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action INstmt2.action WHERE
                 toLower(action) = 'iam:createaccesskey'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2694,9 +2599,8 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_ASSUME_ROLE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:CreatePolicyVersion permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:createpolicyversion'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2738,9 +2642,8 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PutRolePolicy permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:putrolepolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2781,18 +2684,16 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PutUserPolicy permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:putuserpolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find iam:CreateAccessKey permission
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND size([action INstmt2.action WHERE
+        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action INstmt2.action WHERE
                 toLower(action) = 'iam:createaccesskey'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2838,18 +2739,16 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefiniti
     provider="aws",
     cypher=f"""
         // Find principals with iam:AttachRolePolicy permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:attachrolepolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find iam:UpdateAssumeRolePolicy permission
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND size([action INstmt2.action WHERE
+        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action INstmt2.action WHERE
                 toLower(action) = 'iam:updateassumerolepolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2895,18 +2794,16 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_UPDATE_ASSUME_ROLE = AttackPathsQueryDefin
     provider="aws",
     cypher=f"""
         // Find principals with iam:CreatePolicyVersion permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:createpolicyversion'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find iam:UpdateAssumeRolePolicy permission
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND size([action INstmt2.action WHERE
+        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action INstmt2.action WHERE
                 toLower(action) = 'iam:updateassumerolepolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -2953,18 +2850,16 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PutRolePolicy permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'iam:putrolepolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find iam:UpdateAssumeRolePolicy permission
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND size([action INstmt2.action WHERE
+        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action INstmt2.action WHERE
                 toLower(action) = 'iam:updateassumerolepolicy'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
@@ -3010,27 +2905,24 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find lambda:CreateFunction permission
-        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
-        WHERE stmt_create.effect = 'Allow'
-            AND size([action IN split(stmt_create.action, ",") WHERE
+        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_create.action, ",") WHERE
                 toLower(action) = 'lambda:createfunction'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
             | action]) > 0
 
         // Find lambda:InvokeFunction permission
-        MATCH (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement)
-        WHERE stmt_invoke.effect = 'Allow'
-            AND size([action IN split(stmt_invoke.action, ",") WHERE
+        MATCH (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_invoke.action, ",") WHERE
                 toLower(action) = 'lambda:invokefunction'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
@@ -3071,27 +2963,24 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_EVENT_SOURCE = AttackPathsQueryDefin
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find lambda:CreateFunction permission
-        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
-        WHERE stmt_create.effect = 'Allow'
-            AND size([action IN split(stmt_create.action, ",") WHERE
+        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_create.action, ",") WHERE
                 toLower(action) = 'lambda:createfunction'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
             | action]) > 0
 
         // Find lambda:CreateEventSourceMapping permission
-        MATCH (principal)--(event_policy:AWSPolicy)--(stmt_event:AWSPolicyStatement)
-        WHERE stmt_event.effect = 'Allow'
-            AND size([action IN split(stmt_event.action, ",") WHERE
+        MATCH (principal)--(event_policy:AWSPolicy)--(stmt_event:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_event.action, ",") WHERE
                 toLower(action) = 'lambda:createeventsourcemapping'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
@@ -3132,9 +3021,8 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with lambda:UpdateFunctionCode permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'lambda:updatefunctioncode'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
@@ -3175,18 +3063,16 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_INVOKE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with lambda:UpdateFunctionCode permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'lambda:updatefunctioncode'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
             | action]) > 0
 
         // Find lambda:InvokeFunction permission
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND size([action INstmt2.action WHERE
+        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action INstmt2.action WHERE
                 toLower(action) = 'lambda:invokefunction'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
@@ -3232,18 +3118,16 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_ADD_PERMISSION = AttackPathsQueryDefinit
     provider="aws",
     cypher=f"""
         // Find principals with lambda:UpdateFunctionCode permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'lambda:updatefunctioncode'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
             | action]) > 0
 
         // Find lambda:AddPermission permission
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND size([action INstmt2.action WHERE
+        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action INstmt2.action WHERE
                 toLower(action) = 'lambda:addpermission'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
@@ -3289,27 +3173,24 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_ADD_PERMISSION = AttackPathsQueryDef
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find lambda:CreateFunction permission
-        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement)
-        WHERE stmt_create.effect = 'Allow'
-            AND size([action IN split(stmt_create.action, ",") WHERE
+        MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_create.action, ",") WHERE
                 toLower(action) = 'lambda:createfunction'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
             | action]) > 0
 
         // Find lambda:AddPermission permission
-        MATCH (principal)--(perm_policy:AWSPolicy)--(stmt_perm:AWSPolicyStatement)
-        WHERE stmt_perm.effect = 'Allow'
-            AND size([action IN split(stmt_perm.action, ",") WHERE
+        MATCH (principal)--(perm_policy:AWSPolicy)--(stmt_perm:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_perm.action, ",") WHERE
                 toLower(action) = 'lambda:addpermission'
                 OR toLower(action) = 'lambda:*'
                 OR action = '*'
@@ -3350,18 +3231,16 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_NOTEBOOK = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find sagemaker:CreateNotebookInstance permission
-        MATCH (principal)--(sm_policy:AWSPolicy)--(stmt_sm:AWSPolicyStatement)
-        WHERE stmt_sm.effect = 'Allow'
-            AND size([action IN split(stmt_sm.action, ",") WHERE
+        MATCH (principal)--(sm_policy:AWSPolicy)--(stmt_sm:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_sm.action, ",") WHERE
                 toLower(action) = 'sagemaker:createnotebookinstance'
                 OR toLower(action) = 'sagemaker:*'
                 OR action = '*'
@@ -3402,18 +3281,16 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_TRAINING_JOB = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find sagemaker:CreateTrainingJob permission
-        MATCH (principal)--(sm_policy:AWSPolicy)--(stmt_sm:AWSPolicyStatement)
-        WHERE stmt_sm.effect = 'Allow'
-            AND size([action IN split(stmt_sm.action, ",") WHERE
+        MATCH (principal)--(sm_policy:AWSPolicy)--(stmt_sm:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_sm.action, ",") WHERE
                 toLower(action) = 'sagemaker:createtrainingjob'
                 OR toLower(action) = 'sagemaker:*'
                 OR action = '*'
@@ -3454,18 +3331,16 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_PROCESSING_JOB = AttackPathsQueryDefinitio
     provider="aws",
     cypher=f"""
         // Find principals with iam:PassRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement)
-        WHERE stmt_passrole.effect = 'Allow'
-            AND size([action IN split(stmt_passrole.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
                 toLower(action) = 'iam:passrole'
                 OR toLower(action) = 'iam:*'
                 OR action = '*'
             | action]) > 0
 
         // Find sagemaker:CreateProcessingJob permission
-        MATCH (principal)--(sm_policy:AWSPolicy)--(stmt_sm:AWSPolicyStatement)
-        WHERE stmt_sm.effect = 'Allow'
-            AND size([action IN split(stmt_sm.action, ",") WHERE
+        MATCH (principal)--(sm_policy:AWSPolicy)--(stmt_sm:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt_sm.action, ",") WHERE
                 toLower(action) = 'sagemaker:createprocessingjob'
                 OR toLower(action) = 'sagemaker:*'
                 OR action = '*'
@@ -3506,9 +3381,8 @@ AWS_SAGEMAKER_PRIVESC_PRESIGNED_NOTEBOOK_URL = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with sagemaker:CreatePresignedNotebookInstanceUrl permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'sagemaker:createpresignednotebookinstanceurl'
                 OR toLower(action) = 'sagemaker:*'
                 OR action = '*'
@@ -3549,36 +3423,32 @@ AWS_SAGEMAKER_PRIVESC_LIFECYCLE_CONFIG_NOTEBOOK = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with sagemaker:CreateNotebookInstanceLifecycleConfig permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'sagemaker:createnotebookinstancelifecycleconfig'
                 OR toLower(action) = 'sagemaker:*'
                 OR action = '*'
             | action]) > 0
 
         // Find sagemaker:UpdateNotebookInstance permission
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND size([action INstmt2.action WHERE
+        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action INstmt2.action WHERE
                 toLower(action) = 'sagemaker:updatenotebookinstance'
                 OR toLower(action) = 'sagemaker:*'
                 OR action = '*'
             | action]) > 0
 
         // Find sagemaker:StopNotebookInstance permission
-        MATCH (principal)--(policy3:AWSPolicy)--(stmt3:AWSPolicyStatement)
-        WHERE stmt3.effect = 'Allow'
-            AND size([action INstmt3.action WHERE
+        MATCH (principal)--(policy3:AWSPolicy)--(stmt3:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action INstmt3.action WHERE
                 toLower(action) = 'sagemaker:stopnotebookinstance'
                 OR toLower(action) = 'sagemaker:*'
                 OR action = '*'
             | action]) > 0
 
         // Find sagemaker:StartNotebookInstance permission
-        MATCH (principal)--(policy4:AWSPolicy)--(stmt4:AWSPolicyStatement)
-        WHERE stmt4.effect = 'Allow'
-            AND size([action INstmt4.action WHERE
+        MATCH (principal)--(policy4:AWSPolicy)--(stmt4:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action INstmt4.action WHERE
                 toLower(action) = 'sagemaker:startnotebookinstance'
                 OR toLower(action) = 'sagemaker:*'
                 OR action = '*'
@@ -3619,9 +3489,8 @@ AWS_SSM_PRIVESC_START_SESSION = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with ssm:StartSession permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'ssm:startsession'
                 OR toLower(action) = 'ssm:*'
                 OR action = '*'
@@ -3657,9 +3526,8 @@ AWS_SSM_PRIVESC_SEND_COMMAND = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with ssm:SendCommand permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'ssm:sendcommand'
                 OR toLower(action) = 'ssm:*'
                 OR action = '*'
@@ -3695,9 +3563,8 @@ AWS_STS_PRIVESC_ASSUME_ROLE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with sts:AssumeRole permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND size([action IN split(stmt.action, ",") WHERE
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE size([action IN split(stmt.action, ",") WHERE
                 toLower(action) = 'sts:assumerole'
                 OR toLower(action) = 'sts:*'
                 OR action = '*'
