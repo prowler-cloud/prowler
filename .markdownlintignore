@@ -10,3 +10,7 @@ htmlcov/
 ui/.next/
 ui/out/
 contrib/
+
+# Auto-generated content (keepachangelog format legitimately repeats section headings).
+# Revisit with the team — see beads task on markdownlint rule triage.
+**/CHANGELOG.md
