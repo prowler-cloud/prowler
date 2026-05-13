@@ -413,6 +413,7 @@ class AzureProvider(Provider):
                 authority=config["authority"],
                 base_url=config["base_url"],
                 credential_scopes=config["credential_scopes"],
+                graph_host=config["graph_host"],
                 graph_scope=config["graph_scope"],
                 logs_endpoint=config["logs_endpoint"],
             )

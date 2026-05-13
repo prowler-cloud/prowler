@@ -774,11 +774,16 @@ class TestAzureProviderSovereignCloudSupport:
     ):
         config = AzureProvider.setup_region_config(region)
 
+        # graph_host mirrors graph_scope without the `/.default` suffix; we
+        # derive it here to avoid threading a separate parameter through every
+        # parametrized test in this class.
+        expected_graph_host = graph_scope.removesuffix("/.default")
         assert config == AzureRegionConfig(
             name=region,
             authority=authority,
             base_url=base_url,
             credential_scopes=credential_scopes,
+            graph_host=expected_graph_host,
             graph_scope=graph_scope,
             logs_endpoint=logs_endpoint,
         )
