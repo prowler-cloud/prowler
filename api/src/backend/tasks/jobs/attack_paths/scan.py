@@ -201,7 +201,9 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             tmp_cartography_config.neo4j_database
         ) as tmp_neo4j_session:
             # Indexes creation
-            indexes.create_cartography_indexes(tmp_neo4j_session, tmp_cartography_config)
+            indexes.create_cartography_indexes(
+                tmp_neo4j_session, tmp_cartography_config
+            )
             indexes.create_findings_indexes(tmp_neo4j_session)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
 

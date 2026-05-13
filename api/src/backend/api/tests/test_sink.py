@@ -160,3 +160,168 @@ class TestGetBackendForScan:
         backend = sink_module.get_backend_for_scan(scan)
 
         assert backend is sink_module.get_backend()
+
+
+def _session_ctx(session: MagicMock) -> MagicMock:
+    ctx = MagicMock()
+    ctx.__enter__ = MagicMock(return_value=session)
+    ctx.__exit__ = MagicMock(return_value=False)
+    return ctx
+
+
+class TestNeo4jSinkSyncWrites:
+    def test_ensure_sync_indexes_runs_create_index_idempotent(self):
+        from api.attack_paths.sink.neo4j import Neo4jSink
+
+        sink = Neo4jSink()
+        session = MagicMock()
+        session.run.return_value = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            sink.ensure_sync_indexes("db-tenant-x")
+
+        query = session.run.call_args.args[0]
+        assert "CREATE INDEX" in query
+        assert "IF NOT EXISTS" in query
+        assert "`_ProviderResource`" in query
+        assert "`_provider_element_id`" in query
+
+    def test_write_nodes_skips_empty_batch(self):
+        from api.attack_paths.sink.neo4j import Neo4jSink
+
+        sink = Neo4jSink()
+        with patch.object(sink, "get_session") as get_session:
+            sink.write_nodes("db-tenant-x", "`AWSUser`", [])
+            get_session.assert_not_called()
+
+    def test_write_nodes_merges_on_provider_resource_label(self):
+        from api.attack_paths.sink.neo4j import Neo4jSink
+
+        sink = Neo4jSink()
+        session = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            sink.write_nodes(
+                "db-tenant-x",
+                "`AWSUser`:`_ProviderResource`",
+                [{"provider_element_id": "p:e", "props": {"k": "v"}}],
+            )
+
+        query, params = session.run.call_args.args
+        assert "MERGE (n:`_ProviderResource`" in query
+        assert "`_provider_element_id`: row.provider_element_id" in query
+        assert "SET n:`AWSUser`:`_ProviderResource`" in query
+        assert params == {"rows": [{"provider_element_id": "p:e", "props": {"k": "v"}}]}
+
+    def test_write_relationships_scopes_endpoints_by_provider_label(self):
+        from api.attack_paths.sink.neo4j import Neo4jSink
+
+        sink = Neo4jSink()
+        session = MagicMock()
+        provider_id = "00000000-0000-0000-0000-000000000abc"
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            sink.write_relationships(
+                "db-tenant-x",
+                "RESOURCE",
+                provider_id,
+                [
+                    {
+                        "start_element_id": "s",
+                        "end_element_id": "e",
+                        "provider_element_id": "pe",
+                        "props": {},
+                    }
+                ],
+            )
+
+        query = session.run.call_args.args[0]
+        assert ":`_Provider_00000000000000000000000000000abc`" in query
+        assert ":RESOURCE" in query.replace("`", "")
+        assert "MERGE (s)-[r:`RESOURCE`" in query
+
+
+class TestNeptuneSinkSyncWrites:
+    def test_ensure_sync_indexes_is_noop(self):
+        from api.attack_paths.sink.neptune import NeptuneSink
+
+        sink = NeptuneSink()
+        with patch.object(sink, "get_session") as get_session:
+            sink.ensure_sync_indexes("ignored")
+            get_session.assert_not_called()
+
+    def test_write_nodes_merges_on_neptune_id_with_provider_resource_label(self):
+        from api.attack_paths.sink.neptune import NeptuneSink
+
+        sink = NeptuneSink()
+        session = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            sink.write_nodes(
+                "ignored",
+                "`AWSUser`",
+                [{"provider_element_id": "p:e", "props": {"k": "v"}}],
+            )
+
+        query = session.run.call_args.args[0]
+        # Neptune assigns a default `vertex` label to any unlabeled node,
+        # so the MERGE must pin a real label at creation time.
+        assert "MERGE (n:`_ProviderResource` {`~id`: row.provider_element_id})" in query
+        assert "SET n:`AWSUser`" in query
+        assert "SET n.`_provider_element_id` = row.provider_element_id" in query
+
+    def test_write_relationships_matches_endpoints_by_id(self):
+        from api.attack_paths.sink.neptune import NeptuneSink
+
+        sink = NeptuneSink()
+        session = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            sink.write_relationships(
+                "ignored",
+                "RESOURCE",
+                "provider-1",
+                [
+                    {
+                        "start_element_id": "s",
+                        "end_element_id": "e",
+                        "provider_element_id": "pe",
+                        "props": {},
+                    }
+                ],
+            )
+
+        query = session.run.call_args.args[0]
+        assert "MATCH (s) WHERE id(s) = row.start_element_id" in query
+        assert "MATCH (e) WHERE id(e) = row.end_element_id" in query
+        assert "MERGE (s)-[r:`RESOURCE`" in query
+
+
+class TestNeptuneSinkDropSubgraph:
+    def test_drop_subgraph_deletes_rels_before_nodes_in_bounded_batches(self):
+        from api.attack_paths.sink.neptune import NeptuneSink
+
+        sink = NeptuneSink()
+        session = MagicMock()
+
+        rel_record_first = MagicMock()
+        rel_record_first.__getitem__ = lambda _self, key: 50
+        rel_record_drain = MagicMock()
+        rel_record_drain.__getitem__ = lambda _self, key: 0
+        node_record_first = MagicMock()
+        node_record_first.__getitem__ = lambda _self, key: 10
+        node_record_drain = MagicMock()
+        node_record_drain.__getitem__ = lambda _self, key: 0
+
+        run_results = [
+            MagicMock(single=MagicMock(return_value=rel_record_first)),
+            MagicMock(single=MagicMock(return_value=rel_record_drain)),
+            MagicMock(single=MagicMock(return_value=node_record_first)),
+            MagicMock(single=MagicMock(return_value=node_record_drain)),
+        ]
+        session.run.side_effect = run_results
+
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            deleted = sink.drop_subgraph("ignored", "provider-1")
+
+        assert deleted == 10
+        first_query = session.run.call_args_list[0].args[0]
+        assert "DELETE r" in first_query
+        assert "DETACH DELETE" not in first_query
+        third_query = session.run.call_args_list[2].args[0]
+        assert "DELETE n" in third_query

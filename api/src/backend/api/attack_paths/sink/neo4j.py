@@ -238,6 +238,77 @@ class Neo4jSink(SinkDatabase):
                 f"Failed to clear query cache for database `{database}`: {exc}"
             )
 
+    # Sync write path
+
+    def ensure_sync_indexes(self, database: str) -> None:
+        """Create the `_provider_element_id` lookup index on `_ProviderResource`.
+
+        Every synced node carries the `_ProviderResource` label, so a single
+        index covers both node-upserts and relationship endpoint MATCHes.
+        Without this index the rel sync degrades to a label scan per row and
+        large provider syncs become unworkable.
+        """
+        from tasks.jobs.attack_paths.config import (
+            PROVIDER_ELEMENT_ID_PROPERTY,
+            PROVIDER_RESOURCE_LABEL,
+        )
+
+        query = (
+            f"CREATE INDEX provider_element_id_idx IF NOT EXISTS "
+            f"FOR (n:`{PROVIDER_RESOURCE_LABEL}`) "
+            f"ON (n.`{PROVIDER_ELEMENT_ID_PROPERTY}`)"
+        )
+        with self.get_session(database) as session:
+            session.run(query).consume()
+
+    def write_nodes(
+        self,
+        database: str,
+        labels: str,
+        rows: list[dict[str, Any]],
+    ) -> None:
+        if not rows:
+            return
+        from tasks.jobs.attack_paths.config import (
+            PROVIDER_ELEMENT_ID_PROPERTY,
+            PROVIDER_RESOURCE_LABEL,
+        )
+
+        query = f"""
+            UNWIND $rows AS row
+            MERGE (n:`{PROVIDER_RESOURCE_LABEL}` {{`{PROVIDER_ELEMENT_ID_PROPERTY}`: row.provider_element_id}})
+            SET n:{labels}
+            SET n += row.props
+        """
+        with self.get_session(database) as session:
+            session.run(query, {"rows": rows}).consume()
+
+    def write_relationships(
+        self,
+        database: str,
+        rel_type: str,
+        provider_id: str,
+        rows: list[dict[str, Any]],
+    ) -> None:
+        if not rows:
+            return
+        from tasks.jobs.attack_paths.config import (
+            PROVIDER_ELEMENT_ID_PROPERTY,
+            PROVIDER_RESOURCE_LABEL,
+            get_provider_label,
+        )
+
+        provider_label = get_provider_label(provider_id)
+        query = f"""
+            UNWIND $rows AS row
+            MATCH (s:`{PROVIDER_RESOURCE_LABEL}`:`{provider_label}` {{`{PROVIDER_ELEMENT_ID_PROPERTY}`: row.start_element_id}})
+            MATCH (t:`{PROVIDER_RESOURCE_LABEL}`:`{provider_label}` {{`{PROVIDER_ELEMENT_ID_PROPERTY}`: row.end_element_id}})
+            MERGE (s)-[r:`{rel_type}` {{`{PROVIDER_ELEMENT_ID_PROPERTY}`: row.provider_element_id}}]->(t)
+            SET r += row.props
+        """
+        with self.get_session(database) as session:
+            session.run(query, {"rows": rows}).consume()
+
     # For compatibility with test harnesses that patch the concrete driver
     def get_driver(self) -> neo4j.Driver:
         return self._get_driver()

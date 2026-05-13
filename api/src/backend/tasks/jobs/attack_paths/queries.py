@@ -2,8 +2,6 @@
 from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
     PROWLER_FINDING_LABEL,
-    PROVIDER_ELEMENT_ID_PROPERTY,
-    PROVIDER_RESOURCE_LABEL,
 )
 
 
@@ -116,7 +114,8 @@ CREATE_CAN_ACCESS_RELATIONSHIPS_TEMPLATE = f"""
     RETURN COUNT(r) AS relationships_merged
 """
 
-# Sync queries (used by sync.py)
+# Sync queries (used by sync.py to fetch from the cartography temp Neo4j DB)
+# The write side of sync lives in each sink (`api/attack_paths/sink/`).
 
 NODE_FETCH_QUERY = """
     MATCH (n)
@@ -139,18 +138,4 @@ RELATIONSHIPS_FETCH_QUERY = """
            properties(r) AS props
     ORDER BY internal_id
     LIMIT $batch_size
-"""
-
-NODE_SYNC_TEMPLATE = f"""
-    UNWIND $rows AS row
-    MERGE (n:__NODE_LABELS__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}})
-    SET n += row.props
-"""
-
-RELATIONSHIP_SYNC_TEMPLATE = f"""
-    UNWIND $rows AS row
-    MATCH (s:{PROVIDER_RESOURCE_LABEL}:`__PROVIDER_LABEL__` {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.start_element_id}})
-    MATCH (t:{PROVIDER_RESOURCE_LABEL}:`__PROVIDER_LABEL__` {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.end_element_id}})
-    MERGE (s)-[r:__REL_TYPE__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}}]->(t)
-    SET r += row.props
 """

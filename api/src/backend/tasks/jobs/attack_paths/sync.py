@@ -1,8 +1,10 @@
 """
 Graph sync operations for Attack Paths.
 
-This module handles syncing graph data from temporary scan databases
-to the tenant database, adding provider isolation labels and properties.
+Reads nodes and relationships out of the cartography temp database (always
+Neo4j) and hands them to the configured sink (Neo4j or Neptune) in batches.
+Backend-specific Cypher (MERGE shape, ID strategy, indexes) lives in each
+sink; this module owns the source read loop and per-batch grouping only.
 """
 
 import time
@@ -15,6 +17,7 @@ import neo4j
 from celery.utils.log import get_task_logger
 
 from api.attack_paths import database as graph_database
+from api.attack_paths import sink as sink_module
 from tasks.jobs.attack_paths.config import (
     PROVIDER_ISOLATION_PROPERTIES,
     PROVIDER_RESOURCE_LABEL,
@@ -24,10 +27,7 @@ from tasks.jobs.attack_paths.config import (
 )
 from tasks.jobs.attack_paths.queries import (
     NODE_FETCH_QUERY,
-    NODE_SYNC_TEMPLATE,
-    RELATIONSHIP_SYNC_TEMPLATE,
     RELATIONSHIPS_FETCH_QUERY,
-    render_cypher_template,
 )
 
 logger = get_task_logger(__name__)
@@ -51,16 +51,21 @@ def sync_graph(
     Returns:
         Dict with counts of synced nodes and relationships
     """
+    sink = sink_module.get_backend()
+    sink.ensure_sync_indexes(target_database)
+
     nodes_synced = sync_nodes(
         source_database,
         target_database,
         tenant_id,
         provider_id,
+        sink,
     )
     relationships_synced = sync_relationships(
         source_database,
         target_database,
         provider_id,
+        sink,
     )
 
     return {
@@ -74,6 +79,7 @@ def sync_nodes(
     target_database: str,
     tenant_id: str,
     provider_id: str,
+    sink: Any,
 ) -> int:
     """
     Sync nodes from source to target database.
@@ -112,12 +118,7 @@ def sync_nodes(
             label_set.add(get_tenant_label(tenant_id))
             label_set.add(get_provider_label(provider_id))
             node_labels = ":".join(f"`{label}`" for label in sorted(label_set))
-
-            query = render_cypher_template(
-                NODE_SYNC_TEMPLATE, {"__NODE_LABELS__": node_labels}
-            )
-            with graph_database.get_session(target_database) as target_session:
-                target_session.run(query, {"rows": batch})
+            sink.write_nodes(target_database, node_labels, batch)
 
         total_synced += batch_count
         logger.info(
@@ -131,11 +132,10 @@ def sync_relationships(
     source_database: str,
     target_database: str,
     provider_id: str,
+    sink: Any,
 ) -> int:
     """
     Sync relationships from source to target database.
-
-    Matches source and target nodes by `_provider_element_id` in the tenant database.
 
     Source and target sessions are opened sequentially per batch to avoid
     holding two Bolt connections simultaneously for the entire sync duration.
@@ -162,17 +162,8 @@ def sync_relationships(
         if batch_count == 0:
             break
 
-        provider_label = get_provider_label(provider_id)
         for rel_type, batch in grouped.items():
-            query = render_cypher_template(
-                RELATIONSHIP_SYNC_TEMPLATE,
-                {
-                    "__REL_TYPE__": rel_type,
-                    "__PROVIDER_LABEL__": provider_label,
-                },
-            )
-            with graph_database.get_session(target_database) as target_session:
-                target_session.run(query, {"rows": batch})
+            sink.write_relationships(target_database, rel_type, provider_id, batch)
 
         total_synced += batch_count
         logger.info(
@@ -188,6 +179,7 @@ def _node_to_sync_dict(
     """Transform a source node record into a (grouping_key, sync_dict) pair."""
     props = dict(record["props"] or {})
     _strip_internal_properties(props)
+    _coerce_neptune_compatible(props)
     labels = tuple(sorted(set(record["labels"] or [])))
     return labels, {
         "provider_element_id": f"{provider_id}:{record['element_id']}",
@@ -201,6 +193,7 @@ def _rel_to_sync_dict(
     """Transform a source relationship record into a (grouping_key, sync_dict) pair."""
     props = dict(record["props"] or {})
     _strip_internal_properties(props)
+    _coerce_neptune_compatible(props)
     rel_type = record["rel_type"]
     return rel_type, {
         "start_element_id": f"{provider_id}:{record['start_element_id']}",
@@ -214,3 +207,29 @@ def _strip_internal_properties(props: dict[str, Any]) -> None:
     """Remove provider isolation properties before the += spread in sync templates."""
     for key in PROVIDER_ISOLATION_PROPERTIES:
         props.pop(key, None)
+
+
+def _coerce_neptune_compatible(props: dict[str, Any]) -> None:
+    """Convert neo4j temporal/spatial types to ISO-8601 / WKT strings.
+
+    Neptune's Bolt write path rejects neo4j.time.{DateTime,Date,Time,Duration}
+    and neo4j.spatial.Point PackStream markers with "Unsupported data type
+    in the query". Stringifying these in-place preserves the value while
+    keeping the batch compatible with Neptune.
+    """
+    for key, value in list(props.items()):
+        props[key] = _to_neptune_compatible_value(value)
+
+
+def _to_neptune_compatible_value(value: Any) -> Any:
+    if hasattr(value, "iso_format") and callable(value.iso_format):
+        return value.iso_format()
+    if type(value).__module__.startswith("neo4j.spatial"):
+        return str(value)
+    if isinstance(value, list):
+        # Neptune openCypher SET rejects list/array property values
+        # ("Property value must be a simple literal."). Per Neptune docs, the
+        # accepted shape is a delimited string read back with split() inside
+        # queries.
+        return ",".join(str(_to_neptune_compatible_value(v)) for v in value)
+    return value

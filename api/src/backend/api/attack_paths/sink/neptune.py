@@ -226,6 +226,20 @@ class NeptuneSink(SinkDatabase):
         return None
 
     def drop_subgraph(self, database: str, provider_id: str) -> int:  # noqa: ARG002
+        """Delete a provider's subgraph in two bounded phases.
+
+        Neptune write transactions are capped at ~2 minutes. A naive
+        `DETACH DELETE` on a label-scanned batch grows unbounded with graph
+        density (one node can drag thousands of relationships into the same
+        transaction). Instead:
+
+        1. Delete relationships incident to provider nodes, one fixed-size
+           batch per transaction.
+        2. Delete the now-orphaned nodes, one fixed-size batch per transaction.
+
+        Each transaction does work proportional to `batch_size`, never to the
+        graph's branching factor.
+        """
         from tasks.jobs.attack_paths.config import (
             BATCH_SIZE,
             PROVIDER_RESOURCE_LABEL,
@@ -233,24 +247,39 @@ class NeptuneSink(SinkDatabase):
         )
 
         provider_label = get_provider_label(provider_id)
-        deleted_nodes = 0
+
         with self.get_session() as session:
-            deleted_count = 1
-            while deleted_count > 0:
+            while True:
                 result = session.run(
                     f"""
-                    MATCH (n:{PROVIDER_RESOURCE_LABEL}:`{provider_label}`)
+                    MATCH (:`{provider_label}`)-[r]-()
+                    WITH r LIMIT $batch_size
+                    DELETE r
+                    RETURN COUNT(r) AS deleted_rels_count
+                    """,
+                    {"batch_size": BATCH_SIZE},
+                )
+                record = result.single()
+                deleted_rels = (record["deleted_rels_count"] if record else 0) or 0
+                if deleted_rels == 0:
+                    break
+
+            deleted_nodes = 0
+            while True:
+                result = session.run(
+                    f"""
+                    MATCH (n:`{PROVIDER_RESOURCE_LABEL}`:`{provider_label}`)
                     WITH n LIMIT $batch_size
-                    DETACH DELETE n
+                    DELETE n
                     RETURN COUNT(n) AS deleted_nodes_count
                     """,
                     {"batch_size": BATCH_SIZE},
                 )
                 record = result.single()
-                deleted_count = (
-                    (record or {}).get("deleted_nodes_count", 0) if record else 0
-                )
-                deleted_nodes += deleted_count
+                deleted = (record["deleted_nodes_count"] if record else 0) or 0
+                if deleted == 0:
+                    break
+                deleted_nodes += deleted
 
         return deleted_nodes
 
@@ -271,6 +300,70 @@ class NeptuneSink(SinkDatabase):
     def clear_cache(self, database: str) -> None:  # noqa: ARG002
         # Neptune has no user-facing cache-clear procedure; no-op.
         return None
+
+    # Sync write path
+
+    def ensure_sync_indexes(self, database: str) -> None:  # noqa: ARG002
+        # Neptune routes node and relationship lookups through `~id`, which is
+        # the cluster's primary key. No additional index is needed or supported.
+        return None
+
+    def write_nodes(
+        self,
+        database: str,  # noqa: ARG002
+        labels: str,
+        rows: list[dict[str, Any]],
+    ) -> None:
+        if not rows:
+            return
+        from tasks.jobs.attack_paths.config import (
+            PROVIDER_ELEMENT_ID_PROPERTY,
+            PROVIDER_RESOURCE_LABEL,
+        )
+
+        # MERGE on `~id` is the documented and engine-optimized idempotent
+        # upsert pattern for Neptune openCypher. The label inside the MERGE
+        # matters: Neptune assigns a default `vertex` label to any node
+        # created without an explicit one, so we pin `_ProviderResource`
+        # (which every synced node carries anyway) at MERGE-time. Additional
+        # labels are added after.
+        #
+        # We also write `_provider_element_id` as a regular property so
+        # non-sync code (drop_subgraph, query helpers) keeps a stable contract
+        # that doesn't know about `~id`.
+        query = f"""
+            UNWIND $rows AS row
+            MERGE (n:`{PROVIDER_RESOURCE_LABEL}` {{`~id`: row.provider_element_id}})
+            SET n:{labels}
+            SET n += row.props
+            SET n.`{PROVIDER_ELEMENT_ID_PROPERTY}` = row.provider_element_id
+        """
+        with self.get_session() as session:
+            session.run(query, {"rows": rows}).consume()
+
+    def write_relationships(
+        self,
+        database: str,  # noqa: ARG002
+        rel_type: str,
+        provider_id: str,  # noqa: ARG002 - encoded in start/end `~id` already
+        rows: list[dict[str, Any]],
+    ) -> None:
+        if not rows:
+            return
+        from tasks.jobs.attack_paths.config import PROVIDER_ELEMENT_ID_PROPERTY
+
+        # `id(n) = $value` is Neptune's parameterized fast path; both endpoint
+        # MATCHes resolve in O(1) via the system `~id`, so per-row work stays
+        # bounded regardless of batch size.
+        query = f"""
+            UNWIND $rows AS row
+            MATCH (s) WHERE id(s) = row.start_element_id
+            MATCH (e) WHERE id(e) = row.end_element_id
+            MERGE (s)-[r:`{rel_type}` {{`{PROVIDER_ELEMENT_ID_PROPERTY}`: row.provider_element_id}}]->(e)
+            SET r += row.props
+        """
+        with self.get_session() as session:
+            session.run(query, {"rows": rows}).consume()
 
     # Test helpers
 

@@ -1803,7 +1803,7 @@ def _make_session_ctx(session, call_order=None, name=None):
 
 
 class TestSyncNodes:
-    def test_sync_nodes_adds_private_label(self):
+    def test_sync_nodes_passes_isolation_labels_to_sink(self):
         row = {
             "internal_id": 1,
             "element_id": "elem-1",
@@ -1813,29 +1813,32 @@ class TestSyncNodes:
 
         mock_source_1 = MagicMock()
         mock_source_1.run.return_value = [row]
-        mock_target = MagicMock()
         mock_source_2 = MagicMock()
         mock_source_2.run.return_value = []
+        sink = MagicMock()
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[
                 _make_session_ctx(mock_source_1),
-                _make_session_ctx(mock_target),
                 _make_session_ctx(mock_source_2),
             ],
         ):
             total = sync_module.sync_nodes(
-                "source-db", "target-db", "tenant-1", "prov-1"
+                "source-db", "target-db", "tenant-1", "prov-1", sink
             )
 
         assert total == 1
-        query = mock_target.run.call_args.args[0]
-        assert "_ProviderResource" in query
-        assert "_Tenant_tenant1" in query
-        assert "_Provider_prov1" in query
+        sink.write_nodes.assert_called_once()
+        target_db, labels, batch = sink.write_nodes.call_args.args
+        assert target_db == "target-db"
+        assert "_ProviderResource" in labels
+        assert "_Tenant_tenant1" in labels
+        assert "_Provider_prov1" in labels
+        assert batch[0]["provider_element_id"] == "prov-1:elem-1"
+        assert batch[0]["props"] == {"key": "value"}
 
-    def test_sync_nodes_source_closes_before_target_opens(self):
+    def test_sync_nodes_writes_after_source_session_closes(self):
         row = {
             "internal_id": 1,
             "element_id": "elem-1",
@@ -1847,21 +1850,23 @@ class TestSyncNodes:
 
         src_1 = MagicMock()
         src_1.run.return_value = [row]
-        tgt = MagicMock()
         src_2 = MagicMock()
         src_2.run.return_value = []
+        sink = MagicMock()
+        sink.write_nodes.side_effect = lambda *_a, **_kw: call_order.append(
+            "sink:write"
+        )
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[
                 _make_session_ctx(src_1, call_order, "source1"),
-                _make_session_ctx(tgt, call_order, "target"),
                 _make_session_ctx(src_2, call_order, "source2"),
             ],
         ):
-            sync_module.sync_nodes("src-db", "tgt-db", "t-1", "p-1")
+            sync_module.sync_nodes("src-db", "tgt-db", "t-1", "p-1", sink)
 
-        assert call_order.index("source1:exit") < call_order.index("target:enter")
+        assert call_order.index("source1:exit") < call_order.index("sink:write")
 
     def test_sync_nodes_pagination_with_batch_size_1(self):
         row_a = {
@@ -1883,44 +1888,44 @@ class TestSyncNodes:
         src_2.run.return_value = [row_b]
         src_3 = MagicMock()
         src_3.run.return_value = []
-        tgt_1 = MagicMock()
-        tgt_2 = MagicMock()
+        sink = MagicMock()
 
         with (
             patch(
                 "tasks.jobs.attack_paths.sync.graph_database.get_session",
                 side_effect=[
                     _make_session_ctx(src_1),
-                    _make_session_ctx(tgt_1),
                     _make_session_ctx(src_2),
-                    _make_session_ctx(tgt_2),
                     _make_session_ctx(src_3),
                 ],
             ),
             patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
         ):
-            total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1")
+            total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink)
 
         assert total == 2
+        assert sink.write_nodes.call_count == 2
         assert src_1.run.call_args.args[1]["last_id"] == -1
         assert src_2.run.call_args.args[1]["last_id"] == 1
 
     def test_sync_nodes_empty_source_returns_zero(self):
         src = MagicMock()
         src.run.return_value = []
+        sink = MagicMock()
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[_make_session_ctx(src)],
         ) as mock_get_session:
-            total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1")
+            total = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink)
 
         assert total == 0
         assert mock_get_session.call_count == 1
+        sink.write_nodes.assert_not_called()
 
 
 class TestSyncRelationships:
-    def test_sync_relationships_source_closes_before_target_opens(self):
+    def test_sync_relationships_writes_after_source_session_closes(self):
         row = {
             "internal_id": 1,
             "rel_type": "HAS",
@@ -1933,21 +1938,23 @@ class TestSyncRelationships:
 
         src_1 = MagicMock()
         src_1.run.return_value = [row]
-        tgt = MagicMock()
         src_2 = MagicMock()
         src_2.run.return_value = []
+        sink = MagicMock()
+        sink.write_relationships.side_effect = lambda *_a, **_kw: call_order.append(
+            "sink:write"
+        )
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[
                 _make_session_ctx(src_1, call_order, "source1"),
-                _make_session_ctx(tgt, call_order, "target"),
                 _make_session_ctx(src_2, call_order, "source2"),
             ],
         ):
-            sync_module.sync_relationships("src", "tgt", "p-1")
+            sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
-        assert call_order.index("source1:exit") < call_order.index("target:enter")
+        assert call_order.index("source1:exit") < call_order.index("sink:write")
 
     def test_sync_relationships_pagination_with_batch_size_1(self):
         row_a = {
@@ -1971,40 +1978,40 @@ class TestSyncRelationships:
         src_2.run.return_value = [row_b]
         src_3 = MagicMock()
         src_3.run.return_value = []
-        tgt_1 = MagicMock()
-        tgt_2 = MagicMock()
+        sink = MagicMock()
 
         with (
             patch(
                 "tasks.jobs.attack_paths.sync.graph_database.get_session",
                 side_effect=[
                     _make_session_ctx(src_1),
-                    _make_session_ctx(tgt_1),
                     _make_session_ctx(src_2),
-                    _make_session_ctx(tgt_2),
                     _make_session_ctx(src_3),
                 ],
             ),
             patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
         ):
-            total = sync_module.sync_relationships("src", "tgt", "p-1")
+            total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
         assert total == 2
+        assert sink.write_relationships.call_count == 2
         assert src_1.run.call_args.args[1]["last_id"] == -1
         assert src_2.run.call_args.args[1]["last_id"] == 1
 
     def test_sync_relationships_empty_source_returns_zero(self):
         src = MagicMock()
         src.run.return_value = []
+        sink = MagicMock()
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
             side_effect=[_make_session_ctx(src)],
         ) as mock_get_session:
-            total = sync_module.sync_relationships("src", "tgt", "p-1")
+            total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
         assert total == 0
         assert mock_get_session.call_count == 1
+        sink.write_relationships.assert_not_called()
 
 
 class TestInternetAnalysis:
