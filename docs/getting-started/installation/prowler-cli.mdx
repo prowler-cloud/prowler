@@ -68,7 +68,7 @@ To install Prowler as a Python package, use `Python >= 3.10, <= 3.12`. Prowler i
     _Requirements for Developers_:
 
     * `git`
-    * `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
+    * `uv` installed: [uv installation](https://docs.astral.sh/uv/getting-started/installation/).
     * AWS, GCP, Azure and/or Kubernetes credentials
 
     _Commands_:
@@ -76,8 +76,8 @@ To install Prowler as a Python package, use `Python >= 3.10, <= 3.12`. Prowler i
     ```bash
     git clone https://github.com/prowler-cloud/prowler
     cd prowler
-    poetry install
-    poetry run python prowler-cli.py -v
+    uv sync
+    uv run python prowler-cli.py -v
     ```
 
     <Note>

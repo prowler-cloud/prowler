@@ -25,9 +25,9 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ```bash
 # SDK
-poetry install --with dev
-poetry run python prowler-cli.py aws --check check_name
-poetry run pytest tests/
+uv sync
+uv run python prowler-cli.py aws --check check_name
+uv run pytest tests/
 
 # API
 cd api && uv run python src/backend/manage.py runserver

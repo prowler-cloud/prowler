@@ -1277,10 +1277,12 @@ Dependencies ensure that your provider's required libraries are available when P
 **File:** `pyproject.toml`
 
 ```toml
-[tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-# ... other dependencies
-your-sdk-library = "^1.0.0"  # Add your SDK dependency
+[project]
+requires-python = ">=3.10,<3.13"
+dependencies = [
+  # ... other dependencies
+  "your-sdk-library>=1.0.0,<2.0.0",  # Add your SDK dependency
+]
 ```
 
 #### Step 18: Create Tests

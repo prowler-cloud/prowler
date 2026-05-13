@@ -160,13 +160,13 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 
 ```bash
 # Setup
-poetry install --with dev
-poetry run prek install
+uv sync
+uv run prek install
 
 # Code quality
-poetry run make lint
-poetry run make format
-poetry run prek run --all-files
+uv run make lint
+uv run make format
+uv run prek run --all-files
 ```
 
 ---
