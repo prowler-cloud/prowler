@@ -59,7 +59,6 @@ dependencies = [
   "microsoft-kiota-abstractions==1.9.2",
   "msgraph-sdk==1.55.0",
   "numpy==2.0.2",
-  "okta==3.4.2",
   "openstacksdk==4.2.0",
   "pandas==2.2.3",
   "py-ocsf-models==0.8.1",
@@ -97,6 +96,9 @@ name = "prowler"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 version = "5.27.0"
+
+[project.optional-dependencies]
+okta = ["okta==3.4.2"]
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"

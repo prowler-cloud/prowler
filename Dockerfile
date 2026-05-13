@@ -89,7 +89,7 @@ ENV PATH="${HOME}/.local/bin:${PATH}"
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir poetry==2.3.4
 
-RUN poetry install --compile && \
+RUN poetry install --compile --all-extras && \
     rm -rf ~/.cache/pip
 
 # Install PowerShell modules

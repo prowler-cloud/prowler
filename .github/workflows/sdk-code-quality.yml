@@ -76,6 +76,7 @@ jobs:
         uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ matrix.python-version }}
+          extras: all
 
       - name: Check Poetry lock file
         if: steps.check-changes.outputs.any_changed == 'true'

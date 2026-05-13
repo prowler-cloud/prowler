@@ -26,6 +26,10 @@ inputs:
     description: 'Whether to enable Poetry dependency caching via actions/setup-python'
     required: false
     default: 'true'
+  extras:
+    description: 'Comma-separated list of project extras to install (e.g. "okta"). Pass "all" to install every extra.'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -87,8 +91,20 @@ runs:
       if: inputs.install-dependencies == 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        INPUTS_EXTRAS: ${{ inputs.extras }}
       run: |
-        poetry install --no-root
+        if [ "$INPUTS_EXTRAS" = "all" ]; then
+          poetry install --no-root --all-extras
+        elif [ -n "$INPUTS_EXTRAS" ]; then
+          EXTRAS_ARGS=""
+          for extra in ${INPUTS_EXTRAS//,/ }; do
+            EXTRAS_ARGS="$EXTRAS_ARGS -E $extra"
+          done
+          poetry install --no-root $EXTRAS_ARGS
+        else
+          poetry install --no-root
+        fi
         poetry run pip list
 
     - name: Update Prowler Cloud API Client

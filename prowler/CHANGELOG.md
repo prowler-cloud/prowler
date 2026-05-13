@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔄 Changed
 
 - `entra_emergency_access_exclusion` check for M365 provider now scopes the exclusion requirement to enabled Conditional Access policies with a `Block` grant control instead of every enabled policy, focusing on the lockout-relevant policy set [(#10849)](https://github.com/prowler-cloud/prowler/pull/10849)
+- `okta` SDK dependency moved to a new `okta` optional extra; install with `pip install prowler[okta]` (or `poetry install --all-extras`) to use the Okta provider. Prevents resolution conflicts with downstream consumers pinning the legacy `okta<1.0.0` package
 
 ---
 

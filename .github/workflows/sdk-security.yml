@@ -92,6 +92,7 @@ jobs:
         uses: ./.github/actions/setup-python-poetry
         with:
           python-version: '3.12'
+          extras: all
 
       - name: Security scan with Bandit
         if: steps.check-changes.outputs.any_changed == 'true'

@@ -97,6 +97,7 @@ jobs:
         uses: ./.github/actions/setup-python-poetry
         with:
           python-version: ${{ matrix.python-version }}
+          extras: all
 
       # AWS Provider
       - name: Check if AWS files changed
