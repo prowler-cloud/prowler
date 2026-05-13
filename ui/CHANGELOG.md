@@ -7,11 +7,22 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - UI health endpoint at `GET /api/health` for Docker Compose readiness checks [(#11145)](https://github.com/prowler-cloud/prowler/pull/11145)
+- AWS findings and resource details now expose a "View in AWS Console" link that opens the resource directly in the AWS Console via the universal `/go/view` ARN resolver. The per-provider external link is rendered by a new shared `ExternalResourceLink` component, which also covers the existing IaC repository link [(#9172)](https://github.com/prowler-cloud/prowler/pull/9172)
 
 ### 🔄 Changed
 
 - Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
+- Lighthouse now accepts Prowler App Finding Groups MCP tools [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
 - Attack Paths graph now uses React Flow with improved layout, interactions, export, minimap, and browser test coverage [(#10686)](https://github.com/prowler-cloud/prowler/pull/10686)
+- SAML ACS URL is only shown if the email domain is configured [(#11144)](https://github.com/prowler-cloud/prowler/pull/11144)
+
+---
+
+## [1.26.2] (Prowler 5.26.2)
+
+### 🐞 Fixed
+
+- Finding drawer no longer renders literal backticks around inline code in Risk, Description and Remediation sections [(#11142)](https://github.com/prowler-cloud/prowler/pull/11142)
 
 ---
 
@@ -21,7 +32,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Role form Cancel buttons now return to Roles [(#11125)](https://github.com/prowler-cloud/prowler/pull/11125)
 - Shared select dropdowns stay constrained and scrollable inside modals [(#11125)](https://github.com/prowler-cloud/prowler/pull/11125)
-
 
 ---
 

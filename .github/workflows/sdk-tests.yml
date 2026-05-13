@@ -324,6 +324,30 @@ jobs:
           flags: prowler-py${{ matrix.python-version }}-github
           files: ./github_coverage.xml
 
+      # Okta Provider
+      - name: Check if Okta files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-okta
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        with:
+          files: |
+            ./prowler/**/okta/**
+            ./tests/**/okta/**
+            ./poetry.lock
+
+      - name: Run Okta tests
+        if: steps.changed-okta.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/okta --cov-report=xml:okta_coverage.xml tests/providers/okta
+
+      - name: Upload Okta coverage to Codecov
+        if: steps.changed-okta.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-okta
+          files: ./okta_coverage.xml
+
       # NHN Provider
       - name: Check if NHN files changed
         if: steps.check-changes.outputs.any_changed == 'true'
