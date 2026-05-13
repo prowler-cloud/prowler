@@ -6,7 +6,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- Community contribution: AWS Inventory Connectivity Graph tool in `/contrib/inventory-graph` - generates interactive D3.js visualizations of AWS resource relationships (VPC, IAM trust, event triggers, KMS encryption, etc.) from Prowler scan data [(#10382)](https://github.com/prowler-cloud/prowler/pull/10382)
 - `misconfig` scanner as default for Image provider scans [(#10167)](https://github.com/prowler-cloud/prowler/pull/10167)
 - `entra_conditional_access_policy_device_code_flow_blocked` check for M365 provider [(#10218)](https://github.com/prowler-cloud/prowler/pull/10218)
 - RBI compliance for the Azure provider [(#10339)](https://github.com/prowler-cloud/prowler/pull/10339)
