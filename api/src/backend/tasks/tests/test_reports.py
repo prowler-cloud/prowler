@@ -44,6 +44,8 @@ from api.models import (
     Finding,
     Resource,
     ResourceFindingMapping,
+    ResourceTag,
+    ResourceTagMapping,
     StateChoices,
     StatusChoices,
 )
@@ -366,6 +368,317 @@ class TestLoadFindingsForChecks:
         )
 
         assert result == {}
+
+    def test_prefetch_avoids_n_plus_one(self, tenants_fixture, scans_fixture):
+        """Loading N findings must NOT execute O(N) extra queries for resources/tags.
+
+        Regression test for PROWLER-1733. ``FindingOutput.transform_api_finding``
+        reads ``finding.resources.first()`` and ``resource.tags.all()`` per
+        finding. Without ``prefetch_related`` that's 2N additional queries;
+        with prefetch it collapses to a small constant per iterator chunk.
+        """
+        from django.test.utils import CaptureQueriesContext
+        from django.db import connections
+
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        # Build N findings, each linked to one resource that owns 2 tags.
+        N = 20
+        for i in range(N):
+            finding = Finding.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                uid=f"f-prefetch-{i}",
+                check_id="aws_check_prefetch",
+                status=StatusChoices.FAIL,
+                severity=Severity.high,
+                impact=Severity.high,
+                check_metadata={
+                    "provider": "aws",
+                    "checkid": "aws_check_prefetch",
+                    "checktitle": "t",
+                    "checktype": [],
+                    "servicename": "s",
+                    "subservicename": "",
+                    "severity": "high",
+                    "resourcetype": "r",
+                    "description": "",
+                    "risk": "",
+                    "relatedurl": "",
+                    "remediation": {
+                        "recommendation": {"text": "", "url": ""},
+                        "code": {
+                            "nativeiac": "",
+                            "terraform": "",
+                            "cli": "",
+                            "other": "",
+                        },
+                    },
+                    "resourceidtemplate": "",
+                    "categories": [],
+                    "dependson": [],
+                    "relatedto": [],
+                    "notes": "",
+                },
+                raw_result={},
+            )
+            resource = Resource.objects.create(
+                tenant_id=tenant.id,
+                provider=scan.provider,
+                uid=f"r-prefetch-{i}",
+                name=f"r-prefetch-{i}",
+                metadata="{}",
+                details="",
+                region="us-east-1",
+                service="s",
+                type="t::r",
+            )
+            ResourceFindingMapping.objects.create(
+                tenant_id=tenant.id, finding=finding, resource=resource
+            )
+            for k in ("env", "owner"):
+                tag, _ = ResourceTag.objects.get_or_create(
+                    tenant_id=tenant.id, key=k, value=f"v-{i}-{k}"
+                )
+                ResourceTagMapping.objects.create(
+                    tenant_id=tenant.id, resource=resource, tag=tag
+                )
+
+        mock_provider = Mock()
+        mock_provider.type = "aws"
+        mock_provider.identity.account = "test"
+
+        # Patch transform_api_finding to a no-op so the test isolates queries
+        # to the queryset/prefetch path (transform itself is exercised by
+        # the integration tests above and not by this regression check).
+        with patch(
+            "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding",
+            side_effect=lambda model, provider: Mock(check_id=model.check_id),
+        ):
+            with CaptureQueriesContext(
+                connections["default_read_replica"]
+                if "default_read_replica" in connections.databases
+                else connections["default"]
+            ) as ctx:
+                _load_findings_for_requirement_checks(
+                    str(tenant.id),
+                    str(scan.id),
+                    ["aws_check_prefetch"],
+                    mock_provider,
+                )
+
+        # Expected: a small constant number of queries irrespective of N.
+        # Pre-fix this would be ~1 + 2*N. We give some slack for RLS SET
+        # LOCAL statements that the rls_transaction emits.
+        assert len(ctx.captured_queries) < N, (
+            f"Expected O(1) queries with prefetch_related; got "
+            f"{len(ctx.captured_queries)} for N={N} (N+1 regression?)"
+        )
+
+    def test_max_findings_per_check_cap(self, tenants_fixture, scans_fixture):
+        """When a check exceeds ``MAX_FINDINGS_PER_CHECK``, only ``cap`` rows
+        are loaded AND ``total_counts_out`` reports the pre-cap total.
+
+        Guards the PROWLER-1733 truncation knob: prevents both runaway memory
+        and silent data loss in the PDF (the banner relies on knowing the
+        real total).
+        """
+        from unittest.mock import patch as _patch
+
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        # Create 12 findings for a single check; cap to 5.
+        check_id = "aws_check_cap_test"
+        for i in range(12):
+            finding = Finding.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                uid=f"f-cap-{i:02d}",
+                check_id=check_id,
+                status=StatusChoices.FAIL,
+                severity=Severity.high,
+                impact=Severity.high,
+                check_metadata={},
+                raw_result={},
+            )
+            resource = Resource.objects.create(
+                tenant_id=tenant.id,
+                provider=scan.provider,
+                uid=f"r-cap-{i:02d}",
+                name=f"r-cap-{i:02d}",
+                metadata="{}",
+                details="",
+                region="us-east-1",
+                service="s",
+                type="t::r",
+            )
+            ResourceFindingMapping.objects.create(
+                tenant_id=tenant.id, finding=finding, resource=resource
+            )
+
+        mock_provider = Mock(type="aws")
+        mock_provider.identity.account = "test"
+
+        totals: dict = {}
+        # Patch the cap to a small value AND skip the heavy transform so we
+        # only assert on row counts and totals.
+        with (
+            _patch("tasks.jobs.threatscore_utils.MAX_FINDINGS_PER_CHECK", 5),
+            _patch(
+                "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding",
+                side_effect=lambda model, provider: Mock(check_id=model.check_id),
+            ),
+        ):
+            result = _load_findings_for_requirement_checks(
+                str(tenant.id),
+                str(scan.id),
+                [check_id],
+                mock_provider,
+                total_counts_out=totals,
+            )
+
+        assert len(result[check_id]) == 5, (
+            f"cap=5 should yield exactly 5 loaded findings, got {len(result[check_id])}"
+        )
+        assert totals[check_id] == 12, (
+            f"total_counts_out should report the pre-cap total (12), got {totals[check_id]}"
+        )
+
+    def test_only_failed_findings_pushes_down_to_sql(
+        self, tenants_fixture, scans_fixture
+    ):
+        """When ``only_failed_findings=True``, PASS rows are excluded by the
+        DB filter, not just visually hidden afterwards.
+
+        Regression for the consistency fix: previously the requirement-level
+        ``only_failed`` flag filtered which requirements appeared, but inside
+        each rendered requirement the table still showed PASS rows mixed
+        with FAIL, which combined with ``MAX_FINDINGS_PER_CHECK`` could
+        truncate to 1000 PASS findings and hide the actual failure.
+        """
+        from unittest.mock import patch as _patch
+
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        check_id = "aws_check_only_failed_test"
+
+        # Mix PASS and FAIL so the filter has something to drop.
+        for i in range(6):
+            status = StatusChoices.FAIL if i % 2 == 0 else StatusChoices.PASS
+            finding = Finding.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                uid=f"f-of-{i:02d}",
+                check_id=check_id,
+                status=status,
+                severity=Severity.high,
+                impact=Severity.high,
+                check_metadata={},
+                raw_result={},
+            )
+            resource = Resource.objects.create(
+                tenant_id=tenant.id,
+                provider=scan.provider,
+                uid=f"r-of-{i:02d}",
+                name=f"r-of-{i:02d}",
+                metadata="{}",
+                details="",
+                region="us-east-1",
+                service="s",
+                type="t::r",
+            )
+            ResourceFindingMapping.objects.create(
+                tenant_id=tenant.id, finding=finding, resource=resource
+            )
+
+        mock_provider = Mock(type="aws")
+        mock_provider.identity.account = "test"
+
+        totals: dict = {}
+        with _patch(
+            "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding",
+            side_effect=lambda model, provider: Mock(
+                check_id=model.check_id, status=model.status
+            ),
+        ):
+            result = _load_findings_for_requirement_checks(
+                str(tenant.id),
+                str(scan.id),
+                [check_id],
+                mock_provider,
+                total_counts_out=totals,
+                only_failed_findings=True,
+            )
+
+        # 3 FAIL + 3 PASS in DB; FAIL-only filter should load just 3.
+        loaded = result[check_id]
+        assert len(loaded) == 3, f"expected 3 FAIL findings, got {len(loaded)}"
+        statuses = {getattr(f, "status", None) for f in loaded}
+        assert statuses == {StatusChoices.FAIL}, (
+            f"expected all loaded findings to be FAIL; got statuses {statuses}"
+        )
+        # total_counts must reflect the FAIL-only total, not the global total.
+        assert totals[check_id] == 3, (
+            f"total_counts should be FAIL-only (3), got {totals[check_id]}"
+        )
+
+    def test_max_findings_per_check_disabled(self, tenants_fixture, scans_fixture):
+        """``MAX_FINDINGS_PER_CHECK=0`` disables the cap; load all rows."""
+        from unittest.mock import patch as _patch
+
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        check_id = "aws_check_uncapped"
+        for i in range(8):
+            f = Finding.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                uid=f"f-unc-{i:02d}",
+                check_id=check_id,
+                status=StatusChoices.FAIL,
+                severity=Severity.high,
+                impact=Severity.high,
+                check_metadata={},
+                raw_result={},
+            )
+            r = Resource.objects.create(
+                tenant_id=tenant.id,
+                provider=scan.provider,
+                uid=f"r-unc-{i:02d}",
+                name=f"r-unc-{i:02d}",
+                metadata="{}",
+                details="",
+                region="us-east-1",
+                service="s",
+                type="t::r",
+            )
+            ResourceFindingMapping.objects.create(
+                tenant_id=tenant.id, finding=f, resource=r
+            )
+
+        mock_provider = Mock(type="aws")
+        mock_provider.identity.account = "test"
+        totals: dict = {}
+        with (
+            _patch("tasks.jobs.threatscore_utils.MAX_FINDINGS_PER_CHECK", 0),
+            _patch(
+                "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding",
+                side_effect=lambda model, provider: Mock(check_id=model.check_id),
+            ),
+        ):
+            result = _load_findings_for_requirement_checks(
+                str(tenant.id),
+                str(scan.id),
+                [check_id],
+                mock_provider,
+                total_counts_out=totals,
+            )
+
+        assert len(result[check_id]) == 8
+        assert totals[check_id] == 8
 
 
 class TestCleanupStaleTmpOutputDirectories:
@@ -854,6 +1167,181 @@ class TestGenerateComplianceReportsOptimized:
 
         assert result["cis"] == {"upload": False, "path": ""}
         mock_cis.assert_not_called()
+
+    @patch("api.utils.initialize_prowler_provider")
+    @patch("tasks.jobs.report.rmtree")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_cis_report")
+    @patch("tasks.jobs.report.generate_csa_report")
+    @patch("tasks.jobs.report.generate_nis2_report")
+    @patch("tasks.jobs.report.generate_ens_report")
+    @patch("tasks.jobs.report.generate_threatscore_report")
+    @patch("tasks.jobs.report._generate_compliance_output_directory")
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    @patch("tasks.jobs.report.Provider.objects.get")
+    @patch("tasks.jobs.report.ScanSummary.objects.filter")
+    def test_findings_cache_eviction_after_framework(
+        self,
+        mock_scan_summary_filter,
+        mock_provider_get,
+        mock_get_bulk,
+        mock_aggregate_stats,
+        mock_generate_output_dir,
+        mock_threatscore,
+        mock_ens,
+        mock_nis2,
+        mock_csa,
+        mock_cis,
+        mock_upload_to_s3,
+        mock_rmtree,
+        mock_init_provider,
+    ):
+        """After each framework finishes, exclusive entries are evicted.
+
+        Threat scenario for PROWLER-1733: the shared ``findings_cache`` used
+        to grow monotonically through all 5 frameworks. With the new
+        eviction logic, check_ids only used by ThreatScore are dropped when
+        ThreatScore finishes, before ENS runs.
+        """
+        from types import SimpleNamespace
+        from tasks.jobs import report as report_mod
+
+        mock_scan_summary_filter.return_value.exists.return_value = True
+        mock_provider_get.return_value = Mock(uid="provider-uid", provider="aws")
+        # ThreatScore consumes {tsc_only, shared}; ENS consumes {ens_only,
+        # shared}. After ThreatScore evicts, tsc_only must be gone but
+        # shared and ens_only must remain.
+        mock_get_bulk.return_value = {
+            "prowler_threatscore_aws": SimpleNamespace(
+                Requirements=[SimpleNamespace(Checks=["tsc_only", "shared"])]
+            ),
+            "ens_rd2022_aws": SimpleNamespace(
+                Requirements=[SimpleNamespace(Checks=["ens_only", "shared"])]
+            ),
+        }
+        mock_aggregate_stats.return_value = {}
+        mock_generate_output_dir.return_value = "/tmp/tenant/scan/x/prowler-out"
+        mock_upload_to_s3.return_value = "s3://bucket/tenant/scan/x/report.pdf"
+        mock_init_provider.return_value = Mock(name="prowler_provider")
+
+        # Seed the cache as if both frameworks had already loaded their
+        # findings. We mutate it indirectly: each generator wrapper is a
+        # Mock: make ThreatScore populate the cache, and have ENS observe
+        # the state at call time so we can introspect post-eviction.
+        observed_state: dict = {}
+
+        def _threatscore_side_effect(**kwargs):
+            cache = kwargs["findings_cache"]
+            cache["tsc_only"] = ["tsc-finding"]
+            cache["shared"] = ["shared-finding"]
+
+        def _ens_side_effect(**kwargs):
+            # ENS runs AFTER threatscore's _evict_after_framework("threatscore").
+            observed_state["cache_keys_when_ens_runs"] = set(
+                kwargs["findings_cache"].keys()
+            )
+            kwargs["findings_cache"]["ens_only"] = ["ens-finding"]
+
+        mock_threatscore.side_effect = _threatscore_side_effect
+        mock_ens.side_effect = _ens_side_effect
+
+        report_mod.generate_compliance_reports(
+            tenant_id=str(uuid.uuid4()),
+            scan_id=str(uuid.uuid4()),
+            provider_id=str(uuid.uuid4()),
+            generate_threatscore=True,
+            generate_ens=True,
+            generate_nis2=False,
+            generate_csa=False,
+            generate_cis=False,
+        )
+
+        # ``tsc_only`` was exclusive to ThreatScore → evicted before ENS ran.
+        # ``shared`` is still pending for ENS → must remain.
+        assert "tsc_only" not in observed_state["cache_keys_when_ens_runs"], (
+            "tsc_only should have been evicted before ENS ran"
+        )
+        assert "shared" in observed_state["cache_keys_when_ens_runs"], (
+            "shared must remain in cache because ENS still needs it"
+        )
+
+    @patch("api.utils.initialize_prowler_provider")
+    @patch("tasks.jobs.report.rmtree")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_cis_report")
+    @patch("tasks.jobs.report.generate_csa_report")
+    @patch("tasks.jobs.report.generate_nis2_report")
+    @patch("tasks.jobs.report.generate_ens_report")
+    @patch("tasks.jobs.report.generate_threatscore_report")
+    @patch("tasks.jobs.report._generate_compliance_output_directory")
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    @patch("tasks.jobs.report.Provider.objects.get")
+    @patch("tasks.jobs.report.ScanSummary.objects.filter")
+    def test_prowler_provider_initialized_once(
+        self,
+        mock_scan_summary_filter,
+        mock_provider_get,
+        mock_get_bulk,
+        mock_aggregate_stats,
+        mock_generate_output_dir,
+        mock_threatscore,
+        mock_ens,
+        mock_nis2,
+        mock_csa,
+        mock_cis,
+        mock_upload_to_s3,
+        mock_rmtree,
+        mock_init_provider,
+    ):
+        """``initialize_prowler_provider`` must be called exactly once for
+        the whole batch (PROWLER-1733). Previously each generator re-init'd
+        the SDK provider in ``_load_compliance_data`` → 5 inits per scan.
+        """
+        mock_scan_summary_filter.return_value.exists.return_value = True
+        mock_provider_get.return_value = Mock(uid="provider-uid", provider="aws")
+        # CIS variant discovery needs at least one cis_* key.
+        mock_get_bulk.return_value = {"cis_6.0_aws": Mock()}
+        mock_aggregate_stats.return_value = {}
+        mock_generate_output_dir.return_value = "/tmp/tenant/scan/x/prowler-out"
+        mock_upload_to_s3.return_value = "s3://bucket/tenant/scan/x/report.pdf"
+        mock_init_provider.return_value = Mock(name="prowler_provider")
+
+        generate_compliance_reports(
+            tenant_id=str(uuid.uuid4()),
+            scan_id=str(uuid.uuid4()),
+            provider_id=str(uuid.uuid4()),
+            generate_threatscore=True,
+            generate_ens=True,
+            generate_nis2=True,
+            generate_csa=True,
+            generate_cis=True,
+        )
+
+        # All 5 wrappers were invoked once each…
+        mock_threatscore.assert_called_once()
+        mock_ens.assert_called_once()
+        mock_nis2.assert_called_once()
+        mock_csa.assert_called_once()
+        mock_cis.assert_called_once()
+        # …but the SDK provider was initialized only once.
+        assert mock_init_provider.call_count == 1, (
+            f"expected 1 init, got {mock_init_provider.call_count} "
+            f"(prowler_provider must be shared across reports)"
+        )
+
+        # The shared instance must reach every wrapper as kwargs.
+        shared = mock_init_provider.return_value
+        for mock_wrapper in (
+            mock_threatscore,
+            mock_ens,
+            mock_nis2,
+            mock_csa,
+            mock_cis,
+        ):
+            _, call_kwargs = mock_wrapper.call_args
+            assert call_kwargs.get("prowler_provider") is shared
 
     @patch("tasks.jobs.report.rmtree")
     @patch("tasks.jobs.report._upload_to_s3")

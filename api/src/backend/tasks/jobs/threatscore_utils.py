@@ -1,6 +1,8 @@
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q, Window
+from django.db.models.functions import RowNumber
+from tasks.jobs.reports.config import MAX_FINDINGS_PER_CHECK
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
@@ -154,6 +156,8 @@ def _load_findings_for_requirement_checks(
     check_ids: list[str],
     prowler_provider,
     findings_cache: dict[str, list[FindingOutput]] | None = None,
+    total_counts_out: dict[str, int] | None = None,
+    only_failed_findings: bool = False,
 ) -> dict[str, list[FindingOutput]]:
     """
     Load findings for specific check IDs on-demand with optional caching.
@@ -178,6 +182,23 @@ def _load_findings_for_requirement_checks(
         prowler_provider: The initialized Prowler provider instance.
         findings_cache (dict, optional): Cache of already loaded findings.
             If provided, checks are first looked up in cache before querying database.
+        total_counts_out (dict, optional): If provided, populated with
+            ``{check_id: total_findings_in_db}`` BEFORE any per-check cap is
+            applied. Lets callers render a "Showing first N of M" banner for
+            truncated checks. Only populated for ``check_ids`` actually
+            queried (cache hits keep whatever value the caller already had).
+            When ``only_failed_findings=True`` the total is FAIL-only.
+        only_failed_findings (bool): When True, push the ``status=FAIL``
+            filter down into the SQL query so PASS rows are never loaded
+            from the DB nor pydantic-transformed. This matches the
+            ``only_failed`` requirement-level filter applied at PDF render
+            time: a requirement marked FAIL because 1/1000 findings failed
+            shouldn't render a table of 999 PASS rows. That hides the
+            actual failure under noise and wastes the per-check cap on
+            irrelevant data. NOTE: the findings cache stores whatever the
+            first caller asked for, so all callers in a single
+            ``generate_compliance_reports`` run MUST pass the same flag
+            (which they do: it threads from ``only_failed`` defaults).
 
     Returns:
         dict[str, list[FindingOutput]]: Dictionary mapping check_id to list of FindingOutput objects.
@@ -222,17 +243,70 @@ def _load_findings_for_requirement_checks(
         )
 
         with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-            # Use iterator with chunk_size for memory-efficient streaming
-            # chunk_size controls how many rows Django fetches from DB at once
-            findings_queryset = (
-                Finding.all_objects.filter(
-                    tenant_id=tenant_id,
-                    scan_id=scan_id,
-                    check_id__in=check_ids_to_load,
-                )
-                .order_by("check_id", "uid")
-                .iterator(chunk_size=DJANGO_FINDINGS_BATCH_SIZE)
+            base_qs = Finding.all_objects.filter(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                check_id__in=check_ids_to_load,
             )
+            if only_failed_findings:
+                # Push the FAIL filter down into SQL: DB returns ~N×FAIL
+                # rows instead of N×ALL, and we never spend pydantic CPU on
+                # PASS findings the PDF would never render.
+                base_qs = base_qs.filter(status=StatusChoices.FAIL)
+
+            # Aggregate totals once so we (a) know which checks need capping
+            # and (b) can surface "Showing first N of M" in the PDF banner.
+            # Cheap: a single COUNT grouped by check_id.
+            totals: dict[str, int] = {
+                row["check_id"]: row["total"]
+                for row in base_qs.values("check_id").annotate(total=Count("id"))
+            }
+            if total_counts_out is not None:
+                total_counts_out.update(totals)
+
+            cap = MAX_FINDINGS_PER_CHECK
+            checks_over_cap = (
+                {cid for cid, n in totals.items() if n > cap} if cap > 0 else set()
+            )
+
+            # Use iterator with chunk_size for memory-efficient streaming.
+            # FindingOutput.transform_api_finding (prowler/lib/outputs/finding.py)
+            # reads finding.resources.first() and resource.tags.all() per
+            # finding, which without prefetch generates 2N queries per chunk.
+            # prefetch_related runs once per iterator chunk (Django >=4.1) and
+            # collapses that into a constant 2 extra queries per chunk.
+            if checks_over_cap:
+                # Top-N per check via a window function: PostgreSQL only
+                # materialises ``cap * |checks_over_cap| + sum(uncapped)``
+                # rows, vs the full table scan the previous path did.
+                ranked = base_qs.annotate(
+                    rn=Window(
+                        expression=RowNumber(),
+                        partition_by=[F("check_id")],
+                        order_by=F("uid").asc(),
+                    )
+                )
+                findings_queryset = (
+                    Finding.all_objects.filter(
+                        id__in=ranked.filter(rn__lte=cap).values("id")
+                    )
+                    .prefetch_related("resources", "resources__tags")
+                    .order_by("check_id", "uid")
+                    .iterator(chunk_size=DJANGO_FINDINGS_BATCH_SIZE)
+                )
+                logger.info(
+                    "Per-check cap=%d active for %d checks (max %d each); "
+                    "skipping transform for surplus rows",
+                    cap,
+                    len(checks_over_cap),
+                    cap,
+                )
+            else:
+                findings_queryset = (
+                    base_qs.prefetch_related("resources", "resources__tags")
+                    .order_by("check_id", "uid")
+                    .iterator(chunk_size=DJANGO_FINDINGS_BATCH_SIZE)
+                )
 
             # Pre-initialize empty lists for all check_ids to load
             # This avoids repeated dict lookups and 'if not in' checks
@@ -248,7 +322,11 @@ def _load_findings_for_requirement_checks(
                 findings_count += 1
 
             logger.info(
-                f"Loaded {findings_count} findings for {len(check_ids_to_load)} checks"
+                "Loaded %d findings for %d checks (truncated %d checks total=%d)",
+                findings_count,
+                len(check_ids_to_load),
+                len(checks_over_cap),
+                sum(totals.values()),
             )
 
     # Build result dict using cache references (no data duplication)
@@ -258,3 +336,40 @@ def _load_findings_for_requirement_checks(
     }
 
     return result
+
+
+def _get_compliance_check_ids(compliance_obj) -> set[str]:
+    """Return the union of all check_ids referenced by a compliance framework.
+
+    Used by the master report orchestrator to know which checks each
+    framework consumes from the shared ``findings_cache``, so that once a
+    framework finishes the entries no other pending framework needs can be
+    evicted from the cache (PROWLER-1733).
+
+    Args:
+        compliance_obj: A loaded Compliance framework object exposing a
+            ``Requirements`` iterable, each requirement carrying ``Checks``.
+            ``None`` is treated as "no checks" rather than raising, so the
+            caller can pass ``frameworks_bulk.get(...)`` directly without
+            an extra existence check.
+
+    Returns:
+        Set of check_id strings (empty if ``compliance_obj`` is ``None``).
+    """
+    if compliance_obj is None:
+        return set()
+    checks: set[str] = set()
+    requirements = getattr(compliance_obj, "Requirements", None) or []
+    try:
+        # Defensive: Mock objects (used in unit tests) return another Mock
+        # for any attribute access, which is truthy but not iterable. Treat
+        # any non-iterable Requirements value as "no checks".
+        for req in requirements:
+            req_checks = getattr(req, "Checks", None) or []
+            try:
+                checks.update(req_checks)
+            except TypeError:
+                continue
+    except TypeError:
+        return set()
+    return checks
