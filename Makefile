@@ -35,7 +35,7 @@ pypi-clean: ## Delete the distribution files
 
 pypi-build: ## Build package
 	$(MAKE) pypi-clean && \
-	poetry build
+	uv build
 
 pypi-upload: ## Upload package
 	python3 -m twine upload --repository pypi dist/*
@@ -56,4 +56,3 @@ run-api-dev: ## Start development environment with API, PostgreSQL, Valkey, MCP,
 
 ##@ Development Environment
 build-and-run-api-dev: build-no-cache-dev run-api-dev
-
