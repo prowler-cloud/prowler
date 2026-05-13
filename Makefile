@@ -29,6 +29,14 @@ lint: ## Lint Code
 	@echo "Running pylint..."
 	pylint --disable=W,C,R,E -j 0 prowler util
 
+lint-markdown: ## Lint Markdown files
+	@echo "Running markdownlint..."
+	markdownlint "**/*.md"
+
+format-markdown: ## Auto-fix Markdown lint issues
+	@echo "Running markdownlint --fix..."
+	markdownlint --fix "**/*.md"
+
 ##@ PyPI
 pypi-clean: ## Delete the distribution files
 	rm -rf ./dist && rm -rf ./build && rm -rf prowler.egg-info

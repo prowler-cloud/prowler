@@ -1,0 +1,12 @@
+node_modules/
+ui/node_modules/
+.git/
+.venv/
+**/.venv/
+dist/
+build/
+htmlcov/
+.next/
+ui/.next/
+ui/out/
+contrib/
