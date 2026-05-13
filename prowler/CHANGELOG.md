@@ -9,6 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_service_principal_no_secrets_for_permanent_tier0_roles` check for M365 provider [(#10788)](https://github.com/prowler-cloud/prowler/pull/10788)
 - `iam_user_access_not_stale_to_sagemaker` check for AWS provider with configurable `max_unused_sagemaker_access_days` (default 90) [(#11000)](https://github.com/prowler-cloud/prowler/pull/11000)
 - `cloudtrail_bedrock_logging_enabled` check for AWS provider [(#10858)](https://github.com/prowler-cloud/prowler/pull/10858)
+- Okta provider with OAuth 2.0 authentication and `signon_global_session_idle_timeout_15min` check [(#11079)](https://github.com/prowler-cloud/prowler/pull/11079)
 
 ### 🔄 Changed
 
