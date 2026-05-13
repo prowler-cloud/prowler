@@ -1,6 +1,10 @@
 ---
-title: 'Authentication'
+title: 'Okta Authentication in Prowler'
 ---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.27.0" />
 
 Prowler authenticates to Okta as a **service application** using **OAuth 2.0 with a private-key JWT** (Client Credentials grant). The integration is read-only by scope and follows DISA STIG guidance for least-privilege access.
 
@@ -17,9 +21,12 @@ Prowler authenticates to Okta as a **service application** using **OAuth 2.0 wit
 | Method | Status | Use Case |
 |---|---|---|
 | **OAuth 2.0 (private-key JWT)** | Supported | Production scans, CI/CD, Prowler App. |
-| SSWS API token | Planned (future PR) | Quick evaluation in a sandbox tenant. |
 
 The private-key JWT flow is the only supported authentication method in the initial release. The service application proves possession of a private key on every token request; Okta returns a short-lived access token, refreshed automatically by the SDK.
+
+<Note>
+If a different authentication method is needed (SSWS API token, OAuth with user delegation, etc.), please open a [feature request](https://github.com/prowler-cloud/prowler/issues/new?template=feature-request.yml) describing the use case.
+</Note>
 
 ### Required OAuth Scopes
 
@@ -27,43 +34,49 @@ For the initial check (`signon_global_session_idle_timeout_15min`) only one scop
 
 - `okta.policies.read`
 
-Additional scopes used by future checks (grant any you want pre-provisioned):
+Additional scopes will be needed as more services and checks are added, this are the current ones needed:
 
 | Scope | Used by |
 |---|---|
 | `okta.policies.read` | Sign-on / password / authentication policies |
-| `okta.apps.read` | Application sign-on policies |
-| `okta.authenticators.read` | Smart Card, Okta Verify FIPS settings |
-| `okta.idps.read` | Identity provider checks |
-| `okta.networkZones.read` | Network zone checks |
-| `okta.logStreams.read` | Log streaming checks |
-| `okta.brands.read` | Sign-in widget / DOD banner check |
-| `okta.users.read` | Future user-related checks |
-| `okta.roles.read` | API token role checks |
-| `okta.apiTokens.read` | API token checks |
 
 ### Required Admin Role
 
-The service application must be assigned the built-in **Read-Only Administrator** role. This further constrains what the granted scopes can do at runtime and aligns with least-privilege guidance.
+The service application must be assigned the built-in **Read-Only Administrator** role.
+
+Okta's Management API enforces a two-layer authorization model: an OAuth **scope** decides which API endpoints the token can call, and an **admin role** decides whether the call returns data. With only a scope granted, the token mint succeeds but every read returns `403 Forbidden`. The Read-Only Administrator role is the minimum that lets the granted `okta.*.read` scopes actually return configuration data to Prowler's checks — without it, the credential probe at provider startup fails and the scan never gets to evaluate any check.
+
+Read-Only Administrator is intentionally the narrowest role that satisfies this requirement and aligns with the least-privilege guidance in DISA STIG.
 
 ## Step-by-Step Setup
 
-### 1. Disable the privilege-escalation bypass (org-wide, one-time)
+### 1. Go to the admin console
+
+![Okta — admin console page](/user-guide/providers/okta/images/select-admin-console.png)
+
+### 2. [Optional] - Disable the privilege-escalation bypass (org-wide, one-time)
 
 In the Okta Admin Console, go to **Settings → Account → Public client app admins** and ensure it is **off**. When enabled, every API Services app can be auto-assigned the Super Administrator role after scopes are granted, which would invalidate the read-only premise of this integration.
 
-![Okta — disable Public client app admins](/images/providers/okta-disable-public-client-app-admins.png)
+![Okta — disable Public client app admins](/user-guide/providers/okta/images/public-client-app-admins.png)
 
-### 2. Create the API Services app
+### 3. Create the API Services app
 
-1. **Applications → Applications → Create App Integration**.
-2. Sign-in method: **API Services**. Click **Next**.
-3. Name the app (for example, `Prowler Scanner`) and click **Save**.
-4. Copy the displayed **Client ID** — you'll use it as `OKTA_CLIENT_ID`.
+1. Go to **Applications → Applications**.
 
-![Okta — create API Services app](/images/providers/okta-create-api-services-app.png)
+![Okta — create API Services app](/user-guide/providers/okta/images/go-to-applications.png)
 
-### 3. Switch to private-key authentication and generate a keypair
+2. **Create App Integration**
+
+![Okta — create App integration](/user-guide/providers/okta/images/create-new-application.png)
+
+3. Sign-in method: **API Services**. Click **Next**.
+4. Name the app (for example, `Prowler Scanner`) and click **Save**.
+5. Copy the displayed **Client ID** — you'll use it as `OKTA_CLIENT_ID`.
+
+![Okta — copy client id](/user-guide/providers/okta/images/copy-client-id.png)
+
+### 4. Switch to private-key authentication and generate a keypair
 
 On the new app's **General** tab, scroll to **Client Credentials**:
 
@@ -79,15 +92,15 @@ On the new app's **General** tab, scroll to **Client Credentials**:
 Okta displays the private key **only once**. If you close the modal without copying, you must generate a new key.
 </Warning>
 
-![Okta — generate private key](/images/providers/okta-generate-private-key.png)
+![Okta — create Public Key](/user-guide/providers/okta/images/create-public-key.png)
 
-### 4. Grant the required OAuth scopes
+### 5. Grant the required OAuth scopes
 
 On the app, open the **Okta API Scopes** tab and click **Grant** on every scope Prowler needs. For the initial release, granting only `okta.policies.read` is sufficient.
 
-![Okta — grant API scopes](/images/providers/okta-grant-api-scopes.png)
+![Okta — grant OAuth scopes](/user-guide/providers/okta/images/grant-permissions.png)
 
-### 5. Assign the Read-Only Administrator role
+### 6. Assign the Read-Only Administrator role
 
 On the app, open the **Admin roles** tab and click **Edit assignments → Add assignment**:
 
@@ -96,13 +109,11 @@ On the app, open the **Admin roles** tab and click **Edit assignments → Add as
 
 Save the changes.
 
-![Okta — assign Read-Only Administrator role](/images/providers/okta-assign-read-only-admin.png)
+![Okta — grant Read-Only role](/user-guide/providers/okta/images/grant-roles.png)
 
-### 6. (Optional) Verify DPoP setting
+### 7. [Optional] Verify DPoP setting
 
 Prowler sends DPoP (Demonstrating Proof of Possession) proofs on every token request. The integration works whether the **Require Demonstrating Proof of Possession (DPoP) header in token requests** setting on the service app is on or off — but enabling it is the more secure default.
-
-![Okta — DPoP setting on the service app](/images/providers/okta-dpop-setting.png)
 
 ## Prowler CLI Authentication
 

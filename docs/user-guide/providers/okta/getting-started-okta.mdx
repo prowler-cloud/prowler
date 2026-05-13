@@ -1,62 +1,44 @@
 ---
-title: 'Getting Started with Okta'
+title: 'Getting Started With Okta on Prowler'
 ---
 
-This guide covers setting up Okta security scanning with Prowler. The Okta provider authenticates with **OAuth 2.0 (private-key JWT)** as a service application — no end-user login, fully read-only by scope.
+import { VersionBadge } from "/snippets/version-badge.mdx"
 
-<Note>
-**Initial release scope**
-
-The initial Okta provider release ships with one check (`signon_global_session_idle_timeout_15min`, mapped to DISA STIG V-273186). Additional services and checks land in subsequent releases.
-</Note>
+Prowler for Okta scans an Okta organization for identity and session-management misconfigurations. The provider authenticates as a service application using **OAuth 2.0 with a private-key JWT** (Client Credentials grant) — no end-user login, read-only by scope.
 
 ## Prerequisites
 
-- An Okta organization. The UI examples below use **Identity Engine** naming such as **Global Session Policy**; Classic Engine exposes the equivalent sign-on policy concepts under older names.
-- A **Super Administrator** account on that organization to perform the one-time service-app setup.
-- Python 3.10+ and Prowler 5.26.0 or later installed locally.
+Set up authentication for Okta with the [Okta Authentication](/user-guide/providers/okta/authentication) guide before starting:
 
-## 1. Create the Okta service app
+- An Okta organization. The UI examples below use **Identity Engine** terminology such as **Global Session Policy**; Classic Engine exposes the equivalent sign-on policy concepts under older names.
+- A **Super Administrator** account on that organization for the one-time service-app setup.
+- An **API Services** app integration in the Okta Admin Console with the `okta.policies.read` scope granted and the **Read-Only Administrator** role assigned.
+- Python 3.10+ and Prowler 5.27.0 or later installed locally.
 
-1. In the Okta Admin Console, go to **Applications → Applications → Create App Integration**.
-2. Pick **API Services** as the sign-in method, name it (for example, `Prowler Scanner`), and create the app.
-3. On the new app's **General** tab, switch **Client authentication** to **Public key / Private key**.
-4. Either upload an existing public JWK or click **Add key** to let Okta generate one. Download / copy the **private key** material (PEM or JWK) — Okta only shows it once.
+<CardGroup cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
+    Onboard Okta using Prowler Cloud
+  </Card>
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Onboard Okta using Prowler CLI
+  </Card>
+</CardGroup>
 
-<Warning>
-**Disable the "Public client app admins" org setting**
+## Prowler Cloud
 
-Under **Settings → Account**, ensure **Public client app admins** is **off**. When enabled, newly created service apps can be auto-assigned the Super Admin role after scopes are granted, which would silently grant Prowler far more privilege than required.
-</Warning>
+<Note>
+Prowler Cloud onboarding for Okta is coming soon. Track the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler) for release updates. Use the [Prowler CLI](#prowler-cli) workflow below in the meantime.
+</Note>
 
-## 2. Grant the required OAuth scopes
+---
 
-In the service app's **Okta API Scopes** tab, click **Grant** on every scope Prowler needs. For the initial release only one scope is strictly required:
+## Prowler CLI
 
-- `okta.policies.read`
+<VersionBadge version="5.27.0" />
 
-The full list of scopes used by future checks (grant any you want pre-provisioned):
+### Step 1: Set Up Authentication
 
-| Scope | Used by |
-|---|---|
-| `okta.policies.read` | Sign-on / password / authentication policies |
-| `okta.apps.read` | Application sign-on policies |
-| `okta.authenticators.read` | Smart Card, Okta Verify FIPS settings |
-| `okta.idps.read` | Identity provider checks |
-| `okta.networkZones.read` | Network zone checks |
-| `okta.logStreams.read` | Log streaming checks |
-| `okta.brands.read` | Sign-in widget / DOD banner check |
-| `okta.users.read` | Future user-related checks |
-| `okta.roles.read` | API token role checks |
-| `okta.apiTokens.read` | API token checks |
-
-## 3. Assign the Read-Only Administrator role
-
-In **Admin assignments** for the service app, assign the built-in **Read-Only Administrator** role. This further constrains what the granted scopes can do at runtime, in line with least privilege.
-
-## 4. Configure Prowler
-
-Set the following environment variables. Using env vars is preferred over passing the values on the CLI.
+Follow the [Okta Authentication](/user-guide/providers/okta/authentication) guide to create the service application, generate a keypair, grant scopes, and assign the Read-Only Administrator role. Then export the credentials:
 
 ```bash
 export OKTA_ORG_DOMAIN="acme.okta.com"
@@ -68,9 +50,9 @@ export OKTA_SCOPES="okta.policies.read"
 
 The private key file may contain either a PEM-encoded RSA key or a JWK JSON document.
 
-### Supplying the Private Key as Content
+#### Supplying the Private Key as Content
 
-For automated environments where writing the key to disk is not desirable (Prowler App, CI runners, container secrets, etc.), the private key may be passed directly as a string:
+For automated environments where writing the key to disk is not desirable (CI runners, container secrets, etc.), the private key may be passed directly as a string:
 
 ```bash
 export OKTA_ORG_DOMAIN="acme.okta.com"
@@ -80,17 +62,46 @@ export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 
 `OKTA_PRIVATE_KEY` takes precedence over `OKTA_PRIVATE_KEY_FILE` when both are set. The private key is intentionally not exposed as a CLI flag — secrets must be supplied via environment variables only.
 
-## 5. Run a scan
+### Step 2: Run the First Scan
+
+Run a baseline scan after credentials are configured:
 
 ```bash
-# Run all Okta checks
-poetry run python prowler-cli.py okta
-
-# Run a specific check
-poetry run python prowler-cli.py okta --check signon_global_session_idle_timeout_15min
+prowler okta
 ```
 
-Prowler will print a summary table; full findings are written to the configured output formats.
+Or run a specific check directly:
+
+```bash
+prowler okta --check signon_global_session_idle_timeout_15min
+```
+
+Prowler prints a summary table; full findings are written to the configured output formats.
+
+### Step 3: Use a Custom Configuration (Optional)
+
+Prowler uses a configuration file to customize check thresholds. The Okta configuration currently includes:
+
+```yaml
+okta:
+  # okta.signon_global_session_idle_timeout_15min
+  # Defaults to 15 minutes per DISA STIG V-273186.
+  okta_max_session_idle_minutes: 15
+```
+
+To use a custom configuration:
+
+```bash
+prowler okta --config-file /path/to/config.yaml
+```
+
+## Supported Services
+
+Prowler for Okta includes security checks across the following services:
+
+| Service     | Description                                                                         |
+| ----------- | ----------------------------------------------------------------------------------- |
+| **Sign-On** | Global session policy controls (idle timeout, lifetime, rule priority and ordering) |
 
 ## Troubleshooting
 
@@ -98,7 +109,7 @@ Prowler will print a summary table; full findings are written to the configured 
 
 The initial check is mapped to DISA STIG `V-273186` / `OKTA-APP-000020`. Prowler implements the STIG procedure as written: the **Default Policy** must have a **Priority 1** rule that is **not** `Default Rule`, and that rule must set **Maximum Okta global session idle time** to 15 minutes or less.
 
-This is stricter than simply finding the same timeout value somewhere else in the policy set. A compliant custom rule in another policy, or a compliant timeout on the built-in `Default Rule`, doesn't satisfy this STIG procedure.
+This is stricter than simply finding the same timeout value somewhere else in the policy set. A compliant custom rule in another policy, or a compliant timeout on the built-in `Default Rule`, does not satisfy this STIG procedure.
 
 ### Default Scopes
 
@@ -115,8 +126,7 @@ When additional checks are enabled — or when running against a service app tha
 export OKTA_SCOPES="okta.policies.read,okta.apps.read,okta.users.read"
 
 # CLI flag — space-separated
-poetry run python prowler-cli.py okta \
-  --okta-scopes okta.policies.read okta.apps.read okta.users.read
+prowler okta --okta-scopes okta.policies.read okta.apps.read okta.users.read
 ```
 
 For the full catalog of OAuth scopes exposed by the Okta Management API, refer to the [Okta OAuth 2.0 scopes documentation](https://developer.okta.com/docs/api/oauth2/).
