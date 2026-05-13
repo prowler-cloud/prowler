@@ -151,4 +151,21 @@ describe("GET /api/health", () => {
       expect.any(Object),
     );
   });
+
+  it("should use the local API health endpoint when the env var is blank", async () => {
+    // Given
+    vi.stubEnv("PROWLER_API_HEALTH_URL", "  ");
+    const fetchMock = mockApiHealthResponse(
+      new Response(null, { status: 200 }),
+    );
+
+    // When
+    await GET();
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8080/health/ready",
+      expect.any(Object),
+    );
+  });
 });

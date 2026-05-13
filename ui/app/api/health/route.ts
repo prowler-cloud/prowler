@@ -1,3 +1,5 @@
+// Local development fallback. Docker Compose injects PROWLER_API_HEALTH_URL
+// with the internal service hostname (`api`) for container-to-container checks.
 const DEFAULT_API_HEALTH_URL = "http://localhost:8080/health/ready";
 const API_HEALTH_TIMEOUT_MS = 3000;
 
