@@ -14,6 +14,7 @@ import { toast } from "@/components/ui/toast";
 import { onDemandScanFormSchema, ScanProviderInfo } from "@/types";
 
 import { SCAN_LAUNCHED_EVENT } from "../table/scans/scans-table-with-polling";
+
 import { SelectScanProvider } from "./select-scan-provider";
 
 export const LaunchScanWorkflow = ({

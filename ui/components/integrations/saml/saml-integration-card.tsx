@@ -4,12 +4,11 @@ import { CheckIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
 import { deleteSamlConfig } from "@/actions/integrations";
-import { Button } from "@/components/shadcn";
+import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
-import { Card, CardContent, CardHeader } from "../../shadcn";
 import { SamlConfigForm } from "./saml-config-form";
 
 export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {

@@ -6,8 +6,7 @@ import { useIsSSR } from "@react-aria/ssr";
 import { VisuallyHidden } from "@react-aria/visually-hidden";
 import clsx from "clsx";
 import { useTheme } from "next-themes";
-import { FC } from "react";
-import React from "react";
+import React, { FC } from "react";
 
 import {
   Tooltip,

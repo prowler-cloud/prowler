@@ -12,6 +12,7 @@ import { toLocalDateString } from "@/lib/date-utils";
 import { ProviderType, ScanProps } from "@/types";
 
 import { TriggerIcon } from "../../trigger-icon";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 import { DataTableRowDetails } from "./data-table-row-details";
 

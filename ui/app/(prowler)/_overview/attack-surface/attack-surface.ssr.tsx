@@ -5,6 +5,7 @@ import {
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
+
 import { AttackSurface } from "./_components/attack-surface";
 
 export const AttackSurfaceSSR = async ({ searchParams }: SSRComponentProps) => {
