@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OktaPolicy",
+  "ResourceType": "Other",
   "ResourceGroup": "governance",
   "Description": "The DISA STIG procedure for OKTA-APP-000020 requires the **Default Global Session Policy** to have a **Priority 1** rule that is **not** the built-in `Default Rule`, and that rule must set **Maximum Okta global session idle time** to 15 minutes or less. The threshold defaults to 15 minutes per STIG and is overridable via the `okta_max_session_idle_minutes` key in the audit config.",
   "Risk": "Without a 15-minute idle timeout, an unattended workstation leaves an authenticated Okta session open indefinitely, allowing an attacker physical or remote access to take over the user's identity and pivot into every downstream application that trusts Okta SSO.",
