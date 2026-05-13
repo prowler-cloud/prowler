@@ -30,6 +30,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - `okta` provider support with OAuth 2.0 private-key JWT credentials form (client ID + PEM private key) [(#11213)](https://github.com/prowler-cloud/prowler/pull/11213)
 - "Resource Metadata / Evidence" tab in the finding detail drawer [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
 
+### 🔄 Changed
+
+- Restructured ESLint config: migrated to flat `eslint.config.ts` using the `typescript-eslint` meta-package with `projectService` enabled for type-aware linting, replaced `eslint-plugin-prettier` with `eslint-config-prettier/flat`, and consolidated `eslint-plugin-simple-import-sort` + `eslint-plugin-unused-imports` into `eslint-plugin-import-x` (recommended + typescript configs) [(#TBD)](https://github.com/prowler-cloud/prowler/pull/TBD)
+
 ### 🐞 Fixed
 
 - Resource detail panels: metadata editor now scrolls internally with the minimal scrollbar across the finding drawer and `/resources/:id`, tab labels truncate with tooltips on narrow widths, and "View in AWS Console" moved from the resource UID row to the resource actions menu [(#11325)](https://github.com/prowler-cloud/prowler/pull/11325)

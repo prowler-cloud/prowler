@@ -753,22 +753,6 @@
   },
   {
     "section": "devDependencies",
-    "name": "@typescript-eslint/eslint-plugin",
-    "from": "7.18.0",
-    "to": "8.53.0",
-    "strategy": "installed",
-    "generatedAt": "2026-01-19T13:54:24.770Z"
-  },
-  {
-    "section": "devDependencies",
-    "name": "@typescript-eslint/parser",
-    "from": "7.18.0",
-    "to": "8.53.0",
-    "strategy": "installed",
-    "generatedAt": "2026-01-19T13:54:24.770Z"
-  },
-  {
-    "section": "devDependencies",
     "name": "@vitejs/plugin-react",
     "from": "5.1.2",
     "to": "5.1.2",
@@ -841,17 +825,25 @@
   },
   {
     "section": "devDependencies",
-    "name": "eslint-plugin-jsx-a11y",
-    "from": "6.10.2",
-    "to": "6.10.2",
+    "name": "eslint-import-resolver-typescript",
+    "from": "4.4.4",
+    "to": "4.4.4",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-05-13T15:04:07.559Z"
   },
   {
     "section": "devDependencies",
-    "name": "eslint-plugin-prettier",
-    "from": "5.5.1",
-    "to": "5.5.1",
+    "name": "eslint-plugin-import-x",
+    "from": "4.16.2",
+    "to": "4.16.2",
+    "strategy": "installed",
+    "generatedAt": "2026-05-13T15:02:04.867Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-jsx-a11y",
+    "from": "6.10.2",
+    "to": "6.10.2",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
   },
@@ -881,27 +873,19 @@
   },
   {
     "section": "devDependencies",
-    "name": "eslint-plugin-simple-import-sort",
-    "from": "12.1.1",
-    "to": "12.1.1",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
-    "name": "eslint-plugin-unused-imports",
-    "from": "3.2.0",
-    "to": "4.3.0",
-    "strategy": "installed",
-    "generatedAt": "2026-01-19T13:54:24.770Z"
-  },
-  {
-    "section": "devDependencies",
     "name": "globals",
     "from": "17.0.0",
     "to": "17.0.0",
     "strategy": "installed",
     "generatedAt": "2026-01-19T13:54:24.770Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "jiti",
+    "from": "2.7.0",
+    "to": "2.7.0",
+    "strategy": "installed",
+    "generatedAt": "2026-05-13T15:02:04.867Z"
   },
   {
     "section": "devDependencies",
@@ -974,6 +958,14 @@
     "to": "5.5.4",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "typescript-eslint",
+    "from": "8.59.3",
+    "to": "8.59.3",
+    "strategy": "installed",
+    "generatedAt": "2026-05-13T15:02:04.867Z"
   },
   {
     "section": "devDependencies",
