@@ -86,7 +86,9 @@ jobs:
 
       - name: Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: uv run bandit -q -lll -x '*_test.py,./contrib/' -r .
+        # Exclude .venv because uv places the project venv inside ./api; otherwise
+        # bandit would recurse into installed third-party packages.
+        run: uv run bandit -q -lll -x '*_test.py,./contrib/,./.venv/' -r .
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -95,4 +97,4 @@ jobs:
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: uv run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
+        run: uv run vulture --exclude "contrib,tests,conftest.py,.venv" --min-confidence 100 .
