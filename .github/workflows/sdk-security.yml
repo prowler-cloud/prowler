@@ -95,7 +95,7 @@ jobs:
 
       - name: Security scan with Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: uv run bandit -q -lll -x '*_test.py,./contrib/,./api/,./ui' -r .
+        run: uv run bandit -q -lll -x '*_test.py,./.venv/,./contrib/,./api/,./ui' -r .
 
       - name: Security scan with Safety
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -104,4 +104,4 @@ jobs:
 
       - name: Dead code detection with Vulture
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: uv run vulture --exclude "contrib,api,ui" --min-confidence 100 .
+        run: uv run vulture --exclude ".venv,contrib,api,ui" --min-confidence 100 .
