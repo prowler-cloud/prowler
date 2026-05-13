@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
 import { PROVIDER_BADGE_BY_NAME } from "@/components/icons/providers-badge";
+import { applyFailNonMutedFilters } from "@/lib";
 import { initializeChartColors } from "@/lib/charts/colors";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
@@ -463,8 +464,7 @@ export function SankeyChart({
     if (severityFilter) {
       const params = new URLSearchParams(searchParams.toString());
       params.set("filter[severity__in]", severityFilter);
-      params.set("filter[status__in]", "FAIL");
-      params.set("filter[muted]", "false");
+      applyFailNonMutedFilters(params);
       router.push(`/findings?${params.toString()}`);
     }
   };
@@ -484,8 +484,7 @@ export function SankeyChart({
       }
 
       params.set("filter[severity__in]", severityFilter);
-      params.set("filter[status__in]", "FAIL");
-      params.set("filter[muted]", "false");
+      applyFailNonMutedFilters(params);
       router.push(`/findings?${params.toString()}`);
     }
   };

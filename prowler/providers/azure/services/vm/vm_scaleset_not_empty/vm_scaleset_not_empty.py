@@ -14,6 +14,7 @@ class vm_scaleset_not_empty(Check):
     def execute(self):
         findings = []
         for subscription, scale_sets in vm_client.vm_scale_sets.items():
+            subscription_name = vm_client.subscriptions.get(subscription, subscription)
             for scale_set in scale_sets.values():
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=scale_set
@@ -21,9 +22,9 @@ class vm_scaleset_not_empty(Check):
                 report.subscription = subscription
                 if not scale_set.instance_ids:
                     report.status = "FAIL"
-                    report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription}' is empty: no VM instances present."
+                    report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription_name} ({subscription})' is empty: no VM instances present."
                 else:
                     report.status = "PASS"
-                    report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription}' has {len(scale_set.instance_ids)} VM instances."
+                    report.status_extended = f"Scale set '{scale_set.resource_name}' in subscription '{subscription_name} ({subscription})' has {len(scale_set.instance_ids)} VM instances."
                 findings.append(report)
         return findings

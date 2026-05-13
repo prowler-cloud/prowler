@@ -1,4 +1,5 @@
 from prowler.lib.check.compliance_models import (
+    ASDEssentialEight_Requirement_Attribute,
     AWS_Well_Architected_Requirement_Attribute,
     CCC_Requirement_Attribute,
     CIS_Requirement_Attribute,
@@ -1186,6 +1187,61 @@ CCC_GCP_FIXTURE = Compliance(
                     ],
                 )
             ],
+        ),
+    ],
+)
+
+ASD_ESSENTIAL_EIGHT_AWS = Compliance(
+    Framework="ASD-Essential-Eight",
+    Name="ASD Essential Eight Maturity Model - Maturity Level One (AWS)",
+    Version="Nov 2023",
+    Provider="AWS",
+    Description="Literal mapping of the Australian Signals Directorate (ASD) Essential Eight Maturity Model ML1 to AWS infrastructure checks.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="E8-1.8",
+            Description="Online services that are no longer supported by vendors are removed.",
+            Attributes=[
+                ASDEssentialEight_Requirement_Attribute(
+                    Section="1 Patch applications",
+                    MaturityLevel="ML1",
+                    AssessmentStatus="Automated",
+                    CloudApplicability="full",
+                    MitigatedThreats=[
+                        "Use of unsupported software",
+                        "Long-tail vulnerability accumulation",
+                    ],
+                    Description="Detect and remove unsupported AWS-hosted online services (Lambda runtimes, RDS engines, EKS, Fargate, Kafka, OpenSearch).",
+                    RationaleStatement="Unsupported services no longer receive security patches.",
+                    ImpactStatement="",
+                    RemediationProcedure="Migrate Lambda off deprecated runtimes; remove RDS Extended Support; upgrade EKS.",
+                    AuditProcedure="Run all listed checks.",
+                    AdditionalInformation="ASD Essential Eight ML1 - Patch applications - clause 8.",
+                    References="https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model",
+                )
+            ],
+            Checks=["service_test_check_id"],
+        ),
+        Compliance_Requirement(
+            Id="E8-6.1",
+            Description="Microsoft Office macros are disabled for users that do not have a demonstrated business requirement.",
+            Attributes=[
+                ASDEssentialEight_Requirement_Attribute(
+                    Section="6 Restrict Microsoft Office macros",
+                    MaturityLevel="ML1",
+                    AssessmentStatus="Manual",
+                    CloudApplicability="non-applicable",
+                    MitigatedThreats=["Macro-based malware delivery"],
+                    Description="Endpoint / Microsoft 365 control. Out of AWS infrastructure scope.",
+                    RationaleStatement="Most users never need Office macros.",
+                    ImpactStatement="",
+                    RemediationProcedure="Disable macros via Group Policy / Intune / M365 admin policies.",
+                    AuditProcedure="Manual review of M365 macro policy.",
+                    AdditionalInformation="ASD Essential Eight ML1 - Restrict Microsoft Office macros - clause 1. Out of AWS infrastructure scope.",
+                    References="https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model",
+                )
+            ],
+            Checks=[],
         ),
     ],
 )

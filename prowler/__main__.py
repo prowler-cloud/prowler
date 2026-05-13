@@ -18,6 +18,7 @@ from prowler.config.config import (
     json_asff_file_suffix,
     json_ocsf_file_suffix,
     orange_color,
+    sarif_file_suffix,
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -44,7 +45,10 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
-from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    get_bulk_compliance_frameworks_universal,
+)
 from prowler.lib.check.custom_checks_metadata import (
     parse_custom_checks_metadata_file,
     update_checks_metadata,
@@ -53,6 +57,9 @@ from prowler.lib.check.models import CheckMetadata
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.asff.asff import ASFF
+from prowler.lib.outputs.compliance.asd_essential_eight.asd_essential_eight_aws import (
+    ASDEssentialEightAWS,
+)
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
@@ -74,7 +81,10 @@ from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
     GoogleWorkspaceCISASCuBA,
 )
-from prowler.lib.outputs.compliance.compliance import display_compliance_table
+from prowler.lib.outputs.compliance.compliance import (
+    display_compliance_table,
+    process_universal_compliance_frameworks,
+)
 from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
 from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
 from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
@@ -122,6 +132,7 @@ from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ingestion import send_ocsf_to_api
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics, report
+from prowler.lib.outputs.sarif.sarif import SARIF
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.alibabacloud.models import AlibabaCloudOutputOptions
@@ -143,6 +154,7 @@ from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
+from prowler.providers.okta.models import OktaOutputOptions
 from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
 from prowler.providers.vercel.models import VercelOutputOptions
@@ -197,7 +209,8 @@ def prowler():
     if compliance_framework:
         args.output_formats.extend(compliance_framework)
     # If no input compliance framework, set all, unless a specific service or check is input
-    elif default_execution:
+    # Skip for IAC and LLM providers that don't use compliance frameworks
+    elif default_execution and provider not in ["iac", "llm"]:
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
@@ -232,6 +245,8 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
+    universal_frameworks = {}
+
     # Skip compliance frameworks for external-tool providers
     if provider not in EXTERNAL_TOOL_PROVIDERS:
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
@@ -239,6 +254,8 @@ def prowler():
         bulk_checks_metadata = update_checks_metadata_with_compliance(
             bulk_compliance_frameworks, bulk_checks_metadata
         )
+        # Load universal compliance frameworks for new rendering pipeline
+        universal_frameworks = get_bulk_compliance_frameworks_universal(provider)
 
     # Update checks metadata if the --custom-checks-metadata-file is present
     custom_checks_metadata = None
@@ -251,12 +268,12 @@ def prowler():
         )
 
     if args.list_compliance:
-        print_compliance_frameworks(bulk_compliance_frameworks)
+        all_frameworks = {**bulk_compliance_frameworks, **universal_frameworks}
+        print_compliance_frameworks(all_frameworks)
         sys.exit()
     if args.list_compliance_requirements:
-        print_compliance_requirements(
-            bulk_compliance_frameworks, args.list_compliance_requirements
-        )
+        all_frameworks = {**bulk_compliance_frameworks, **universal_frameworks}
+        print_compliance_requirements(all_frameworks, args.list_compliance_requirements)
         sys.exit()
 
     # Load checks to execute
@@ -273,6 +290,7 @@ def prowler():
         provider=provider,
         list_checks=getattr(args, "list_checks", False)
         or getattr(args, "list_checks_json", False),
+        universal_frameworks=universal_frameworks,
     )
 
     # if --list-checks-json, dump a json file and exit
@@ -409,6 +427,10 @@ def prowler():
         output_options = VercelOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "okta":
+        output_options = OktaOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -428,14 +450,15 @@ def prowler():
 
             findings = global_provider.run_scan(streaming_callback=streaming_callback)
         else:
-            # Original behavior for IAC or non-verbose LLM
+            # Original behavior for IAC and Image
             try:
                 findings = global_provider.run()
             except ImageBaseException as error:
                 logger.critical(f"{error}")
                 sys.exit(1)
-            # Note: IaC doesn't support granular progress tracking since Trivy runs as a black box
-            # and returns all findings at once. Progress tracking would just be 0% → 100%.
+            # Note: External tool providers don't support granular progress tracking since
+            # they run external tools as a black box and return all findings at once.
+            # Progress tracking would just be 0% → 100%.
 
             # Filter findings by status if specified
             if hasattr(args, "status") and args.status:
@@ -552,6 +575,13 @@ def prowler():
                 html_output.batch_write_data_to_file(
                     provider=global_provider, stats=stats
                 )
+            if mode == "sarif":
+                sarif_output = SARIF(
+                    findings=finding_outputs,
+                    file_path=f"{filename}{sarif_file_suffix}",
+                )
+                generated_outputs["regular"].append(sarif_output)
+                sarif_output.batch_write_data_to_file()
 
     if getattr(args, "push_to_cloud", False):
         if not ocsf_output or not getattr(ocsf_output, "file_path", None):
@@ -613,9 +643,29 @@ def prowler():
                 )
 
     # Compliance Frameworks
+    # Source the framework listing from the union of `bulk_compliance_frameworks`
+    # and `universal_frameworks` so universal-only frameworks (e.g.
+    # `prowler/compliance/csa_ccm_4.0.json`) — which `Compliance.get_bulk(provider)`
+    # does not load — still reach `process_universal_compliance_frameworks` below.
+    # The provider-specific block subtracts the names handled by the universal
+    # processor so the legacy per-provider handlers only see frameworks that the
+    # bulk loader actually resolved.
     input_compliance_frameworks = set(output_options.output_modes).intersection(
-        get_available_compliance_frameworks(provider)
+        set(bulk_compliance_frameworks.keys()) | set(universal_frameworks.keys())
     )
+
+    # ── Universal compliance frameworks (provider-agnostic) ──
+    universal_processed = process_universal_compliance_frameworks(
+        input_compliance_frameworks=input_compliance_frameworks,
+        universal_frameworks=universal_frameworks,
+        finding_outputs=finding_outputs,
+        output_directory=output_options.output_directory,
+        output_filename=output_options.output_filename,
+        provider=provider,
+        generated_outputs=generated_outputs,
+    )
+    input_compliance_frameworks -= universal_processed
+
     if provider == "aws":
         for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
@@ -631,6 +681,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            elif compliance_name.startswith("asd_essential_eight"):
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                asd_essential_eight = ASDEssentialEightAWS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(asd_essential_eight)
+                asd_essential_eight.batch_write_data_to_file()
             elif compliance_name == "mitre_attack_aws":
                 # Generate MITRE ATT&CK Finding Object
                 filename = (
@@ -1385,6 +1447,9 @@ def prowler():
                     output_options.output_filename,
                     output_options.output_directory,
                     compliance_overview,
+                    universal_frameworks=universal_frameworks,
+                    provider=provider,
+                    output_formats=args.output_formats,
                 )
             if compliance_overview:
                 print(

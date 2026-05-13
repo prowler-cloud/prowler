@@ -280,7 +280,13 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         config_path=arguments.config_file,
                         repositories=repos,
+                        repo_list_file=getattr(arguments, "repo_list_file", None),
                         organizations=orgs,
+                        github_actions_enabled=not getattr(
+                            arguments, "no_github_actions", False
+                        ),
+                        exclude_workflows=getattr(arguments, "exclude_workflows", []),
+                        fixer_config=fixer_config,
                     )
                 elif "googleworkspace" in provider_class_name.lower():
                     provider_class(
@@ -393,6 +399,19 @@ class Provider(ABC):
                 elif "vercel" in provider_class_name.lower():
                     provider_class(
                         projects=getattr(arguments, "project", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "okta" in provider_class_name.lower():
+                    provider_class(
+                        okta_org_domain=getattr(arguments, "okta_org_domain", ""),
+                        okta_client_id=getattr(arguments, "okta_client_id", ""),
+                        okta_private_key=getattr(arguments, "okta_private_key", ""),
+                        okta_private_key_file=getattr(
+                            arguments, "okta_private_key_file", ""
+                        ),
+                        okta_scopes=getattr(arguments, "okta_scopes", None),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

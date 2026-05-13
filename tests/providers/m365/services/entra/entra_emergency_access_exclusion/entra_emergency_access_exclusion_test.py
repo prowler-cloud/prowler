@@ -47,7 +47,7 @@ class Test_entra_emergency_access_exclusion:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "No enabled Conditional Access policies found. Emergency access exclusions are not required."
+                == "No enabled Conditional Access policies with a Block grant control found. Emergency access exclusions are not required."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "Conditional Access Policies"
@@ -98,7 +98,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -122,7 +122,7 @@ class Test_entra_emergency_access_exclusion:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "No enabled Conditional Access policies found. Emergency access exclusions are not required."
+                == "No enabled Conditional Access policies with a Block grant control found. Emergency access exclusions are not required."
             )
 
     def test_entra_no_emergency_access_exclusion(self):
@@ -172,7 +172,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -207,7 +207,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -230,7 +230,7 @@ class Test_entra_emergency_access_exclusion:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert (
-                "No user or group is excluded as emergency access from all 2 enabled Conditional Access policies"
+                "No user or group is excluded as emergency access from all 2 enabled Conditional Access policies with a Block grant control"
                 in result[0].status_extended
             )
             assert result[0].resource_name == "Conditional Access Policies"
@@ -283,7 +283,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -318,7 +318,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -352,7 +352,7 @@ class Test_entra_emergency_access_exclusion:
             assert result[0].status == "PASS"
             assert "BreakGlass1" in result[0].status_extended
             assert (
-                "excluded from all 2 enabled Conditional Access policies"
+                "excluded from all 2 enabled Conditional Access policies with a Block grant control"
                 in result[0].status_extended
             )
             assert result[0].resource_name == "Conditional Access Policies"
@@ -405,7 +405,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -440,7 +440,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -474,7 +474,7 @@ class Test_entra_emergency_access_exclusion:
             assert result[0].status == "PASS"
             assert "BreakGlassGroup" in result[0].status_extended
             assert (
-                "excluded from all 2 enabled Conditional Access policies"
+                "excluded from all 2 enabled Conditional Access policies with a Block grant control"
                 in result[0].status_extended
             )
             assert result[0].resource_name == "Conditional Access Policies"
@@ -528,7 +528,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -563,7 +563,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -605,7 +605,7 @@ class Test_entra_emergency_access_exclusion:
             assert "BreakGlass1" in result[0].status_extended
             assert "BreakGlassGroup" in result[0].status_extended
             assert (
-                "excluded from all 2 enabled Conditional Access policies"
+                "excluded from all 2 enabled Conditional Access policies with a Block grant control"
                 in result[0].status_extended
             )
             assert result[0].resource_name == "Conditional Access Policies"
@@ -658,7 +658,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -693,7 +693,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -729,7 +729,7 @@ class Test_entra_emergency_access_exclusion:
             assert result[0].resource_id == "conditionalAccessPolicies"
             assert "BreakGlass1" in result[0].status_extended
             assert (
-                "excluded from all 1 enabled Conditional Access policies"
+                "excluded from all 1 enabled Conditional Access policies with a Block grant control"
                 in result[0].status_extended
             )
 
@@ -781,7 +781,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -816,7 +816,7 @@ class Test_entra_emergency_access_exclusion:
                         ),
                     ),
                     grant_controls=GrantControls(
-                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
                         operator=GrantControlOperator.AND,
                     ),
                     session_controls=SessionControls(
@@ -850,8 +850,316 @@ class Test_entra_emergency_access_exclusion:
             assert result[0].status == "PASS"
             assert "BreakGlass1" in result[0].status_extended
             assert (
-                "excluded from all 2 enabled Conditional Access policies"
+                "excluded from all 2 enabled Conditional Access policies with a Block grant control"
                 in result[0].status_extended
             )
             assert result[0].resource_name == "Conditional Access Policies"
             assert result[0].resource_id == "conditionalAccessPolicies"
+
+    def test_entra_only_non_blocking_policies(self):
+        """PASS when the tenant has only non-blocking policies (no Block grant)."""
+        policy_id = str(uuid4())
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                policy_id: ConditionalAccessPolicy(
+                    id=policy_id,
+                    display_name="MFA for all",
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[],
+                            excluded_groups=[],
+                            included_users=["All"],
+                            excluded_users=[],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        operator=GrantControlOperator.AND,
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=False, mode="always"
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.EVERY_TIME,
+                        ),
+                    ),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                ),
+            }
+
+            check = entra_emergency_access_exclusion()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == "No enabled Conditional Access policies with a Block grant control found. Emergency access exclusions are not required."
+            )
+
+    def test_entra_user_excluded_from_blocking_but_included_in_non_blocking(self):
+        """PASS when only Block-grant exclusions are required (non-blocking inclusion is ignored)."""
+        block_policy_id = str(uuid4())
+        mfa_policy_id = str(uuid4())
+        emergency_user_id = "emergency-access-user"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                block_policy_id: ConditionalAccessPolicy(
+                    id=block_policy_id,
+                    display_name="Block legacy auth",
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[],
+                            excluded_groups=[],
+                            included_users=["All"],
+                            excluded_users=[emergency_user_id],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.AND,
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=False, mode="always"
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.EVERY_TIME,
+                        ),
+                    ),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                ),
+                mfa_policy_id: ConditionalAccessPolicy(
+                    id=mfa_policy_id,
+                    display_name="MFA for all",
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[],
+                            excluded_groups=[],
+                            included_users=["All"],
+                            excluded_users=[],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[ConditionalAccessGrantControl.MFA],
+                        operator=GrantControlOperator.AND,
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=False, mode="always"
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.EVERY_TIME,
+                        ),
+                    ),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                ),
+            }
+
+            entra_client.users = {
+                emergency_user_id: User(
+                    id=emergency_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+            entra_client.groups = []
+
+            check = entra_emergency_access_exclusion()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "BreakGlass1" in result[0].status_extended
+            assert (
+                "excluded from all 1 enabled Conditional Access policies with a Block grant control"
+                in result[0].status_extended
+            )
+
+    def test_entra_user_excluded_only_from_subset_of_blocking_policies(self):
+        """FAIL when the user is excluded from one Block policy but not the other."""
+        block_policy_id_1 = str(uuid4())
+        block_policy_id_2 = str(uuid4())
+        emergency_user_id = "emergency-access-user"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_emergency_access_exclusion.entra_emergency_access_exclusion import (
+                entra_emergency_access_exclusion,
+            )
+            from prowler.providers.m365.services.entra.entra_service import (
+                ConditionalAccessPolicy,
+            )
+
+            entra_client.conditional_access_policies = {
+                block_policy_id_1: ConditionalAccessPolicy(
+                    id=block_policy_id_1,
+                    display_name="Block 1",
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[],
+                            excluded_groups=[],
+                            included_users=["All"],
+                            excluded_users=[emergency_user_id],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.AND,
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=False, mode="always"
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.EVERY_TIME,
+                        ),
+                    ),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                ),
+                block_policy_id_2: ConditionalAccessPolicy(
+                    id=block_policy_id_2,
+                    display_name="Block 2",
+                    conditions=Conditions(
+                        application_conditions=ApplicationsConditions(
+                            included_applications=["All"],
+                            excluded_applications=[],
+                            included_user_actions=[],
+                        ),
+                        user_conditions=UsersConditions(
+                            included_groups=[],
+                            excluded_groups=[],
+                            included_users=["All"],
+                            excluded_users=[],
+                            included_roles=[],
+                            excluded_roles=[],
+                        ),
+                    ),
+                    grant_controls=GrantControls(
+                        built_in_controls=[ConditionalAccessGrantControl.BLOCK],
+                        operator=GrantControlOperator.AND,
+                    ),
+                    session_controls=SessionControls(
+                        persistent_browser=PersistentBrowser(
+                            is_enabled=False, mode="always"
+                        ),
+                        sign_in_frequency=SignInFrequency(
+                            is_enabled=False,
+                            frequency=None,
+                            type=None,
+                            interval=SignInFrequencyInterval.EVERY_TIME,
+                        ),
+                    ),
+                    state=ConditionalAccessPolicyState.ENABLED,
+                ),
+            }
+
+            entra_client.users = {
+                emergency_user_id: User(
+                    id=emergency_user_id,
+                    name="BreakGlass1",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
+            }
+            entra_client.groups = []
+
+            check = entra_emergency_access_exclusion()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "No user or group is excluded as emergency access from all 2 enabled Conditional Access policies with a Block grant control."
+            )

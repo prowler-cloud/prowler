@@ -1,7 +1,11 @@
 interface ScanDateSource {
   id: string;
   attributes?: {
-    inserted_at?: string;
+    // Findings are persisted when the scan finishes, so their `inserted_at`
+    // aligns with the scan's `completed_at` — not the scan's `inserted_at`
+    // (which is when the scan row was first created and can fall on a
+    // different UTC day for scans that cross midnight).
+    completed_at?: string;
   };
 }
 
@@ -34,10 +38,10 @@ function hasInsertedAtFilter(filters: Record<string, string>): boolean {
 }
 
 export function buildFindingScanDateFilters(
-  scanInsertedAtValues: string[],
+  scanCompletedAtValues: string[],
 ): Record<string, string> {
   const dates = Array.from(
-    new Set(scanInsertedAtValues.map(formatScanDate).filter(Boolean)),
+    new Set(scanCompletedAtValues.map(formatScanDate).filter(Boolean)),
   ).sort() as string[];
 
   if (dates.length === 0) {
@@ -82,11 +86,11 @@ export async function resolveFindingScanDateFilters({
     });
   }
 
-  const scanInsertedAtValues = scanIds
-    .map((scanId) => scansById.get(scanId)?.attributes?.inserted_at)
-    .filter((insertedAt): insertedAt is string => Boolean(insertedAt));
+  const scanCompletedAtValues = scanIds
+    .map((scanId) => scansById.get(scanId)?.attributes?.completed_at)
+    .filter((completedAt): completedAt is string => Boolean(completedAt));
 
-  const dateFilters = buildFindingScanDateFilters(scanInsertedAtValues);
+  const dateFilters = buildFindingScanDateFilters(scanCompletedAtValues);
 
   if (Object.keys(dateFilters).length === 0) {
     return filters;

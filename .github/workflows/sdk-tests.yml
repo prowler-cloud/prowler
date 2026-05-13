@@ -209,11 +209,11 @@ jobs:
           echo "AWS service_paths='${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}'"
 
           if [ "${STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL}" = "true" ]; then
-            poetry run pytest -p no:randomly -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
+            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
           elif [ -z "${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}" ]; then
             echo "No AWS service paths detected; skipping AWS tests."
           else
-            poetry run pytest -p no:randomly -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}
+            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}
           fi
         env:
           STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL: ${{ steps.aws-services.outputs.run_all }}
@@ -323,6 +323,30 @@ jobs:
         with:
           flags: prowler-py${{ matrix.python-version }}-github
           files: ./github_coverage.xml
+
+      # Okta Provider
+      - name: Check if Okta files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-okta
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        with:
+          files: |
+            ./prowler/**/okta/**
+            ./tests/**/okta/**
+            ./poetry.lock
+
+      - name: Run Okta tests
+        if: steps.changed-okta.outputs.any_changed == 'true'
+        run: poetry run pytest -n auto --cov=./prowler/providers/okta --cov-report=xml:okta_coverage.xml tests/providers/okta
+
+      - name: Upload Okta coverage to Codecov
+        if: steps.changed-okta.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-okta
+          files: ./okta_coverage.xml
 
       # NHN Provider
       - name: Check if NHN files changed

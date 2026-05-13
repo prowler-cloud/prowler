@@ -1,7 +1,7 @@
 ---
 name: prowler-ui
 description: >
-  Prowler UI-specific patterns. For generic patterns, see: typescript, react-19, nextjs-15, tailwind-4.
+  Prowler UI-specific patterns. For generic patterns, see: typescript, react-19, nextjs-16, tailwind-4.
   Trigger: When working inside ui/ on Prowler-specific conventions (shadcn vs HeroUI legacy, folder placement, actions/adapters, shared types/hooks/lib).
 license: Apache-2.0
 metadata:
@@ -18,7 +18,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 - `typescript` - Const types, flat interfaces
 - `react-19` - No useMemo/useCallback, compiler
-- `nextjs-15` - App Router, Server Actions
+- `nextjs-16` - App Router, Server Actions
 - `tailwind-4` - cn() utility, styling rules
 - `zod-4` - Schema validation
 - `zustand-5` - State management
@@ -28,7 +28,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ## Tech Stack (Versions)
 
 ```
-Next.js 15.5.9 | React 19.2.2 | Tailwind 4.1.13 | shadcn/ui
+Next.js 16.2.3 | React 19.2.5 | Tailwind 4.1.18 | shadcn/ui
 Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8
 NextAuth 5.0.0-beta.30 | Recharts 2.15.4
 HeroUI 2.8.4 (LEGACY - do not add new components)

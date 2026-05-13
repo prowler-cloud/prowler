@@ -18,6 +18,7 @@ from prowler.providers.common.arguments import (
     init_providers_parser,
     validate_asff_usage,
     validate_provider_arguments,
+    validate_sarif_usage,
 )
 
 
@@ -28,10 +29,10 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel,dashboard,iac,image,llm} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel}
+  {aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,vercel}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -39,15 +40,16 @@ Available Cloud Providers:
     m365                Microsoft 365 Provider
     github              GitHub Provider
     googleworkspace     Google Workspace Provider
+    okta                Okta Provider
     cloudflare          Cloudflare Provider
     oraclecloud         Oracle Cloud Infrastructure Provider
     openstack           OpenStack Provider
     alibabacloud        Alibaba Cloud Provider
-    iac                 IaC Provider (Beta)
+    iac                 IaC Provider
     llm                 LLM Provider (Beta)
     image               Container Image Provider
     nhn                 NHN Provider (Unofficial)
-    mongodbatlas        MongoDB Atlas Provider (Beta)
+    mongodbatlas        MongoDB Atlas Provider
     vercel              Vercel Provider
 
 Available components:
@@ -152,6 +154,12 @@ Detailed documentation at https://docs.prowler.com
         )
         if not asff_is_valid:
             self.parser.error(asff_error)
+
+        sarif_is_valid, sarif_error = validate_sarif_usage(
+            args.provider, getattr(args, "output_formats", None)
+        )
+        if not sarif_is_valid:
+            self.parser.error(sarif_error)
 
         return args
 

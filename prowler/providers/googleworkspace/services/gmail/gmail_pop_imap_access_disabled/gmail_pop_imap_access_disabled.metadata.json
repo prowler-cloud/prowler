@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "gmail_pop_imap_access_disabled",
+  "CheckTitle": "POP and IMAP access is disabled for all users",
+  "CheckType": [],
+  "ServiceName": "gmail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "POP and IMAP allow users to access Gmail through legacy or third-party email clients that may not support modern authentication mechanisms such as multifactor authentication. Disabling these protocols forces users to access email through approved clients only.",
+  "Risk": "With POP and IMAP enabled, users can access email through **legacy clients** that rely on simple password authentication, bypassing **multifactor authentication** and other modern security controls. This significantly increases the risk of **credential-based account compromise**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/105694",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Gmail**\n3. Click **End User Access** > **POP and IMAP Access**\n4. Uncheck **Enable IMAP access for all users**\n5. Uncheck **Enable POP access for all users**\n6. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable both POP and IMAP access to prevent users from using legacy email clients that bypass modern authentication controls.",
+      "Url": "https://hub.prowler.com/check/gmail_pop_imap_access_disabled"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "gmail_auto_forwarding_disabled",
+    "gmail_per_user_outbound_gateway_disabled"
+  ],
+  "Notes": ""
+}

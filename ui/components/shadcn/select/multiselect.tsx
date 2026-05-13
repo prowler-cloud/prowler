@@ -10,6 +10,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type WheelEvent,
 } from "react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
@@ -42,29 +43,46 @@ type MultiSelectContextType = {
   setOpen: (open: boolean) => void;
   selectedValues: Set<string>;
   toggleValue: (value: string) => void;
+  setValues: (values: string[]) => void;
   items: Map<string, ReactNode>;
   onItemAdded: (value: string, label: ReactNode) => void;
   onValuesChange?: (values: string[]) => void;
 };
 const MultiSelectContext = createContext<MultiSelectContextType | null>(null);
 
+const stopWheelPropagation = (event: WheelEvent<HTMLElement>) => {
+  event.stopPropagation();
+};
+
 export function MultiSelect({
   children,
   values,
   defaultValues,
   onValuesChange,
+  open: controlledOpen,
+  onOpenChange,
 }: {
   children: ReactNode;
   values?: string[];
   defaultValues?: string[];
   onValuesChange?: (values: string[]) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [internalValues, setInternalValues] = useState(
     new Set<string>(values ?? defaultValues),
   );
+  const open = controlledOpen ?? internalOpen;
   const selectedValues = values ? new Set(values) : internalValues;
   const [items, setItems] = useState<Map<string, ReactNode>>(new Map());
+
+  function setOpen(nextOpen: boolean) {
+    if (controlledOpen === undefined) {
+      setInternalOpen(nextOpen);
+    }
+    onOpenChange?.(nextOpen);
+  }
 
   function toggleValue(value: string) {
     const getNewSet = (prev: Set<string>) => {
@@ -78,6 +96,12 @@ export function MultiSelect({
     };
     setInternalValues(getNewSet);
     onValuesChange?.(Array.from(getNewSet(selectedValues)));
+  }
+
+  function setValues(nextValues: string[]) {
+    const nextSet = new Set(nextValues);
+    setInternalValues(nextSet);
+    onValuesChange?.(Array.from(nextSet));
   }
 
   const onItemAdded = useCallback((value: string, label: ReactNode) => {
@@ -94,12 +118,13 @@ export function MultiSelect({
         setOpen,
         selectedValues,
         toggleValue,
+        setValues,
         items,
         onItemAdded,
         onValuesChange,
       }}
     >
-      <Popover open={open} onOpenChange={setOpen} modal={true}>
+      <Popover open={open} onOpenChange={setOpen} modal={false}>
         {children}
       </Popover>
     </MultiSelectContext>
@@ -284,11 +309,26 @@ export function MultiSelectContent({
   width?: "default" | "wide";
 } & Omit<ComponentPropsWithoutRef<typeof Command>, "children">) {
   const canSearch = typeof search === "object" ? true : search;
+  const listRef = useRef<HTMLDivElement>(null);
 
   const widthClasses =
     width === "wide"
       ? "w-[min(max(var(--radix-popover-trigger-width),24rem),calc(100vw-2rem))] max-w-[32rem]"
       : "w-[min(var(--radix-popover-trigger-width),calc(100vw-2rem))] max-w-[24rem]";
+
+  function handleSearchValueChange(searchValue: string) {
+    if (!canSearch || !searchValue.trim()) return;
+
+    requestAnimationFrame(() => {
+      const firstVisibleItem = listRef.current?.querySelector<HTMLElement>(
+        '[data-slot="multiselect-item"]:not([hidden])',
+      );
+
+      firstVisibleItem?.scrollIntoView({
+        block: "nearest",
+      });
+    });
+  }
 
   return (
     <>
@@ -300,23 +340,37 @@ export function MultiSelectContent({
       <PopoverContent
         align="start"
         data-slot="multiselect-content"
+        style={{
+          maxHeight:
+            "min(360px, var(--radix-popover-content-available-height, 360px))",
+        }}
         className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-border-input-primary bg-bg-input-primary relative z-50 rounded-lg border p-0",
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-border-input-primary bg-bg-input-primary relative z-50 overflow-hidden rounded-lg border p-0",
           widthClasses,
         )}
       >
-        <Command {...props} className="rounded-lg">
+        <Command {...props} className="max-h-[inherit] rounded-lg">
           {canSearch ? (
             <CommandInput
               placeholder={
                 typeof search === "object" ? search.placeholder : undefined
               }
               className="text-bg-button-secondary placeholder:text-bg-button-secondary"
+              onValueChange={handleSearchValueChange}
             />
           ) : (
             <button className="sr-only" />
           )}
-          <CommandList className="minimal-scrollbar max-h-[300px] overflow-x-hidden overflow-y-auto p-3">
+          <CommandList
+            ref={listRef}
+            onWheelCapture={stopWheelPropagation}
+            style={{
+              maxHeight: canSearch
+                ? "min(300px, calc(var(--radix-popover-content-available-height, 300px) - 37px))"
+                : "min(300px, var(--radix-popover-content-available-height, 300px))",
+            }}
+            className="minimal-scrollbar overflow-x-hidden overflow-y-auto overscroll-contain p-3"
+          >
             {canSearch && (
               <CommandEmpty className="text-bg-button-secondary py-6 text-center text-sm">
                 {typeof search === "object" ? search.emptyMessage : undefined}
@@ -357,7 +411,7 @@ export function MultiSelectItem({
       keywords={keywords}
       data-slot="multiselect-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary my-1 flex w-full cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none first:mt-0 last:mb-0 hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         isSelected && "bg-slate-100 dark:bg-slate-800/50",
         className,
       )}
@@ -407,11 +461,16 @@ export function MultiSelectSeparator({
 export function MultiSelectSelectAll({
   className,
   children = "Select All",
+  mode = "clear",
+  values,
   ...props
 }: Omit<ComponentPropsWithoutRef<"button">, "children"> & {
   children?: ReactNode;
+  mode?: "clear" | "select";
+  values?: string[];
 }) {
-  const { selectedValues, onValuesChange } = useMultiSelectContext();
+  const { items, selectedValues, setValues, onValuesChange } =
+    useMultiSelectContext();
 
   if (!onValuesChange) {
     return null;
@@ -419,12 +478,39 @@ export function MultiSelectSelectAll({
 
   const hasSelections = selectedValues.size > 0;
 
-  if (!hasSelections) {
-    return null;
+  if (mode === "clear") {
+    const handleClearAll = () => {
+      onValuesChange?.([]);
+    };
+    const label = hasSelections ? children : "All selected";
+
+    return (
+      <button
+        type="button"
+        data-slot="multiselect-select-all"
+        className={cn(
+          "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+          hasSelections && "text-destructive hover:text-destructive",
+          !hasSelections && "cursor-not-allowed opacity-50",
+          "font-semibold",
+          className,
+        )}
+        disabled={!hasSelections}
+        onClick={handleClearAll}
+        {...props}
+      >
+        <span className="flex min-w-0 flex-1 items-center gap-2">{label}</span>
+      </button>
+    );
   }
 
-  const handleClearAll = () => {
-    onValuesChange?.([]);
+  const itemValues = values ?? Array.from(items.keys());
+  const hasItems = itemValues.length > 0;
+  const allSelected =
+    hasItems && itemValues.every((value) => selectedValues.has(value));
+
+  const handleSelectAll = () => {
+    setValues(itemValues);
   };
 
   return (
@@ -433,11 +519,12 @@ export function MultiSelectSelectAll({
       data-slot="multiselect-select-all"
       className={cn(
         "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
-        hasSelections && "text-destructive hover:text-destructive",
+        allSelected && "cursor-not-allowed opacity-50",
         "font-semibold",
         className,
       )}
-      onClick={handleClearAll}
+      disabled={!hasItems || allSelected}
+      onClick={handleSelectAll}
       {...props}
     >
       <span className="flex min-w-0 flex-1 items-center gap-2">{children}</span>

@@ -20,6 +20,8 @@ This maintains chronological order: oldest entries at top, newest at bottom.
 ## Entry Patterns
 
 > **Note:** Section headers already provide the verb. Entries describe WHAT, not the action.
+>
+> **Link target rule:** Every entry MUST link to the PR (`https://github.com/prowler-cloud/prowler/pull/N`). Linking to `/issues/N` is FORBIDDEN — even when the PR fixes an issue. The issue↔PR mapping belongs in the PR body (`Fixes #N`), not here.
 
 ### Feature Addition (🚀 Added)
 ```markdown
@@ -39,6 +41,8 @@ This maintains chronological order: oldest entries at top, newest at bottom.
 - OCI update credentials form failing silently due to missing provider UID [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 - {What was broken} in {component} [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 ```
+
+> When a PR fixes a reported issue, the link still goes to the PR (`/pull/N`), never the issue (`/issues/N`). Reference the issue from the PR body with `Fixes #N`.
 
 ### Security Patch (🔐 Security)
 ```markdown

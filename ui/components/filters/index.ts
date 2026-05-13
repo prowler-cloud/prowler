@@ -1,4 +1,5 @@
 export * from "./apply-filters-button";
+export * from "./batch-filters-layout";
 export * from "./clear-filters-button";
 export * from "./custom-checkbox-muted-findings";
 export * from "./custom-date-picker";

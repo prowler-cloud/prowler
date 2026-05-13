@@ -26,6 +26,8 @@ def _build_oss_service(audit_resources=None):
     service.client = client
     service.session = MagicMock()
     service.session.get_credentials.return_value = _DummyCreds()
+    service._bucket_inventory_lock = Lock()
+    service._bucket_inventory_loaded = False
     # Avoid real thread pool in tests
     service.__threading_call__ = lambda call, iterator=None: [
         call(item) for item in ((iterator or service.regional_clients.values()))
@@ -97,3 +99,37 @@ def test_list_buckets_rejects_xxe_payload():
         oss._list_buckets()
 
     assert oss.buckets == {}
+
+
+def test_list_buckets_userdisable_is_not_logged_as_error():
+    oss = _build_oss_service()
+
+    with (
+        patch("requests.get") as get_mock,
+        patch(
+            "prowler.providers.alibabacloud.services.oss.oss_service.logger.error"
+        ) as logger_error,
+    ):
+        get_mock.return_value = MagicMock(
+            status_code=403,
+            text="<Error><Code>UserDisable</Code><Message>UserDisable</Message></Error>",
+        )
+        oss._list_buckets()
+
+    assert oss.buckets == {}
+    logger_error.assert_not_called()
+
+
+def test_list_buckets_inventory_is_loaded_once_across_regions():
+    oss = _build_oss_service()
+    other_client = MagicMock()
+    other_client.region = "us-east-1"
+    oss.regional_clients["us-east-1"] = other_client
+
+    with patch("requests.get") as get_mock:
+        get_mock.return_value = MagicMock(
+            status_code=200, text=_fake_oss_list_response()
+        )
+        oss.__threading_call__(oss._list_buckets)
+
+    assert get_mock.call_count == 1

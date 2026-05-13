@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Check, Minus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRef } from "react";
 
 import {
   RadioGroup,
@@ -28,8 +29,8 @@ interface ScanListTableProps {
   scans: AttackPathScan[];
 }
 
-const DEFAULT_PAGE_SIZE = 5;
-const PAGE_SIZE_OPTIONS = [2, 5, 10, 15];
+const DEFAULT_PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 25];
 const parsePageParam = (value: string | null, fallback: number) => {
   if (!value) return fallback;
 
@@ -150,7 +151,7 @@ const getColumns = ({
   {
     accessorKey: "provider",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Account" />
+      <DataTableColumnHeader column={column} title="Provider" />
     ),
     cell: ({ row }) => (
       <EntityInfo
@@ -243,6 +244,8 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   const endIndex = startIndex + pageSize;
   const paginatedScans = scans.slice(startIndex, endIndex);
 
+  const suppressNextPageResetRef = useRef(false);
+
   const pushWithParams = (nextParams: Record<string, string>) => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -258,10 +261,15 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   };
 
   const handlePageChange = (page: number) => {
+    if (suppressNextPageResetRef.current && page === 1) {
+      suppressNextPageResetRef.current = false;
+      return;
+    }
     pushWithParams({ scanPage: page.toString() });
   };
 
   const handlePageSizeChange = (nextPageSize: number) => {
+    suppressNextPageResetRef.current = true;
     pushWithParams({
       scanPage: "1",
       scanPageSize: nextPageSize.toString(),

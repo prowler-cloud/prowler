@@ -18,11 +18,7 @@ class drive_external_sharing_warn_users(Check):
         if drive_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=drive_client.provider.identity,
-                resource_name=drive_client.provider.identity.domain,
-                resource_id=drive_client.provider.identity.customer_id,
-                customer_id=drive_client.provider.identity.customer_id,
-                location="global",
+                resource=drive_client.provider.domain_resource,
             )
 
             warning_enabled = drive_client.policies.warn_for_external_sharing

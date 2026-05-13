@@ -2,16 +2,129 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.27.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- AWS findings and resource details now expose a "View in AWS Console" link that opens the resource directly in the AWS Console via the universal `/go/view` ARN resolver. The per-provider external link is rendered by a new shared `ExternalResourceLink` component, which also covers the existing IaC repository link [(#9172)](https://github.com/prowler-cloud/prowler/pull/9172)
+
+### 🔄 Changed
+
+- Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
+- Attack Paths graph now uses React Flow with improved layout, interactions, export, minimap, and browser test coverage [(#10686)](https://github.com/prowler-cloud/prowler/pull/10686)
+- SAML ACS URL is only shown if the email domain is configured [(#11144)](https://github.com/prowler-cloud/prowler/pull/11144)
+
+---
+
+## [1.26.2] (Prowler 5.26.2)
+
+### 🐞 Fixed
+
+- Finding drawer no longer renders literal backticks around inline code in Risk, Description and Remediation sections [(#11142)](https://github.com/prowler-cloud/prowler/pull/11142)
+
+---
+
+## [1.26.1] (Prowler 5.26.1)
+
+### 🐞 Fixed
+
+- Role form Cancel buttons now return to Roles [(#11125)](https://github.com/prowler-cloud/prowler/pull/11125)
+- Shared select dropdowns stay constrained and scrollable inside modals [(#11125)](https://github.com/prowler-cloud/prowler/pull/11125)
+
+---
+
+## [1.26.0] (Prowler v5.26.0)
+
+### 🚀 Added
+
+- ASD Essential Eight compliance framework support [(#11071)](https://github.com/prowler-cloud/prowler/pull/11071)
+
+### 🔄 Changed
+
+- Standardized "Providers" wording across UI and documentation, replacing legacy "Cloud Providers" / "Accounts" / "Account Groups" copy [(#10971)](https://github.com/prowler-cloud/prowler/pull/10971)
+- Finding detail drawer now labels remediation actions from finding-level recommendation URLs by destination: "View CVE", "View in Prowler Hub", "View Advisory", or "View Reference", while keeping URL-only remediation cards labeled [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
+- Finding detail drawer reorganized: status-colored banner below the resource info, dedicated Remediation tab, renamed "Findings for this resource" tab, and inline View Resource link next to the resource UID [(#11091)](https://github.com/prowler-cloud/prowler/pull/11091)
+- ThreatScore compliance views: canonical pillar order across all charts and the accordion, clickable pillars on `/compliance` that anchor the detail page, Top Failed Sections always shows the full pillar set, and donut tooltip now triggers on every segment [(#10975)](https://github.com/prowler-cloud/prowler/pull/10975)
+
+---
+
+## [1.25.3] (Prowler v5.25.3)
+
+### 🐞 Fixed
+
+- CLI command in the finding drawer no longer renders the line-number gutter, matching the original styled block while removing the leading `1` [(#11059)](https://github.com/prowler-cloud/prowler/pull/11059)
+
+---
+
+## [1.25.2] (Prowler v5.25.2)
+
+### 🔄 Changed
+
+- Compliance cards: progress bar now spans the full card width, the passing-requirements caption sits beside the framework logo under the title, and the ISO 27001 logo asset is recentered within its tile [(#10939)](https://github.com/prowler-cloud/prowler/pull/10939)
+- Findings expanded resource rows now drop the redundant cube icons, render Service and Region with the same compact label style as Last seen and Failing for, and reorder columns to Status, Resource, Provider, Severity, then field labels [(#10949)](https://github.com/prowler-cloud/prowler/pull/10949)
+
+---
+
+## [1.25.1] (Prowler v5.25.1)
+
+### 🐞 Fixed
+
+- Compliance page export menu now scales on small screens, and frameworks load on first render without requiring a manual scan re-selection [(#10918)](https://github.com/prowler-cloud/prowler/pull/10918)
+
+---
+
+## [1.25.0] (Prowler v5.25.0)
+
+### 🚀 Added
+
+- Download PDF button for CIS Benchmark compliance cards, surfaced only on the latest CIS variant per provider to match the backend's latest-only PDF generation [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
+- `knip` for dead code detection with `lint:knip` and `lint:knip:fix` scripts [(#10654)](https://github.com/prowler-cloud/prowler/pull/10654)
+- Resource button in the findings resource detail drawer to open the related resource page [(#10847)](https://github.com/prowler-cloud/prowler/pull/10847)
+
+### 🔄 Changed
+
+- Redesign compliance page, client-side search for compliance frameworks, compact scan selector trigger, enhanced compliance cards [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
+- Allows tenant owners to expel users from their organizations [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+- Shared filter dropdowns now support local option search and auto-scroll to the first visible match across table and provider filters [(#10859)](https://github.com/prowler-cloud/prowler/pull/10859)
+- Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
+- Mutelist improvements: table now supports name/reason search and visual count badges for finding targets [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)
+- Resources now use batch-applied filters, render metadata JSON with syntax highlighting, and more [(#10861)](https://github.com/prowler-cloud/prowler/pull/10861)
+- Table pagination controls now keep their arrows visible on hover in light theme, and more UI improvements [(#10862)](https://github.com/prowler-cloud/prowler/pull/10862)
+- Fix rows-per-page selector silently ignoring changes in URL-driven tables by unifying `DataTable` pagination into a single `onPaginationChange` callback [(#10863)](https://github.com/prowler-cloud/prowler/pull/10863)
+
+---
+
+## [1.24.4] (Prowler 5.24.4)
+
+### 🐞 Fixed
+
+- Provider wizard no longer advances to the Launch Scan step when rotating credentials [(#10851)](https://github.com/prowler-cloud/prowler/pull/10851)
+- Attack Paths scan selector now lists scans from every provider with working pagination, instead of capping the list at the first ten [(#10864)](https://github.com/prowler-cloud/prowler/pull/10864)
+
+---
+
+## [1.24.2] (Prowler v5.24.2)
+
+### 🐞 Fixed
+
+- Default muted filter now applied consistently on the findings page and the finding-group resource drill-down, keeping muted findings hidden unless the "include muted findings" checkbox is opted in [(#10818)](https://github.com/prowler-cloud/prowler/pull/10818)
+
+---
+
 ## [1.24.1] (Prowler v5.24.1)
-
-### 🔒 Security
-
-- Upgrade React to 19.2.5 and Next.js to 16.2.3 to mitigate CVE-2026-23869 (React2DoS), a high-severity unauthenticated remote DoS vulnerability in the React Flight Protocol's Server Function deserialization [(#10754)](https://github.com/prowler-cloud/prowler/pull/10754)
 
 ### 🐞 Fixed
 
 - Findings and filter UX fixes: exclude muted findings by default in the resource detail drawer and finding group resource views, show category context label (for example `Status: FAIL`) on MultiSelect triggers instead of hiding the placeholder, and add a `wide` width option for filter dropdowns applied to the findings Scan filter to prevent label truncation [(#10734)](https://github.com/prowler-cloud/prowler/pull/10734)
 - Findings grouped view now handles zero-resource IaC counters, refines drawer loading states, and adds provider indicators to finding groups [(#10736)](https://github.com/prowler-cloud/prowler/pull/10736)
+- Other Findings for this resource: ordering by `severity` [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
+- Other Findings for this resource: show `delta` indicator [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
+- Compliance: requirement findings do not show muted findings [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
+- Latest new findings: link to finding groups order by `-severity,-last_seen_at` [(#10778)](https://github.com/prowler-cloud/prowler/pull/10778)
+
+### 🔒 Security
+
+- Upgrade React to 19.2.5 and Next.js to 16.2.3 to mitigate CVE-2026-23869 (React2DoS), a high-severity unauthenticated remote DoS vulnerability in the React Flight Protocol's Server Function deserialization [(#10754)](https://github.com/prowler-cloud/prowler/pull/10754)
 
 ---
 

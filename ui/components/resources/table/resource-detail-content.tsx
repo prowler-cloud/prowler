@@ -1,15 +1,7 @@
 "use client";
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
-import {
-  Check,
-  Container,
-  Copy,
-  CornerDownRight,
-  ExternalLink,
-  Link,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Container, CornerDownRight, Link } from "lucide-react";
 import { useState } from "react";
 
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
@@ -30,12 +22,16 @@ import {
 } from "@/components/shadcn/info-field/info-field";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import { ExternalResourceLink } from "@/components/shared/external-resource-link";
+import {
+  QUERY_EDITOR_LANGUAGE,
+  QueryCodeEditor,
+} from "@/components/shared/query-code-editor";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { DataTable } from "@/components/ui/table";
 import { getGroupLabel } from "@/lib/categories";
-import { buildGitFileUrl } from "@/lib/iac-utils";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
 
@@ -115,11 +111,9 @@ export const ResourceDetailContent = ({
   );
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [activeTab, setActiveTab] = useState("findings");
-  const [metadataCopied, setMetadataCopied] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
-  const router = useRouter();
 
   const resource = resourceDetails;
   const resourceId = resource.id;
@@ -155,12 +149,6 @@ export const ResourceDetailContent = ({
     navigator.clipboard.writeText(url);
   };
 
-  const copyMetadata = async (metadata: Record<string, unknown>) => {
-    await navigator.clipboard.writeText(JSON.stringify(metadata, null, 2));
-    setMetadataCopied(true);
-    setTimeout(() => setMetadataCopied(false), 2000);
-  };
-
   const navigateToFinding = async (findingId: string) => {
     setSelectedFindingId(findingId);
     await loadFindingDetails(findingId);
@@ -177,7 +165,6 @@ export const ResourceDetailContent = ({
 
     setRowSelection({});
     if (ids.length > 0) setFindingsReloadNonce((v) => v + 1);
-    router.refresh();
   };
 
   const failedFindings = findingsData;
@@ -202,16 +189,6 @@ export const ResourceDetailContent = ({
     navigateToFinding,
     handleMuteComplete,
   );
-
-  const gitUrl =
-    providerData.provider === "iac"
-      ? buildGitFileUrl(
-          providerData.uid,
-          attributes.name,
-          "",
-          attributes.region,
-        )
-      : null;
 
   const findingTitle =
     findingDetails?.attributes?.check_metadata?.checktitle || "Finding Detail";
@@ -281,25 +258,13 @@ export const ResourceDetailContent = ({
               </TooltipTrigger>
               <TooltipContent>Copy resource link to clipboard</TooltipContent>
             </Tooltip>
-            {providerData.provider === "iac" && gitUrl && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <a
-                    href={gitUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-bg-data-info inline-flex items-center gap-1 text-sm"
-                    aria-label="Open resource in repository"
-                  >
-                    <ExternalLink size={16} />
-                    View in Repository
-                  </a>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Go to Resource in the Repository
-                </TooltipContent>
-              </Tooltip>
-            )}
+            <ExternalResourceLink
+              providerType={providerData.provider}
+              resourceUid={attributes.uid}
+              providerUid={providerData.uid}
+              resourceName={attributes.name}
+              region={attributes.region}
+            />
           </div>
         </div>
       </div>
@@ -452,30 +417,17 @@ export const ResourceDetailContent = ({
               )}
 
               {hasMetadata && parsedMetadata && (
-                <Card variant="inner">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-sm font-semibold">
-                      Metadata:
-                    </span>
-                    <div className="border-border-neutral-secondary bg-bg-neutral-secondary relative w-full rounded-lg border">
-                      <button
-                        type="button"
-                        onClick={() => copyMetadata(parsedMetadata)}
-                        className="text-text-neutral-secondary hover:text-text-neutral-primary absolute top-2 right-2 z-10 cursor-pointer transition-colors"
-                        aria-label="Copy metadata to clipboard"
-                      >
-                        {metadataCopied ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </button>
-                      <pre className="minimal-scrollbar mr-10 max-h-[200px] overflow-auto p-3 text-xs break-words whitespace-pre-wrap">
-                        {JSON.stringify(parsedMetadata, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                </Card>
+                <QueryCodeEditor
+                  ariaLabel="Resource metadata"
+                  visibleLabel={null}
+                  language={QUERY_EDITOR_LANGUAGE.JSON}
+                  value={JSON.stringify(parsedMetadata, null, 2)}
+                  copyValue={JSON.stringify(parsedMetadata, null, 2)}
+                  editable={false}
+                  minHeight={220}
+                  showCopyButton
+                  onChange={() => {}}
+                />
               )}
 
               {!attributes.details?.trim() && !hasMetadata && (
@@ -487,20 +439,13 @@ export const ResourceDetailContent = ({
 
             <TabsContent value="tags" className="flex flex-col gap-4">
               {hasTags ? (
-                <Card variant="inner">
-                  <div className="flex flex-col gap-3">
-                    <span className="text-text-neutral-secondary text-sm font-semibold">
-                      Tags:
-                    </span>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      {tagEntries.map(([key, value]) => (
-                        <InfoField key={key} label={key} variant="compact">
-                          {renderValue(value)}
-                        </InfoField>
-                      ))}
-                    </div>
-                  </div>
-                </Card>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {tagEntries.map(([key, value]) => (
+                    <InfoField key={key} label={key} variant="compact">
+                      {renderValue(value)}
+                    </InfoField>
+                  ))}
+                </div>
               ) : (
                 <p className="text-text-neutral-tertiary py-8 text-center text-sm">
                   No tags available for this resource.

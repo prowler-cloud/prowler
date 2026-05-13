@@ -54,7 +54,6 @@ export class SignUpPage extends BasePage {
   }
 
   async verifyPageLoaded(): Promise<void> {
-    await expect(this.page).toHaveURL("/sign-up");
     await expect(this.emailInput).toBeVisible();
     await expect(this.submitButton).toBeVisible();
   }

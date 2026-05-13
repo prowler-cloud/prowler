@@ -8,7 +8,9 @@ from prowler.providers.azure.services.sqlserver.sqlserver_service import (
     Server,
 )
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -16,6 +18,9 @@ from tests.providers.azure.azure_fixtures import (
 class Test_sqlserver_tde_encrypted_with_cmk:
     def test_no_sql_servers(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sqlserver_client.sql_servers = {}
 
         with (
@@ -38,6 +43,9 @@ class Test_sqlserver_tde_encrypted_with_cmk:
 
     def test_no_sql_servers_databases(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         sqlserver_client.sql_servers = {
@@ -76,6 +84,9 @@ class Test_sqlserver_tde_encrypted_with_cmk:
 
     def test_sql_servers_encryption_protector_service_managed(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         database = Database(
@@ -125,7 +136,7 @@ class Test_sqlserver_tde_encrypted_with_cmk:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has TDE disabled without CMK."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has TDE disabled without CMK."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
@@ -134,6 +145,9 @@ class Test_sqlserver_tde_encrypted_with_cmk:
 
     def test_sql_servers_database_encryption_disabled(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         database = Database(
@@ -183,7 +197,7 @@ class Test_sqlserver_tde_encrypted_with_cmk:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has TDE disabled with CMK."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has TDE disabled with CMK."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name
@@ -192,6 +206,9 @@ class Test_sqlserver_tde_encrypted_with_cmk:
 
     def test_sql_servers_database_encryption_enabled(self):
         sqlserver_client = mock.MagicMock
+        sqlserver_client.subscriptions = {
+            AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME
+        }
         sql_server_name = "SQL Server Name"
         sql_server_id = str(uuid4())
         database = Database(
@@ -241,7 +258,7 @@ class Test_sqlserver_tde_encrypted_with_cmk:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_ID} has TDE enabled with CMK."
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} has TDE enabled with CMK."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == sql_server_name

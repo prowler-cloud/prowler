@@ -6,12 +6,10 @@ import { handleApiResponse } from "@/lib/server-actions-helper";
 export const getCompliancesOverview = async ({
   scanId,
   region,
-  query,
   filters = {},
 }: {
   scanId?: string;
   region?: string | string[];
-  query?: string;
   filters?: Record<string, string | string[] | undefined>;
 } = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -31,8 +29,6 @@ export const getCompliancesOverview = async ({
 
   setParam("filter[scan_id]", scanId);
   setParam("filter[region__in]", region);
-  if (query) url.searchParams.set("filter[search]", query);
-
   try {
     const response = await fetch(url.toString(), {
       headers,
@@ -46,15 +42,16 @@ export const getCompliancesOverview = async ({
 };
 
 export const getComplianceOverviewMetadataInfo = async ({
-  query = "",
   sort = "",
   filters = {},
-}) => {
+}: {
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
+} = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/compliance-overviews/metadata`);
 
-  if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {
