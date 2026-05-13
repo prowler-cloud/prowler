@@ -12,6 +12,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
 
+---
+
+## [1.27.2] (Prowler UNRELEASED)
+
 ### 🐞 Fixed
 
 - Attack Paths: BEDROCK-001 and BEDROCK-002 now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
