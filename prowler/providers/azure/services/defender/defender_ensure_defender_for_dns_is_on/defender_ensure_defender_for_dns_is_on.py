@@ -6,6 +6,9 @@ class defender_ensure_defender_for_dns_is_on(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, pricings in defender_client.pricings.items():
+            subscription_name = defender_client.subscriptions.get(
+                subscription, subscription
+            )
             if "Dns" in pricings:
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=pricings["Dns"]
@@ -13,10 +16,10 @@ class defender_ensure_defender_for_dns_is_on(Check):
                 report.subscription = subscription
                 report.resource_name = "Defender plan DNS"
                 report.status = "PASS"
-                report.status_extended = f"Defender plan Defender for DNS from subscription {subscription} is set to ON (pricing tier standard)."
+                report.status_extended = f"Defender plan Defender for DNS from subscription {subscription_name} ({subscription}) is set to ON (pricing tier standard)."
                 if pricings["Dns"].pricing_tier != "Standard":
                     report.status = "FAIL"
-                    report.status_extended = f"Defender plan Defender for DNS from subscription {subscription} is set to OFF (pricing tier not standard)."
+                    report.status_extended = f"Defender plan Defender for DNS from subscription {subscription_name} ({subscription}) is set to OFF (pricing tier not standard)."
 
                 findings.append(report)
         return findings

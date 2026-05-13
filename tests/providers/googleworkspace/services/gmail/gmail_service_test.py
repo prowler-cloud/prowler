@@ -34,8 +34,11 @@ class TestGmailService:
                     "setting": {
                         "type": "settings/gmail.email_attachment_safety",
                         "value": {
+                            "enableEncryptedAttachmentProtection": True,
                             "encryptedAttachmentProtectionConsequence": "SPAM_FOLDER",
+                            "enableAttachmentWithScriptsProtection": True,
                             "scriptAttachmentProtectionConsequence": "QUARANTINE",
+                            "enableAnomalousAttachmentProtection": True,
                             "anomalousAttachmentProtectionConsequence": "WARNING",
                         },
                     }
@@ -54,10 +57,15 @@ class TestGmailService:
                     "setting": {
                         "type": "settings/gmail.spoofing_and_authentication",
                         "value": {
+                            "detectDomainNameSpoofing": True,
                             "domainSpoofingConsequence": "SPAM_FOLDER",
+                            "detectEmployeeNameSpoofing": True,
                             "employeeNameSpoofingConsequence": "SPAM_FOLDER",
+                            "detectDomainSpoofingFromUnauthenticatedSenders": True,
                             "inboundDomainSpoofingConsequence": "QUARANTINE",
+                            "detectUnauthenticatedEmails": True,
                             "unauthenticatedEmailConsequence": "WARNING",
+                            "detectGroupsSpoofing": True,
                             "groupsSpoofingConsequence": "SPAM_FOLDER",
                         },
                     }
@@ -121,23 +129,31 @@ class TestGmailService:
 
             assert gmail.policies_fetched is True
             assert gmail.policies.enable_mail_delegation is False
+            assert gmail.policies.enable_encrypted_attachment_protection is True
             assert (
                 gmail.policies.encrypted_attachment_protection_consequence
                 == "SPAM_FOLDER"
             )
+            assert gmail.policies.enable_script_attachment_protection is True
             assert (
                 gmail.policies.script_attachment_protection_consequence == "QUARANTINE"
             )
+            assert gmail.policies.enable_anomalous_attachment_protection is True
             assert (
                 gmail.policies.anomalous_attachment_protection_consequence == "WARNING"
             )
             assert gmail.policies.enable_shortener_scanning is True
             assert gmail.policies.enable_external_image_scanning is True
             assert gmail.policies.enable_aggressive_warnings_on_untrusted_links is True
+            assert gmail.policies.detect_domain_name_spoofing is True
             assert gmail.policies.domain_spoofing_consequence == "SPAM_FOLDER"
+            assert gmail.policies.detect_employee_name_spoofing is True
             assert gmail.policies.employee_name_spoofing_consequence == "SPAM_FOLDER"
+            assert gmail.policies.detect_inbound_domain_spoofing is True
             assert gmail.policies.inbound_domain_spoofing_consequence == "QUARANTINE"
+            assert gmail.policies.detect_unauthenticated_emails is True
             assert gmail.policies.unauthenticated_email_consequence == "WARNING"
+            assert gmail.policies.detect_groups_spoofing is True
             assert gmail.policies.groups_spoofing_consequence == "SPAM_FOLDER"
             assert gmail.policies.enable_pop_access is False
             assert gmail.policies.enable_imap_access is False
@@ -464,16 +480,24 @@ class TestGmailService:
 
         policies = GmailPolicies(
             enable_mail_delegation=False,
+            enable_encrypted_attachment_protection=True,
             encrypted_attachment_protection_consequence="SPAM_FOLDER",
+            enable_script_attachment_protection=True,
             script_attachment_protection_consequence="QUARANTINE",
+            enable_anomalous_attachment_protection=True,
             anomalous_attachment_protection_consequence="WARNING",
             enable_shortener_scanning=True,
             enable_external_image_scanning=True,
             enable_aggressive_warnings_on_untrusted_links=True,
+            detect_domain_name_spoofing=True,
             domain_spoofing_consequence="SPAM_FOLDER",
+            detect_employee_name_spoofing=True,
             employee_name_spoofing_consequence="SPAM_FOLDER",
+            detect_inbound_domain_spoofing=True,
             inbound_domain_spoofing_consequence="QUARANTINE",
+            detect_unauthenticated_emails=True,
             unauthenticated_email_consequence="WARNING",
+            detect_groups_spoofing=True,
             groups_spoofing_consequence="SPAM_FOLDER",
             enable_pop_access=False,
             enable_imap_access=False,
@@ -484,8 +508,10 @@ class TestGmailService:
         )
 
         assert policies.enable_mail_delegation is False
+        assert policies.enable_encrypted_attachment_protection is True
         assert policies.encrypted_attachment_protection_consequence == "SPAM_FOLDER"
         assert policies.enable_shortener_scanning is True
+        assert policies.detect_domain_name_spoofing is True
         assert policies.domain_spoofing_consequence == "SPAM_FOLDER"
         assert policies.enable_pop_access is False
         assert policies.enable_auto_forwarding is False

@@ -135,4 +135,13 @@ describe("ProviderTypeSelector", () => {
       expect.stringContaining("Amazon Web Services"),
     );
   });
+
+  it("disables select all when every provider is already shown", () => {
+    render(<ProviderTypeSelector providers={providers} />);
+
+    expect(
+      screen.getByRole("option", { name: /select all providers/i }),
+    ).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByText("All selected")).toBeInTheDocument();
+  });
 });

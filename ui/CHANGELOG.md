@@ -2,15 +2,46 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.26.0] (Prowler UNRELEASED)
+## [1.27.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- AWS findings and resource details now expose a "View in AWS Console" link that opens the resource directly in the AWS Console via the universal `/go/view` ARN resolver. The per-provider external link is rendered by a new shared `ExternalResourceLink` component, which also covers the existing IaC repository link [(#9172)](https://github.com/prowler-cloud/prowler/pull/9172)
+
+### 🔄 Changed
+
+- Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
+- Attack Paths graph now uses React Flow with improved layout, interactions, export, minimap, and browser test coverage [(#10686)](https://github.com/prowler-cloud/prowler/pull/10686)
+- SAML ACS URL is only shown if the email domain is configured [(#11144)](https://github.com/prowler-cloud/prowler/pull/11144)
+
+---
+
+## [1.26.1] (Prowler 5.26.1)
+
+### 🐞 Fixed
+
+- Role form Cancel buttons now return to Roles [(#11125)](https://github.com/prowler-cloud/prowler/pull/11125)
+- Shared select dropdowns stay constrained and scrollable inside modals [(#11125)](https://github.com/prowler-cloud/prowler/pull/11125)
+
+
+---
+
+## [1.26.0] (Prowler v5.26.0)
+
+### 🚀 Added
+
+- ASD Essential Eight compliance framework support [(#11071)](https://github.com/prowler-cloud/prowler/pull/11071)
 
 ### 🔄 Changed
 
 - Standardized "Providers" wording across UI and documentation, replacing legacy "Cloud Providers" / "Accounts" / "Account Groups" copy [(#10971)](https://github.com/prowler-cloud/prowler/pull/10971)
+- Finding detail drawer now labels remediation actions from finding-level recommendation URLs by destination: "View CVE", "View in Prowler Hub", "View Advisory", or "View Reference", while keeping URL-only remediation cards labeled [(#10853)](https://github.com/prowler-cloud/prowler/pull/10853)
+- Finding detail drawer reorganized: status-colored banner below the resource info, dedicated Remediation tab, renamed "Findings for this resource" tab, and inline View Resource link next to the resource UID [(#11091)](https://github.com/prowler-cloud/prowler/pull/11091)
+- ThreatScore compliance views: canonical pillar order across all charts and the accordion, clickable pillars on `/compliance` that anchor the detail page, Top Failed Sections always shows the full pillar set, and donut tooltip now triggers on every segment [(#10975)](https://github.com/prowler-cloud/prowler/pull/10975)
 
 ---
 
-## [1.25.3] (Prowler UNRELEASED)
+## [1.25.3] (Prowler v5.25.3)
 
 ### 🐞 Fixed
 
@@ -46,7 +77,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Redesign compliance page, client-side search for compliance frameworks, compact scan selector trigger, enhanced compliance cards [(#10767)](https://github.com/prowler-cloud/prowler/pull/10767)
-- Allows tenant owners to expel users from their organizations  [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+- Allows tenant owners to expel users from their organizations [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
 - Shared filter dropdowns now support local option search and auto-scroll to the first visible match across table and provider filters [(#10859)](https://github.com/prowler-cloud/prowler/pull/10859)
 - Backward-compatibility middleware redirect from `/sign-up?invitation_token=…` to `/invitation/accept?invitation_token=…`; new invitation emails use `/invitation/accept` directly [(#10797)](https://github.com/prowler-cloud/prowler/pull/10797)
 - Mutelist improvements: table now supports name/reason search and visual count badges for finding targets [(#10846)](https://github.com/prowler-cloud/prowler/pull/10846)

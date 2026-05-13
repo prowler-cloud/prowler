@@ -13,6 +13,7 @@ export const addRoleFormSchema = z.object({
   manage_providers: z.boolean().default(false),
   manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
+  manage_alerts: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });
@@ -25,6 +26,7 @@ export const editRoleFormSchema = z.object({
   manage_providers: z.boolean().default(false),
   manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
+  manage_alerts: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });

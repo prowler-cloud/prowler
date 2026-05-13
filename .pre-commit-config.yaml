@@ -6,7 +6,7 @@
 #   P40 — security scanners
 #   P50 — dependency validation
 
-default_install_hook_types: [pre-commit, pre-push]
+default_install_hook_types: [pre-commit]
 
 repos:
   ## GENERAL (prek built-in — no external repo needed)
@@ -44,7 +44,9 @@ repos:
     rev: v1.24.1
     hooks:
       - id: zizmor
-        files: ^\.github/
+        # zizmor only audits workflows, composite actions and dependabot
+        # config; broader paths trip exit 3 ("no audit was performed").
+        files: ^\.github/(workflows|actions)/.+\.ya?ml$|^\.github/dependabot\.ya?ml$
         priority: 30
 
   ## BASH
@@ -62,12 +64,7 @@ repos:
       - id: autoflake
         name: "SDK - autoflake"
         files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
-        args:
-          [
-            "--in-place",
-            "--remove-all-unused-imports",
-            "--remove-unused-variable",
-          ]
+        args: ["--in-place", "--remove-all-unused-imports", "--remove-unused-variable"]
         priority: 20
 
   - repo: https://github.com/pycqa/isort
@@ -179,8 +176,7 @@ repos:
         language: system
         types: [python]
         files: '.*\.py'
-        exclude:
-          { glob: ["{contrib,skills}/**", "**/.venv/**", "**/*_test.py"] }
+        exclude: { glob: ["{contrib,skills}/**", "**/.venv/**", "**/*_test.py"] }
         priority: 40
 
       - id: safety
@@ -190,16 +186,7 @@ repos:
         entry: safety check --policy-file .safety-policy.yml
         language: system
         pass_filenames: false
-        files:
-          {
-            glob:
-              [
-                "**/pyproject.toml",
-                "**/poetry.lock",
-                "**/requirements*.txt",
-                ".safety-policy.yml",
-              ],
-          }
+        files: { glob: ["**/pyproject.toml", "**/poetry.lock", "**/requirements*.txt", ".safety-policy.yml"] }
         priority: 40
 
       - id: vulture

@@ -17,7 +17,7 @@ MOCK_OLD_PROWLER_VERSION = "0.0.0"
 MOCK_PROWLER_MASTER_VERSION = "3.4.0"
 
 
-def mock_prowler_get_latest_release(_, **kwargs):
+def mock_prowler_get_latest_release(_, **_kwargs):
     """Mock requests.get() to get the Prowler latest release"""
     response = Response()
     response._content = b'[{"name":"3.3.0"}]'
@@ -75,6 +75,7 @@ config_aws = {
     "mute_non_default_regions": False,
     "max_unused_access_keys_days": 45,
     "max_console_access_days": 45,
+    "max_unused_sagemaker_access_days": 90,
     "shodan_api_key": None,
     "max_security_group_rules": 50,
     "max_ec2_instance_age_in_days": 180,
