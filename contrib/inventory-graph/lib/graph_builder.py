@@ -78,9 +78,12 @@ def build_graph() -> ConnectivityGraph:
         if extractor_module is None:
             try:
                 import importlib
+
                 extractor_module = importlib.import_module(extractor_module_key)
             except ImportError as e:
-                logger.debug(f"inventory graph_builder: cannot import extractor {extractor_module_key}: {e}")
+                logger.debug(
+                    f"inventory graph_builder: cannot import extractor {extractor_module_key}: {e}"
+                )
                 continue
 
         try:

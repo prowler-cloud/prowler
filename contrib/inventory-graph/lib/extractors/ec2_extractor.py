@@ -66,7 +66,9 @@ def extract(client) -> Tuple[List[ResourceNode], List[ResourceEdge]]:
 
     # Security Groups
     for sg in client.security_groups.values():
-        name = sg.name if hasattr(sg, "name") else sg.id if hasattr(sg, "id") else sg.arn
+        name = (
+            sg.name if hasattr(sg, "name") else sg.id if hasattr(sg, "id") else sg.arn
+        )
         nodes.append(
             ResourceNode(
                 id=sg.arn,

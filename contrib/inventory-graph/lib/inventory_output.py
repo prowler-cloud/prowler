@@ -21,6 +21,7 @@ from lib.models import ConnectivityGraph
 # JSON output
 # ---------------------------------------------------------------------------
 
+
 def write_json(graph: ConnectivityGraph, file_path: str) -> None:
     """Serialise the graph to a JSON file."""
     try:
@@ -406,13 +407,13 @@ def _build_legend_html(colours: dict, shape: str) -> str:
             rows.append(
                 f'<div class="legend-row">'
                 f'<div class="legend-dot" style="background:{colour}"></div>'
-                f'<span>{key}</span></div>'
+                f"<span>{key}</span></div>"
             )
         else:
             rows.append(
                 f'<div class="legend-row">'
                 f'<div class="legend-line" style="background:{colour}"></div>'
-                f'<span>{key}</span></div>'
+                f"<span>{key}</span></div>"
             )
     return "\n".join(rows)
 
@@ -475,6 +476,7 @@ def write_html(graph: ConnectivityGraph, file_path: str) -> None:
 # ---------------------------------------------------------------------------
 # Convenience entry-point called from __main__.py
 # ---------------------------------------------------------------------------
+
 
 def generate_inventory_outputs(output_path: str) -> None:
     """
