@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.27.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- AWS findings and resource details now expose a "View in AWS Console" link that opens the resource directly in the AWS Console via the universal `/go/view` ARN resolver. The per-provider external link is rendered by a new shared `ExternalResourceLink` component, which also covers the existing IaC repository link [(#9172)](https://github.com/prowler-cloud/prowler/pull/9172)
+
 ### 🔄 Changed
 
 - Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
