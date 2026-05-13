@@ -117,9 +117,9 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | MongoDB Atlas | 10 | 3 | 0 | 8 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | Image | N/A | N/A | N/A | N/A | Official | CLI, API |
-| Google Workspace | 25 | 4 | 2 | 4 | Official | CLI |
+| Google Workspace | 25 | 4 | 2 | 4 | Official | UI, API, CLI |
 | OpenStack | 34 | 5 | 0 | 9 | Official | UI, API, CLI |
-| Vercel | 26 | 6 | 0 | 5 | Official | CLI |
+| Vercel | 26 | 6 | 0 | 5 | Official | UI, API, CLI |
 | Okta | 1 | 1 | 0 | 1 | Official | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
