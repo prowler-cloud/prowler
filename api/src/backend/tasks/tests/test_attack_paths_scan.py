@@ -49,7 +49,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
@@ -195,7 +195,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
@@ -294,7 +294,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
@@ -397,7 +397,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.internet.analysis")
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
         "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
@@ -506,7 +506,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
@@ -619,7 +619,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
@@ -735,7 +735,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
@@ -856,7 +856,7 @@ class TestAttackPathsRun:
     @patch("tasks.jobs.attack_paths.scan.indexes.create_findings_indexes")
     @patch("tasks.jobs.attack_paths.scan.cartography_ontology.run")
     @patch("tasks.jobs.attack_paths.scan.cartography_analysis.run")
-    @patch("tasks.jobs.attack_paths.scan.cartography_create_indexes.run")
+    @patch("tasks.jobs.attack_paths.indexes.cartography_create_indexes.run")
     @patch("tasks.jobs.attack_paths.scan.graph_database.clear_cache")
     @patch("tasks.jobs.attack_paths.scan.graph_database.create_database")
     @patch(
@@ -2879,3 +2879,57 @@ class TestCleanupStaleAttackPathsScans:
         ap_scan.refresh_from_db()
         assert ap_scan.state == StateChoices.SCHEDULED
         mock_revoke.assert_not_called()
+
+
+class TestNormalizeSinkProperties:
+    """Coerce Cartography-emitted property values into sink-portable primitives.
+
+    Lists become comma-strings, dicts become JSON strings, temporals become
+    ISO strings, spatials become their stringified form. The same coercion
+    runs regardless of the active sink so queries are portable.
+    """
+
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            (
+                {"a": "x", "b": 1, "c": 1.5, "d": True, "e": None},
+                {"a": "x", "b": 1, "c": 1.5, "d": True, "e": None},
+            ),
+            (
+                {"actions": ["s3:GetObject", "s3:PutObject"], "tags": []},
+                {"actions": "s3:GetObject,s3:PutObject", "tags": ""},
+            ),
+            (
+                {"condition": {"StringEquals": {"aws:SourceAccount": "123456789012"}}},
+                {
+                    "condition": '{"StringEquals": {"aws:SourceAccount": "123456789012"}}'
+                },
+            ),
+        ],
+    )
+    def test_primitive_list_and_dict_branches(self, raw, expected):
+        sync_module._normalize_sink_properties(raw)
+        assert raw == expected
+
+    def test_temporal_and_spatial_become_strings(self):
+        class FakeDateTime:
+            def iso_format(self) -> str:
+                return "2026-05-13T10:00:00+00:00"
+
+        class FakeSpatialPoint:
+            def __str__(self) -> str:
+                return "POINT(1.0 2.0)"
+
+        # The spatial branch is detected by module prefix, not by base class.
+        FakeSpatialPoint.__module__ = "neo4j.spatial.fake"
+
+        props = {
+            "created_at": FakeDateTime(),
+            "location": FakeSpatialPoint(),
+        }
+        sync_module._normalize_sink_properties(props)
+        assert props == {
+            "created_at": "2026-05-13T10:00:00+00:00",
+            "location": "POINT(1.0 2.0)",
+        }

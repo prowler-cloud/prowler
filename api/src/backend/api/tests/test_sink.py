@@ -325,3 +325,144 @@ class TestNeptuneSinkDropSubgraph:
         assert "DETACH DELETE" not in first_query
         third_query = session.run.call_args_list[2].args[0]
         assert "DELETE n" in third_query
+
+
+class TestNeo4jSinkDropSubgraph:
+    """Neo4j drop runs a single-phase ``DETACH DELETE`` loop, bounded by batch size."""
+
+    def test_drop_subgraph_batches_until_empty_and_returns_total(self):
+        from api.attack_paths.sink.neo4j import Neo4jSink
+
+        sink = Neo4jSink()
+        session = MagicMock()
+
+        first_record = MagicMock()
+        first_record.get = lambda key, default=0: 10
+        drain_record = MagicMock()
+        drain_record.get = lambda key, default=0: 0
+        session.run.side_effect = [
+            MagicMock(single=MagicMock(return_value=first_record)),
+            MagicMock(single=MagicMock(return_value=drain_record)),
+        ]
+
+        provider_id = "00000000-0000-0000-0000-000000000abc"
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            deleted = sink.drop_subgraph("db-tenant-x", provider_id)
+
+        assert deleted == 10
+        first_query = session.run.call_args_list[0].args[0]
+        assert "DETACH DELETE n" in first_query
+        assert ":`_Provider_00000000000000000000000000000abc`" in first_query
+        assert session.run.call_count == 2
+
+    def test_drop_subgraph_returns_zero_when_database_does_not_exist(self):
+        from api.attack_paths.database import GraphDatabaseQueryException
+        from api.attack_paths.sink.neo4j import DATABASE_NOT_FOUND_CODE, Neo4jSink
+
+        sink = Neo4jSink()
+        session = MagicMock()
+        session.run.side_effect = GraphDatabaseQueryException(
+            message="db missing", code=DATABASE_NOT_FOUND_CODE
+        )
+
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            deleted = sink.drop_subgraph("db-tenant-missing", "provider-1")
+
+        assert deleted == 0
+
+
+class TestSinkHasProviderData:
+    """``has_provider_data`` is the read-path probe used by API views."""
+
+    def test_neo4j_returns_true_when_provider_node_exists(self):
+        from api.attack_paths.sink.neo4j import Neo4jSink
+
+        sink = Neo4jSink()
+        session = MagicMock()
+        session.run.return_value.single.return_value = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            present = sink.has_provider_data(
+                "db-tenant-x", "00000000-0000-0000-0000-000000000abc"
+            )
+
+        assert present is True
+        query = session.run.call_args.args[0]
+        assert ":`_Provider_00000000000000000000000000000abc`" in query
+
+    def test_neo4j_returns_false_when_database_does_not_exist(self):
+        from api.attack_paths.database import GraphDatabaseQueryException
+        from api.attack_paths.sink.neo4j import DATABASE_NOT_FOUND_CODE, Neo4jSink
+
+        sink = Neo4jSink()
+        session = MagicMock()
+        session.run.side_effect = GraphDatabaseQueryException(
+            message="db missing", code=DATABASE_NOT_FOUND_CODE
+        )
+
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            present = sink.has_provider_data("db-tenant-missing", "provider-1")
+
+        assert present is False
+
+    def test_neptune_returns_true_when_provider_node_exists(self):
+        from api.attack_paths.sink.neptune import NeptuneSink
+
+        sink = NeptuneSink()
+        session = MagicMock()
+        session.run.return_value.single.return_value = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            present = sink.has_provider_data("ignored", "provider-1")
+
+        assert present is True
+
+
+class TestGetBackendForScanCutover:
+    """``get_backend_for_scan`` routes by the row's recorded sink, not the live setting.
+
+    During the Neptune cutover, scans written under one backend stay queryable
+    even when the process is later reconfigured. The active backend serves
+    matching scans; a cached secondary serves the rest.
+    """
+
+    def test_neptune_scan_on_neo4j_process_uses_neptune_secondary(self, settings):
+        from api.attack_paths.sink import factory
+
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+        active_neo4j = MagicMock(name="neo4j-active")
+        factory._backend = active_neo4j
+
+        secondary_neptune = MagicMock(name="neptune-secondary")
+        with patch.object(factory, "_build_backend", return_value=secondary_neptune):
+            scan = MagicMock(is_neptune=True)
+            backend = factory.get_backend_for_scan(scan)
+
+        assert backend is secondary_neptune
+        assert backend is not active_neo4j
+
+    def test_neo4j_scan_on_neptune_process_uses_neo4j_secondary(self, settings):
+        from api.attack_paths.sink import factory
+
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+        active_neptune = MagicMock(name="neptune-active")
+        factory._backend = active_neptune
+
+        secondary_neo4j = MagicMock(name="neo4j-secondary")
+        with patch.object(factory, "_build_backend", return_value=secondary_neo4j):
+            scan = MagicMock(is_neptune=False)
+            backend = factory.get_backend_for_scan(scan)
+
+        assert backend is secondary_neo4j
+        assert backend is not active_neptune
+
+
+class TestNeptuneAdminNoOps:
+    """Neptune is single-database; admin DDL has no work to do."""
+
+    @pytest.mark.parametrize("method", ["create_database", "drop_database"])
+    def test_admin_ops_return_none_without_touching_a_session(self, method):
+        from api.attack_paths.sink.neptune import NeptuneSink
+
+        sink = NeptuneSink()
+        with patch.object(sink, "get_session") as get_session:
+            assert getattr(sink, method)("ignored") is None
+            get_session.assert_not_called()
