@@ -127,19 +127,19 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
         // Find principals with {permission}
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
         WHERE stmt.effect = 'Allow'
-            AND any(action IN stmt.action WHERE
+            AND size([action IN split(stmt.action, ',') WHERE
                 toLower(action) = '{permission_lowercase}'
                 OR toLower(action) = '{service}:*'
                 OR action = '*'
-            )
+            ]) > 0
 
         // Find target resources attached to the same principal
         MATCH path_target = (aws)--(target_policy:AWSPolicy)--(principal)
         WHERE target_policy.arn CONTAINS $provider_uid
-            AND any(resource IN stmt.resource WHERE
+            AND size([resource IN split(stmt.resource, ',') WHERE
                 resource = '*'
                 OR target_policy.arn CONTAINS resource
-            )
+            ]) > 0
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -162,15 +162,15 @@ The other 3 sub-patterns share the same `path_principal`, deduplication tail, an
 ```cypher
 // Lateral to user (e.g., IAM-002) - targets other IAM users
 MATCH path_target = (aws)--(target_user:AWSUser)
-WHERE any(resource IN stmt.resource WHERE resource = '*' OR target_user.arn CONTAINS resource OR resource CONTAINS target_user.name)
+WHERE size([resource IN split(stmt.resource, ',') WHERE resource = '*' OR target_user.arn CONTAINS resource OR resource CONTAINS target_user.name]) > 0
 
 // Assume-role lateral (e.g., IAM-014) - targets roles the principal can assume
 MATCH path_target = (aws)--(target_role:AWSRole)<-[:STS_ASSUMEROLE_ALLOW]-(principal)
-WHERE any(resource IN stmt.resource WHERE resource = '*' OR target_role.arn CONTAINS resource OR resource CONTAINS target_role.name)
+WHERE size([resource IN split(stmt.resource, ',') WHERE resource = '*' OR target_role.arn CONTAINS resource OR resource CONTAINS target_role.name]) > 0
 
 // PassRole + service (e.g., EC2-001) - targets roles trusting a service
 MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {arn: '{service}.amazonaws.com'})
-WHERE any(resource IN stmt.resource WHERE resource = '*' OR target_role.arn CONTAINS resource OR resource CONTAINS target_role.name)
+WHERE size([resource IN split(stmt.resource, ',') WHERE resource = '*' OR target_role.arn CONTAINS resource OR resource CONTAINS target_role.name]) > 0
 ```
 
 **Multi-permission**: PassRole queries require a second permission. Add `MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)` with its own WHERE before `path_target`, then check BOTH `stmt.resource` AND `stmt2.resource` against the target. See IAM-015 or EC2-001 in `aws.py` for examples.
@@ -260,7 +260,7 @@ https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/0.126.0
 
 Read the schema to discover available node labels, properties, and relationships for the target resources. Internal labels (`_ProviderResource`, `_AWSResource`, `_Tenant_*`, `_Provider_*`) exist for isolation but should never appear in queries.
 
-### 4. Create query definition
+### 3. Create query definition
 
 Use the appropriate pattern (privilege escalation or network exposure) with:
 
@@ -273,7 +273,7 @@ Use the appropriate pattern (privilege escalation or network exposure) with:
 - **parameters**: Optional list of user-provided parameters (`parameters=[]` if none)
 - **attribution**: Optional `AttackPathsQueryAttribution(text, link)` for sourced queries. The `text` includes source, reference ID, and permissions. The `link` uses a lowercase ID. Omit for non-sourced queries.
 
-### 5. Add query to provider list
+### 4. Add query to provider list
 
 Add the constant to the `{PROVIDER}_QUERIES` list.
 
@@ -281,32 +281,8 @@ Add the constant to the `{PROVIDER}_QUERIES` list.
 
 ## Query naming conventions
 
-### Query ID
-
-```
-{provider}-{category}-{description}
-```
-
-Examples: `aws-ec2-privesc-passrole-iam`, `aws-ec2-instances-internet-exposed`
-
-### Query constant name
-
-```
-{PROVIDER}_{CATEGORY}_{DESCRIPTION}
-```
-
-Examples: `AWS_EC2_PRIVESC_PASSROLE_IAM`, `AWS_EC2_INSTANCES_INTERNET_EXPOSED`
-
----
-
-## Query categories
-
-| Category             | Description                    | Example                   |
-| -------------------- | ------------------------------ | ------------------------- |
-| Basic Resource       | List resources with properties | RDS instances, S3 buckets |
-| Network Exposure     | Internet-exposed resources     | EC2 with public IPs       |
-| Privilege Escalation | IAM privilege escalation paths | PassRole + RunInstances   |
-| Data Access          | Access to sensitive data       | EC2 with S3 access        |
+- **ID**: kebab-case `{provider}-{category}-{description}`, e.g. `aws-ec2-privesc-passrole-iam`.
+- **Constant**: SHOUTING_SNAKE_CASE `{PROVIDER}_{CATEGORY}_{DESCRIPTION}`, e.g. `AWS_EC2_PRIVESC_PASSROLE_IAM`.
 
 ---
 
@@ -322,11 +298,11 @@ MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrinc
 
 ```cypher
 WHERE stmt.effect = 'Allow'
-    AND any(action IN stmt.action WHERE
+    AND size([action IN split(stmt.action, ',') WHERE
         toLower(action) = 'iam:passrole'
         OR toLower(action) = 'iam:*'
         OR action = '*'
-    )
+    ]) > 0
 ```
 
 ### Find roles trusting a service
@@ -346,12 +322,25 @@ MATCH path_target = (aws)--(target_role:AWSRole)<-[:STS_ASSUMEROLE_ALLOW]-(princ
 ### Check resource scope
 
 ```cypher
-WHERE any(resource IN stmt.resource WHERE
+WHERE size([resource IN split(stmt.resource, ',') WHERE
     resource = '*'
     OR target_role.arn CONTAINS resource
     OR resource CONTAINS target_role.name
-)
+]) > 0
 ```
+
+### List-typed properties
+
+`AWSPolicyStatement.action`, `resource`, `notaction`, `notresource` are comma-delimited strings, not arrays. Read them with `split(prop, ',')`.
+
+| Intent | Pattern |
+|---|---|
+| Membership | `'iam:DeletePolicy' IN split(stmt.action, ',')` |
+| At least one matches | `size([x IN split(stmt.action, ',') WHERE pred]) > 0` |
+| None match | `size([x IN split(stmt.action, ',') WHERE pred]) = 0` |
+| All match | `WITH stmt, split(stmt.action, ',') AS xs WHERE size([x IN xs WHERE pred]) = size(xs)` |
+
+The `ALL` form repeats `split(...)` twice when inlined; hoist with `WITH` when it gets noisy.
 
 ### Internet node via path connectivity
 
@@ -406,7 +395,7 @@ RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
 
 ## Prowler-specific labels and relationships
 
-These are added by the sync task, not part of the Cartography schema. For all other node labels, properties, and relationships, **always consult the Cartography schema** (see step 2 below).
+These are added by the sync task, not part of the Cartography schema. For all other node labels, properties, and relationships, **always consult the Cartography schema** (see step 2 above).
 
 | Label/Relationship     | Description                                        |
 | ---------------------- | -------------------------------------------------- |
@@ -458,7 +447,7 @@ parameters=[
 
 4. **Never use internal labels in queries**: `_ProviderResource`, `_AWSResource`, `_Tenant_*`, `_Provider_*` are for system isolation. They should never appear in predefined or custom query text.
 
-6. **Internet node uses path connectivity**: Reach it via `OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(resource)` where `resource` is already scoped by the account anchor. No standalone lookup.
+5. **Internet node uses path connectivity**: Reach it via `OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(resource)` where `resource` is already scoped by the account anchor. No standalone lookup.
 
 ---
 
@@ -476,6 +465,9 @@ Queries must be written in **openCypher Version 9** for compatibility with both 
 | `FOREACH` clause           | `WITH` + `UNWIND` + `SET`                              |
 | Regex operator (`=~`)      | `toLower()` + exact match, or `CONTAINS`/`STARTS WITH`. One legacy query uses `=~` - do not add new usages |
 | `CALL () { UNION }`        | Multi-label OR in WHERE (see patterns section)         |
+| `any(x IN list ...)`       | `size([x IN list WHERE pred]) > 0`                     |
+| `all(x IN list ...)`       | `size([x IN list WHERE pred]) = size(list)`            |
+| `none(x IN list ...)`      | `size([x IN list WHERE pred]) = 0`                     |
 
 ---
 
