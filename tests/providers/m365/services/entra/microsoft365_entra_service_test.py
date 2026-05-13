@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -664,10 +665,11 @@ class Test_Entra_Service:
             )
         )
 
-        registration_details = asyncio.run(
+        registration_details, error_message = asyncio.run(
             entra_service._get_user_registration_details()
         )
 
+        assert error_message is None
         assert registration_details == {
             "user-1": {
                 "is_mfa_capable": True,
@@ -684,3 +686,190 @@ class Test_Entra_Service:
         registration_builder.get.assert_awaited()
         registration_builder.with_url.assert_called_once_with("next-link")
         registration_builder_next.get.assert_awaited()
+
+    def test__get_user_registration_details_returns_error_on_permission_denied(self):
+        """Test that 403 Authorization_RequestDenied returns an empty dict and
+        a descriptive error message naming the missing AuditLog.Read.All permission.
+        """
+        from msgraph.generated.models.o_data_errors.main_error import MainError
+        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+
+        odata_error = ODataError()
+        odata_error.error = MainError()
+        odata_error.error.code = "Authorization_RequestDenied"
+
+        registration_builder = SimpleNamespace(get=AsyncMock(side_effect=odata_error))
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            reports=SimpleNamespace(
+                authentication_methods=SimpleNamespace(
+                    user_registration_details=registration_builder
+                )
+            )
+        )
+
+        registration_details, error_message = asyncio.run(
+            entra_service._get_user_registration_details()
+        )
+
+        assert registration_details == {}
+        assert error_message is not None
+        assert "AuditLog.Read.All" in error_message
+        assert "user registration details" in error_message
+
+    def test__get_service_principals_filters_third_party_owners(self):
+        """Service principals owned by another tenant must not be returned."""
+        # Mixed-case input to verify the service normalizes both sides before
+        # comparison, so a Graph response that returns the owner id in upper
+        # case still matches the lower-case identity in the provider.
+        tenant_id_in = "AAAAAAAA-1111-1111-1111-111111111111"
+        tenant_id_lower = tenant_id_in.lower()
+        microsoft_tenant_id = "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+
+        owned_sp = SimpleNamespace(
+            id="sp-owned",
+            display_name="Customer App",
+            app_id="app-owned",
+            app_owner_organization_id=tenant_id_in,
+            password_credentials=[
+                SimpleNamespace(
+                    key_id="cred-1",
+                    display_name="secret",
+                    end_date_time=None,
+                )
+            ],
+            key_credentials=[],
+        )
+        first_party_sp = SimpleNamespace(
+            id="sp-first-party",
+            display_name="Microsoft Graph",
+            app_id="app-graph",
+            app_owner_organization_id=microsoft_tenant_id,
+            password_credentials=[
+                SimpleNamespace(
+                    key_id="cred-2",
+                    display_name="secret",
+                    end_date_time=None,
+                )
+            ],
+            key_credentials=[],
+        )
+        third_party_sp = SimpleNamespace(
+            id="sp-third-party",
+            display_name="Some Vendor App",
+            app_id="app-vendor",
+            app_owner_organization_id="22222222-2222-2222-2222-222222222222",
+            password_credentials=[],
+            key_credentials=[],
+        )
+
+        sp_response = SimpleNamespace(
+            value=[owned_sp, first_party_sp, third_party_sp],
+            odata_next_link=None,
+        )
+
+        empty_assignments_response = SimpleNamespace(value=[], odata_next_link=None)
+
+        role_assignments_builder = SimpleNamespace(
+            get=AsyncMock(return_value=empty_assignments_response)
+        )
+        role_management_builder = SimpleNamespace(
+            directory=SimpleNamespace(
+                role_assignments=role_assignments_builder,
+            )
+        )
+
+        service_principals_builder = SimpleNamespace(
+            get=AsyncMock(return_value=sp_response),
+            with_url=MagicMock(),
+        )
+
+        # The /applications endpoint returns no entries for this case, so the
+        # service-level test just exercises the customer-owned filter, not the
+        # secret join.
+        applications_response = SimpleNamespace(value=[], odata_next_link=None)
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=applications_response),
+            with_url=MagicMock(),
+        )
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.tenant_id = tenant_id_lower
+        entra_service.client = SimpleNamespace(
+            service_principals=service_principals_builder,
+            role_management=role_management_builder,
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service._get_service_principals())
+
+        assert set(result.keys()) == {"sp-owned"}
+        assert result["sp-owned"].app_owner_organization_id == tenant_id_lower
+
+    def test__get_service_principals_merges_application_credentials(self):
+        """Secrets registered on the parent Application must be attributed to the SP."""
+        tenant_id = "11111111-1111-1111-1111-111111111111"
+
+        # SP returned by Graph with NO password_credentials of its own (the
+        # common case in production when the secret was added through "App
+        # registrations > Certificates & secrets").
+        sp_without_sp_level_secret = SimpleNamespace(
+            id="sp-owned",
+            display_name="m365-dev",
+            app_id="app-owned",
+            app_owner_organization_id=tenant_id,
+            password_credentials=[],
+            key_credentials=[],
+        )
+        sp_response = SimpleNamespace(
+            value=[sp_without_sp_level_secret], odata_next_link=None
+        )
+
+        # The corresponding Application carries the actual secret.
+        future = datetime(2099, 1, 1, tzinfo=timezone.utc)
+        application = SimpleNamespace(
+            id="app-object",
+            app_id="app-owned",
+            password_credentials=[
+                SimpleNamespace(
+                    key_id="cred-app",
+                    display_name="app-level-secret",
+                    end_date_time=future,
+                ),
+            ],
+            key_credentials=[],
+        )
+        applications_response = SimpleNamespace(
+            value=[application], odata_next_link=None
+        )
+
+        empty_assignments_response = SimpleNamespace(value=[], odata_next_link=None)
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.tenant_id = tenant_id
+        entra_service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(
+                get=AsyncMock(return_value=sp_response),
+                with_url=MagicMock(),
+            ),
+            applications=SimpleNamespace(
+                get=AsyncMock(return_value=applications_response),
+                with_url=MagicMock(),
+            ),
+            role_management=SimpleNamespace(
+                directory=SimpleNamespace(
+                    role_assignments=SimpleNamespace(
+                        get=AsyncMock(return_value=empty_assignments_response),
+                    ),
+                )
+            ),
+        )
+
+        result = asyncio.run(entra_service._get_service_principals())
+
+        merged = result["sp-owned"]
+        assert len(merged.password_credentials) == 1
+        assert merged.password_credentials[0].key_id == "cred-app"
+        assert merged.password_credentials[0].display_name == "app-level-secret"
+        assert merged.password_credentials[0].is_active()
