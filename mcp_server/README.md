@@ -10,6 +10,7 @@
 
 Full access to Prowler Cloud platform and self-managed Prowler App for:
 - **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments
+- **Finding Groups Analysis**: Triage findings grouped by check ID and drill down into affected resources
 - **Provider Management**: Create, configure, and manage your configured Prowler providers (AWS, Azure, GCP, etc.)
 - **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments
 - **Resource Inventory**: Search and view detailed information about your audited resources
