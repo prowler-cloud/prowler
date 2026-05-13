@@ -70,3 +70,9 @@ package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
 version = "1.28.0"
+
+[tool.uv]
+# prowler SDK pins okta==3.4.2 (new Okta provider, PR #11079); cartography==0.135.0 still
+# declares okta<1.0.0 for its own (unused-by-prowler) intel.okta integration. Force okta to
+# the version prowler needs; cartography's okta module is not imported by prowler/api.
+override-dependencies = ["okta==3.4.2"]
