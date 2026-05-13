@@ -1,6 +1,6 @@
 <p align="center">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-black.png#gh-light-mode-only" width="50%" height="50%">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
+  <img align="center" alt="Prowler logo" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-black.png#gh-light-mode-only" width="50%" height="50%">
+  <img align="center" alt="Prowler logo" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
   <b><i>Prowler</b> is the Open Cloud Security Platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
@@ -22,8 +22,8 @@
   <a href="https://pypistats.org/packages/prowler"><img alt="PyPI Downloads" src="https://img.shields.io/pypi/dw/prowler.svg?label=downloads"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://gallery.ecr.aws/prowler-cloud/prowler"><img width="120" height=19" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
-  <a href="https://codecov.io/gh/prowler-cloud/prowler"><img src="https://codecov.io/gh/prowler-cloud/prowler/graph/badge.svg?token=OflBGsdpDl"/></a>
-  <a href="https://insights.linuxfoundation.org/project/prowler-cloud-prowler"><img src="https://insights.linuxfoundation.org/api/badge/health-score?project=prowler-cloud-prowler"/></a>
+  <a href="https://codecov.io/gh/prowler-cloud/prowler"><img alt="Codecov coverage" src="https://codecov.io/gh/prowler-cloud/prowler/graph/badge.svg?token=OflBGsdpDl"/></a>
+  <a href="https://insights.linuxfoundation.org/project/prowler-cloud-prowler"><img alt="Linux Foundation insights health score" src="https://insights.linuxfoundation.org/api/badge/health-score?project=prowler-cloud-prowler"/></a>
 </p>
 <p align="center">
     <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler"></a>
@@ -36,7 +36,7 @@
 </p>
 <hr>
 <p align="center">
-  <img align="center" src="/docs/img/prowler-cloud.gif" width="100%" height="100%">
+  <img align="center" alt="Prowler Cloud demo" src="/docs/img/prowler-cloud.gif" width="100%" height="100%">
 </p>
 
 # Description
@@ -145,11 +145,11 @@ Prowler App offers flexible installation methods tailored to various environment
 
 ### Docker Compose
 
-**Requirements**
+#### Requirements
 
-* `Docker Compose` installed: https://docs.docker.com/compose/install/.
+- `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
-**Commands**
+#### Commands
 
 ``` console
 VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
@@ -174,14 +174,14 @@ You can find more information in the [Troubleshooting](./docs/troubleshooting.md
 
 ### From GitHub
 
-**Requirements**
+#### Requirements
 
-* `git` installed.
-* `uv` installed: [uv installation](https://docs.astral.sh/uv/getting-started/installation/).
-* `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
-* `Docker Compose` installed: https://docs.docker.com/compose/install/.
+- `git` installed.
+- `uv` installed: [uv installation](https://docs.astral.sh/uv/getting-started/installation/).
+- `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
+- `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
-**Commands to run the API**
+#### Commands to run the API
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
@@ -198,7 +198,7 @@ gunicorn -c config/guniconf.py config.wsgi:application
 
 > After completing the setup, access the API documentation at http://localhost:8080/api/v1/docs.
 
-**Commands to run the API Worker**
+#### Commands to run the API Worker
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
@@ -211,7 +211,7 @@ cd src/backend
 python -m celery -A config.celery worker -l info -E
 ```
 
-**Commands to run the API Scheduler**
+#### Commands to run the API Scheduler
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
@@ -224,7 +224,7 @@ cd src/backend
 python -m celery -A config.celery beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 
-**Commands to run the UI**
+#### Commands to run the UI
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
@@ -236,7 +236,7 @@ pnpm start
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
-**Pre-commit Hooks Setup**
+#### Pre-commit Hooks Setup
 
 Some pre-commit hooks require tools installed on your system:
 
@@ -256,14 +256,14 @@ prowler -v
 
 ### Containers
 
-**Available Versions of Prowler CLI**
+#### Available Versions of Prowler CLI
 
 The following versions of Prowler CLI are available, depending on your requirements:
 
 - `latest`: Synchronizes with the `master` branch. Note that this version is not stable.
 - `v4-latest`: Synchronizes with the `v4` branch. Note that this version is not stable.
 - `v3-latest`: Synchronizes with the `v3` branch. Note that this version is not stable.
-- `<x.y.z>` (release): Stable releases corresponding to specific versions. You can find the complete list of releases [here](https://github.com/prowler-cloud/prowler/releases).
+- `<x.y.z>` (release): Stable releases corresponding to specific versions. See the [complete list of Prowler releases](https://github.com/prowler-cloud/prowler/releases).
 - `stable`: Always points to the latest release.
 - `v4-stable`: Always points to the latest release for v4.
 - `v3-stable`: Always points to the latest release for v3.
@@ -337,7 +337,7 @@ Full configuration, per-provider authentication, and SARIF examples: [Prowler Gi
 
 ## Prowler CLI
 
-**Running Prowler**
+### Running Prowler
 
 Prowler can be executed across various environments, offering flexibility to meet your needs. It can be run from:
 

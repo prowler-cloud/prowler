@@ -1,0 +1,77 @@
+name: 'Docs: Markdown Lint'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  markdown-lint:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            registry.npmjs.org:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Check for Markdown changes
+        id: check-changes
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        with:
+          files: |
+            **/*.md
+            .markdownlint.json
+            .markdownlintignore
+          files_ignore: |
+            **/CHANGELOG.md
+            contrib/**
+            **/node_modules/**
+
+      - name: Setup Node.js
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '20'
+
+      - name: Install markdownlint-cli
+        if: steps.check-changes.outputs.any_changed == 'true'
+        # Pin to the same version used in .pre-commit-config.yaml so prek and CI behave identically.
+        run: npm install --global markdownlint-cli@0.45.0
+
+      - name: Run markdownlint on changed files
+        if: steps.check-changes.outputs.any_changed == 'true'
+        env:
+          CHANGED_FILES: ${{ steps.check-changes.outputs.all_changed_files }}
+        run: |
+          # Drop config/ignore files from the list — markdownlint only lints .md.
+          mapfile -t files < <(printf '%s\n' $CHANGED_FILES | grep -E '\.md$' || true)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No .md files changed."
+            exit 0
+          fi
+          markdownlint "${files[@]}"
