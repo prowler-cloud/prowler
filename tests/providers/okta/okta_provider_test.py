@@ -106,13 +106,20 @@ class Test_OktaProvider_setup_session:
                 private_key_file=str(key_file),
             )
 
-    def test_accepts_oktapreview_emea_gov_tlds(self, _clear_okta_env, tmp_path):
+    def test_accepts_all_okta_managed_tlds(self, _clear_okta_env, tmp_path):
+        # Mirrors the domain whitelist used by the Okta SDK
+        # (okta.config.config_validator) so that gov/mil tenants — exactly the
+        # audience most likely to care about the DISA STIG check — are not
+        # turned away at provider init.
         key_file = tmp_path / "key.pem"
         key_file.write_text(OKTA_PRIVATE_KEY)
         for domain in (
             "acme.oktapreview.com",
             "acme.okta-emea.com",
             "acme.okta-gov.com",
+            "acme.okta.mil",
+            "acme.okta-miltest.com",
+            "acme.trex-govcloud.com",
         ):
             session = OktaProvider.setup_session(
                 org_domain=domain,

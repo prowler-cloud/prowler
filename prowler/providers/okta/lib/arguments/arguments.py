@@ -17,7 +17,8 @@ def init_parser(self):
         help=(
             "Okta organization domain (e.g. acme.okta.com). Must be an "
             "Okta-managed domain (.okta.com / .oktapreview.com / "
-            ".okta-emea.com / .okta-gov.com), without scheme or path."
+            ".okta-emea.com / .okta-gov.com / .okta.mil / "
+            ".okta-miltest.com / .trex-govcloud.com), without scheme or path."
         ),
         default=None,
         metavar="OKTA_ORG_DOMAIN",
