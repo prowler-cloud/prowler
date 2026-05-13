@@ -13,7 +13,7 @@
   "Risk": "Without a 15-minute idle timeout, an unattended workstation leaves an authenticated Okta session open indefinitely, allowing an attacker physical or remote access to take over the user's identity and pivot into every downstream application that trusts Okta SSO.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-global-session-policies.htm",
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm",
     "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/"
   ],
   "Remediation": {
