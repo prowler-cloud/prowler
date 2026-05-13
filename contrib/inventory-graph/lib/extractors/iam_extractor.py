@@ -77,6 +77,8 @@ def extract(client) -> Tuple[List[ResourceNode], List[ResourceEdge]]:
                         )
                     )
         except Exception as e:
-            logger.debug(f"inventory iam_extractor: could not parse trust policy for {role.arn}: {e}")
+            logger.debug(
+                f"inventory iam_extractor: could not parse trust policy for {role.arn}: {e}"
+            )
 
     return nodes, edges

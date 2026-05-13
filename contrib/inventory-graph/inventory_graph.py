@@ -113,7 +113,9 @@ def main():
         print("  1. Run a Prowler scan first: prowler aws --output-formats csv")
         print("  2. Then run this script in the same session")
         print()
-        print("Alternatively, integrate this tool directly into Prowler's output pipeline.")
+        print(
+            "Alternatively, integrate this tool directly into Prowler's output pipeline."
+        )
         sys.exit(1)
 
     print(f"✓ Discovered {len(graph.nodes)} nodes and {len(graph.edges)} edges")
