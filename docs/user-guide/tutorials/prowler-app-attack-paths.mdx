@@ -147,7 +147,7 @@ LIMIT 25
 ```cypher
 MATCH (principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
 WHERE stmt.effect = 'Allow'
-  AND ANY(action IN stmt.action WHERE action = '*')
+  AND size([action IN split(stmt.action, ',') WHERE action = '*']) > 0
 RETURN principal.arn AS principal, policy.arn AS policy,
        stmt.action AS actions, stmt.resource AS resources
 LIMIT 25
@@ -173,6 +173,48 @@ RETURN r.name AS role_name, r.arn AS role_arn, p.arn AS trusted_service
 LIMIT 25
 ```
 
+### Working with List-Typed Properties
+
+Some Cartography properties represent lists of values, such as `action`, `resource`, `notaction`, and `notresource` on `AWSPolicyStatement` nodes. In the Attack Paths graph, list-typed properties are stored as comma-delimited strings to keep the schema portable across graph backends. Read them back with `split(prop, ',')`.
+
+**Membership** uses the standard `IN` operator on the split result:
+
+```cypher
+MATCH (stmt:AWSPolicyStatement)
+WHERE 'iam:DeletePolicy' IN split(stmt.action, ',')
+RETURN stmt
+LIMIT 25
+```
+
+**Predicate filters** (asking whether any, all, or none of the elements satisfy a condition) are expressed with a list comprehension wrapped in `size(...)`:
+
+| Intent | Pattern |
+|---|---|
+| At least one element matches | `size([x IN list WHERE pred]) > 0` |
+| No element matches | `size([x IN list WHERE pred]) = 0` |
+| Every element matches | `size([x IN list WHERE pred]) = size(list)` |
+
+Example, finding statements that grant any S3 action:
+
+```cypher
+MATCH (stmt:AWSPolicyStatement)
+WHERE size([action IN split(stmt.action, ',') WHERE action STARTS WITH 's3:']) > 0
+RETURN stmt
+LIMIT 25
+```
+
+The "every element matches" form repeats the `split(...)` call on both sides of the comparison. When that becomes noisy, hoist the split into a `WITH` clause first:
+
+```cypher
+MATCH (stmt:AWSPolicyStatement)
+WITH stmt, split(stmt.action, ',') AS actions
+WHERE size([action IN actions WHERE action STARTS WITH 's3:']) = size(actions)
+RETURN stmt
+LIMIT 25
+```
+
+Returning the raw value (`RETURN stmt.action`) is also valid when the comma-delimited form is acceptable in the output.
+
 ### Tips for Writing Queries
 
 - Start small with `LIMIT` to inspect the shape of the data before broadening the pattern.
@@ -192,6 +234,7 @@ In addition to the upstream schema, Prowler enriches the graph with:
 
 - **`ProwlerFinding`** nodes representing Prowler check results, linked to affected resources via `HAS_FINDING` relationships.
 - **`Internet`** nodes used to model exposure paths from the public internet to internal resources.
+- **List-typed properties** such as `action` or `resource` on `AWSPolicyStatement` are stored as comma-delimited strings. See [Working with List-Typed Properties](#working-with-list-typed-properties) for the read pattern.
 
 <Note>
   AI assistants connected through Prowler MCP Server can fetch the exact
