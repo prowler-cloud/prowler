@@ -23,6 +23,7 @@ Please add a detailed description of how to review this PR.
 
 </details>
 
+
 - [ ] Review if the code is being covered by tests.
 - [ ] Review if code is being documented following this specification https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
 - [ ] Review if backport is needed.
@@ -30,12 +31,10 @@ Please add a detailed description of how to review this PR.
 - [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/prowler/CHANGELOG.md), if applicable.
 
 #### SDK/CLI
-
 - Are there new checks included in this PR? Yes / No
-  - If so, do we need to update permissions for the provider? Please review this carefully.
+    - If so, do we need to update permissions for the provider? Please review this carefully.
 
 #### UI
-
 - [ ] All issue/task requirements work as expected on the UI
 - [ ] If this PR adds or updates npm dependencies, include package-health evidence (maintenance, popularity, known vulnerabilities, license, release age) and explain why existing/native alternatives are insufficient.
 - [ ] Screenshots/Video of the functionality flow (if applicable) - Mobile (X < 640px)
@@ -44,7 +43,6 @@ Please add a detailed description of how to review this PR.
 - [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/ui/CHANGELOG.md), if applicable.
 
 #### API
-
 - [ ] All issue/task requirements work as expected on the API
 - [ ] Endpoint response output (if applicable)
 - [ ] EXPLAIN ANALYZE output for new/modified queries or indexes (if applicable)
