@@ -14,6 +14,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+## [5.26.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- AWS IAM customer-managed policy content checks (`iam_policy_allows_privilege_escalation`, `iam_policy_no_full_access_to_cloudtrail`, `iam_policy_no_full_access_to_kms`, `iam_policy_no_wildcard_marketplace_subscribe`, `iam_no_custom_policy_permissive_role_assumption`) no longer emit `FAIL` on unattached policies unless `--scan-unused-services` is enabled, aligning with the proactive-by-default scan mode used by the rest of AWS checks
+
+---
+
 ## [5.26.0] (Prowler v5.26.0)
 
 ### 🚀 Added
