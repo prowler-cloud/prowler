@@ -226,5 +226,6 @@ pnpm run test:e2e:ui
 - [ ] Relevant E2E tests pass
 - [ ] All UI states handled (loading, error, empty)
 - [ ] No secrets in code (use `.env.local`)
+- [ ] New npm dependencies include package-health evidence (maintenance, popularity, known vulnerabilities, license, release age) and a rationale for not using existing/native alternatives.
 - [ ] Error messages sanitized
 - [ ] Server-side validation present
