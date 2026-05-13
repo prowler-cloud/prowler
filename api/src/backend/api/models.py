@@ -296,6 +296,7 @@ class Provider(RowLevelSecurityProtectedModel):
         IMAGE = "image", _("Image")
         GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
         VERCEL = "vercel", _("Vercel")
+        OKTA = "okta", _("Okta")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -351,6 +352,18 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Google Workspace Customer ID must start with 'C' followed by one or more alphanumeric characters (e.g., C01234abc, C12345678).",
                 code="googleworkspace-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_okta_uid(value):
+        if not re.match(
+            r"^[a-z0-9][a-z0-9-]*\.(okta\.com|oktapreview\.com|okta-emea\.com|okta-gov\.com)$",
+            value,
+        ):
+            raise ModelValidationError(
+                detail="Okta provider ID must be a valid Okta-managed org domain (e.g., acme.okta.com), without scheme or path.",
+                code="okta-uid",
                 pointer="/data/attributes/uid",
             )
 

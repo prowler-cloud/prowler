@@ -1,4 +1,6 @@
+import sys
 from datetime import datetime, timedelta, timezone
+from types import ModuleType
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -138,6 +140,28 @@ class TestReturnProwlerProvider:
         prowler_provider = return_prowler_provider(provider)
         assert prowler_provider == expected_provider
 
+    def test_return_prowler_provider_okta(self):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.OKTA.value
+
+        fake_okta_package = ModuleType("prowler.providers.okta")
+        fake_okta_package.__path__ = []
+        fake_okta_module = ModuleType("prowler.providers.okta.okta_provider")
+
+        class FakeOktaProvider:
+            pass
+
+        fake_okta_module.OktaProvider = FakeOktaProvider
+
+        with patch.dict(
+            sys.modules,
+            {
+                "prowler.providers.okta": fake_okta_package,
+                "prowler.providers.okta.okta_provider": fake_okta_module,
+            },
+        ):
+            assert return_prowler_provider(provider) is FakeOktaProvider
+
     def test_return_prowler_provider_unsupported_provider(self):
         provider = MagicMock()
         provider.provider = "UNSUPPORTED_PROVIDER"
@@ -239,6 +263,31 @@ class TestProwlerProviderConnectionTest:
         )
 
     @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_okta_provider(
+        self, mock_return_prowler_provider
+    ):
+        """Test connection test for Okta provider passes org domain and provider_id."""
+        provider = MagicMock()
+        provider.uid = "acme.okta.com"
+        provider.provider = Provider.ProviderChoices.OKTA.value
+        provider.secret.secret = {
+            "okta_client_id": "0oa123456789abcdef",
+            "okta_private_key": "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+            "okta_scopes": ["okta.policies.read"],
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            okta_client_id="0oa123456789abcdef",
+            okta_private_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+            okta_scopes=["okta.policies.read"],
+            okta_org_domain="acme.okta.com",
+            provider_id="acme.okta.com",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_image_provider_no_creds(
         self, mock_return_prowler_provider
     ):
@@ -307,6 +356,10 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.VERCEL.value,
                 {"team_id": "provider_uid"},
+            ),
+            (
+                Provider.ProviderChoices.OKTA.value,
+                {"okta_org_domain": "provider_uid"},
             ),
         ],
     )

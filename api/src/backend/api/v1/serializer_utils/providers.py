@@ -406,6 +406,33 @@ from rest_framework_json_api import serializers
             },
             {
                 "type": "object",
+                "title": "Okta OAuth Credentials",
+                "properties": {
+                    "okta_client_id": {
+                        "type": "string",
+                        "description": "Okta OAuth 2.0 service app client ID.",
+                    },
+                    "okta_private_key": {
+                        "type": "string",
+                        "description": "Raw PEM private key content for the Okta service app.",
+                    },
+                    "okta_private_key_file": {
+                        "type": "string",
+                        "description": "Path to a PEM private key file readable by the API worker.",
+                    },
+                    "okta_scopes": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional OAuth scopes. Defaults to ['okta.policies.read'] when omitted or empty.",
+                    },
+                },
+                "anyOf": [
+                    {"required": ["okta_client_id", "okta_private_key"]},
+                    {"required": ["okta_client_id", "okta_private_key_file"]},
+                ],
+            },
+            {
+                "type": "object",
                 "title": "Vercel API Token",
                 "properties": {
                     "api_token": {

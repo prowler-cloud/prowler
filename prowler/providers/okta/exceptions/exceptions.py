@@ -34,6 +34,10 @@ class OktaBaseException(ProwlerException):
             "message": "Okta service app is missing required scopes",
             "remediation": "Have a Super Admin grant the required *.read scopes to the service app and assign the Read-Only Administrator role.",
         },
+        (14007, "OktaInvalidProviderIdError"): {
+            "message": "The provided provider_id does not match the credentials org domain",
+            "remediation": "Check the provider_id (Okta org domain) and ensure it matches the org the service app credentials were issued for.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -103,4 +107,11 @@ class OktaInsufficientPermissionsError(OktaCredentialsError):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             14006, file=file, original_exception=original_exception, message=message
+        )
+
+
+class OktaInvalidProviderIdError(OktaCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            14007, file=file, original_exception=original_exception, message=message
         )

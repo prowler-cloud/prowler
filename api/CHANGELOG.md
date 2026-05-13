@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+- `okta` provider support [(#11079)](https://github.com/prowler-cloud/prowler/pull/11079)
 
 ### 🔄 Changed
 
