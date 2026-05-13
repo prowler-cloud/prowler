@@ -7,6 +7,7 @@ Backend-specific Cypher (MERGE shape, ID strategy, indexes) lives in each
 sink; this module owns the source read loop and per-batch grouping only.
 """
 
+import json
 import time
 
 from collections import defaultdict
@@ -179,7 +180,7 @@ def _node_to_sync_dict(
     """Transform a source node record into a (grouping_key, sync_dict) pair."""
     props = dict(record["props"] or {})
     _strip_internal_properties(props)
-    _coerce_neptune_compatible(props)
+    _normalize_sink_properties(props)
     labels = tuple(sorted(set(record["labels"] or [])))
     return labels, {
         "provider_element_id": f"{provider_id}:{record['element_id']}",
@@ -193,7 +194,7 @@ def _rel_to_sync_dict(
     """Transform a source relationship record into a (grouping_key, sync_dict) pair."""
     props = dict(record["props"] or {})
     _strip_internal_properties(props)
-    _coerce_neptune_compatible(props)
+    _normalize_sink_properties(props)
     rel_type = record["rel_type"]
     return rel_type, {
         "start_element_id": f"{provider_id}:{record['start_element_id']}",
@@ -209,27 +210,42 @@ def _strip_internal_properties(props: dict[str, Any]) -> None:
         props.pop(key, None)
 
 
-def _coerce_neptune_compatible(props: dict[str, Any]) -> None:
-    """Convert neo4j temporal/spatial types to ISO-8601 / WKT strings.
+def _normalize_sink_properties(props: dict[str, Any]) -> None:
+    """Normalize property values to primitive Cypher literals for either sink.
 
-    Neptune's Bolt write path rejects neo4j.time.{DateTime,Date,Time,Duration}
-    and neo4j.spatial.Point PackStream markers with "Unsupported data type
-    in the query". Stringifying these in-place preserves the value while
-    keeping the batch compatible with Neptune.
+    Attack-paths node and relationship properties are written as primitive
+    scalars regardless of the active sink (Neo4j or Neptune). The convention
+    is driven by Neptune's openCypher type restrictions, which reject list,
+    map, temporal and spatial property values, but it is applied uniformly
+    so that custom and predefined queries are portable across sinks without
+    runtime rewriting.
+
+    Concretely:
+      - Temporal values (neo4j.time.{DateTime,Date,Time,Duration}) become
+        their ISO-8601 string representation.
+      - Spatial values (neo4j.spatial.Point and subclasses) become their
+        WKT-style string representation.
+      - Lists become a comma-delimited string, read back with `split(prop, ',')`
+        inside queries.
+      - Maps / dicts become a JSON-encoded string, read back with `CONTAINS`
+        substring checks inside queries.
     """
     for key, value in list(props.items()):
-        props[key] = _to_neptune_compatible_value(value)
+        props[key] = _to_sink_property_value(value)
 
 
-def _to_neptune_compatible_value(value: Any) -> Any:
+def _to_sink_property_value(value: Any) -> Any:
     if hasattr(value, "iso_format") and callable(value.iso_format):
         return value.iso_format()
     if type(value).__module__.startswith("neo4j.spatial"):
         return str(value)
+    if isinstance(value, dict):
+        # openCypher SET rejects map property values; encode as JSON so the
+        # structured payload survives the round-trip and is queryable with
+        # CONTAINS substring checks.
+        return json.dumps(value, sort_keys=True, default=str)
     if isinstance(value, list):
-        # Neptune openCypher SET rejects list/array property values
-        # ("Property value must be a simple literal."). Per Neptune docs, the
-        # accepted shape is a delimited string read back with split() inside
-        # queries.
-        return ",".join(str(_to_neptune_compatible_value(v)) for v in value)
+        # openCypher SET rejects list/array property values; encode as a
+        # delimited string read back with split() inside queries.
+        return ",".join(str(_to_sink_property_value(v)) for v in value)
     return value

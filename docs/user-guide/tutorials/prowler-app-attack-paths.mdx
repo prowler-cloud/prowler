@@ -215,6 +215,26 @@ LIMIT 25
 
 Returning the raw value (`RETURN stmt.action`) is also valid when the comma-delimited form is acceptable in the output.
 
+### Working with JSON-Encoded Properties
+
+Some Cartography properties represent nested objects, most notably `condition` on `AWSPolicyStatement` and `S3PolicyStatement` nodes. In the Attack Paths graph, object-typed properties are stored as JSON-encoded strings to keep the schema portable across graph backends. The value looks like:
+
+```
+'{"StringEquals":{"aws:SourceAccount":"123456789012"}}'
+```
+
+There is no JSON parser available at query time, so use `CONTAINS` for substring checks against keys or known values:
+
+```cypher
+MATCH (stmt:AWSPolicyStatement)
+WHERE stmt.effect = 'Allow'
+  AND stmt.condition CONTAINS '"aws:SourceAccount"'
+RETURN stmt
+LIMIT 25
+```
+
+When a query needs to inspect the structured members of a condition (for example, evaluate every operator and key), fetch the rows first and parse the JSON in application code. Cypher cannot navigate JSON object keys or values.
+
 ### Tips for Writing Queries
 
 - Start small with `LIMIT` to inspect the shape of the data before broadening the pattern.
@@ -235,6 +255,7 @@ In addition to the upstream schema, Prowler enriches the graph with:
 - **`ProwlerFinding`** nodes representing Prowler check results, linked to affected resources via `HAS_FINDING` relationships.
 - **`Internet`** nodes used to model exposure paths from the public internet to internal resources.
 - **List-typed properties** such as `action` or `resource` on `AWSPolicyStatement` are stored as comma-delimited strings. See [Working with List-Typed Properties](#working-with-list-typed-properties) for the read pattern.
+- **Object-typed properties** such as `condition` on `AWSPolicyStatement` are stored as JSON-encoded strings. See [Working with JSON-Encoded Properties](#working-with-json-encoded-properties) for the read pattern.
 
 <Note>
   AI assistants connected through Prowler MCP Server can fetch the exact

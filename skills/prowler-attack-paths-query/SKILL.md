@@ -331,7 +331,7 @@ WHERE size([resource IN split(stmt.resource, ',') WHERE
 
 ### List-typed properties
 
-`AWSPolicyStatement.action`, `resource`, `notaction`, `notresource` are comma-delimited strings, not arrays. Read them with `split(prop, ',')`.
+`AWSPolicyStatement.action`, `resource`, `notaction`, `notresource` are comma-delimited strings, not arrays. Read them with `split(prop, ',')`. The convention applies on both Neo4j and Neptune backends.
 
 | Intent | Pattern |
 |---|---|
@@ -341,6 +341,18 @@ WHERE size([resource IN split(stmt.resource, ',') WHERE
 | All match | `WITH stmt, split(stmt.action, ',') AS xs WHERE size([x IN xs WHERE pred]) = size(xs)` |
 
 The `ALL` form repeats `split(...)` twice when inlined; hoist with `WITH` when it gets noisy.
+
+### JSON-encoded properties
+
+Object-typed Cartography properties — most notably `condition` on `AWSPolicyStatement` and `S3PolicyStatement` — are stored as JSON-encoded strings. The value looks like `'{"StringEquals":{"aws:SourceAccount":"123456789012"}}'`. The convention applies on both Neo4j and Neptune backends.
+
+There is no JSON parser available at query time. Use `CONTAINS` for substring checks against keys or known values:
+
+```cypher
+WHERE stmt.condition CONTAINS '"aws:SourceAccount"'
+```
+
+When a query needs to inspect the structured members of an object, do that in Python after fetching the rows. Cypher cannot navigate JSON object keys or values.
 
 ### Internet node via path connectivity
 
