@@ -221,6 +221,11 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
     Returns:
         dict: The configuration dictionary for the specified provider.
     """
+    # Imported lazily to avoid an import cycle: schemas may eventually want to
+    # import from prowler.config.config (e.g. for shared constants).
+    from prowler.config.schema.registry import SCHEMAS
+    from prowler.config.schema.validator import validate_provider_config
+
     try:
         with open(config_file_path, "r", encoding=encoding_format_utf_8) as f:
             config_file = yaml.safe_load(f)
@@ -238,7 +243,11 @@ def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
                 if provider in ["azure", "gcp", "kubernetes", "m365"]:
                     config = {}
 
-            return config
+            return validate_provider_config(
+                provider=provider,
+                raw=config,
+                schema_cls=SCHEMAS.get(provider),
+            )
 
     except FileNotFoundError as error:
         logger.error(
