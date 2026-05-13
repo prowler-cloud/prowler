@@ -132,6 +132,10 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm run healthcheck
 
+      - name: Run pnpm audit
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm run audit
+
       - name: Run unit tests (all - critical paths changed)
         if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed == 'true'
         run: |

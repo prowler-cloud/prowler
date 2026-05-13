@@ -9,7 +9,9 @@ Prowler App offers flexible installation methods tailored to various environment
 Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detailed usage instructions.
 
 <Warning>
-  Prowler configuration is based on `.env` files. Every version of Prowler can have differences on that file, so, please, use the file that corresponds with that version or repository branch or tag.
+  Prowler configuration is based on `.env` files. Every version of Prowler can
+  have differences on that file, so, please, use the file that corresponds with
+  that version or repository branch or tag.
 </Warning>
 
 <Tabs>
@@ -38,7 +40,7 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
 
     - `git` installed.
     - `poetry` installed: [poetry installation](https://python-poetry.org/docs/#installation).
-    - `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+    - `pnpm` installed through [Corepack](https://pnpm.io/installation#using-corepack) or the standalone [pnpm installation](https://pnpm.io/installation).
     - `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
     <Warning>
@@ -97,9 +99,11 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     ```bash
     git clone https://github.com/prowler-cloud/prowler \
     cd prowler/ui \
-    npm install \
-    npm run build \
-    npm start
+    corepack enable \
+    corepack install \
+    pnpm install --frozen-lockfile \
+    pnpm run build \
+    pnpm start
     ```
 
     > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
@@ -107,6 +111,7 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     <Warning>
       Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
     </Warning>
+
   </Tab>
 </Tabs>
 
@@ -126,9 +131,10 @@ PROWLER_API_VERSION="5.26.1"
 ```
 
 <Note>
-  You can find the latest versions of Prowler App in the [Releases Github section](https://github.com/prowler-cloud/prowler/releases) or in the [Container Versions](#container-versions) section of this documentation.
+  You can find the latest versions of Prowler App in the [Releases Github
+  section](https://github.com/prowler-cloud/prowler/releases) or in the
+  [Container Versions](#container-versions) section of this documentation.
 </Note>
-
 
 #### Option 2: Using Docker Compose Pull
 
@@ -141,7 +147,8 @@ The `--policy always` flag ensures that Docker pulls the latest images even if t
 <Note>
   **What Gets Preserved During Upgrade**
 
-  Everything is preserved, nothing will be deleted after the update.
+Everything is preserved, nothing will be deleted after the update.
+
 </Note>
 
 ### Troubleshooting Installation Issues

@@ -9,6 +9,7 @@
 ### Prowler Cloud and Prowler App (Self-Managed)
 
 Full access to Prowler Cloud platform and self-managed Prowler App for:
+
 - **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments
 - **Provider Management**: Create, configure, and manage your configured Prowler providers (AWS, Azure, GCP, etc.)
 - **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments
@@ -19,6 +20,7 @@ Full access to Prowler Cloud platform and self-managed Prowler App for:
 ### Prowler Hub
 
 Access to Prowler's comprehensive security knowledge base:
+
 - **Security Checks Catalog**: Browse and search **over 1000 security checks** across multiple Prowler providers
 - **Check Implementation**: View the Python code that powers each security check
 - **Automated Fixers**: Access remediation scripts for common security issues
@@ -28,6 +30,7 @@ Access to Prowler's comprehensive security knowledge base:
 ### Prowler Documentation
 
 Search and retrieve official Prowler documentation:
+
 - **Intelligent Search**: Full-text search across all Prowler documentation
 - **Contextual Results**: Get relevant documentation pages with highlighted snippets
 - **Document Retrieval**: Access complete markdown content of any documentation file
@@ -36,13 +39,13 @@ Search and retrieve official Prowler documentation:
 
 For comprehensive guides and tutorials, see the official documentation:
 
-| Guide | Description |
-|-------|-------------|
-| [Overview](https://docs.prowler.com/getting-started/products/prowler-mcp) | Key capabilities, use cases, and deployment options |
-| [Installation](https://docs.prowler.com/getting-started/installation/prowler-mcp) | Docker, PyPI, and source installation |
-| [Configuration](https://docs.prowler.com/getting-started/basic-usage/prowler-mcp) | Configure Claude Desktop, Cursor, and other MCP clients |
-| [Tools Reference](https://docs.prowler.com/getting-started/basic-usage/prowler-mcp-tools) | Complete reference of all tools |
-| [Developer Guide](https://docs.prowler.com/developer-guide/mcp-server) | How to extend with new tools |
+| Guide                                                                                     | Description                                             |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [Overview](https://docs.prowler.com/getting-started/products/prowler-mcp)                 | Key capabilities, use cases, and deployment options     |
+| [Installation](https://docs.prowler.com/getting-started/installation/prowler-mcp)         | Docker, PyPI, and source installation                   |
+| [Configuration](https://docs.prowler.com/getting-started/basic-usage/prowler-mcp)         | Configure Claude Desktop, Cursor, and other MCP clients |
+| [Tools Reference](https://docs.prowler.com/getting-started/basic-usage/prowler-mcp-tools) | Complete reference of all tools                         |
+| [Developer Guide](https://docs.prowler.com/developer-guide/mcp-server)                    | How to extend with new tools                            |
 
 ## Deployment Options
 
@@ -56,13 +59,21 @@ Prowler MCP Server can be used in three ways:
 - Managed and maintained by Prowler team
 - Always up-to-date
 
+Install a reviewed version of `mcp-remote` in a dedicated local workspace first. Avoid running `npx mcp-remote` directly because it can download and execute a new package version on each run.
+
+```bash
+mkdir -p ~/.local/share/prowler-mcp-bridge
+cd ~/.local/share/prowler-mcp-bridge
+npm init -y
+npm install --save-exact mcp-remote@0.1.38
+```
+
 ```json
 {
   "mcpServers": {
     "prowler": {
-      "command": "npx",
+      "command": "/absolute/path/to/.local/share/prowler-mcp-bridge/node_modules/.bin/mcp-remote",
       "args": [
-        "mcp-remote",
         "https://mcp.prowler.com/mcp",
         "--header",
         "Authorization: Bearer pk_YOUR_API_KEY_HERE"
@@ -117,6 +128,7 @@ For complete tool descriptions and parameters, see the [Tools Reference](https:/
 ### Tool Naming Convention
 
 All tools follow a consistent naming pattern with prefixes:
+
 - `prowler_app_*` - Prowler Cloud and App (Self-Managed) management tools
 - `prowler_hub_*` - Prowler Hub catalog and compliance tools
 - `prowler_docs_*` - Prowler documentation search and retrieval
@@ -136,6 +148,7 @@ prowler_mcp_server/
 ```
 
 **Key Features:**
+
 - **Modular Design**: Three independent sub-servers with prefixed namespacing
 - **Auto-Discovery**: Prowler App tools are automatically discovered and registered
 - **LLM Optimization**: Response models minimize token usage by excluding empty values
@@ -146,16 +159,19 @@ prowler_mcp_server/
 The Prowler MCP Server enables powerful workflows through AI assistants:
 
 **Security Operations**
+
 - "Show me all critical findings from my AWS production accounts"
 - "Register my new AWS account in Prowler and run a scheduled scan every day"
 - "List all muted findings and detect what findgings are muted by a not enough good reason in relation to their severity"
 
 **Security Research**
+
 - "Explain what the S3 bucket public access Prowler check does"
 - "Find all Prowler checks related to encryption at rest"
 - "What is the latest version of the CIS that Prowler is covering per provider?"
 
 **Documentation & Learning**
+
 - "How do I configure Prowler to scan my GCP organization?"
 - "What authentication methods does Prowler support for Azure?"
 - "How can I contribute with a new security check to Prowler?"
@@ -163,9 +179,11 @@ The Prowler MCP Server enables powerful workflows through AI assistants:
 ## Requirements
 
 **For Prowler Cloud MCP Server:**
+
 - Prowler Cloud account and API key (only for Prowler Cloud/App features)
 
 **For self-hosted STDIO/HTTP Mode:**
+
 - Python 3.12+ or Docker
 - Network access to:
   - `https://hub.prowler.com` (for Prowler Hub)

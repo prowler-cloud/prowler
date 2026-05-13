@@ -7,13 +7,16 @@ Configure your MCP client to connect to Prowler MCP Server.
 ## Step 1: Get Your API Key
 
 <Note>
-**Authentication is optional**: Prowler Hub and Prowler Documentation features work without authentication. An API key is only required for Prowler Cloud and Prowler App (Self-Managed) features.
+  **Authentication is optional**: Prowler Hub and Prowler Documentation features
+  work without authentication. An API key is only required for Prowler Cloud and
+  Prowler App (Self-Managed) features.
 </Note>
 
 To use Prowler Cloud or Prowler App (Self-Managed) features. To get the API key, please refer to the [API Keys](/user-guide/tutorials/prowler-app-api-keys) guide.
 
 <Warning>
-Keep the API key secure. Never share it publicly or commit it to version control.
+  Keep the API key secure. Never share it publicly or commit it to version
+  control.
 </Warning>
 
 ## Step 2: Configure Your MCP Host/Client
@@ -44,13 +47,24 @@ Choose the configuration based on your deployment:
 
   <Tab title="Generic without Native HTTP Support">
     **Configuration:**
+
+    <Warning>
+      Avoid configuring MCP clients to run `npx mcp-remote` directly. `npx` can download and execute a new package version on each run. Install a reviewed version of `mcp-remote` in a dedicated local workspace, then point the MCP client to the installed binary.
+    </Warning>
+
+    ```bash
+    mkdir -p ~/.local/share/prowler-mcp-bridge
+    cd ~/.local/share/prowler-mcp-bridge
+    npm init -y
+    npm install --save-exact mcp-remote@0.1.38
+    ```
+
     ```json
     {
       "mcpServers": {
         "prowler": {
-          "command": "npx",
+          "command": "/absolute/path/to/.local/share/prowler-mcp-bridge/node_modules/.bin/mcp-remote",
           "args": [
-            "mcp-remote",
             "https://mcp.prowler.com/mcp", // or your self-hosted Prowler MCP Server URL
             "--header",
             "Authorization: Bearer ${PROWLER_APP_API_KEY}"
@@ -65,6 +79,7 @@ Choose the configuration based on your deployment:
     <Info>
     The `mcp-remote` tool acts as a bridge for clients that don't support HTTP natively. Learn more at [mcp-remote on npm](https://www.npmjs.com/package/mcp-remote).
     </Info>
+
   </Tab>
 
   <Tab title="Claude Desktop">
@@ -72,14 +87,20 @@ Choose the configuration based on your deployment:
     2. Go to "Developer" tab
     3. Click in "Edit Config" button
     4. Edit the `claude_desktop_config.json` file with your favorite editor
-    5. Add the following configuration:
+    5. Install a reviewed version of `mcp-remote` in a dedicated local workspace:
+    ```bash
+    mkdir -p ~/.local/share/prowler-mcp-bridge
+    cd ~/.local/share/prowler-mcp-bridge
+    npm init -y
+    npm install --save-exact mcp-remote@0.1.38
+    ```
+    6. Add the following configuration:
     ```json
     {
       "mcpServers": {
         "prowler": {
-          "command": "npx",
+          "command": "/absolute/path/to/.local/share/prowler-mcp-bridge/node_modules/.bin/mcp-remote",
           "args": [
-            "mcp-remote",
             "https://mcp.prowler.com/mcp",
             "--header",
             "Authorization: Bearer ${PROWLER_APP_API_KEY}"
@@ -119,7 +140,6 @@ Choose the configuration based on your deployment:
     }
     ```
   </Tab>
-
 
 </Tabs>
 
@@ -185,9 +205,10 @@ STDIO mode is only available when running the MCP server locally.
 ## Step 3: Start Using Prowler MCP
 
 Restart your MCP client and start asking questions:
-- *"Show me all critical findings from my AWS accounts"*
-- *"What does the S3 bucket public access check do?"*
-- *"Onboard this new AWS account in my Prowler Organization"*
+
+- _"Show me all critical findings from my AWS accounts"_
+- _"What does the S3 bucket public access check do?"_
+- _"Onboard this new AWS account in my Prowler Organization"_
 
 ## Authentication Methods
 
@@ -229,7 +250,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
 <Warning>
-JWT tokens are only valid for 30 minutes. You need to generate a new token if you want to continue using the MCP server.
+  JWT tokens are only valid for 30 minutes. You need to generate a new token if
+  you want to continue using the MCP server.
 </Warning>
 
 ## Troubleshooting
@@ -244,6 +266,7 @@ JWT tokens are only valid for 30 minutes. You need to generate a new token if yo
 ### Authentication Failures
 
 **Error: Unauthorized (401)**
+
 - Verify your API key is correct
 - Ensure the key hasn't expired
 - Check you're using the right API endpoint
@@ -251,6 +274,7 @@ JWT tokens are only valid for 30 minutes. You need to generate a new token if yo
 ### Connection Issues
 
 **Cannot Reach Server:**
+
 - Verify the server URL is correct
 - Check network connectivity
 - For local servers, ensure the server is running
@@ -277,7 +301,11 @@ JWT tokens are only valid for 30 minutes. You need to generate a new token if yo
 Now that your MCP server is configured:
 
 <CardGroup cols={1}>
-  <Card title="Tools Reference" icon="wrench" href="/getting-started/basic-usage/prowler-mcp-tools">
+  <Card
+    title="Tools Reference"
+    icon="wrench"
+    href="/getting-started/basic-usage/prowler-mcp-tools"
+  >
     Explore all available tools
   </Card>
 </CardGroup>
