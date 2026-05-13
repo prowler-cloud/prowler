@@ -9,7 +9,7 @@ on:
       - 'api/**'
       - '.github/workflows/api-tests.yml'
       - '.github/workflows/api-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
   pull_request:
     branches:
       - "master"
@@ -18,7 +18,7 @@ on:
       - 'api/**'
       - '.github/workflows/api-tests.yml'
       - '.github/workflows/api-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

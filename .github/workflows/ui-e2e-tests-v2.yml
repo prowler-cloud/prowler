@@ -158,7 +158,7 @@ jobs:
             for fixture in api/fixtures/dev/*.json; do
               if [ -f "$fixture" ]; then
                 echo "Loading $fixture"
-                poetry run python manage.py loaddata "$fixture" --database admin
+                uv run python manage.py loaddata "$fixture" --database admin
               fi
             done
           '
