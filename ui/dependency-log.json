@@ -506,10 +506,10 @@
   {
     "section": "dependencies",
     "name": "react",
-    "from": "19.2.4",
-    "to": "19.2.5",
+    "from": "19.2.5",
+    "to": "19.2.6",
     "strategy": "installed",
-    "generatedAt": "2026-04-17T09:52:03.464Z"
+    "generatedAt": "2026-05-14T10:34:34.526Z"
   },
   {
     "section": "dependencies",
@@ -522,10 +522,10 @@
   {
     "section": "dependencies",
     "name": "react-dom",
-    "from": "19.2.4",
-    "to": "19.2.5",
+    "from": "19.2.5",
+    "to": "19.2.6",
     "strategy": "installed",
-    "generatedAt": "2026-04-17T09:52:03.464Z"
+    "generatedAt": "2026-05-14T10:34:34.526Z"
   },
   {
     "section": "dependencies",
