@@ -108,6 +108,9 @@ def display_summary_table(
                 )
             else:
                 audited_entities = provider.identity.username or "Personal Account"
+        elif provider.type == "scaleway":
+            entity_type = "Organization"
+            audited_entities = provider.identity.organization_id
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

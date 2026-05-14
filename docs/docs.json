@@ -327,6 +327,12 @@
                 ]
               },
               {
+                "group": "Scaleway",
+                "pages": [
+                  "user-guide/providers/scaleway/getting-started-scaleway"
+                ]
+              },
+              {
                 "group": "Vercel",
                 "pages": [
                   "user-guide/providers/vercel/getting-started-vercel",

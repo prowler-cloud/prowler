@@ -1283,6 +1283,53 @@ class CheckReportVercel(Check_Report):
         return "global"
 
 
+class CheckReportScaleway(Check_Report):
+    """Contains the Scaleway Check's finding information.
+
+    Scaleway scans run at the organization level. Most IAM/account-level
+    resources are global; regional resources expose a ``region`` attribute
+    on the underlying object, which we surface as the report ``region``.
+    """
+
+    resource_name: str
+    resource_id: str
+    organization_id: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        organization_id: str = None,
+    ) -> None:
+        """Initialize the Scaleway Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary.
+            resource: The Scaleway resource being checked.
+            resource_name: Override for resource name.
+            resource_id: Override for resource ID.
+            organization_id: Override for the organization ID.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+        self.organization_id = organization_id or getattr(
+            resource, "organization_id", ""
+        )
+        self._region = getattr(resource, "region", None) or "global"
+
+    @property
+    def region(self) -> str:
+        """Scaleway regional resources expose their own region; IAM is global."""
+        return self._region
+
+
 # Testing Pending
 def load_check_metadata(metadata_file: str) -> CheckMetadata:
     """

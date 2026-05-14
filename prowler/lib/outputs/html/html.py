@@ -73,8 +73,7 @@ class HTML(Output):
                 elif finding.status == "FAIL":
                     row_class = "table-danger"
 
-                self._data.append(
-                    f"""
+                self._data.append(f"""
                         <tr class="{row_class}">
                             <td>{finding_status}</td>
                             <td>{finding.metadata.Severity.value}</td>
@@ -89,8 +88,7 @@ class HTML(Output):
                             <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
                         </tr>
-                        """
-                )
+                        """)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -143,8 +141,7 @@ class HTML(Output):
             from_cli (bool): whether the request is from the CLI or not
         """
         try:
-            file_descriptor.write(
-                f"""<!DOCTYPE html>
+            file_descriptor.write(f"""<!DOCTYPE html>
     <html lang="en">
     <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -253,8 +250,7 @@ class HTML(Output):
                     <th scope="col">Compliance</th>
                 </tr>
             </thead>
-            <tbody>"""
-            )
+            <tbody>""")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -269,8 +265,7 @@ class HTML(Output):
             file_descriptor (file): the file descriptor to write the footer
         """
         try:
-            file_descriptor.write(
-                """
+            file_descriptor.write("""
             </tbody>
             </table>
         </div>
@@ -409,8 +404,7 @@ class HTML(Output):
 </body>
 
 </html>
-"""
-            )
+""")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -1389,6 +1383,77 @@ class HTML(Output):
                     <div class="card">
                         <div class="card-header">
                             Vercel Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_scaleway_assessment_summary(provider: Provider) -> str:
+        """
+        get_scaleway_assessment_summary gets the HTML assessment summary for the Scaleway provider
+
+        Args:
+            provider (Provider): the Scaleway provider object
+
+        Returns:
+            str: HTML assessment summary for the Scaleway provider
+        """
+        try:
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Organization ID:</b> {provider.identity.organization_id}
+                            </li>"""
+
+            credentials_items = """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key
+                            </li>"""
+
+            access_key = getattr(provider.session, "access_key", None)
+            if access_key:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Access Key:</b> {access_key}
+                            </li>"""
+
+            bearer_type = getattr(provider.identity, "bearer_type", None)
+            bearer_email = getattr(provider.identity, "bearer_email", None)
+            bearer_id = getattr(provider.identity, "bearer_id", None)
+            if bearer_type:
+                bearer_label = bearer_email or bearer_id or "-"
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Bearer:</b> {bearer_type} ({bearer_label})
+                            </li>"""
+
+            region = getattr(provider.session, "default_region", None)
+            if region:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Default Region:</b> {region}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Scaleway Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Scaleway Credentials
                         </div>
                         <ul class="list-group list-group-flush">{credentials_items}
                         </ul>

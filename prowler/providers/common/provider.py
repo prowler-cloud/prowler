@@ -403,6 +403,17 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "scaleway" in provider_class_name.lower():
+                    provider_class(
+                        access_key=getattr(arguments, "access_key", None),
+                        secret_key=getattr(arguments, "secret_key", None),
+                        organization_id=getattr(arguments, "organization_id", None),
+                        project_id=getattr(arguments, "project_id", None),
+                        region=getattr(arguments, "region", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(

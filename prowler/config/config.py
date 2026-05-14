@@ -75,6 +75,7 @@ class Provider(str, Enum):
     ALIBABACLOUD = "alibabacloud"
     OPENSTACK = "openstack"
     IMAGE = "image"
+    SCALEWAY = "scaleway"
     VERCEL = "vercel"
 
 
