@@ -1630,6 +1630,16 @@ class TestProviderViewSet:
                     "uid": "acme.okta.com",
                     "alias": "Okta Org",
                 },
+                {
+                    "provider": "okta",
+                    "uid": "agency.okta-gov.com",
+                    "alias": "Okta Gov Org",
+                },
+                {
+                    "provider": "okta",
+                    "uid": "agency.okta.mil",
+                    "alias": "Okta Mil Org",
+                },
             ]
         ),
     )

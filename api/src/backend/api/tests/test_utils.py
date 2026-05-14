@@ -1,6 +1,4 @@
-import sys
 from datetime import datetime, timedelta, timezone
-from types import ModuleType
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -33,6 +31,7 @@ from prowler.providers.image.image_provider import ImageProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
+from prowler.providers.okta.okta_provider import OktaProvider
 from prowler.providers.openstack.openstack_provider import OpenstackProvider
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 from prowler.providers.vercel.vercel_provider import VercelProvider
@@ -132,6 +131,7 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.OPENSTACK.value, OpenstackProvider),
             (Provider.ProviderChoices.IMAGE.value, ImageProvider),
             (Provider.ProviderChoices.VERCEL.value, VercelProvider),
+            (Provider.ProviderChoices.OKTA.value, OktaProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -139,28 +139,6 @@ class TestReturnProwlerProvider:
         provider.provider = provider_type
         prowler_provider = return_prowler_provider(provider)
         assert prowler_provider == expected_provider
-
-    def test_return_prowler_provider_okta(self):
-        provider = MagicMock()
-        provider.provider = Provider.ProviderChoices.OKTA.value
-
-        fake_okta_package = ModuleType("prowler.providers.okta")
-        fake_okta_package.__path__ = []
-        fake_okta_module = ModuleType("prowler.providers.okta.okta_provider")
-
-        class FakeOktaProvider:
-            pass
-
-        fake_okta_module.OktaProvider = FakeOktaProvider
-
-        with patch.dict(
-            sys.modules,
-            {
-                "prowler.providers.okta": fake_okta_package,
-                "prowler.providers.okta.okta_provider": fake_okta_module,
-            },
-        ):
-            assert return_prowler_provider(provider) is FakeOktaProvider
 
     def test_return_prowler_provider_unsupported_provider(self):
         provider = MagicMock()

@@ -358,11 +358,19 @@ class Provider(RowLevelSecurityProtectedModel):
     @staticmethod
     def validate_okta_uid(value):
         if not re.match(
-            r"^[a-z0-9][a-z0-9-]*\.(okta\.com|oktapreview\.com|okta-emea\.com|okta-gov\.com)$",
+            r"^[a-z0-9][a-z0-9-]*\.("
+            r"okta\.com|oktapreview\.com|okta-emea\.com|"
+            r"okta-gov\.com|okta\.mil|okta-miltest\.com|trex-govcloud\.com"
+            r")$",
             value,
         ):
             raise ModelValidationError(
-                detail="Okta provider ID must be a valid Okta-managed org domain (e.g., acme.okta.com), without scheme or path.",
+                detail=(
+                    "Okta provider ID must be a valid Okta-managed org domain "
+                    "(e.g., acme.okta.com, also .oktapreview.com / .okta-emea.com "
+                    "/ .okta-gov.com / .okta.mil / .okta-miltest.com / "
+                    ".trex-govcloud.com), without scheme or path."
+                ),
                 code="okta-uid",
                 pointer="/data/attributes/uid",
             )
