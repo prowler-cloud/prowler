@@ -10,6 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔄 Changed
 
+- Replace `poetry` with `uv` (`0.11.14`) as the API package manager; migrate `pyproject.toml` to `[dependency-groups]` and regenerate as `uv.lock` [(#10775)](https://github.com/prowler-cloud/prowler/pull/10775)
 - Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
 
 ---

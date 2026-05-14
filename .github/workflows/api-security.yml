@@ -9,7 +9,7 @@ on:
       - 'api/**'
       - '.github/workflows/api-tests.yml'
       - '.github/workflows/api-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
   pull_request:
     branches:
       - "master"
@@ -18,7 +18,7 @@ on:
       - 'api/**'
       - '.github/workflows/api-tests.yml'
       - '.github/workflows/api-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -54,6 +54,7 @@ jobs:
             github.com:443
             auth.safetycli.com:443
             pyup.io:443
+            raw.githubusercontent.com:443
             data.safetycli.com:443
             api.github.com:443
 
@@ -77,23 +78,24 @@ jobs:
             api/CHANGELOG.md
             api/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
-          update-lock: 'true'
 
       - name: Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
+        # Exclude .venv because uv places the project venv inside ./api; otherwise
+        # bandit would recurse into installed third-party packages.
+        run: uv run bandit -q -lll -x '*_test.py,./contrib/,./.venv/' -r .
 
       - name: Safety
         if: steps.check-changes.outputs.any_changed == 'true'
         # Accepted CVEs, severity threshold, and ignore expirations live in ../.safety-policy.yml
-        run: poetry run safety check --policy-file ../.safety-policy.yml
+        run: uv run safety check --policy-file ../.safety-policy.yml
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
+        run: uv run vulture --exclude "contrib,tests,conftest.py,.venv" --min-confidence 100 .

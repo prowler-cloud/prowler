@@ -11,12 +11,15 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
+- Faster, stricter pre-commit: prek lints and formats only staged UI files (husky removed), with Prettier and ESLint (`--max-warnings 40`, stale-disable detection) now covering the full UI workspace, including `public/` assets (only the auto-generated `public/mockServiceWorker.js` stays ignored) [(#11118)](https://github.com/prowler-cloud/prowler/pull/11118)
+- Lighthouse now accepts Prowler App Finding Groups MCP tools [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
 - Attack Paths graph now uses React Flow with improved layout, interactions, export, minimap, and browser test coverage [(#10686)](https://github.com/prowler-cloud/prowler/pull/10686)
 - SAML ACS URL is only shown if the email domain is configured [(#11144)](https://github.com/prowler-cloud/prowler/pull/11144)
 
 ### 🐞 Fixed
 
 - Muting a finding group on `/findings` now hides the row immediately without waiting for a manual reload; muted `check_id`s are tracked client-side under `prowler:optimistic-muted-groups` in `sessionStorage` with a 90s TTL so a fast reload still honors the optimistic hide while the background reaggregation catches up [(#11170)](https://github.com/prowler-cloud/prowler/pull/11170)
+- Mute Findings modal now enforces the 100-character limit on the rule name input with a live counter and inline error, matching the existing reason field behaviour [(#11158)](https://github.com/prowler-cloud/prowler/pull/11158)
 
 ---
 

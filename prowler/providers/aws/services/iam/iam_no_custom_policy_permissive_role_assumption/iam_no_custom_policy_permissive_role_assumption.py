@@ -16,6 +16,8 @@ class iam_no_custom_policy_permissive_role_assumption(Check):
         for policy in iam_client.policies.values():
             # Check only custom policies
             if policy.type == "Custom":
+                if not policy.attached and not iam_client.provider.scan_unused_services:
+                    continue
                 report = Check_Report_AWS(metadata=self.metadata(), resource=policy)
                 report.region = iam_client.region
                 report.status = "PASS"
