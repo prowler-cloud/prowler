@@ -105,5 +105,6 @@ jobs:
           lockfile: api/uv.lock
 
       - name: Vulture
-        if: steps.check-changes.outputs.any_changed == 'true'
+        # Run even when osv-scanner reports findings so dead-code signal isn't masked by SCA failures.
+        if: ${{ !cancelled() && steps.check-changes.outputs.any_changed == 'true' }}
         run: uv run vulture --exclude "contrib,tests,conftest.py,.venv" --min-confidence 100 .
