@@ -14,6 +14,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Attack Paths graph now uses React Flow with improved layout, interactions, export, minimap, and browser test coverage [(#10686)](https://github.com/prowler-cloud/prowler/pull/10686)
 - SAML ACS URL is only shown if the email domain is configured [(#11144)](https://github.com/prowler-cloud/prowler/pull/11144)
 
+### 🐞 Fixed
+
+- Muting a finding group on `/findings` now hides the row immediately without waiting for a manual reload; muted `check_id`s are tracked client-side under `prowler:optimistic-muted-groups` in `sessionStorage` with a 90s TTL so a fast reload still honors the optimistic hide while the background reaggregation catches up [(#11170)](https://github.com/prowler-cloud/prowler/pull/11170)
+
 ---
 
 ## [1.26.2] (Prowler 5.26.2)
