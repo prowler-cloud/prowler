@@ -155,19 +155,19 @@ Current providers:
 
 ```bash
 # Run provider
-poetry run python prowler-cli.py {provider}
+uv run python prowler-cli.py {provider}
 
 # List services for provider
-poetry run python prowler-cli.py {provider} --list-services
+uv run python prowler-cli.py {provider} --list-services
 
 # List checks for provider
-poetry run python prowler-cli.py {provider} --list-checks
+uv run python prowler-cli.py {provider} --list-checks
 
 # Run specific service
-poetry run python prowler-cli.py {provider} --services {service}
+uv run python prowler-cli.py {provider} --services {service}
 
 # Debug mode
-poetry run python prowler-cli.py {provider} --log-level DEBUG
+uv run python prowler-cli.py {provider} --log-level DEBUG
 ```
 
 ## Resources

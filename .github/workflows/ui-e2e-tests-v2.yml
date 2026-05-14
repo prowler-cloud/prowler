@@ -132,8 +132,8 @@ jobs:
 
       - name: Build API image from current code
         # docker-compose.yml references prowlercloud/prowler-api:latest from the registry,
-        # which lags behind PR changes (e.g. the poetry -> uv migration); build locally so
-        # E2E exercises the API image produced by this PR.
+        # which lags behind PR changes; build locally so E2E exercises the API image
+        # produced by this PR.
         run: docker build -t prowlercloud/prowler-api:latest ./api
 
       - name: Start API services

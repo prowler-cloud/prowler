@@ -2,10 +2,10 @@
 # Applied in: .pre-commit-config.yaml, .github/workflows/api-security.yml,
 # .github/workflows/sdk-security.yml via `--policy-file`.
 #
-# Validate: poetry run safety validate policy_file --path .safety-policy.yml
+# Validate: uv run safety validate policy_file --path .safety-policy.yml
 
 security:
-  # Scan unpinned requirements too. Prowler pins via poetry.lock, so this is
+  # Scan unpinned requirements too. Prowler pins via uv.lock, so this is
   # defensive against accidental unpinned entries.
   ignore-unpinned-requirements: False
 
