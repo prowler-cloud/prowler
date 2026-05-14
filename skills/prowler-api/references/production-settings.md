@@ -3,7 +3,7 @@
 ## Django Deployment Checklist Command
 
 ```bash
-cd api && poetry run python src/backend/manage.py check --deploy
+cd api && uv run python src/backend/manage.py check --deploy
 ```
 
 This command checks for common deployment issues and missing security settings.

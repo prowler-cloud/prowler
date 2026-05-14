@@ -9,7 +9,7 @@ on:
       - 'api/**'
       - '.github/workflows/api-tests.yml'
       - '.github/workflows/api-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
       - '.github/actions/osv-scanner/**'
       - '.github/scripts/osv-scan.sh'
   pull_request:
@@ -20,7 +20,7 @@ on:
       - 'api/**'
       - '.github/workflows/api-tests.yml'
       - '.github/workflows/api-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
       - '.github/actions/osv-scanner/**'
       - '.github/scripts/osv-scan.sh'
 
@@ -84,24 +84,25 @@ jobs:
             api/CHANGELOG.md
             api/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
-          update-lock: 'true'
 
       - name: Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
+        # Exclude .venv because uv places the project venv inside ./api; otherwise
+        # bandit would recurse into installed third-party packages.
+        run: uv run bandit -q -lll -x '*_test.py,./contrib/,./.venv/' -r .
 
       - name: Dependency vulnerability scan with osv-scanner
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: ./.github/actions/osv-scanner
         with:
-          lockfile: api/poetry.lock
+          lockfile: api/uv.lock
 
       - name: Vulture
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
+        run: uv run vulture --exclude "contrib,tests,conftest.py,.venv" --min-confidence 100 .
