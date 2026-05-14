@@ -16,6 +16,7 @@ class CloudFront(AWSService):
         self._list_distributions(self.client, self.region)
         self._get_distribution_config(self.client, self.distributions, self.region)
         self._list_tags_for_resource(self.client, self.distributions, self.region)
+        self._get_log_delivery_sources(self.distributions, self.region)
 
     def _list_distributions(self, client, region) -> dict:
         logger.info("CloudFront - Listing Distributions...")
@@ -153,6 +154,54 @@ class CloudFront(AWSService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_log_delivery_sources(self, distributions, region):
+        """Check for Standard Logging v2 via CloudWatch Logs delivery sources.
+
+        A delivery source alone is not enough. We must also verify that an
+        active delivery exists for the source, otherwise logs are not flowing.
+        """
+        logger.info("CloudFront - Checking CloudWatch Logs delivery sources...")
+        try:
+            distribution_arns = {
+                dist.arn: dist_id for dist_id, dist in distributions.items()
+            }
+            if not distribution_arns:
+                return
+
+            # CloudFront delivery sources live in the global region (us-east-1),
+            # not the profile's default region.
+            global_region = self.provider.get_global_region()
+            logs_client = self.session.client("logs", region_name=global_region)
+
+            # Find delivery sources whose resourceArns match a distribution
+            matching_sources = {}
+            paginator = logs_client.get_paginator("describe_delivery_sources")
+            for page in paginator.paginate():
+                for source in page.get("deliverySources", []):
+                    if source.get("service") != self.service:
+                        continue
+                    for resource_arn in source.get("resourceArns", []):
+                        if resource_arn in distribution_arns:
+                            source_name = source.get("name", "")
+                            matching_sources[source_name] = resource_arn
+
+            if not matching_sources:
+                return
+
+            # Verify at least one active delivery exists per source
+            paginator = logs_client.get_paginator("describe_deliveries")
+            for page in paginator.paginate():
+                for delivery in page.get("deliveries", []):
+                    source_name = delivery.get("deliverySourceName", "")
+                    if source_name in matching_sources:
+                        resource_arn = matching_sources[source_name]
+                        dist_id = distribution_arns[resource_arn]
+                        distributions[dist_id].logging_v2_enabled = True
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class OriginsSSLProtocols(Enum):
     SSLv3 = "SSLv3"
@@ -207,6 +256,7 @@ class Distribution(BaseModel):
     id: str
     region: str
     logging_enabled: bool = False
+    logging_v2_enabled: bool = False
     default_cache_config: Optional[DefaultCacheConfigBehaviour] = None
     geo_restriction_type: Optional[GeoRestrictionType] = None
     origins: list[Origin]

@@ -10,7 +10,7 @@ class entra_policy_user_consent_for_verified_apps(Check):
             report = Check_Report_Azure(metadata=self.metadata(), resource=auth_policy)
             report.subscription = f"Tenant: {tenant_domain}"
             report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
-            report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
+            report.resource_id = auth_policy.id
             report.status = "PASS"
             report.status_extended = "Entra does not allow users to consent non-verified apps accessing company data on their behalf."
 

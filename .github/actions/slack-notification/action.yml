@@ -26,16 +26,18 @@ runs:
       id: status
       shell: bash
       run: |
-        if [[ "${{ inputs.step-outcome }}" == "success" ]]; then
+        if [[ "${INPUTS_STEP_OUTCOME}" == "success" ]]; then
           echo "STATUS_TEXT=Completed" >> $GITHUB_ENV
           echo "STATUS_COLOR=#6aa84f" >> $GITHUB_ENV
-        elif [[ "${{ inputs.step-outcome }}" == "failure" ]]; then
+        elif [[ "${INPUTS_STEP_OUTCOME}" == "failure" ]]; then
           echo "STATUS_TEXT=Failed" >> $GITHUB_ENV
           echo "STATUS_COLOR=#fc3434" >> $GITHUB_ENV
         else
           # No outcome provided - pending/in progress state
           echo "STATUS_COLOR=#dbab09" >> $GITHUB_ENV
         fi
+      env:
+        INPUTS_STEP_OUTCOME: ${{ inputs.step-outcome }}
 
     - name: Send Slack notification (new message)
       if: inputs.update-ts == ''
@@ -67,8 +69,11 @@ runs:
       id: slack-notification
       shell: bash
       run: |
-        if [[ "${{ inputs.update-ts }}" == "" ]]; then
-          echo "ts=${{ steps.slack-notification-post.outputs.ts }}" >> $GITHUB_OUTPUT
+        if [[ "${INPUTS_UPDATE_TS}" == "" ]]; then
+          echo "ts=${STEPS_SLACK_NOTIFICATION_POST_OUTPUTS_TS}" >> $GITHUB_OUTPUT
         else
-          echo "ts=${{ inputs.update-ts }}" >> $GITHUB_OUTPUT
+          echo "ts=${INPUTS_UPDATE_TS}" >> $GITHUB_OUTPUT
         fi
+      env:
+        INPUTS_UPDATE_TS: ${{ inputs.update-ts }}
+        STEPS_SLACK_NOTIFICATION_POST_OUTPUTS_TS: ${{ steps.slack-notification-post.outputs.ts }}

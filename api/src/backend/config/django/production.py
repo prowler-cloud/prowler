@@ -3,6 +3,10 @@ from config.env import env
 
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+CORS_ALLOWED_ORIGINS = env.list(
+    "DJANGO_CORS_ALLOWED_ORIGINS",
+    default=["http://localhost", "http://127.0.0.1"],
+)
 
 # Database
 # TODO Use Django database routers https://docs.djangoproject.com/en/5.0/topics/db/multi-db/#automatic-database-routing
@@ -36,6 +40,20 @@ DATABASES = {
         "PASSWORD": env("POSTGRES_REPLICA_PASSWORD", default=default_db_password),
         "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
         "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
+    },
+    "admin_replica": {
+        "ENGINE": "psqlextra.backend",
+        "NAME": env("POSTGRES_REPLICA_DB", default=default_db_name),
+        "USER": env("POSTGRES_ADMIN_USER"),
+        "PASSWORD": env("POSTGRES_ADMIN_PASSWORD"),
+        "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
+        "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
+    },
+    "neo4j": {
+        "HOST": env.str("NEO4J_HOST"),
+        "PORT": env.str("NEO4J_PORT"),
+        "USER": env.str("NEO4J_USER"),
+        "PASSWORD": env.str("NEO4J_PASSWORD"),
     },
 }
 

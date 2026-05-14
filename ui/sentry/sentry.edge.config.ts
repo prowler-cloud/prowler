@@ -1,64 +1,69 @@
 import * as Sentry from "@sentry/nextjs";
 
-const isProduction = process.env.SENTRY_ENVIRONMENT === "pro";
+const SENTRY_DSN = process.env.SENTRY_DSN;
 
-/**
- * Edge runtime Sentry configuration
- *
- * Edge runtime has stricter constraints than Node.js:
- * - Limited execution time (~10-30 seconds)
- * - Lower memory availability
- * - Reduced sample rates to minimize overhead
- * - No complex integrations
- */
-Sentry.init({
-  // 📍 DSN - Data Source Name (identifies your Sentry project)
-  dsn: process.env.SENTRY_DSN,
+// Only initialize Sentry if DSN is configured
+if (SENTRY_DSN) {
+  const isProduction = process.env.SENTRY_ENVIRONMENT === "pro";
 
-  // 🌍 Environment configuration
-  environment: process.env.SENTRY_ENVIRONMENT || "local",
+  /**
+   * Edge runtime Sentry configuration
+   *
+   * Edge runtime has stricter constraints than Node.js:
+   * - Limited execution time (~10-30 seconds)
+   * - Lower memory availability
+   * - Reduced sample rates to minimize overhead
+   * - No complex integrations
+   */
+  Sentry.init({
+    // 📍 DSN - Data Source Name (identifies your Sentry project)
+    dsn: SENTRY_DSN,
 
-  // 📦 Release tracking
-  release: process.env.SENTRY_RELEASE,
+    // 🌍 Environment configuration
+    environment: process.env.SENTRY_ENVIRONMENT || "local",
 
-  // 📊 Sample Rates - Reduced for edge runtime constraints
-  // 50% in dev, 25% in production (edge has lower overhead limits than server)
-  tracesSampleRate: isProduction ? 0.25 : 0.5,
+    // 📦 Release tracking
+    release: process.env.SENTRY_RELEASE,
 
-  // 🔌 Integrations - Edge runtime doesn't support all integrations
-  integrations: [],
+    // 📊 Sample Rates - Reduced for edge runtime constraints
+    // 50% in dev, 25% in production (edge has lower overhead limits than server)
+    tracesSampleRate: isProduction ? 0.25 : 0.5,
 
-  // 🎣 Filter expected errors - Don't send noise to Sentry
-  ignoreErrors: [
-    // NextAuth redirect errors - Expected behavior in auth flow
-    "NEXT_REDIRECT",
-    "NEXT_NOT_FOUND",
-    // Expected HTTP errors - Expected when users lack permissions
-    "401", // Unauthorized - expected when token expires
-    "403", // Forbidden - expected when no permissions
-    "404", // Not Found - expected for missing resources
-  ],
+    // 🔌 Integrations - Edge runtime doesn't support all integrations
+    integrations: [],
 
-  beforeSend(event, hint) {
-    // Add edge runtime context for debugging
-    event.tags = {
-      ...event.tags,
-      runtime: "edge",
-    };
+    // 🎣 Filter expected errors - Don't send noise to Sentry
+    ignoreErrors: [
+      // NextAuth redirect errors - Expected behavior in auth flow
+      "NEXT_REDIRECT",
+      "NEXT_NOT_FOUND",
+      // Expected HTTP errors - Expected when users lack permissions
+      "401", // Unauthorized - expected when token expires
+      "403", // Forbidden - expected when no permissions
+      "404", // Not Found - expected for missing resources
+    ],
 
-    const error = hint.originalException;
+    beforeSend(event, hint) {
+      // Add edge runtime context for debugging
+      event.tags = {
+        ...event.tags,
+        runtime: "edge",
+      };
 
-    // Don't send NextAuth expected errors
-    if (
-      error &&
-      typeof error === "object" &&
-      "message" in error &&
-      typeof error.message === "string" &&
-      error.message.includes("NEXT_REDIRECT")
-    ) {
-      return null;
-    }
+      const error = hint.originalException;
 
-    return event;
-  },
-});
+      // Don't send NextAuth expected errors
+      if (
+        error &&
+        typeof error === "object" &&
+        "message" in error &&
+        typeof error.message === "string" &&
+        error.message.includes("NEXT_REDIRECT")
+      ) {
+        return null;
+      }
+
+      return event;
+    },
+  });
+}

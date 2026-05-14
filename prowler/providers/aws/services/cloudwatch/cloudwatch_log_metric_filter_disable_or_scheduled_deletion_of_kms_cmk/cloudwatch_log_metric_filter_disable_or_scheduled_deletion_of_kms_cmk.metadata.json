@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "CloudTrail events delivered to CloudWatch are evaluated for a **metric filter and alarm** that monitor **KMS CMK state changes**, specifically `DisableKey` and `ScheduleKeyDeletion` from `kms.amazonaws.com`.",
   "Risk": "Missing alerts on **CMK disablement or scheduled deletion** undermines **availability** and **integrity**: encrypted data may become undecryptable, backups unusable, and recovery impossible. Attackers or insiders can change key states unnoticed, causing outages and irreversible data loss.",
   "RelatedUrl": "",

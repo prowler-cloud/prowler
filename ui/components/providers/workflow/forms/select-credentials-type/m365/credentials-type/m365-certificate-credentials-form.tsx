@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { Control } from "react-hook-form";
 
-import { CustomInput, CustomTextarea } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import {
+  WizardInputField,
+  WizardTextareaField,
+} from "@/components/providers/workflow/forms/fields";
 import { M365CertificateCredentials } from "@/types";
 
 export const M365CertificateCredentialsForm = ({
@@ -22,7 +25,7 @@ export const M365CertificateCredentialsForm = ({
           certificate authentication.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name="tenant_id"
         type="text"
@@ -31,9 +34,8 @@ export const M365CertificateCredentialsForm = ({
         placeholder="Enter the Tenant ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.tenant_id}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name="client_id"
         type="text"
@@ -42,9 +44,8 @@ export const M365CertificateCredentialsForm = ({
         placeholder="Enter the Client ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_id}
       />
-      <CustomTextarea
+      <WizardTextareaField
         control={control}
         name="certificate_content"
         label="Certificate Content"
@@ -52,19 +53,20 @@ export const M365CertificateCredentialsForm = ({
         placeholder="Enter the base64 encoded certificate content"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.certificate_content}
         minRows={4}
       />
       <p className="text-default-500 text-sm">
         The certificate content must be base64 encoded from an unsigned
         certificate. For detailed instructions on how to generate and encode
         your certificate, please refer to the{" "}
-        <CustomLink
+        <Link
           href="https://docs.prowler.com/user-guide/providers/microsoft365/authentication#generate-the-certificate"
-          size="sm"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-button-tertiary p-0 text-sm"
         >
           certificate generation guide
-        </CustomLink>
+        </Link>
         .
       </p>
     </>

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEksCluster",
+  "ResourceGroup": "container",
   "Description": "**Amazon EKS clusters** have **deletion protection** enabled blocking cluster removal until protection is explicitly disabled.",
   "Risk": "Without **deletion protection**, automation errors or a compromised admin can remove the cluster control plane, causing immediate **availability** loss and downtime. Destructive actions can also affect the **integrity** of deployments, leave orphaned resources, hinder recovery, and raise **operational cost**.",
   "RelatedUrl": "",

@@ -1,7 +1,5 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@heroui/card";
-import { Chip } from "@heroui/chip";
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -17,14 +15,16 @@ import {
   IntegrationCardHeader,
   IntegrationSkeleton,
 } from "@/components/integrations/shared";
+import { Badge, Button } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
+import { Card, CardContent, CardHeader } from "../../shadcn";
 import { SecurityHubIntegrationForm } from "./security-hub-integration-form";
 
 interface SecurityHubIntegrationsManagerProps {
@@ -92,7 +92,7 @@ export const SecurityHubIntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -124,7 +124,7 @@ export const SecurityHubIntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -175,7 +175,7 @@ export const SecurityHubIntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -258,49 +258,44 @@ export const SecurityHubIntegrationsManager = ({
 
   return (
     <>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
+      <Modal
+        open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Delete Security Hub Integration"
         description="This action cannot be undone. This will permanently delete your Security Hub integration."
       >
-        <div className="flex w-full justify-center gap-6">
-          <CustomButton
+        <div className="flex w-full justify-end gap-4">
+          <Button
             type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
+            variant="ghost"
             size="lg"
-            onPress={() => {
+            onClick={() => {
               setIsDeleteOpen(false);
               setIntegrationToDelete(null);
             }}
-            isDisabled={isDeleting !== null}
+            disabled={isDeleting !== null}
           >
-            <span>Cancel</span>
-          </CustomButton>
+            Cancel
+          </Button>
 
-          <CustomButton
+          <Button
             type="button"
-            ariaLabel="Delete"
-            className="w-full"
-            variant="solid"
-            color="danger"
+            variant="destructive"
             size="lg"
-            isLoading={isDeleting !== null}
-            startContent={!isDeleting && <Trash2Icon size={24} />}
-            onPress={() =>
+            disabled={isDeleting !== null}
+            onClick={() =>
               integrationToDelete &&
               handleDeleteIntegration(integrationToDelete.id)
             }
           >
+            {!isDeleting && <Trash2Icon size={24} />}
             {isDeleting ? "Deleting..." : "Delete"}
-          </CustomButton>
+          </Button>
         </div>
-      </CustomAlertModal>
+      </Modal>
 
-      <CustomAlertModal
-        isOpen={isModalOpen}
+      <Modal
+        open={isModalOpen}
         onOpenChange={setIsModalOpen}
         title={
           editMode === "configuration"
@@ -320,7 +315,7 @@ export const SecurityHubIntegrationsManager = ({
           onCancel={handleModalClose}
           editMode={editMode}
         />
-      </CustomAlertModal>
+      </Modal>
 
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
@@ -334,14 +329,10 @@ export const SecurityHubIntegrationsManager = ({
                 : `${integrations.length} integration${integrations.length !== 1 ? "s" : ""} configured`}
             </p>
           </div>
-          <CustomButton
-            color="action"
-            startContent={<PlusIcon size={16} />}
-            onPress={handleAddIntegration}
-            ariaLabel="Add integration"
-          >
+          <Button onClick={handleAddIntegration}>
+            <PlusIcon size={16} />
             Add Integration
-          </CustomButton>
+          </Button>
         </div>
 
         {isOperationLoading ? (
@@ -359,8 +350,8 @@ export const SecurityHubIntegrationsManager = ({
               const providerDetails = getProviderDetails(integration);
 
               return (
-                <Card key={integration.id} className="dark:bg-gray-800">
-                  <CardHeader className="pb-2">
+                <Card key={integration.id} variant="base">
+                  <CardHeader>
                     <IntegrationCardHeader
                       icon={<AWSSecurityHubIcon size={32} />}
                       title={providerDetails.displayName}
@@ -388,19 +379,18 @@ export const SecurityHubIntegrationsManager = ({
                       }}
                     />
                   </CardHeader>
-                  <CardBody className="pt-0">
+                  <CardContent className="pt-0">
                     <div className="flex flex-col gap-3">
                       {enabledRegions.length > 0 && (
                         <div className="flex flex-wrap gap-1">
                           {enabledRegions.map((region) => (
-                            <Chip
+                            <Badge
                               key={region}
-                              size="sm"
-                              variant="flat"
-                              className="bg-default-100"
+                              variant="outline"
+                              className="border-border-neutral-secondary bg-bg-neutral-secondary text-text-neutral-primary text-xs font-normal"
                             >
                               {region}
-                            </Chip>
+                            </Badge>
                           ))}
                         </div>
                       )}
@@ -428,7 +418,7 @@ export const SecurityHubIntegrationsManager = ({
                         />
                       </div>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
               );
             })}

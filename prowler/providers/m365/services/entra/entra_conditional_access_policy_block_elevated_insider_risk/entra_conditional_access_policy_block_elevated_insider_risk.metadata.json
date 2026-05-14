@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_block_elevated_insider_risk",
+  "CheckTitle": "Conditional Access Policy blocks access for users with elevated insider risk",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "This check verifies that at least one **enabled** Conditional Access policy **blocks access** to all cloud applications for users flagged with an **elevated insider risk** level by Microsoft Purview Insider Risk Management and Adaptive Protection.",
+  "Risk": "Without blocking elevated insider risk users, compromised or malicious insiders retain **full access** to cloud applications. This enables data exfiltration, unauthorized modifications, and lateral movement, directly impacting **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/purview/insider-risk-management-adaptive-protection",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/how-to-policy-insider-risk"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the Microsoft Entra admin center, go to Protection > Conditional Access > Policies.\n2. Click New policy.\n3. Under Users, select Include > All users.\n4. Under Target resources, select Include > All cloud apps.\n5. Under Conditions > Insider risk, select Configure > Yes, then check Elevated.\n6. Under Grant, select Block access.\n7. Set Enable policy to On and click Create.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure **Adaptive Protection** in Microsoft Purview to classify insider risk tiers, then create a Conditional Access policy that **blocks access** to all cloud apps for users with **elevated** risk. Only exclude dedicated break-glass accounts.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_block_elevated_insider_risk"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires Microsoft 365 E5 with Microsoft Purview Insider Risk Management and Adaptive Protection configured. The insiderRiskLevels condition in Conditional Access evaluates the insider risk level assigned by Purview Adaptive Protection."
+}

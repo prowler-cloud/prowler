@@ -5,6 +5,10 @@ from enum import Enum
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
 
+from api.models import Scan, StateChoices
+
+SCHEDULED_SCAN_NAME = "Daily scheduled scan"
+
 
 class CustomEncoder(json.JSONEncoder):
     def default(self, o):
@@ -71,3 +75,58 @@ def batched(iterable, batch_size):
             batch = []
 
     yield batch, True
+
+
+def _get_or_create_scheduled_scan(
+    tenant_id: str,
+    provider_id: str,
+    scheduler_task_id: int,
+    scheduled_at: datetime,
+    update_state: bool = False,
+) -> Scan:
+    """
+    Get or create a scheduled scan, cleaning up duplicates if found.
+
+    Args:
+        tenant_id: The tenant ID.
+        provider_id: The provider ID.
+        scheduler_task_id: The PeriodicTask ID.
+        scheduled_at: The scheduled datetime for the scan.
+        update_state: If True, also reset state to SCHEDULED when updating.
+
+    Returns:
+        The scan instance to use.
+    """
+    scheduled_scans = list(
+        Scan.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
+            scheduler_task_id=scheduler_task_id,
+        ).order_by("scheduled_at", "inserted_at")
+    )
+
+    if scheduled_scans:
+        scan_instance = scheduled_scans[0]
+        if len(scheduled_scans) > 1:
+            Scan.objects.filter(id__in=[s.id for s in scheduled_scans[1:]]).delete()
+        needs_update = scan_instance.scheduled_at != scheduled_at
+        if update_state and scan_instance.state != StateChoices.SCHEDULED:
+            scan_instance.state = StateChoices.SCHEDULED
+            scan_instance.name = SCHEDULED_SCAN_NAME
+            needs_update = True
+        if needs_update:
+            scan_instance.scheduled_at = scheduled_at
+            scan_instance.save()
+        return scan_instance
+
+    return Scan.objects.create(
+        tenant_id=tenant_id,
+        name=SCHEDULED_SCAN_NAME,
+        provider_id=provider_id,
+        trigger=Scan.TriggerChoices.SCHEDULED,
+        state=StateChoices.SCHEDULED,
+        scheduled_at=scheduled_at,
+        scheduler_task_id=scheduler_task_id,
+    )

@@ -21,6 +21,8 @@ export type SubmenuProps = {
   active?: boolean;
   icon: IconComponent;
   disabled?: boolean;
+  highlight?: boolean;
+  cloudOnly?: boolean;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
@@ -33,6 +35,7 @@ export type MenuProps = {
   defaultOpen?: boolean;
   target?: string;
   tooltip?: string;
+  highlight?: boolean;
 };
 
 export type GroupProps = {
@@ -48,22 +51,77 @@ export interface CollapseMenuButtonProps {
   isOpen: boolean | undefined;
 }
 
+export const NEXT_UI_VARIANTS = {
+  SOLID: "solid",
+  FADED: "faded",
+  BORDERED: "bordered",
+  LIGHT: "light",
+  FLAT: "flat",
+  GHOST: "ghost",
+  SHADOW: "shadow",
+} as const;
 export type NextUIVariants =
-  | "solid"
-  | "faded"
-  | "bordered"
-  | "light"
-  | "flat"
-  | "ghost"
-  | "shadow";
+  (typeof NEXT_UI_VARIANTS)[keyof typeof NEXT_UI_VARIANTS];
 
-export type NextUIColors =
-  | "primary"
-  | "secondary"
-  | "success"
-  | "warning"
-  | "danger"
-  | "default";
+export const NEXT_UI_COLORS = {
+  PRIMARY: "primary",
+  SECONDARY: "secondary",
+  SUCCESS: "success",
+  WARNING: "warning",
+  DANGER: "danger",
+  DEFAULT: "default",
+} as const;
+export type NextUIColors = (typeof NEXT_UI_COLORS)[keyof typeof NEXT_UI_COLORS];
+
+export const PERMISSION_STATE = {
+  UNLIMITED: "unlimited",
+  LIMITED: "limited",
+  NONE: "none",
+} as const;
+export type PermissionState =
+  (typeof PERMISSION_STATE)[keyof typeof PERMISSION_STATE];
+
+export const FINDING_DELTA = {
+  NEW: "new",
+  CHANGED: "changed",
+  NONE: "none",
+} as const;
+export type FindingDelta =
+  | (typeof FINDING_DELTA)[keyof typeof FINDING_DELTA]
+  | null;
+
+export const FINDING_STATUS = {
+  PASS: "PASS",
+  FAIL: "FAIL",
+  MANUAL: "MANUAL",
+} as const;
+export type FindingStatus =
+  (typeof FINDING_STATUS)[keyof typeof FINDING_STATUS];
+
+/**
+ * Maps raw finding status values to human-readable display strings.
+ * Follows the same pattern as SEVERITY_DISPLAY_NAMES in types/severities.ts.
+ */
+export const FINDING_STATUS_DISPLAY_NAMES: Record<FindingStatus, string> = {
+  PASS: "Pass",
+  FAIL: "Fail",
+  MANUAL: "Manual",
+};
+
+export const SEVERITY = {
+  INFORMATIONAL: "informational",
+  LOW: "low",
+  MEDIUM: "medium",
+  HIGH: "high",
+  CRITICAL: "critical",
+} as const;
+export type Severity = (typeof SEVERITY)[keyof typeof SEVERITY];
+
+export const USER_STATUS = {
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+} as const;
+export type UserStatus = (typeof USER_STATUS)[keyof typeof USER_STATUS];
 
 export interface PermissionInfo {
   field: string;
@@ -186,6 +244,13 @@ export interface TaskDetails {
     };
   };
 }
+export const AWS_CREDENTIALS_TYPE = {
+  AWS_SDK_DEFAULT: "aws-sdk-default",
+  ACCESS_SECRET_KEY: "access-secret-key",
+} as const;
+export type AWSCredentialsType =
+  (typeof AWS_CREDENTIALS_TYPE)[keyof typeof AWS_CREDENTIALS_TYPE];
+
 export type AWSCredentials = {
   [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: string;
   [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: string;
@@ -201,9 +266,7 @@ export type AWSCredentialsRole = {
   [ProviderCredentialFields.EXTERNAL_ID]?: string;
   [ProviderCredentialFields.ROLE_SESSION_NAME]?: string;
   [ProviderCredentialFields.SESSION_DURATION]?: number;
-  [ProviderCredentialFields.CREDENTIALS_TYPE]?:
-    | "aws-sdk-default"
-    | "access-secret-key";
+  [ProviderCredentialFields.CREDENTIALS_TYPE]?: AWSCredentialsType;
 };
 
 export type AzureCredentials = {
@@ -254,6 +317,15 @@ export type IacCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type ImageCredentials = {
+  [ProviderCredentialFields.REGISTRY_USERNAME]?: string;
+  [ProviderCredentialFields.REGISTRY_PASSWORD]?: string;
+  [ProviderCredentialFields.REGISTRY_TOKEN]?: string;
+  [ProviderCredentialFields.IMAGE_FILTER]?: string;
+  [ProviderCredentialFields.TAG_FILTER]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type OCICredentials = {
   [ProviderCredentialFields.OCI_USER]: string;
   [ProviderCredentialFields.OCI_FINGERPRINT]: string;
@@ -264,15 +336,77 @@ export type OCICredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type MongoDBAtlasCredentials = {
+  [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: string;
+  [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type AlibabaCloudCredentials = {
+  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: string;
+  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type AlibabaCloudCredentialsRole = {
+  [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: string;
+  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: string;
+  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: string;
+  [ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type CloudflareTokenCredentials = {
+  [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type CloudflareApiKeyCredentials = {
+  [ProviderCredentialFields.CLOUDFLARE_API_KEY]: string;
+  [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type CloudflareCredentials =
+  | CloudflareTokenCredentials
+  | CloudflareApiKeyCredentials;
+
+export type OpenStackCredentials = {
+  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]: string;
+  [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type GoogleWorkspaceCredentials = {
+  [ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID]: string;
+  [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]: string;
+  [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type VercelCredentials = {
+  [ProviderCredentialFields.VERCEL_API_TOKEN]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
+  | AWSCredentialsRole
   | AzureCredentials
   | GCPDefaultCredentials
   | GCPServiceAccountKey
   | KubernetesCredentials
   | IacCredentials
+  | ImageCredentials
   | M365Credentials
-  | OCICredentials;
+  | OCICredentials
+  | MongoDBAtlasCredentials
+  | AlibabaCloudCredentials
+  | AlibabaCloudCredentialsRole
+  | CloudflareCredentials
+  | OpenStackCredentials
+  | GoogleWorkspaceCredentials
+  | VercelCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
@@ -286,6 +420,14 @@ export interface ApiError {
   };
   code: string;
 }
+
+export type ApiResponse = {
+  error?: string;
+  errors?: ApiError[];
+  data?: unknown;
+  success?: boolean;
+  status?: number;
+};
 
 export interface InvitationProps {
   type: "invitations";
@@ -318,7 +460,8 @@ export interface InvitationProps {
         manage_providers?: boolean;
         manage_integrations?: boolean;
         manage_scans?: boolean;
-        permission_state?: "unlimited" | "limited" | "none";
+        manage_alerts?: boolean;
+        permission_state?: PermissionState;
       };
     };
   };
@@ -342,8 +485,9 @@ export interface Role {
     manage_providers: boolean;
     manage_integrations: boolean;
     manage_scans: boolean;
+    manage_alerts?: boolean;
     unlimited_visibility: boolean;
-    permission_state: "unlimited" | "limited" | "none";
+    permission_state: PermissionState;
     inserted_at: string;
     updated_at: string;
   };
@@ -477,10 +621,10 @@ export interface FindingProps {
   id: string;
   attributes: {
     uid: string;
-    delta: "new" | "changed" | null;
-    status: "PASS" | "FAIL" | "MANUAL";
+    delta: FindingDelta;
+    status: FindingStatus;
     status_extended: string;
-    severity: "informational" | "low" | "medium" | "high" | "critical";
+    severity: Severity;
     check_id: string;
     muted: boolean;
     muted_reason?: string;
@@ -489,7 +633,7 @@ export interface FindingProps {
       notes: string;
       checkid: string;
       provider: string;
-      severity: "informational" | "low" | "medium" | "high" | "critical";
+      severity: Severity;
       checktype: string[];
       dependson: string[];
       relatedto: string[];
@@ -566,6 +710,8 @@ export interface FindingProps {
         type: string;
         inserted_at: string;
         updated_at: string;
+        details: string | null;
+        partition: string | null;
       };
       relationships: {
         provider: {
@@ -638,5 +784,5 @@ export interface UserProps {
   name: string;
   role: string;
   dateAdded: string;
-  status: "active" | "inactive";
+  status: UserStatus;
 }

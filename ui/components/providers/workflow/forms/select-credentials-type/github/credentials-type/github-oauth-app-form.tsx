@@ -2,7 +2,7 @@
 
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 export const GitHubOAuthAppForm = ({ control }: { control: Control<any> }) => {
@@ -16,7 +16,7 @@ export const GitHubOAuthAppForm = ({ control }: { control: Control<any> }) => {
           Please provide your GitHub OAuth App token.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.OAUTH_APP_TOKEN}
         type="password"
@@ -25,9 +25,6 @@ export const GitHubOAuthAppForm = ({ control }: { control: Control<any> }) => {
         placeholder="Enter your GitHub OAuth App token"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.OAUTH_APP_TOKEN]
-        }
       />
     </>
   );

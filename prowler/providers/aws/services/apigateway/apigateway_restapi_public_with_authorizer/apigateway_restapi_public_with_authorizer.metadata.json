@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayRestApi",
+  "ResourceGroup": "api_gateway",
   "Description": "**API Gateway REST APIs** exposed to the Internet are evaluated for an attached **authorizer** that enforces caller identity (Lambda authorizer or Cognito user pool) on method invocations.\n\nFocus is on whether public endpoints require authenticated requests rather than accepting anonymous calls.",
   "Risk": "Without an **authorizer** on a public API, anonymous callers can:\n- Read or alter data (confidentiality/integrity)\n- Trigger backend actions, impacting systems\n- Abuse traffic, degrading availability and inflating costs\n\nEndpoint enumeration also enables broader discovery and lateral movement.",
   "RelatedUrl": "",

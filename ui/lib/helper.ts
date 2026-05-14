@@ -1,11 +1,16 @@
 import {
   getComplianceCsv,
+  getCompliancePdfReport,
   getExportsZip,
-  getThreatScorePdf,
+  type ScanBinaryResult,
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
+import {
+  COMPLIANCE_REPORT_DISPLAY_NAMES,
+  type ComplianceReportType,
+} from "@/lib/compliance/compliance-report-types";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
 export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
@@ -145,12 +150,12 @@ export const downloadScanZip = async (
  * Generic function to download a file from base64 data
  */
 const downloadFile = async (
-  result: any,
+  result: ScanBinaryResult,
   outputType: string,
   successMessage: string,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
-  if (result?.pending) {
+  if ("pending" in result && result.pending) {
     toast({
       title: "The report is still being generated",
       description: "Please try again in a few minutes.",
@@ -158,7 +163,7 @@ const downloadFile = async (
     return;
   }
 
-  if (result?.success && result.data) {
+  if ("success" in result && result.success) {
     try {
       const binaryString = window.atob(result.data);
       const bytes = new Uint8Array(binaryString.length);
@@ -180,7 +185,7 @@ const downloadFile = async (
         title: "Download Complete",
         description: successMessage,
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Download Failed",
@@ -190,7 +195,7 @@ const downloadFile = async (
     return;
   }
 
-  if (result?.error) {
+  if ("error" in result) {
     toast({
       variant: "destructive",
       title: "Download Failed",
@@ -212,6 +217,10 @@ export const downloadComplianceCsv = async (
   complianceId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
+  toast({
+    title: "Download Started",
+    description: "Preparing the CSV report. This may take a moment.",
+  });
   const result = await getComplianceCsv(scanId, complianceId);
   await downloadFile(
     result,
@@ -221,18 +230,46 @@ export const downloadComplianceCsv = async (
   );
 };
 
-export const downloadThreatScorePdf = async (
+/**
+ * Download a compliance PDF report.
+ *
+ * The call hits ``/scans/{id}/{reportType}`` for every supported framework.
+ * For CIS — which ships multiple versions per provider — the backend only
+ * generates the PDF for the highest available version, so the call site
+ * does not need to resolve a specific variant.
+ *
+ * @param scanId - The scan ID
+ * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
+ * @param toast - Toast notification function
+ */
+export const downloadCompliancePdf = async (
   scanId: string,
+  reportType: ComplianceReportType,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
-  const result = await getThreatScorePdf(scanId);
+  const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
+  toast({
+    title: "Download Started",
+    description: `Preparing the ${reportName} PDF report. This may take a moment.`,
+  });
+  const result = await getCompliancePdfReport(scanId, reportType);
   await downloadFile(
     result,
     "application/pdf",
-    "The ThreatScore PDF report has been downloaded successfully.",
+    `The ${reportName} PDF report has been downloaded successfully.`,
     toast,
   );
 };
+
+/**
+ * @deprecated Use {@link downloadCompliancePdf} instead. Kept as a thin
+ * wrapper for callers not yet migrated.
+ */
+export const downloadComplianceReportPdf = async (
+  scanId: string,
+  reportType: ComplianceReportType,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => downloadCompliancePdf(scanId, reportType, toast);
 
 export const isGoogleOAuthEnabled =
   !!process.env.SOCIAL_GOOGLE_OAUTH_CLIENT_ID &&
@@ -251,7 +288,6 @@ export const checkTaskStatus = async (
     const task = await getTask(taskId);
 
     if (task.error) {
-      // eslint-disable-next-line no-console
       console.error(`Error retrieving task: ${task.error}`);
       return { completed: false, error: task.error };
     }
@@ -349,9 +385,8 @@ export const permissionFormFields: PermissionInfo[] = [
   },
   {
     field: "manage_providers",
-    label: "Manage Cloud Providers",
-    description:
-      "Allows configuration and management of cloud provider connections",
+    label: "Manage Providers",
+    description: "Allows configuration and management of provider connections",
   },
   {
     field: "manage_integrations",
@@ -363,6 +398,11 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "manage_scans",
     label: "Manage Scans",
     description: "Allows launching and configuring scans security scans",
+  },
+  {
+    field: "manage_alerts",
+    label: "Manage Alerts",
+    description: "Allows creating and managing custom alerts",
   },
 
   {

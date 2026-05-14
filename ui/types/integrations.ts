@@ -29,7 +29,7 @@ export interface IntegrationProps {
       // Jira specific configuration
       domain?: string;
       projects?: { [key: string]: string };
-      issue_types?: string[];
+      issue_types?: { [key: string]: string[] };
       [key: string]: unknown;
     };
     url?: string;

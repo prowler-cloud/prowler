@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                     ("kubernetes", "Kubernetes"),
                     ("m365", "M365"),
                     ("github", "GitHub"),
-                    ("oci", "Oracle Cloud Infrastructure"),
+                    ("oraclecloud", "Oracle Cloud Infrastructure"),
                     ("iac", "IaC"),
                 ],
                 default="aws",

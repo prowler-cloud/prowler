@@ -78,12 +78,13 @@
         {
           "ItemId": "cc_3_2",
           "Section": "CC3.0 - Common Criteria Related to Risk Assessment",
-          "Service": "gcr",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "gcr_container_scanning_enabled"
+        "gcr_container_scanning_enabled",
+        "gemini_api_disabled"
       ]
     },
     {
@@ -282,12 +283,13 @@
         {
           "ItemId": "cc_7_1",
           "Section": "CC7.0 - System Operations",
-          "Service": "iam",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "iam_cloud_asset_inventory_enabled"
+        "iam_cloud_asset_inventory_enabled",
+        "gemini_api_disabled"
       ]
     },
     {
@@ -421,6 +423,22 @@
       ]
     },
     {
+      "Id": "cc_9_2",
+      "Name": "CC9.2 The entity assesses and manages risks associated with vendors and business partners",
+      "Description": "Establishes Requirements for Vendor and Business Partner Engagements—The entity establishes specific requirements for a vendor and business partner engagement that includes (1) scope of services and product specifications, (2) roles and responsibilities, (3) compliance requirements, and (4) service levels. Assesses Vendor and Business Partner Risks—The entity assesses, on a periodic basis, the risks that vendors and business partners (and those entities' vendors and business partners) represent to the achievement of the entity's objectives. Assigns Responsibility and Accountability for Managing Vendors and Business Partners—The entity assigns responsibility and accountability for the management of risks associated with vendors and business partners. Establishes Communication Protocols for Vendors and Business Partners—The entity establishes communication and resolution protocols for service or product issues related to vendors and business partners. Establishes Exception Handling Procedures From Vendors and Business Partners —The entity establishes exception handling procedures for service or product issues related to vendors and business partners. Assesses Vendor and Business Partner Performance—The entity periodically assesses the performance of vendors and business partners. Implements Procedures for Addressing Issues Identified During Vendor and Business Partner Assessments—The entity implements procedures for addressing issues identified with vendor and business partner relationships. Implements Procedures for Terminating Vendor and Business Partner Relationships — The entity implements procedures for terminating vendor and business partner relationships. Obtains Confidentiality Commitments from Vendors and Business Partners—The entity obtains confidentiality commitments that are consistent with the entity's confidentiality commitments and requirements from vendors and business partners who have access to confidential information. Assesses Compliance With Confidentiality Commitments of Vendors and Business Partners — On a periodic and as-needed basis, the entity assesses compliance by vendors and business partners with the entity's confidentiality commitments and requirements. Obtains Privacy Commitments from Vendors and Business Partners—The entity obtains privacy commitments, consistent with the entity's privacy commitments and requirements, from vendors and business partners who have access to personal information. Assesses Compliance with Privacy Commitments of Vendors and Business Partners— On a periodic and as-needed basis, the entity assesses compliance by vendors and business partners with the entity's privacy commitments and requirements and takes corrective action as necessary.",
+      "Attributes": [
+        {
+          "ItemId": "cc_9_2",
+          "Section": "CC9.0 - Risk Mitigation",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "gemini_api_disabled"
+      ]
+    },
+    {
       "Id": "cc_a_1_1",
       "Name": "A1.2 The entity authorizes, designs, develops or acquires, implements, operates, approves, maintains, and monitors environmental protections, software, data back-up processes, and recovery infrastructure to meet its objectives",
       "Description": "Measures Current Usage - The use of the system components is measured to establish a baseline for capacity management and to use when evaluating the risk of impaired availability due to capacity constraints. Forecasts Capacity - The expected average and peak use of system components is forecasted and compared to system capacity and associated tolerances. Forecasting considers capacity in the event of the failure of system components that constrain capacity. Makes Changes Based on Forecasts - The system change management process is initiated when forecasted usage exceeds capacity tolerances.",
@@ -491,6 +509,87 @@
       ],
       "Checks": [
         "cloudstorage_bucket_log_retention_policy_lock"
+      ]
+    },
+    {
+      "Id": "pi_1_2",
+      "Name": "PI1.2 System inputs are measured and recorded completely, accurately, and timely to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements policies and procedures over system inputs, including controls over completeness and accuracy, to result in products, services, and reporting to meet the entity's objectives. This includes defining accuracy targets, monitoring input quality, and creating detailed records of each input event.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_2",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "logging_sink_created",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "pi_1_3",
+      "Name": "PI1.3 Data is processed completely, accurately, and timely as authorized to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to ensure data is processed completely, accurately, and timely. This includes defining processing specifications, identifying processing activities, detecting and correcting errors throughout processing, recording processing activities with accurate logs, and ensuring completeness and timeliness of processing.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_3",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "pi_1_4",
+      "Name": "PI1.4 System outputs are complete, accurate, distributed only to intended parties, and retained to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to ensure system outputs are delivered to authorized recipients in the correct format and protected against unauthorized access, modification, theft, destruction, or corruption. This includes output encryption, access controls, and audit trails for output delivery.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_4",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "compute_instance_confidential_computing_enabled",
+        "pubsub_topic_encryption_with_cmk"
+      ]
+    },
+    {
+      "Id": "pi_1_5",
+      "Name": "PI1.5 Stored data is maintained complete, accurate, and protected from unauthorized modification to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to protect stored inputs, items in processing, and outputs from theft, destruction, corruption, or deterioration. This includes data encryption at rest, key management, backup and recovery procedures, access controls, and data integrity validation.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_5",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "cloudsql_instance_automated_backups",
+        "compute_instance_encryption_with_csek_enabled",
+        "kms_key_rotation_enabled",
+        "dataproc_encrypted_with_cmks_disabled"
       ]
     }
   ]

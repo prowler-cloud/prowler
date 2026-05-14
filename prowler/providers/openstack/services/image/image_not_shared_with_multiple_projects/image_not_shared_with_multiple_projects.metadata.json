@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "image_not_shared_with_multiple_projects",
+  "CheckTitle": "Images are not shared with an excessive number of projects",
+  "CheckType": [],
+  "ServiceName": "image",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OS::Glance::WebImage",
+  "ResourceGroup": "storage",
+  "Description": "**OpenStack images** are evaluated to verify that **shared images do not exceed a configurable member threshold** (default: 5 accepted members). Images shared with many projects amplify the blast radius of any vulnerability found in the image, as all consuming projects would be affected. Best practices recommend limiting image sharing to the minimum set of projects required.",
+  "Risk": "Images shared with many projects amplify the blast radius of image vulnerabilities, backdoors, or misconfigurations. If a widely shared image is compromised, all projects using it are affected. Oversharing also increases the risk of unauthorized access to proprietary software or sensitive OS configurations embedded in images.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/security-guide/image-storage/checklist.html",
+    "https://docs.openstack.org/glance/latest/admin/manage-images.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "openstack image remove project <image_id> <project_id>",
+      "NativeIaC": "",
+      "Other": "**Reduce image sharing:**\n1. List shared members: `openstack image member list <image_id>`\n2. Review each member project for continued need\n3. Remove unnecessary members: `openstack image remove project <image_id> <project_id>`\n4. Consider publishing separate images per team instead of oversharing",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review shared image membership regularly and remove projects that no longer need access. Consider creating separate images per team or environment instead of sharing a single image widely. The threshold is configurable via audit_config 'image_sharing_threshold' (default: 5).",
+      "Url": "https://hub.prowler.com/check/image_not_shared_with_multiple_projects"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check only evaluates images with visibility='shared'. Private, public, and community images are automatically passed. Only members with status='accepted' count toward the threshold. The default threshold of 5 can be customized via audit_config 'image_sharing_threshold'."
+}

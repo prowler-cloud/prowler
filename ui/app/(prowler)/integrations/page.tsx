@@ -1,9 +1,9 @@
-import React from "react";
-
 import {
+  ApiKeyLinkCard,
   JiraIntegrationCard,
   S3IntegrationCard,
   SecurityHubIntegrationCard,
+  SsoLinkCard,
 } from "@/components/integrations";
 import { ContentLayout } from "@/components/ui";
 
@@ -27,6 +27,12 @@ export default async function Integrations() {
 
           {/* Jira Integration */}
           <JiraIntegrationCard />
+
+          {/* SSO Configuration - redirects to Profile */}
+          <SsoLinkCard />
+
+          {/* API Keys - redirects to Profile */}
+          <ApiKeyLinkCard />
         </div>
       </div>
     </ContentLayout>

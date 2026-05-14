@@ -6,10 +6,12 @@ import pytest
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS, OperationalError
 from freezegun import freeze_time
+from psycopg2 import sql as psycopg2_sql
 from rest_framework_json_api.serializers import ValidationError
 
 from api.db_utils import (
     POSTGRES_TENANT_VAR,
+    PostgresEnumMigration,
     _should_create_index_on_partition,
     batch_delete,
     create_objects_in_batches,
@@ -550,6 +552,36 @@ class TestRlsTransaction:
                                     mock_sleep.assert_any_call(1.0)
                                     assert mock_logger.info.call_count == 2
 
+    def test_rls_transaction_operational_error_inside_context_no_retry(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Test OperationalError raised inside context does not retry."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic") as mock_atomic:
+                    mock_atomic.return_value.__enter__.return_value = None
+                    mock_atomic.return_value.__exit__.return_value = False
+
+                    with patch("api.db_utils.time.sleep") as mock_sleep:
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with pytest.raises(OperationalError):
+                                    with rls_transaction(tenant_id):
+                                        raise OperationalError("Conflict with recovery")
+
+                                mock_sleep.assert_not_called()
+
     def test_rls_transaction_max_three_attempts_for_replica(
         self, tenants_fixture, enable_read_replica
     ):
@@ -578,6 +610,38 @@ class TestRlsTransaction:
                                         pass
 
                                 assert mock_atomic.call_count == 3
+
+    def test_rls_transaction_replica_no_retry_when_disabled(
+        self, tenants_fixture, enable_read_replica
+    ):
+        """Test replica retry is disabled when retry_on_replica=False."""
+        tenant = tenants_fixture[0]
+        tenant_id = str(tenant.id)
+
+        with patch("api.db_utils.get_read_db_alias", return_value=enable_read_replica):
+            with patch("api.db_utils.connections") as mock_connections:
+                mock_conn = MagicMock()
+                mock_cursor = MagicMock()
+                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+                mock_connections.__getitem__.return_value = mock_conn
+                mock_connections.__contains__.return_value = True
+
+                with patch("api.db_utils.transaction.atomic") as mock_atomic:
+                    mock_atomic.side_effect = OperationalError("Replica error")
+
+                    with patch("api.db_utils.time.sleep") as mock_sleep:
+                        with patch(
+                            "api.db_utils.set_read_db_alias", return_value="token"
+                        ):
+                            with patch("api.db_utils.reset_read_db_alias"):
+                                with pytest.raises(OperationalError):
+                                    with rls_transaction(
+                                        tenant_id, retry_on_replica=False
+                                    ):
+                                        pass
+
+                                assert mock_atomic.call_count == 1
+                                mock_sleep.assert_not_called()
 
     def test_rls_transaction_only_one_attempt_for_primary(self, tenants_fixture):
         """Test only 1 attempt for primary database."""
@@ -848,3 +912,61 @@ class TestRlsTransaction:
             cursor.execute("SELECT 1")
             result = cursor.fetchone()
             assert result[0] == 1
+
+
+class TestPostgresEnumMigration:
+    """
+    Verify that PostgresEnumMigration builds DDL statements via psycopg2.sql
+    so that enum type names and values are always properly quoted — preventing
+    SQL injection through f-string interpolation.
+    """
+
+    def _make_mock_schema_editor(self):
+        mock_cursor = MagicMock()
+        mock_conn = MagicMock()
+        mock_conn.cursor.return_value.__enter__ = MagicMock(return_value=mock_cursor)
+        mock_conn.cursor.return_value.__exit__ = MagicMock(return_value=False)
+        mock_schema_editor = MagicMock()
+        mock_schema_editor.connection = mock_conn
+        return mock_schema_editor, mock_cursor
+
+    def test_create_enum_type_generates_correct_sql(self):
+        """create_enum_type builds a proper CREATE TYPE … AS ENUM via psycopg2.sql."""
+        migration = PostgresEnumMigration("my_enum", ("val_a", "val_b"))
+        schema_editor, mock_cursor = self._make_mock_schema_editor()
+
+        migration.create_enum_type(apps=None, schema_editor=schema_editor)
+
+        mock_cursor.execute.assert_called_once()
+        query_arg = mock_cursor.execute.call_args[0][0]
+        assert isinstance(
+            query_arg, psycopg2_sql.Composable
+        ), "create_enum_type must pass a psycopg2.sql.Composable, not a raw string."
+        # Verify the composed SQL structure: CREATE TYPE <Identifier> AS ENUM (<Literals>)
+        parts = query_arg.seq
+        assert parts[0] == psycopg2_sql.SQL("CREATE TYPE ")
+        assert isinstance(parts[1], psycopg2_sql.Identifier)
+        assert parts[1].strings == ("my_enum",)
+        assert parts[2] == psycopg2_sql.SQL(" AS ENUM (")
+        # The enum values are a Composed of Literal items joined by ", "
+        enum_literals = [p for p in parts[3].seq if isinstance(p, psycopg2_sql.Literal)]
+        assert [lit._wrapped for lit in enum_literals] == ["val_a", "val_b"]
+        assert parts[4] == psycopg2_sql.SQL(")")
+
+    def test_drop_enum_type_generates_correct_sql(self):
+        """drop_enum_type builds a proper DROP TYPE via psycopg2.sql."""
+        migration = PostgresEnumMigration("my_enum", ("val_a",))
+        schema_editor, mock_cursor = self._make_mock_schema_editor()
+
+        migration.drop_enum_type(apps=None, schema_editor=schema_editor)
+
+        mock_cursor.execute.assert_called_once()
+        query_arg = mock_cursor.execute.call_args[0][0]
+        assert isinstance(
+            query_arg, psycopg2_sql.Composable
+        ), "drop_enum_type must pass a psycopg2.sql.Composable, not a raw string."
+        # Verify the composed SQL structure: DROP TYPE <Identifier>
+        parts = query_arg.seq
+        assert parts[0] == psycopg2_sql.SQL("DROP TYPE ")
+        assert isinstance(parts[1], psycopg2_sql.Identifier)
+        assert parts[1].strings == ("my_enum",)

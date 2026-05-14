@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Compartment",
+  "ResourceGroup": "governance",
   "Description": "**OCI Cloud Guard** status in the tenancy's root compartment is evaluated, expecting `ENABLED` to indicate the service is active for organization-wide detection and response.",
   "Risk": "Without **Cloud Guard** at the root, signals across compartments can be missed, allowing misconfigurations and malicious activity to persist. This undermines confidentiality (undetected data access), integrity (unauthorized changes), and availability (ongoing abuse without automated response).",
   "RelatedUrl": "",

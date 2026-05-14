@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCodeBuildProject",
+  "ResourceGroup": "devops",
   "Description": "**AWS CodeBuild projects** are assessed for recent activity using the last build invocation timestamp. Projects not invoked within `90 days` or never built are treated as **inactive**.",
   "Risk": "**Inactive projects** increase **attack surface**. Dormant webhooks or **source credentials** can be abused, and attached **IAM roles** may retain excessive permissions. Stale configs can expose **secrets** in env vars or logs, threatening build **integrity** and data **confidentiality**, while adding avoidable cost and operational sprawl.",
   "RelatedUrl": "",

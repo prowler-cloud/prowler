@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "directory_super_admin_count",
+  "CheckTitle": "Domain has 2-4 super administrators",
+  "CheckType": [],
+  "ServiceName": "directory",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Google Workspace domain has between **2 and 4 super administrators**.\n\nHaving too few super admins creates a **single point of failure** and administrative access issues if the only admin is unavailable. Having too many super admins increases the **attack surface** and the risk of unauthorized access to critical administrative functions.",
+  "Risk": "Having fewer than 2 super administrators creates a **single point of failure** and may prevent administrative access in emergencies.\n\nHaving more than 4 super administrators increases the security risk by expanding the **attack surface** for compromised accounts with full **administrative privileges**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/users/prebuilt-administrator-roles",
+    "https://support.google.com/a/answer/9011373"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Directory** > **Users**\n3. Click on a user to view their details\n4. Click **Admin roles and privileges**\n5. To add super admin: Check **Super Admin** role and click **Save**\n6. To remove super admin: Uncheck **Super Admin** role and click **Save**\n\nEnsure your domain has **2-4 super administrators** for operational resilience and security. For users requiring limited administrative access, assign specific delegated admin roles instead of super admin privileges.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review the list of super administrators in your Google Workspace Admin console. Add more super admins if you have fewer than 2, or remove unnecessary super admin privileges if you have more than 4. Consider using delegated admin roles for users who need limited administrative capabilities.",
+      "Url": "https://hub.prowler.com/check/directory_super_admin_count"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

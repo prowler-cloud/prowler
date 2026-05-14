@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "network",
   "Description": "**AWS Direct Connect** connectivity is provisioned with **connection and location redundancy**-multiple connections spread across **at least two distinct Direct Connect locations** in each Region.",
   "Risk": "Missing **connection/location redundancy** creates a **single point of failure**, degrading **availability**. A router, fiber, or site outage can sever private paths to AWS, stalling app traffic, data replication, and admin access, leading to timeouts or extended downtime until alternate paths are restored.",
   "RelatedUrl": "",

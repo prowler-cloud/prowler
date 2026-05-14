@@ -13,6 +13,8 @@ env:
   PROWLER_VERSION: ${{ github.event.release.tag_name }}
   BASE_BRANCH: master
 
+permissions: {}
+
 jobs:
   detect-release-type:
     runs-on: ubuntu-latest
@@ -26,6 +28,11 @@ jobs:
       minor_version: ${{ steps.detect.outputs.minor_version }}
       patch_version: ${{ steps.detect.outputs.patch_version }}
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Detect release type and parse version
         id: detect
         run: |
@@ -66,19 +73,29 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Calculate next minor version
         run: |
-          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
-          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
+          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
+          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
 
           NEXT_MINOR_VERSION=${MAJOR_VERSION}.$((MINOR_VERSION + 1)).0
           echo "NEXT_MINOR_VERSION=${NEXT_MINOR_VERSION}" >> "${GITHUB_ENV}"
 
           echo "Current version: $PROWLER_VERSION"
           echo "Next minor version: $NEXT_MINOR_VERSION"
+        env:
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
 
       - name: Bump versions in files for master
         run: |
@@ -86,21 +103,20 @@ jobs:
 
           sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_MINOR_VERSION}\"|" pyproject.toml
           sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_MINOR_VERSION}\"|" prowler/config/config.py
-          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_MINOR_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
 
       - name: Create PR for next minor version to master
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: master
-          commit-message: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
-          branch: version-bump-to-v${{ env.NEXT_MINOR_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
-          labels: no-changelog
+          commit-message: 'chore(sdk): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
+          branch: sdk-version-bump-to-v${{ env.NEXT_MINOR_VERSION }}
+          title: 'chore(sdk): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
@@ -111,14 +127,15 @@ jobs:
             By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
 
       - name: Checkout version branch
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: v${{ needs.detect-release-type.outputs.major_version }}.${{ needs.detect-release-type.outputs.minor_version }}
+          persist-credentials: false
 
       - name: Calculate first patch version
         run: |
-          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
-          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
+          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
+          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
 
           FIRST_PATCH_VERSION=${MAJOR_VERSION}.${MINOR_VERSION}.1
           VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
@@ -128,6 +145,9 @@ jobs:
 
           echo "First patch version: $FIRST_PATCH_VERSION"
           echo "Version branch: $VERSION_BRANCH"
+        env:
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
 
       - name: Bump versions in files for version branch
         run: |
@@ -135,21 +155,20 @@ jobs:
 
           sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${FIRST_PATCH_VERSION}\"|" pyproject.toml
           sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${FIRST_PATCH_VERSION}\"|" prowler/config/config.py
-          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${FIRST_PATCH_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
 
       - name: Create PR for first patch version to version branch
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: ${{ env.VERSION_BRANCH }}
-          commit-message: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
-          branch: version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
-          labels: no-changelog
+          commit-message: 'chore(sdk): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
+          branch: sdk-version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
+          title: 'chore(sdk): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 
@@ -168,14 +187,21 @@ jobs:
       contents: read
       pull-requests: write
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Calculate next patch version
         run: |
-          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
-          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
-          PATCH_VERSION=${{ needs.detect-release-type.outputs.patch_version }}
+          MAJOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION}
+          MINOR_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION}
+          PATCH_VERSION=${NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_PATCH_VERSION}
 
           NEXT_PATCH_VERSION=${MAJOR_VERSION}.${MINOR_VERSION}.$((PATCH_VERSION + 1))
           VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
@@ -186,6 +212,10 @@ jobs:
           echo "Current version: $PROWLER_VERSION"
           echo "Next patch version: $NEXT_PATCH_VERSION"
           echo "Target branch: $VERSION_BRANCH"
+        env:
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MAJOR_VERSION: ${{ needs.detect-release-type.outputs.major_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_MINOR_VERSION: ${{ needs.detect-release-type.outputs.minor_version }}
+          NEEDS_DETECT_RELEASE_TYPE_OUTPUTS_PATCH_VERSION: ${{ needs.detect-release-type.outputs.patch_version }}
 
       - name: Bump versions in files for version branch
         run: |
@@ -193,21 +223,20 @@ jobs:
 
           sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_PATCH_VERSION}\"|" pyproject.toml
           sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_PATCH_VERSION}\"|" prowler/config/config.py
-          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_PATCH_VERSION}|" .env
 
           echo "Files modified:"
           git --no-pager diff
 
       - name: Create PR for next patch version to version branch
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           base: ${{ env.VERSION_BRANCH }}
-          commit-message: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
-          branch: version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
-          title: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
-          labels: no-changelog
+          commit-message: 'chore(sdk): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
+          branch: sdk-version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
+          title: 'chore(sdk): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
+          labels: no-changelog,skip-sync
           body: |
             ### Description
 

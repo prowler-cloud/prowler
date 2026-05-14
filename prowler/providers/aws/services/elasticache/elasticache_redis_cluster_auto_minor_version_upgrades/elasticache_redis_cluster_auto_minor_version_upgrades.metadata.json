@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "**ElastiCache for Redis** replication groups are configured to apply **automatic minor engine upgrades** using `AutoMinorVersionUpgrade`",
   "Risk": "Without **automatic minor upgrades**, Redis nodes may run versions with known CVEs and stability bugs, enabling unauthorized access, replication inconsistencies, or crashes. Delayed patching widens the attack window and lengthens maintenance, degrading confidentiality, integrity, and availability.",
   "RelatedUrl": "",

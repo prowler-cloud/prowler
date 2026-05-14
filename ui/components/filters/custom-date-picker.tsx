@@ -1,101 +1,121 @@
 "use client";
 
-import { Button, ButtonGroup } from "@heroui/button";
-import { DatePicker } from "@heroui/date-picker";
-import {
-  getLocalTimeZone,
-  startOfMonth,
-  startOfWeek,
-  today,
-} from "@internationalized/date";
-import { useLocale } from "@react-aria/i18n";
+import { format } from "date-fns";
+import { CalendarIcon, ChevronDown } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useRef } from "react";
+import { useState } from "react";
 
+import { Calendar } from "@/components/shadcn/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/shadcn/popover";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { toLocalDateString } from "@/lib/date-utils";
+import { cn } from "@/lib/utils";
 
-export const CustomDatePicker = () => {
+/** Batch mode: caller controls both the pending date value and the notification callback (all-or-nothing). */
+interface CustomDatePickerBatchProps {
+  /**
+   * Called instead of updating the URL directly.
+   * Receives the filter key ("inserted_at") and the formatted date string (YYYY-MM-DD).
+   */
+  onBatchChange: (filterKey: string, value: string) => void;
+  /**
+   * Controlled date value from the parent (pending state).
+   * Expected format: YYYY-MM-DD (or any value parseable by `new Date()`).
+   */
+  value: string | undefined;
+}
+
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface CustomDatePickerInstantProps {
+  onBatchChange?: never;
+  value?: never;
+}
+
+type CustomDatePickerProps =
+  | CustomDatePickerBatchProps
+  | CustomDatePickerInstantProps;
+
+const parseDate = (raw: string | null | undefined): Date | undefined => {
+  if (!raw) return undefined;
+  try {
+    // Use T00:00:00 suffix to avoid timezone offset shifting the date
+    return new Date(raw + "T00:00:00");
+  } catch {
+    return undefined;
+  }
+};
+
+export const CustomDatePicker = ({
+  onBatchChange,
+  value: valueProp,
+}: CustomDatePickerProps = {}) => {
   const searchParams = useSearchParams();
   const { updateFilter } = useUrlFilters();
+  const [open, setOpen] = useState(false);
 
-  const [value, setValue] = React.useState(() => {
-    const dateParam = searchParams.get("filter[inserted_at]");
-    return dateParam ? today(getLocalTimeZone()) : null;
-  });
+  // Derive the displayed date directly from the controlled source of truth:
+  // - Batch mode: `valueProp` from parent (pending state)
+  // - Instant mode: `searchParams` from URL (re-renders automatically on URL change)
+  const date =
+    valueProp !== undefined
+      ? parseDate(valueProp)
+      : parseDate(searchParams.get("filter[inserted_at]"));
 
-  const { locale } = useLocale();
-
-  const now = today(getLocalTimeZone());
-  const nextWeek = startOfWeek(now.add({ weeks: 1 }), locale);
-  const nextMonth = startOfMonth(now.add({ months: 1 }));
-
-  const applyDateFilter = useCallback(
-    (date: any) => {
-      if (date) {
-        updateFilter("inserted_at", date.toString());
-      } else {
-        updateFilter("inserted_at", null);
-      }
-    },
-    [updateFilter],
-  );
-
-  const initialRender = useRef(true);
-
-  useEffect(() => {
-    if (initialRender.current) {
-      initialRender.current = false;
+  const applyDateFilter = (selectedDate: Date | undefined) => {
+    if (onBatchChange) {
+      // Batch mode: notify caller instead of updating URL
+      onBatchChange("inserted_at", toLocalDateString(selectedDate) ?? "");
       return;
     }
-    const params = new URLSearchParams(searchParams.toString());
-    if (params.size === 0) {
-      setValue(null);
-    }
-  }, [searchParams]);
 
-  const handleDateChange = (newValue: any) => {
-    setValue(newValue);
-    applyDateFilter(newValue);
+    // Instant mode (default): push to URL immediately
+    if (selectedDate) {
+      // Format as YYYY-MM-DD for the API
+      updateFilter("inserted_at", toLocalDateString(selectedDate) ?? "");
+    } else {
+      updateFilter("inserted_at", null);
+    }
+  };
+
+  const handleDateSelect = (newDate: Date | undefined) => {
+    applyDateFilter(newDate);
+    setOpen(false);
   };
 
   return (
-    <div className="flex w-full flex-col md:gap-2">
-      <DatePicker
-        aria-label="Select a Date"
-        label="Date"
-        labelPlacement="inside"
-        CalendarTopContent={
-          <ButtonGroup
-            fullWidth
-            className="bg-content1 dark:bg-prowler-blue-400 [&>button]:border-default-200/60 [&>button]:text-default-500 px-3 pt-3 pb-2"
-            radius="full"
-            size="sm"
-            variant="flat"
-          >
-            <Button onPress={() => handleDateChange(now)}>Today</Button>
-            <Button onPress={() => handleDateChange(nextWeek)}>
-              Next week
-            </Button>
-            <Button onPress={() => handleDateChange(nextMonth)}>
-              Next month
-            </Button>
-          </ButtonGroup>
-        }
-        calendarProps={{
-          focusedValue: value || undefined,
-          onFocusChange: setValue,
-          nextButtonProps: {
-            variant: "bordered",
-          },
-          prevButtonProps: {
-            variant: "bordered",
-          },
-        }}
-        value={value}
-        onChange={handleDateChange}
-        size="sm"
-        variant="flat"
-      />
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          className={cn(
+            "border-border-input-primary bg-bg-input-primary text-bg-button-secondary dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex h-[52px] w-full items-center justify-between gap-2 rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+            !date && "text-bg-button-secondary",
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <CalendarIcon className="text-bg-button-secondary size-5 opacity-70" />
+            {date ? format(date, "PPP") : "Pick a date"}
+          </span>
+          <ChevronDown
+            className={cn(
+              "text-bg-button-secondary size-6 shrink-0 opacity-70 transition-transform duration-200",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="border-border-input-primary bg-bg-input-primary w-auto p-0"
+        align="start"
+      >
+        <Calendar mode="single" selected={date} onSelect={handleDateSelect} />
+      </PopoverContent>
+    </Popover>
   );
 };

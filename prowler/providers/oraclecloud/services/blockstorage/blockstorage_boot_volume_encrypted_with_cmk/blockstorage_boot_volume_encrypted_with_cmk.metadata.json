@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "BootVolume",
+  "ResourceGroup": "storage",
   "Description": "Boot volumes use **customer-managed keys (CMEK)** when a Vault key is assigned (`kms_key_id` present), rather than default Oracle-managed encryption.",
   "Risk": "Without **CMEK**, control over encryption is limited: you cannot rapidly disable or rotate keys to contain compromise, weakening **confidentiality** of boot data and backups. Provider-managed keys reduce **separation of duties** and **auditability**, hindering incident response and compliance for sensitive systems.",
   "RelatedUrl": "",

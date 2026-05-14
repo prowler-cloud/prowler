@@ -32,6 +32,18 @@ def stdout_report(finding, color, verbose, status, fix):
         details = finding.check_metadata.CheckID
     if finding.check_metadata.Provider == "oraclecloud":
         details = finding.region
+    if finding.check_metadata.Provider == "alibabacloud":
+        details = finding.region
+    if finding.check_metadata.Provider == "openstack":
+        details = finding.region
+    if finding.check_metadata.Provider == "cloudflare":
+        details = finding.zone_name
+    if finding.check_metadata.Provider == "googleworkspace":
+        details = finding.location
+    if finding.check_metadata.Provider == "vercel":
+        details = finding.region
+    if finding.check_metadata.Provider == "okta":
+        details = finding.region
 
     if (verbose or fix) and (not status or finding.status in status):
         if finding.muted:

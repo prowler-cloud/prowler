@@ -1,12 +1,60 @@
 "use client";
 
 import { useState } from "react";
-import { Cell, Label, Pie, PieChart, Tooltip } from "recharts";
+import {
+  Cell,
+  Label,
+  Pie,
+  PieChart,
+  Sector,
+  type SectorProps,
+  Tooltip,
+} from "recharts";
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 
 import { ChartLegend } from "./shared/chart-legend";
 import { DonutDataPoint } from "./types";
+
+const CHART_COLORS = {
+  emptyState: "var(--border-neutral-tertiary)",
+};
+
+interface TooltipPayloadData {
+  percentage?: number;
+  change?: number;
+  color?: string;
+}
+
+interface TooltipPayloadEntry {
+  name: string;
+  color?: string;
+  payload?: TooltipPayloadData;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+}
+
+interface LegendPayloadData {
+  percentage?: number;
+}
+
+interface LegendPayloadEntry {
+  value: string;
+  color: string;
+  payload: LegendPayloadData;
+}
+
+interface CustomLegendProps {
+  payload: LegendPayloadEntry[];
+}
+
+interface CenterLabel {
+  value: string | number;
+  label: string;
+}
 
 interface DonutChartProps {
   data: DonutDataPoint[];
@@ -14,13 +62,11 @@ interface DonutChartProps {
   innerRadius?: number;
   outerRadius?: number;
   showLegend?: boolean;
-  centerLabel?: {
-    value: string | number;
-    label: string;
-  };
+  centerLabel?: CenterLabel;
+  onSegmentClick?: (dataPoint: DonutDataPoint, index: number) => void;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   const entry = payload[0];
@@ -57,9 +103,9 @@ const CustomTooltip = ({ active, payload }: any) => {
   );
 };
 
-const CustomLegend = ({ payload }: any) => {
-  const items = payload.map((entry: any) => ({
-    label: `${entry.value} (${entry.payload.percentage}%)`,
+const CustomLegend = ({ payload }: CustomLegendProps) => {
+  const items = payload.map((entry: LegendPayloadEntry) => ({
+    label: `${entry.value} (${entry.payload.percentage ?? 0}%)`,
     color: entry.color,
   }));
 
@@ -72,6 +118,7 @@ export function DonutChart({
   outerRadius = 86,
   showLegend = true,
   centerLabel,
+  onSegmentClick,
 }: DonutChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -102,8 +149,8 @@ export function DonutChart({
     {
       name: "No data",
       value: 1,
-      fill: "var(--border-neutral-tertiary)",
-      color: "var(--border-neutral-tertiary)",
+      fill: CHART_COLORS.emptyState,
+      color: CHART_COLORS.emptyState,
       percentage: 0,
       change: undefined,
     },
@@ -117,6 +164,22 @@ export function DonutChart({
     },
   }));
 
+  // Reserve a small ring at the outer edge so the active sector can grow into
+  // it without being clipped by the SVG viewport (consumers like
+  // RequirementsStatusCard wrap the chart in a fixed-size box where
+  // outerRadius == container/2 leaves no room to expand).
+  const ACTIVE_GROW = 4;
+  const restingOuterRadius = Math.max(
+    innerRadius + 1,
+    outerRadius - ACTIVE_GROW,
+  );
+
+  // Grows the hovered slice up to the original outerRadius so tiny segments
+  // (e.g. 1% fail) are easy to see and target with the cursor.
+  const renderActiveShape = (props: SectorProps) => (
+    <Sector {...props} outerRadius={(props.outerRadius ?? 0) + ACTIVE_GROW} />
+  );
+
   return (
     <>
       <ChartContainer
@@ -124,27 +187,48 @@ export function DonutChart({
         className="mx-auto aspect-square max-h-[350px]"
       >
         <PieChart>
-          {!isEmpty && <Tooltip content={<CustomTooltip />} />}
+          {!isEmpty && (
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={false}
+              wrapperStyle={{ zIndex: 1000 }}
+            />
+          )}
           <Pie
             data={isEmpty ? emptyData : chartData}
             dataKey="value"
             nameKey="name"
             innerRadius={innerRadius}
-            outerRadius={outerRadius}
+            outerRadius={restingOuterRadius}
             strokeWidth={0}
             paddingAngle={0}
+            // `?? undefined` — Recharts treats `null` as truthy in some paths
+            // and `||` would clobber index 0 (e.g. the "Pass" pillar).
+            activeIndex={hoveredIndex ?? undefined}
+            activeShape={renderActiveShape}
+            onMouseEnter={(_, index) => {
+              if (!isEmpty) setHoveredIndex(index);
+            }}
+            onMouseLeave={() => setHoveredIndex(null)}
           >
             {(isEmpty ? emptyData : chartData).map((entry, index) => {
               const opacity =
                 hoveredIndex === null ? 1 : hoveredIndex === index ? 1 : 0.5;
+              const isClickable = !isEmpty && onSegmentClick;
               return (
                 <Cell
                   key={`cell-${index}`}
                   fill={entry.fill}
                   opacity={opacity}
-                  style={{ transition: "opacity 0.2s" }}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
+                  className={isClickable ? "cursor-pointer" : ""}
+                  style={{
+                    transition: "opacity 0.2s",
+                  }}
+                  onClick={() => {
+                    if (isClickable) {
+                      onSegmentClick(data[index], index);
+                    }
+                  }}
                 />
               );
             })}

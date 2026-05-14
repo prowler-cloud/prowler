@@ -82,7 +82,7 @@ def test_check_provider_connection_exception(
     [
         {
             "name": "OpenAI",
-            "api_key_decoded": "sk-test1234567890T3BlbkFJtest1234567890",
+            "api_key_decoded": "sk-fake-test-key-for-unit-testing-only",
             "model": "gpt-4o",
             "temperature": 0,
             "max_tokens": 4000,

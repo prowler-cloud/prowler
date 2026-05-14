@@ -1,7 +1,10 @@
 from uuid import UUID
 
-# Service management API
+# Conditional Access target resource identifiers
+# (Graph API includeApplications values)
 WINDOWS_AZURE_SERVICE_MANAGEMENT_API = "797f4846-ba00-4fd7-ba43-dac1f8f63013"
+# Named app group — Graph API returns this literal string, not a GUID
+MICROSOFT_ADMIN_PORTALS = "MicrosoftAdminPortals"
 
 # Authorization policy roles
 GUEST_USER_ACCESS_NO_RESTRICTICTED = UUID("a0b1b346-4d3e-4e8b-98f8-753987be4970")

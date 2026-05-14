@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "directory_super_admin_only_admin_roles",
+  "CheckTitle": "All super admin accounts are used only for super admin activities",
+  "CheckType": [],
+  "ServiceName": "directory",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Super admin accounts do not also hold **additional admin roles** such as Groups Admin, User Management Admin, etc. Each super administrator has a separate, non-admin account for daily activities, following the **principle of least privilege**.",
+  "Risk": "A super admin account that also holds additional admin roles increases the **attack surface** for phishing and credential theft. Compromising a single dual-role account grants full administrative access, bypassing **separation of duties** and enabling unauthorized changes to users, billing, and security settings.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/users/prebuilt-administrator-roles",
+    "https://support.google.com/a/answer/9011373"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Directory** > **Users**\n3. Click on the super admin user who also has additional admin roles\n4. Click **Admin roles and privileges**\n5. Remove the additional admin roles from the super admin account\n6. Create a separate account for daily admin tasks",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Apply the principle of separation of duties by maintaining dedicated super admin accounts exclusively for privileged tasks. Daily administrative activities should be performed from separate accounts with only the delegated roles required.",
+      "Url": "https://hub.prowler.com/check/directory_super_admin_only_admin_roles"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "directory_super_admin_count"
+  ],
+  "Notes": ""
+}

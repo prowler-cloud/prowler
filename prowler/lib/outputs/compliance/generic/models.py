@@ -28,3 +28,4 @@ class GenericComplianceModel(BaseModel):
     ResourceName: str
     Framework: str
     Name: str
+    Requirements_Attributes_Comment: Optional[str] = None

@@ -626,9 +626,8 @@ class GcpProvider(Provider):
         Usage:
             >>> GcpProvider.get_projects(credentials=credentials, organization_id=organization_id)
         """
+        projects = {}
         try:
-            projects = {}
-
             if organization_id:
                 try:
                     # Initialize Cloud Asset Inventory API for recursive project retrieval
@@ -803,8 +802,7 @@ class GcpProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        finally:
-            return projects
+        return projects
 
     def update_projects_with_organizations(self):
         """

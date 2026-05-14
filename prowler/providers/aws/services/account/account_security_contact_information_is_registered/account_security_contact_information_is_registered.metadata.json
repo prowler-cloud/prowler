@@ -11,12 +11,12 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "Account settings contain a **Security alternate contact** in Alternate Contacts (name, `EmailAddress`, `PhoneNumber`) for targeted AWS security notifications.",
   "Risk": "Missing or outdated **security contact** can delay or prevent AWS advisories from reaching responders, increasing risk to:\n- Confidentiality: data exfiltration from undetected compromise\n- Integrity: unauthorized changes persist longer\n- Availability: resource abuse (e.g., cryptomining) and outages",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/account_alternate_contact",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_19/",
     "https://support.icompaas.com/support/solutions/articles/62000234161-1-2-ensure-security-contact-information-is-registered-manual-",
     "https://www.plerion.com/cloud-knowledge-base/ensure-security-contact-information-is-registered",
     "https://repost.aws/articles/ARDFbpt-bvQ8iuErnqVVcCXQ/managing-aws-organization-alternate-contacts-via-csv"

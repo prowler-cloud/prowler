@@ -10,7 +10,7 @@ class entra_policy_default_users_cannot_create_security_groups(Check):
             report = Check_Report_Azure(metadata=self.metadata(), resource=auth_policy)
             report.subscription = f"Tenant: {tenant_domain}"
             report.resource_name = getattr(auth_policy, "name", "Authorization Policy")
-            report.resource_id = getattr(auth_policy, "id", "authorizationPolicy")
+            report.resource_id = auth_policy.id
             report.status = "FAIL"
             report.status_extended = "Non-privileged users are able to create security groups via the Access Panel and the Azure administration portal."
 

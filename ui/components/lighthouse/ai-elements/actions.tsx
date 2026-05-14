@@ -2,9 +2,9 @@
 
 import type { ComponentProps } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
 
-import { Button } from "./button";
 import {
   Tooltip,
   TooltipContent,

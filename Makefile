@@ -23,7 +23,7 @@ format: ## Format Code
 
 lint: ## Lint Code
 	@echo "Running flake8..."
-	flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude contrib
+	flake8 . --ignore=E266,W503,E203,E501,W605,E128 --exclude .venv,contrib
 	@echo "Running black... "
 	black --check .
 	@echo "Running pylint..."
@@ -35,7 +35,7 @@ pypi-clean: ## Delete the distribution files
 
 pypi-build: ## Build package
 	$(MAKE) pypi-clean && \
-	poetry build
+	uv build
 
 pypi-upload: ## Upload package
 	python3 -m twine upload --repository pypi dist/*
@@ -47,13 +47,12 @@ help:     ## Show this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Build no cache
-build-no-cache-dev: 
-	docker compose -f docker-compose-dev.yml build --no-cache api-dev worker-dev worker-beat
+build-no-cache-dev:
+	docker compose -f docker-compose-dev.yml build --no-cache api-dev worker-dev worker-beat mcp-server
 
 ##@ Development Environment
-run-api-dev: ## Start development environment with API, PostgreSQL, Valkey, and workers 
-	docker compose -f docker-compose-dev.yml up api-dev postgres valkey worker-dev worker-beat
+run-api-dev: ## Start development environment with API, PostgreSQL, Valkey, MCP, and workers
+	docker compose -f docker-compose-dev.yml up api-dev postgres valkey worker-dev worker-beat mcp-server
 
 ##@ Development Environment
 build-and-run-api-dev: build-no-cache-dev run-api-dev
-

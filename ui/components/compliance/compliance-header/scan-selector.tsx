@@ -1,5 +1,14 @@
-import { Select, SelectItem } from "@heroui/select";
+"use client";
 
+import { Badge } from "@/components/shadcn/badge/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn/select/select";
+import { getScanEntityLabel } from "@/lib/helper-filters";
 import { ProviderType, ScanProps } from "@/types";
 
 import { ComplianceScanInfo } from "./compliance-scan-info";
@@ -21,37 +30,45 @@ export const ScanSelector = ({
   selectedScanId,
   onSelectionChange,
 }: SelectScanComplianceDataProps) => {
+  const selectedScan = scans.find((item) => item.id === selectedScanId);
+  const triggerLabel = selectedScan ? getScanEntityLabel(selectedScan) : "";
+
   return (
     <Select
-      aria-label="Select a Scan"
-      placeholder="Select a scan"
-      classNames={{
-        trigger: "w-full min-w-[365px] rounded-lg",
-        popoverContent: "rounded-lg",
-      }}
-      size="lg"
-      labelPlacement="outside"
-      selectedKeys={new Set([selectedScanId])}
-      onSelectionChange={(keys) => {
-        const newSelectedId = Array.from(keys)[0] as string;
-        if (newSelectedId && newSelectedId !== selectedScanId) {
-          onSelectionChange(newSelectedId);
+      value={selectedScanId}
+      onValueChange={(value) => {
+        if (value && value !== selectedScanId) {
+          onSelectionChange(value);
         }
       }}
-      renderValue={() => {
-        const selectedItem = scans.find((item) => item.id === selectedScanId);
-        return selectedItem ? (
-          <ComplianceScanInfo scan={selectedItem} />
-        ) : (
-          "Select a scan"
-        );
-      }}
     >
-      {scans.map((scan) => (
-        <SelectItem key={scan.id} textValue={scan.attributes.name || "- -"}>
-          <ComplianceScanInfo scan={scan} />
-        </SelectItem>
-      ))}
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder="Select a scan">
+          {selectedScan ? (
+            <>
+              <span className="text-text-neutral-secondary shrink-0 text-xs">
+                Scan:
+              </span>
+              <Badge variant="tag" className="truncate">
+                {triggerLabel}
+              </Badge>
+            </>
+          ) : (
+            "Select a scan"
+          )}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {scans.map((scan) => (
+          <SelectItem
+            key={scan.id}
+            value={scan.id}
+            className="data-[state=checked]:bg-bg-neutral-tertiary [&_svg:not([class*='size-'])]:size-6"
+          >
+            <ComplianceScanInfo scan={scan} />
+          </SelectItem>
+        ))}
+      </SelectContent>
     </Select>
   );
 };

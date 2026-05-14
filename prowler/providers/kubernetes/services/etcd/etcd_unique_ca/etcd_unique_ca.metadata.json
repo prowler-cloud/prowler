@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Etcd** configuration is assessed to ensure it trusts a **unique Certificate Authority** via `--trusted-ca-file`, distinct from the API server's `--client-ca-file`. If the same CA file is used, etcd shares the cluster CA; differing files imply separation, though CA content should still be verified.",
   "Risk": "Using the Kubernetes CA for etcd allows any cert signed by that CA to authenticate to the datastore. Theft or mis-issuance enables unauthorized reads/writes, causing secret exposure (confidentiality), state tampering (integrity), and potential control-plane disruption (availability).",
   "RelatedUrl": "",

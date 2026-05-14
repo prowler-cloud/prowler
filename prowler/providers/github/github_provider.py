@@ -1,3 +1,4 @@
+import logging
 import os
 from os import environ
 from typing import Union
@@ -21,6 +22,8 @@ from prowler.providers.github.exceptions.exceptions import (
     GithubInvalidCredentialsError,
     GithubInvalidProviderIdError,
     GithubInvalidTokenError,
+    GithubRepoListFileNotFoundError,
+    GithubRepoListFileReadError,
     GithubSetUpIdentityError,
     GithubSetUpSessionError,
 )
@@ -89,6 +92,8 @@ class GithubProvider(Provider):
 
     _type: str = "github"
     _auth_method: str = None
+    MAX_REPO_LIST_LINES: int = 10_000
+    MAX_REPO_NAME_LENGTH: int = 500
     _session: GithubSession
     _identity: GithubIdentityInfo
     _audit_config: dict
@@ -112,7 +117,11 @@ class GithubProvider(Provider):
         mutelist_path: str = None,
         mutelist_content: dict = None,
         repositories: list = None,
+        repo_list_file: str = None,
         organizations: list = None,
+        # GitHub Actions scanning
+        github_actions_enabled: bool = True,
+        exclude_workflows: list = None,
     ):
         """
         GitHub Provider constructor
@@ -129,19 +138,34 @@ class GithubProvider(Provider):
             mutelist_path (str): Path to the mutelist file.
             mutelist_content (dict): Mutelist content.
             repositories (list): List of repository names to scan in 'owner/repo-name' format.
+            repo_list_file (str): Path to a file containing repository names (one per line).
             organizations (list): List of organization or user names to scan repositories for.
         """
         logger.info("Instantiating GitHub Provider...")
 
         # Mute GitHub library logs to reduce noise since it is already handled by the Prowler logger
-        import logging
-
         logging.getLogger("github").setLevel(logging.CRITICAL)
         logging.getLogger("github.GithubRetry").setLevel(logging.CRITICAL)
 
         # Set repositories and organizations for scoping
-        self._repositories = repositories or []
-        self._organizations = organizations or []
+        # Normalize single strings into lists (argparse sometimes passes str for singular flags)
+        if repositories is None:
+            self._repositories = []
+        elif isinstance(repositories, str):
+            self._repositories = [repositories]
+        else:
+            self._repositories = list(repositories)
+
+        # Load repos from file if provided
+        if repo_list_file:
+            self._load_repos_from_file(repo_list_file)
+
+        if organizations is None:
+            self._organizations = []
+        elif isinstance(organizations, str):
+            self._organizations = [organizations]
+        else:
+            self._organizations = list(organizations)
 
         self._session = GithubProvider.setup_session(
             personal_access_token,
@@ -189,7 +213,19 @@ class GithubProvider(Provider):
             self._mutelist = GithubMutelist(
                 mutelist_path=mutelist_path,
             )
+        # GitHub Actions scanning configuration
+        self._github_actions_enabled = github_actions_enabled
+        self._exclude_workflows = exclude_workflows or []
+
         Provider.set_global_provider(self)
+
+    @property
+    def github_actions_enabled(self) -> bool:
+        return self._github_actions_enabled
+
+    @property
+    def exclude_workflows(self) -> list:
+        return self._exclude_workflows
 
     @property
     def auth_method(self):
@@ -245,6 +281,46 @@ class GithubProvider(Provider):
         """
         return self._organizations
 
+    def _load_repos_from_file(self, file_path: str) -> None:
+        """Load repository names from a file (one per line)."""
+        try:
+            repo_count = 0
+            before = len(self._repositories)
+            with open(file_path, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    repo_count += 1
+                    if repo_count > self.MAX_REPO_LIST_LINES:
+                        raise GithubRepoListFileReadError(
+                            file=file_path,
+                            message=f"Repo list file exceeds maximum of {self.MAX_REPO_LIST_LINES} lines.",
+                        )
+                    if len(line) > self.MAX_REPO_NAME_LENGTH:
+                        logger.warning(
+                            f"Skipping repo name exceeding {self.MAX_REPO_NAME_LENGTH} chars at line {repo_count} in {file_path}"
+                        )
+                        continue
+                    self._repositories.append(line)
+            self._repositories = list(dict.fromkeys(self._repositories))
+            logger.info(
+                f"Loaded {len(self._repositories) - before} repositories from {file_path}"
+            )
+        except FileNotFoundError:
+            raise GithubRepoListFileNotFoundError(
+                file=file_path,
+                message=f"Repo list file not found: {file_path}",
+            )
+        except (GithubRepoListFileReadError, GithubRepoListFileNotFoundError):
+            raise
+        except Exception as error:
+            raise GithubRepoListFileReadError(
+                file=file_path,
+                original_exception=error,
+                message=f"Error reading repo list file: {error}",
+            )
+
     @staticmethod
     def setup_session(
         personal_access_token: str = None,
@@ -285,6 +361,18 @@ class GithubProvider(Provider):
                         app_key = rsa_key.read()
                 else:
                     app_key = format_rsa_key(github_app_key_content)
+
+            # Check for incomplete GitHub App credentials (user provided only part of them)
+            elif (github_app_key or github_app_key_content) and not github_app_id:
+                raise GithubEnvironmentVariableError(
+                    file=os.path.basename(__file__),
+                    message="GitHub App authentication requires both --github-app-id and --github-app-key-path (or --github-app-key). Missing: --github-app-id",
+                )
+            elif github_app_id and not (github_app_key or github_app_key_content):
+                raise GithubEnvironmentVariableError(
+                    file=os.path.basename(__file__),
+                    message="GitHub App authentication requires both --github-app-id and --github-app-key-path (or --github-app-key). Missing: --github-app-key-path or --github-app-key",
+                )
 
             else:
                 # PAT

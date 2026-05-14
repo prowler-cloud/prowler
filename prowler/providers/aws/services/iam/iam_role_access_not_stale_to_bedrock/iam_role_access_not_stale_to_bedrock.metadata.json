@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_role_access_not_stale_to_bedrock",
+  "CheckTitle": "Regular Bedrock access ensures IAM roles retain only actively used permissions",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:iam::account-id:role/resource-id",
+  "Severity": "medium",
+  "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
+  "Description": "IAM roles granted **Bedrock** permissions are evaluated for recent service usage.\n\nRoles whose last Bedrock access exceeds the configured threshold (default **60 days**) or that have **never** accessed Bedrock are flagged, indicating stale permissions that should be reviewed.",
+  "Risk": "Stale Bedrock permissions widen the **blast radius** of a credential compromise.\n\nAn attacker who assumes a role with unused Bedrock permissions can invoke foundation models, exfiltrate data through model responses, or incur significant costs — all without triggering expected usage patterns.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/security-iam.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#remove-credentials"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the IAM console and select the role\n2. Review the **Access Advisor** tab to confirm Bedrock has not been accessed recently\n3. Remove or detach any policies granting Bedrock permissions that are no longer needed\n4. If the role still requires Bedrock access, verify usage and reduce scope to least privilege",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Apply the **principle of least privilege** by regularly reviewing IAM Access Advisor data and revoking Bedrock permissions that are no longer actively used.\n\nEstablish a periodic access review process and automate alerts for stale permissions to maintain a minimal attack surface.",
+      "Url": "https://hub.prowler.com/check/iam_role_access_not_stale_to_bedrock"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_api_key_no_administrative_privileges",
+    "bedrock_api_key_no_long_term_credentials"
+  ],
+  "Notes": "The staleness threshold is configurable via the `max_unused_bedrock_access_days` audit config key (default: 60 days)."
+}

@@ -1,0 +1,41 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "calendar_external_sharing_primary_calendar",
+  "CheckTitle": "External sharing for primary calendars is restricted to free/busy only",
+  "CheckType": [],
+  "ServiceName": "calendar",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The domain-wide default for primary calendars shares **only free/busy information** with external users. When external sharing is set to share full event details, sensitive information such as meeting titles, attendees, locations, and descriptions is exposed to users outside the organization.",
+  "Risk": "Overly permissive external sharing of primary calendars exposes **sensitive meeting metadata** — titles, attendees, locations, and descriptions — to users outside the organization. This increases the risk of **information disclosure**, **social engineering**, and **targeted phishing** based on insights into organizational activities.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/60765",
+    "https://knowledge.workspace.google.com/admin/calendar/set-google-calendar-sharing-options",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Calendar**\n3. Click **Sharing settings**\n4. Under **External sharing options for primary calendars**, select **Only free/busy information (hide event details)**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict external sharing of primary calendars to free/busy information only. This preserves scheduling functionality with external users while preventing exposure of sensitive meeting details.",
+      "Url": "https://hub.prowler.com/check/calendar_external_sharing_primary_calendar"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "calendar_external_sharing_secondary_calendar",
+    "calendar_external_invitations_warning"
+  ],
+  "Notes": ""
+}

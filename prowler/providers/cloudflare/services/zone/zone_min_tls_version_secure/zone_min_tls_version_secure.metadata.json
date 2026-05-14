@@ -1,0 +1,37 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_min_tls_version_secure",
+  "CheckTitle": "Minimum TLS version is set to 1.2 or higher",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **minimum TLS version** configuration by checking if the version is set to at least `TLS 1.2` to ensure connections use **secure, modern cryptographic protocols**.",
+  "Risk": "Allowing **legacy TLS versions** (1.0, 1.1) exposes connections to known protocol vulnerabilities.\n- **Confidentiality**: BEAST, POODLE, and weak cipher suites can be exploited for traffic decryption\n- **Compliance**: TLS 1.0/1.1 are deprecated by PCI-DSS, NIST, and major browsers\n- **Integrity**: downgrade attacks can force weaker encryption that is susceptible to tampering",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/minimum-tls/",
+    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/tls-13/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to SSL/TLS > Edge Certificates\n3. Scroll to Minimum TLS Version\n4. Select TLS 1.2 or TLS 1.3 from the dropdown\n5. Verify that your clients support the selected TLS version",
+      "Terraform": "```hcl\n# Set minimum TLS version to 1.2 for secure connections\nresource \"cloudflare_zone_setting\" \"min_tls_version\" {\n  zone_id    = \"<ZONE_ID>\"\n  setting_id = \"min_tls_version\"\n  value      = \"1.2\" # Critical: blocks legacy TLS 1.0/1.1 connections\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set **minimum TLS version** to `1.2` or higher.\n- **TLS 1.0 and 1.1** are deprecated by all major browsers and contain known vulnerabilities\n- Consider setting to `TLS 1.3` for environments with modern client requirements\n- Test client compatibility before upgrading minimum version",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_min_tls_version_secure"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

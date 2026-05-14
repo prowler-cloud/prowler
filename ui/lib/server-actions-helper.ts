@@ -125,7 +125,7 @@ export const handleApiResponse = async (
   let data: any;
   try {
     data = JSON.parse(rawText);
-  } catch (e) {
+  } catch (_e) {
     // If body isn't valid JSON, return as text payload
     data = { data: rawText };
   }

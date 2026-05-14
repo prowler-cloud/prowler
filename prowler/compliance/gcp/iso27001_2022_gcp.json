@@ -295,7 +295,8 @@
         }
       ],
       "Checks": [
-        "iam_cloud_asset_inventory_enabled"
+        "iam_cloud_asset_inventory_enabled",
+        "gemini_api_disabled"
       ]
     },
     {
@@ -325,7 +326,8 @@
         }
       ],
       "Checks": [
-        "iam_cloud_asset_inventory_enabled"
+        "iam_cloud_asset_inventory_enabled",
+        "gemini_api_disabled"
       ]
     },
     {
@@ -340,7 +342,9 @@
           "Check_Summary": "The organisation should regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "gemini_api_disabled"
+      ]
     },
     {
       "Id": "A.5.23",
@@ -354,7 +358,9 @@
           "Check_Summary": "Processes for acquisition, use, management and exit from cloud services should be established in accordance with the organisation’s information security requirements."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "gemini_api_disabled"
+      ]
     },
     {
       "Id": "A.5.24",

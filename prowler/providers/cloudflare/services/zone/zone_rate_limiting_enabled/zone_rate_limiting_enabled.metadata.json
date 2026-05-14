@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_rate_limiting_enabled",
+  "CheckTitle": "Rate limiting is configured for the zone",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Rate Limiting** configuration by checking if rules are configured to protect against **DDoS attacks**, **brute force attempts**, and **API abuse**.",
+  "Risk": "Without **Rate Limiting**, applications are vulnerable to volumetric attacks.\n- **Confidentiality**: credential brute forcing can compromise user accounts\n- **Integrity**: API abuse can manipulate data through excessive requests\n- **Availability**: volumetric attacks can exhaust resources causing service degradation",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/rate-limiting-rules/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Security > WAF > Rate limiting rules\n3. Create a new rate limiting rule\n4. Configure thresholds based on expected traffic patterns\n5. Apply stricter limits to sensitive endpoints like authentication and APIs",
+      "Terraform": "```hcl\n# Configure Rate Limiting to protect against volumetric attacks\nresource \"cloudflare_ruleset\" \"rate_limit\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"Rate limiting\"\n  kind    = \"zone\"\n  phase   = \"http_ratelimit\"\n  rules {\n    action = \"block\"\n    ratelimit {\n      characteristics     = [\"ip.src\"]\n      period              = 60\n      requests_per_period = 100\n      mitigation_timeout  = 600\n    }\n    expression  = \"true\"\n    description = \"Rate limit all requests\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Implement **Rate Limiting** as part of defense in depth.\n- Configure thresholds based on expected traffic patterns\n- Apply stricter limits to sensitive endpoints like authentication and APIs\n- Use different rate limits for different paths or endpoints\n- Monitor rate limiting analytics to fine-tune thresholds",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_rate_limiting_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Rate limiting rules are configured in the http_ratelimit phase. Consider different thresholds for different types of endpoints based on their sensitivity and expected usage patterns."
+}

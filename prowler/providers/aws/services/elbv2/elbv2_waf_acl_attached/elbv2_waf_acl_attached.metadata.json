@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
   "Description": "Application Load Balancers are evaluated for an associated **AWS WAF web ACL** that governs HTTP(S) requests. The evaluation detects ALBs missing a web ACL and recognizes associations from **WAFv2** or regional **WAF Classic**.",
   "Risk": "Absent a **WAF web ACL**, ALBs accept unfiltered Layer 7 traffic, enabling:\n- **Injection** (SQLi/XSS) harming confidentiality and integrity\n- **Credential stuffing** and **bot abuse**\n- **Resource exhaustion** degrading availability",
   "RelatedUrl": "",

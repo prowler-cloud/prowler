@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_https_redirect_enabled",
+  "CheckTitle": "Always Use HTTPS is enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Always Use HTTPS** setting by checking if it is enabled to automatically redirect all **HTTP requests to HTTPS**, enforcing encrypted transport for all visitors.",
+  "Risk": "Without **automatic HTTPS redirects**, users may access resources over unencrypted HTTP.\n- **Confidentiality**: traffic can be intercepted and read by attackers on the network path\n- **Integrity**: HTTP responses can be modified in transit (content injection, malware insertion)\n- **Authentication**: session cookies and credentials may be transmitted in plaintext",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/always-use-https/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to SSL/TLS > Edge Certificates\n3. Scroll to Always Use HTTPS\n4. Toggle the setting to On\n5. Verify that your site works correctly over HTTPS",
+      "Terraform": "```hcl\n# Enable Always Use HTTPS to redirect HTTP to HTTPS\nresource \"cloudflare_zone_setting\" \"always_use_https\" {\n  zone_id    = \"<ZONE_ID>\"\n  setting_id = \"always_use_https\"\n  value      = \"on\" # Critical: forces all traffic to use encrypted HTTPS\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Always Use HTTPS** to enforce encrypted connections for all visitors.\n- Combine with **HSTS** to prevent SSL stripping attacks\n- Ensure all resources (images, scripts, stylesheets) are served over HTTPS\n- Test for mixed content warnings before enabling",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_https_redirect_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

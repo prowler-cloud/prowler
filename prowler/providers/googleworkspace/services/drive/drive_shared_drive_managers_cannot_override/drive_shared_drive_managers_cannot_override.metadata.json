@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "drive_shared_drive_managers_cannot_override",
+  "CheckTitle": "Shared drive managers cannot override shared drive settings",
+  "CheckType": [],
+  "ServiceName": "drive",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The domain-wide default prevents members with **manager access** to a shared drive from overriding the shared drive settings established by administrators. This ensures that security controls — such as external access, member-only access, and download restrictions — cannot be relaxed at the individual shared drive level.",
+  "Risk": "If shared drive managers can override organizational defaults, **unauthorized data exposure** can occur when a manager intentionally or accidentally weakens a shared drive's security posture (for example, allowing external members or enabling download for viewers).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/7662202",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Click **Sharing settings** > **Shared drive creation**\n4. **Uncheck** *Allow members with manager access to override the settings below*\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Prevent shared drive managers from overriding organizationally established shared drive settings. This ensures that security controls remain consistent across all shared drives and cannot be relaxed by non-administrators.",
+      "Url": "https://hub.prowler.com/check/drive_shared_drive_managers_cannot_override"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [
+    "drive_shared_drive_creation_allowed",
+    "drive_shared_drive_members_only_access",
+    "drive_shared_drive_disable_download_print_copy"
+  ],
+  "Notes": ""
+}

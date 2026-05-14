@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "**Amazon DynamoDB Accelerator (DAX)** cluster node placement across **Availability Zones** is evaluated. Clusters with nodes in more than one AZ within the Region are recognized as multi-AZ; clusters whose nodes reside in a single AZ are recognized as single-AZ.",
   "Risk": "Without **multi-AZ DAX nodes**, an AZ outage or primary node failure can render the cache **unavailable**, harming **availability** and causing **latency spikes** and **throttling** as load shifts to DynamoDB. Loss of caching can drive higher costs and trigger **timeout cascades** in read-heavy workloads.",
   "RelatedUrl": "",

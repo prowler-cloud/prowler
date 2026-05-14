@@ -1,5 +1,11 @@
 import { format, parseISO } from "date-fns";
-import React from "react";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import { cn } from "@/lib/utils";
 
 interface DateWithTimeProps {
   dateTime: string | null; // e.g., "2024-07-17T09:55:14.191475Z"
@@ -7,11 +13,11 @@ interface DateWithTimeProps {
   inline?: boolean;
 }
 
-export const DateWithTime: React.FC<DateWithTimeProps> = ({
+export const DateWithTime = ({
   dateTime,
   showTime = true,
   inline = false,
-}) => {
+}: DateWithTimeProps) => {
   if (!dateTime) return <span>--</span>;
 
   try {
@@ -23,25 +29,62 @@ export const DateWithTime: React.FC<DateWithTimeProps> = ({
     }
 
     const formattedDate = format(date, "MMM dd, yyyy");
-    const formattedTime = format(date, "p");
+    const formattedTime = format(date, "h:mma");
+    const timezone =
+      Intl.DateTimeFormat()
+        .resolvedOptions()
+        .timeZone.split("/")
+        .pop()
+        ?.substring(0, 3)
+        .toUpperCase() || "";
 
-    return (
-      <div className="mw-fit py-[2px]">
-        <div
-          className={`flex ${inline ? "flex-row items-center gap-2" : "flex-col"}`}
-        >
-          <span className="text-xs font-semibold whitespace-nowrap">
-            {formattedDate}
-          </span>
-          {showTime && (
-            <span className="text-xs whitespace-nowrap text-gray-500">
-              {formattedTime}
-            </span>
+    const fullText = showTime
+      ? `${formattedDate} ${formattedTime} ${timezone}`
+      : formattedDate;
+
+    const content = (
+      <div
+        className={cn(
+          "gap-1",
+          inline
+            ? "inline-flex flex-row items-center overflow-hidden"
+            : "flex flex-col",
+        )}
+      >
+        <span
+          className={cn(
+            "text-text-neutral-primary text-sm whitespace-nowrap",
+            inline && "truncate",
           )}
-        </div>
+        >
+          {formattedDate}
+        </span>
+        {showTime && (
+          <span
+            className={cn(
+              "text-text-neutral-tertiary text-xs font-medium whitespace-nowrap",
+              inline && "truncate",
+            )}
+          >
+            {formattedTime} {timezone}
+          </span>
+        )}
       </div>
     );
-  } catch (error) {
+
+    if (inline) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="min-w-0 overflow-hidden">{content}</div>
+          </TooltipTrigger>
+          <TooltipContent>{fullText}</TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return content;
+  } catch {
     return <span>-</span>;
   }
 };

@@ -1196,6 +1196,46 @@ class TestReport:
             )
             mocked_print.assert_called()  # Verifying that print was called
 
+    def test_report_with_googleworkspace_provider_pass(self):
+        finding = MagicMock()
+        finding.status = "PASS"
+        finding.muted = False
+        finding.location = "global"
+        finding.check_metadata.Provider = "googleworkspace"
+        finding.status_extended = "Domain has 2 super administrators"
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "googleworkspace"
+
+        with mock.patch("builtins.print") as mocked_print:
+            report([finding], provider, output_options)
+            mocked_print.assert_called()
+
+    def test_report_with_googleworkspace_provider_fail(self):
+        finding = MagicMock()
+        finding.status = "FAIL"
+        finding.muted = False
+        finding.location = "global"
+        finding.check_metadata.Provider = "googleworkspace"
+        finding.status_extended = "Domain has only 1 super administrator"
+
+        output_options = MagicMock()
+        output_options.verbose = True
+        output_options.status = ["PASS", "FAIL"]
+        output_options.fixer = False
+
+        provider = MagicMock()
+        provider.type = "googleworkspace"
+
+        with mock.patch("builtins.print") as mocked_print:
+            report([finding], provider, output_options)
+            mocked_print.assert_called()
+
     def test_report_with_no_findings(self):
         # Mocking check_findings and provider
         check_findings = []

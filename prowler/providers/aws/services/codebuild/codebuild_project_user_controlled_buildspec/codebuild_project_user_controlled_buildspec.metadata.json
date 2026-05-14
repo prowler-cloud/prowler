@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCodeBuildProject",
+  "ResourceGroup": "devops",
   "Description": "AWS CodeBuild projects are evaluated for use of a **user-controlled buildspec**, identified when the project references a repository file like `*.yml` or `*.yaml`. Projects using non file-based build instructions are treated as centrally managed.",
   "Risk": "Repository-controlled buildspecs let unreviewed changes run in CI, endangering **integrity** (tampered artifacts), **confidentiality** (secret leakage), and **availability** (resource abuse). Attackers can weaponize PRs to execute code and pivot via the build role.",
   "RelatedUrl": "",

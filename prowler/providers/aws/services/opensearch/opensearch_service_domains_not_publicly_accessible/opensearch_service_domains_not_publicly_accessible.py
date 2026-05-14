@@ -8,6 +8,7 @@ from prowler.providers.aws.services.opensearch.opensearch_client import (
 class opensearch_service_domains_not_publicly_accessible(Check):
     def execute(self):
         findings = []
+        trusted_ips = opensearch_client.audit_config.get("trusted_ips", [])
         for domain in opensearch_client.opensearch_domains.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=domain)
             report.status = "PASS"
@@ -18,7 +19,9 @@ class opensearch_service_domains_not_publicly_accessible(Check):
             if domain.vpc_id:
                 report.status_extended = f"Opensearch domain {domain.name} is in a VPC, then it is not publicly accessible."
             elif domain.access_policy is not None and is_policy_public(
-                domain.access_policy, opensearch_client.audited_account
+                domain.access_policy,
+                opensearch_client.audited_account,
+                trusted_ips=trusted_ips,
             ):
                 report.status = "FAIL"
                 report.status_extended = f"Opensearch domain {domain.name} is publicly accessible via access policy."

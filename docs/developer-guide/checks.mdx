@@ -20,21 +20,35 @@ The most common high level steps to create a new check are:
 3. Create a check-specific folder. The path should follow this pattern: `prowler/providers/<provider>/services/<service>/<check_name_want_to_implement>`. Adhere to the [Naming Format for Checks](#naming-format-for-checks).
 4. Populate the folder with files as specified in [File Creation](#file-creation).
 5. Run the check locally to ensure it works as expected. For checking you can use the CLI in the next way:
-    - To ensure the check has been detected by Prowler: `poetry run python prowler-cli.py <provider> --list-checks | grep <check_name>`.
-    - To run the check, to find possible issues: `poetry run python prowler-cli.py <provider> --log-level ERROR --verbose --check <check_name>`.
+    - To ensure the check has been detected by Prowler: `uv run python prowler-cli.py <provider> --list-checks | grep <check_name>`.
+    - To run the check, to find possible issues: `uv run python prowler-cli.py <provider> --log-level ERROR --verbose --check <check_name>`.
 6. Create comprehensive tests for the check that cover multiple scenarios including both PASS (compliant) and FAIL (non-compliant) cases. For detailed information about test structure and implementation guidelines, refer to the [Testing](/developer-guide/unit-testing) documentation.
 7. If the check and its corresponding tests are working as expected, you can submit a PR to Prowler.
 
 ### Naming Format for Checks
 
-Checks must be named following the format: `service_subservice_resource_action`.
+If you already know the check name when creating a request or implementing a check, use a descriptive identifier with lowercase letters and underscores only.
+
+Recommended patterns:
+
+- `<service>_<resource>_<best_practice>`
 
 The name components are:
 
-- `service` – The main service being audited (e.g., ec2, entra, iam, etc.)
-- `subservice` – An individual component or subset of functionality within the service that is being audited. This may correspond to a shortened version of the class attribute accessed within the check. If there is no subservice, just omit.
-- `resource` – The specific resource type being evaluated (e.g., instance, policy, role, etc.)
-- `action` – The security aspect or configuration being checked (e.g., public, encrypted, enabled, etc.)
+- `service` – The main service or product area being audited (e.g., ec2, entra, iam, bedrock).
+- `resource` – The resource, feature, or configuration being evaluated. It can be a single word or a compound phrase joined with underscores (e.g., instance, policy, guardrail, sensitive_information_filter).
+- `best_practice` – The expected secure state or best practice being checked (e.g., enabled, encrypted, restricted, configured, not_publicly_accessible).
+
+Additional guidance:
+
+- Use underscores only. Do not use hyphens.
+- Keep the name specific enough to describe the behavior of the check.
+- The first segment should match the service or product area whenever possible.
+
+Examples:
+
+- `s3_bucket_versioning_enabled`
+- `bedrock_guardrail_sensitive_information_filter_enabled`
 
 ### File Creation
 
@@ -237,6 +251,7 @@ Below is a generic example of a check metadata file. **Do not include comments i
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "security",
   "Description": "This check verifies that the service resource has the required **security setting** enabled to protect against potential vulnerabilities.\n\nIt ensures that the resource follows security best practices and maintains proper access controls. The check evaluates whether the security configuration is properly implemented and active.",
   "Risk": "Without proper security settings, the resource may be vulnerable to:\n\n- **Unauthorized access** - Malicious actors could gain entry\n- **Data breaches** - Sensitive information could be compromised\n- **Security threats** - Various attack vectors could be exploited\n\nThis could result in compliance violations and potential financial or reputational damage.",
   "RelatedUrl": "",
@@ -312,7 +327,35 @@ The type of resource being audited. This field helps categorize and organize fin
 - **Azure**: Use types from [Azure Resource Graph](https://learn.microsoft.com/en-us/azure/governance/resource-graph/reference/supported-tables-resources), for example: `Microsoft.Storage/storageAccounts`.
 - **Google Cloud**: Use [Cloud Asset Inventory asset types](https://cloud.google.com/asset-inventory/docs/asset-types), for example: `compute.googleapis.com/Instance`.
 - **Kubernetes**: Use types shown under `KIND` from `kubectl api-resources`.
-- **M365 / GitHub**: Leave empty due to lack of standardized types.
+- **Oracle Cloud Infrastructure**: Use types from [Oracle Cloud Infrastructure documentation](https://docs.public.oneportal.content.oci.oraclecloud.com/en-us/iaas/Content/Search/Tasks/queryingresources_topic-Listing_Supported_Resource_Types.htm).
+- **OpenStack**: Use types from [OpenStack Heat resource types](https://docs.openstack.org/heat/latest/template_guide/openstack.html).
+- **Alibaba Cloud**: Use types from [Alibaba Cloud ROS resource types](https://www.alibabacloud.com/help/en/ros/developer-reference/list-of-resource-types-by-service).
+- **Any other provider**: Use `NotDefined` due to lack of standardized resource types in their SDK or documentation.
+
+#### ResourceGroup
+
+A high-level classification that groups checks by the type of cloud resource they audit. This field enables filtering and organizing findings by resource category across all providers. The value must be one of the following predefined groups:
+
+| Group | Description |
+|-------|-------------|
+| `compute` | Virtual machines, instances, auto-scaling groups, workspaces, streaming |
+| `container` | Container orchestration, Kubernetes, registries, pods |
+| `serverless` | Functions, step functions, event-driven compute |
+| `database` | Relational, NoSQL, caches, search engines, data warehouses, graph databases |
+| `storage` | Object storage, block storage, file systems, backups, archives |
+| `network` | VPCs, subnets, load balancers, DNS, VPN, firewalls, CDN |
+| `IAM` | IAM users, roles, policies, access keys, service accounts, directories |
+| `messaging` | Queues, topics, event buses, streaming, email services |
+| `security` | WAF, secrets, KMS, certificates, security tools, defenders, DDoS protection |
+| `monitoring` | Logs, metrics, alerts, audit trails, observability, config tracking |
+| `api_gateway` | API management, REST APIs, GraphQL endpoints |
+| `ai_ml` | Machine learning, AI services, notebooks, training, LLM |
+| `governance` | Accounts, organizations, projects, policies, settings, compliance tools |
+| `collaboration` | Productivity SaaS apps (Exchange, Teams, SharePoint) |
+| `devops` | CI/CD, infrastructure as code, automation, code repositories, version control |
+| `analytics` | Data warehouses, query engines, ETL pipelines, BI tools, data lakes |
+
+The group is determined by the resource type being audited, not the service. For example, an EC2 security group check would use `network` (not `compute`), while an EC2 instance check would use `compute`.
 
 #### Description
 
@@ -358,7 +401,7 @@ Provides both code examples and best practice recommendations for addressing the
 
 #### Categories
 
-One or more functional groupings used for execution filtering (e.g., `internet-exposed`). You can define new categories just by adding to this field.
+One or more functional groupings used for execution filtering (e.g., `internet-exposed`). Categories must match the predefined values enforced by `CheckMetadata`; adding a new category requires updating the validator and the metadata documentation.
 
 For the complete list of available categories, see [Categories Guidelines](/developer-guide/check-metadata-guidelines#categories-guidelines).
 

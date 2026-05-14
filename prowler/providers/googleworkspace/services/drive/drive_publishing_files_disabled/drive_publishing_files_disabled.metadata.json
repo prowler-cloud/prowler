@@ -1,0 +1,41 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "drive_publishing_files_disabled",
+  "CheckTitle": "Publishing Drive files to the web is disabled",
+  "CheckType": [],
+  "ServiceName": "drive",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The domain-wide Drive and Docs default **prevents users from publishing files to the web** or making them visible to the world as public or unlisted. Publishing a file to the web exposes its content to anyone on the internet, often without any audit trail, making it one of the highest-impact misconfigurations available to end users.",
+  "Risk": "Allowing users to publish Drive files to the web creates a path for **unbounded data exposure**. Sensitive documents, intellectual property, customer data, or internal communications can be made publicly accessible — and indexed by search engines — with a single click, often unintentionally.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/60781",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Click **Sharing settings** > **Sharing options**\n4. Under **Sharing outside of <Company>**, **uncheck** *When sharing outside of <Company> is allowed, users in <Company> can make files and published web content visible to anyone with the link*\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable the ability for users to publish Drive files to the web or make them visible to anyone with the link. This eliminates the most direct path to unintentional public data exposure through Drive.",
+      "Url": "https://hub.prowler.com/check/drive_publishing_files_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "drive_external_sharing_warn_users",
+    "drive_sharing_allowlisted_domains",
+    "drive_internal_users_distribute_content"
+  ],
+  "Notes": ""
+}

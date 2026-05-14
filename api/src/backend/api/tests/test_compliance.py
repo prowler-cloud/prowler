@@ -1,14 +1,18 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+from api import compliance as compliance_module
 from api.compliance import (
     generate_compliance_overview_template,
     generate_scan_compliance,
+    get_compliance_frameworks,
     get_prowler_provider_checks,
     get_prowler_provider_compliance,
     load_prowler_checks,
-    load_prowler_compliance,
 )
 from api.models import Provider
+from prowler.lib.check.compliance_models import Compliance
 
 
 class TestCompliance:
@@ -34,55 +38,6 @@ class TestCompliance:
         compliance_data = get_prowler_provider_compliance(provider_type)
         assert compliance_data == mock_compliance.get_bulk.return_value
         mock_compliance.get_bulk.assert_called_once_with(provider_type)
-
-    @patch("api.models.Provider.ProviderChoices")
-    @patch("api.compliance.get_prowler_provider_compliance")
-    @patch("api.compliance.generate_compliance_overview_template")
-    @patch("api.compliance.load_prowler_checks")
-    def test_load_prowler_compliance(
-        self,
-        mock_load_prowler_checks,
-        mock_generate_compliance_overview_template,
-        mock_get_prowler_provider_compliance,
-        mock_provider_choices,
-    ):
-        mock_provider_choices.values = ["aws", "azure"]
-
-        compliance_data_aws = {"compliance_aws": MagicMock()}
-        compliance_data_azure = {"compliance_azure": MagicMock()}
-
-        compliance_data_dict = {
-            "aws": compliance_data_aws,
-            "azure": compliance_data_azure,
-        }
-
-        def mock_get_compliance(provider_type):
-            return compliance_data_dict[provider_type]
-
-        mock_get_prowler_provider_compliance.side_effect = mock_get_compliance
-
-        mock_generate_compliance_overview_template.return_value = {
-            "template_key": "template_value"
-        }
-
-        mock_load_prowler_checks.return_value = {"checks_key": "checks_value"}
-
-        load_prowler_compliance()
-
-        from api.compliance import PROWLER_CHECKS, PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE
-
-        assert PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE == {
-            "template_key": "template_value"
-        }
-        assert PROWLER_CHECKS == {"checks_key": "checks_value"}
-
-        expected_prowler_compliance = compliance_data_dict
-        mock_get_prowler_provider_compliance.assert_any_call("aws")
-        mock_get_prowler_provider_compliance.assert_any_call("azure")
-        mock_generate_compliance_overview_template.assert_called_once_with(
-            expected_prowler_compliance
-        )
-        mock_load_prowler_checks.assert_called_once_with(expected_prowler_compliance)
 
     @patch("api.compliance.get_prowler_provider_checks")
     @patch("api.models.Provider.ProviderChoices")
@@ -300,3 +255,58 @@ class TestCompliance:
         }
 
         assert template == expected_template
+
+
+@pytest.fixture
+def reset_compliance_cache():
+    """Reset the module-level cache so each test starts cold."""
+    previous = dict(compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS)
+    compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS.clear()
+    try:
+        yield
+    finally:
+        compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS.clear()
+        compliance_module.AVAILABLE_COMPLIANCE_FRAMEWORKS.update(previous)
+
+
+class TestGetComplianceFrameworks:
+    def test_returns_keys_from_compliance_get_bulk(self, reset_compliance_cache):
+        with patch("api.compliance.Compliance") as mock_compliance:
+            mock_compliance.get_bulk.return_value = {
+                "cis_1.4_aws": MagicMock(),
+                "mitre_attack_aws": MagicMock(),
+            }
+            result = get_compliance_frameworks(Provider.ProviderChoices.AWS)
+
+        assert sorted(result) == ["cis_1.4_aws", "mitre_attack_aws"]
+        mock_compliance.get_bulk.assert_called_once_with(Provider.ProviderChoices.AWS)
+
+    def test_caches_result_per_provider(self, reset_compliance_cache):
+        with patch("api.compliance.Compliance") as mock_compliance:
+            mock_compliance.get_bulk.return_value = {"cis_1.4_aws": MagicMock()}
+            get_compliance_frameworks(Provider.ProviderChoices.AWS)
+            get_compliance_frameworks(Provider.ProviderChoices.AWS)
+
+        # Cached after first call.
+        assert mock_compliance.get_bulk.call_count == 1
+
+    @pytest.mark.parametrize(
+        "provider_type",
+        [choice.value for choice in Provider.ProviderChoices],
+    )
+    def test_listing_is_subset_of_bulk(self, reset_compliance_cache, provider_type):
+        """Regression for CLOUD-API-40S: every name returned by
+        ``get_compliance_frameworks`` must be loadable via ``Compliance.get_bulk``.
+
+        A divergence here is what produced ``KeyError: 'csa_ccm_4.0'`` in
+        ``generate_outputs_task`` after universal/multi-provider compliance
+        JSONs were introduced at the top-level ``prowler/compliance/`` path.
+        """
+        bulk_keys = set(Compliance.get_bulk(provider_type).keys())
+        listed = set(get_compliance_frameworks(provider_type))
+
+        missing = listed - bulk_keys
+        assert not missing, (
+            f"get_compliance_frameworks({provider_type!r}) returned names not "
+            f"loadable by Compliance.get_bulk: {sorted(missing)}"
+        )

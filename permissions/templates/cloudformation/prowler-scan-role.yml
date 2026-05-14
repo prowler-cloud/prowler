@@ -36,6 +36,15 @@ Parameters:
       The IAM principal type and name that will be allowed to assume the role created, leave an * for all the IAM principals in your AWS account. If you are deploying this template to be used in Prowler Cloud please do not edit this.
     Type: String
     Default: role/prowler*
+  EnableOrganizations:
+    Description: |
+      Enable AWS Organizations discovery permissions. Set to true only when deploying this role in the management account.
+      This adds read-only Organizations permissions (e.g. ListAccounts, DescribeOrganization) and StackSet management permissions.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
   EnableS3Integration:
     Description: |
       Enable S3 integration for storing Prowler scan reports.
@@ -56,6 +65,7 @@ Parameters:
     Default: ""
 
 Conditions:
+  OrganizationsEnabled: !Equals [!Ref EnableOrganizations, true]
   S3IntegrationEnabled: !Equals [!Ref EnableS3Integration, true]
 
 
@@ -141,6 +151,30 @@ Resources:
                   - "arn:*:apigateway:*::/restapis/*"
                   - "arn:*:apigateway:*::/apis/*"
         - !If
+          - OrganizationsEnabled
+          - PolicyName: ProwlerOrganizations
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Sid: AllowOrganizationsReadOnly
+                  Effect: Allow
+                  Action:
+                    - "organizations:DescribeAccount"
+                    - "organizations:DescribeOrganization"
+                    - "organizations:ListAccounts"
+                    - "organizations:ListAccountsForParent"
+                    - "organizations:ListOrganizationalUnitsForParent"
+                    - "organizations:ListRoots"
+                    - "organizations:ListTagsForResource"
+                  Resource: "*"
+                - Sid: AllowStackSetManagement
+                  Effect: Allow
+                  Action:
+                    - "organizations:RegisterDelegatedAdministrator"
+                    - "iam:CreateServiceLinkedRole"
+                  Resource: "*"
+          - !Ref AWS::NoValue
+        - !If
           - S3IntegrationEnabled
           - PolicyName: S3Integration
             PolicyDocument:
@@ -191,6 +225,7 @@ Metadata:
           - ExternalId
           - AccountId
           - IAMPrincipal
+          - EnableOrganizations
           - EnableS3Integration
       - Label:
           default: Optional

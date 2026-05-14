@@ -1,9 +1,11 @@
-import React from "react";
+import { createElement, ReactNode } from "react";
 
+import { ASDEssentialEightCustomDetails } from "@/components/compliance/compliance-custom-details/asd-essential-eight-details";
 import { AWSWellArchitectedCustomDetails } from "@/components/compliance/compliance-custom-details/aws-well-architected-details";
 import { C5CustomDetails } from "@/components/compliance/compliance-custom-details/c5-details";
 import { CCCCustomDetails } from "@/components/compliance/compliance-custom-details/ccc-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
+import { CSACustomDetails } from "@/components/compliance/compliance-custom-details/csa-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
@@ -14,12 +16,16 @@ import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import {
   AttributesData,
   CategoryData,
-  FailedSection,
   Framework,
   Requirement,
   RequirementsData,
+  TopFailedResult,
 } from "@/types/compliance";
 
+import {
+  mapComplianceData as mapASDEssentialEightComplianceData,
+  toAccordionItems as toASDEssentialEightAccordionItems,
+} from "./asd-essential-eight";
 import {
   mapComplianceData as mapAWSWellArchitectedComplianceData,
   toAccordionItems as toAWSWellArchitectedAccordionItems,
@@ -37,6 +43,10 @@ import {
   toAccordionItems as toCISAccordionItems,
 } from "./cis";
 import { calculateCategoryHeatmapData, getTopFailedSections } from "./commons";
+import {
+  mapComplianceData as mapCSAComplianceData,
+  toAccordionItems as toCSAAccordionItems,
+} from "./csa";
 import {
   mapComplianceData as mapENSComplianceData,
   toAccordionItems as toENSAccordionItems,
@@ -60,6 +70,7 @@ import {
   toAccordionItems as toMITREAccordionItems,
 } from "./mitre";
 import {
+  getTopFailedSections as getThreatScoreTopFailedSections,
   mapComplianceData as mapThetaComplianceData,
   toAccordionItems as toThetaAccordionItems,
 } from "./threat";
@@ -74,9 +85,9 @@ export interface ComplianceMapper {
     data: Framework[],
     scanId: string | undefined,
   ) => AccordionItemProps[];
-  getTopFailedSections: (mappedData: Framework[]) => FailedSection[];
+  getTopFailedSections: (mappedData: Framework[]) => TopFailedResult;
   calculateCategoryHeatmapData: (complianceData: Framework[]) => CategoryData[];
-  getDetailsComponent: (requirement: Requirement) => React.ReactNode;
+  getDetailsComponent: (requirement: Requirement) => ReactNode;
 }
 
 const getDefaultMapper = (): ComplianceMapper => ({
@@ -86,10 +97,19 @@ const getDefaultMapper = (): ComplianceMapper => ({
   calculateCategoryHeatmapData: (data: Framework[]) =>
     calculateCategoryHeatmapData(data),
   getDetailsComponent: (requirement: Requirement) =>
-    React.createElement(GenericCustomDetails, { requirement }),
+    createElement(GenericCustomDetails, { requirement }),
 });
 
 const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
+  "ASD-Essential-Eight": {
+    mapComplianceData: mapASDEssentialEightComplianceData,
+    toAccordionItems: toASDEssentialEightAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(ASDEssentialEightCustomDetails, { requirement }),
+  },
   C5: {
     mapComplianceData: mapC5ComplianceData,
     toAccordionItems: toC5AccordionItems,
@@ -97,7 +117,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(C5CustomDetails, { requirement }),
+      createElement(C5CustomDetails, { requirement }),
   },
   ENS: {
     mapComplianceData: mapENSComplianceData,
@@ -106,7 +126,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(ENSCustomDetails, { requirement }),
+      createElement(ENSCustomDetails, { requirement }),
   },
   ISO27001: {
     mapComplianceData: mapISOComplianceData,
@@ -115,7 +135,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(ISOCustomDetails, { requirement }),
+      createElement(ISOCustomDetails, { requirement }),
   },
   CIS: {
     mapComplianceData: mapCISComplianceData,
@@ -124,7 +144,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(CISCustomDetails, { requirement }),
+      createElement(CISCustomDetails, { requirement }),
   },
   "AWS-Well-Architected-Framework-Security-Pillar": {
     mapComplianceData: mapAWSWellArchitectedComplianceData,
@@ -133,7 +153,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
+      createElement(AWSWellArchitectedCustomDetails, { requirement }),
   },
   "AWS-Well-Architected-Framework-Reliability-Pillar": {
     mapComplianceData: mapAWSWellArchitectedComplianceData,
@@ -142,7 +162,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(AWSWellArchitectedCustomDetails, { requirement }),
+      createElement(AWSWellArchitectedCustomDetails, { requirement }),
   },
   "KISA-ISMS-P": {
     mapComplianceData: mapKISAComplianceData,
@@ -151,7 +171,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(KISACustomDetails, { requirement }),
+      createElement(KISACustomDetails, { requirement }),
   },
   "MITRE-ATTACK": {
     mapComplianceData: mapMITREComplianceData,
@@ -159,16 +179,16 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     getTopFailedSections: getMITRETopFailedSections,
     calculateCategoryHeatmapData: calculateMITRECategoryHeatmapData,
     getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(MITRECustomDetails, { requirement }),
+      createElement(MITRECustomDetails, { requirement }),
   },
   ProwlerThreatScore: {
     mapComplianceData: mapThetaComplianceData,
     toAccordionItems: toThetaAccordionItems,
-    getTopFailedSections,
+    getTopFailedSections: getThreatScoreTopFailedSections,
     calculateCategoryHeatmapData: (complianceData: Framework[]) =>
       calculateCategoryHeatmapData(complianceData),
     getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(ThreatCustomDetails, { requirement }),
+      createElement(ThreatCustomDetails, { requirement }),
   },
   CCC: {
     mapComplianceData: mapCCCComplianceData,
@@ -177,7 +197,16 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     calculateCategoryHeatmapData: (data: Framework[]) =>
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
-      React.createElement(CCCCustomDetails, { requirement }),
+      createElement(CCCCustomDetails, { requirement }),
+  },
+  "CSA-CCM": {
+    mapComplianceData: mapCSAComplianceData,
+    toAccordionItems: toCSAAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(CSACustomDetails, { requirement }),
   },
 });
 

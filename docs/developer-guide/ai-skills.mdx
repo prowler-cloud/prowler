@@ -1,0 +1,219 @@
+---
+title: 'AI Skills System'
+---
+
+This guide explains the AI Skills system that provides on-demand context and patterns to AI agents working with the Prowler codebase.
+
+<Info>
+**What are AI Skills?** Skills are structured instructions that help AI agents (Claude Code, Cursor, Copilot, etc.) understand Prowler's conventions, patterns, and best practices.
+</Info>
+
+## Architecture Overview
+
+```mermaid
+graph LR
+    subgraph FLOW["AI Skills Architecture"]
+        A["AI Agent"] -->|"1. matches trigger"| B["AGENTS.md"]
+        B -->|"2. loads"| C["Skill"]
+        C -->|"3. provides"| D["Patterns<br/>Templates<br/>Commands"]
+        C -->|"4. references"| E["Local Docs"]
+        D --> F["Correct Output"]
+        E --> F
+    end
+
+    style A fill:#1e3a5f,stroke:#4a9eff,color:#fff
+    style B fill:#5c4d1a,stroke:#ffd700,color:#fff
+    style C fill:#1a4d1a,stroke:#4caf50,color:#fff
+    style E fill:#4a1a4d,stroke:#ba68c8,color:#fff
+    style F fill:#1a4d2e,stroke:#66bb6a,color:#fff
+```
+
+## How It Works
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant A as AI Agent
+    participant R as AGENTS.md
+    participant S as Skill
+    participant AS as assets/
+    participant RF as references/
+    participant D as Local Docs
+
+    U->>A: "Create an AWS security check"
+
+    Note over A: Analyze request context
+
+    A->>R: Find matching skill trigger
+    R-->>A: prowler-sdk-check matches
+
+    A->>S: Load SKILL.md
+    S-->>A: Patterns, rules, templates, commands
+
+    Note over A: Need code template?
+
+    A->>AS: Read assets/aws_check.py
+    AS-->>A: Check implementation template
+
+    Note over A: Need more details?
+
+    A->>RF: Read references/metadata-docs.md
+    RF-->>A: Points to local docs
+
+    A->>D: Read docs/developer-guide/checks.mdx
+    D-->>A: Full documentation
+
+    Note over A: Execute with full context
+
+    A->>U: Creates check with correct patterns
+```
+
+## Before vs After
+
+```mermaid
+graph TD
+    subgraph COMPARISON["BEFORE vs AFTER"]
+        direction LR
+
+        subgraph BEFORE["Without Skills"]
+            B1["AI guesses conventions"]
+            B2["Wrong structure"]
+            B3["Multiple iterations"]
+            B4["Web searches for docs"]
+            B5["Inconsistent patterns"]
+        end
+
+        subgraph AFTER["With Skills"]
+            A1["AI loads exact patterns"]
+            A2["Correct structure"]
+            A3["First-time right"]
+            A4["Local docs referenced"]
+            A5["Consistent patterns"]
+        end
+    end
+
+    style BEFORE fill:#5c1a1a,stroke:#ef5350,color:#fff
+    style AFTER fill:#1a4d1a,stroke:#66bb6a,color:#fff
+```
+
+## Complete Architecture
+
+```mermaid
+flowchart TB
+    subgraph ENTRY["ENTRY POINT"]
+        AGENTS["AGENTS.md<br/>━━━━━━━━━━━━━━━━━<br/>• Available skills registry<br/>• Skill → Trigger mapping<br/>• Component navigation"]
+    end
+
+    subgraph SKILLS["SKILLS LIBRARY"]
+        direction TB
+
+        subgraph GENERIC["Generic Skills"]
+            G1["typescript"]
+            G2["react-19"]
+            G3["nextjs-15"]
+            G4["tailwind-4"]
+            G5["pytest"]
+            G6["playwright"]
+            G7["django-drf"]
+            G8["zod-4"]
+            G9["zustand-5"]
+            G10["ai-sdk-5"]
+        end
+
+        subgraph PROWLER["Prowler Skills"]
+            P1["prowler"]
+            P2["prowler-sdk-check"]
+            P3["prowler-api"]
+            P4["prowler-ui"]
+            P5["prowler-mcp"]
+            P6["prowler-provider"]
+            P7["prowler-compliance"]
+            P8["prowler-compliance-review"]
+            P9["prowler-docs"]
+            P10["prowler-pr"]
+            P11["prowler-ci"]
+        end
+
+        subgraph TESTING["Testing Skills"]
+            T1["prowler-test-sdk"]
+            T2["prowler-test-api"]
+            T3["prowler-test-ui"]
+        end
+
+        subgraph META["Meta Skills"]
+            M1["skill-creator"]
+            M2["skill-sync"]
+        end
+    end
+
+    subgraph STRUCTURE["SKILL STRUCTURE"]
+        direction LR
+
+        SKILLMD["SKILL.md<br/>━━━━━━━━━━━━━━<br/>• Frontmatter<br/>• Critical patterns<br/>• Decision trees<br/>• Code examples<br/>• Commands<br/>• Keywords"]
+
+        ASSETS["assets/<br/>━━━━━━━━━━━━━━<br/>• Code templates<br/>• JSON schemas<br/>• Config examples"]
+
+        REFS["references/<br/>━━━━━━━━━━━━━━<br/>• Local doc paths<br/>• No web URLs<br/>• Single source"]
+    end
+
+    subgraph DOCS["DOCUMENTATION"]
+        direction TB
+        DD["docs/developer-guide/"]
+        D1["checks.mdx"]
+        D2["unit-testing.mdx"]
+        D3["provider.mdx"]
+        D4["mcp-server.mdx"]
+        D5["..."]
+
+        DD --> D1
+        DD --> D2
+        DD --> D3
+        DD --> D4
+        DD --> D5
+    end
+
+    ENTRY --> SKILLS
+    SKILLS --> STRUCTURE
+    SKILLMD --> ASSETS
+    SKILLMD --> REFS
+    REFS -.->|"points to"| DOCS
+
+    style ENTRY fill:#1e3a5f,stroke:#4a9eff,color:#fff
+    style GENERIC fill:#5c4d1a,stroke:#ffd700,color:#fff
+    style PROWLER fill:#1a4d1a,stroke:#66bb6a,color:#fff
+    style TESTING fill:#4d1a3d,stroke:#f06292,color:#fff
+    style META fill:#4a1a4d,stroke:#ba68c8,color:#fff
+    style STRUCTURE fill:#5c3d1a,stroke:#ffb74d,color:#fff
+    style DOCS fill:#1a3d4d,stroke:#4dd0e1,color:#fff
+```
+
+## Skills Included
+
+| Type | Skills |
+|------|--------|
+| **Generic** | typescript, react-19, nextjs-15, tailwind-4, pytest, playwright, django-drf, zod-4, zustand-5, ai-sdk-5 |
+| **Prowler** | prowler, prowler-sdk-check, prowler-api, prowler-ui, prowler-mcp, prowler-provider, prowler-compliance, prowler-compliance-review, prowler-docs, prowler-pr, prowler-ci |
+| **Testing** | prowler-test-sdk, prowler-test-api, prowler-test-ui |
+| **Meta** | skill-creator, skill-sync |
+
+## Skill Structure
+
+Each skill follows the [Agent Skills spec](https://agentskills.io):
+
+```
+skills/{skill-name}/
+├── SKILL.md          # Patterns, rules, decision trees
+├── assets/           # Code templates, schemas
+└── references/       # Links to local docs (single source of truth)
+```
+
+## Key Design Decisions
+
+1. **Self-contained skills** - Critical patterns inline for fast loading
+2. **Local doc references** - No web URLs, points to `docs/developer-guide/*.mdx`
+3. **Single source of truth** - Skills reference docs, no duplication
+4. **On-demand loading** - AI loads only what's needed for the task
+
+## Creating New Skills
+
+Use the `skill-creator` meta-skill to create new skills that follow the Agent Skills spec. See `AGENTS.md` for the full list of available skills and their triggers.

@@ -19,6 +19,7 @@ def mock_list_repositories(_):
             name="repo1",
             owner="account-name",
             full_name="account-name/repo1",
+            immutable_releases_enabled=True,
             default_branch=Branch(
                 name="main",
                 protected=True,
@@ -88,6 +89,7 @@ class Test_Repository_Service:
         )
         assert repository_service.repositories[1].archived is False
         assert repository_service.repositories[1].pushed_at is not None
+        assert repository_service.repositories[1].immutable_releases_enabled is True
 
 
 class Test_Repository_FileExists:
@@ -135,7 +137,7 @@ class Test_Repository_GraphQL:
         provider.repositories = []
         provider.organizations = []
 
-        with patch.object(Repository, "__init__", lambda x, y: None):
+        with patch.object(Repository, "__init__", lambda *_: None):
             repository_service = Repository(provider)
             mock_client = MagicMock()
             repository_service.clients = [mock_client]
@@ -163,7 +165,7 @@ class Test_Repository_GraphQL:
         provider.repositories = []
         provider.organizations = []
 
-        with patch.object(Repository, "__init__", lambda x, y: None):
+        with patch.object(Repository, "__init__", lambda *_: None):
             repository_service = Repository(provider)
             repository_service.clients = [MagicMock()]
             repository_service.provider = provider
@@ -191,7 +193,7 @@ class Test_Repository_GraphQL:
         provider.repositories = []
         provider.organizations = []
 
-        with patch.object(Repository, "__init__", lambda x, y: None):
+        with patch.object(Repository, "__init__", lambda *_: None):
             repository_service = Repository(provider)
             repository_service.clients = [MagicMock()]
             repository_service.provider = provider
@@ -243,19 +245,61 @@ class Test_Repository_Scoping:
         self.mock_repo2.get_branch.side_effect = Exception("404 Not Found")
         self.mock_repo2.get_dependabot_alerts.side_effect = Exception("404 Not Found")
 
-    def test_combined_repository_and_organization_scoping(self):
-        """Test that both repository and organization scoping can be used together"""
+    def test_qualified_repo_with_organization_skips_org_fetch(self):
+        """Test that a fully qualified repo with --organization does not fetch all org repos"""
         provider = set_mocked_github_provider()
         provider.repositories = ["owner1/repo1"]
         provider.organizations = ["org2"]
 
         mock_client = MagicMock()
-        # Repository lookup
         mock_client.get_repo.return_value = self.mock_repo1
-        # Organization lookup
-        mock_org = MagicMock()
-        mock_org.get_repos.return_value = [self.mock_repo2]
-        mock_client.get_organization.return_value = mock_org
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            repos = repository_service._list_repositories()
+
+            assert len(repos) == 1
+            assert 1 in repos
+            assert repos[1].name == "repo1"
+            mock_client.get_repo.assert_called_once_with("owner1/repo1")
+            mock_client.get_organization.assert_not_called()
+
+    def test_unqualified_repo_qualified_with_organization(self):
+        """Test that an unqualified repo name is qualified with the organization"""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["repo1"]
+        provider.organizations = ["owner1"]
+
+        mock_client = MagicMock()
+        mock_client.get_repo.return_value = self.mock_repo1
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            repos = repository_service._list_repositories()
+
+            assert len(repos) == 1
+            assert 1 in repos
+            assert repos[1].name == "repo1"
+            mock_client.get_repo.assert_called_once_with("owner1/repo1")
+
+    def test_unqualified_repo_qualified_with_multiple_organizations(self):
+        """Test that an unqualified repo is qualified with each organization"""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["repo1"]
+        provider.organizations = ["org1", "org2"]
+
+        mock_client = MagicMock()
+        mock_client.get_repo.side_effect = [self.mock_repo1, self.mock_repo2]
 
         with patch(
             "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
@@ -267,12 +311,56 @@ class Test_Repository_Scoping:
             repos = repository_service._list_repositories()
 
             assert len(repos) == 2
-            assert 1 in repos
-            assert 2 in repos
-            assert repos[1].name == "repo1"
-            assert repos[2].name == "repo2"
-            mock_client.get_repo.assert_called_once_with("owner1/repo1")
-            mock_client.get_organization.assert_called_once_with("org2")
+            mock_client.get_repo.assert_any_call("org1/repo1")
+            mock_client.get_repo.assert_any_call("org2/repo1")
+
+    def test_unqualified_repo_without_organization_is_skipped(self):
+        """Test that an unqualified repo without --organization is skipped with a warning"""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["repo1"]
+        provider.organizations = []
+
+        mock_client = MagicMock()
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            with patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger:
+                repos = repository_service._list_repositories()
+
+                assert len(repos) == 0
+                mock_logger.warning.assert_called_with(
+                    "Repository name 'repo1' should be in 'owner/repo-name' format. Skipping."
+                )
+                mock_client.get_repo.assert_not_called()
+
+    def test_mixed_qualified_and_unqualified_repos_with_organization(self):
+        """Test mix of qualified and unqualified repos with --organization"""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["repo1", "owner2/repo2"]
+        provider.organizations = ["org1"]
+
+        mock_client = MagicMock()
+        mock_client.get_repo.side_effect = [self.mock_repo1, self.mock_repo2]
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.GithubService.__init__"
+        ):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            repos = repository_service._list_repositories()
+
+            assert len(repos) == 2
+            mock_client.get_repo.assert_any_call("org1/repo1")
+            mock_client.get_repo.assert_any_call("owner2/repo2")
 
 
 class Test_Repository_Validation:
@@ -374,3 +462,147 @@ class Test_Repository_ErrorHandling:
                 # Should log rate limit error
                 mock_logger.error.assert_called()
                 assert "Rate limit exceeded" in str(mock_logger.error.call_args)
+
+
+class Test_Repository_DismissStaleReviewsRulesets:
+    def setup_method(self):
+        self.repository_service = Repository.__new__(Repository)
+        self.repository_service.provider = set_mocked_github_provider()
+        self.repository_service.clients = []
+        self.repository_service.audit_config = None
+        self.repository_service.fixer_config = None
+
+    def _build_repo(
+        self,
+        *,
+        branch_protected: bool,
+        dismiss_stale_reviews: bool = False,
+        ruleset_details: list[dict] | None = None,
+    ):
+        repo = MagicMock()
+        repo.id = 1
+        repo.name = "repo1"
+        repo.owner.login = "owner1"
+        repo.full_name = "owner1/repo1"
+        repo.default_branch = "main"
+        repo.private = False
+        repo.archived = False
+        repo.pushed_at = datetime.now(timezone.utc)
+        repo.delete_branch_on_merge = False
+        repo.security_and_analysis = None
+        repo.get_contents.side_effect = [None, None, None, None]
+        repo.get_dependabot_alerts.side_effect = Exception(
+            "403 Forbidden: Dependabot alerts are disabled for this repository."
+        )
+
+        branch = MagicMock()
+        branch.protected = branch_protected
+        branch.get_required_signatures.return_value = False
+
+        protection = MagicMock()
+        protection.required_linear_history = False
+        protection.allow_force_pushes = False
+        protection.allow_deletions = False
+        protection.required_status_checks = None
+        protection.enforce_admins = False
+        protection.required_conversation_resolution = False
+
+        if branch_protected:
+            protection.required_pull_request_reviews = MagicMock(
+                required_approving_review_count=1,
+                require_code_owner_reviews=False,
+                dismiss_stale_reviews=dismiss_stale_reviews,
+            )
+        else:
+            protection.required_pull_request_reviews = None
+
+        branch.get_protection.return_value = protection
+        repo.get_branch.return_value = branch
+
+        ruleset_details = ruleset_details or []
+        repo._requester.requestJsonAndCheck.side_effect = [
+            (None, [{"id": ruleset["id"]} for ruleset in ruleset_details]),
+            *[(None, ruleset) for ruleset in ruleset_details],
+        ]
+
+        return repo
+
+    def _build_pull_request_ruleset(self, *, enforcement: str, include: list[str]):
+        return {
+            "id": 101,
+            "name": "Dismiss stale reviews",
+            "target": "branch",
+            "source_type": "Repository",
+            "source": "owner1/repo1",
+            "enforcement": enforcement,
+            "conditions": {"ref_name": {"include": include, "exclude": []}},
+            "rules": [
+                {
+                    "type": "pull_request",
+                    "parameters": {
+                        "dismiss_stale_reviews_on_push": True,
+                        "require_code_owner_review": False,
+                        "require_last_push_approval": False,
+                        "required_approving_review_count": 1,
+                        "required_review_thread_resolution": False,
+                    },
+                }
+            ],
+        }
+
+    def test_process_repository_uses_classic_branch_protection(self):
+        repo = self._build_repo(branch_protected=True, dismiss_stale_reviews=True)
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.dismiss_stale_reviews is True
+        assert repos[1].default_branch.dismiss_stale_reviews_source == "classic"
+
+    def test_process_repository_uses_active_ruleset_for_default_branch(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_pull_request_ruleset(
+                    enforcement="active", include=["~DEFAULT_BRANCH"]
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.dismiss_stale_reviews is True
+        assert repos[1].default_branch.dismiss_stale_reviews_source == "ruleset"
+
+    def test_process_repository_treats_all_branches_ruleset_as_default_branch(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_pull_request_ruleset(enforcement="active", include=["~ALL"])
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.dismiss_stale_reviews is True
+        assert repos[1].default_branch.dismiss_stale_reviews_source == "ruleset"
+
+    def test_process_repository_marks_inactive_ruleset_as_fail_signal(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_pull_request_ruleset(
+                    enforcement="disabled", include=["~DEFAULT_BRANCH"]
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.dismiss_stale_reviews is False
+        assert (
+            repos[1].default_branch.dismiss_stale_reviews_source == "ruleset_not_active"
+        )

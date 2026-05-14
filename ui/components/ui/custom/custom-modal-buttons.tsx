@@ -1,6 +1,7 @@
+import { Loader2 } from "lucide-react";
 import { ReactNode } from "react";
 
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import { Button } from "@/components/shadcn";
 
 interface ModalButtonsProps {
   onCancel: () => void;
@@ -21,33 +22,32 @@ export const ModalButtons = ({
   submitColor = "action",
   submitIcon,
 }: ModalButtonsProps) => {
+  const submitVariant = submitColor === "danger" ? "destructive" : "default";
+
   return (
-    <div className="flex w-full justify-center gap-6">
-      <CustomButton
+    <div className="flex w-full justify-end gap-4">
+      <Button
         size="lg"
-        radius="lg"
-        variant="faded"
+        variant="ghost"
         type="button"
-        ariaLabel="Cancel"
-        className="w-full bg-transparent"
-        onPress={onCancel}
-        isDisabled={isLoading}
+        onClick={onCancel}
+        disabled={isLoading}
       >
         Cancel
-      </CustomButton>
-      <CustomButton
+      </Button>
+      <Button
         size="lg"
-        radius="lg"
-        className="w-full"
-        ariaLabel={submitText}
-        color={submitColor}
-        onPress={onSubmit}
-        isLoading={isLoading}
-        isDisabled={isDisabled || isLoading}
-        startContent={submitIcon}
+        variant={submitVariant}
+        onClick={onSubmit}
+        disabled={isDisabled || isLoading}
       >
-        {submitText}
-      </CustomButton>
+        {isLoading ? (
+          <Loader2 className="animate-spin" />
+        ) : (
+          submitIcon && submitIcon
+        )}
+        {isLoading ? "Loading" : submitText}
+      </Button>
     </div>
   );
 };

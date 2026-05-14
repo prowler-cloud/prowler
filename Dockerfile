@@ -1,4 +1,4 @@
-FROM python:3.12.11-slim-bookworm AS build
+FROM python:3.12.11-slim-bookworm@sha256:519591d6871b7bc437060736b9f7456b8731f1499a57e22e6c285135ae657bf7 AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
@@ -6,12 +6,16 @@ LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
-ARG TRIVY_VERSION=0.66.0
+ARG TRIVY_VERSION=0.70.0
 ENV TRIVY_VERSION=${TRIVY_VERSION}
+
+ARG ZIZMOR_VERSION=1.24.1
+ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget libicu72 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
+    build-essential pkg-config libzstd-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -47,6 +51,22 @@ RUN ARCH=$(uname -m) && \
     mkdir -p /tmp/.cache/trivy && \
     chmod 777 /tmp/.cache/trivy
 
+# Install zizmor for GitHub Actions workflow scanning
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        ZIZMOR_ARCH="x86_64-unknown-linux-gnu" ; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+        ZIZMOR_ARCH="aarch64-unknown-linux-gnu" ; \
+    else \
+        echo "Unsupported architecture for zizmor: $ARCH" && exit 1 ; \
+    fi && \
+    wget --progress=dot:giga "https://github.com/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-${ZIZMOR_ARCH}.tar.gz" -O /tmp/zizmor.tar.gz && \
+    mkdir -p /tmp/zizmor-extract && \
+    tar zxf /tmp/zizmor.tar.gz -C /tmp/zizmor-extract && \
+    mv /tmp/zizmor-extract/zizmor /usr/local/bin/zizmor && \
+    chmod +x /usr/local/bin/zizmor && \
+    rm -rf /tmp/zizmor.tar.gz /tmp/zizmor-extract
+
 # Add prowler user
 RUN addgroup --gid 1000 prowler && \
     adduser --uid 1000 --gid 1000 --disabled-password --gecos "" prowler
@@ -58,7 +78,7 @@ WORKDIR /home/prowler
 # Copy necessary files
 COPY prowler/  /home/prowler/prowler/
 COPY dashboard/ /home/prowler/dashboard/
-COPY pyproject.toml /home/prowler
+COPY pyproject.toml uv.lock /home/prowler/
 COPY README.md /home/prowler/
 COPY prowler/providers/m365/lib/powershell/m365_powershell.py /home/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py
 
@@ -67,17 +87,17 @@ ENV HOME='/home/prowler'
 ENV PATH="${HOME}/.local/bin:${PATH}"
 #hadolint ignore=DL3013
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir poetry
+    pip install --no-cache-dir uv==0.11.14
 
-RUN poetry install --compile && \
-    rm -rf ~/.cache/pip
+RUN uv sync --compile-bytecode && \
+    rm -rf ~/.cache/uv
 
 # Install PowerShell modules
-RUN poetry run python prowler/providers/m365/lib/powershell/m365_powershell.py
+RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py
 
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
 
 USER prowler
-ENTRYPOINT ["poetry", "run", "prowler"]
+ENTRYPOINT [".venv/bin/prowler"]

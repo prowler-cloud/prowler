@@ -1,11 +1,11 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { useFormStatus } from "react-dom";
 
 import { SaveIcon } from "@/components/icons";
-
-import { CustomButton } from "../custom";
+import { Button } from "@/components/shadcn";
 
 interface FormCancelButtonProps {
   setIsOpen?: Dispatch<SetStateAction<boolean>>;
@@ -56,18 +56,10 @@ const FormCancelButton = ({
   };
 
   return (
-    <CustomButton
-      type="button"
-      ariaLabel="Cancel"
-      className="w-full bg-transparent"
-      variant="faded"
-      size="lg"
-      radius="lg"
-      onPress={handleCancel}
-      startContent={leftIcon}
-    >
-      <span>{children}</span>
-    </CustomButton>
+    <Button type="button" variant="ghost" size="lg" onClick={handleCancel}>
+      {leftIcon}
+      {children}
+    </Button>
   );
 };
 
@@ -79,22 +71,18 @@ const FormSubmitButton = ({
   rightIcon,
 }: FormSubmitButtonProps) => {
   const { pending } = useFormStatus();
+  const submitVariant = color === "danger" ? "destructive" : "default";
 
   return (
-    <CustomButton
+    <Button
       type="submit"
-      ariaLabel="Save"
-      className="w-full"
-      variant="solid"
-      color={color}
+      variant={submitVariant}
       size="lg"
-      radius="lg"
-      isLoading={pending}
-      isDisabled={isDisabled}
-      startContent={!pending && rightIcon}
+      disabled={isDisabled || pending}
     >
-      {pending ? <>{loadingText}</> : <span>{children}</span>}
-    </CustomButton>
+      {pending ? <Loader2 className="animate-spin" /> : rightIcon}
+      {pending ? loadingText : children}
+    </Button>
   );
 };
 
@@ -110,7 +98,7 @@ export const FormButtons = ({
   leftIcon,
 }: FormButtonsProps) => {
   return (
-    <div className="flex w-full justify-center gap-6">
+    <div className="flex w-full justify-end gap-4">
       <FormCancelButton
         setIsOpen={setIsOpen}
         onCancel={onCancel}

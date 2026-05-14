@@ -13,3 +13,5 @@ README.md
 !.next/static
 !.next/standalone
 .git
+.pre-commit-config.yaml
+scripts/setup-git-hooks.js

@@ -2,10 +2,9 @@ import "@/styles/globals.css";
 
 import { GoogleTagManager } from "@next/third-parties/google";
 import { Metadata, Viewport } from "next";
-import { redirect } from "next/navigation";
+import { ReactNode, Suspense } from "react";
 
-import { auth } from "@/auth.config";
-import { Toaster } from "@/components/ui";
+import { NavigationProgress, Toaster } from "@/components/ui";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";
@@ -30,17 +29,7 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const session = await auth();
-
-  if (session?.user) {
-    redirect("/");
-  }
-
+export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <html suppressHydrationWarning lang="en">
       <head />
@@ -52,6 +41,9 @@ export default async function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
+          <Suspense>
+            <NavigationProgress />
+          </Suspense>
           {children}
           <Toaster />
           <GoogleTagManager

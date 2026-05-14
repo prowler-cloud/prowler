@@ -3,18 +3,54 @@ import pathlib
 from datetime import datetime, timezone
 from enum import Enum
 from os import getcwd
+from typing import Tuple
 
 import requests
 import yaml
 from packaging import version
 
+from prowler.lib.check.compliance_models import load_compliance_framework_universal
+
+# Re-exported from a leaf module so prowler.lib.check.utils can import the
+# constant without participating in the config <-> compliance_models <-> utils
+# import cycle. Existing consumers continue to import from this module.
+# The `as EXTERNAL_TOOL_PROVIDERS` rename is the PEP 484 explicit re-export
+# form so static analyzers (CodeQL, mypy, ruff) treat the name as public.
+from prowler.lib.check.external_tool_providers import (  # noqa: F401
+    EXTERNAL_TOOL_PROVIDERS as EXTERNAL_TOOL_PROVIDERS,
+)
 from prowler.lib.logger import logger
 
-timestamp = datetime.today()
-timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-prowler_version = "5.14.0"
+
+class _MutableTimestamp:
+    """Lightweight proxy to keep timestamp references in sync across modules."""
+
+    def __init__(self, value: datetime) -> None:
+        self.value = value
+
+    def set(self, value: datetime) -> None:
+        self.value = value
+
+    def __getattr__(self, name):
+        return getattr(self.value, name)
+
+    def __str__(self) -> str:  # pragma: no cover - trivial forwarder
+        return str(self.value)
+
+    def __repr__(self) -> str:  # pragma: no cover - trivial forwarder
+        return repr(self.value)
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, _MutableTimestamp):
+            return self.value == other.value
+        return self.value == other
+
+
+timestamp = _MutableTimestamp(datetime.today())
+timestamp_utc = _MutableTimestamp(datetime.now(timezone.utc))
+prowler_version = "5.27.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
-square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
+square_logo_img = "https://raw.githubusercontent.com/prowler-cloud/prowler/dc7d2d5aeb92fdf12e8604f42ef6472cd3e8e889/docs/img/prowler-logo-black.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
 azure_logo = "https://user-images.githubusercontent.com/38561120/235927375-b23e2e0f-8932-49ec-b59c-d89f61c8041d.png"
 gcp_logo = "https://user-images.githubusercontent.com/38561120/235928332-eb4accdc-c226-4391-8e97-6ca86a91cf50.png"
@@ -27,13 +63,20 @@ class Provider(str, Enum):
     AWS = "aws"
     GCP = "gcp"
     AZURE = "azure"
+    CLOUDFLARE = "cloudflare"
     KUBERNETES = "kubernetes"
     M365 = "m365"
     GITHUB = "github"
+    GOOGLEWORKSPACE = "googleworkspace"
     IAC = "iac"
     NHN = "nhn"
     MONGODBATLAS = "mongodbatlas"
     ORACLECLOUD = "oraclecloud"
+    ALIBABACLOUD = "alibabacloud"
+    OPENSTACK = "openstack"
+    IMAGE = "image"
+    VERCEL = "vercel"
+    OKTA = "okta"
 
 
 # Compliance
@@ -45,13 +88,33 @@ def get_available_compliance_frameworks(provider=None):
     providers = [p.value for p in Provider]
     if provider:
         providers = [provider]
-    for provider in providers:
-        with os.scandir(f"{actual_directory}/../compliance/{provider}") as files:
+    for current_provider in providers:
+        compliance_dir = f"{actual_directory}/../compliance/{current_provider}"
+        if not os.path.isdir(compliance_dir):
+            continue
+        with os.scandir(compliance_dir) as files:
             for file in files:
                 if file.is_file() and file.name.endswith(".json"):
                     available_compliance_frameworks.append(
                         file.name.removesuffix(".json")
                     )
+    # Also scan top-level compliance/ for multi-provider (universal) JSONs.
+    # When a specific provider was requested, only include the framework if it
+    # declares support for that provider; otherwise include all universal frameworks.
+    compliance_root = f"{actual_directory}/../compliance"
+    if os.path.isdir(compliance_root):
+        with os.scandir(compliance_root) as files:
+            for file in files:
+                if file.is_file() and file.name.endswith(".json"):
+                    name = file.name.removesuffix(".json")
+                    if provider:
+                        framework = load_compliance_framework_universal(file.path)
+                        if framework is None or not framework.supports_provider(
+                            provider
+                        ):
+                            continue
+                    if name not in available_compliance_frameworks:
+                        available_compliance_frameworks.append(name)
     return available_compliance_frameworks
 
 
@@ -71,6 +134,7 @@ json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"
 json_ocsf_file_suffix = ".ocsf.json"
 html_file_suffix = ".html"
+sarif_file_suffix = ".sarif"
 default_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/config.yaml"
 )
@@ -81,7 +145,40 @@ default_redteam_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/llm_config.yaml"
 )
 encoding_format_utf_8 = "utf-8"
-available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
+available_output_formats = ["csv", "json-asff", "json-ocsf", "html", "sarif"]
+
+# Prowler Cloud API settings
+cloud_api_base_url = os.getenv("PROWLER_CLOUD_API_BASE_URL", "https://api.prowler.com")
+cloud_api_key = os.getenv("PROWLER_CLOUD_API_KEY", "")
+cloud_api_ingestion_path = "/api/v1/ingestions"
+
+
+def set_output_timestamp(
+    new_timestamp: datetime,
+) -> Tuple[datetime, datetime, str, str]:
+    """
+    Override the global output timestamps so generated artifacts reflect a specific scan.
+    Returns the previous values so callers can restore them afterwards.
+    """
+    global output_file_timestamp, timestamp_iso
+
+    previous_values = (
+        timestamp.value,
+        timestamp_utc.value,
+        output_file_timestamp,
+        timestamp_iso,
+    )
+
+    timestamp.set(new_timestamp)
+    timestamp_utc.set(
+        new_timestamp.astimezone(timezone.utc)
+        if new_timestamp.tzinfo
+        else new_timestamp.replace(tzinfo=timezone.utc)
+    )
+    output_file_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
+    timestamp_iso = timestamp.isoformat(sep=" ", timespec="seconds")
+
+    return previous_values
 
 
 def get_default_mute_file_path(provider: str):

@@ -15,11 +15,17 @@ class SageMaker(AWSService):
         self.sagemaker_notebook_instances = []
         self.sagemaker_models = []
         self.sagemaker_training_jobs = []
+        self.sagemaker_domains = []
         self.endpoint_configs = {}
+
+        # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
         self.__threading_call__(self._list_models)
         self.__threading_call__(self._list_training_jobs)
         self.__threading_call__(self._list_endpoint_configs)
+        self.__threading_call__(self._list_domains)
+
+        # Describe resources concurrently
         self.__threading_call__(self._describe_model, self.sagemaker_models)
         self.__threading_call__(
             self._describe_notebook_instance, self.sagemaker_notebook_instances
@@ -28,9 +34,23 @@ class SageMaker(AWSService):
             self._describe_training_job, self.sagemaker_training_jobs
         )
         self.__threading_call__(
-            self._describe_endpoint_config, self.endpoint_configs.values()
+            self._describe_endpoint_config, list(self.endpoint_configs.values())
         )
-        self._list_tags_for_resource()
+        self.__threading_call__(self._describe_domain, self.sagemaker_domains)
+
+        # List tags concurrently for each resource collection
+        # This replaces the previous sequential sequential execution to improve performance
+        self.__threading_call__(self._list_tags_for_resource, self.sagemaker_models)
+        self.__threading_call__(
+            self._list_tags_for_resource, self.sagemaker_notebook_instances
+        )
+        self.__threading_call__(
+            self._list_tags_for_resource, self.sagemaker_training_jobs
+        )
+        self.__threading_call__(
+            self._list_tags_for_resource, list(self.endpoint_configs.values())
+        )
+        self.__threading_call__(self._list_tags_for_resource, self.sagemaker_domains)
 
     def _list_notebook_instances(self, regional_client):
         logger.info("SageMaker - listing notebook instances...")
@@ -187,43 +207,59 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_tags_for_resource(self):
+    def _list_tags_for_resource(self, resource):
+        """
+        Lists tags for a specific SageMaker resource.
+        This method is designed to be called in parallel threads for each resource.
+        """
         logger.info("SageMaker - List Tags...")
         try:
-            for model in self.sagemaker_models:
-                regional_client = self.regional_clients[model.region]
-                response = regional_client.list_tags(ResourceArn=model.arn)["Tags"]
-                model.tags = response
+            regional_client = self.regional_clients[resource.region]
+            response = regional_client.list_tags(ResourceArn=resource.arn)["Tags"]
+            resource.tags = response
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _list_domains(self, regional_client):
+        logger.info("SageMaker - listing domains...")
         try:
-            for instance in self.sagemaker_notebook_instances:
-                regional_client = self.regional_clients[instance.region]
-                response = regional_client.list_tags(ResourceArn=instance.arn)["Tags"]
-                instance.tags = response
+            list_domains_paginator = regional_client.get_paginator("list_domains")
+            for page in list_domains_paginator.paginate():
+                for domain in page["Domains"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(domain["DomainArn"], self.audit_resources)
+                    ):
+                        self.sagemaker_domains.append(
+                            Domain(
+                                domain_id=domain["DomainId"],
+                                name=domain["DomainName"],
+                                region=regional_client.region,
+                                arn=domain["DomainArn"],
+                            )
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _describe_domain(self, domain):
+        logger.info("SageMaker - describing domain...")
         try:
-            for job in self.sagemaker_training_jobs:
-                regional_client = self.regional_clients[job.region]
-                response = regional_client.list_tags(ResourceArn=job.arn)["Tags"]
-                job.tags = response
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            regional_client = self.regional_clients[domain.region]
+            describe_domain = regional_client.describe_domain(DomainId=domain.domain_id)
+            if "AuthMode" in describe_domain:
+                domain.auth_mode = describe_domain["AuthMode"]
+            domain.single_sign_on_managed_application_instance_id = describe_domain.get(
+                "SingleSignOnManagedApplicationInstanceId"
             )
-        try:
-            for endpoint in self.endpoint_configs.values():
-                regional_client = self.regional_clients[endpoint.region]
-                response = regional_client.list_tags(ResourceArn=endpoint.arn)["Tags"]
-                endpoint.tags = response
+            domain.single_sign_on_application_arn = describe_domain.get(
+                "SingleSignOnApplicationArn"
+            )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{domain.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _list_endpoint_configs(self, regional_client):
@@ -309,6 +345,17 @@ class TrainingJob(BaseModel):
 class ProductionVariant(BaseModel):
     name: str
     initial_instance_count: int
+
+
+class Domain(BaseModel):
+    domain_id: str
+    name: str
+    region: str
+    arn: str
+    auth_mode: Optional[str] = None
+    single_sign_on_managed_application_instance_id: Optional[str] = None
+    single_sign_on_application_arn: Optional[str] = None
+    tags: Optional[list] = []
 
 
 class EndpointConfig(BaseModel):

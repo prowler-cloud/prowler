@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsLambdaFunction",
+  "ResourceGroup": "serverless",
   "Description": "**AWS Lambda** function invocations are recorded as **CloudTrail data events** when trails include `AWS::Lambda::Function` resources.\n\nThe finding reflects whether a function's `Invoke` activity is being logged by an eligible trail.",
   "Risk": "Without Lambda `Invoke` data events, per-invocation accountability is lost. Adversaries or misused automation can run code without an audit trail, obscuring actor, time, and source. This hinders forensics and enables covert exfiltration or unauthorized changes, impacting **confidentiality** and **integrity**.",
   "RelatedUrl": "",

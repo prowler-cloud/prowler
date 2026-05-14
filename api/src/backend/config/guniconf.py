@@ -15,7 +15,7 @@ from config.django.production import LOGGING as DJANGO_LOGGERS, DEBUG  # noqa: E
 from config.custom_logging import BackendLogger  # noqa: E402
 
 BIND_ADDRESS = env("DJANGO_BIND_ADDRESS", default="127.0.0.1")
-PORT = env("DJANGO_PORT", default=8000)
+PORT = env("DJANGO_PORT", default=8080)
 
 # Server settings
 bind = f"{BIND_ADDRESS}:{PORT}"

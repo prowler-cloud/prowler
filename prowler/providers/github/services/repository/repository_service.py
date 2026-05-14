@@ -1,4 +1,5 @@
 from datetime import datetime
+from fnmatch import fnmatch
 from typing import Optional
 
 import github
@@ -100,6 +101,145 @@ class Repository(GithubService):
             )
             return []
 
+    def _default_branch_matches_rule_pattern(
+        self, pattern: str, default_branch: str
+    ) -> bool:
+        """Check whether a ruleset ref pattern applies to the default branch."""
+        branch_ref = f"refs/heads/{default_branch}"
+
+        if pattern in {"~ALL", "~DEFAULT_BRANCH"}:
+            return True
+
+        return fnmatch(branch_ref, pattern)
+
+    def _ruleset_targets_default_branch(
+        self, ruleset: dict, default_branch: str
+    ) -> bool:
+        """Check whether a ruleset targets the repository default branch."""
+        ref_name_conditions = (ruleset.get("conditions") or {}).get("ref_name")
+        if not ref_name_conditions:
+            return False
+
+        include_patterns = ref_name_conditions.get("include") or []
+        exclude_patterns = ref_name_conditions.get("exclude") or []
+
+        if not include_patterns:
+            return False
+
+        if not any(
+            self._default_branch_matches_rule_pattern(pattern, default_branch)
+            for pattern in include_patterns
+        ):
+            return False
+
+        return not any(
+            self._default_branch_matches_rule_pattern(pattern, default_branch)
+            for pattern in exclude_patterns
+        )
+
+    def _get_repository_rulesets(self, repo) -> Optional[list[dict]]:
+        """Fetch repository and parent branch rulesets with full rule details."""
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+
+        try:
+            rulesets = []
+            page = 1
+
+            while True:
+                _, response = repo._requester.requestJsonAndCheck(  # type: ignore[attr-defined]
+                    "GET",
+                    f"/repos/{repo.full_name}/rulesets?includes_parents=true&targets=branch&per_page=100&page={page}",
+                    headers=headers,
+                )
+
+                if not isinstance(response, list):
+                    break
+
+                rulesets.extend(response)
+
+                if len(response) < 100:
+                    break
+
+                page += 1
+
+            detailed_rulesets = []
+            for ruleset in rulesets:
+                ruleset_id = ruleset.get("id")
+                if ruleset_id is None:
+                    continue
+
+                _, ruleset_details = repo._requester.requestJsonAndCheck(  # type: ignore[attr-defined]
+                    "GET",
+                    f"/repos/{repo.full_name}/rulesets/{ruleset_id}?includes_parents=true",
+                    headers=headers,
+                )
+                if isinstance(ruleset_details, dict):
+                    detailed_rulesets.append(ruleset_details)
+
+            return detailed_rulesets
+        except github.GithubException as error:
+            status_code = getattr(error, "status", None)
+            if status_code == 404:
+                logger.info(
+                    f"{repo.full_name}: rulesets endpoint not available for this repository."
+                )
+                return None
+            if status_code == 403:
+                logger.warning(
+                    f"{repo.full_name}: insufficient permissions to query repository rulesets."
+                )
+                return None
+            self._handle_github_api_error(
+                error, "fetching repository rulesets", repo.full_name
+            )
+        except Exception as error:
+            logger.error(
+                f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return None
+
+    def _get_dismiss_stale_reviews_from_rulesets(
+        self, repo, default_branch: str
+    ) -> tuple[Optional[bool], Optional[str]]:
+        """Evaluate dismiss-stale-review coverage from repository and parent rulesets."""
+        rulesets = self._get_repository_rulesets(repo)
+        if rulesets is None:
+            return None, None
+
+        has_inactive_ruleset = False
+
+        for ruleset in rulesets:
+            if ruleset.get("target") != "branch":
+                continue
+
+            if not self._ruleset_targets_default_branch(ruleset, default_branch):
+                continue
+
+            for rule in ruleset.get("rules") or []:
+                if rule.get("type") != "pull_request":
+                    continue
+
+                dismiss_stale_reviews = (rule.get("parameters") or {}).get(
+                    "dismiss_stale_reviews_on_push"
+                )
+                if dismiss_stale_reviews is not True:
+                    continue
+
+                enforcement = ruleset.get("enforcement")
+                if enforcement in {"active", "enabled"}:
+                    return True, "ruleset"
+                if enforcement in {"disabled", "evaluate"}:
+                    has_inactive_ruleset = True
+
+        if has_inactive_ruleset:
+            return False, "ruleset_not_active"
+
+        return None, None
+
     def _list_repositories(self):
         """
         List repositories based on provider scoping configuration.
@@ -121,15 +261,22 @@ class Repository(GithubService):
                     )
                 ):
                     if self.provider.repositories:
-                        logger.info(
-                            f"Filtering for specific repositories: {self.provider.repositories}"
-                        )
+                        qualified_repos = []
                         for repo_name in self.provider.repositories:
-                            if not self._validate_repository_format(repo_name):
+                            if self._validate_repository_format(repo_name):
+                                qualified_repos.append(repo_name)
+                            elif self.provider.organizations:
+                                for org_name in self.provider.organizations:
+                                    qualified_repos.append(f"{org_name}/{repo_name}")
+                            else:
                                 logger.warning(
                                     f"Repository name '{repo_name}' should be in 'owner/repo-name' format. Skipping."
                                 )
-                                continue
+
+                        logger.info(
+                            f"Filtering for specific repositories: {qualified_repos}"
+                        )
+                        for repo_name in qualified_repos:
                             try:
                                 repo = client.get_repo(repo_name)
                                 self._process_repository(repo, repos)
@@ -138,7 +285,7 @@ class Repository(GithubService):
                                     error, "accessing repository", repo_name
                                 )
 
-                    if self.provider.organizations:
+                    elif self.provider.organizations:
                         logger.info(
                             f"Filtering for repositories in organizations: {self.provider.organizations}"
                         )
@@ -234,11 +381,9 @@ class Repository(GithubService):
                 codeowners_exists = None
             else:
                 codeowners_exists = False
-            delete_branch_on_merge = (
-                repo.delete_branch_on_merge
-                if repo.delete_branch_on_merge is not None
-                else False
-            )
+            # GitHub API only returns delete_branch_on_merge with Administration: Read and Write
+            # With Read-only permission, it returns None - set to None for MANUAL status
+            delete_branch_on_merge = repo.delete_branch_on_merge
 
             require_pr = False
             approval_cnt = 0
@@ -251,6 +396,8 @@ class Repository(GithubService):
             status_checks = False
             enforce_admins = False
             conversation_resolution = False
+            dismiss_stale_reviews = False
+            dismiss_stale_reviews_source = None
             try:
                 branch = repo.get_branch(default_branch)
                 if branch.protected:
@@ -278,6 +425,13 @@ class Repository(GithubService):
                             if require_pr
                             else False
                         )
+                        dismiss_stale_reviews = (
+                            protection.required_pull_request_reviews.dismiss_stale_reviews
+                            if require_pr
+                            else False
+                        )
+                        if dismiss_stale_reviews:
+                            dismiss_stale_reviews_source = "classic"
                         require_signed_commits = branch.get_required_signatures()
             except Exception as error:
                 # If the branch is not found, it is not protected
@@ -298,9 +452,25 @@ class Repository(GithubService):
                     status_checks = None
                     enforce_admins = None
                     conversation_resolution = None
+                    dismiss_stale_reviews = None
+                    dismiss_stale_reviews_source = None
                     logger.error(
                         f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+
+            if dismiss_stale_reviews is not None:
+                (
+                    ruleset_dismiss_stale_reviews,
+                    ruleset_source,
+                ) = self._get_dismiss_stale_reviews_from_rulesets(repo, default_branch)
+                if ruleset_dismiss_stale_reviews:
+                    dismiss_stale_reviews = True
+                    dismiss_stale_reviews_source = "ruleset"
+                elif (
+                    ruleset_source == "ruleset_not_active" and not dismiss_stale_reviews
+                ):
+                    dismiss_stale_reviews = False
+                    dismiss_stale_reviews_source = "ruleset_not_active"
 
             secret_scanning_enabled = False
             dependabot_alerts_enabled = False
@@ -341,6 +511,9 @@ class Repository(GithubService):
                 name=repo.name,
                 owner=repo.owner.login,
                 full_name=repo.full_name,
+                immutable_releases_enabled=self._get_repository_immutable_releases_status(
+                    repo
+                ),
                 default_branch=Branch(
                     name=default_branch,
                     protected=branch_protection,
@@ -355,6 +528,8 @@ class Repository(GithubService):
                     conversation_resolution=conversation_resolution,
                     require_code_owner_reviews=require_code_owner_reviews,
                     require_signed_commits=require_signed_commits,
+                    dismiss_stale_reviews=dismiss_stale_reviews,
+                    dismiss_stale_reviews_source=dismiss_stale_reviews_source,
                 ),
                 private=repo.private,
                 archived=repo.archived,
@@ -369,6 +544,54 @@ class Repository(GithubService):
             logger.error(
                 f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _get_repository_immutable_releases_status(self, repo) -> Optional[bool]:
+        """Retrieve the immutable releases status for the provided repository.
+
+        The API returns a response in the format:
+        {
+            "enabled": true,
+            "enforced_by_owner": false
+        }
+
+        Args:
+            repo: The PyGithub repository instance to query.
+
+        Returns:
+            Optional[bool]: True when immutable releases are enabled, False when they are disabled, and None when the status cannot be determined.
+        """
+        try:
+            _, response = repo._requester.requestJsonAndCheck(  # type: ignore[attr-defined]
+                "GET",
+                f"/repos/{repo.full_name}/immutable-releases",
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+            )
+            if isinstance(response, dict) and "enabled" in response:
+                return response.get("enabled")
+            return None
+        except github.GithubException as error:
+            status_code = getattr(error, "status", None)
+            if status_code == 404:
+                logger.info(
+                    f"{repo.full_name}: immutable releases endpoint not available for this repository."
+                )
+                return None
+            if status_code == 403:
+                logger.warning(
+                    f"{repo.full_name}: insufficient permissions to query immutable releases endpoint."
+                )
+                return None
+            self._handle_github_api_error(
+                error, "fetching immutable releases status", repo.full_name
+            )
+        except Exception as error:
+            logger.error(
+                f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return None
 
 
 class Branch(BaseModel):
@@ -387,6 +610,8 @@ class Branch(BaseModel):
     require_code_owner_reviews: Optional[bool]
     require_signed_commits: Optional[bool]
     conversation_resolution: Optional[bool]
+    dismiss_stale_reviews: Optional[bool]
+    dismiss_stale_reviews_source: Optional[str] = None
 
 
 class Repo(BaseModel):
@@ -396,6 +621,7 @@ class Repo(BaseModel):
     name: str
     owner: str
     full_name: str
+    immutable_releases_enabled: Optional[bool] = None
     default_branch: Branch
     private: bool
     archived: bool

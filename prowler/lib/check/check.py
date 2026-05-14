@@ -14,7 +14,7 @@ from colorama import Fore, Style
 import prowler
 from prowler.config.config import orange_color
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
-from prowler.lib.check.models import Check
+from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
@@ -110,6 +110,48 @@ def parse_checks_from_folder(provider, input_folder: str) -> set:
         sys.exit(1)
 
 
+def load_custom_checks_metadata(input_folder: str) -> dict:
+    """
+    Load check metadata from a custom checks folder without copying the checks.
+    This is used to validate check names before the provider is initialized.
+
+    Args:
+        input_folder (str): Path to the folder containing custom checks.
+
+    Returns:
+        dict: A dictionary with CheckID as key and CheckMetadata as value.
+    """
+    custom_checks_metadata = {}
+
+    try:
+        if not os.path.isdir(input_folder):
+            return custom_checks_metadata
+
+        with os.scandir(input_folder) as checks:
+            for check in checks:
+                if check.is_dir():
+                    check_name = check.name
+                    metadata_file = os.path.join(
+                        input_folder, check_name, f"{check_name}.metadata.json"
+                    )
+                    if os.path.isfile(metadata_file):
+                        try:
+                            check_metadata = load_check_metadata(metadata_file)
+                            custom_checks_metadata[check_metadata.CheckID] = (
+                                check_metadata
+                            )
+                        except Exception as error:
+                            logger.warning(
+                                f"Could not load metadata from {metadata_file}: {error}"
+                            )
+        return custom_checks_metadata
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        return custom_checks_metadata
+
+
 # Load checks from custom folder
 def remove_custom_checks_module(input_folder: str, provider: str):
     # Check if input folder is a S3 URI
@@ -186,6 +228,28 @@ def print_categories(categories: set):
     print(message)
 
 
+def list_resource_groups(bulk_checks_metadata: dict) -> set:
+    available_resource_groups = set()
+    for check in bulk_checks_metadata.values():
+        if check.ResourceGroup:
+            available_resource_groups.add(check.ResourceGroup)
+    return available_resource_groups
+
+
+def print_resource_groups(resource_groups: set):
+    rg_num = len(resource_groups)
+    plural_string = f"\nThere are {Fore.YELLOW}{rg_num}{Style.RESET_ALL} available resource groups.\n"
+    singular_string = (
+        f"\nThere is {Fore.YELLOW}{rg_num}{Style.RESET_ALL} available resource group.\n"
+    )
+
+    message = plural_string if rg_num > 1 else singular_string
+    for rg in sorted(resource_groups):
+        print(f"- {rg}")
+
+    print(message)
+
+
 def print_services(service_list: set):
     services_num = len(service_list)
     plural_string = f"\nThere are {Fore.YELLOW}{services_num}{Style.RESET_ALL} available services.\n"
@@ -235,12 +299,22 @@ def print_compliance_frameworks(
 def print_compliance_requirements(
     bulk_compliance_frameworks: dict, compliance_frameworks: list
 ):
+    from prowler.lib.check.compliance_models import ComplianceFramework
+
     for compliance_framework in compliance_frameworks:
         for key in bulk_compliance_frameworks.keys():
-            framework = bulk_compliance_frameworks[key].Framework
-            provider = bulk_compliance_frameworks[key].Provider
-            version = bulk_compliance_frameworks[key].Version
-            requirements = bulk_compliance_frameworks[key].Requirements
+            entry = bulk_compliance_frameworks[key]
+            is_universal = isinstance(entry, ComplianceFramework)
+            if is_universal:
+                framework = entry.framework
+                provider = entry.provider or "Multi-provider"
+                version = entry.version
+                requirements = entry.requirements
+            else:
+                framework = entry.Framework
+                provider = entry.Provider or "Multi-provider"
+                version = entry.Version
+                requirements = entry.Requirements
             # We can list the compliance requirements for a given framework using the
             # bulk_compliance_frameworks keys since they are the compliance specification file name
             if compliance_framework == key:
@@ -249,10 +323,23 @@ def print_compliance_requirements(
                 )
                 for requirement in requirements:
                     checks = ""
-                    for check in requirement.Checks:
-                        checks += f" {Fore.YELLOW}\t\t{check}\n{Style.RESET_ALL}"
+                    if is_universal:
+                        req_checks = requirement.checks
+                        req_id = requirement.id
+                        req_description = requirement.description
+                    else:
+                        req_checks = requirement.Checks
+                        req_id = requirement.Id
+                        req_description = requirement.Description
+                    if isinstance(req_checks, dict):
+                        for prov, check_list in req_checks.items():
+                            for check in check_list:
+                                checks += f" {Fore.YELLOW}\t\t[{prov}] {check}\n{Style.RESET_ALL}"
+                    else:
+                        for check in req_checks:
+                            checks += f" {Fore.YELLOW}\t\t{check}\n{Style.RESET_ALL}"
                     print(
-                        f"Requirement Id: {Fore.MAGENTA}{requirement.Id}{Style.RESET_ALL}\n\t- Description: {requirement.Description}\n\t- Checks:\n{checks}"
+                        f"Requirement Id: {Fore.MAGENTA}{req_id}{Style.RESET_ALL}\n\t- Description: {req_description}\n\t- Checks:\n{checks}"
                     )
 
 
@@ -641,10 +728,36 @@ def execute(
                 is_finding_muted_args["organization_id"] = (
                     global_provider.identity.organization_id
                 )
+            elif global_provider.type == "alibabacloud":
+                is_finding_muted_args["account_id"] = (
+                    global_provider.identity.account_id
+                )
+            elif global_provider.type == "openstack":
+                is_finding_muted_args["project_id"] = (
+                    global_provider.identity.project_id
+                )
+            elif global_provider.type == "vercel":
+                team = getattr(global_provider.identity, "team", None)
+                is_finding_muted_args["team_id"] = (
+                    team.id if team else global_provider.identity.user_id
+                )
+            elif global_provider.type == "oraclecloud":
+                is_finding_muted_args["tenancy_id"] = (
+                    global_provider.identity.tenancy_id
+                )
+            elif global_provider.type == "okta":
+                is_finding_muted_args["org_domain"] = (
+                    global_provider.identity.org_domain
+                )
             for finding in check_findings:
+                if global_provider.type == "cloudflare":
+                    is_finding_muted_args["account_id"] = finding.account_id
                 if global_provider.type == "azure":
-                    is_finding_muted_args["subscription_id"] = (
-                        global_provider.identity.subscriptions.get(finding.subscription)
+                    is_finding_muted_args["subscription_id"] = finding.subscription
+                    is_finding_muted_args["subscription_name"] = (
+                        global_provider.identity.subscriptions.get(
+                            finding.subscription, finding.subscription
+                        )
                     )
                 is_finding_muted_args["finding"] = finding
                 finding.muted = global_provider.mutelist.is_finding_muted(

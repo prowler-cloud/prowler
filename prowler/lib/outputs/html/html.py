@@ -9,6 +9,7 @@ from prowler.config.config import (
     square_logo_img,
     timestamp,
 )
+from prowler.lib.cli.redact import redact_argv
 from prowler.lib.logger import logger
 from prowler.lib.outputs.output import Finding, Output
 from prowler.lib.outputs.utils import parse_html_string, unroll_dict
@@ -72,8 +73,7 @@ class HTML(Output):
                 elif finding.status == "FAIL":
                     row_class = "table-danger"
 
-                self._data.append(
-                    f"""
+                self._data.append(f"""
                         <tr class="{row_class}">
                             <td>{finding_status}</td>
                             <td>{finding.metadata.Severity.value}</td>
@@ -88,8 +88,7 @@ class HTML(Output):
                             <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
                         </tr>
-                        """
-                )
+                        """)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -142,8 +141,7 @@ class HTML(Output):
             from_cli (bool): whether the request is from the CLI or not
         """
         try:
-            file_descriptor.write(
-                f"""<!DOCTYPE html>
+            file_descriptor.write(f"""<!DOCTYPE html>
     <html lang="en">
     <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -196,7 +194,7 @@ class HTML(Output):
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(sys.argv[1:]) if from_cli else ""}
+                <b>Parameters used:</b> {redact_argv(sys.argv[1:]) if from_cli else ""}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}
@@ -241,7 +239,7 @@ class HTML(Output):
                     <th scope="col">Status</th>
                     <th scope="col">Severity</th>
                     <th scope="col">Service Name</th>
-                    <th scope="col">{"Line Range" if provider.type == "iac" else "Region"}</th>
+                    <th scope="col">Region</th>
                     <th style="width:20%" scope="col">Check ID</th>
                     <th style="width:20%" scope="col">Check Title</th>
                     <th scope="col">Resource ID</th>
@@ -252,8 +250,7 @@ class HTML(Output):
                     <th scope="col">Compliance</th>
                 </tr>
             </thead>
-            <tbody>"""
-            )
+            <tbody>""")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -268,8 +265,7 @@ class HTML(Output):
             file_descriptor (file): the file descriptor to write the footer
         """
         try:
-            file_descriptor.write(
-                """
+            file_descriptor.write("""
             </tbody>
             </table>
         </div>
@@ -408,8 +404,7 @@ class HTML(Output):
 </body>
 
 </html>
-"""
-            )
+""")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -491,8 +486,11 @@ class HTML(Output):
         """
         try:
             printed_subscriptions = []
-            for key, value in provider.identity.subscriptions.items():
-                intermediate = f"{key} : {value}"
+            for (
+                subscription_id,
+                display_name,
+            ) in provider.identity.subscriptions.items():
+                intermediate = f"{display_name} : {subscription_id}"
                 printed_subscriptions.append(intermediate)
 
             # check if identity is str(coming from SP) or dict(coming from browser or)
@@ -931,6 +929,56 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_image_assessment_summary(provider: Provider) -> str:
+        """
+        get_image_assessment_summary gets the HTML assessment summary for the Image provider
+
+        Args:
+            provider (Provider): the Image provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            if provider.registry:
+                target_info = f"<b>Registry URL:</b> {provider.registry}"
+            else:
+                target_info = f'<b>Images:</b> {", ".join(provider.images)}'
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                {target_info}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Image Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Image authentication method:</b> {provider.auth_method}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_llm_assessment_summary(provider: Provider) -> str:
         """
         get_llm_assessment_summary gets the HTML assessment summary for the LLM provider
@@ -1062,6 +1110,380 @@ class HTML(Output):
                             <li class="list-group-item">
                                 <b>Authentication Type:</b> API Token
                             </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_cloudflare_assessment_summary(provider: Provider) -> str:
+        """
+        get_cloudflare_assessment_summary gets the HTML assessment summary for the Cloudflare provider
+
+        Args:
+            provider (Provider): the Cloudflare provider object
+
+        Returns:
+            str: HTML assessment summary for the Cloudflare provider
+        """
+        try:
+            # Build assessment summary items (only non-None values)
+            assessment_items = ""
+            if provider.accounts:
+                accounts = ", ".join([acc.id for acc in provider.accounts])
+                assessment_items += f"""
+                            <li class="list-group-item">
+                                <b>Accounts:</b> {accounts}
+                            </li>"""
+
+            # Build credentials items (only non-None values)
+            credentials_items = ""
+
+            # Authentication method
+            if provider.session.api_token:
+                credentials_items += """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+            elif provider.session.api_key and provider.session.api_email:
+                credentials_items += """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key + Email
+                            </li>"""
+
+            # Email (from identity or session)
+            email = getattr(provider.identity, "email", None) or getattr(
+                provider.session, "api_email", None
+            )
+            if email:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Cloudflare Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Cloudflare Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_alibabacloud_assessment_summary(provider: Provider) -> str:
+        """
+        get_alibabacloud_assessment_summary gets the HTML assessment summary for the Alibaba Cloud provider
+
+        Args:
+            provider (Provider): the Alibaba Cloud provider object
+
+        Returns:
+            str: HTML assessment summary for the Alibaba Cloud provider
+        """
+        try:
+            account_id = getattr(provider.identity, "account_id", "unknown")
+            account_name = getattr(provider.identity, "account_name", "")
+            audited_regions = getattr(
+                provider.identity, "audited_regions", "All Regions"
+            )
+            identity_arn = getattr(provider.identity, "identity_arn", "unknown")
+            user_name = getattr(provider.identity, "user_name", "unknown")
+
+            account_name_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>Account Name:</b> {account_name}
+                            </li>"""
+                if account_name
+                else ""
+            )
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Alibaba Cloud Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Account ID:</b> {account_id}
+                            </li>
+                            {account_name_item}
+                            <li class="list-group-item">
+                                <b>Audited Regions:</b> {audited_regions}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Alibaba Cloud Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>User Name:</b> {user_name}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Identity ARN:</b> {identity_arn}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_openstack_assessment_summary(provider: Provider) -> str:
+        """
+        get_openstack_assessment_summary gets the HTML assessment summary for the OpenStack provider
+
+        Args:
+            provider (Provider): the OpenStack provider object
+
+        Returns:
+            str: HTML assessment summary for the OpenStack provider
+        """
+        try:
+            project_id = getattr(provider.identity, "project_id", "unknown")
+            project_name = getattr(provider.identity, "project_name", "")
+            region_name = getattr(provider.identity, "region_name", "unknown")
+            username = getattr(provider.identity, "username", "unknown")
+            user_id = getattr(provider.identity, "user_id", "")
+
+            project_name_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>Project Name:</b> {project_name}
+                            </li>"""
+                if project_name
+                else ""
+            )
+
+            user_id_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>User ID:</b> {user_id}
+                            </li>"""
+                if user_id
+                else ""
+            )
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            OpenStack Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {project_id}
+                            </li>
+                            {project_name_item}
+                            <li class="list-group-item">
+                                <b>Region:</b> {region_name}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            OpenStack Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Username:</b> {username}
+                            </li>
+                            {user_id_item}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_googleworkspace_assessment_summary(provider: Provider) -> str:
+        """
+        get_googleworkspace_assessment_summary gets the HTML assessment summary for the Google Workspace provider
+
+        Args:
+            provider (Provider): the Google Workspace provider object
+
+        Returns:
+            str: HTML assessment summary for the Google Workspace provider
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Google Workspace Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Domain:</b> {provider.identity.domain}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Customer ID:</b> {provider.identity.customer_id}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Google Workspace Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Delegated User:</b> {provider.identity.delegated_user}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Authentication Method:</b> Service Account with Domain-Wide Delegation
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_vercel_assessment_summary(provider: Provider) -> str:
+        """
+        get_vercel_assessment_summary gets the HTML assessment summary for the Vercel provider
+
+        Args:
+            provider (Provider): the Vercel provider object
+
+        Returns:
+            str: HTML assessment summary for the Vercel provider
+        """
+        try:
+            assessment_items = ""
+
+            team = getattr(provider.identity, "team", None)
+            if team:
+                assessment_items += f"""
+                            <li class="list-group-item">
+                                <b>Team:</b> {team.name} ({team.id})
+                            </li>"""
+
+            credentials_items = """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+
+            email = getattr(provider.identity, "email", None)
+            if email:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>"""
+
+            username = getattr(provider.identity, "username", None)
+            if username:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Username:</b> {username}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Vercel Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Vercel Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_okta_assessment_summary(provider: Provider) -> str:
+        """
+        get_okta_assessment_summary gets the HTML assessment summary for the Okta provider
+
+        Args:
+            provider (Provider): the Okta provider object
+
+        Returns:
+            str: HTML assessment summary for the Okta provider
+        """
+        try:
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Okta Domain:</b> {provider.identity.org_domain}
+                            </li>"""
+
+            credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>Authentication:</b> {provider.auth_method}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Client ID:</b> {provider.identity.client_id}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Okta Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Okta Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
                         </ul>
                     </div>
                 </div>"""

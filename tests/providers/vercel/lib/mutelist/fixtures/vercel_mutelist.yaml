@@ -1,0 +1,9 @@
+Mutelist:
+  Accounts:
+    "team_test123":
+      Checks:
+        "project_deployment_protection_enabled":
+          Regions:
+            - "*"
+          Resources:
+            - "prj_test789"

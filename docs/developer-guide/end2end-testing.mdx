@@ -1,0 +1,327 @@
+---
+title: 'End-2-End Tests for Prowler App'
+---
+
+End-to-end (E2E) tests validate complete user flows in Prowler App (UI + API). These tests are implemented with [Playwright](https://playwright.dev/) under the `ui/tests` folder and are designed to run against a Prowler App environment.
+
+## General Recommendations
+
+When adding or maintaining E2E tests for Prowler App, follow these guidelines:
+
+1. **Test real user journeys**
+   Focus on full workflows (for example, sign-up → login → add provider → launch scan) instead of low-level UI details already covered by unit or integration tests.
+
+2. **Group tests by entity or feature area**
+   - Organize E2E tests by entity or feature area (for example, `providers.spec.ts`, `scans.spec.ts`, `invitations.spec.ts`, `sign-up.spec.ts`).
+   - Each entity should have its own test file and corresponding page model class (for example, `ProvidersPage`, `ScansPage`, `InvitationsPage`).
+   - Related tests for the same entity should be grouped together in the same test file to improve maintainability and make it easier to find and update tests for a specific feature.
+
+3. **Use a Page Model (Page Object Model)**
+   - Encapsulate selectors and common actions in page classes instead of repeating them in each test.
+   - Leverage and extend the existing Playwright page models in `ui/tests`—such as `ProvidersPage`, `ScansPage`, and others—which are all based on the shared `BasePage`.
+   - Page models for Prowler App pages should be placed in their respective entity folders (for example, `ui/tests/providers/providers-page.ts`).
+   - Page models for external pages (not part of Prowler App) should be grouped in the `external` folder (for example, `ui/tests/external/github-page.ts`).
+   - This approach improves readability, reduces duplication, and makes refactors safer.
+
+4. **Reuse authentication states (StorageState)**
+   - Multiple authentication setup projects are available that generate pre-authenticated state files stored in `playwright/.auth/`. Each project requires specific environment variables:
+     - `admin.auth.setup` – Admin users with full system permissions (requires `E2E_ADMIN_USER` / `E2E_ADMIN_PASSWORD`)
+     - `manage-scans.auth.setup` – Users with scan management permissions (requires `E2E_MANAGE_SCANS_USER` / `E2E_MANAGE_SCANS_PASSWORD`)
+     - `manage-integrations.auth.setup` – Users with integration management permissions (requires `E2E_MANAGE_INTEGRATIONS_USER` / `E2E_MANAGE_INTEGRATIONS_PASSWORD`)
+     - `manage-account.auth.setup` – Users with account management permissions (requires `E2E_MANAGE_ACCOUNT_USER` / `E2E_MANAGE_ACCOUNT_PASSWORD`)
+     - `manage-cloud-providers.auth.setup` – Users with cloud provider management permissions (requires `E2E_MANAGE_CLOUD_PROVIDERS_USER` / `E2E_MANAGE_CLOUD_PROVIDERS_PASSWORD`)
+     - `unlimited-visibility.auth.setup` – Users with unlimited visibility permissions (requires `E2E_UNLIMITED_VISIBILITY_USER` / `E2E_UNLIMITED_VISIBILITY_PASSWORD`)
+     - `invite-and-manage-users.auth.setup` – Users with user invitation and management permissions (requires `E2E_INVITE_AND_MANAGE_USERS_USER` / `E2E_INVITE_AND_MANAGE_USERS_PASSWORD`)
+   <Note>
+   If fixtures have been applied (fixtures are used to populate the database with initial development data), you can use the user `e2e@prowler.com` with password `Thisisapassword123@` to configure the Admin credentials by setting `E2E_ADMIN_USER=e2e@prowler.com` and `E2E_ADMIN_PASSWORD=Thisisapassword123@`.
+   </Note>
+
+   - Within test files, use `test.use({ storageState: "playwright/.auth/admin_user.json" })` to load the pre-authenticated state, avoiding redundant authentication steps in each test. This must be placed at the test level (not inside the test function) to apply the authentication state to all tests in that scope. This approach is preferred over declaring dependencies in `playwright.config.ts` because it provides more control over which authentication states are used in specific tests.
+
+     **Example:**
+
+     ```typescript
+     // Use admin authentication state for all tests in this scope
+     test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+     test("should perform admin action", async ({ page }) => {
+       // Test implementation
+     });
+     ```
+
+5. **Tag and document scenarios**
+   - Follow the existing naming convention for suites and test cases (for example, `SCANS-E2E-001`, `PROVIDER-E2E-003`) and use tags such as `@e2e`, `@serial` and feature tags (for example, `@providers`, `@scans`,`@aws`) to filter and organize tests.
+
+   **Example:**
+     ```typescript
+     test(
+       "should add a new AWS provider with static credentials",
+       {
+         tag: [
+           "@critical",
+           "@e2e",
+           "@providers",
+           "@aws",
+           "@serial",
+           "@PROVIDER-E2E-001",
+         ],
+       },
+       async ({ page }) => {
+         // Test implementation
+       }
+     );
+     ```
+   -  Document each one in the Markdown files under `ui/tests`, including **Priority**, **Tags**, **Description**, **Preconditions**, **Flow steps**, **Expected results**,**Key verification points** and **Notes**.
+
+   **Example**
+   ```Markdown
+   ## Test Case: `SCANS-E2E-001` - Execute On-Demand Scan
+
+   **Priority:** `critical`
+
+   **Tags:**
+
+   - type → @e2e, @serial
+   - feature → @scans
+
+   **Description/Objective:** Validates the complete flow to execute an on-demand scan selecting a provider by UID and confirming success on the Scans page.
+
+   **Preconditions:**
+
+   - Admin user authentication required (admin.auth.setup setup)
+   - Environment variables configured for : E2E_AWS_PROVIDER_ACCOUNT_ID,E2E_AWS_PROVIDER_ACCESS_KEY and E2E_AWS_PROVIDER_SECRET_KEY
+   - Remove any existing AWS provider with the same Account ID before starting the test
+   - This test must be run serially and never in parallel with other tests, as it requires the Account ID Provider to be already registered.
+
+   ### Flow Steps:
+
+   1. Navigate to Scans page
+   2. Open provider selector and choose the entry whose text contains E2E_AWS_PROVIDER_ACCOUNT_ID
+   3. Optionally fill scan label (alias)
+   4. Click "Start now" to launch the scan
+   5. Verify the success toast appears
+   6. Verify a row in the Scans table contains the provided scan label (or shows the new scan entry)
+
+   ### Expected Result:
+
+   - Scan is launched successfully
+   - Success toast is displayed to the user
+   - Scans table displays the new scan entry (including the alias when provided)
+
+   ### Key verification points:
+
+   - Scans page loads correctly
+   - Provider select is available and lists the configured provider UID
+   - "Start now" button is rendered and enabled when form is valid
+   - Success toast message: "The scan was launched successfully."
+   - Table contains a row with the scan label or new scan state (queued/available/executing)
+
+   ### Notes:
+
+   - The table may take a short time to reflect the new scan; assertions look for a row containing the alias.
+   - Provider cleanup performed before each test to ensure clean state
+   - Tests should run serially to avoid state conflicts.
+
+   ```
+
+6. **Use environment variables for secrets and dynamic data**
+   Credentials, provider identifiers, secrets, tokens must come from environment variables (for example, `E2E_AWS_PROVIDER_ACCOUNT_ID`, `E2E_AWS_PROVIDER_ACCESS_KEY`, `E2E_AWS_PROVIDER_SECRET_KEY`, `E2E_GCP_PROJECT_ID`).
+
+   <Warning>
+   Never commit real secrets, tokens, or account IDs to the repository.
+   </Warning>
+
+7. **Keep tests deterministic and isolated**
+   - Use Playwright's `test.beforeEach()` and `test.afterEach()` hooks to manage test state:
+     - **`test.beforeEach()`**: Execute cleanup or setup logic before each test runs (for example, delete existing providers with a specific account ID to ensure a clean state).
+     - **`test.afterEach()`**: Execute cleanup logic after each test completes (for example, remove test data created during the test execution to prevent interference with subsequent tests).
+   - Define tests as serial using `test.describe.serial()` when they share state or resources that could interfere with parallel execution (for example, tests that use the same provider account ID or create dependent resources). This ensures tests within the serial group run sequentially, preventing race conditions and data conflicts.
+   - Use unique identifiers (for example, random suffixes for emails or labels) to prevent data collisions.
+
+8. **Use explicit waiting strategies**
+   - Avoid using `waitForLoadState('networkidle')` as it is unreliable and can lead to flaky tests or unnecessary delays.
+   - Leverage Playwright's auto-waiting capabilities by waiting for specific elements to be actionable (for example, `locator.click()`, `locator.fill()`, `locator.waitFor()`).
+   - **Prioritize selector strategies**: Prefer `page.getByRole()` over other approaches like `page.getByText()`. `getByRole()` is more resilient to UI changes, aligns with accessibility best practices, and better reflects how users interact with the application (by role and accessible name rather than implementation details).
+   - For dynamic content, wait for specific UI elements that indicate the page is ready (for example, button becoming enabled, a specific text appearing, etc).
+   - This approach makes tests more reliable, faster, and aligned with how users actually interact with the application.
+
+   **Common waiting patterns used in Prowler E2E tests:**
+
+   - **Element visibility assertions**: Use `expect(locator).toBeVisible()` or `expect(locator).not.toBeVisible()` to wait for elements to appear or disappear (Playwright automatically waits for these conditions).
+
+   - **URL changes**: Use `expect(page).toHaveURL(url)` or `page.waitForURL(url)` to wait for navigation to complete.
+
+   - **Element states**: Use `locator.waitFor({ state: "visible" })` or `locator.waitFor({ state: "hidden" })` when you need explicit state control.
+
+   - **Text content**: Use `expect(locator).toHaveText(text)` or `expect(locator).toContainText(text)` to wait for specific text to appear.
+
+   - **Element attributes**: Use `expect(locator).toHaveAttribute(name, value)` to wait for attributes like `aria-disabled="false"` indicating a button is enabled.
+
+   - **Custom conditions**: Use `page.waitForFunction(() => condition)` for complex conditions that cannot be expressed with locators (for example, checking DOM element dimensions or computed styles).
+
+   - **Retryable assertions**: Use `expect(async () => { ... }).toPass({ timeout })` for conditions that may take time to stabilize (for example, waiting for table rows to filter after a server request).
+
+   - **Scroll into view**: Use `locator.scrollIntoViewIfNeeded()` before interacting with elements that may be outside the viewport.
+
+   **Example from Prowler tests:**
+
+   ```typescript
+   // Wait for page to load by checking main content is visible
+   await expect(page.locator("main")).toBeVisible();
+
+   // Wait for URL change after form submission
+   await expect(page).toHaveURL("/providers");
+
+   // Wait for button to become enabled
+   await expect(submitButton).toHaveAttribute("aria-disabled", "false");
+
+   // Wait for loading spinner to disappear
+   await expect(page.getByText("Loading")).not.toBeVisible();
+
+   // Wait for custom condition
+   await page.waitForFunction(() => {
+     const main = document.querySelector("main");
+     return main && main.offsetHeight > 0;
+   });
+
+   // Wait for retryable condition (e.g., table filtering)
+   await expect(async () => {
+     const rowCount = await tableRows.count();
+     expect(rowCount).toBeLessThanOrEqual(1);
+   }).toPass({ timeout: 20000 });
+   ```
+
+## Running Prowler Tests
+
+E2E tests for Prowler App run from the `ui` project using Playwright. The Playwright configuration lives in `ui/playwright.config.ts` and defines:
+
+- `testDir: "./tests"` – location of E2E test files (relative to the `ui` project root, so `ui/tests`).
+- `webServer` – how to start the Next.js development server and connect to Prowler API.
+- `use.baseURL` – base URL for browser interactions (defaults to `http://localhost:3000` or `AUTH_URL` if set).
+- `reporter: [["list"]]` – uses the list reporter to display test results in a concise format in the terminal. Other reporter options are available (for example, `html`, `json`, `junit`, `github`), and multiple reporters can be configured simultaneously. See the [Playwright reporter documentation](https://playwright.dev/docs/test-reporters) for all available options.
+- `expect.timeout: 20000` – timeout for assertions (20 seconds). This is the maximum time Playwright will wait for an assertion to pass before considering it failed.
+- **Test artifacts** (in `use` configuration): By default, `trace`, `screenshot`, and `video` are set to `"off"` to minimize resource usage. To review test failures or debug issues, these can be enabled in `playwright.config.ts` by changing them to `"on"`, `"on-first-retry"`, or `"retain-on-failure"` depending on your needs.
+- `outputDir: "/tmp/playwright-tests"` – directory where Playwright stores test artifacts (screenshots, videos, traces) during test execution.
+- **CI-specific configuration**: The configuration uses different settings when running in CI environments (detected via `process.env.CI`):
+  - **Retries**: `2` retries in CI (to handle flaky tests), `0` retries locally (for faster feedback during development).
+  - **Workers**: `1` worker in CI (sequential execution for stability), `undefined` locally (parallel execution by default for faster test runs).
+
+### Prerequisites
+
+Before running E2E tests:
+
+- **Install root and UI dependencies**
+  - Follow the [developer guide introduction](/developer-guide/introduction#getting-the-code-and-installing-all-dependencies) to clone the repository and install core dependencies.
+  - From the `ui` directory, install frontend dependencies:
+
+    ```bash
+    cd ui
+    pnpm install
+    pnpm run test:e2e:install  # Install Playwright browsers
+    ```
+
+- **Ensure Prowler API is available**
+  - By default, Playwright uses `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api/v1` (configured in `playwright.config.ts`).
+  - Start Prowler API so it is reachable on that URL (for example, via `docker-compose-dev.yml` or the development orchestration used locally).
+  - If a different API URL is required, set `NEXT_PUBLIC_API_BASE_URL` accordingly before running the tests.
+
+- **Ensure Prowler App UI is available**
+  - Playwright automatically starts the Next.js server through the `webServer` block in `playwright.config.ts` (`pnpm run dev` by default).
+  - If the UI is already running on `http://localhost:3000`, Playwright will reuse the existing server when `reuseExistingServer` is `true`.
+
+- **Configure E2E environment variables**
+  - Suite-specific variables (for example, provider account IDs, credentials, and E2E user data) must be provided before running tests.
+  - They can be defined either:
+    - As exported environment variables in the shell before executing the Playwright commands, or
+    - In a `.env.local` or `.env` file under `ui/`, and then loaded into the shell before running tests, for example:
+
+      ```bash
+      cd ui
+      set -a
+      source .env.local  # or .env
+      set +a
+      ```
+  - Refer to the Markdown documentation files in `ui/tests` for each E2E suite (for example, the `*.md` files that describe sign-up, providers, scans, invitations, and other flows) to see the exact list of required variables and their meaning.
+  - Each E2E test suite explicitly checks that its required environment variables are defined at runtime and will fail with a clear error message if any mandatory variable is missing, making misconfiguration easy to detect.
+
+### Executing Tests
+
+To execute E2E tests for Prowler App:
+
+1. **Run the full E2E suite (headless)**
+
+   From the `ui` directory:
+
+   ```bash
+   pnpm run test:e2e
+   ```
+
+   This command runs Playwright with the configured projects
+
+2. **Run E2E tests with the Playwright UI runner**
+
+   ```bash
+   pnpm run test:e2e:ui
+   ```
+
+   This opens the Playwright test runner UI to inspect, debug, and rerun specific tests or projects.
+
+3. **Debug E2E tests interactively**
+
+   ```bash
+   pnpm run test:e2e:debug
+   ```
+
+   Use this mode to step through flows, inspect selectors, and adjust timings. It runs tests in headed mode with debugging tools enabled.
+
+4. **Run tests in headed mode without debugger**
+
+   ```bash
+   pnpm run test:e2e:headed
+   ```
+
+   This is useful to visually confirm flows while still running the full suite.
+
+5. **View previous test reports**
+
+   ```bash
+   pnpm run test:e2e:report
+   ```
+
+   This opens the latest Playwright HTML report, including traces and screenshots when enabled.
+
+6. **Run specific tests or subsets**
+
+   In addition to the predefined scripts, Playwright allows filtering which tests run. These examples use the Playwright CLI directly through `pnpm`:
+
+   - **By test ID (`@ID` in the test metadata or description)**
+
+     To run a single test case identified by its ID (for example, `@PROVIDER-E2E-001` or `@SCANS-E2E-001`):
+
+     ```bash
+     pnpm playwright test --grep @PROVIDER-E2E-001
+     ```
+
+   - **By tags**
+
+     To run all tests that share a common tag (for example, all provider E2E tests tagged with `@providers`):
+
+     ```bash
+     pnpm playwright test --grep @providers
+     ```
+
+     This is useful to focus on a specific feature area such as providers, scans, invitations, or sign-up.
+
+   - **By Playwright project**
+
+     To run only the tests associated with a given project defined in `playwright.config.ts` (for example, `providers` or `scans`):
+
+     ```bash
+     pnpm playwright test --project=providers
+     ```
+
+     Combining project and grep filters is also supported, enabling very narrow runs (for example, a single test ID within the `providers` project). For additional CLI options and combinations, see the [Playwright command line documentation](https://playwright.dev/docs/test-cli).
+
+<Note>
+For detailed flows, preconditions, and environment variable requirements per feature, always refer to the Markdown files in `ui/tests`. Those documents are the single source of truth for business expectations and validation points in each E2E suite.
+</Note>

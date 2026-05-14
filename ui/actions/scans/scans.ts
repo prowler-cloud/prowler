@@ -3,9 +3,19 @@
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import {
+  COMPLIANCE_REPORT_DISPLAY_NAMES,
+  type ComplianceReportType,
+} from "@/lib/compliance/compliance-report-types";
+import { runWithConcurrencyLimit } from "@/lib/concurrency";
+import {
+  appendSanitizedProviderTypeFilters,
+  sanitizeProviderTypesCsv,
+} from "@/lib/provider-filters";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
+const ORGANIZATION_SCAN_CONCURRENCY_LIMIT = 5;
 export const getScans = async ({
   page = 1,
   query = "",
@@ -32,10 +42,7 @@ export const getScans = async ({
     url.searchParams.append(`fields[${key}]`, String(value));
   });
 
-  // Add dynamic filters (e.g., "filter[state]", "fields[scans]")
-  Object.entries(filters).forEach(([key, value]) => {
-    url.searchParams.append(key, String(value));
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), { headers });
@@ -52,6 +59,10 @@ export const getScansByState = async () => {
   const url = new URL(`${apiBaseUrl}/scans`);
   // Request only the necessary fields to optimize the response
   url.searchParams.append("fields[scans]", "state");
+  url.searchParams.append(
+    "filter[provider_type__in]",
+    sanitizeProviderTypesCsv(),
+  );
 
   try {
     const response = await fetch(url.toString(), {
@@ -65,10 +76,17 @@ export const getScansByState = async () => {
   }
 };
 
-export const getScan = async (scanId: string) => {
+export const getScan = async (
+  scanId: string,
+  { include }: { include?: string } = {},
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/scans/${scanId}`);
+
+  if (include) {
+    url.searchParams.set("include", include);
+  }
 
   try {
     const response = await fetch(url.toString(), {
@@ -157,6 +175,73 @@ export const scheduleDaily = async (formData: FormData) => {
   }
 };
 
+export const launchOrganizationScans = async (
+  providerIds: string[],
+  scheduleOption: "daily" | "single",
+) => {
+  const validProviderIds = providerIds.filter(Boolean);
+  if (validProviderIds.length === 0) {
+    return {
+      successCount: 0,
+      failureCount: 0,
+      totalCount: 0,
+    };
+  }
+
+  const launchResults = await runWithConcurrencyLimit(
+    validProviderIds,
+    ORGANIZATION_SCAN_CONCURRENCY_LIMIT,
+    async (providerId) => {
+      try {
+        const formData = new FormData();
+        formData.set("providerId", providerId);
+
+        const result =
+          scheduleOption === "daily"
+            ? await scheduleDaily(formData)
+            : await scanOnDemand(formData);
+
+        return {
+          providerId,
+          ok: !result?.error,
+          error: result?.error ? String(result.error) : null,
+        };
+      } catch (error) {
+        return {
+          providerId,
+          ok: false,
+          error:
+            error instanceof Error ? error.message : "Failed to launch scan.",
+        };
+      }
+    },
+  );
+
+  const summary = launchResults.reduce(
+    (acc, item) => {
+      if (item.ok) {
+        acc.successCount += 1;
+        return acc;
+      }
+
+      acc.failureCount += 1;
+      acc.errors.push({
+        providerId: item.providerId,
+        error: item.error || "Failed to launch scan.",
+      });
+      return acc;
+    },
+    {
+      successCount: 0,
+      failureCount: 0,
+      totalCount: validProviderIds.length,
+      errors: [] as Array<{ providerId: string; error: string }>,
+    },
+  );
+
+  return summary;
+};
+
 export const updateScan = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
 
@@ -233,91 +318,100 @@ export const getExportsZip = async (scanId: string) => {
   }
 };
 
-export const getComplianceCsv = async (
-  scanId: string,
-  complianceId: string,
-) => {
-  const headers = await getAuthHeaders({ contentType: false });
+/**
+ * Discriminated union returned by {@link _fetchScanBinary}.
+ *
+ * Exported so `ui/lib/helper.ts::downloadFile` can type-narrow on the
+ * `success` / `pending` / `error` tags without resorting to `any`.
+ */
+export type ScanBinaryResult =
+  | { success: true; data: string; filename: string }
+  | { pending: true; state: string | undefined; taskId: string | undefined }
+  | { error: string };
 
-  const url = new URL(
-    `${apiBaseUrl}/scans/${scanId}/compliance/${complianceId}`,
-  );
+/**
+ * Shared binary-report fetcher used by CSV and PDF report downloads.
+ *
+ * All report endpoints (`/scans/{id}/compliance/{name}`,
+ * `/scans/{id}/{reportType}`) speak the same protocol: Bearer auth, 202
+ * ACCEPTED while the generation task is still running, 2xx with a binary
+ * body when the artifact is ready, JSON error body otherwise. This helper
+ * encapsulates all of that so the public wrappers only have to build the
+ * URL and pick a filename.
+ *
+ * @param urlPath    Path segment under `{apiBaseUrl}/scans/{scanId}/`.
+ * @param filename   Download filename to surface to the user.
+ * @param errorLabel Friendly label used when the backend error body is empty.
+ * @returns A ``{ success, data, filename }`` object on 2xx, a
+ *          ``{ pending, state, taskId }`` object on 202, or
+ *          ``{ error }`` on any failure.
+ */
+const _fetchScanBinary = async (
+  scanId: string,
+  urlPath: string,
+  filename: string,
+  errorLabel: string,
+): Promise<ScanBinaryResult> => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/scans/${scanId}/${urlPath}`);
 
   try {
     const response = await fetch(url.toString(), { headers });
 
     if (response.status === 202) {
       const json = await response.json();
-      const taskId = json?.data?.id;
-      const state = json?.data?.attributes?.state;
       return {
         pending: true,
-        state,
-        taskId,
+        state: json?.data?.attributes?.state,
+        taskId: json?.data?.id,
       };
     }
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData?.errors?.detail ||
-          "Unable to retrieve compliance report. Contact support if the issue continues.",
+          `Unable to retrieve ${errorLabel}. Contact support if the issue continues.`,
       );
     }
 
     const arrayBuffer = await response.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString("base64");
 
-    return {
-      success: true,
-      data: base64,
-      filename: `scan-${scanId}-compliance-${complianceId}.csv`,
-    };
+    return { success: true, data: base64, filename };
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    return { error: getErrorMessage(error) };
   }
 };
 
-export const getThreatScorePdf = async (scanId: string) => {
-  const headers = await getAuthHeaders({ contentType: false });
+export const getComplianceCsv = async (scanId: string, complianceId: string) =>
+  _fetchScanBinary(
+    scanId,
+    `compliance/${complianceId}`,
+    `scan-${scanId}-compliance-${complianceId}.csv`,
+    "compliance report",
+  );
 
-  const url = new URL(`${apiBaseUrl}/scans/${scanId}/threatscore`);
-
-  try {
-    const response = await fetch(url.toString(), { headers });
-
-    if (response.status === 202) {
-      const json = await response.json();
-      const taskId = json?.data?.id;
-      const state = json?.data?.attributes?.state;
-      return {
-        pending: true,
-        state,
-        taskId,
-      };
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData?.errors?.detail ||
-          "Unable to retrieve ThreatScore PDF report. Contact support if the issue continues.",
-      );
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-
-    return {
-      success: true,
-      data: base64,
-      filename: `scan-${scanId}-threatscore.pdf`,
-    };
-  } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
-  }
+/**
+ * Get a compliance PDF report for any supported framework.
+ *
+ * For frameworks with multiple variants per provider (currently CIS) the
+ * backend generates a single PDF for the highest available version, so
+ * callers only need to pass the generic report type.
+ *
+ * @param scanId - The scan ID
+ * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
+ * @returns Promise with the PDF data or error
+ */
+export const getCompliancePdfReport = async (
+  scanId: string,
+  reportType: ComplianceReportType,
+) => {
+  const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
+  return _fetchScanBinary(
+    scanId,
+    reportType,
+    `scan-${scanId}-${reportType}.pdf`,
+    `${reportName} PDF report`,
+  );
 };

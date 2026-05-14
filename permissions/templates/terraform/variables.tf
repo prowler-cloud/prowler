@@ -27,6 +27,12 @@ variable "iam_principal" {
   default     = "role/prowler*"
 }
 
+variable "enable_organizations" {
+  type        = bool
+  description = "Enable AWS Organizations discovery permissions. Set to true only when deploying this role in the management account."
+  default     = false
+}
+
 variable "enable_s3_integration" {
   type        = bool
   description = "Enable S3 integration for storing Prowler scan reports."

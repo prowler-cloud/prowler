@@ -77,8 +77,8 @@ class M365CIS(ComplianceOutput):
                     compliance_row = M365CISModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
-                        TenantId=finding.account_uid,
-                        Location=finding.region,
+                        TenantId="",
+                        Location="",
                         AssessmentDate=str(timestamp),
                         Requirements_Id=requirement.Id,
                         Requirements_Description=requirement.Description,

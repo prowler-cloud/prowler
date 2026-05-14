@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDynamoDbTable",
+  "ResourceGroup": "database",
   "Description": "**DynamoDB tables** are evaluated for inclusion in an **AWS Backup backup plan** through resource assignments, including explicit tables, resource-type wildcards, or all-resources coverage.\n\nThe result indicates whether a table is governed by scheduled backups and retention defined by the plan.",
   "Risk": "Without a backup plan, table data lacks governed copies, harming **availability** and **integrity**. Accidental deletes, corrupt writes, or malicious actions can become unrecoverable, and RPO/RTO worsen. You also forfeit cross-Region/account copies and immutability features, increasing downtime and data loss.",
   "RelatedUrl": "",

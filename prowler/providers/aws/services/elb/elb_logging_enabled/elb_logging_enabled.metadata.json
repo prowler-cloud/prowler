@@ -12,13 +12,14 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**Elastic Load Balancers** have **access logs** configured to deliver request metadata (client IPs, paths, status, TLS details) to **Amazon S3**",
   "Risk": "Without **ELB access logs**, you lose **visibility** into edge traffic, reducing detection of reconnaissance, brute-force, and exploitation attempts. This hampers forensics and incident timelines, risking undetected data exfiltration (confidentiality), untraceable changes (integrity), and delayed response to outages or DDoS (availability).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/enable-access-logs.html",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/access-log-collection.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElasticBeanstalk/enable-access-logs.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/ElasticBeanstalk/enable-access-logs.html",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html"
   ],
   "Remediation": {

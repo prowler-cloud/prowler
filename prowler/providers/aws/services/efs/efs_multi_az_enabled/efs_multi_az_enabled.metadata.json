@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEfsFileSystem",
+  "ResourceGroup": "storage",
   "Description": "**Amazon EFS** file systems are assessed for **multi-AZ resilience**: Regional type (no `availability_zone_id`) with mount targets in more than one Availability Zone. Single-AZ (One Zone) or Regional with only one mount target is identified for attention.",
   "Risk": "Concentrating access through a single AZ or a lone mount target reduces **availability**. An AZ outage can sever client connectivity, causing downtime and I/O errors. A single mount target also forces cross-AZ traffic, increasing latency and costs and undermining **resilience** and seamless failover.",
   "RelatedUrl": "",

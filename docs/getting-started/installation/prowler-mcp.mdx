@@ -52,7 +52,7 @@ Choose one of the following installation methods:
     ```bash
     docker run --rm -i \
       -e PROWLER_APP_API_KEY="pk_your_api_key" \
-      -e PROWLER_API_BASE_URL="https://api.prowler.com" \
+      -e API_BASE_URL="https://api.prowler.com/api/v1" \
       prowlercloud/prowler-mcp
     ```
 
@@ -181,19 +181,19 @@ Configure the server using environment variables:
 | Variable | Description | Required | Default |
 |----------|-------------|----------|---------|
 | `PROWLER_APP_API_KEY` | Prowler API key | Only for STDIO mode | - |
-| `PROWLER_API_BASE_URL` | Custom Prowler API endpoint | No | `https://api.prowler.com` |
+| `API_BASE_URL` | Custom Prowler API endpoint | No | `https://api.prowler.com/api/v1` |
 | `PROWLER_MCP_TRANSPORT_MODE` | Default transport mode (overwritten by `--transport` argument) | No | `stdio` |
 
 <CodeGroup>
 ```bash macOS/Linux
 export PROWLER_APP_API_KEY="pk_your_api_key_here"
-export PROWLER_API_BASE_URL="https://api.prowler.com"
+export API_BASE_URL="https://api.prowler.com/api/v1"
 export PROWLER_MCP_TRANSPORT_MODE="http"
 ```
 
 ```bash Windows PowerShell
 $env:PROWLER_APP_API_KEY="pk_your_api_key_here"
-$env:PROWLER_API_BASE_URL="https://api.prowler.com"
+$env:API_BASE_URL="https://api.prowler.com/api/v1"
 $env:PROWLER_MCP_TRANSPORT_MODE="http"
 ```
 </CodeGroup>
@@ -208,7 +208,7 @@ For convenience, create a `.env` file in the `mcp_server` directory:
 
 ```bash .env
 PROWLER_APP_API_KEY=pk_your_api_key_here
-PROWLER_API_BASE_URL=https://api.prowler.com
+API_BASE_URL=https://api.prowler.com/api/v1
 PROWLER_MCP_TRANSPORT_MODE=stdio
 ```
 

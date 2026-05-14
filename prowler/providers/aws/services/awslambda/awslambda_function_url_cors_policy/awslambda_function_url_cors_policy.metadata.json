@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsLambdaFunction",
+  "ResourceGroup": "serverless",
   "Description": "**Lambda function URL** CORS policy is reviewed for `AllowOrigins`. The presence of `*` indicates a wide origin allowance in the CORS configuration.",
   "Risk": "**Wildcard origins** allow any website to call the endpoint from a browser and read responses, weakening origin isolation.\n\nThis can lead to data exposure (C) and unauthorized actions (I) if state-changing methods are reachable, enabling scripted abuse and cross-origin attacks.",
   "RelatedUrl": "",

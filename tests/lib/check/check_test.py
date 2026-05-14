@@ -18,12 +18,13 @@ from prowler.lib.check.check import (
     list_categories,
     list_checks_json,
     list_services,
+    load_custom_checks_metadata,
     parse_checks_from_file,
     parse_checks_from_folder,
     remove_custom_checks_module,
     update_audit_metadata,
 )
-from prowler.lib.check.models import load_check_metadata
+from prowler.lib.check.models import CheckMetadata, load_check_metadata
 from prowler.lib.check.utils import (
     list_modules,
     recover_checks_from_provider,
@@ -411,7 +412,7 @@ class TestCheck:
                 },
                 "expected": {
                     "CheckID": "iam_user_accesskey_unused",
-                    "CheckTitle": "Ensure Access Keys unused are disabled",
+                    "CheckTitle": "Access Keys unused should be disabled",
                     "ServiceName": "iam",
                     "Severity": "low",
                 },
@@ -482,6 +483,49 @@ class TestCheck:
                 parse_checks_from_folder(aws_provider, check_folder) == test["expected"]
             )
             remove_custom_checks_module(check_folder, provider)
+
+    def test_load_custom_checks_metadata(self, tmp_path):
+        """Test loading check metadata from a custom checks folder."""
+        check_name = "custom_test_check"
+        check_folder = tmp_path / check_name
+        check_folder.mkdir()
+
+        metadata = {
+            "Provider": "aws",
+            "CheckID": check_name,
+            "CheckTitle": "Test Custom Check",
+            "CheckType": [],
+            "ServiceName": "custom",
+            "SubServiceName": "",
+            "ResourceIdTemplate": "arn:aws:custom:::resource",
+            "Severity": "low",
+            "ResourceType": "AwsCustomResource",
+            "Description": "A test custom check",
+            "Risk": "Test risk",
+            "RelatedUrl": "",
+            "Remediation": {
+                "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+                "Recommendation": {"Text": "", "Url": ""},
+            },
+            "Categories": [],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "",
+        }
+        metadata_file = check_folder / f"{check_name}.metadata.json"
+        metadata_file.write_text(json.dumps(metadata))
+
+        result = load_custom_checks_metadata(str(tmp_path))
+
+        assert check_name in result
+        assert result[check_name].CheckID == check_name
+        assert result[check_name].Provider == "aws"
+        assert result[check_name].Severity == "low"
+
+    def test_load_custom_checks_metadata_nonexistent_path(self):
+        """Test that nonexistent paths return empty dict."""
+        result = load_custom_checks_metadata("/nonexistent/path/to/checks")
+        assert result == {}
 
     def test_exclude_checks_to_run(self):
         test_cases = [
@@ -570,7 +614,7 @@ class TestCheck:
             "forensics-ready",
             "encryption",
             "internet-exposed",
-            "trustboundaries",
+            "trust-boundaries",
         }
         listed_categories = list_categories(test_bulk_checks_metadata)
         assert listed_categories == expected_categories
@@ -914,7 +958,126 @@ class TestCheck:
         )
         self.verify_metadata_check_id(base_directory)
 
+    def test_alibabacloud_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/alibabacloud/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_cloudflare_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/cloudflare/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_github_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/github/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_googleworkspace_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/googleworkspace/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_m365_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/m365/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_mongodbatlas_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/mongodbatlas/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_nhn_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/nhn/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_openstack_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/openstack/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_oraclecloud_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/oraclecloud/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_vercel_checks_metadata_is_valid(self):
+        base_directory = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "../../../",
+                "prowler/providers/vercel/services",
+            )
+        )
+        self.verify_metadata_check_id(base_directory)
+
+    def test_vercel_checks_metadata_use_canonical_hub_urls(self):
+        base_directory = pathlib.Path(__file__).resolve().parents[3] / "prowler"
+        provider_path = base_directory / "providers" / "vercel" / "services"
+
+        invalid_urls = []
+
+        for metadata_file_path in provider_path.rglob("*.metadata.json"):
+            with metadata_file_path.open("r") as metadata_file:
+                data = json.load(metadata_file)
+
+            recommendation = data.get("Remediation", {}).get("Recommendation", {})
+            url = recommendation.get("Url", "")
+
+            if url.startswith("https://hub.prowler.com/checks/vercel/"):
+                invalid_urls.append(f"{metadata_file_path}: {url}")
+
+        assert not invalid_urls, "\n".join(invalid_urls)
+
     def verify_metadata_check_id(self, provider_path):
+        errors = []
         # Walk through the base directory to find all service directories
         for root, dirs, _ in os.walk(provider_path):
             # We only want to look at directories that are direct children of the base directory
@@ -940,9 +1103,85 @@ class TestCheck:
                                 check_id = data.get("CheckID", None)
 
                                 # Compare CheckID to the check name
-                                assert (
-                                    check_id == check_dir
-                                ), f"CheckID in metadata does not match the check name in {check_directory}. Found CheckID: {check_id}"
+                                if check_id != check_dir:
+                                    errors.append(
+                                        f"CheckID in metadata does not match the check name in {check_directory}. Found CheckID: {check_id}"
+                                    )
+
+                                # Validate metadata against Pydantic validators
+                                try:
+                                    CheckMetadata.parse_file(metadata_file_path)
+                                except Exception as e:
+                                    errors.append(
+                                        f"Metadata validation failed for {metadata_file_path}: {e}"
+                                    )
+
+        assert not errors, "\n\n".join(errors)
+
+    def test_execute_oraclecloud_mutelist_passes_tenancy_id(self):
+        """Test that execute() passes tenancy_id to is_finding_muted for OCI provider."""
+        tenancy_id = "ocid1.tenancy.oc1..aaaaaaaexample"
+
+        finding = Mock()
+        finding.status = "PASS"
+        finding.muted = False
+
+        check = Mock()
+        check.CheckID = "oci_test_check"
+        check.execute = Mock(return_value=[finding])
+
+        provider = mock.MagicMock()
+        provider.type = "oraclecloud"
+        provider.identity.tenancy_id = tenancy_id
+        provider.mutelist.mutelist = {"Accounts": {tenancy_id: {}}}
+        provider.mutelist.is_finding_muted = Mock(return_value=True)
+
+        findings = execute(
+            check=check,
+            global_provider=provider,
+            custom_checks_metadata=None,
+            output_options=None,
+        )
+
+        provider.mutelist.is_finding_muted.assert_called_once_with(
+            tenancy_id=tenancy_id,
+            finding=finding,
+        )
+        assert findings[0].muted is True
+
+    def test_execute_azure_mutelist_passes_subscription_id_and_name(self):
+        """Test that execute() passes Azure subscription ID and display name."""
+        subscription_id = "12345678-1234-1234-1234-123456789012"
+        subscription_name = "subscription_1"
+
+        finding = Mock()
+        finding.status = "PASS"
+        finding.muted = False
+        finding.subscription = subscription_id
+
+        check = Mock()
+        check.CheckID = "azure_test_check"
+        check.execute = Mock(return_value=[finding])
+
+        provider = mock.MagicMock()
+        provider.type = "azure"
+        provider.identity.subscriptions = {subscription_id: subscription_name}
+        provider.mutelist.mutelist = {"Accounts": {subscription_name: {}}}
+        provider.mutelist.is_finding_muted = Mock(return_value=True)
+
+        findings = execute(
+            check=check,
+            global_provider=provider,
+            custom_checks_metadata=None,
+            output_options=None,
+        )
+
+        provider.mutelist.is_finding_muted.assert_called_once_with(
+            subscription_id=subscription_id,
+            subscription_name=subscription_name,
+            finding=finding,
+        )
+        assert findings[0].muted is True
 
     def test_execute_check_exception_only_logs(self, caplog):
         caplog.set_level(ERROR)

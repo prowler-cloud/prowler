@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "objectstorage_container_public_read_acl_disabled",
+  "CheckTitle": "Object storage containers do not grant anonymous read access",
+  "CheckType": [],
+  "ServiceName": "objectstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OS::Swift::Container",
+  "ResourceGroup": "storage",
+  "Description": "**OpenStack Swift containers** are evaluated to verify that **anonymous read access** is not granted. The `.r:*` ACL allows any unauthenticated user on the internet to read objects in the container. This is a critical exposure that can lead to data leaks, especially when containers hold sensitive information such as backups, logs, or application data.",
+  "Risk": "Containers with `.r:*` in the read ACL are **publicly accessible** without authentication. Attackers can enumerate and download all objects, leading to **data breaches**, **credential exposure**, and **compliance violations**. Public containers are frequently targeted by automated scanners.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/swift/latest/overview_acl.html",
+    "https://docs.openstack.org/security-guide/object-storage.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "swift post <container_name> --read-acl ''",
+      "NativeIaC": "",
+      "Other": "1. Navigate to **Object Store > Containers**\n2. Select the container with public read ACL\n3. Edit the container metadata\n4. Remove the `.r:*` entry from the Read ACL\n5. Save changes",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove `.r:*` from container read ACLs to prevent **anonymous access**. Use **project-scoped ACLs** (e.g., `project-id:*`) or specific user ACLs instead. If public access is required, consider using a **CDN** or **signed URLs** with time-limited tokens.",
+      "Url": "https://hub.prowler.com/check/objectstorage_container_public_read_acl_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Swift ACLs use a specific syntax where `.r:*` grants read access to all referrers (anonymous access). The `.r:` prefix indicates referrer-based ACL. This check specifically looks for the wildcard referrer pattern."
+}

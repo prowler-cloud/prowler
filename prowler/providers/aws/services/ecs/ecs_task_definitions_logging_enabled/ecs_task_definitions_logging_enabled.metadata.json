@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEcsTaskDefinition",
+  "ResourceGroup": "container",
   "Description": "**Amazon ECS task definition** containers specify a **logging configuration** with a non-null `logDriver` for every container in the latest active revision.",
   "Risk": "Absent container logs erode visibility, letting intrusions, data exfiltration, and configuration tampering go undetected.\n\nMissing audit trails weaken confidentiality and integrity, hinder forensics, and increase MTTR during outages, impacting availability and compliance evidence.",
   "RelatedUrl": "",

@@ -1,14 +1,14 @@
-name: 'UI: Tests'
+name: "UI: Tests"
 
 on:
   push:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
   pull_request:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -16,7 +16,9 @@ concurrency:
 
 env:
   UI_WORKING_DIR: ./ui
-  NODE_VERSION: '20.x'
+  NODE_VERSION: "24.13.0"
+
+permissions: {}
 
 jobs:
   ui-tests:
@@ -29,12 +31,30 @@ jobs:
         working-directory: ./ui
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            registry.npmjs.org:443
+            fonts.googleapis.com:443
+            fonts.gstatic.com:443
+            api.github.com:443
+            release-assets.githubusercontent.com:443
+            cdn.playwright.dev:443
+            objects.githubusercontent.com:443
+            playwright.download.prss.microsoft.com:443
+
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
       - name: Check for UI changes
         id: check-changes
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             ui/**
@@ -42,23 +62,121 @@ jobs:
           files_ignore: |
             ui/CHANGELOG.md
             ui/README.md
+            ui/AGENTS.md
+
+      - name: Get changed source files for targeted tests
+        id: changed-source
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        with:
+          files: |
+            ui/**/*.ts
+            ui/**/*.tsx
+          files_ignore: |
+            ui/**/*.test.ts
+            ui/**/*.test.tsx
+            ui/**/*.spec.ts
+            ui/**/*.spec.tsx
+            ui/vitest.config.ts
+            ui/vitest.setup.ts
+
+      - name: Check for critical path changes (run all tests)
+        id: critical-changes
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        with:
+          files: |
+            ui/lib/**
+            ui/types/**
+            ui/config/**
+            ui/middleware.ts
+            ui/vitest.config.ts
+            ui/vitest.setup.ts
 
       - name: Setup Node.js ${{ env.NODE_VERSION }}
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: './ui/package-lock.json'
+
+      - name: Setup pnpm
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          package_json_file: ui/package.json
+          run_install: false
+
+      - name: Get pnpm store directory
+        if: steps.check-changes.outputs.any_changed == 'true'
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm and Next.js cache
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: |
+            ${{ env.STORE_PATH }}
+            ${{ env.UI_WORKING_DIR }}/node_modules
+            ${{ env.UI_WORKING_DIR }}/.next/cache
+          key: ${{ runner.os }}-pnpm-nextjs-${{ hashFiles('ui/pnpm-lock.yaml') }}-${{ hashFiles('ui/**/*.ts', 'ui/**/*.tsx', 'ui/**/*.js', 'ui/**/*.jsx') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-nextjs-${{ hashFiles('ui/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-pnpm-nextjs-
 
       - name: Install dependencies
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: npm ci
+        run: pnpm install --frozen-lockfile --prefer-offline
 
       - name: Run healthcheck
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: npm run healthcheck
+        run: pnpm run healthcheck
+
+      - name: Run pnpm audit
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm run audit
+
+      - name: Run unit tests (all - critical paths changed)
+        if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed == 'true'
+        run: |
+          echo "Critical paths changed - running ALL unit tests"
+          pnpm run test:unit
+
+      - name: Run unit tests (related to changes only)
+        if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files != ''
+        run: |
+          echo "Running tests related to changed files:"
+          echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}"
+          # Convert space-separated to vitest related format (remove ui/ prefix for relative paths)
+          CHANGED_FILES=$(echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | sed 's|^ui/||' | tr '\n' ' ')
+          pnpm exec vitest related $CHANGED_FILES --run --project unit
+        env:
+          STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-source.outputs.all_changed_files }}
+
+      - name: Run unit tests (test files only changed)
+        if: steps.check-changes.outputs.any_changed == 'true' && steps.critical-changes.outputs.any_changed != 'true' && steps.changed-source.outputs.all_changed_files == ''
+        run: |
+          echo "Only test files changed - running ALL unit tests"
+          pnpm run test:unit
+
+      - name: Cache Playwright browsers
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: playwright-cache
+        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-chromium-
+
+      - name: Install Playwright Chromium browser
+        if: steps.check-changes.outputs.any_changed == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install chromium
+
+      - name: Run browser tests
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm run test:browser
 
       - name: Build application
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: npm run build
+        run: pnpm run build

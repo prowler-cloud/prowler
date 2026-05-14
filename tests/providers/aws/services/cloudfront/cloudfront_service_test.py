@@ -171,6 +171,10 @@ def mock_make_api_call(self, operation_name, kwarg):
                 ]
             }
         }
+    if operation_name == "DescribeDeliverySources":
+        return {"deliverySources": []}
+    if operation_name == "DescribeDeliveries":
+        return {"deliveries": []}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -284,3 +288,158 @@ class Test_CloudFront_Service:
             == DEFAULT_CACHE_CONFIG.field_level_encryption_id
         )
         assert cloudfront.distributions[DISTRIBUTION_ID].tags == TAGS
+
+    def test_get_log_delivery_sources_with_active_delivery(self):
+        from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
+
+        DISTRIBUTION_ID = "E27LVI50CSW06W"
+        DISTRIBUTION_ARN = (
+            f"arn:aws:cloudfront::{AWS_ACCOUNT_NUMBER}:distribution/{DISTRIBUTION_ID}"
+        )
+        REGION = "us-east-1"
+
+        distributions = {
+            DISTRIBUTION_ID: Distribution(
+                arn=DISTRIBUTION_ARN,
+                id=DISTRIBUTION_ID,
+                region=REGION,
+                origins=[],
+                origin_failover=False,
+            )
+        }
+
+        mock_logs_client = mock.MagicMock()
+        mock_paginator_sources = mock.MagicMock()
+        mock_paginator_sources.paginate.return_value = [
+            {
+                "deliverySources": [
+                    {
+                        "name": "cf-source-1",
+                        "service": "cloudfront",
+                        "resourceArns": [DISTRIBUTION_ARN],
+                    },
+                ]
+            }
+        ]
+        mock_paginator_deliveries = mock.MagicMock()
+        mock_paginator_deliveries.paginate.return_value = [
+            {
+                "deliveries": [
+                    {
+                        "id": "delivery-1",
+                        "deliverySourceName": "cf-source-1",
+                        "deliveryDestinationArn": "arn:aws:logs:us-east-1:123456789012:log-group:cf-logs",
+                    },
+                ]
+            }
+        ]
+
+        def paginator_side_effect(operation):
+            if operation == "describe_delivery_sources":
+                return mock_paginator_sources
+            if operation == "describe_deliveries":
+                return mock_paginator_deliveries
+
+        mock_logs_client.get_paginator.side_effect = paginator_side_effect
+
+        service = mock.MagicMock()
+        service.service = "cloudfront"
+        service.session.client.return_value = mock_logs_client
+
+        CloudFront._get_log_delivery_sources(service, distributions, REGION)
+
+        assert distributions[DISTRIBUTION_ID].logging_v2_enabled is True
+
+    def test_get_log_delivery_sources_source_without_delivery(self):
+        from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
+
+        DISTRIBUTION_ID = "E27LVI50CSW06W"
+        DISTRIBUTION_ARN = (
+            f"arn:aws:cloudfront::{AWS_ACCOUNT_NUMBER}:distribution/{DISTRIBUTION_ID}"
+        )
+        REGION = "us-east-1"
+
+        distributions = {
+            DISTRIBUTION_ID: Distribution(
+                arn=DISTRIBUTION_ARN,
+                id=DISTRIBUTION_ID,
+                region=REGION,
+                origins=[],
+                origin_failover=False,
+            )
+        }
+
+        mock_logs_client = mock.MagicMock()
+        mock_paginator_sources = mock.MagicMock()
+        mock_paginator_sources.paginate.return_value = [
+            {
+                "deliverySources": [
+                    {
+                        "name": "cf-source-1",
+                        "service": "cloudfront",
+                        "resourceArns": [DISTRIBUTION_ARN],
+                    },
+                ]
+            }
+        ]
+        mock_paginator_deliveries = mock.MagicMock()
+        mock_paginator_deliveries.paginate.return_value = [{"deliveries": []}]
+
+        def paginator_side_effect(operation):
+            if operation == "describe_delivery_sources":
+                return mock_paginator_sources
+            if operation == "describe_deliveries":
+                return mock_paginator_deliveries
+
+        mock_logs_client.get_paginator.side_effect = paginator_side_effect
+
+        service = mock.MagicMock()
+        service.service = "cloudfront"
+        service.session.client.return_value = mock_logs_client
+
+        CloudFront._get_log_delivery_sources(service, distributions, REGION)
+
+        assert distributions[DISTRIBUTION_ID].logging_v2_enabled is False
+
+    def test_get_log_delivery_sources_no_matching_sources(self):
+        from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
+
+        DISTRIBUTION_ID = "E27LVI50CSW06W"
+        DISTRIBUTION_ARN = (
+            f"arn:aws:cloudfront::{AWS_ACCOUNT_NUMBER}:distribution/{DISTRIBUTION_ID}"
+        )
+        REGION = "us-east-1"
+
+        distributions = {
+            DISTRIBUTION_ID: Distribution(
+                arn=DISTRIBUTION_ARN,
+                id=DISTRIBUTION_ID,
+                region=REGION,
+                origins=[],
+                origin_failover=False,
+            )
+        }
+
+        mock_logs_client = mock.MagicMock()
+        mock_paginator_sources = mock.MagicMock()
+        mock_paginator_sources.paginate.return_value = [
+            {
+                "deliverySources": [
+                    {
+                        "name": "other-source",
+                        "service": "VPC",
+                        "resourceArns": ["arn:aws:some:other:resource"],
+                    },
+                ]
+            }
+        ]
+
+        mock_logs_client.get_paginator.return_value = mock_paginator_sources
+
+        service = mock.MagicMock()
+        service.service = "cloudfront"
+        service.session.client.return_value = mock_logs_client
+
+        CloudFront._get_log_delivery_sources(service, distributions, REGION)
+
+        assert distributions[DISTRIBUTION_ID].logging_v2_enabled is False

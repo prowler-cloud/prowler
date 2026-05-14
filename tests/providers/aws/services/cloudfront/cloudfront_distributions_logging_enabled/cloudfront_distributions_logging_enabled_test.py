@@ -64,7 +64,7 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled via standard."
             )
 
     def test_one_distribution_logging_disabled_realtime_disabled(self):
@@ -145,7 +145,7 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled via real-time."
             )
             assert result[0].resource_tags == []
 
@@ -186,6 +186,48 @@ class Test_cloudfront_distributions_logging_enabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled."
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled via standard, real-time."
+            )
+            assert result[0].resource_tags == []
+
+    def test_one_distribution_logging_v2_enabled(self):
+        cloudfront_client = mock.MagicMock
+        cloudfront_client.distributions = {
+            DISTRIBUTION_ID: Distribution(
+                arn=DISTRIBUTION_ARN,
+                id=DISTRIBUTION_ID,
+                region=REGION,
+                logging_enabled=False,
+                logging_v2_enabled=True,
+                default_cache_config=DefaultCacheConfigBehaviour(
+                    realtime_log_config_arn="",
+                    viewer_protocol_policy=ViewerProtocolPolicy.https_only,
+                    field_level_encryption_id="",
+                ),
+                origins=[],
+                origin_failover=False,
+            )
+        }
+
+        with mock.patch(
+            "prowler.providers.aws.services.cloudfront.cloudfront_service.CloudFront",
+            new=cloudfront_client,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.cloudfront.cloudfront_distributions_logging_enabled.cloudfront_distributions_logging_enabled import (
+                cloudfront_distributions_logging_enabled,
+            )
+
+            check = cloudfront_distributions_logging_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].region == REGION
+            assert result[0].resource_arn == DISTRIBUTION_ARN
+            assert result[0].resource_id == DISTRIBUTION_ID
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"CloudFront Distribution {DISTRIBUTION_ID} has logging enabled via v2/CloudWatch."
             )
             assert result[0].resource_tags == []

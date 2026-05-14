@@ -1,6 +1,9 @@
 import { Control, Controller } from "react-hook-form";
 
-import { CustomInput, CustomTextarea } from "@/components/ui/custom";
+import {
+  WizardInputField,
+  WizardTextareaField,
+} from "@/components/providers/workflow/forms/fields";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { OCICredentials } from "@/types";
 
@@ -25,7 +28,7 @@ export const OracleCloudCredentialsForm = ({
         name={ProviderCredentialFields.OCI_TENANCY}
         render={({ field }) => <input type="hidden" {...field} />}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.OCI_USER}
         type="text"
@@ -34,9 +37,8 @@ export const OracleCloudCredentialsForm = ({
         placeholder="ocid1.user.oc1..aaaaaaa..."
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.user}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.OCI_FINGERPRINT}
         type="text"
@@ -45,9 +47,8 @@ export const OracleCloudCredentialsForm = ({
         placeholder="Enter the API key fingerprint"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.fingerprint}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.OCI_REGION}
         type="text"
@@ -56,9 +57,8 @@ export const OracleCloudCredentialsForm = ({
         placeholder="e.g. us-ashburn-1"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.region}
       />
-      <CustomTextarea
+      <WizardTextareaField
         control={control}
         name={ProviderCredentialFields.OCI_KEY_CONTENT}
         label="Private Key Content"
@@ -67,9 +67,8 @@ export const OracleCloudCredentialsForm = ({
         variant="bordered"
         minRows={6}
         isRequired
-        isInvalid={!!control._formState.errors.key_content}
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.OCI_PASS_PHRASE}
         type="password"
@@ -78,7 +77,6 @@ export const OracleCloudCredentialsForm = ({
         placeholder="Enter passphrase if key is encrypted"
         variant="bordered"
         isRequired={false}
-        isInvalid={!!control._formState.errors.pass_phrase}
       />
       <div className="text-default-400 text-xs">
         Paste the raw content of your OCI private key file (PEM format). The key

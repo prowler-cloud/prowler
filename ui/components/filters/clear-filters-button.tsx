@@ -1,38 +1,96 @@
 "use client";
 
-import { CrossIcon } from "@/components/icons";
-import { useUrlFilters } from "@/hooks/use-url-filters";
+import { XCircle } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { CustomButton } from "../ui/custom/custom-button";
+import { Button } from "../shadcn";
+
+// Filters that should be excluded from count and visibility check
+const EXCLUDED_FILTERS = ["filter[search]", "filter[muted]"];
 
 export interface ClearFiltersButtonProps {
   className?: string;
   text?: string;
   ariaLabel?: string;
+  /** Show the count of active filters */
+  showCount?: boolean;
+  /** Button visual variant */
+  variant?: "link" | "default" | "outline";
+  /**
+   * Optional callback for batch mode. When provided, this is called INSTEAD
+   * of pushing URL params directly. Useful for clearing pending filter state
+   * without immediately navigating.
+   */
+  onClear?: () => void;
+  /**
+   * In batch mode, the number of pending filter keys that have non-empty values.
+   * When provided alongside `onClear`, overrides the URL-based count shown by
+   * `showCount`. This ensures the displayed count reflects the pending state
+   * (not the last-applied URL state) while the user is editing filters.
+   */
+  pendingCount?: number;
 }
 
 export const ClearFiltersButton = ({
-  className = "w-full md:w-fit",
-  text = "Clear all filters",
+  text = "Clear All",
   ariaLabel = "Reset",
+  showCount = false,
+  variant = "outline",
+  onClear,
+  pendingCount,
 }: ClearFiltersButtonProps) => {
-  const { clearAllFilters, hasFilters } = useUrlFilters();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  if (!hasFilters()) {
+  // Get active filters (excluding search and muted)
+  const activeFilters = Array.from(searchParams.keys()).filter(
+    (key) => key.startsWith("filter[") && !EXCLUDED_FILTERS.includes(key),
+  );
+
+  const filterCount = activeFilters.length;
+
+  // Clear all filters except excluded ones (muted, search)
+  const clearFiltersPreservingExcluded = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    Array.from(params.keys()).forEach((key) => {
+      if (
+        (key.startsWith("filter[") && !EXCLUDED_FILTERS.includes(key)) ||
+        key === "sort"
+      ) {
+        params.delete(key);
+      }
+    });
+    params.delete("page");
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  // In batch mode: use pendingCount if provided; otherwise fall back to URL count.
+  // In instant mode: always use URL count.
+  const displayCount =
+    onClear && pendingCount !== undefined ? pendingCount : filterCount;
+
+  // In instant mode: hide when no URL filters exist
+  if (!onClear && filterCount === 0) {
     return null;
   }
 
+  // In batch mode: hide when there are no pending or URL filters to clear
+  if (onClear && displayCount === 0) {
+    return null;
+  }
+
+  const displayText = showCount ? `Clear All (${displayCount})` : text;
+
   return (
-    <CustomButton
-      ariaLabel={ariaLabel}
-      className={className}
-      onPress={clearAllFilters}
-      variant="dashed"
-      size="md"
-      endContent={<CrossIcon size={24} />}
-      radius="sm"
+    <Button
+      aria-label={ariaLabel}
+      onClick={onClear ?? clearFiltersPreservingExcluded}
+      size="sm"
+      variant={variant}
     >
-      {text}
-    </CustomButton>
+      <XCircle className="mr-0.5 size-4" />
+      {displayText}
+    </Button>
   );
 };

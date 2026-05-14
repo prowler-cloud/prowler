@@ -1,34 +1,31 @@
-import { Spacer } from "@heroui/spacer";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import {
-  getFindings,
-  getLatestFindings,
-  getLatestMetadataInfo,
-  getMetadataInfo,
-} from "@/actions/findings";
+  adaptFindingGroupsResponse,
+  getFindingGroups,
+  getLatestFindingGroups,
+} from "@/actions/finding-groups";
+import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
-import { getScans } from "@/actions/scans";
+import { getScan, getScans } from "@/actions/scans";
+import { SeedFromFindingsButton } from "@/app/(prowler)/alerts/_components";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
-  ColumnFindings,
+  FindingsGroupTable,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
+import { FilterTransitionWrapper } from "@/contexts";
 import {
-  createDict,
+  applyDefaultMutedFilter,
   createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
-import {
-  createProviderDetailsMapping,
-  extractProviderUIDs,
-} from "@/lib/provider-helpers";
-import { FilterEntity, ScanEntity, ScanProps } from "@/types";
-import { FindingProps, SearchParamsProps } from "@/types/components";
+import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
+import { ScanEntity, ScanProps } from "@/types";
+import { SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,
@@ -36,36 +33,39 @@ export default async function Findings({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const { searchParamsKey, encodedSort } =
-    extractSortAndKey(resolvedSearchParams);
+  const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
-  // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
-
-  const [metadataInfoData, providersData, scansData] = await Promise.all([
-    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
-      query,
-      sort: encodedSort,
-      filters,
-    }),
+  const [providersData, scansData] = await Promise.all([
     getProviders({ pageSize: 50 }),
     getScans({ pageSize: 50 }),
   ]);
 
-  // Extract unique regions and services from the new endpoint
+  const filtersWithScanDates = await resolveFindingScanDateFilters({
+    filters,
+    scans: scansData?.data || [],
+    loadScan: async (scanId: string) => {
+      const response = await getScan(scanId);
+      return response?.data;
+    },
+  });
+  const resolvedFilters = applyDefaultMutedFilter(filtersWithScanDates);
+  const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);
+  const metadataInfoData = await (
+    hasHistoricalData ? getMetadataInfo : getLatestMetadataInfo
+  )({
+    query,
+    sort: encodedSort,
+    filters: resolvedFilters,
+  });
+
+  // Extract unique regions, services, categories, groups from the new endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
-
-  // Extract provider UIDs and details using helper functions
-  const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
-  const providerDetails = providersData
-    ? (createProviderDetailsMapping(providerUIDs, providersData) as {
-        [uid: string]: FilterEntity;
-      }[])
-    : [];
+  const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
+  const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
 
   // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data?.filter(
@@ -78,97 +78,93 @@ export default async function Findings({
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
   const scanDetails = createScanDetailsMapping(
-    completedScans,
+    completedScans || [],
     providersData,
   ) as { [uid: string]: ScanEntity }[];
+  const alertsEnabled = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
   return (
     <ContentLayout title="Findings" icon="lucide:tag">
-      <FindingsFilters
-        providerUIDs={providerUIDs}
-        providerDetails={providerDetails}
-        completedScans={completedScans || []}
-        completedScanIds={completedScanIds}
-        scanDetails={scanDetails}
-        uniqueRegions={uniqueRegions}
-        uniqueServices={uniqueServices}
-        uniqueResourceTypes={uniqueResourceTypes}
-      />
-      <Spacer y={8} />
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
-        <SSRDataTable searchParams={resolvedSearchParams} />
-      </Suspense>
+      <FilterTransitionWrapper>
+        <div className="mb-6">
+          <FindingsFilters
+            providers={providersData?.data || []}
+            completedScanIds={completedScanIds}
+            scanDetails={scanDetails}
+            uniqueRegions={uniqueRegions}
+            uniqueServices={uniqueServices}
+            uniqueResourceTypes={uniqueResourceTypes}
+            uniqueCategories={uniqueCategories}
+            uniqueGroups={uniqueGroups}
+            trailingControls={
+              <SeedFromFindingsButton
+                filterBag={filters}
+                providers={providersData?.data || []}
+                scans={scanDetails}
+                uniqueRegions={uniqueRegions}
+                uniqueServices={uniqueServices}
+                uniqueResourceTypes={uniqueResourceTypes}
+                uniqueCategories={uniqueCategories}
+                uniqueGroups={uniqueGroups}
+                isCloudEnabled={alertsEnabled}
+              />
+            }
+          />
+        </div>
+        <Suspense fallback={<SkeletonTableFindings />}>
+          <SSRDataTable
+            searchParams={resolvedSearchParams}
+            filters={resolvedFilters}
+          />
+        </Suspense>
+      </FilterTransitionWrapper>
     </ContentLayout>
   );
 }
 
 const SSRDataTable = async ({
   searchParams,
+  filters,
 }: {
   searchParams: SearchParamsProps;
+  filters: Record<string, string>;
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
-  const defaultSort = "severity,status,-inserted_at";
 
-  const { encodedSort } = extractSortAndKey({
-    ...searchParams,
-    sort: searchParams.sort ?? defaultSort,
-  });
+  const { encodedSort } = extractSortAndKey(searchParams);
+  const hasHistoricalData = hasDateOrScanFilter(filters);
 
-  const { filters, query } = extractFiltersAndQuery(searchParams);
-  // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(searchParams);
+  const fetchFindingGroups = hasHistoricalData
+    ? getFindingGroups
+    : getLatestFindingGroups;
 
-  const fetchFindings = hasDateOrScan ? getFindings : getLatestFindings;
-
-  const findingsData = await fetchFindings({
-    query,
+  const findingGroupsData = await fetchFindingGroups({
     page,
-    sort: encodedSort,
+    ...(encodedSort && { sort: encodedSort }),
     filters,
     pageSize,
   });
 
-  // Create dictionaries for resources, scans, and providers
-  const resourceDict = createDict("resources", findingsData);
-  const scanDict = createDict("scans", findingsData);
-  const providerDict = createDict("providers", findingsData);
-
-  // Expand each finding with its corresponding resource, scan, and provider
-  const expandedFindings = findingsData?.data
-    ? findingsData.data.map((finding: FindingProps) => {
-        const scan = scanDict[finding.relationships?.scan?.data?.id];
-        const resource =
-          resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        const provider = providerDict[scan?.relationships?.provider?.data?.id];
-
-        return {
-          ...finding,
-          relationships: { scan, resource, provider },
-        };
-      })
-    : [];
-
-  // Create the new object while maintaining the original structure
-  const expandedResponse = {
-    ...findingsData,
-    data: expandedFindings,
-  };
+  // Transform API response to FindingGroupRow[]
+  const groups = adaptFindingGroupsResponse(findingGroupsData);
+  // Key resets all client state (selection, drill-down) when data changes
+  const groupKey = groups.map((g) => g.id).join(",");
 
   return (
     <>
-      {findingsData?.errors && (
+      {findingGroupsData?.errors?.length > 0 && (
         <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
-          <p>{findingsData.errors[0].detail}</p>
+          <p>{findingGroupsData.errors[0].detail}</p>
         </div>
       )}
-      <DataTable
-        key={Date.now()}
-        columns={ColumnFindings}
-        data={expandedResponse?.data || []}
-        metadata={findingsData?.meta}
+      <FindingsGroupTable
+        key={groupKey}
+        data={groups}
+        metadata={findingGroupsData?.meta}
+        resolvedFilters={filters}
+        hasHistoricalData={hasHistoricalData}
       />
     </>
   );

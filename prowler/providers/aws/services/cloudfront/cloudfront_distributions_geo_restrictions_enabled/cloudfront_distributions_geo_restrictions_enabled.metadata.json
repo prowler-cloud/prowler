@@ -10,13 +10,14 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudFrontDistribution",
+  "ResourceGroup": "network",
   "Description": "**CloudFront distributions** have **geographic restrictions** configured to limit access by country using an allowlist or blocklist (`RestrictionType` not `none`).",
   "Risk": "Absent geo restrictions, content is globally reachable, enabling:\n- Access from sanctioned or unlicensed regions (confidentiality/compliance)\n- Broader bot abuse, scraping, and DDoS staging (availability)\n- More credential-stuffing and fraud attempts against apps",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://repost.aws/knowledge-center/cloudfront-geo-restriction",
     "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/georestrictions.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/geo-restriction.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/CloudFront/geo-restriction.html"
   ],
   "Remediation": {
     "Code": {

@@ -1,7 +1,5 @@
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
 
-import { useUrlFilters } from "@/hooks/use-url-filters";
 import { isScanEntity } from "@/lib/helper-filters";
 import {
   FilterEntity,
@@ -12,183 +10,86 @@ import {
 } from "@/types";
 
 interface UseRelatedFiltersProps {
-  providerUIDs: string[];
-  providerDetails: { [uid: string]: FilterEntity }[];
+  providerIds?: string[];
+  providerUIDs?: string[];
+  providerDetails: { [key: string]: FilterEntity }[];
   completedScanIds?: string[];
   scanDetails?: { [key: string]: ScanEntity }[];
   enableScanRelation?: boolean;
+  providerFilterType?: FilterType.PROVIDER | FilterType.PROVIDER_UID;
 }
 
+/**
+ * Derives available providers and scans based on the current URL filters.
+ *
+ * Pure computation — no effects, no state, no navigation. The returned
+ * lists update automatically when searchParams change because the component
+ * re-renders with new searchParams from Next.js.
+ *
+ * Cascading filter cleanup (e.g. auto-clearing a scan when its provider is
+ * deselected) is handled atomically by the filter components themselves
+ * (ProviderTypeSelector clears provider_id__in, AccountsSelector updates
+ * provider_type__in). This avoids the production bug where router.push()
+ * calls inside useEffect would silently abort pending navigations.
+ */
 export const useRelatedFilters = ({
-  providerUIDs,
+  providerIds = [],
+  providerUIDs = [],
   providerDetails,
   completedScanIds = [],
   scanDetails = [],
   enableScanRelation = false,
+  providerFilterType = FilterType.PROVIDER,
 }: UseRelatedFiltersProps) => {
   const searchParams = useSearchParams();
-  const { updateFilter } = useUrlFilters();
-  const [availableScans, setAvailableScans] =
-    useState<string[]>(completedScanIds);
-  const [availableProviderUIDs, setAvailableProviderUIDs] =
-    useState<string[]>(providerUIDs);
-  const previousProviders = useRef<string[]>([]);
-  const previousProviderTypes = useRef<ProviderType[]>([]);
-  const isManualDeselection = useRef(false);
 
-  const getScanProvider = (scanId: string) => {
-    if (!enableScanRelation) return null;
-    const scanDetail = scanDetails.find(
-      (detail) => Object.keys(detail)[0] === scanId,
-    );
-    return scanDetail ? scanDetail[scanId]?.providerInfo?.uid : null;
-  };
+  const providers = providerIds.length > 0 ? providerIds : providerUIDs;
 
-  const getScanProviderType = (scanId: string): ProviderType | null => {
-    if (!enableScanRelation) return null;
-    const scanDetail = scanDetails.find(
-      (detail) => Object.keys(detail)[0] === scanId,
-    );
-    return scanDetail ? scanDetail[scanId]?.providerInfo?.provider : null;
-  };
+  const providerParam = searchParams.get(`filter[${providerFilterType}]`);
+  const providerTypeParam = searchParams.get(
+    `filter[${FilterType.PROVIDER_TYPE}]`,
+  );
 
-  const getProviderType = (providerUid: string): ProviderType | null => {
+  const currentProviders = providerParam ? providerParam.split(",") : [];
+  const currentProviderTypes = providerTypeParam
+    ? (providerTypeParam.split(",") as ProviderType[])
+    : [];
+
+  const getProviderType = (providerKey: string): ProviderType | null => {
     const providerDetail = providerDetails.find(
-      (detail) => Object.keys(detail)[0] === providerUid,
+      (detail) => Object.keys(detail)[0] === providerKey,
     );
     if (!providerDetail) return null;
 
-    const entity = providerDetail[providerUid];
+    const entity = providerDetail[providerKey];
     if (!isScanEntity(entity as ScanEntity)) {
       return (entity as ProviderEntity).provider;
     }
     return null;
   };
 
-  useEffect(() => {
-    const scanParam = enableScanRelation
-      ? searchParams.get(`filter[${FilterType.SCAN}]`)
-      : null;
-    const providerParam = searchParams.get(
-      `filter[${FilterType.PROVIDER_UID}]`,
-    );
-    const providerTypeParam = searchParams.get(
-      `filter[${FilterType.PROVIDER_TYPE}]`,
-    );
+  // Derive available providers filtered by selected provider types
+  const availableProviders =
+    currentProviderTypes.length > 0
+      ? providers.filter((key) => {
+          const providerType = getProviderType(key);
+          return providerType && currentProviderTypes.includes(providerType);
+        })
+      : providers;
 
-    const currentProviders = providerParam ? providerParam.split(",") : [];
-    const currentProviderTypes = providerTypeParam
-      ? (providerTypeParam.split(",") as ProviderType[])
-      : [];
+  // Derive available scans filtered by selected providers and provider types
+  const availableScans = enableScanRelation
+    ? currentProviders.length > 0 || currentProviderTypes.length > 0
+      ? completedScanIds.filter((scanId) => {
+          const scanDetail = scanDetails.find(
+            (detail) => Object.keys(detail)[0] === scanId,
+          );
+          if (!scanDetail) return false;
 
-    // Detect deselected items
-    const deselectedProviders = previousProviders.current.filter(
-      (provider) => !currentProviders.includes(provider),
-    );
-    const deselectedProviderTypes = previousProviderTypes.current.filter(
-      (type) => !currentProviderTypes.includes(type),
-    );
-
-    // Check if it's a manual deselection
-    if (deselectedProviderTypes.length > 0) {
-      isManualDeselection.current = true;
-    } else if (
-      currentProviderTypes.length === 0 &&
-      previousProviderTypes.current.length === 0
-    ) {
-      isManualDeselection.current = false;
-    }
-
-    // Update references
-    previousProviders.current = currentProviders;
-    previousProviderTypes.current = currentProviderTypes;
-
-    // Handle scan selection logic
-    if (enableScanRelation && scanParam) {
-      const scanProviderId = getScanProvider(scanParam);
-      const scanProviderType = getScanProviderType(scanParam);
-
-      const shouldDeselectScan =
-        (scanProviderId &&
-          (deselectedProviders.includes(scanProviderId) ||
-            (currentProviders.length > 0 &&
-              !currentProviders.includes(scanProviderId)))) ||
-        (scanProviderType &&
-          !isManualDeselection.current &&
-          (deselectedProviderTypes.includes(scanProviderType) ||
-            (currentProviderTypes.length > 0 &&
-              !currentProviderTypes.includes(scanProviderType))));
-
-      if (shouldDeselectScan) {
-        updateFilter(FilterType.SCAN, null);
-        // } else {
-        //   // Add provider if not already selected
-        //   if (scanProviderId && !currentProviders.includes(scanProviderId)) {
-        //     updateFilter(FilterType.PROVIDER_UID, [
-        //       ...currentProviders,
-        //       scanProviderId,
-        //     ]);
-        //   }
-
-        //   // Only add provider type if there are none selected
-        //   if (
-        //     scanProviderType &&
-        //     currentProviderTypes.length === 0 &&
-        //     !isManualDeselection.current
-        //   ) {
-        //     updateFilter(FilterType.PROVIDER_TYPE, [scanProviderType]);
-        //   }
-      }
-    }
-
-    // // Handle provider selection logic
-    // if (
-    //   currentProviders.length > 0 &&
-    //   deselectedProviders.length === 0 &&
-    //   !isManualDeselection.current
-    // ) {
-    //   const providerTypes = currentProviders
-    //     .map(getProviderType)
-    //     .filter((type): type is ProviderType => type !== null);
-    //   const selectedProviderTypes = Array.from(new Set(providerTypes));
-
-    //   if (
-    //     selectedProviderTypes.length > 0 &&
-    //     currentProviderTypes.length === 0
-    //   ) {
-    //     updateFilter(FilterType.PROVIDER_TYPE, selectedProviderTypes);
-    //   }
-    // }
-
-    // Update available providers
-    if (currentProviderTypes.length > 0) {
-      const filteredProviderUIDs = providerUIDs.filter((uid) => {
-        const providerType = getProviderType(uid);
-        return providerType && currentProviderTypes.includes(providerType);
-      });
-      setAvailableProviderUIDs(filteredProviderUIDs);
-
-      const validProviders = currentProviders.filter((uid) => {
-        const providerType = getProviderType(uid);
-        return providerType && currentProviderTypes.includes(providerType);
-      });
-
-      if (validProviders.length !== currentProviders.length) {
-        updateFilter(
-          FilterType.PROVIDER_UID,
-          validProviders.length > 0 ? validProviders : null,
-        );
-      }
-    } else {
-      setAvailableProviderUIDs(providerUIDs);
-    }
-
-    // Update available scans
-    if (enableScanRelation) {
-      if (currentProviders.length > 0 || currentProviderTypes.length > 0) {
-        const filteredScans = completedScanIds.filter((scanId) => {
-          const scanProviderId = getScanProvider(scanId);
-          const scanProviderType = getScanProviderType(scanId);
+          const scanProviderId = scanDetail[scanId]?.providerInfo?.uid ?? null;
+          const scanProviderType =
+            (scanDetail[scanId]?.providerInfo?.provider as ProviderType) ??
+            null;
 
           return (
             (currentProviders.length === 0 ||
@@ -197,17 +98,13 @@ export const useRelatedFilters = ({
               (scanProviderType &&
                 currentProviderTypes.includes(scanProviderType)))
           );
-        });
-        setAvailableScans(filteredScans);
-      } else {
-        setAvailableScans(completedScanIds);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+        })
+      : completedScanIds
+    : completedScanIds;
 
   return {
-    availableProviderUIDs,
+    availableProviderIds: providerIds.length > 0 ? availableProviders : [],
+    availableProviderUIDs: providerUIDs.length > 0 ? availableProviders : [],
     availableScans,
   };
 };

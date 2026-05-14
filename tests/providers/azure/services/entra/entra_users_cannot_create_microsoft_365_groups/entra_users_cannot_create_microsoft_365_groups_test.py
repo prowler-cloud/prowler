@@ -1,7 +1,11 @@
 from unittest import mock
 from uuid import uuid4
 
-from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provider
+from tests.providers.azure.azure_fixtures import (
+    DOMAIN,
+    TENANT_IDS,
+    set_mocked_azure_provider,
+)
 
 
 class Test_entra_users_cannot_create_microsoft_365_groups:
@@ -23,6 +27,7 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             )
 
             entra_client.group_settings = {}
+            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_users_cannot_create_microsoft_365_groups()
             result = check.execute()
@@ -45,7 +50,9 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
                 entra_users_cannot_create_microsoft_365_groups,
             )
 
+            # Empty group settings - no Group.Unified found
             entra_client.group_settings = {DOMAIN: {}}
+            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_users_cannot_create_microsoft_365_groups()
             result = check.execute()
@@ -53,8 +60,8 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Users can create Microsoft 365 groups."
             assert result[0].subscription == f"Tenant: {DOMAIN}"
-            assert result[0].resource_name == "Microsoft365 Groups"
-            assert result[0].resource_id == "Microsoft365 Groups"
+            assert result[0].resource_name == DOMAIN
+            assert result[0].resource_id == TENANT_IDS[0]
 
     def test_entra_users_cannot_create_microsoft_365_groups(self):
         entra_client = mock.MagicMock
@@ -85,12 +92,14 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             entra_client.group_settings = {
                 DOMAIN: {
                     id: GroupSetting(
+                        id=id,
                         name="Group.Unified",
                         template_id=template_id,
                         settings=[setting],
                     )
                 }
             }
+            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_users_cannot_create_microsoft_365_groups()
             result = check.execute()
@@ -100,8 +109,8 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
                 result[0].status_extended == "Users cannot create Microsoft 365 groups."
             )
             assert result[0].subscription == f"Tenant: {DOMAIN}"
-            assert result[0].resource_name == "Microsoft365 Groups"
-            assert result[0].resource_id == "Microsoft365 Groups"
+            assert result[0].resource_name == "Group.Unified"
+            assert result[0].resource_id == id
 
     def test_entra_users_can_create_microsoft_365_groups(self):
         entra_client = mock.MagicMock
@@ -132,12 +141,14 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             entra_client.group_settings = {
                 DOMAIN: {
                     id: GroupSetting(
+                        id=id,
                         name="Group.Unified",
                         template_id=template_id,
                         settings=[setting],
                     )
                 }
             }
+            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_users_cannot_create_microsoft_365_groups()
             result = check.execute()
@@ -145,8 +156,8 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Users can create Microsoft 365 groups."
             assert result[0].subscription == f"Tenant: {DOMAIN}"
-            assert result[0].resource_name == "Microsoft365 Groups"
-            assert result[0].resource_id == "Microsoft365 Groups"
+            assert result[0].resource_name == "Group.Unified"
+            assert result[0].resource_id == id
 
     def test_entra_users_can_create_microsoft_365_groups_no_setting(self):
         entra_client = mock.MagicMock
@@ -174,12 +185,14 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             entra_client.group_settings = {
                 DOMAIN: {
                     id: GroupSetting(
+                        id=id,
                         name="Group.Unified",
                         template_id=template_id,
                         settings=[],
                     )
                 }
             }
+            entra_client.tenant_ids = TENANT_IDS
 
             check = entra_users_cannot_create_microsoft_365_groups()
             result = check.execute()
@@ -187,5 +200,5 @@ class Test_entra_users_cannot_create_microsoft_365_groups:
             assert result[0].status == "FAIL"
             assert result[0].status_extended == "Users can create Microsoft 365 groups."
             assert result[0].subscription == f"Tenant: {DOMAIN}"
-            assert result[0].resource_name == "Microsoft365 Groups"
-            assert result[0].resource_id == "Microsoft365 Groups"
+            assert result[0].resource_name == "Group.Unified"
+            assert result[0].resource_id == id

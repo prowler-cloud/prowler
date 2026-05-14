@@ -11,12 +11,13 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
+  "ResourceGroup": "compute",
   "Description": "EC2 Auto Scaling groups attached to a load balancer are evaluated for **ELB-based health checks** that use the load balancer's target health instead of instance-only checks.",
   "Risk": "Without **ELB health checks**, the group may keep instances that fail load balancer probes, causing:\n- Reduced **availability** from routing to bad targets\n- Higher error rates impacting transaction **integrity**\n- Inefficient scaling and increased **costs**",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-1",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/auto-scaling-group-health-check.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/AutoScaling/auto-scaling-group-health-check.html",
     "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-elb-healthcheck.html#as-add-elb-healthcheck-console"
   ],
   "Remediation": {

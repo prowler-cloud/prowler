@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDmsReplicationTask",
+  "ResourceGroup": "database",
   "Description": "**AWS DMS replication tasks** have **logging enabled** and configure `SOURCE_CAPTURE` and `SOURCE_UNLOAD` with severity at least `LOGGER_SEVERITY_DEFAULT` (or higher: `LOGGER_SEVERITY_DEBUG`, `LOGGER_SEVERITY_DETAILED_DEBUG`).",
   "Risk": "Missing or low-severity source logs hinder visibility into **CDC** and full-load activity, risking undetected errors, stalls, or tampering. This can cause silent **data drift**, broken lineage, and failed recoveries, undermining **integrity** and **availability** and weakening auditability during investigations.",
   "RelatedUrl": "",

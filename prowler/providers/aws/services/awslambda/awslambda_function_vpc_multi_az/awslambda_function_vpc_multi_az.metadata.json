@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsLambdaFunction",
+  "ResourceGroup": "serverless",
   "Description": "**AWS Lambda** functions attached to a VPC use subnets that span at least the required number of **Availability Zones** (`2` by default).\n\nThe evaluation counts the unique AZs of the function's configured subnets.",
   "Risk": "Single-AZ placement limits **availability**. An AZ outage or subnet/IP exhaustion can block ENI creation and VPC access, causing failed invocations, timeouts, and event backlogs.\n\nThis degrades uptime and can delay processing of critical events.",
   "RelatedUrl": "",

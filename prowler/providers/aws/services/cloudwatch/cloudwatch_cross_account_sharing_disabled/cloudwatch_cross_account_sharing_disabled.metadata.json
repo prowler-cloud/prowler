@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
   "Description": "**Amazon CloudWatch** cross-account sharing via the `CloudWatch-CrossAccountSharingRole` allows other AWS accounts to view your metrics, dashboards, and alarms. The presence of this role indicates that sharing is active.",
   "Risk": "Granting other accounts visibility into observability data reduces **confidentiality** and enables **reconnaissance**. Adversaries or over-privileged partners can map architectures, profile workloads, and spot alerting gaps, increasing chances of **lateral movement** and **evasion**.",
   "RelatedUrl": "",

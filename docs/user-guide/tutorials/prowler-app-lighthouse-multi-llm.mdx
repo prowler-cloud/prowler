@@ -1,0 +1,169 @@
+---
+title: 'Using Multiple LLM Providers with Lighthouse'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.14.0" />
+
+Prowler Lighthouse AI supports multiple Large Language Model (LLM) providers, offering flexibility to choose the provider that best fits infrastructure, compliance requirements, and cost considerations. This guide explains how to configure and use different LLM providers with Lighthouse AI.
+
+## Supported Providers
+
+Lighthouse AI supports the following LLM providers:
+
+- **OpenAI**: Provides access to GPT models (GPT-4o, GPT-4, etc.)
+- **Amazon Bedrock**: Offers AWS-hosted access to Claude, Llama, Titan, and other models
+- **OpenAI Compatible**: Supports custom endpoints like OpenRouter, Ollama, or any OpenAI-compatible service
+
+## Model Requirements
+
+For Lighthouse AI to work properly, models **must** support all of the following capabilities:
+
+- **Text input**: Ability to receive text prompts.
+- **Text output**: Ability to generate text responses.
+- **Tool calling**: Ability to invoke tools and functions to retrieve data from Prowler.
+
+If any of these capabilities are missing, the model will not be compatible with Lighthouse AI.
+
+## How Default Providers Work
+
+All three providers can be configured for a tenant, but only one can be set as the default provider. The first configured provider automatically becomes the default.
+
+When visiting Lighthouse AI chat, the default provider's default model loads automatically. Users can switch to any available LLM model (including those from non-default providers) using the dropdown in chat.
+
+<img src="/images/prowler-app/lighthouse-switch-models.png" alt="Switch models in Lighthouse AI chat interface" />
+
+## Configuring Providers
+
+Navigate to **Configuration** → **Lighthouse AI** to see all three provider options with a **Connect** button under each.
+
+<img src="/images/prowler-app/lighthouse-configuration.png" alt="Prowler Lighthouse Configuration" />
+
+### Connecting a Provider
+
+To connect a provider:
+
+1. Click **Connect** under the desired provider
+2. Enter the required credentials
+3. Select a default model for that provider
+4. Click **Connect** to save
+
+<Tabs>
+  <Tab title="OpenAI">
+    ### Required Information
+
+    - **API Key**: OpenAI API key (starts with `sk-` or `sk-proj-`). API keys can be created from the [OpenAI platform](https://platform.openai.com/api-keys).
+
+    ### Before Connecting
+
+    - Ensure the OpenAI account has sufficient credits.
+    - Verify that the `gpt-5` model (recommended for Lighthouse AI) is not blocked in the OpenAI organization settings.
+  </Tab>
+
+  <Tab title="Amazon Bedrock">
+    Prowler connects to Amazon Bedrock using either [Amazon Bedrock API keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html) or IAM credentials.
+
+    <Note>
+    Amazon Bedrock models depend on AWS region and account entitlements. Lighthouse AI displays only accessible models that support tool calling and text input/output.
+    </Note>
+
+    ### Amazon Bedrock Long-Term API Key
+
+    <VersionBadge version="5.15.0" />
+
+    <Warning>
+    Amazon Bedrock Long-Term API keys are recommended only for exploration purposes. For production environments, use AWS IAM Access Keys with properly scoped permissions.
+    </Warning>
+
+    Amazon Bedrock API keys provide simpler authentication with automatically assigned permissions.
+
+    #### Required Information
+
+    - **Bedrock Long-Term API Key**: The API key generated from Amazon Bedrock.
+    - **AWS Region**: Region where Bedrock is available.
+
+    <Note>
+    Amazon Bedrock Long-Term API keys are automatically assigned the necessary permissions (`AmazonBedrockLimitedAccess` policy).
+
+    Learn more: [Getting Started with Amazon Bedrock API Keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html)
+    </Note>
+
+    ### AWS IAM Access Keys
+
+    Standard AWS IAM credentials can be used as an alternative authentication method.
+
+    #### Required Information
+
+    - **AWS Access Key ID**: The access key ID for the IAM user.
+    - **AWS Secret Access Key**: The secret access key for the IAM user.
+    - **AWS Region**: Region where Bedrock is available.
+
+    #### Required Permissions
+
+    The AWS IAM user must have the `AmazonBedrockLimitedAccess` managed policy attached:
+
+    ```text
+    arn:aws:iam::aws:policy/AmazonBedrockLimitedAccess
+    ```
+
+    <Note>
+    Access to all Amazon Bedrock foundation models is enabled by default. When you select a model or invoke it for the first time (using Prowler or otherwise), you agree to Amazon's EULA. More info: [Amazon Bedrock Model Access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
+    </Note>
+
+  </Tab>
+
+  <Tab title="OpenAI Compatible">
+    Use this option to connect to any LLM provider exposing an OpenAI compatible API endpoint (OpenRouter, Ollama, etc.).
+
+    ### Required Information
+
+    - **API Key**: API key from the compatible service.
+    - **Base URL**: API endpoint URL including the API version (e.g., `https://openrouter.ai/api/v1`).
+
+    ### Example: OpenRouter
+
+    1. Create an account at [OpenRouter](https://openrouter.ai/)
+    2. [Generate an API key](https://openrouter.ai/docs/guides/overview/auth/provisioning-api-keys) from the OpenRouter dashboard
+    3. Configure in Lighthouse AI:
+       - **API Key**: OpenRouter API key
+       - **Base URL**: `https://openrouter.ai/api/v1`
+  </Tab>
+</Tabs>
+
+## Changing the Default Provider
+
+To set a different provider as default:
+
+1. Navigate to **Configuration** → **Lighthouse AI**
+2. Click **Configure** under the desired provider to set as default
+3. Click **Set as Default**
+
+<img src="/images/prowler-app/lighthouse-set-default-provider.png" alt="Set default LLM provider" />
+
+## Updating Provider Credentials
+
+To update credentials for a connected provider:
+
+1. Navigate to **Configuration** → **Lighthouse AI**
+2. Click **Configure** under the provider
+3. Enter the new credentials
+4. Click **Update**
+
+## Deleting a Provider
+
+To remove a configured provider:
+
+1. Navigate to **Configuration** → **Lighthouse AI**
+2. Click **Configure** under the provider
+3. Click **Delete**
+
+## Model Recommendations
+
+For best results with Lighthouse AI, the recommended model is `gpt-5` from OpenAI.
+
+Models from other providers such as Amazon Bedrock and OpenAI Compatible endpoints can be connected and used, but performance is not guaranteed. Ensure that any selected model supports text input, text output, and tool calling capabilities.
+
+## Getting Help
+
+For issues or suggestions, [reach out through our Slack channel](https://goto.prowler.com/slack).

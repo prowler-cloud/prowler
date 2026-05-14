@@ -1,0 +1,43 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "drive_external_sharing_warn_users",
+  "CheckTitle": "Users are warned when sharing files outside the domain",
+  "CheckType": [],
+  "ServiceName": "drive",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The domain-wide Drive and Docs configuration **warns users** when they attempt to share a file with users outside the organization. This prompt gives users an opportunity to reconsider before exposing organizational content to external parties, reducing the likelihood of **accidental data disclosure** through everyday sharing actions.",
+  "Risk": "Without external sharing warnings, users may unintentionally share **sensitive documents** with external recipients who are not entitled to the data. This is a common vector for inadvertent leakage of intellectual property, personally identifiable information, and confidential business data through routine Drive sharing.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/60781",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Click **Sharing settings** > **Sharing options**\n4. Under **Sharing outside of <Company>**, ensure sharing outside the domain is allowed and check **For files owned by users in <Company> warn when sharing outside of <Company>**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable external sharing warnings so users are notified whenever they attempt to share a file outside the organization. This simple prompt helps prevent accidental disclosure of sensitive content to unintended recipients.",
+      "Url": "https://hub.prowler.com/check/drive_external_sharing_warn_users"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "drive_publishing_files_disabled",
+    "drive_sharing_allowlisted_domains",
+    "drive_warn_sharing_with_allowlisted_domains",
+    "drive_access_checker_recipients_only",
+    "drive_internal_users_distribute_content"
+  ],
+  "Notes": ""
+}

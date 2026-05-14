@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsElasticBeanstalkEnvironment",
+  "ResourceGroup": "compute",
   "Description": "**Elastic Beanstalk environments** are configured to stream instance and proxy logs to **Amazon CloudWatch Logs** via the `StreamLogs` setting",
   "Risk": "Without **centralized logging** to CloudWatch, logs may be lost during rotation or instance termination, delaying detection and response. Attackers can delete local logs to evade audits, hiding evidence of web attacks or config tampering and undermining **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",

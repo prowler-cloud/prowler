@@ -17,7 +17,7 @@ MOCK_OLD_PROWLER_VERSION = "0.0.0"
 MOCK_PROWLER_MASTER_VERSION = "3.4.0"
 
 
-def mock_prowler_get_latest_release(_, **kwargs):
+def mock_prowler_get_latest_release(_, **_kwargs):
     """Mock requests.get() to get the Prowler latest release"""
     response = Response()
     response._content = b'[{"name":"3.3.0"}]'
@@ -31,6 +31,7 @@ old_config_aws = {
     "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
     "ec2_allowed_instance_owners": ["amazon-elb"],
     "trusted_account_ids": [],
+    "trusted_ips": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
@@ -74,6 +75,7 @@ config_aws = {
     "mute_non_default_regions": False,
     "max_unused_access_keys_days": 45,
     "max_console_access_days": 45,
+    "max_unused_sagemaker_access_days": 90,
     "shodan_api_key": None,
     "max_security_group_rules": 50,
     "max_ec2_instance_age_in_days": 180,
@@ -95,6 +97,7 @@ config_aws = {
     "fargate_linux_latest_version": "1.4.0",
     "fargate_windows_latest_version": "1.0.0",
     "trusted_account_ids": [],
+    "trusted_ips": [],
     "log_group_retention_days": 365,
     "max_idle_disconnect_timeout_in_seconds": 600,
     "max_disconnect_timeout_in_seconds": 300,
@@ -329,7 +332,11 @@ config_azure = {
     "defender_attack_path_minimal_risk_level": "High",
 }
 
-config_gcp = {"shodan_api_key": None, "max_unused_account_days": 30}
+config_gcp = {
+    "shodan_api_key": None,
+    "mig_min_zones": 2,
+    "max_unused_account_days": 30,
+}
 
 config_kubernetes = {
     "audit_log_maxbackup": 10,
@@ -388,6 +395,7 @@ class Test_Config:
 
     def test_get_available_compliance_frameworks(self):
         compliance_frameworks = [
+            "csa_ccm_4.0",
             "cisa_aws",
             "soc2_aws",
             "cis_1.4_aws",
@@ -421,6 +429,40 @@ class Test_Config:
         assert (
             get_available_compliance_frameworks().sort() == compliance_frameworks.sort()
         )
+
+    def test_get_available_compliance_frameworks_filters_universal_by_provider(self):
+        aws_frameworks = get_available_compliance_frameworks("aws")
+        kubernetes_frameworks = get_available_compliance_frameworks("kubernetes")
+
+        assert "csa_ccm_4.0" in aws_frameworks
+        assert "csa_ccm_4.0" not in kubernetes_frameworks
+
+    def test_get_available_compliance_frameworks_no_provider_includes_universals(self):
+        """Regression test for the variable shadowing bug.
+
+        Previously, the inner ``for provider in providers`` loop shadowed
+        the outer ``provider`` parameter. When called without a provider,
+        the post-loop ``if provider:`` branch wrongly applied
+        ``framework.supports_provider(<last provider iterated>)`` and
+        excluded universal frameworks from the result.
+
+        Result: the parser-level ``available_compliance_frameworks``
+        constant was missing universal frameworks like ``csa_ccm_4.0``,
+        which made ``--compliance csa_ccm_4.0`` reject the choice.
+        """
+        all_frameworks = get_available_compliance_frameworks()
+        assert "csa_ccm_4.0" in all_frameworks
+
+    def test_get_available_compliance_frameworks_does_not_mutate_provider_param(self):
+        """Calling with a specific provider must not affect a subsequent
+        call without provider. Validates that the loop variable rename
+        prevents leaking state between calls."""
+        # Force an iteration over multiple providers first
+        get_available_compliance_frameworks("kubernetes")
+        # Then a no-provider call must still include universals supported
+        # by ANY provider (not filtered by some leaked value)
+        all_frameworks = get_available_compliance_frameworks()
+        assert "csa_ccm_4.0" in all_frameworks
 
     def test_load_and_validate_config_file_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))

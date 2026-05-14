@@ -1,14 +1,28 @@
-name: 'API: Security'
+name: "API: Security"
 
 on:
   push:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-tests.yml'
+      - '.github/workflows/api-security.yml'
+      - '.github/actions/setup-python-uv/**'
+      - '.github/actions/osv-scanner/**'
+      - '.github/scripts/osv-scan.sh'
   pull_request:
     branches:
-      - 'master'
-      - 'v5.*'
+      - "master"
+      - "v5.*"
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-tests.yml'
+      - '.github/workflows/api-security.yml'
+      - '.github/actions/setup-python-uv/**'
+      - '.github/actions/osv-scanner/**'
+      - '.github/scripts/osv-scan.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,53 +31,80 @@ concurrency:
 env:
   API_WORKING_DIR: ./api
 
+permissions: {}
+
 jobs:
   api-security-scans:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
+      pull-requests: write # osv-scanner action posts/updates a PR comment with findings
     strategy:
       matrix:
         python-version:
-          - '3.12'
+          - "3.12"
     defaults:
       run:
         working-directory: ./api
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            pypi.org:443
+            files.pythonhosted.org:443
+            github.com:443
+            api.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            api.osv.dev:443
+            api.deps.dev:443
+            osv-vulnerabilities.storage.googleapis.com:443
+
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
       - name: Check for API changes
         id: check-changes
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             api/**
             .github/workflows/api-security.yml
+            .github/actions/osv-scanner/**
+            .github/scripts/osv-scan.sh
           files_ignore: |
             api/docs/**
             api/README.md
             api/CHANGELOG.md
+            api/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
 
       - name: Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
+        # Exclude .venv because uv places the project venv inside ./api; otherwise
+        # bandit would recurse into installed third-party packages.
+        run: uv run bandit -q -lll -x '*_test.py,./contrib/,./.venv/' -r .
 
-      - name: Safety
+      - name: Dependency vulnerability scan with osv-scanner
         if: steps.check-changes.outputs.any_changed == 'true'
-        # 76352, 76353, 77323 come from SDK, but they cannot upgrade it yet. It does not affect API
-        # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
-        run: poetry run safety check --ignore 70612,66963,74429,76352,76353,77323,77744,77745
+        uses: ./.github/actions/osv-scanner
+        with:
+          lockfile: api/uv.lock
 
       - name: Vulture
-        if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
+        # Run even when osv-scanner reports findings so dead-code signal isn't masked by SCA failures.
+        if: ${{ !cancelled() && steps.check-changes.outputs.any_changed == 'true' }}
+        run: uv run vulture --exclude "contrib,tests,conftest.py,.venv" --min-confidence 100 .

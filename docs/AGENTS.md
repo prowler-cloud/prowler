@@ -467,7 +467,7 @@ Effective headers and section titles enhance document readability and structure,
 
     * **Example:**
         * How to Clone and Install Prowler from GitHub (header: Title case)
-            * How to install poetry dependencies (subheading: Sentence case)
+            * How to install uv dependencies (subheading: Sentence case)
 5.  **Using Keywords in Headers**
     Headers should include relevant keywords to improve document searchability:
     * **Good:** Scanning AWS Accounts in Parallel
@@ -476,6 +476,66 @@ Effective headers and section titles enhance document readability and structure,
     Ensure uniformity in section titles across related documentation:
     * **Standardized Header Naming:** Use consistent wording for common sections (e.g., "Installation," "Setup," "Configuration").
     * **Numbering Sections (If Necessary):** For structured guides, include numbering where appropriate (e.g., "Step 1: Install Prowler").
+
+---
+
+## Version Badge for Feature Documentation
+
+The Version Badge component indicates when a specific feature or functionality was introduced in Prowler. This component is located at `docs/snippets/version-badge.mdx` and should be used consistently across the documentation.
+
+### When to Use the Version Badge
+
+Use the Version Badge when documenting:
+
+* New features added in a specific version.
+* New CLI options or flags.
+* New API endpoints or SDK methods.
+* New compliance frameworks or security checks.
+* Breaking changes or deprecated features (with appropriate context).
+
+### How to Use the Version Badge
+
+1.  **Import the Component**
+
+    At the top of the MDX file, import the snippet:
+
+    ```mdx
+    import { VersionBadge } from "/snippets/version-badge.mdx"
+    ```
+
+2.  **Place the Badge**
+
+    Insert the badge immediately after the section header or feature title:
+
+    ```mdx
+    ## New Feature Name
+
+    <VersionBadge version="4.5.0" />
+
+    Description of the feature...
+    ```
+
+3.  **Version Format**
+
+    Use semantic versioning format (e.g., `4.5.0`, `5.0.0`). Do not include the "v" prefix.
+
+### Placement Guidelines
+
+* Place the Version Badge on its own line, directly below the header.
+* Leave a blank line after the badge before continuing with the content.
+* For subsections, place the badge only if the subsection introduces something new independently from the parent section.
+
+**Example:**
+
+```mdx
+## Tag-Based Scanning
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="4.3.0" />
+
+Tag-Based Scanning allows filtering resources by AWS tags during security assessments...
+```
 
 ---
 

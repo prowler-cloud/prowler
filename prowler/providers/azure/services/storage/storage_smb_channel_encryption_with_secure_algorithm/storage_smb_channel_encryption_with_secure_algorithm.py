@@ -16,6 +16,9 @@ class storage_smb_channel_encryption_with_secure_algorithm(Check):
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
+            subscription_name = storage_client.subscriptions.get(
+                subscription, subscription
+            )
             for account in storage_accounts:
                 if account.file_service_properties:
                     pretty_current_algorithms = (
@@ -36,16 +39,16 @@ class storage_smb_channel_encryption_with_secure_algorithm(Check):
                         not account.file_service_properties.smb_protocol_settings.channel_encryption
                     ):
                         report.status = "FAIL"
-                        report.status_extended = f"Storage account {account.name} from subscription {subscription} does not have SMB channel encryption enabled for file shares."
+                        report.status_extended = f"Storage account {account.name} from subscription {subscription_name} ({subscription}) does not have SMB channel encryption enabled for file shares."
                     elif any(
                         algorithm in SECURE_ENCRYPTION_ALGORITHMS
                         for algorithm in account.file_service_properties.smb_protocol_settings.channel_encryption
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"Storage account {account.name} from subscription {subscription} has a secure algorithm for SMB channel encryption ({', '.join(SECURE_ENCRYPTION_ALGORITHMS)}) enabled for file shares since it supports {pretty_current_algorithms}."
+                        report.status_extended = f"Storage account {account.name} from subscription {subscription_name} ({subscription}) has a secure algorithm for SMB channel encryption ({', '.join(SECURE_ENCRYPTION_ALGORITHMS)}) enabled for file shares since it supports {pretty_current_algorithms}."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"Storage account {account.name} from subscription {subscription} does not have SMB channel encryption with a secure algorithm for file shares since it supports {pretty_current_algorithms}."
+                        report.status_extended = f"Storage account {account.name} from subscription {subscription_name} ({subscription}) does not have SMB channel encryption with a secure algorithm for file shares since it supports {pretty_current_algorithms}."
 
                     findings.append(report)
         return findings

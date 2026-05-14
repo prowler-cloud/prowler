@@ -2,10 +2,12 @@
 
 This repository hosts the UI component for Prowler, providing a user-friendly web interface to interact seamlessly with Prowler's features.
 
-
 ## 🚀 Production deployment
+
 ### Docker deployment
+
 #### Clone the repository
+
 ```console
 # HTTPS
 git clone https://github.com/prowler-cloud/ui.git
@@ -14,16 +16,21 @@ git clone https://github.com/prowler-cloud/ui.git
 git clone git@github.com:prowler-cloud/ui.git
 
 ```
+
 #### Build the Docker image
+
 ```bash
 docker build -t prowler-cloud/ui . --target prod
 ```
+
 #### Run the Docker container
+
 ```bash
 docker run -p 3000:3000 prowler-cloud/ui
 ```
 
 ### Local deployment
+
 #### Clone the repository
 
 ```console
@@ -38,18 +45,21 @@ git clone git@github.com:prowler-cloud/ui.git
 #### Build the project
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 #### Run the production server
 
 ```bash
-npm start
+pnpm start
 ```
 
 ## 🧪 Development deployment
+
 ### Docker deployment
+
 #### Clone the repository
+
 ```console
 # HTTPS
 git clone https://github.com/prowler-cloud/ui.git
@@ -58,16 +68,21 @@ git clone https://github.com/prowler-cloud/ui.git
 git clone git@github.com:prowler-cloud/ui.git
 
 ```
+
 #### Build the Docker image
+
 ```bash
 docker build -t prowler-cloud/ui . --target dev
 ```
+
 #### Run the Docker container
+
 ```bash
 docker run -p 3000:3000 prowler-cloud/ui
 ```
 
 ### Local deployment
+
 #### Clone the repository
 
 ```console
@@ -81,33 +96,21 @@ git clone git@github.com:prowler-cloud/ui.git
 
 #### Install dependencies
 
-You can use one of them `npm`, `yarn`, `pnpm`, `bun`, Example using `npm`:
-
 ```bash
-npm install
+pnpm install
 ```
 
-**Note:** The `npm install` command will automatically configure Git hooks for code quality checks. If you experience issues, you can manually configure them:
+**Note:** The `pnpm install` command will automatically configure prek Git hooks for code quality checks. If hooks are not installed, run from the repo root:
 
 ```bash
-git config core.hooksPath "ui/.husky"
+prek install
 ```
 
 #### Run the development server
 
 ```bash
-npm run dev
+pnpm run dev
 ```
-
-## Setup pnpm (optional)
-
-If you are using `pnpm`, you need to add the following code to your `.npmrc` file:
-
-```bash
-public-hoist-pattern[]=*@nextui-org/*
-```
-
-After modifying the `.npmrc` file, you need to run `pnpm install` again to ensure that the dependencies are installed correctly.
 
 ## Technologies Used
 
@@ -119,47 +122,12 @@ After modifying the `.npmrc` file, you need to run `pnpm install` again to ensur
 - [Framer Motion](https://www.framer.com/motion/)
 - [next-themes](https://github.com/pacocoursey/next-themes)
 
-## Git Hooks & Code Review
+## Git Hooks
 
-This project uses Git hooks to maintain code quality. When you commit changes to TypeScript/JavaScript files, the pre-commit hook can optionally validate them against our coding standards using Claude Code.
-
-### Enabling Code Review
-
-To enable automatic code review on commits, add this to your `.env` file in the project root:
+The UI uses [prek](https://github.com/j178/prek) for pre-commit checks, configured in [`.pre-commit-config.yaml`](.pre-commit-config.yaml). `pnpm install` runs the postinstall script that installs hooks automatically. To re-install manually:
 
 ```bash
-CODE_REVIEW_ENABLED=true
+prek install --overwrite
 ```
 
-When enabled, the hook will:
-- ✅ Validate your staged changes against `AGENTS.md` standards
-- ✅ Check for common issues (any types, incorrect imports, styling violations, etc.)
-- ✅ Block commits that don't comply with the standards
-- ✅ Provide helpful feedback on how to fix issues
-
-### Disabling Code Review
-
-To disable code review (faster commits, useful for quick iterations):
-
-```bash
-CODE_REVIEW_ENABLED=false
-```
-
-Or remove the variable from your `.env` file.
-
-### Requirements
-
-- [Claude Code CLI](https://github.com/anthropics/claude-code) installed and authenticated
-- `.env` file in the project root with `CODE_REVIEW_ENABLED` set
-
-### Troubleshooting
-
-If hooks aren't running after commits:
-
-```bash
-# Verify hooks are configured
-git config --get core.hooksPath  # Should output: ui/.husky
-
-# Reconfigure if needed
-git config core.hooksPath "ui/.husky"
-```
+On each commit, prek runs Prettier and ESLint against the staged files, plus a project-wide TypeScript check and the unit tests related to the staged changes. The full Next.js build runs in CI, not on commit.

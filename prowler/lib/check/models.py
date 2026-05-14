@@ -1,4 +1,5 @@
 import functools
+import json
 import os
 import re
 import sys
@@ -10,10 +11,122 @@ from typing import Any, Dict, Optional, Set
 from pydantic.v1 import BaseModel, Field, ValidationError, validator
 from pydantic.v1.error_wrappers import ErrorWrapper
 
-from prowler.config.config import Provider
+from prowler.config.config import EXTERNAL_TOOL_PROVIDERS, Provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
+
+# Valid ResourceGroup values as defined in the RFC
+VALID_RESOURCE_GROUPS = frozenset(
+    {
+        "compute",
+        "container",
+        "serverless",
+        "database",
+        "storage",
+        "network",
+        "IAM",
+        "messaging",
+        "security",
+        "monitoring",
+        "api_gateway",
+        "ai_ml",
+        "governance",
+        "collaboration",
+        "devops",
+        "analytics",
+    }
+)
+
+# Valid Categories as defined in the RFC
+VALID_CATEGORIES = frozenset(
+    {
+        "encryption",
+        "internet-exposed",
+        "logging",
+        "secrets",
+        "resilience",
+        "threat-detection",
+        "trust-boundaries",
+        "vulnerabilities",
+        "cluster-security",
+        "container-security",
+        "node-security",
+        "gen-ai",
+        "ci-cd",
+        "identity-access",
+        "email-security",
+        "forensics-ready",
+        "software-supply-chain",
+        "e3",
+        "e5",
+        "privilege-escalation",
+        "ec2-imdsv1",
+        "vercel-hobby-plan",
+        "vercel-pro-plan",
+        "vercel-enterprise-plan",
+    }
+)
+
+
+@functools.lru_cache(maxsize=1)
+def _load_aws_check_types_hierarchy() -> dict:
+    """
+    Load and cache the AWS CheckTypes hierarchy from the JSON config file.
+
+    Returns:
+        dict: The CheckTypes hierarchy, or empty dict if file not found.
+    """
+    try:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        check_types_file = os.path.normpath(
+            os.path.join(
+                current_dir,
+                "..",
+                "..",
+                "providers",
+                "aws",
+                "config",
+                "check_types.json",
+            )
+        )
+
+        if not os.path.exists(check_types_file):
+            return {}
+
+        with open(check_types_file, "r") as f:
+            return json.load(f)
+
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def _validate_aws_check_type_in_config(check_type: str) -> bool:
+    """
+    Validate if a CheckType exists in the AWS config using direct lookups.
+    Supports partial paths: namespace, namespace/category, namespace/category/classifier
+
+    Args:
+        check_type: The CheckType string to validate (e.g., "TTPs/Initial Access")
+
+    Returns:
+        bool: True if the CheckType path exists in the config hierarchy
+    """
+    if not check_type:
+        return False
+
+    hierarchy = _load_aws_check_types_hierarchy()
+    if not hierarchy:
+        return False
+
+    path_parts = check_type.split("/")
+    current_level = hierarchy
+    for part in path_parts:
+        if not isinstance(current_level, dict) or part not in current_level:
+            return False
+        current_level = current_level[part]
+
+    return True
 
 
 class Code(BaseModel):
@@ -94,11 +207,19 @@ class CheckMetadata(BaseModel):
         Compliance (list, optional): The compliance information for the check. Defaults to None.
 
     Validators:
-        valid_category(value): Validator function to validate the categories of the check.
+        valid_category(value): Validator function to validate the categories of the check against predefined values.
         severity_to_lower(severity): Validator function to convert the severity to lowercase.
-        valid_severity(severity): Validator function to validate the severity of the check.
         valid_cli_command(remediation): Validator function to validate the CLI command is not an URL.
         valid_resource_type(resource_type): Validator function to validate the resource type is not empty.
+        validate_service_name(service_name, values): Validator function to validate the service name matches CheckID.
+        valid_check_id(check_id): Validator function to validate the CheckID format.
+        validate_check_title(check_title): Validator function to validate CheckTitle max length (150 chars) and not starting with 'Ensure'.
+        validate_related_url(related_url): Validator function to validate RelatedUrl is empty (deprecated field).
+        validate_recommendation_url(remediation): Validator function to validate Recommendation URL points to Prowler Hub.
+        validate_check_type(check_type, values): Validator function to validate CheckType - must be empty for non-AWS providers, no empty strings and predefined types validation for AWS.
+        validate_description(description): Validator function to validate Description max length (400 chars).
+        validate_risk(risk): Validator function to validate Risk max length (400 chars).
+        validate_resource_group(resource_group): Validator function to validate ResourceGroup against predefined values.
         validate_additional_urls(additional_urls): Validator function to ensure AdditionalURLs contains no duplicates.
     """
 
@@ -112,6 +233,7 @@ class CheckMetadata(BaseModel):
     ResourceIdTemplate: str
     Severity: Severity
     ResourceType: str
+    ResourceGroup: str = Field(default="")
     Description: str
     Risk: str
     RelatedUrl: str
@@ -125,14 +247,22 @@ class CheckMetadata(BaseModel):
     # store the compliance later if supplied
     Compliance: Optional[list[Any]] = Field(default_factory=list)
 
+    # TODO: Remove noqa and fix cls vulture errors
     @validator("Categories", each_item=True, pre=True, always=True)
-    def valid_category(value):
+    def valid_category(cls, value, values):  # noqa: F841
         if not isinstance(value, str):
             raise ValueError("Categories must be a list of strings")
         value_lower = value.lower()
         if not re.match("^[a-z0-9-]+$", value_lower):
             raise ValueError(
-                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers and hyphen '-'"
+                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers, and hyphen '-'"
+            )
+        if (
+            value_lower not in VALID_CATEGORIES
+            and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS
+        ):
+            raise ValueError(
+                f"Invalid category: '{value_lower}'. Must be one of: {', '.join(sorted(VALID_CATEGORIES))}."
             )
         return value_lower
 
@@ -153,16 +283,12 @@ class CheckMetadata(BaseModel):
         return resource_type
 
     @validator("ServiceName", pre=True, always=True)
-    def validate_service_name(cls, service_name, values):
+    def validate_service_name(cls, service_name, values):  # noqa: F841
         if not service_name:
             raise ValueError("ServiceName must be a non-empty string")
 
         check_id = values.get("CheckID")
-        if (
-            check_id
-            and values.get("Provider") != "iac"
-            and values.get("Provider") != "llm"
-        ):
+        if check_id and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             service_from_check_id = check_id.split("_")[0]
             if service_name != service_from_check_id:
                 raise ValueError(
@@ -174,15 +300,11 @@ class CheckMetadata(BaseModel):
         return service_name
 
     @validator("CheckID", pre=True, always=True)
-    def valid_check_id(cls, check_id, values):
+    def valid_check_id(cls, check_id, values):  # noqa: F841
         if not check_id:
             raise ValueError("CheckID must be a non-empty string")
 
-        if (
-            check_id
-            and values.get("Provider") != "iac"
-            and values.get("Provider") != "llm"
-        ):
+        if check_id and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             if "-" in check_id:
                 raise ValueError(
                     f"CheckID {check_id} contains a hyphen, which is not allowed"
@@ -190,8 +312,92 @@ class CheckMetadata(BaseModel):
 
         return check_id
 
+    @validator("CheckTitle", pre=True, always=True)
+    def validate_check_title(cls, check_title, values):  # noqa: F841
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            if len(check_title) > 150:
+                raise ValueError(
+                    f"CheckTitle must not exceed 150 characters, got {len(check_title)} characters"
+                )
+            if check_title.startswith("Ensure"):
+                raise ValueError(
+                    "CheckTitle must not start with 'Ensure'. Use a descriptive title that focuses on the security state."
+                )
+        return check_title
+
+    @validator("RelatedUrl", pre=True, always=True)
+    def validate_related_url(cls, related_url, values):  # noqa: F841
+        if related_url and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            raise ValueError("RelatedUrl must be empty. This field is deprecated.")
+        return related_url
+
+    @validator("Remediation")
+    def validate_recommendation_url(cls, remediation, values):  # noqa: F841
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            url = remediation.Recommendation.Url
+            if url and not url.startswith("https://hub.prowler.com/"):
+                raise ValueError(
+                    f"Remediation Recommendation URL must point to Prowler Hub (https://hub.prowler.com/...), got '{url}'."
+                )
+        return remediation
+
+    @validator("CheckType", pre=True, always=True)
+    def validate_check_type(cls, check_type, values):  # noqa: F841
+        provider = values.get("Provider", "").lower()
+
+        # Non-AWS providers must have an empty CheckType list
+        if provider != "aws" and provider not in EXTERNAL_TOOL_PROVIDERS:
+            if check_type:
+                raise ValueError(
+                    f"CheckType must be empty for non-AWS providers. Got {check_type} for provider '{provider}'."
+                )
+            return check_type
+
+        # Check for empty strings in the list - applies to AWS
+        for i, check_type_item in enumerate(check_type):
+            if not check_type_item or check_type_item.strip() == "":
+                raise ValueError(
+                    f"CheckType list cannot contain empty strings. Found empty string at index {i}."
+                )
+
+        # For AWS provider, validate against config hierarchy
+        if provider == "aws":
+            for check_type_item in check_type:
+                if not _validate_aws_check_type_in_config(check_type_item):
+                    raise ValueError(
+                        f"Invalid CheckType: '{check_type_item}'. Must be a valid path in the AWS CheckType hierarchy. See prowler/providers/aws/config/check_types.json for valid values."
+                    )
+
+        return check_type
+
+    @validator("Description", pre=True, always=True)
+    def validate_description(cls, description, values):  # noqa: F841
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            if len(description) > 400:
+                raise ValueError(
+                    f"Description must not exceed 400 characters, got {len(description)} characters"
+                )
+        return description
+
+    @validator("Risk", pre=True, always=True)
+    def validate_risk(cls, risk, values):  # noqa: F841
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            if len(risk) > 400:
+                raise ValueError(
+                    f"Risk must not exceed 400 characters, got {len(risk)} characters"
+                )
+        return risk
+
+    @validator("ResourceGroup", pre=True, always=True)
+    def validate_resource_group(cls, resource_group):  # noqa: F841
+        if resource_group and resource_group not in VALID_RESOURCE_GROUPS:
+            raise ValueError(
+                f"Invalid ResourceGroup: '{resource_group}'. Must be one of: {', '.join(sorted(VALID_RESOURCE_GROUPS))} or empty string."
+            )
+        return resource_group
+
     @validator("AdditionalURLs", pre=True, always=True)
-    def validate_additional_urls(cls, additional_urls):
+    def validate_additional_urls(cls, additional_urls):  # noqa: F841
         if not isinstance(additional_urls, list):
             raise ValueError("AdditionalURLs must be a list")
 
@@ -457,7 +663,8 @@ class Check(ABC, CheckMetadata):
         # Verify names consistency
         check_id = self.CheckID
         class_name = self.__class__.__name__
-        file_name = file_path.split(sep="/")[-1]
+        # os.path.basename handles Windows and POSIX paths reliably
+        file_name = os.path.basename(file_path)
 
         errors = []
         if check_id != class_name:
@@ -649,6 +856,29 @@ class Check_Report_OCI(Check_Report):
 
 
 @dataclass
+class CheckReportAlibabaCloud(Check_Report):
+    """Contains the Alibaba Cloud Check's finding information."""
+
+    resource_id: str
+    resource_arn: str
+    region: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the Alibaba Cloud Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
+        )
+        self.resource_arn = getattr(resource, "arn", "")
+        self.region = getattr(resource, "region", "")
+
+
+@dataclass
 class Check_Report_Kubernetes(Check_Report):
     # TODO change class name to CheckReportKubernetes
     """Contains the Kubernetes Check's finding information."""
@@ -704,6 +934,154 @@ class CheckReportGithub(Check_Report):
 
 
 @dataclass
+class CheckReportOkta(Check_Report):
+    """Contains the Okta Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    org_domain: str
+    region: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        org_domain: str = None,
+        region: str = "global",
+    ) -> None:
+        """Initialize the Okta Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            org_domain: The Okta organization domain related with the finding.
+            region: Always "global" — Okta has no regional concept.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.org_domain = org_domain or getattr(resource, "org_domain", "")
+        self.region = region
+
+
+@dataclass
+class CheckReportGoogleWorkspace(Check_Report):
+    """Contains the Google Workspace Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    customer_id: str
+    location: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        customer_id: str = None,
+        location: str = "global",
+    ) -> None:
+        """Initialize the Google Workspace Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            customer_id: The Google Workspace customer ID.
+            location: The location of the resource (default: "global").
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = (
+            resource_name
+            or getattr(resource, "email", "")
+            or getattr(resource, "name", "")
+        )
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.customer_id = customer_id or getattr(resource, "customer_id", "")
+        self.location = location
+
+
+@dataclass
+class CheckReportCloudflare(Check_Report):
+    """Contains the Cloudflare Check's finding information.
+
+    Cloudflare is a global service - zones are resources, not regional contexts.
+    All zone-related attributes are derived from the zone object passed as resource.
+    """
+
+    resource_name: str
+    resource_id: str
+    _zone: Any  # CloudflareZone object
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+    ) -> None:
+        """Initialize the Cloudflare Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary
+            resource: The CloudflareZone resource being checked
+            resource_name: Override for resource name
+            resource_id: Override for resource ID
+        """
+        super().__init__(metadata, resource)
+
+        # Zone is the resource being checked
+        self._zone = resource
+
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+
+    @property
+    def zone(self) -> Any:
+        """The CloudflareZone object."""
+        return self._zone
+
+    @property
+    def zone_id(self) -> str:
+        """Zone ID."""
+        return getattr(self._zone, "id", "")
+
+    @property
+    def zone_name(self) -> str:
+        """Zone name - for DNS records use zone_name attribute, for zones use name."""
+        zone_name = getattr(self._zone, "zone_name", None)
+        if zone_name:
+            return zone_name
+        return getattr(self._zone, "name", "")
+
+    @property
+    def account_id(self) -> str:
+        """Account ID derived from resource's account object or flat account_id."""
+        zone_account = getattr(self._zone, "account", None)
+        if zone_account:
+            return getattr(zone_account, "id", "")
+        return getattr(self._zone, "account_id", "")
+
+    @property
+    def region(self) -> str:
+        """Return zone_name as region for zone-scoped resources, otherwise global."""
+        zone_name = getattr(self._zone, "zone_name", None)
+        if zone_name:
+            return zone_name
+        return "global"
+
+
+@dataclass
 class CheckReportM365(Check_Report):
     """Contains the M365 Check's finding information."""
 
@@ -755,15 +1133,53 @@ class CheckReportIAC(Check_Report):
 
         self.resource = finding
         self.resource_name = file_path
-        self.resource_line_range = (
-            (
-                str(finding.get("CauseMetadata", {}).get("StartLine", ""))
-                + ":"
-                + str(finding.get("CauseMetadata", {}).get("EndLine", ""))
-            )
-            if finding.get("CauseMetadata", {}).get("StartLine", "")
-            else ""
+        cause = finding.get("CauseMetadata", {})
+        start = cause.get("StartLine") or finding.get("StartLine")
+        end = cause.get("EndLine") or finding.get("EndLine")
+        self.resource_line_range = f"{start}:{end}" if start else ""
+
+
+@dataclass
+class CheckReportImage(Check_Report):
+    """Contains the Container Image Check's finding information using Trivy."""
+
+    resource_name: str
+    resource_id: str
+    image_digest: str
+    package_name: str
+    installed_version: str
+    fixed_version: str
+
+    def __init__(
+        self,
+        metadata: Optional[dict] = None,
+        finding: Optional[dict] = None,
+        image_name: str = "",
+    ) -> None:
+        """
+        Initialize the Container Image Check's finding information from a Trivy vulnerability/secret dict.
+
+        Args:
+            metadata (Dict): Check metadata.
+            finding (dict): A single vulnerability/secret result from Trivy's JSON output.
+            image_name (str): The container image name being scanned.
+        """
+        if metadata is None:
+            metadata = {}
+        if finding is None:
+            finding = {}
+        super().__init__(metadata, finding)
+
+        self.resource_name = image_name
+        self.resource_id = (
+            finding.get("VulnerabilityID", "")
+            or finding.get("RuleID", "")
+            or finding.get("ID", "")
         )
+        self.image_digest = finding.get("PkgID", "")
+        self.package_name = finding.get("PkgName", "")
+        self.installed_version = finding.get("InstalledVersion", "")
+        self.fixed_version = finding.get("FixedVersion", "")
 
 
 @dataclass
@@ -840,6 +1256,25 @@ class CheckReportStackIT(Check_Report):
 
 
 @dataclass
+class CheckReportOpenStack(Check_Report):
+    """Contains the OpenStack Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    project_id: str
+    region: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "default")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.project_id = getattr(resource, "project_id", "")
+        self.region = getattr(resource, "region", "global")
+
+
+@dataclass
 class CheckReportMongoDBAtlas(Check_Report):
     """Contains the MongoDB Atlas Check's finding information."""
 
@@ -862,6 +1297,50 @@ class CheckReportMongoDBAtlas(Check_Report):
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.project_id = getattr(resource, "project_id", "")
         self.location = getattr(resource, "location", self.project_id)
+
+
+@dataclass
+class CheckReportVercel(Check_Report):
+    """Contains the Vercel Check's finding information.
+
+    Vercel is a global platform - team_id is the scoping context.
+    All resource-related attributes are derived from the resource object.
+    """
+
+    resource_name: str
+    resource_id: str
+    team_id: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        team_id: str = None,
+    ) -> None:
+        """Initialize the Vercel Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary
+            resource: The Vercel resource being checked
+            resource_name: Override for resource name
+            resource_id: Override for resource ID
+            team_id: Override for team ID
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+        self.team_id = team_id or getattr(resource, "team_id", "")
+
+    @property
+    def region(self) -> str:
+        """Vercel is global - return 'global'."""
+        return "global"
 
 
 # Testing Pending

@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_waf_enabled",
+  "CheckTitle": "WAF is enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Web Application Firewall (WAF)** configuration by checking if it is enabled to protect against common web vulnerabilities including **SQL injection**, **XSS**, and **OWASP Top 10** threats.",
+  "Risk": "Without **WAF**, web applications are exposed to common attack vectors.\n- **Confidentiality**: SQL injection attacks can exfiltrate sensitive database contents\n- **Integrity**: XSS attacks can modify page content and steal session tokens\n- **Availability**: application-layer attacks can cause service disruption",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Security > WAF\n3. Enable managed rulesets (OWASP, Cloudflare Managed Ruleset)\n4. Configure custom rules based on your application's specific threat model\n5. Monitor WAF analytics to tune rules and reduce false positives",
+      "Terraform": "```hcl\n# Enable WAF managed rulesets for comprehensive protection\nresource \"cloudflare_ruleset\" \"waf_managed\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"WAF Managed Rules\"\n  kind    = \"zone\"\n  phase   = \"http_request_firewall_managed\"\n  rules {\n    action = \"execute\"\n    action_parameters {\n      id = \"efb7b8c949ac4650a09736fc376e9aee\" # Cloudflare Managed Ruleset\n    }\n    expression  = \"true\"\n    description = \"Execute Cloudflare Managed Ruleset\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **WAF** as a critical layer of defense for web applications.\n- Deploy managed rulesets for protection against OWASP Top 10 vulnerabilities\n- Create custom rules based on your application's specific threat model\n- Monitor WAF analytics to tune rules and reduce false positives\n- Combine with rate limiting and bot protection for comprehensive security",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_waf_enabled"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "WAF is available on Pro, Business, and Enterprise plans. Configure managed rulesets and create custom rules to match your application's specific security requirements."
+}

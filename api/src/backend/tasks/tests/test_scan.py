@@ -9,17 +9,23 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from tasks.jobs.scan import (
+    _ATTACK_SURFACE_MAPPING_CACHE,
     _aggregate_findings_by_region,
     _copy_compliance_requirement_rows,
     _create_compliance_summaries,
     _create_finding_delta,
+    _get_attack_surface_mapping_from_provider,
     _normalized_compliance_key,
     _persist_compliance_requirement_rows,
     _process_finding_micro_batch,
     _store_resources,
+    aggregate_attack_surface,
+    aggregate_category_counts,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
+    reset_ephemeral_resource_findings_count,
+    update_provider_compliance_scores,
 )
 from tasks.utils import CustomEncoder
 
@@ -30,7 +36,9 @@ from api.models import (
     MuteRule,
     Provider,
     Resource,
+    ResourceScanSummary,
     Scan,
+    ScanSummary,
     StateChoices,
     StatusChoices,
 )
@@ -1374,6 +1382,9 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1391,6 +1402,9 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
             )
 
         created_finding = Finding.objects.get(uid=finding.uid)
@@ -1400,7 +1414,9 @@ class TestProcessFindingMicroBatch:
         assert created_finding.status == StatusChoices.PASS
         assert created_finding.delta == Finding.DeltaChoices.NEW
         assert created_finding.muted is False
-        assert created_finding.check_metadata == finding.metadata
+        expected_metadata = {**finding.metadata, "compliance": finding.compliance}
+        assert created_finding.check_metadata == expected_metadata
+        assert created_finding.check_metadata["compliance"] == finding.compliance
         assert created_finding.resource_regions == [finding.region]
         assert created_finding.resource_services == [finding.service_name]
         assert created_finding.resource_types == [finding.resource_type]
@@ -1483,6 +1499,9 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {finding.uid: "Muted via rule"}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1500,6 +1519,9 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
             )
 
         existing_resource.refresh_from_db()
@@ -1607,6 +1629,9 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1625,6 +1650,9 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
             )
 
         # Verify the long UID finding was NOT created
@@ -1644,6 +1672,122 @@ class TestProcessFindingMicroBatch:
             f"Scan {scan.id}: Skipped 1 finding(s)" in str(call)
             for call in warning_calls
         )
+
+    def test_process_finding_micro_batch_tracks_categories(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+
+        finding1 = FakeFinding(
+            uid="finding-cat-1",
+            status=StatusChoices.PASS,
+            status_extended="all good",
+            severity=Severity.low,
+            check_id="genai_check",
+            resource_uid="arn:aws:bedrock:::model/test",
+            resource_name="test-model",
+            region="us-east-1",
+            service_name="bedrock",
+            resource_type="model",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"categories": ["gen-ai", "security"]},
+            muted=False,
+        )
+
+        finding2 = FakeFinding(
+            uid="finding-cat-2",
+            status=StatusChoices.FAIL,
+            status_extended="bad",
+            severity=Severity.high,
+            check_id="iam_check",
+            resource_uid="arn:aws:iam:::user/test",
+            resource_name="test-user",
+            region="us-east-1",
+            service_name="iam",
+            resource_type="user",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"categories": ["security", "iam"]},
+            muted=False,
+        )
+
+        resource_cache = {}
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding1, finding2],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                last_status_cache,
+                resource_failed_findings_cache,
+                unique_resources,
+                scan_resource_cache,
+                mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
+            )
+
+        # finding1: PASS, severity=low, categories=["gen-ai", "security"]
+        # finding2: FAIL, severity=high, categories=["security", "iam"]
+        # Keys are (category, severity) tuples
+        assert set(scan_categories_cache.keys()) == {
+            ("gen-ai", "low"),
+            ("security", "low"),
+            ("security", "high"),
+            ("iam", "high"),
+        }
+        assert scan_categories_cache[("gen-ai", "low")] == {
+            "total": 1,
+            "failed": 0,
+            "new_failed": 0,
+        }
+        assert scan_categories_cache[("security", "low")] == {
+            "total": 1,
+            "failed": 0,
+            "new_failed": 0,
+        }
+        assert scan_categories_cache[("security", "high")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 1,
+        }
+        assert scan_categories_cache[("iam", "high")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 1,
+        }
+
+        created_finding1 = Finding.objects.get(uid="finding-cat-1")
+        created_finding2 = Finding.objects.get(uid="finding-cat-2")
+        assert set(created_finding1.categories) == {"gen-ai", "security"}
+        assert set(created_finding2.categories) == {"security", "iam"}
 
 
 @pytest.mark.django_db
@@ -3217,6 +3361,175 @@ class TestAggregateFindings:
         regions = {s.region for s in summaries}
         assert regions == {"us-east-1", "us-west-2"}
 
+    @patch("tasks.jobs.scan.Finding.objects.filter")
+    @patch("tasks.jobs.scan.ScanSummary.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_findings_skips_rows_with_null_service_or_region(
+        self, mock_rls_transaction, mock_bulk_create, mock_findings_filter
+    ):
+        """Aggregation rows with NULL service or region (orphan Findings whose
+        ResourceFindingMapping is missing) must be dropped before
+        ``bulk_create`` so the NOT NULL constraints on ``scan_summaries`` are
+        not violated. Valid rows in the same batch must still be persisted."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+
+        base_counts = {
+            "fail": 1,
+            "_pass": 0,
+            "muted_count": 0,
+            "total": 1,
+            "new": 0,
+            "changed": 0,
+            "unchanged": 1,
+            "fail_new": 0,
+            "fail_changed": 0,
+            "pass_new": 0,
+            "pass_changed": 0,
+            "muted_new": 0,
+            "muted_changed": 0,
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {
+                "check_id": "check_valid",
+                "resources__service": "s3",
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **base_counts,
+            },
+            {
+                "check_id": "check_null_service",
+                "resources__service": None,
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **base_counts,
+            },
+            {
+                "check_id": "check_null_region",
+                "resources__service": "ec2",
+                "severity": "low",
+                "resources__region": None,
+                **base_counts,
+            },
+            {
+                "check_id": "check_null_both",
+                "resources__service": None,
+                "severity": "medium",
+                "resources__region": None,
+                **base_counts,
+            },
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_findings(tenant_id, scan_id)
+
+        mock_bulk_create.assert_called_once()
+        args, _ = mock_bulk_create.call_args
+        summaries = list(args[0])
+
+        assert len(summaries) == 1
+        assert summaries[0].check_id == "check_valid"
+        assert summaries[0].service == "s3"
+        assert summaries[0].region == "us-east-1"
+
+    def test_aggregate_findings_is_idempotent_on_rerun(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        findings_fixture,
+    ):
+        """Re-running `aggregate_findings` for the same scan must not violate
+        the `unique_scan_summary` constraint. The post-mute reaggregation
+        pipeline re-dispatches `perform_scan_summary_task` against scans
+        whose summaries already exist; upsert must update existing rows in
+        place (same primary keys) rather than inserting duplicates."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        value_columns = (
+            "check_id",
+            "service",
+            "severity",
+            "region",
+            "fail",
+            "_pass",
+            "muted",
+            "total",
+        )
+
+        aggregate_findings(str(tenant.id), str(scan.id))
+        first_run_ids = set(
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant.id, scan_id=scan.id
+            ).values_list("id", flat=True)
+        )
+        first_run_rows = list(
+            ScanSummary.all_objects.filter(tenant_id=tenant.id, scan_id=scan.id).values(
+                *value_columns
+            )
+        )
+
+        # Second invocation must not raise and must not duplicate rows.
+        aggregate_findings(str(tenant.id), str(scan.id))
+        second_run_ids = set(
+            ScanSummary.all_objects.filter(
+                tenant_id=tenant.id, scan_id=scan.id
+            ).values_list("id", flat=True)
+        )
+        second_run_rows = list(
+            ScanSummary.all_objects.filter(tenant_id=tenant.id, scan_id=scan.id).values(
+                *value_columns
+            )
+        )
+
+        # Upsert preserves the original row identities; values stay stable
+        # because the underlying Finding set is unchanged between runs.
+        assert second_run_rows == first_run_rows
+        assert first_run_ids == second_run_ids
+
+    def test_aggregate_findings_reflects_mute_between_runs(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        findings_fixture,
+    ):
+        """Re-running `aggregate_findings` after a finding is muted between
+        runs must move counters: the matching ScanSummary row's `fail`
+        decrements and `muted` increments. Guards against a regression where
+        upsert silently keeps stale values from the first run."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        finding1, _ = findings_fixture  # finding1 is FAIL and not muted.
+
+        aggregate_findings(str(tenant.id), str(scan.id))
+        before = ScanSummary.all_objects.get(
+            tenant_id=tenant.id,
+            scan_id=scan.id,
+            check_id=finding1.check_id,
+            service="ec2",
+            severity=finding1.severity,
+            region="us-east-1",
+        )
+        assert before.fail == 1
+        assert before.muted == 0
+
+        Finding.all_objects.filter(pk=finding1.pk).update(muted=True)
+
+        aggregate_findings(str(tenant.id), str(scan.id))
+        after = ScanSummary.all_objects.get(pk=before.pk)
+
+        assert after.fail == 0
+        assert after.muted == 1
+        assert after.total == before.total
+
 
 @pytest.mark.django_db
 class TestAggregateFindingsByRegion:
@@ -3338,7 +3651,10 @@ class TestAggregateFindingsByRegion:
 
         # Verify filter was called with muted=False
         mock_findings_filter.assert_called_once_with(
-            tenant_id=tenant_id, scan_id=scan_id, muted=False
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            muted=False,
+            status__in=["PASS", "FAIL"],
         )
 
     @patch("tasks.jobs.scan.Finding.all_objects.filter")
@@ -3471,3 +3787,866 @@ class TestAggregateFindingsByRegion:
 
         assert check_status_by_region == {}
         assert findings_count_by_compliance == {}
+
+
+@pytest.mark.django_db
+class TestAggregateAttackSurface:
+    """Test aggregate_attack_surface function and related caching."""
+
+    def setup_method(self):
+        """Clear cache before each test."""
+        _ATTACK_SURFACE_MAPPING_CACHE.clear()
+
+    def teardown_method(self):
+        """Clear cache after each test."""
+        _ATTACK_SURFACE_MAPPING_CACHE.clear()
+
+    @patch("tasks.jobs.scan.CheckMetadata.list")
+    def test_get_attack_surface_mapping_caches_result(self, mock_check_metadata_list):
+        """Test that _get_attack_surface_mapping_from_provider caches results."""
+        mock_check_metadata_list.return_value = {"check_internet_exposed_1"}
+
+        # First call should hit CheckMetadata.list
+        result1 = _get_attack_surface_mapping_from_provider("aws")
+        assert mock_check_metadata_list.call_count == 2  # internet-exposed, secrets
+
+        # Second call should use cache
+        result2 = _get_attack_surface_mapping_from_provider("aws")
+        assert mock_check_metadata_list.call_count == 2  # No additional calls
+
+        assert result1 is result2
+        assert "aws" in _ATTACK_SURFACE_MAPPING_CACHE
+
+    @patch("tasks.jobs.scan.CheckMetadata.list")
+    def test_get_attack_surface_mapping_different_providers(
+        self, mock_check_metadata_list
+    ):
+        """Test caching works independently for different providers."""
+        mock_check_metadata_list.return_value = {"check_1"}
+
+        _get_attack_surface_mapping_from_provider("aws")
+        aws_call_count = mock_check_metadata_list.call_count
+
+        _get_attack_surface_mapping_from_provider("gcp")
+        gcp_call_count = mock_check_metadata_list.call_count
+
+        # Both providers should have made calls
+        assert gcp_call_count > aws_call_count
+        assert "aws" in _ATTACK_SURFACE_MAPPING_CACHE
+        assert "gcp" in _ATTACK_SURFACE_MAPPING_CACHE
+
+    @patch("tasks.jobs.scan.CheckMetadata.list")
+    def test_get_attack_surface_mapping_returns_hardcoded_checks(
+        self, mock_check_metadata_list
+    ):
+        """Test that hardcoded check IDs are returned for privilege-escalation and ec2-imdsv1."""
+        mock_check_metadata_list.return_value = set()
+
+        result = _get_attack_surface_mapping_from_provider("aws")
+
+        # Hardcoded checks should be present
+        assert (
+            "iam_policy_allows_privilege_escalation" in result["privilege-escalation"]
+        )
+        assert (
+            "iam_inline_policy_allows_privilege_escalation"
+            in result["privilege-escalation"]
+        )
+        assert "ec2_instance_imdsv2_enabled" in result["ec2-imdsv1"]
+        assert "ec2_instance_account_imdsv2_enabled" in result["ec2-imdsv1"]
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_creates_overview_records(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that aggregate_attack_surface creates AttackSurfaceOverview records."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.provider.provider = "aws"
+        scan.provider.save()
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_internet_1", "check_internet_2"},
+            "secrets": {"check_secrets_1"},
+            "privilege-escalation": {"check_privesc_1"},
+            "ec2-imdsv1": {"check_imdsv1_1"},
+        }
+
+        # Mock findings aggregation
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {"check_id": "check_internet_1", "total": 10, "failed": 3, "muted": 1},
+            {"check_id": "check_secrets_1", "total": 5, "failed": 2, "muted": 0},
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        mock_bulk_create.assert_called_once()
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+
+        # Should create records for internet-exposed and secrets (the ones with findings)
+        assert len(objects) == 2
+        assert kwargs["batch_size"] == 500
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_skips_unsupported_provider(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that ec2-imdsv1 is skipped for non-AWS providers."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.provider.provider = "gcp"
+        scan.provider.uid = "gcp-test-project-id"
+        scan.provider.save()
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_internet_1"},
+            "secrets": {"check_secrets_1"},
+            "privilege-escalation": set(),  # Not supported for GCP
+            "ec2-imdsv1": {"check_imdsv1_1"},  # Should be skipped for GCP
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {"check_id": "check_internet_1", "total": 5, "failed": 1, "muted": 0},
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        # ec2-imdsv1 check_ids should not be in the filter
+        filter_call = mock_findings_filter.call_args
+        check_ids_in_filter = filter_call[1]["check_id__in"]
+        assert "check_imdsv1_1" not in check_ids_in_filter
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_no_findings(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that no records are created when there are no findings."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_1"},
+            "secrets": {"check_2"},
+            "privilege-escalation": set(),
+            "ec2-imdsv1": set(),
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = []  # No findings
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        mock_bulk_create.assert_not_called()
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_aggregates_counts_correctly(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that counts from multiple check_ids are aggregated per attack surface type."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.provider.provider = "aws"
+        scan.provider.save()
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_internet_1", "check_internet_2"},
+            "secrets": set(),
+            "privilege-escalation": set(),
+            "ec2-imdsv1": set(),
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {"check_id": "check_internet_1", "total": 10, "failed": 3, "muted": 1},
+            {"check_id": "check_internet_2", "total": 5, "failed": 2, "muted": 0},
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+
+        assert len(objects) == 1
+        overview = objects[0]
+        assert overview.attack_surface_type == "internet-exposed"
+        assert overview.total_findings == 15  # 10 + 5
+        assert overview.failed_findings == 5  # 3 + 2
+        assert overview.muted_failed_findings == 1  # 1 + 0
+
+    @patch("tasks.jobs.scan.Scan.all_objects.select_related")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_uses_select_related(
+        self, mock_rls_transaction, mock_select_related, tenants_fixture, scans_fixture
+    ):
+        """Test that select_related is used to avoid N+1 query."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        mock_scan = MagicMock()
+        mock_scan.provider.provider = "aws"
+
+        mock_select_related.return_value.get.return_value = mock_scan
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        with patch(
+            "tasks.jobs.scan._get_attack_surface_mapping_from_provider"
+        ) as mock_map:
+            mock_map.return_value = {}
+
+            aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        mock_select_related.assert_called_once_with("provider")
+
+
+class TestAggregateCategoryCounts:
+    """Test aggregate_category_counts helper function."""
+
+    def test_aggregate_category_counts_basic(self):
+        """Test basic category counting for a non-muted PASS finding."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security", "iam"],
+            severity="high",
+            status="PASS",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        assert ("security", "high") in cache
+        assert ("iam", "high") in cache
+        assert cache[("security", "high")] == {"total": 1, "failed": 0, "new_failed": 0}
+        assert cache[("iam", "high")] == {"total": 1, "failed": 0, "new_failed": 0}
+
+    def test_aggregate_category_counts_fail_not_muted(self):
+        """Test category counting for a non-muted FAIL finding."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security"],
+            severity="critical",
+            status="FAIL",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("security", "critical")] == {
+            "total": 1,
+            "failed": 1,
+            "new_failed": 0,
+        }
+
+    def test_aggregate_category_counts_new_fail(self):
+        """Test category counting for a new FAIL finding (delta='new')."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["gen-ai"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("gen-ai", "high")] == {"total": 1, "failed": 1, "new_failed": 1}
+
+    def test_aggregate_category_counts_muted_finding(self):
+        """Test that muted findings are excluded from all counts."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=True,
+            cache=cache,
+        )
+
+        assert cache[("security", "high")] == {"total": 0, "failed": 0, "new_failed": 0}
+
+    def test_aggregate_category_counts_accumulates(self):
+        """Test that multiple calls accumulate counts."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+
+        # First finding: PASS
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="PASS",
+            delta=None,
+            muted=False,
+            cache=cache,
+        )
+
+        # Second finding: FAIL (new)
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        # Third finding: FAIL (changed)
+        aggregate_category_counts(
+            categories=["security"],
+            severity="high",
+            status="FAIL",
+            delta="changed",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("security", "high")] == {"total": 3, "failed": 2, "new_failed": 1}
+
+    def test_aggregate_category_counts_empty_categories(self):
+        """Test with empty categories list."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=[],
+            severity="high",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache == {}
+
+    def test_aggregate_category_counts_changed_delta(self):
+        """Test that changed delta increments failed but not new_failed."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["iam"],
+            severity="medium",
+            status="FAIL",
+            delta="changed",
+            muted=False,
+            cache=cache,
+        )
+
+        assert cache[("iam", "medium")] == {"total": 1, "failed": 1, "new_failed": 0}
+
+    def test_aggregate_category_counts_multiple_categories_single_finding(self):
+        """Test single finding with multiple categories."""
+        cache: dict[tuple[str, str], dict[str, int]] = {}
+        aggregate_category_counts(
+            categories=["security", "compliance", "data-protection"],
+            severity="low",
+            status="FAIL",
+            delta="new",
+            muted=False,
+            cache=cache,
+        )
+
+        assert len(cache) == 3
+        for cat in ["security", "compliance", "data-protection"]:
+            assert cache[(cat, "low")] == {"total": 1, "failed": 1, "new_failed": 1}
+
+
+@pytest.mark.django_db
+class TestUpdateProviderComplianceScores:
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_update_provider_compliance_scores_basic(
+        self,
+        mock_psycopg_connection,
+        tenants_fixture,
+        scans_fixture,
+        settings,
+    ):
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        scan.state = StateChoices.COMPLETED
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+        connection.autocommit = True
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.rowcount = 2
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "completed"
+        assert result["upserted"] == 2
+        assert cursor.execute.call_count >= 3
+        connection.commit.assert_called_once()
+
+    def test_update_provider_compliance_scores_skips_incomplete_scan(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[1]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        scan.state = StateChoices.AVAILABLE
+        scan.completed_at = None
+        scan.save()
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "scan not completed"
+
+    def test_update_provider_compliance_scores_skips_no_completed_at(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        scan.state = StateChoices.COMPLETED
+        scan.completed_at = None
+        scan.save()
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "no completed_at"
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_update_provider_compliance_scores_executes_sql_queries(
+        self,
+        mock_psycopg_connection,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+        settings,
+    ):
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+
+        scan.state = StateChoices.COMPLETED
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.rowcount = 1
+        cursor.fetchall.side_effect = [[("aws_cis_2.0",)], []]
+
+        result = update_provider_compliance_scores(tenant_id, scan_id)
+
+        assert result["status"] == "completed"
+
+        calls = [str(c) for c in cursor.execute.call_args_list]
+        assert any("provider_compliance_scores" in c for c in calls)
+        assert any("tenant_compliance_summaries" in c for c in calls)
+        assert any("pg_advisory_xact_lock" in c for c in calls)
+
+
+class TestScanIsFullScope:
+    def _live_trigger(self):
+        return Scan.TriggerChoices.MANUAL
+
+    @pytest.mark.parametrize(
+        "scanner_args",
+        [
+            {},
+            {"unrelated": "value"},
+            {"checks": None},
+            {"services": []},
+            {"severities": ""},
+        ],
+    )
+    def test_full_scope_when_no_filters_present(self, scanner_args):
+        scan = Scan(scanner_args=scanner_args, trigger=self._live_trigger())
+        assert scan.is_full_scope() is True
+
+    def test_full_scope_covers_every_sdk_kwarg(self):
+        # Lock the predicate to whatever ProwlerScan's __init__ exposes today.
+        # If the SDK adds a new filter, this test still passes via the
+        # introspection-driven derivation; if it adds a non-filter kwarg
+        # (e.g. provider-like), keep the exclusion list in sync in models.py.
+        from prowler.lib.scan.scan import Scan as ProwlerScan
+        import inspect
+
+        expected = tuple(
+            name
+            for name in inspect.signature(ProwlerScan.__init__).parameters
+            if name not in ("self", "provider")
+        )
+        assert Scan.get_scoping_scanner_arg_keys() == expected
+        # Spot-check a few well-known filters survive the introspection.
+        assert "checks" in expected
+        assert "services" in expected
+        assert "severities" in expected
+
+    def test_partial_scope_for_each_sdk_filter(self):
+        for key in Scan.get_scoping_scanner_arg_keys():
+            scan = Scan(scanner_args={key: ["x"]}, trigger=self._live_trigger())
+            assert scan.is_full_scope() is False, f"{key} should mark scan as partial"
+
+    def test_imported_scan_is_never_full_scope(self):
+        # Forward-defensive: any trigger outside LIVE_SCAN_TRIGGERS (e.g. a
+        # future "imported" trigger) must never qualify, even with empty args.
+        scan = Scan(scanner_args={}, trigger="imported")
+        assert scan.is_full_scope() is False
+
+    def test_handles_none_scanner_args(self):
+        scan = Scan(scanner_args=None, trigger=self._live_trigger())
+        assert scan.is_full_scope() is True
+
+
+@pytest.mark.django_db
+class TestResetEphemeralResourceFindingsCount:
+    def _make_scan_summary(self, tenant_id, scan_id, resource):
+        return ResourceScanSummary.objects.create(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            resource_id=resource.id,
+            service=resource.service,
+            region=resource.region,
+            resource_type=resource.type,
+        )
+
+    def test_resets_only_resources_missing_from_full_scope_scan(
+        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        scan1, scan2, *_ = scans_fixture
+        resource1, resource2, resource3 = resources_fixture
+
+        Resource.objects.filter(id=resource1.id).update(failed_findings_count=3)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+        Resource.objects.filter(id=resource3.id).update(failed_findings_count=7)
+
+        # Only resource1 was scanned in scan1; resource2 is ephemeral.
+        self._make_scan_summary(tenant.id, scan1.id, resource1)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+        assert result["reset"] == 1
+
+        resource1.refresh_from_db()
+        resource2.refresh_from_db()
+        resource3.refresh_from_db()
+
+        assert resource1.failed_findings_count == 3
+        assert resource2.failed_findings_count == 0
+        # Other provider's resource is never touched.
+        assert resource3.failed_findings_count == 7
+
+    def test_skips_when_scan_not_completed(
+        self, tenants_fixture, scans_fixture, resources_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Scan.objects.filter(id=scan1.id).update(state=StateChoices.EXECUTING)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "scan not completed"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 5
+
+    def test_skips_when_scan_has_scoping_filters(
+        self, tenants_fixture, scans_fixture, resources_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        _, resource2, _ = resources_fixture
+
+        Scan.objects.filter(id=scan1.id).update(scanner_args={"checks": ["check1"]})
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "partial scan scope"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 5
+
+    def test_skips_when_scan_not_found(self, tenants_fixture):
+        tenant, *_ = tenants_fixture
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(uuid.uuid4())
+        )
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "scan not found"
+
+    def test_skips_when_newer_scan_completed_for_same_provider(
+        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+    ):
+        # If a newer completed scan exists for the same provider, our
+        # ResourceScanSummary set is stale relative to the resources' current
+        # counts, and applying the diff would corrupt them.
+        from datetime import timedelta
+
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        provider, *_ = providers_fixture
+        _, resource2, _ = resources_fixture
+
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+
+        # Create a newer COMPLETED scan for the same provider, with an
+        # explicit completed_at strictly after scan1's so ordering is
+        # deterministic regardless of clock resolution.
+        newer_completed_at = scan1.completed_at + timedelta(minutes=5)
+        Scan.objects.create(
+            name="Newer Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=newer_completed_at,
+            completed_at=newer_completed_at,
+        )
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "newer scan exists"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 5
+
+    def test_does_not_touch_other_providers_resources(
+        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        _, _, resource3 = resources_fixture
+
+        # resource3 belongs to provider2 with failed_findings_count > 0 and is
+        # not in scan1's summary. It MUST NOT be reset.
+        Resource.objects.filter(id=resource3.id).update(failed_findings_count=9)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+        assert result["reset"] == 0
+
+        resource3.refresh_from_db()
+        assert resource3.failed_findings_count == 9
+
+    def test_resources_already_zero_are_not_rewritten(
+        self, tenants_fixture, scans_fixture, resources_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        # Both resources already at 0, neither in summary -> nothing to update.
+        Resource.objects.filter(id=resource1.id).update(failed_findings_count=0)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=0)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+        assert result["reset"] == 0
+
+    def test_skips_when_summaries_missing_for_scan_with_resources(
+        self, tenants_fixture, scans_fixture, resources_fixture
+    ):
+        # Catastrophic guard: if a scan reports unique_resource_count > 0 but
+        # no ResourceScanSummary rows are persisted (e.g. bulk_create silently
+        # failed), the anti-join would classify EVERY resource as ephemeral
+        # and zero their counts. The gate must skip and preserve the data.
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Scan.objects.filter(id=scan1.id).update(unique_resource_count=10)
+        Resource.objects.filter(id=resource1.id).update(failed_findings_count=3)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "skipped"
+        assert result["reason"] == "summaries missing"
+
+        resource1.refresh_from_db()
+        resource2.refresh_from_db()
+        assert resource1.failed_findings_count == 3
+        assert resource2.failed_findings_count == 5
+
+    def test_ignores_sibling_scan_with_null_completed_at(
+        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+    ):
+        # Postgres orders NULL first in DESC; a sibling COMPLETED scan with a
+        # missing completed_at must not be treated as the latest scan and
+        # cause us to incorrectly skip the reset.
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        provider, *_ = providers_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+        self._make_scan_summary(tenant.id, scan1.id, resource1)
+
+        Scan.objects.create(
+            name="Ghost Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=scan1.completed_at,
+            completed_at=None,
+        )
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+        assert result["reset"] == 1
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 0
+
+    def test_batches_updates_when_many_ephemeral_resources(
+        self, tenants_fixture, scans_fixture, resources_fixture
+    ):
+        # Forces multiple batches to confirm the chunked UPDATE path executes
+        # cleanly and the count is the sum across batches.
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Resource.objects.filter(id=resource1.id).update(failed_findings_count=2)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=4)
+
+        # No ResourceScanSummary -> both resource1 and resource2 are ephemeral.
+        # Force a 1-row batch via the shared findings batch size knob.
+        with patch("tasks.jobs.scan.DJANGO_FINDINGS_BATCH_SIZE", 1):
+            result = reset_ephemeral_resource_findings_count(
+                tenant_id=str(tenant.id), scan_id=str(scan1.id)
+            )
+
+        assert result["status"] == "completed"
+        assert result["reset"] == 2
+
+        resource1.refresh_from_db()
+        resource2.refresh_from_db()
+        assert resource1.failed_findings_count == 0
+        assert resource2.failed_findings_count == 0

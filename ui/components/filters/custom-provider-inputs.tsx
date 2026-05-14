@@ -1,13 +1,16 @@
-import React from "react";
-
 import {
+  AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
+  ImageProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
+  OpenStackProviderBadge,
   OracleCloudProviderBadge,
 } from "../icons/providers-badge";
 
@@ -34,6 +37,15 @@ export const CustomProviderInputM365 = () => {
     <div className="flex items-center gap-x-2">
       <M365ProviderBadge width={25} height={25} />
       <p className="text-sm">Microsoft 365</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputMongoDBAtlas = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <MongoDBAtlasProviderBadge width={25} height={25} />
+      <p className="text-sm">MongoDB Atlas</p>
     </div>
   );
 };
@@ -74,11 +86,47 @@ export const CustomProviderInputIac = () => {
   );
 };
 
+export const CustomProviderInputImage = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <ImageProviderBadge width={25} height={25} />
+      <p className="text-sm">Container Registry</p>
+    </div>
+  );
+};
+
 export const CustomProviderInputOracleCloud = () => {
   return (
     <div className="flex items-center gap-x-2">
       <OracleCloudProviderBadge width={25} height={25} />
       <p className="text-sm">Oracle Cloud Infrastructure</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputAlibabaCloud = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <AlibabaCloudProviderBadge width={25} height={25} />
+      <p className="text-sm">Alibaba Cloud</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputCloudflare = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <CloudflareProviderBadge width={25} height={25} />
+      <p className="text-sm">Cloudflare</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputOpenStack = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <OpenStackProviderBadge width={25} height={25} />
+      <p className="text-sm">OpenStack</p>
     </div>
   );
 };

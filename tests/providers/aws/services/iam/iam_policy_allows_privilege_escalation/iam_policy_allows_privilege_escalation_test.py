@@ -1261,3 +1261,86 @@ class Test_iam_policy_allows_privilege_escalation:
                             permissions
                         ]:
                             assert search(permission, finding.status_extended)
+
+    @mock_aws
+    def test_unattached_policy_skipped_when_scan_unused_services_disabled(self):
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        policy_name = "unattached_privilege_escalation"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "iam:CreateAccessKey", "Resource": "*"},
+            ],
+        }
+        iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], scan_unused_services=False
+        )
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+                iam_policy_allows_privilege_escalation,
+            )
+
+            check = iam_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert result == []
+
+    @mock_aws
+    def test_attached_policy_fails_when_scan_unused_services_disabled(self):
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        user_name = "test_user_privesc"
+        policy_name = "attached_privilege_escalation"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "iam:CreateAccessKey", "Resource": "*"},
+            ],
+        }
+        policy_arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+        iam_client.create_user(UserName=user_name)
+        iam_client.attach_user_policy(UserName=user_name, PolicyArn=policy_arn)
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], scan_unused_services=False
+        )
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_policy_allows_privilege_escalation.iam_policy_allows_privilege_escalation import (
+                iam_policy_allows_privilege_escalation,
+            )
+
+            check = iam_policy_allows_privilege_escalation()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_arn == policy_arn
+            assert search(
+                f"Custom Policy {policy_arn} allows privilege escalation",
+                result[0].status_extended,
+            )

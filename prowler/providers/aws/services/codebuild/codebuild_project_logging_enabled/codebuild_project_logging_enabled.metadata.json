@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCodeBuildProject",
+  "ResourceGroup": "devops",
   "Description": "**CodeBuild projects** are assessed for **logging configuration** to Amazon **CloudWatch Logs** or **S3**, identifying when at least one destination is `enabled` for build logs and events.",
   "Risk": "Absence of **build logging** creates blind spots for **integrity** and **accountability**. Attackers or misconfigurations can alter artifacts, exfiltrate data, or misuse credentials with little trace, hindering **forensics** and **incident response**. Missing telemetry impedes correlation with other alerts, risking source code and secret **confidentiality**.",
   "RelatedUrl": "",

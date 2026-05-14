@@ -2,7 +2,7 @@ import json
 from unittest.mock import ANY, Mock, patch
 
 import pytest
-from conftest import TODAY
+from conftest import TEST_PASSWORD, TODAY
 from django.urls import reverse
 from rest_framework import status
 
@@ -829,4 +829,67 @@ class TestUserRoleLinkPermissions:
             content_type="application/vnd.api+json",
         )
 
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestCrossTenantRoleLeak:
+    """Regression tests for get_role() cross-tenant privilege leak.
+
+    get_role() must query admin_db (bypassing RLS) so that a user with a role
+    in tenant A cannot accidentally pass role checks when authenticated against
+    tenant B where they have no role.
+    """
+
+    def test_user_with_role_in_tenant_a_denied_in_tenant_b(self, tenants_fixture):
+        """User has admin role in tenant A, membership in tenant B but no role.
+        Hitting an RBAC-protected endpoint with a tenant-B token must return 403."""
+        from rest_framework.test import APIClient
+
+        tenant_a = tenants_fixture[0]
+        tenant_b = tenants_fixture[1]
+
+        user = User.objects.create_user(
+            name="cross_tenant_user",
+            email="cross_tenant@test.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(
+            user=user, tenant=tenant_a, role=Membership.RoleChoices.OWNER
+        )
+        Membership.objects.create(
+            user=user, tenant=tenant_b, role=Membership.RoleChoices.OWNER
+        )
+
+        # Role only in tenant A
+        role = Role.objects.create(
+            name="admin",
+            tenant_id=tenant_a.id,
+            manage_users=True,
+            manage_account=True,
+            manage_billing=True,
+            manage_providers=True,
+            manage_integrations=True,
+            manage_scans=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant_a.id)
+
+        # Mint token scoped to tenant B (where user has NO role)
+        serializer = TokenSerializer(
+            data={
+                "type": "tokens",
+                "email": "cross_tenant@test.com",
+                "password": TEST_PASSWORD,
+                "tenant_id": tenant_b.id,
+            }
+        )
+        serializer.is_valid(raise_exception=True)
+        access_token = serializer.validated_data["access"]
+
+        client = APIClient()
+        client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+
+        # user-list requires manage_users permission via HasPermissions
+        response = client.get(reverse("user-list"))
         assert response.status_code == status.HTTP_403_FORBIDDEN

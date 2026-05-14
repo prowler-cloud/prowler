@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsBackupRecoveryPoint",
+  "ResourceGroup": "storage",
   "Description": "**AWS Backup recovery points** are evaluated for **encryption at rest** using the backup vault's KMS configuration. Items lacking vault-level encryption are highlighted, regardless of the source resource's encryption.",
   "Risk": "Unencrypted recovery points can be read or copied if vault access is obtained, enabling offline analysis and data theft (**confidentiality**). Snapshots or restores may be altered (**integrity**), and unsafe restores can disrupt recovery operations (**availability**).",
   "RelatedUrl": "",

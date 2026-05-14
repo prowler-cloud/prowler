@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_development_mode_disabled",
+  "CheckTitle": "Development mode is disabled for production zones",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Development Mode** configuration by checking if it is disabled to ensure **caching**, **security features**, and **performance optimizations** are active in production environments.",
+  "Risk": "With **Development Mode** enabled, Cloudflare bypasses caching and some optimizations.\n- **Confidentiality**: some security features may be affected or bypassed\n- **Integrity**: performance optimizations are disabled impacting site reliability\n- **Availability**: origin server is exposed to increased load without caching protection",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/cache/reference/development-mode/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Caching > Configuration\n3. Scroll to Development Mode\n4. Ensure Development Mode is Off\n5. Note: Development Mode auto-expires after 3 hours if left enabled",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable **Development Mode** for production environments.\n- Use only temporarily during active development when cache bypassing is necessary\n- Development Mode auto-expires after 3 hours\n- Ensure it is manually disabled after development work completes\n- Consider using cache purge or page rules for targeted cache invalidation instead",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_development_mode_disabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Development Mode temporarily suspends Cloudflare caching and minification. It auto-expires after 3 hours to prevent accidental prolonged use."
+}

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAthenaWorkGroup",
+  "ResourceGroup": "analytics",
   "Description": "**Athena workgroups** that set `enforce_workgroup_configuration=true` apply the **workgroup's settings** to every query, overriding client-side options for results location, expected bucket owner, encryption, and control of objects written to the results bucket.",
   "Risk": "Without enforcement, clients may disable or change result **encryption**, redirect outputs to unintended or cross-account buckets, and bypass retention controls.\n\nThis enables data exposure (C), result tampering (I), and weak auditability, complicating incident response.",
   "RelatedUrl": "",

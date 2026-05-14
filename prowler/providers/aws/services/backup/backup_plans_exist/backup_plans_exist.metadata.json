@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsBackupBackupPlan",
+  "ResourceGroup": "storage",
   "Description": "**AWS Backup** is assessed for the existence of at least one **backup plan** that schedules and retains recovery points for selected resources.\n\nThe evaluation determines whether any plan is configured; when none is found-even if backup vaults exist-the absence of a plan is noted.",
   "Risk": "Without a backup plan, resources lack scheduled recovery points, undermining RPO/RTO.\n- Irrecoverable data after deletion or corruption (integrity)\n- Prolonged outages due to unavailable restores (availability)\n- Inconsistent backups that hinder investigations and controlled recovery",
   "RelatedUrl": "",

@@ -2,9 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+
+const invitationTokenSchema = z.string().min(1).max(500);
 
 export const getInvitations = async ({
   page = 1,
@@ -193,5 +196,37 @@ export const revokeInvite = async (formData: FormData) => {
     return data || { success: true };
   } catch (error) {
     handleApiError(error);
+  }
+};
+
+export const acceptInvitation = async (token: string) => {
+  const parsed = invitationTokenSchema.safeParse(token);
+  if (!parsed.success) {
+    return { error: "Invalid invitation token" };
+  }
+
+  const headers = await getAuthHeaders({ contentType: true });
+
+  const url = new URL(`${apiBaseUrl}/invitations/accept`);
+
+  const body = JSON.stringify({
+    data: {
+      type: "invitations",
+      attributes: {
+        invitation_token: parsed.data,
+      },
+    },
+  });
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+      body,
+    });
+
+    return handleApiResponse(response);
+  } catch (error) {
+    return handleApiError(error);
   }
 };

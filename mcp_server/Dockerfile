@@ -1,7 +1,7 @@
 # =============================================================================
 # Build stage - Install dependencies and build the application
 # =============================================================================
-FROM ghcr.io/astral-sh/uv:python3.13-alpine AS builder
+FROM ghcr.io/astral-sh/uv:python3.13-alpine@sha256:8f53782bb232ab0b5558f3071e86e2bbfde884e18815f2b19cc57f2d336e9ee2 AS builder
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # =============================================================================
 # Final stage - Minimal runtime environment
 # =============================================================================
-FROM python:3.13-alpine
+FROM python:3.13-alpine@sha256:bb1f2fdb1065c85468775c9d680dcd344f6442a2d1181ef7916b60a623f11d40
 
 LABEL maintainer="https://github.com/prowler-cloud"
 

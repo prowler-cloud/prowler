@@ -5,20 +5,17 @@ import { Divider } from "@heroui/divider";
 import { Tooltip } from "@heroui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { clsx } from "clsx";
-import { InfoIcon, SaveIcon } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { updateRole } from "@/actions/roles/roles";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
-import {
-  CustomButton,
-  CustomDropdownSelection,
-  CustomInput,
-} from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import { CustomInput } from "@/components/ui/custom";
+import { Form, FormButtons } from "@/components/ui/form";
 import { getErrorMessage, permissionFormFields } from "@/lib";
 import { ApiError, editRoleFormSchema } from "@/types";
 
@@ -44,6 +41,13 @@ export const EditRoleForm = ({
 }) => {
   const { toast } = useToast();
   const router = useRouter();
+  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const visiblePermissionFormFields = permissionFormFields.filter(
+    (permission) =>
+      !["manage_billing", "manage_alerts"].includes(permission.field) ||
+      isCloudEnvironment,
+  );
+
   const form = useForm<FormValues>({
     resolver: zodResolver(editRoleFormSchema),
     defaultValues: {
@@ -72,17 +76,8 @@ export const EditRoleForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSelectAllChange = (checked: boolean) => {
-    const permissions = [
-      "manage_users",
-      "manage_account",
-      "manage_billing",
-      "manage_providers",
-      "manage_integrations",
-      "manage_scans",
-      "unlimited_visibility",
-    ];
-    permissions.forEach((permission) => {
-      form.setValue(permission as keyof FormValues, checked, {
+    visiblePermissionFormFields.forEach(({ field }) => {
+      form.setValue(field as keyof FormValues, checked, {
         shouldValidate: true,
         shouldDirty: true,
         shouldTouch: true,
@@ -105,8 +100,9 @@ export const EditRoleForm = ({
       updatedFields.manage_scans = values.manage_scans;
       updatedFields.unlimited_visibility = values.unlimited_visibility;
 
-      if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+      if (isCloudEnvironment) {
         updatedFields.manage_billing = values.manage_billing;
+        updatedFields.manage_alerts = values.manage_alerts;
       }
 
       if (
@@ -182,7 +178,6 @@ export const EditRoleForm = ({
           placeholder="Enter role name"
           variant="bordered"
           isRequired
-          isInvalid={!!form.formState.errors.name}
         />
 
         <div className="flex flex-col gap-4">
@@ -190,7 +185,7 @@ export const EditRoleForm = ({
 
           {/* Select All Checkbox */}
           <Checkbox
-            isSelected={permissionFormFields.every((perm) =>
+            isSelected={visiblePermissionFormFields.every((perm) =>
               form.watch(perm.field as keyof FormValues),
             )}
             onChange={(e) => onSelectAllChange(e.target.checked)}
@@ -198,19 +193,15 @@ export const EditRoleForm = ({
               label: "text-small",
               wrapper: "checkbox-update",
             }}
+            color="default"
           >
             Grant all admin permissions
           </Checkbox>
 
           {/* Permissions Grid */}
           <div className="grid grid-cols-2 gap-4">
-            {permissionFormFields
-              .filter(
-                (permission) =>
-                  permission.field !== "manage_billing" ||
-                  process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true",
-              )
-              .map(({ field, label, description }) => (
+            {visiblePermissionFormFields.map(
+              ({ field, label, description }) => (
                 <div key={field} className="flex items-center gap-2">
                   <Checkbox
                     {...form.register(field as keyof FormValues)}
@@ -219,6 +210,7 @@ export const EditRoleForm = ({
                       label: "text-small",
                       wrapper: "checkbox-update",
                     }}
+                    color="default"
                   >
                     {label}
                   </Checkbox>
@@ -234,7 +226,8 @@ export const EditRoleForm = ({
                     </div>
                   </Tooltip>
                 </div>
-              ))}
+              ),
+            )}
           </div>
         </div>
         <Divider className="my-4" />
@@ -253,15 +246,21 @@ export const EditRoleForm = ({
               name="groups"
               control={form.control}
               render={({ field }) => (
-                <CustomDropdownSelection
-                  label="Select Groups"
-                  name="groups"
-                  values={groups}
-                  selectedKeys={field.value}
-                  onChange={(name, selectedValues) => {
-                    field.onChange(selectedValues);
-                  }}
-                />
+                <div className="flex flex-col gap-2">
+                  <EnhancedMultiSelect
+                    options={groups.map((group) => ({
+                      label: group.name,
+                      value: group.id,
+                    }))}
+                    onValueChange={field.onChange}
+                    defaultValue={field.value || []}
+                    placeholder="Select groups"
+                    searchable={true}
+                    hideSelectAll={true}
+                    emptyIndicator="No results found"
+                    resetOnDefaultValueChange={true}
+                  />
+                </div>
               )}
             />
 
@@ -272,20 +271,11 @@ export const EditRoleForm = ({
             )}
           </div>
         )}
-        <div className="flex w-full justify-end sm:gap-6">
-          <CustomButton
-            type="submit"
-            ariaLabel="Update Role"
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Update Role</span>}
-          </CustomButton>
-        </div>
+        <FormButtons
+          submitText="Update Role"
+          isDisabled={isLoading}
+          onCancel={() => router.push("/roles")}
+        />
       </form>
     </Form>
   );

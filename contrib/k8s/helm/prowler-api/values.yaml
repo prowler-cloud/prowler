@@ -39,6 +39,9 @@ secrets:
   POSTGRES_PASSWORD:
   POSTGRES_DB:
   # Valkey settings
+  VALKEY_SCHEME: redis
+  VALKEY_USERNAME:
+  VALKEY_PASSWORD:
   VALKEY_HOST: valkey-headless
   VALKEY_PORT: "6379"
   VALKEY_DB: "0"
@@ -70,7 +73,7 @@ secrets:
   DJANGO_SECRETS_ENCRYPTION_KEY:
   DJANGO_BROKER_VISIBILITY_TIMEOUT: 86400
 
-releaseConfigRoot: /home/prowler/.cache/pypoetry/virtualenvs/prowler-api-NnJNioq7-py3.12/lib/python3.12/site-packages/
+releaseConfigRoot: /home/prowler/.venv/lib/python3.12/site-packages/
 releaseConfigPath: prowler/config/config.yaml
 
 mainConfig:

@@ -76,6 +76,8 @@ class ASFF(Output):
                         ProductArn=f"arn:{finding.partition}:securityhub:{finding.region}::product/prowler/prowler",
                         ProductFields=ProductFields(
                             ProwlerResourceName=finding.resource_uid,
+                            ProwlerAccountOrganizationalUnitId=finding.account_ou_uid,
+                            ProwlerAccountOrganizationalUnitName=finding.account_ou_name,
                         ),
                         GeneratorId="prowler-" + finding.metadata.CheckID,
                         AwsAccountId=finding.account_uid,
@@ -242,6 +244,8 @@ class ProductFields(BaseModel):
     ProviderName: str = "Prowler"
     ProviderVersion: str = prowler_version
     ProwlerResourceName: str
+    ProwlerAccountOrganizationalUnitId: Optional[str] = None
+    ProwlerAccountOrganizationalUnitName: Optional[str] = None
 
 
 class Severity(BaseModel):

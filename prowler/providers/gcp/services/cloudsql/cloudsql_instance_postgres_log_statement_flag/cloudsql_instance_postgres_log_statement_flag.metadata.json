@@ -1,29 +1,34 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_postgres_log_statement_flag",
-  "CheckTitle": "Ensure That the Log_statement Database Flag for Cloud SQL PostgreSQL Instance Is Set Appropriately",
+  "CheckTitle": "Cloud SQL PostgreSQL instance has 'log_statement' flag set to 'ddl'",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure That the Log_statement Database Flag for Cloud SQL PostgreSQL Instance Is Set Appropriately",
-  "Risk": "Auditing helps in forensic analysis. If log_statement is not set to the correct value, too many statements may be logged leading to issues in finding the relevant information from the logs, or too few statements may be logged with relevant information missing from the logs.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for PostgreSQL** instances have `log_statement` set to `ddl`, recording only data definition statements in server logs",
+  "Risk": "Missing `ddl` logging leaves schema changes untracked, undermining **integrity** and hindering investigations.\n\nExcessive logging (e.g., `all`) can inflate volumes, impair **availability**, raise costs, and leak sensitive values, harming **confidentiality**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/sql/docs/postgres/flags"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_statement=ddl",
+      "CLI": "gcloud sql instances patch <example_resource_name> --database-flags=log_statement=ddl",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to SQL > Instances and open <example_resource_name>\n2. Click Edit\n3. In Database flags, click Add item\n4. Select log_statement and set value to ddl\n5. Click Save",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<region>\"\n  database_version = \"POSTGRES_14\"\n\n  settings {\n    tier = \"db-custom-2-7680\"\n\n    # Critical: sets PostgreSQL 'log_statement' to 'ddl' to pass the check\n    database_flags {\n      name  = \"log_statement\"   # required flag name\n      value = \"ddl\"             # required value\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "The value ddl logs all data definition statements. A value of 'ddl' is recommended unless otherwise directed by your organization's logging policy.",
-      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
+      "Text": "Configure `log_statement` to `ddl` to capture schema changes without excessive noise. Apply **defense in depth**: use targeted auditing for data access, restrict and monitor log access with **least privilege**, and enforce log retention and rotation to protect availability.",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_postgres_log_statement_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

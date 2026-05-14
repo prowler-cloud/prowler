@@ -29,15 +29,15 @@ class TestCSV:
                 partition="aws",
                 description="Description of the finding",
                 risk="High",
-                related_url="http://example.com",
+                related_url="",
                 remediation_recommendation_text="Recommendation text",
-                remediation_recommendation_url="http://example.com/remediation",
+                remediation_recommendation_url="https://hub.prowler.com/check/test_check",
                 remediation_code_nativeiac="native-iac-code",
                 remediation_code_terraform="terraform-code",
                 remediation_code_other="other-code",
                 remediation_code_cli="cli-code",
                 compliance={"compliance_key": "compliance_value"},
-                categories=["categorya", "categoryb"],
+                categories=["encryption", "logging"],
                 depends_on=["dependency"],
                 related_to=["related"],
                 additional_urls=[
@@ -65,7 +65,10 @@ class TestCSV:
         assert output_data["PROVIDER"] == "aws"
         assert output_data["CHECK_ID"] == "service_test_check_id"
         assert output_data["CHECK_TITLE"] == "service_test_check_id"
-        assert output_data["CHECK_TYPE"] == "test-type"
+        assert (
+            output_data["CHECK_TYPE"]
+            == "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+        )
         assert isinstance(output_data["STATUS"], str)
         assert output_data["STATUS"] == "PASS"
         assert output_data["STATUS_EXTENDED"] == "status-extended"
@@ -86,11 +89,11 @@ class TestCSV:
         assert output_data["REGION"] == AWS_REGION_EU_WEST_1
         assert output_data["DESCRIPTION"] == "Description of the finding"
         assert output_data["RISK"] == "High"
-        assert output_data["RELATED_URL"] == "http://example.com"
+        assert output_data["RELATED_URL"] == ""
         assert output_data["REMEDIATION_RECOMMENDATION_TEXT"] == "Recommendation text"
         assert (
             output_data["REMEDIATION_RECOMMENDATION_URL"]
-            == "http://example.com/remediation"
+            == "https://hub.prowler.com/check/test_check"
         )
         assert output_data["REMEDIATION_CODE_NATIVEIAC"] == "native-iac-code"
         assert output_data["REMEDIATION_CODE_TERRAFORM"] == "terraform-code"
@@ -98,7 +101,7 @@ class TestCSV:
         assert output_data["REMEDIATION_CODE_OTHER"] == "other-code"
         assert isinstance(output_data["COMPLIANCE"], str)
         assert output_data["COMPLIANCE"] == "compliance_key: compliance_value"
-        assert output_data["CATEGORIES"] == "categorya | categoryb"
+        assert output_data["CATEGORIES"] == "encryption | logging"
         assert output_data["DEPENDS_ON"] == "dependency"
         assert output_data["RELATED_TO"] == "related"
         assert (
@@ -107,6 +110,8 @@ class TestCSV:
         )
         assert output_data["NOTES"] == "Notes about the finding"
         assert output_data["PROWLER_VERSION"] == prowler_version
+        assert output_data["ACCOUNT_OU_UID"] == "ou-abc1-12345678"
+        assert output_data["ACCOUNT_OU_NAME"] == "Production/WebServices"
 
     @freeze_time(datetime.now())
     def test_csv_write_to_file(self):
@@ -121,7 +126,7 @@ class TestCSV:
             output.batch_write_data_to_file()
 
         mock_file.seek(0)
-        expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION;ADDITIONAL_URLS\r\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag:test-value;test-unique-finding;aws;service_test_check_id;service_test_check_id;test-type;PASS;;False;service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance: test-compliance;test-category;test-dependency;test-related-to;test-notes;{prowler_version};https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html | https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html\r\n"
+        expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION;ADDITIONAL_URLS;ACCOUNT_OU_UID;ACCOUNT_OU_NAME\r\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag:test-value;test-unique-finding;aws;service_test_check_id;service_test_check_id;Software and Configuration Checks/AWS Security Best Practices/Network Reachability;PASS;;False;service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;;;;;;;;test-compliance: test-compliance;encryption;test-dependency;test-related-to;test-notes;{prowler_version};https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html | https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html;ou-abc1-12345678;Production/WebServices\r\n"
         content = mock_file.read()
 
         assert content == expected_csv
@@ -199,7 +204,7 @@ class TestCSV:
             with patch.object(temp_file, "close", return_value=None):
                 csv.batch_write_data_to_file()
 
-            expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION;ADDITIONAL_URLS\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag:test-value;test-unique-finding;aws;service_test_check_id;service_test_check_id;test-type;PASS;;False;service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;test-url;;;;;;;test-compliance: test-compliance;test-category;test-dependency;test-related-to;test-notes;{prowler_version};https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html | https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html\n"
+            expected_csv = f"AUTH_METHOD;TIMESTAMP;ACCOUNT_UID;ACCOUNT_NAME;ACCOUNT_EMAIL;ACCOUNT_ORGANIZATION_UID;ACCOUNT_ORGANIZATION_NAME;ACCOUNT_TAGS;FINDING_UID;PROVIDER;CHECK_ID;CHECK_TITLE;CHECK_TYPE;STATUS;STATUS_EXTENDED;MUTED;SERVICE_NAME;SUBSERVICE_NAME;SEVERITY;RESOURCE_TYPE;RESOURCE_UID;RESOURCE_NAME;RESOURCE_DETAILS;RESOURCE_TAGS;PARTITION;REGION;DESCRIPTION;RISK;RELATED_URL;REMEDIATION_RECOMMENDATION_TEXT;REMEDIATION_RECOMMENDATION_URL;REMEDIATION_CODE_NATIVEIAC;REMEDIATION_CODE_TERRAFORM;REMEDIATION_CODE_CLI;REMEDIATION_CODE_OTHER;COMPLIANCE;CATEGORIES;DEPENDS_ON;RELATED_TO;NOTES;PROWLER_VERSION;ADDITIONAL_URLS;ACCOUNT_OU_UID;ACCOUNT_OU_NAME\nprofile: default;{datetime.now()};123456789012;123456789012;;test-organization-id;test-organization;test-tag:test-value;test-unique-finding;aws;service_test_check_id;service_test_check_id;Software and Configuration Checks/AWS Security Best Practices/Network Reachability;PASS;;False;service;;high;test-resource;;;;;aws;eu-west-1;check description;test-risk;;;;;;;;test-compliance: test-compliance;encryption;test-dependency;test-related-to;test-notes;{prowler_version};https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/best-practices.html | https://docs.aws.amazon.com/prescriptive-guidance/latest/migration-operations-integration/introduction.html;ou-abc1-12345678;Production/WebServices\n"
 
             temp_file.seek(0)
 

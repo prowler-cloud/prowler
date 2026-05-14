@@ -6,24 +6,29 @@ import { handleApiResponse } from "@/lib/server-actions-helper";
 export const getCompliancesOverview = async ({
   scanId,
   region,
-  query,
+  filters = {},
 }: {
-  scanId: string;
+  scanId?: string;
   region?: string | string[];
-  query?: string;
-}) => {
+  filters?: Record<string, string | string[] | undefined>;
+} = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/compliance-overviews`);
 
-  if (scanId) url.searchParams.append("filter[scan_id]", scanId);
-  if (query) url.searchParams.append("filter[search]", query);
+  const setParam = (key: string, value?: string | string[]) => {
+    if (!value) return;
 
-  if (region) {
-    const regionValue = Array.isArray(region) ? region.join(",") : region;
-    url.searchParams.append("filter[region__in]", regionValue);
-  }
+    const serializedValue = Array.isArray(value) ? value.join(",") : value;
+    if (serializedValue.trim().length > 0) {
+      url.searchParams.set(key, serializedValue);
+    }
+  };
 
+  Object.entries(filters).forEach(([key, value]) => setParam(key, value));
+
+  setParam("filter[scan_id]", scanId);
+  setParam("filter[region__in]", region);
   try {
     const response = await fetch(url.toString(), {
       headers,
@@ -31,21 +36,22 @@ export const getCompliancesOverview = async ({
 
     return handleApiResponse(response);
   } catch (error) {
-    console.error("Error fetching providers:", error);
+    console.error("Error fetching compliances overview:", error);
     return undefined;
   }
 };
 
 export const getComplianceOverviewMetadataInfo = async ({
-  query = "",
   sort = "",
   filters = {},
-}) => {
+}: {
+  sort?: string;
+  filters?: Record<string, string | string[] | undefined>;
+} = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/compliance-overviews/metadata`);
 
-  if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {

@@ -89,7 +89,7 @@ export const createApiKey = async (
     const data = (await handleApiResponse(response)) as CreateApiKeyResponse;
 
     // Revalidate the api-keys list
-    revalidateTag("api-keys");
+    revalidateTag("api-keys", "max");
 
     return { data };
   } catch (error) {
@@ -138,7 +138,7 @@ export const updateApiKey = async (
     const data = (await handleApiResponse(response)) as SingleApiKeyResponse;
 
     // Revalidate the api-keys list
-    revalidateTag("api-keys");
+    revalidateTag("api-keys", "max");
 
     return { data };
   } catch (error) {
@@ -171,7 +171,7 @@ export const revokeApiKey = async (
     }
 
     // Revalidate the api-keys list
-    revalidateTag("api-keys");
+    revalidateTag("api-keys", "max");
 
     return { success: true };
   } catch (error) {

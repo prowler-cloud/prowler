@@ -6,7 +6,7 @@ import { FeedsLoadingFallback, NavbarClient } from "./navbar-client";
 
 interface NavbarProps {
   title: string;
-  icon: string | ReactNode;
+  icon?: string | ReactNode;
 }
 
 export function Navbar({ title, icon }: NavbarProps) {
@@ -15,7 +15,7 @@ export function Navbar({ title, icon }: NavbarProps) {
       title={title}
       icon={icon}
       feedsSlot={
-        <Suspense fallback={<FeedsLoadingFallback />}>
+        <Suspense key="feeds" fallback={<FeedsLoadingFallback />}>
           <FeedsServer limit={15} />
         </Suspense>
       }

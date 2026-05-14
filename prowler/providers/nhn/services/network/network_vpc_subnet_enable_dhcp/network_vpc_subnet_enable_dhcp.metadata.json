@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "VPC",
+  "ResourceGroup": "network",
   "Description": "Check if DHCP is enabled for the subnets in the VPC.",
   "Risk": "",
   "RelatedUrl": "",

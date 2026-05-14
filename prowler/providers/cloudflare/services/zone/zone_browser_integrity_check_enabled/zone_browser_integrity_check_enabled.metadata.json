@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_browser_integrity_check_enabled",
+  "CheckTitle": "Cloudflare Zone Browser Integrity Check Is Enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Browser Integrity Check** configuration by verifying that HTTP headers are analyzed to identify requests from bots or clients with missing/invalid browser signatures.",
+  "Risk": "Without **Browser Integrity Check**, malformed or suspicious requests reach the origin.\n- **Confidentiality**: basic bots can access and scrape content without challenge\n- **Integrity**: requests with invalid headers may exploit application vulnerabilities\n- **Availability**: automated traffic without browser signatures consumes resources",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/tools/browser-integrity-check/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Security > Settings\n3. Enable Browser Integrity Check\n4. This feature is enabled by default on most Cloudflare plans",
+      "Terraform": "```hcl\n# Enable Browser Integrity Check\nresource \"cloudflare_zone_settings_override\" \"browser_check\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    browser_check = \"on\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Browser Integrity Check** to filter basic bot traffic.\n- Validates HTTP headers to identify non-browser requests\n- Challenges requests with missing or invalid browser signatures\n- Enabled by default on most Cloudflare plans\n- Low impact on legitimate users with standard browsers",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_browser_integrity_check_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Browser Integrity Check is enabled by default on most Cloudflare plans. It provides basic protection against requests with invalid or missing browser headers."
+}

@@ -1,17 +1,29 @@
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
+    backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
 )
 
 from api.models import (
     ComplianceOverviewSummary,
+    Finding,
+    ProviderComplianceScore,
     ResourceScanSummary,
     Scan,
+    ScanCategorySummary,
+    ScanGroupSummary,
     StateChoices,
+    StatusChoices,
 )
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 
 
 @pytest.fixture(scope="function")
@@ -44,6 +56,45 @@ def get_not_completed_scans(providers_fixture):
         provider_id=provider_id,
     )
     return scan_1, scan_2
+
+
+@pytest.fixture(scope="function")
+def findings_with_categories_fixture(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource = resources_fixture[0]
+
+    finding = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_with_categories",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="test_check",
+        check_metadata={"CheckId": "test_check"},
+        categories=["gen-ai", "security"],
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+    return finding
+
+
+@pytest.fixture(scope="function")
+def scan_category_summary_fixture(scans_fixture):
+    scan = scans_fixture[0]
+    return ScanCategorySummary.objects.create(
+        tenant_id=scan.tenant_id,
+        scan=scan,
+        category="existing-category",
+        severity=Severity.critical,
+        total_findings=1,
+        failed_findings=0,
+        new_failed_findings=0,
+    )
 
 
 @pytest.mark.django_db
@@ -132,6 +183,10 @@ class TestBackfillComplianceSummaries:
     def test_backfill_creates_compliance_summaries(
         self, tenants_fixture, scans_fixture, compliance_requirements_overviews_fixture
     ):
+        # Fixture seeds compliance rows the backfill aggregates over; pytest
+        # injects it by parameter name, so we reference it explicitly here
+        # to keep static analysers from flagging it as unused.
+        del compliance_requirements_overviews_fixture
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
 
@@ -172,3 +227,342 @@ class TestBackfillComplianceSummaries:
             assert summary.requirements_failed == expected_counts["requirements_failed"]
             assert summary.requirements_manual == expected_counts["requirements_manual"]
             assert summary.total_requirements == expected_counts["total_requirements"]
+
+
+@pytest.mark.django_db
+class TestBackfillScanCategorySummaries:
+    def test_rerun_with_no_findings_is_noop(self, scan_category_summary_fixture):
+        """When the scan has no findings, the backfill is a no-op: it
+        reports `no categories to backfill` and leaves the table
+        untouched. The upsert path cannot drop rows it does not produce,
+        so any pre-existing row survives (matching the scan-completion
+        writer that used `ignore_conflicts=True`)."""
+        tenant_id = scan_category_summary_fixture.tenant_id
+        scan_id = scan_category_summary_fixture.scan_id
+
+        result = aggregate_scan_category_summaries(str(tenant_id), str(scan_id))
+
+        assert result == {"status": "no categories to backfill"}
+        assert ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id, category="existing-category"
+        ).exists()
+
+    def test_rerun_upserts_without_duplicating(self, findings_with_categories_fixture):
+        """Calling the backfill twice upserts rather than raising on
+        `unique_category_severity_per_scan`; rows are updated in place
+        (same primary keys)."""
+        finding = findings_with_categories_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        aggregate_scan_category_summaries(tenant_id, scan_id)
+        first_ids = set(
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        aggregate_scan_category_summaries(tenant_id, scan_id)
+        second_ids = set(
+            ScanCategorySummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        assert first_ids == second_ids
+        assert len(first_ids) == 2  # 2 categories x 1 severity
+
+    def test_rerun_reflects_mute_between_runs(self, findings_with_categories_fixture):
+        """Muting a finding between two backfill runs must move counters:
+        `failed_findings` and `new_failed_findings` drop to zero (muted
+        findings are excluded from those totals). Guards against a
+        regression where the upsert keeps stale counts from the first run."""
+        finding = findings_with_categories_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        aggregate_scan_category_summaries(tenant_id, scan_id)
+        before = list(
+            ScanCategorySummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+        assert all(s.failed_findings == 1 for s in before)
+        assert all(s.new_failed_findings == 1 for s in before)
+        assert all(s.total_findings == 1 for s in before)
+
+        Finding.all_objects.filter(pk=finding.pk).update(muted=True)
+
+        aggregate_scan_category_summaries(tenant_id, scan_id)
+        after = list(
+            ScanCategorySummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+
+        assert {s.id for s in after} == {s.id for s in before}
+        assert all(s.failed_findings == 0 for s in after)
+        assert all(s.new_failed_findings == 0 for s in after)
+        assert all(s.total_findings == 0 for s in after)
+
+    def test_not_completed_scan(self, get_not_completed_scans):
+        for scan in get_not_completed_scans:
+            result = aggregate_scan_category_summaries(
+                str(scan.tenant_id), str(scan.id)
+            )
+            assert result == {"status": "scan is not completed"}
+
+    def test_no_categories_to_backfill(self, scans_fixture):
+        scan = scans_fixture[1]  # Failed scan with no findings
+        result = aggregate_scan_category_summaries(str(scan.tenant_id), str(scan.id))
+        assert result == {"status": "no categories to backfill"}
+
+    def test_successful_backfill(self, findings_with_categories_fixture):
+        finding = findings_with_categories_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        result = aggregate_scan_category_summaries(tenant_id, scan_id)
+
+        # 2 categories × 1 severity = 2 rows
+        assert result == {"status": "backfilled", "categories_count": 2}
+
+        summaries = ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        )
+        assert summaries.count() == 2
+        categories = set(summaries.values_list("category", flat=True))
+        assert categories == {"gen-ai", "security"}
+
+        for summary in summaries:
+            assert summary.severity == Severity.critical
+            assert summary.total_findings == 1
+            assert summary.failed_findings == 1
+            assert summary.new_failed_findings == 1
+
+
+@pytest.fixture(scope="function")
+def findings_with_group_fixture(scans_fixture, resources_fixture):
+    scan = scans_fixture[0]
+    resource = resources_fixture[0]
+
+    finding = Finding.objects.create(
+        tenant_id=scan.tenant_id,
+        uid="finding_with_group",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.high,
+        impact_extended="test impact",
+        severity=Severity.high,
+        raw_result={"status": Status.FAIL},
+        check_id="test_check",
+        check_metadata={"CheckId": "test_check"},
+        resource_groups="ai_ml",
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources([resource])
+    return finding
+
+
+@pytest.fixture(scope="function")
+def scan_resource_group_summary_fixture(scans_fixture):
+    scan = scans_fixture[0]
+    return ScanGroupSummary.objects.create(
+        tenant_id=scan.tenant_id,
+        scan=scan,
+        resource_group="existing-group",
+        severity=Severity.high,
+        total_findings=1,
+        failed_findings=0,
+        new_failed_findings=0,
+        resources_count=1,
+    )
+
+
+@pytest.mark.django_db
+class TestBackfillScanGroupSummaries:
+    def test_rerun_with_no_findings_is_noop(self, scan_resource_group_summary_fixture):
+        """When the scan has no findings, the backfill is a no-op: it
+        reports `no resource groups to backfill` and leaves the table
+        untouched. The upsert path cannot drop rows it does not produce,
+        so any pre-existing row survives (matching the scan-completion
+        writer that used `ignore_conflicts=True`)."""
+        tenant_id = scan_resource_group_summary_fixture.tenant_id
+        scan_id = scan_resource_group_summary_fixture.scan_id
+
+        result = aggregate_scan_resource_group_summaries(str(tenant_id), str(scan_id))
+
+        assert result == {"status": "no resource groups to backfill"}
+        assert ScanGroupSummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id, resource_group="existing-group"
+        ).exists()
+
+    def test_rerun_upserts_without_duplicating(self, findings_with_group_fixture):
+        """Calling the backfill twice upserts rather than raising on
+        `unique_resource_group_severity_per_scan`; rows are updated in
+        place (same primary keys)."""
+        finding = findings_with_group_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+        first_ids = set(
+            ScanGroupSummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+        second_ids = set(
+            ScanGroupSummary.objects.filter(
+                tenant_id=tenant_id, scan_id=scan_id
+            ).values_list("id", flat=True)
+        )
+
+        assert first_ids == second_ids
+        assert len(first_ids) == 1  # 1 resource group x 1 severity
+
+    def test_rerun_reflects_mute_between_runs(self, findings_with_group_fixture):
+        """Muting a finding between two backfill runs must move counters:
+        `failed_findings` and `new_failed_findings` drop to zero (muted
+        findings are excluded from those totals). Guards against a
+        regression where the upsert keeps stale counts from the first run."""
+        finding = findings_with_group_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+        before = list(
+            ScanGroupSummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+        assert len(before) == 1
+        assert before[0].failed_findings == 1
+        assert before[0].new_failed_findings == 1
+        assert before[0].total_findings == 1
+
+        Finding.all_objects.filter(pk=finding.pk).update(muted=True)
+
+        aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+        after = list(
+            ScanGroupSummary.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        )
+
+        assert {s.id for s in after} == {s.id for s in before}
+        assert after[0].failed_findings == 0
+        assert after[0].new_failed_findings == 0
+        assert after[0].total_findings == 0
+
+    def test_not_completed_scan(self, get_not_completed_scans):
+        for scan in get_not_completed_scans:
+            result = aggregate_scan_resource_group_summaries(
+                str(scan.tenant_id), str(scan.id)
+            )
+            assert result == {"status": "scan is not completed"}
+
+    def test_no_resource_groups_to_backfill(self, scans_fixture):
+        scan = scans_fixture[1]  # Failed scan with no findings
+        result = aggregate_scan_resource_group_summaries(
+            str(scan.tenant_id), str(scan.id)
+        )
+        assert result == {"status": "no resource groups to backfill"}
+
+    def test_successful_backfill(self, findings_with_group_fixture):
+        finding = findings_with_group_fixture
+        tenant_id = str(finding.tenant_id)
+        scan_id = str(finding.scan_id)
+
+        result = aggregate_scan_resource_group_summaries(tenant_id, scan_id)
+
+        # 1 resource group × 1 severity = 1 row
+        assert result == {"status": "backfilled", "resource_groups_count": 1}
+
+        summaries = ScanGroupSummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        )
+        assert summaries.count() == 1
+
+        summary = summaries.first()
+        assert summary.resource_group == "ai_ml"
+        assert summary.severity == Severity.high
+        assert summary.total_findings == 1
+        assert summary.failed_findings == 1
+        assert summary.new_failed_findings == 1
+        assert summary.resources_count == 1
+
+
+@pytest.mark.django_db
+class TestBackfillProviderComplianceScores:
+    def test_no_completed_scans(self, tenants_fixture):
+        tenant = tenants_fixture[2]
+        result = backfill_provider_compliance_scores(str(tenant.id))
+        assert result == {"status": "no completed scans"}
+
+    def test_no_scans_to_process(self, tenants_fixture, scans_fixture):
+        tenant = tenants_fixture[0]
+        scan1, scan2, _ = scans_fixture
+
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            scan=scan1,
+            provider=scan1.provider,
+            compliance_id="aws_cis_1.0",
+            requirement_id="1.1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan1.completed_at,
+        )
+        ProviderComplianceScore.objects.create(
+            tenant_id=tenant.id,
+            scan=scan2,
+            provider=scan2.provider,
+            compliance_id="aws_cis_1.0",
+            requirement_id="1.1",
+            requirement_status=StatusChoices.PASS,
+            scan_completed_at=scan2.completed_at,
+        )
+
+        result = backfill_provider_compliance_scores(str(tenant.id))
+        assert result == {"status": "no scans to process"}
+
+    @patch("tasks.jobs.backfill.psycopg_connection")
+    def test_successful_backfill_executes_sql_queries(
+        self,
+        mock_psycopg_connection,
+        tenants_fixture,
+        scans_fixture,
+        settings,
+    ):
+        """Test successful backfill executes SQL queries and returns correct stats."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan2 = scans_fixture[1]
+
+        # Set completed_at to make the scan eligible for backfill
+        scan.completed_at = datetime.now(timezone.utc)
+        scan.save()
+        scan2.state = StateChoices.AVAILABLE
+        scan2.completed_at = None
+        scan2.save()
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+        connection.autocommit = True
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.rowcount = 5
+
+        result = backfill_provider_compliance_scores(str(tenant.id))
+
+        assert result["status"] == "backfilled"
+        assert result["providers_processed"] == 1
+        assert result["providers_skipped"] == 0
+        assert result["total_upserted"] == 5
+        assert result["tenant_summary_count"] == 5

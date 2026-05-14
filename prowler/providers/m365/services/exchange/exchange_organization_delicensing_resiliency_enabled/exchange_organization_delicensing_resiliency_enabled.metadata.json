@@ -1,0 +1,36 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_organization_delicensing_resiliency_enabled",
+  "CheckTitle": "Delicensing Resiliency protects Exchange Online mailboxes from immediate access loss during license changes",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online** Delicensing Resiliency provides a grace period when licenses expire or are reassigned, preventing immediate mailbox access loss.\n\nThis evaluates whether the organization has **Delayed Delicensing** enabled to protect mailbox data during licensing transitions. Note: This feature is only available to tenants with 5000 or more paid licenses.",
+  "Risk": "Without **Delicensing Resiliency**, removing or reassigning an Exchange Online license causes **immediate mailbox inaccessibility**. This can lead to data loss, business disruption, and inability to recover mailbox contents during organizational changes such as role transitions or license optimizations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/exchange/recipients-in-exchange-online/manage-user-mailboxes/delicensing-resiliency"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-OrganizationConfig -DelayedDelicensingEnabled $true",
+      "NativeIaC": "",
+      "Other": "1. Connect to Exchange Online PowerShell\n2. Run: Set-OrganizationConfig -DelayedDelicensingEnabled $true\n3. Verify with: Get-OrganizationConfig | Format-List DelayedDelicensingEnabled",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **Delicensing Resiliency** to ensure mailbox data is preserved during license transitions. This provides a grace period allowing administrators to reassign licenses or export data before access is permanently revoked, maintaining **business continuity** and **data protection**.",
+      "Url": "https://hub.prowler.com/check/exchange_organization_delicensing_resiliency_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check includes an automated fixer that runs `Set-OrganizationConfig -DelayedDelicensingEnabled $true` via Exchange Online PowerShell. Delicensing Resiliency is only available to tenants with 5000 or more paid licenses; trial licenses also count toward this threshold but cannot be discerned from the SDK, so tenants at or above the threshold (or with an unknown license count) are reported as a preventive FAIL and eligibility can be confirmed by running the fixer, which succeeds on qualifying tenants and fails otherwise."
+}

@@ -103,8 +103,16 @@ def get_prowler_threatscore_table(
     for pillar in pillars:
         pillar_table["Provider"].append(compliance.Provider)
         pillar_table["Pillar"].append(pillar)
+        if max_score_per_pillar[pillar] == 0:
+            pillar_score = 100.0
+            score_color = Fore.GREEN
+        else:
+            pillar_score = (
+                score_per_pillar[pillar] / max_score_per_pillar[pillar]
+            ) * 100
+            score_color = Fore.RED
         pillar_table["Score"].append(
-            f"{Style.BRIGHT}{Fore.RED}{(score_per_pillar[pillar] / max_score_per_pillar[pillar]) * 100:.2f}%{Style.RESET_ALL}"
+            f"{Style.BRIGHT}{score_color}{pillar_score:.2f}%{Style.RESET_ALL}"
         )
         if pillars[pillar]["FAIL"] > 0:
             pillar_table["Status"].append(
@@ -148,9 +156,12 @@ def get_prowler_threatscore_table(
                 print(
                     f"\nFramework {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Results:"
                 )
-                print(
-                    f"\nGeneric Threat Score: {generic_score / max_generic_score * 100:.2f}%"
-                )
+                # Handle division by zero when all findings are muted
+                if max_generic_score == 0:
+                    generic_threat_score = 100.0
+                else:
+                    generic_threat_score = generic_score / max_generic_score * 100
+                print(f"\nGeneric Threat Score: {generic_threat_score:.2f}%")
                 print(
                     tabulate(
                         pillar_table,

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayRestApi",
+  "ResourceGroup": "api_gateway",
   "Description": "**API Gateway REST APIs** are evaluated for **access control**: an **API-level authorizer** is present, or all resource methods use an authorization mechanism. Methods marked `NONE` indicate unauthenticated access.",
   "Risk": "**Unauthenticated API methods** enable:\n- Arbitrary reads exposing data (**confidentiality**)\n- Unauthorized actions against backends (**integrity**)\n- Abuse and high traffic causing cost spikes or outages (**availability**)\n\nAttackers can enumerate endpoints and invoke integrations without tokens.",
   "RelatedUrl": "",

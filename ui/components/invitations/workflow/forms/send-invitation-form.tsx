@@ -1,6 +1,5 @@
 "use client";
 
-import { Select, SelectItem } from "@heroui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -8,8 +7,16 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { sendInvite } from "@/actions/invitations/invitation";
+import { Button } from "@/components/shadcn";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn/select/select";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
@@ -79,7 +86,7 @@ export const SendInvitationForm = ({
         const invitationId = data?.data?.id || "";
         router.push(`/invitations/check-details/?id=${invitationId}`);
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -104,59 +111,60 @@ export const SendInvitationForm = ({
           placeholder="Enter the email address"
           variant="flat"
           isRequired
-          isInvalid={!!form.formState.errors.email}
         />
 
         <Controller
           name="roleId"
           control={form.control}
           render={({ field }) => (
-            <>
+            <div className="flex flex-col gap-1.5">
               <Select
-                {...field}
-                label="Role"
-                placeholder="Select a role"
-                classNames={{
-                  selectorIcon: "right-2",
-                }}
-                variant="flat"
-                isDisabled={isSelectorDisabled}
-                selectedKeys={[field.value]}
-                onSelectionChange={(selected) =>
-                  field.onChange(selected?.currentKey || "")
-                }
+                value={field.value || undefined}
+                onValueChange={field.onChange}
+                disabled={isSelectorDisabled}
               >
-                {isSelectorDisabled ? (
-                  <SelectItem key={defaultRole}>{defaultRole}</SelectItem>
-                ) : (
-                  roles.map((role) => (
-                    <SelectItem key={role.id}>{role.name}</SelectItem>
-                  ))
-                )}
+                <SelectTrigger aria-label="Select a role">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {isSelectorDisabled ? (
+                    <SelectItem value={defaultRole}>{defaultRole}</SelectItem>
+                  ) : (
+                    roles.map((role) => (
+                      <SelectItem key={role.id} value={role.id}>
+                        {role.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
               </Select>
               {form.formState.errors.roleId && (
-                <p className="mt-2 text-sm text-red-600">
+                <p className="text-text-error mt-2 text-sm">
                   {form.formState.errors.roleId.message}
                 </p>
               )}
-            </>
+            </div>
           )}
         />
 
         {/* Submit Button */}
         <div className="flex w-full justify-end sm:gap-6">
-          <CustomButton
+          <Button
             type="submit"
-            ariaLabel="Send Invitation"
             className="w-1/2"
-            variant="solid"
-            color="action"
+            variant="default"
             size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
+            disabled={isLoading}
           >
-            {isLoading ? <>Loading</> : <span>Send Invitation</span>}
-          </CustomButton>
+            {isLoading ? (
+              <>Loading</>
+            ) : (
+              <>
+                <SaveIcon size={20} />
+                <span>Send Invitation</span>
+              </>
+            )}
+          </Button>
         </div>
       </form>
     </Form>

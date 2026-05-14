@@ -1,27 +1,29 @@
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
-import { getProviders } from "@/actions/providers";
-import { getScans, getScansByState } from "@/actions/scans";
+import { getAllProviders } from "@/actions/providers";
+import { getScans } from "@/actions/scans";
 import { auth } from "@/auth.config";
 import { MutedFindingsConfigButton } from "@/components/providers";
 import {
-  AutoRefresh,
   NoProvidersAdded,
   NoProvidersConnected,
   ScansFilters,
 } from "@/components/scans";
 import { LaunchScanWorkflow } from "@/components/scans/launch-workflow";
 import { SkeletonTableScans } from "@/components/scans/table";
-import { ColumnGetScans } from "@/components/scans/table/scans";
+import { ScansTableWithPolling } from "@/components/scans/table/scans";
 import { ContentLayout } from "@/components/ui";
 import { CustomBanner } from "@/components/ui/custom/custom-banner";
-import { DataTable } from "@/components/ui/table";
 import {
   createProviderDetailsMapping,
   extractProviderUIDs,
 } from "@/lib/provider-helpers";
-import { ProviderProps, ScanProps, SearchParamsProps } from "@/types";
+import {
+  ExpandedScanData,
+  ProviderProps,
+  ScanProps,
+  SearchParamsProps,
+} from "@/types";
 
 export default async function Scans({
   searchParams,
@@ -33,9 +35,34 @@ export default async function Scans({
   const filteredParams = { ...resolvedSearchParams };
   delete filteredParams.scanId;
 
-  const providersData = await getProviders({
-    pageSize: 50,
-  });
+  const [providersData, completedScansData] = await Promise.all([
+    getAllProviders(),
+    getScans({
+      filters: { "filter[state]": "completed" },
+      pageSize: 50,
+      fields: { scans: "name,completed_at,provider" },
+      include: "provider",
+    }),
+  ]);
+
+  const completedScans: ExpandedScanData[] = (completedScansData?.data ?? [])
+    .map((scan: ScanProps) => {
+      const providerId = scan.relationships?.provider?.data?.id;
+      const providerData = completedScansData?.included?.find(
+        (item: { type: string; id: string }) =>
+          item.type === "providers" && item.id === providerId,
+      );
+      if (!providerData) return null;
+      return {
+        ...scan,
+        providerInfo: {
+          provider: providerData.attributes.provider,
+          uid: providerData.attributes.uid,
+          alias: providerData.attributes.alias,
+        },
+      };
+    })
+    .filter(Boolean) as ExpandedScanData[];
 
   const providerInfo =
     providersData?.data
@@ -60,15 +87,6 @@ export default async function Scans({
 
   const hasManageScansPermission = session?.user?.permissions?.manage_scans;
 
-  // Get scans data to check for executing scans
-  const scansData = await getScansByState();
-
-  const hasExecutingScan = scansData?.data?.some(
-    (scan: ScanProps) =>
-      scan.attributes.state === "executing" ||
-      scan.attributes.state === "available",
-  );
-
   // Extract provider UIDs and create provider details mapping for filtering
   const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
   const providerDetails = providersData
@@ -85,35 +103,34 @@ export default async function Scans({
 
   return (
     <ContentLayout title="Scans" icon="lucide:timer">
-      <AutoRefresh hasExecutingScan={hasExecutingScan} />
       <>
-        {!hasManageScansPermission ? (
-          <CustomBanner
-            title={"Access Denied"}
-            message={"You don't have permission to launch the scan."}
+        <>
+          {!hasManageScansPermission ? (
+            <CustomBanner
+              title={"Access Denied"}
+              message={"You don't have permission to launch the scan."}
+            />
+          ) : thereIsNoProvidersConnected ? (
+            <>
+              <NoProvidersConnected />
+            </>
+          ) : (
+            <LaunchScanWorkflow providers={providerInfo} />
+          )}
+        </>
+        <div className="flex flex-col gap-6">
+          <ScansFilters
+            providerUIDs={providerUIDs}
+            providerDetails={providerDetails}
+            completedScans={completedScans}
           />
-        ) : thereIsNoProvidersConnected ? (
-          <>
-            <Spacer y={8} />
-            <NoProvidersConnected />
-            <Spacer y={8} />
-          </>
-        ) : (
-          <LaunchScanWorkflow providers={providerInfo} />
-        )}
-
-        <ScansFilters
-          providerUIDs={providerUIDs}
-          providerDetails={providerDetails}
-        />
-        <Spacer y={8} />
-        <div className="flex items-center justify-end gap-4">
-          <MutedFindingsConfigButton />
+          <div className="flex items-center justify-end">
+            <MutedFindingsConfigButton />
+          </div>
+          <Suspense fallback={<SkeletonTableScans />}>
+            <SSRDataTableScans searchParams={resolvedSearchParams} />
+          </Suspense>
         </div>
-        <Spacer y={8} />
-        <Suspense fallback={<SkeletonTableScans />}>
-          <SSRDataTableScans searchParams={resolvedSearchParams} />
-        </Suspense>
       </>
     </ContentLayout>
   );
@@ -148,9 +165,12 @@ const SSRDataTableScans = async ({
     include: "provider",
   });
 
-  // Process scans with provider information from included data
+  const scans = scansData?.data;
+  const included = scansData?.included;
+  const meta = scansData && "meta" in scansData ? scansData.meta : undefined;
+
   const expandedScansData =
-    scansData?.data?.map((scan: any) => {
+    scans?.map((scan: ScanProps) => {
       const providerId = scan.relationships?.provider?.data?.id;
 
       if (!providerId) {
@@ -158,8 +178,9 @@ const SSRDataTableScans = async ({
       }
 
       // Find the provider data in the included array
-      const providerData = scansData.included?.find(
-        (item: any) => item.type === "providers" && item.id === providerId,
+      const providerData = included?.find(
+        (item: { type: string; id: string }) =>
+          item.type === "providers" && item.id === providerId,
       );
 
       if (!providerData) {
@@ -177,11 +198,10 @@ const SSRDataTableScans = async ({
     }) || [];
 
   return (
-    <DataTable
-      key={`scans-${Date.now()}`}
-      columns={ColumnGetScans}
-      data={expandedScansData || []}
-      metadata={scansData?.meta}
+    <ScansTableWithPolling
+      initialData={expandedScansData}
+      initialMeta={meta}
+      searchParams={searchParams}
     />
   );
 };

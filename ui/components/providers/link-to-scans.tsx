@@ -1,21 +1,25 @@
 "use client";
 
-import { CustomButton } from "@/components/ui/custom";
+import Link from "next/link";
+
+import { Button } from "@/components/shadcn";
 
 interface LinkToScansProps {
+  hasSchedule: boolean;
   providerUid?: string;
 }
 
-export const LinkToScans = ({ providerUid }: LinkToScansProps) => {
+export const LinkToScans = ({ hasSchedule, providerUid }: LinkToScansProps) => {
   return (
-    <CustomButton
-      asLink={`/scans?filter[provider_uid]=${providerUid}`}
-      ariaLabel="Go to Scans page"
-      variant="solid"
-      color="action"
-      size="sm"
-    >
-      View Scan Jobs
-    </CustomButton>
+    <div className="flex items-center gap-1">
+      <span className="text-text-neutral-secondary text-sm">
+        {hasSchedule ? "Daily" : "None"}
+      </span>
+      <Button asChild variant="link" size="sm" className="text-xs">
+        <Link href={`/scans?filter[provider_uid]=${providerUid}`}>
+          View Jobs
+        </Link>
+      </Button>
+    </div>
   );
 };

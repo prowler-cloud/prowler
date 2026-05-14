@@ -1,14 +1,9 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
-
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert/Alert";
-import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import { Button } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
+import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 
 interface ApiKeySuccessModalProps {
   isOpen: boolean;
@@ -22,15 +17,13 @@ export const ApiKeySuccessModal = ({
   apiKey,
 }: ApiKeySuccessModalProps) => {
   return (
-    <CustomAlertModal
-      isOpen={isOpen}
+    <Modal
+      open={isOpen}
       onOpenChange={(open) => !open && onClose()}
       title="API Key Created Successfully"
-      size="2xl"
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <Alert variant="destructive">
-          <AlertTitle>⚠️ Warning</AlertTitle>
           <AlertDescription>
             This is the only time you will see this API key. Please copy it now
             and store it securely. Once you close this dialog, the key cannot be
@@ -39,29 +32,23 @@ export const ApiKeySuccessModal = ({
         </Alert>
 
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">Your API Key</p>
-          <Snippet
-            hideSymbol
-            classNames={{
-              pre: "font-mono text-sm break-all whitespace-pre-wrap",
-            }}
-            tooltipProps={{
-              content: "Copy API key",
-              color: "default",
-            }}
-          >
-            {apiKey}
-          </Snippet>
+          <p className="text-text-neutral-primary text-sm font-medium">
+            Your API Key
+          </p>
+          <CodeSnippet
+            value={apiKey}
+            multiline
+            ariaLabel="Copy API key"
+            className="w-full px-3 py-2 text-sm"
+          />
         </div>
       </div>
 
-      <CustomButton
-        ariaLabel="Close and confirm API key saved"
-        color="action"
-        onPress={onClose}
-      >
-        Acknowledged
-      </CustomButton>
-    </CustomAlertModal>
+      <div className="mt-4 flex justify-end">
+        <Button aria-label="Close and confirm API key saved" onClick={onClose}>
+          Acknowledged
+        </Button>
+      </div>
+    </Modal>
   );
 };

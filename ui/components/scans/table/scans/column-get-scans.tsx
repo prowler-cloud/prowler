@@ -1,18 +1,17 @@
 "use client";
 
-import { Tooltip } from "@heroui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
 import { TableLink } from "@/components/ui/custom";
-import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
+import { toLocalDateString } from "@/lib/date-utils";
 import { ProviderType, ScanProps } from "@/types";
 
 import { TriggerIcon } from "../../trigger-icon";
-import { DataTableDownloadDetails } from "./data-table-download-details";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { DataTableRowDetails } from "./data-table-row-details";
 
@@ -67,12 +66,17 @@ const ScanDetailsCell = ({ row }: { row: any }) => {
 export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   {
     id: "moreInfo",
-    header: "Details",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Details" />
+    ),
     cell: ({ row }) => <ScanDetailsCell row={row} />,
+    enableSorting: false,
   },
   {
     accessorKey: "cloudProvider",
-    header: () => <p className="pr-8">Cloud Provider</p>,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Provider" />
+    ),
     cell: ({ row }) => {
       const providerInfo = row.original.providerInfo;
 
@@ -83,33 +87,21 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const { provider, uid, alias } = providerInfo;
 
       return (
-        <EntityInfoShort
+        <EntityInfo
           cloudProvider={provider as ProviderType}
           entityAlias={alias}
           entityId={uid}
         />
       );
     },
+    enableSorting: false,
   },
 
-  {
-    accessorKey: "started_at",
-    header: () => <p className="pr-8">Started at</p>,
-    cell: ({ row }) => {
-      const {
-        attributes: { started_at },
-      } = getScanData(row);
-
-      return (
-        <div className="w-[100px]">
-          <DateWithTime dateTime={started_at} />
-        </div>
-      );
-    },
-  },
   {
     accessorKey: "status",
-    header: "Status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { state },
@@ -123,25 +115,41 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         </div>
       );
     },
+    enableSorting: false,
   },
   {
     accessorKey: "findings",
-    header: "Findings",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Findings" />
+    ),
     cell: ({ row }) => {
-      const { id } = getScanData(row);
+      const {
+        id,
+        attributes: { completed_at },
+      } = getScanData(row);
       const scanState = row.original.attributes?.state;
+      // Source is `completed_at` (scan finish time) because findings are
+      // persisted when the scan ends — that's when their `inserted_at` is
+      // written. The URL key stays `filter[inserted_at]` because the findings
+      // table is partitioned by the finding's `inserted_at` date; this filter
+      // is the partition hint the backend uses to avoid scanning every
+      // partition. Names differ by design: scan.completed_at ≈ finding.inserted_at.
+      const scanDate = toLocalDateString(completed_at);
       return (
         <TableLink
-          href={`/findings?filter[scan__in]=${id}&filter[status__in]=FAIL`}
-          isDisabled={scanState !== "completed"}
+          href={`/findings?filter[scan]=${id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`}
+          isDisabled={scanState !== "completed" || !scanDate}
           label="See Findings"
         />
       );
     },
+    enableSorting: false,
   },
   {
     accessorKey: "compliance",
-    header: "Compliance",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Compliance" />
+    ),
     cell: ({ row }) => {
       const { id } = getScanData(row);
       const scanState = row.original.attributes?.state;
@@ -153,44 +161,13 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         />
       );
     },
+    enableSorting: false,
   },
-  {
-    id: "download",
-    header: () => (
-      <div className="flex items-end gap-x-1">
-        <p className="w-fit text-xs">Download</p>
-        <Tooltip
-          className="text-xs"
-          content="Download a ZIP file that includes the JSON (OCSF), CSV, and HTML scan reports, along with the compliance report."
-        >
-          <div className="flex items-center gap-2">
-            <InfoIcon className="text-primary mb-1" size={12} />
-          </div>
-        </Tooltip>
-      </div>
-    ),
-    cell: ({ row }) => {
-      return (
-        <div className="mx-auto w-fit">
-          <DataTableDownloadDetails row={row} />
-        </div>
-      );
-    },
-  },
-
-  // {
-  //   accessorKey: "scanner_args",
-  //   header: "Scanner Args",
-  //   cell: ({ row }) => {
-  //     const {
-  //       attributes: { scanner_args },
-  //     } = getScanData(row);
-  //     return <p className="font-medium">{scanner_args?.only_logs}</p>;
-  //   },
-  // },
   {
     accessorKey: "resources",
-    header: "Resources",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Impacted Resources" />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { unique_resource_count },
@@ -201,16 +178,38 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         </div>
       );
     },
+    enableSorting: false,
+  },
+  {
+    accessorKey: "started_at",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Started at" />
+    ),
+    cell: ({ row }) => {
+      const {
+        attributes: { started_at },
+      } = getScanData(row);
+
+      return (
+        <div className="w-[100px]">
+          <DateWithTime dateTime={started_at} />
+        </div>
+      );
+    },
+    enableSorting: false,
   },
   {
     accessorKey: "scheduled_at",
-    header: "Scheduled at",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Scheduled at" />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { scheduled_at },
       } = getScanData(row);
       return <DateWithTime dateTime={scheduled_at} />;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "completed_at",
@@ -272,8 +271,10 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   },
   {
     id: "actions",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
     cell: ({ row }) => {
       return <DataTableRowActions row={row} />;
     },
+    enableSorting: false,
   },
 ];
