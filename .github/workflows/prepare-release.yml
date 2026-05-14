@@ -339,10 +339,11 @@ jobs:
           exit 1
         fi
 
-        # Update poetry lock file
-        echo "Updating poetry.lock file..."
+        # Update uv lock file
+        echo "Updating uv.lock file..."
+        pip install --no-cache-dir uv==0.11.14
         cd api
-        poetry lock
+        uv lock
         cd ..
 
         echo "✓ Prepared prowler dependency update to: $UPDATED_PROWLER_REF"
@@ -357,7 +358,7 @@ jobs:
         base: ${{ env.BRANCH_NAME }}
         add-paths: |
           api/pyproject.toml
-          api/poetry.lock
+          api/uv.lock
         title: "chore(api): Update prowler dependency to ${{ env.BRANCH_NAME }} for release ${{ env.PROWLER_VERSION }}"
         body: |
           ### Description
@@ -366,7 +367,7 @@ jobs:
 
           **Changes:**
           - Updates `api/pyproject.toml` prowler dependency from `@master` to `@${{ env.BRANCH_NAME }}`
-          - Updates `api/poetry.lock` file with resolved dependencies
+          - Updates `api/uv.lock` file with resolved dependencies
 
           This PR should be merged into the `${{ env.BRANCH_NAME }}` release branch.
 
