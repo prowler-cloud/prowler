@@ -338,6 +338,13 @@
                   "user-guide/providers/vercel/getting-started-vercel",
                   "user-guide/providers/vercel/authentication"
                 ]
+              },
+              {
+                "group": "Okta",
+                "pages": [
+                  "user-guide/providers/okta/getting-started-okta",
+                  "user-guide/providers/okta/authentication"
+                ]
               }
             ]
           },

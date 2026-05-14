@@ -109,10 +109,10 @@ export function MyComponent() {
 
 ## Adding New shadcn Components
 
-When adding new shadcn components using the CLI:
+When adding new shadcn components using the CLI, pin the reviewed CLI version instead of using `@latest`:
 
 ```bash
-npx shadcn@latest add [component-name]
+pnpm dlx shadcn@4.7.0 add [component-name]
 ```
 
 The component will be automatically added to this directory due to the configuration in `components.json`:

@@ -40,6 +40,8 @@ def stdout_report(finding, color, verbose, status, fix):
         details = finding.location
     if finding.check_metadata.Provider == "vercel":
         details = finding.region
+    if finding.check_metadata.Provider == "okta":
+        details = finding.region
     if finding.check_metadata.Provider == "scaleway":
         details = finding.region
 

@@ -1395,6 +1395,56 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_okta_assessment_summary(provider: Provider) -> str:
+        """
+        get_okta_assessment_summary gets the HTML assessment summary for the Okta provider
+
+        Args:
+            provider (Provider): the Okta provider object
+
+        Returns:
+            str: HTML assessment summary for the Okta provider
+        """
+        try:
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Okta Domain:</b> {provider.identity.org_domain}
+                            </li>"""
+
+            credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>Authentication:</b> {provider.auth_method}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Client ID:</b> {provider.identity.client_id}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Okta Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Okta Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_scaleway_assessment_summary(provider: Provider) -> str:
         """
         get_scaleway_assessment_summary gets the HTML assessment summary for the Scaleway provider

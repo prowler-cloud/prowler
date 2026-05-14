@@ -108,6 +108,9 @@ def display_summary_table(
                 )
             else:
                 audited_entities = provider.identity.username or "Personal Account"
+        elif provider.type == "okta":
+            entity_type = "Okta Org"
+            audited_entities = provider.identity.org_domain
         elif provider.type == "scaleway":
             entity_type = "Organization"
             audited_entities = provider.identity.organization_id

@@ -44,13 +44,21 @@ Choose the configuration based on your deployment:
 
   <Tab title="Generic without Native HTTP Support">
     **Configuration:**
+    <Warning>
+    Avoid configuring MCP clients to run `npx mcp-remote` directly. `npx` can download and execute a new package version on each run. Install a reviewed version of `mcp-remote` in a dedicated local workspace, then point the MCP client to the installed binary.
+    </Warning>
+    ```bash
+    mkdir -p ~/.local/share/prowler-mcp-bridge
+    cd ~/.local/share/prowler-mcp-bridge
+    npm init -y
+    npm install --save-exact mcp-remote@0.1.38
+    ```
     ```json
     {
       "mcpServers": {
         "prowler": {
-          "command": "npx",
+          "command": "/absolute/path/to/.local/share/prowler-mcp-bridge/node_modules/.bin/mcp-remote",
           "args": [
-            "mcp-remote",
             "https://mcp.prowler.com/mcp", // or your self-hosted Prowler MCP Server URL
             "--header",
             "Authorization: Bearer ${PROWLER_APP_API_KEY}"
@@ -72,14 +80,20 @@ Choose the configuration based on your deployment:
     2. Go to "Developer" tab
     3. Click in "Edit Config" button
     4. Edit the `claude_desktop_config.json` file with your favorite editor
-    5. Add the following configuration:
+    5. Install a reviewed version of `mcp-remote` in a dedicated local workspace:
+    ```bash
+    mkdir -p ~/.local/share/prowler-mcp-bridge
+    cd ~/.local/share/prowler-mcp-bridge
+    npm init -y
+    npm install --save-exact mcp-remote@0.1.38
+    ```
+    6. Add the following configuration:
     ```json
     {
       "mcpServers": {
         "prowler": {
-          "command": "npx",
+          "command": "/absolute/path/to/.local/share/prowler-mcp-bridge/node_modules/.bin/mcp-remote",
           "args": [
-            "mcp-remote",
             "https://mcp.prowler.com/mcp",
             "--header",
             "Authorization: Bearer ${PROWLER_APP_API_KEY}"

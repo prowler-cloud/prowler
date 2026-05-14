@@ -77,6 +77,7 @@ class Provider(str, Enum):
     IMAGE = "image"
     SCALEWAY = "scaleway"
     VERCEL = "vercel"
+    OKTA = "okta"
 
 
 # Compliance

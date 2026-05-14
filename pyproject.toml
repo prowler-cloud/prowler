@@ -59,6 +59,7 @@ dependencies = [
   "microsoft-kiota-abstractions==1.9.2",
   "msgraph-sdk==1.55.0",
   "numpy==2.0.2",
+  "okta==3.4.2",
   "openstacksdk==4.2.0",
   "pandas==2.2.3",
   "py-ocsf-models==0.8.1",

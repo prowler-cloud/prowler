@@ -403,6 +403,19 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "okta" in provider_class_name.lower():
+                    provider_class(
+                        okta_org_domain=getattr(arguments, "okta_org_domain", ""),
+                        okta_client_id=getattr(arguments, "okta_client_id", ""),
+                        okta_private_key=getattr(arguments, "okta_private_key", ""),
+                        okta_private_key_file=getattr(
+                            arguments, "okta_private_key_file", ""
+                        ),
+                        okta_scopes=getattr(arguments, "okta_scopes", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "scaleway" in provider_class_name.lower():
                     provider_class(
                         access_key=getattr(arguments, "access_key", None),
