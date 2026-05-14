@@ -29,6 +29,7 @@ describe("GET /api/health", () => {
 
     // Then
     expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(body).toEqual(expectedBody);
   });
 
@@ -44,7 +45,7 @@ describe("GET /api/health", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("should ignore PROWLER_API_HEALTH_URL", async () => {
+  it("should not depend on external health URLs", async () => {
     // Given
     vi.stubEnv(
       "PROWLER_API_HEALTH_URL",
