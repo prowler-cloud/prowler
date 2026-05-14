@@ -9,7 +9,7 @@
   "Severity": "low",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Google Chat internal file sharing controls whether users can share files with other people inside the organization via Chat conversations. Organizations in regulated industries may need to control and audit all file sharing, even between internal users.",
+  "Description": "Google Chat **internal file sharing** controls whether users can share files with other people inside the organization via Chat conversations. Organizations in regulated industries may need to **control and audit** all file sharing, even between internal users.",
   "Risk": "Unrestricted internal file sharing in Chat allows files with **sensitive information** to be distributed freely without passing through approved channels. This undermines **data governance** and **audit trail** requirements, making it harder to track data movement within the organization.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable internal file sharing in Chat to enforce file distribution through approved channels with proper audit trails and governance controls.",
+      "Text": "Disable **internal file sharing** in Chat to enforce file distribution through **approved channels** with proper audit trails and governance controls.",
       "Url": "https://hub.prowler.com/check/chat_internal_file_sharing_disabled"
     }
   },

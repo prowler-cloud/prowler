@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Google Chat apps connect to external services to look up information, schedule meetings, or complete tasks. Apps are accounts created by Google, users in the organization, or third parties that can access user data including email addresses, conversation content, and organizational information.",
+  "Description": "Google Chat apps connect to external services to look up information, schedule meetings, or complete tasks. Apps are accounts created by Google, users in the organization, or third parties that can access user data including **email addresses**, **conversation content**, and **organizational information**.",
   "Risk": "Unrestricted Chat app installation allows **unvetted third-party applications** to access user data including conversation content and organizational information. An attacker could distribute a malicious Chat app to **exfiltrate confidential data** or establish **persistent access** to internal communications.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable Chat apps installation to prevent unvetted third-party applications from accessing organizational data through the Chat platform.",
+      "Text": "Disable Chat apps installation to prevent **unvetted third-party applications** from accessing organizational data through the Chat platform.",
       "Url": "https://hub.prowler.com/check/chat_apps_installation_disabled"
     }
   },

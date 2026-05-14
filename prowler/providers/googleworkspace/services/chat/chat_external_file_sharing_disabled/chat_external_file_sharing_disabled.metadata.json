@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Google Chat external file sharing controls whether users can share files with people outside the organization via Chat conversations. Files often contain confidential information, and organizations in regulated industries need to control the flow of this information outside their boundaries.",
+  "Description": "Google Chat **external file sharing** controls whether users can share files with people outside the organization via Chat conversations. Files often contain **confidential information**, and organizations in regulated industries need to control the flow of this information outside their boundaries.",
   "Risk": "Enabled external file sharing allows users to send files containing **confidential information** to external parties through Chat. This creates a **data leakage** channel that bypasses DLP controls, particularly dangerous for organizations handling **regulated data** such as PII, PHI, or financial records.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable external file sharing in Chat to prevent users from sharing files with people outside the organization through Chat conversations.",
+      "Text": "Disable **external file sharing** in Chat to prevent users from sharing files with people outside the organization through Chat conversations.",
       "Url": "https://hub.prowler.com/check/chat_external_file_sharing_disabled"
     }
   },

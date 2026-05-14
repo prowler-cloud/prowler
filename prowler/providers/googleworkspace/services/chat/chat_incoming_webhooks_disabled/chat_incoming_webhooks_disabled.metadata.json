@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Incoming webhooks let external applications post asynchronous messages into Google Chat spaces without being a Chat app. When enabled, users can configure webhooks and developers can call them to send content from external applications.",
+  "Description": "**Incoming webhooks** let external applications post asynchronous messages into Google Chat spaces without being a Chat app. When enabled, users can configure webhooks and developers can call them to send content from **external applications**.",
   "Risk": "Exposed webhook URLs allow **unauthorized content injection** into Chat spaces. Attackers can send **fraudulent or misleading messages** that appear to come from trusted services, creating a vector for **social engineering** and **phishing** within internal communications.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable incoming webhooks to prevent unauthenticated external applications from injecting content into internal Chat spaces.",
+      "Text": "Disable **incoming webhooks** to prevent unauthenticated external applications from **injecting content** into internal Chat spaces.",
       "Url": "https://hub.prowler.com/check/chat_incoming_webhooks_disabled"
     }
   },

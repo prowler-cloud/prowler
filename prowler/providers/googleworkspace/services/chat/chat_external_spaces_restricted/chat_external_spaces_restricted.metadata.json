@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Google Chat external spaces allow users to create or join collaborative spaces that include people outside the organization. If external spaces are allowed, they can optionally be restricted to only allowlisted domains to limit external participation.",
+  "Description": "Google Chat **external spaces** allow users to create or join collaborative spaces that include people outside the organization. If external spaces are allowed, they can optionally be restricted to only **allowlisted domains** to limit external participation.",
   "Risk": "Unrestricted external spaces allow users to add **anyone from any domain** to persistent group conversations. This increases the risk of **confidential information exposure** in shared spaces and enables **unauthorized external access** to ongoing organizational discussions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Restrict external spaces to allowlisted domains only to control which external parties can participate in organizational Chat spaces.",
+      "Text": "Restrict **external spaces** to **allowlisted domains** only to control which external parties can participate in organizational Chat spaces.",
       "Url": "https://hub.prowler.com/check/chat_external_spaces_restricted"
     }
   },
