@@ -39,10 +39,11 @@ Dependencies are continuously monitored for known vulnerabilities with timely up
 
 ### Dependency Vulnerability Scanning
 
-- **Safety:** Scans Python dependencies against known vulnerability databases
-  - Runs on every commit via pre-commit hooks
-  - Integrated into CI/CD for SDK and API
-  - Configured with selective ignores for tracked exceptions
+- **osv-scanner:** Scans lockfiles against the [OSV.dev](https://osv.dev) vulnerability database
+  - Runs in CI on every pull request and push for SDK, API, and UI
+  - Fails the build on `HIGH`, `CRITICAL`, and `UNKNOWN` severity findings
+  - Posts a per-lockfile report as a PR comment
+  - Per-vulnerability ignores (with reason and expiry) live in `osv-scanner.toml` at the repo root
 - **Trivy:** Multi-purpose scanner for containers and dependencies
   - Scans all container images (UI, API, SDK, MCP Server)
   - Checks for vulnerabilities in OS packages and application dependencies
