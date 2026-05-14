@@ -87,7 +87,7 @@ poetry run pytest tests/providers/aws/services/ec2/ec2_ami_public/ -v
 fd "test_*.py" api/src/backend/api/tests/
 
 # 2. Run specific test
-poetry run pytest api/src/backend/api/tests/test_models.py -v
+uv run pytest api/src/backend/api/tests/test_models.py -v
 
 # 3. Read existing tests
 ```
@@ -366,6 +366,6 @@ poetry run pytest --cov=./prowler tests/      # Coverage
 
 ```bash
 poetry run pytest -x --tb=short                           # Run all (stop on first fail)
-poetry run pytest api/src/backend/api/tests/test_file.py  # Specific file
+uv run pytest api/src/backend/api/tests/test_file.py     # Specific file
 poetry run pytest -k "test_name" -v                       # Filter by name
 ```
