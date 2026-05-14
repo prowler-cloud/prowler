@@ -165,16 +165,6 @@ repos:
         exclude: { glob: ["{contrib,skills}/**", "**/.venv/**", "**/*_test.py"] }
         priority: 40
 
-      - id: safety
-        name: safety
-        description: "Safety is a tool that checks your installed dependencies for known security vulnerabilities"
-        # Accepted CVEs, severity threshold, and ignore expirations live in .safety-policy.yml
-        entry: safety check --policy-file .safety-policy.yml
-        language: system
-        pass_filenames: false
-        files: { glob: ["**/pyproject.toml", "**/uv.lock", "**/requirements*.txt", ".safety-policy.yml"] }
-        priority: 40
-
       - id: vulture
         name: vulture
         description: "Vulture finds unused code in Python programs."

@@ -15,7 +15,6 @@ dev = [
   "pytest-randomly==3.15.0",
   "pytest-xdist==3.6.1",
   "ruff==0.5.0",
-  "safety==3.7.0",
   "tqdm==4.67.1",
   "vulture==2.14",
   "prek==0.3.9"
@@ -393,8 +392,6 @@ constraint-dependencies = [
   "ruamel-yaml==0.19.1",
   "ruff==0.5.0",
   "s3transfer==0.14.0",
-  "safety==3.7.0",
-  "safety-schemas==0.0.16",
   "scaleway==2.10.3",
   "scaleway-core==2.10.3",
   "schema==0.7.5",
