@@ -529,6 +529,9 @@ postgresql:
 valkey:
   # If enabled, it will create a Secret with the following.
   # Otherwise, create a secret with
+  # - VALKEY_SCHEME
+  # - VALKEY_USERNAME
+  # - VALKEY_PASSWORD
   # - VALKEY_HOST
   # - VALKEY_PORT
   # - VALKEY_DB

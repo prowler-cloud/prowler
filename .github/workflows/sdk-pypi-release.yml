@@ -13,6 +13,8 @@ env:
   RELEASE_TAG: ${{ github.event.release.tag_name }}
   PYTHON_VERSION: '3.12'
 
+permissions: {}
+
 jobs:
   validate-release:
     if: github.repository == 'prowler-cloud/prowler'
@@ -25,6 +27,11 @@ jobs:
       major_version: ${{ steps.parse-version.outputs.major }}
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Parse and validate version
         id: parse-version
         run: |
@@ -58,21 +65,24 @@ jobs:
       url: https://pypi.org/project/prowler/${{ needs.validate-release.outputs.prowler_version }}/
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - name: Install Poetry
-        run: pipx install poetry==2.1.1
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - name: Setup Python with uv
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          install-dependencies: 'false'
 
       - name: Build Prowler package
-        run: poetry build
+        run: uv build
 
       - name: Publish Prowler package to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
@@ -91,18 +101,21 @@ jobs:
       url: https://pypi.org/project/prowler-cloud/${{ needs.validate-release.outputs.prowler_version }}/
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - name: Install Poetry
-        run: pipx install poetry==2.1.1
-
-      - name: Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - name: Setup Python with uv
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          install-dependencies: 'false'
 
       - name: Install toml package
         run: pip install toml
@@ -113,7 +126,7 @@ jobs:
           python util/replicate_pypi_package.py
 
       - name: Build prowler-cloud package
-        run: poetry build
+        run: uv build
 
       - name: Publish prowler-cloud package to PyPI
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0

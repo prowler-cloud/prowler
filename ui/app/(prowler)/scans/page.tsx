@@ -18,7 +18,12 @@ import {
   createProviderDetailsMapping,
   extractProviderUIDs,
 } from "@/lib/provider-helpers";
-import { ProviderProps, ScanProps, SearchParamsProps } from "@/types";
+import {
+  ExpandedScanData,
+  ProviderProps,
+  ScanProps,
+  SearchParamsProps,
+} from "@/types";
 
 export default async function Scans({
   searchParams,
@@ -30,7 +35,34 @@ export default async function Scans({
   const filteredParams = { ...resolvedSearchParams };
   delete filteredParams.scanId;
 
-  const providersData = await getAllProviders();
+  const [providersData, completedScansData] = await Promise.all([
+    getAllProviders(),
+    getScans({
+      filters: { "filter[state]": "completed" },
+      pageSize: 50,
+      fields: { scans: "name,completed_at,provider" },
+      include: "provider",
+    }),
+  ]);
+
+  const completedScans: ExpandedScanData[] = (completedScansData?.data ?? [])
+    .map((scan: ScanProps) => {
+      const providerId = scan.relationships?.provider?.data?.id;
+      const providerData = completedScansData?.included?.find(
+        (item: { type: string; id: string }) =>
+          item.type === "providers" && item.id === providerId,
+      );
+      if (!providerData) return null;
+      return {
+        ...scan,
+        providerInfo: {
+          provider: providerData.attributes.provider,
+          uid: providerData.attributes.uid,
+          alias: providerData.attributes.alias,
+        },
+      };
+    })
+    .filter(Boolean) as ExpandedScanData[];
 
   const providerInfo =
     providersData?.data
@@ -90,6 +122,7 @@ export default async function Scans({
           <ScansFilters
             providerUIDs={providerUIDs}
             providerDetails={providerDetails}
+            completedScans={completedScans}
           />
           <div className="flex items-center justify-end">
             <MutedFindingsConfigButton />

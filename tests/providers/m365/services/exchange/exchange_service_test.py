@@ -161,6 +161,18 @@ def mock_exchange_get_shared_mailboxes(_):
     ]
 
 
+async def mock_exchange_get_total_paid_licenses(_):
+    return 6000
+
+
+async def mock_exchange_get_total_paid_licenses_none(_):
+    return None
+
+
+@patch(
+    "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_total_paid_licenses",
+    new=mock_exchange_get_total_paid_licenses,
+)
 class Test_Exchange_Service:
     def test_get_client(self):
         with (
@@ -201,6 +213,7 @@ class Test_Exchange_Service:
             assert organization_config.mailtips_external_recipient_enabled is False
             assert organization_config.mailtips_group_metrics_enabled is True
             assert organization_config.mailtips_large_audience_threshold == 25
+            assert organization_config.total_paid_licenses == 6000
 
             exchange_client.powershell.close()
 
@@ -480,4 +493,28 @@ class Test_Exchange_Service:
             )
             assert shared_mailboxes[1].identity == "info@contoso.com"
 
+            exchange_client.powershell.close()
+
+    def test_get_total_paid_licenses_none(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch.object(
+                Exchange,
+                "_get_organization_config",
+                mock_exchange_get_organization_config,
+            ),
+            mock.patch.object(
+                Exchange,
+                "_get_total_paid_licenses",
+                mock_exchange_get_total_paid_licenses_none,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert exchange_client.organization_config.total_paid_licenses is None
             exchange_client.powershell.close()

@@ -1,0 +1,40 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "drive_warn_sharing_with_allowlisted_domains",
+  "CheckTitle": "Users are warned when sharing files with allowlisted domains",
+  "CheckType": [],
+  "ServiceName": "drive",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "At the domain level, even when external sharing is restricted to allowlisted domains, Google Drive **warns users** before they share a file with a user in an allowlisted domain. This second-step prompt helps users recognize when they are crossing the organizational boundary, even within permitted destinations.",
+  "Risk": "Allowlisted domains are still external. Users may not realize that even an allowlisted recipient is outside the organization, leading to **unintentional disclosure of sensitive content** to legitimate but external collaborators. A warning prompt at share time mitigates that without preventing the sharing itself.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/60781",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Click **Sharing settings** > **Sharing options**\n4. Under **Sharing outside of <Company>**, ensure **ALLOWLISTED DOMAINS** is selected\n5. Check **Warn when files owned by users or shared drives in <Company> are shared with users in allowlisted domains**\n6. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable warnings for sharing with allowlisted domains so users are reminded that they are sharing externally, even when the destination is permitted. This preserves the convenience of allowlisted sharing while reducing accidental disclosure.",
+      "Url": "https://hub.prowler.com/check/drive_warn_sharing_with_allowlisted_domains"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "drive_external_sharing_warn_users",
+    "drive_sharing_allowlisted_domains"
+  ],
+  "Notes": "This check is meaningful only when external sharing is restricted to allowlisted domains. See the related check drive_sharing_allowlisted_domains."
+}

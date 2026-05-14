@@ -78,12 +78,13 @@
         {
           "ItemId": "cc_3_2",
           "Section": "CC3.0 - Common Criteria Related to Risk Assessment",
-          "Service": "gcr",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "gcr_container_scanning_enabled"
+        "gcr_container_scanning_enabled",
+        "gemini_api_disabled"
       ]
     },
     {
@@ -282,12 +283,13 @@
         {
           "ItemId": "cc_7_1",
           "Section": "CC7.0 - System Operations",
-          "Service": "iam",
+          "Service": "gcp",
           "Type": "automated"
         }
       ],
       "Checks": [
-        "iam_cloud_asset_inventory_enabled"
+        "iam_cloud_asset_inventory_enabled",
+        "gemini_api_disabled"
       ]
     },
     {
@@ -418,6 +420,22 @@
       ],
       "Checks": [
         "iam_cloud_asset_inventory_enabled"
+      ]
+    },
+    {
+      "Id": "cc_9_2",
+      "Name": "CC9.2 The entity assesses and manages risks associated with vendors and business partners",
+      "Description": "Establishes Requirements for Vendor and Business Partner Engagements—The entity establishes specific requirements for a vendor and business partner engagement that includes (1) scope of services and product specifications, (2) roles and responsibilities, (3) compliance requirements, and (4) service levels. Assesses Vendor and Business Partner Risks—The entity assesses, on a periodic basis, the risks that vendors and business partners (and those entities' vendors and business partners) represent to the achievement of the entity's objectives. Assigns Responsibility and Accountability for Managing Vendors and Business Partners—The entity assigns responsibility and accountability for the management of risks associated with vendors and business partners. Establishes Communication Protocols for Vendors and Business Partners—The entity establishes communication and resolution protocols for service or product issues related to vendors and business partners. Establishes Exception Handling Procedures From Vendors and Business Partners —The entity establishes exception handling procedures for service or product issues related to vendors and business partners. Assesses Vendor and Business Partner Performance—The entity periodically assesses the performance of vendors and business partners. Implements Procedures for Addressing Issues Identified During Vendor and Business Partner Assessments—The entity implements procedures for addressing issues identified with vendor and business partner relationships. Implements Procedures for Terminating Vendor and Business Partner Relationships — The entity implements procedures for terminating vendor and business partner relationships. Obtains Confidentiality Commitments from Vendors and Business Partners—The entity obtains confidentiality commitments that are consistent with the entity's confidentiality commitments and requirements from vendors and business partners who have access to confidential information. Assesses Compliance With Confidentiality Commitments of Vendors and Business Partners — On a periodic and as-needed basis, the entity assesses compliance by vendors and business partners with the entity's confidentiality commitments and requirements. Obtains Privacy Commitments from Vendors and Business Partners—The entity obtains privacy commitments, consistent with the entity's privacy commitments and requirements, from vendors and business partners who have access to personal information. Assesses Compliance with Privacy Commitments of Vendors and Business Partners— On a periodic and as-needed basis, the entity assesses compliance by vendors and business partners with the entity's privacy commitments and requirements and takes corrective action as necessary.",
+      "Attributes": [
+        {
+          "ItemId": "cc_9_2",
+          "Section": "CC9.0 - Risk Mitigation",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "gemini_api_disabled"
       ]
     },
     {

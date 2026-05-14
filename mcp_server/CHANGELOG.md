@@ -2,6 +2,40 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+## [0.7.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- MCP Server tools for Prowler Finding Groups Management [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
+
+### 🔐 Security
+
+- `cryptography` from 46.0.1 to 47.0.0 (transitive) for CVE-2026-39892 and CVE-2026-26007 / CVE-2026-34073 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
+
+---
+
+## [0.6.0] (Prowler v5.23.0)
+
+### 🚀 Added
+
+- Resource events tool to get timeline for a resource (who, what, when) [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
+
+### 🔄 Changed
+
+- Pin `httpx` dependency to exact version for reproducible installs [(#10593)](https://github.com/prowler-cloud/prowler/pull/10593)
+
+### 🔐 Security
+
+- `authlib` bumped from 1.6.5 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
+
+---
+
+## [0.5.0] (Prowler v5.21.0)
+
+### 🚀 Added
+
+- Attack Path tool to get Neo4j DB schema [(#10321)](https://github.com/prowler-cloud/prowler/pull/10321)
+
 ## [0.4.0] (Prowler v5.19.0)
 
 ### 🚀 Added

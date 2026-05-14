@@ -20226,6 +20226,48 @@
       ]
     },
     {
+      "Id": "12.8.3.1",
+      "Description": "Checks that the Gemini API (a.k.a. Generative Language API) is disabled since it is out of scope of GCP's PCI DSS conformance.",
+      "Name": "Gemini API",
+      "Checks": [
+        "gemini_api_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "12.8.3: Risk to information assets associated with third-party service provider (TPSP) relationships is managed.",
+          "Service": "Gemini API"
+        }
+      ]
+    },
+    {
+      "Id": "12.8.4.1",
+      "Description": "Checks that the Gemini API (a.k.a. Generative Language API) is disabled since it is out of scope of GCP's PCI DSS conformance.",
+      "Name": "Gemini API",
+      "Checks": [
+        "gemini_api_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "12.8.4: Risk to information assets associated with third-party service provider (TPSP) relationships is managed.",
+          "Service": "Gemini API"
+        }
+      ]
+    },
+    {
+      "Id": "12.9.1.1",
+      "Description": "Checks that the Gemini API (a.k.a. Generative Language API) is disabled since it is out of scope of GCP's PCI DSS conformance.",
+      "Name": "Gemini API",
+      "Checks": [
+        "gemini_api_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "12.9.1: Third-party service providers (TPSPs) support their customers’ PCI DSS compliance.",
+          "Service": "Gemini API"
+        }
+      ]
+    },
+    {
       "Id": "A1.1.2.1",
       "Description": "Checks if a backup vault has an attached IAM policy that prevents deletion of backup recovery points. The rule is NON_COMPLIANT if the Backup Vault does not have IAM policies or has policies lacking a suitable 'Deny' statement for deleting backups.",
       "Name": "Google Cloud Backup and DR",

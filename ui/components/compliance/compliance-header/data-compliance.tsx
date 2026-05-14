@@ -7,11 +7,13 @@ import {
   ScanSelector,
   SelectScanComplianceDataProps,
 } from "@/components/compliance/compliance-header/index";
+import { cn } from "@/lib/utils";
 interface DataComplianceProps {
   scans: SelectScanComplianceDataProps["scans"];
+  className?: string;
 }
 
-export const DataCompliance = ({ scans }: DataComplianceProps) => {
+export const DataCompliance = ({ scans, className }: DataComplianceProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -36,7 +38,7 @@ export const DataCompliance = ({ scans }: DataComplianceProps) => {
   };
 
   return (
-    <div className="flex max-w-fit">
+    <div className={cn("w-full", className)}>
       <ScanSelector
         scans={scans}
         selectedScanId={selectedScanId}

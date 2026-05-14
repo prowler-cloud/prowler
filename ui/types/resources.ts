@@ -145,3 +145,24 @@ export interface ResourceApiResponse {
   included: ResourceItemProps[];
   meta: Meta;
 }
+
+export interface ResourceEventAttributes {
+  event_time: string;
+  event_name: string;
+  event_source: string;
+  actor: string;
+  actor_uid: string;
+  actor_type: string;
+  source_ip_address: string;
+  user_agent: string;
+  request_data: Record<string, unknown> | null;
+  response_data: Record<string, unknown> | null;
+  error_code: string | null;
+  error_message: string | null;
+}
+
+export interface ResourceEventProps {
+  type: "resource-events";
+  id: string;
+  attributes: ResourceEventAttributes;
+}

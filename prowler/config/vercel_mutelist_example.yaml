@@ -1,0 +1,50 @@
+### Account, Check and/or Region can be * to apply for all the cases.
+### Account == <Vercel Team ID>
+### Region == * (Vercel is a global service, region is always "global")
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Accounts, Regions, Resources and/or Tags.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Accounts:
+    "team_example123":
+      Checks:
+        "project_deployment_protection_enabled":
+          Regions:
+            - "*"
+          Resources:
+            - "prj_internal001"
+            - "prj_internal002"
+          Description: "Mute deployment protection check for internal-only projects"
+        "project_environment_*":
+          Regions:
+            - "*"
+          Resources:
+            - "prj_staging.*"
+          Description: "Mute all environment variable checks for staging projects"
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "prj_sandbox"
+          Tags:
+            - "environment=sandbox"
+          Description: "Mute all checks for sandbox project with matching tag"
+
+    "*":
+      Checks:
+        "security_waf_enabled":
+          Regions:
+            - "*"
+          Resources:
+            - "prj_static.*"
+          Description: "Mute WAF check for static-only projects across all teams"
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Tags:
+            - "prowler-ignore=true"
+          Description: "Global mute for resources tagged with prowler-ignore=true"

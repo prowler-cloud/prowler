@@ -80,6 +80,8 @@ def load_csv_files(csv_files):
                 result = result.replace("_M65", " - M65")
             if "ALIBABACLOUD" in result:
                 result = result.replace("_ALIBABACLOUD", " - ALIBABACLOUD")
+            if "ORACLECLOUD" in result:
+                result = result.replace("_ORACLECLOUD", " - ORACLECLOUD")
             results.append(result)
 
     unique_results = set(results)

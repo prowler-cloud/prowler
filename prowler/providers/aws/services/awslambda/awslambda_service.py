@@ -23,6 +23,7 @@ class Lambda(AWSService):
         self._list_tags_for_resource()
         self.__threading_call__(self._get_policy)
         self.__threading_call__(self._get_function_url_config)
+        self.__threading_call__(self._list_event_source_mappings)
 
     def _list_functions(self, regional_client):
         logger.info("Lambda - Listing Functions...")
@@ -54,7 +55,47 @@ class Lambda(AWSService):
                                 "Variables"
                             )
                             self.functions[lambda_arn].environment = lambda_environment
+                        if "KMSKeyArn" in function:
+                            self.functions[lambda_arn].kms_key_arn = function[
+                                "KMSKeyArn"
+                            ]
+                        if "Layers" in function:
+                            self.functions[lambda_arn].layers = [
+                                Layer(arn=layer["Arn"]) for layer in function["Layers"]
+                            ]
+                        dlq_arn = function.get("DeadLetterConfig", {}).get("TargetArn")
+                        if dlq_arn:
+                            self.functions[lambda_arn].dead_letter_config = (
+                                DeadLetterConfig(target_arn=dlq_arn)
+                            )
 
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} --"
+                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                f" {error}"
+            )
+
+    def _list_event_source_mappings(self, regional_client):
+        logger.info("Lambda - Listing Event Source Mappings...")
+        try:
+            paginator = regional_client.get_paginator("list_event_source_mappings")
+            for page in paginator.paginate():
+                for mapping in page.get("EventSourceMappings", []):
+                    function_arn = mapping.get("FunctionArn", "")
+                    # Normalise to unqualified ARN (strip :qualifier suffix if present)
+                    base_arn = ":".join(function_arn.split(":")[:7])
+                    if base_arn not in self.functions:
+                        continue
+                    self.functions[base_arn].event_source_mappings.append(
+                        EventSourceMapping(
+                            uuid=mapping["UUID"],
+                            event_source_arn=mapping.get("EventSourceArn", ""),
+                            state=mapping.get("State", ""),
+                            batch_size=mapping.get("BatchSize"),
+                            starting_position=mapping.get("StartingPosition"),
+                        )
+                    )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"
@@ -192,16 +233,42 @@ class URLConfig(BaseModel):
     cors_config: URLConfigCORS
 
 
+class Layer(BaseModel):
+    arn: str
+
+    @property
+    def account_id(self) -> str:
+        """Extract the account ID from the layer ARN."""
+        parts = self.arn.split(":")
+        return parts[4] if len(parts) >= 5 else ""
+
+
+class DeadLetterConfig(BaseModel):
+    target_arn: str
+
+
+class EventSourceMapping(BaseModel):
+    uuid: str
+    event_source_arn: str
+    state: str
+    batch_size: Optional[int] = None
+    starting_position: Optional[str] = None
+
+
 class Function(BaseModel):
     name: str
     arn: str
     security_groups: list
     runtime: Optional[str] = None
-    environment: dict = None
+    environment: Optional[dict] = None
     region: str
     policy: dict = {}
     code: LambdaCode = None
     url_config: URLConfig = None
     vpc_id: Optional[str] = None
     subnet_ids: Optional[set] = None
+    kms_key_arn: Optional[str] = None
+    layers: list[Layer] = []
+    dead_letter_config: Optional[DeadLetterConfig] = None
+    event_source_mappings: list[EventSourceMapping] = []
     tags: Optional[list] = []

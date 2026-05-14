@@ -9,6 +9,10 @@ const SkeletonTableRow = () => {
           <Skeleton className="size-1.5 rounded-full" />
         </div>
       </td>
+      {/* Expand chevron */}
+      <td className="px-1 py-4">
+        <Skeleton className="size-5 rounded" />
+      </td>
       {/* Checkbox */}
       <td className="px-2 py-4">
         <div className="bg-bg-input-primary border-border-input-primary size-6 rounded-sm border shadow-[0_1px_2px_0_rgba(0,0,0,0.1)]" />
@@ -24,14 +28,6 @@ const SkeletonTableRow = () => {
           <Skeleton className="h-4 w-4/5 rounded" />
         </div>
       </td>
-      {/* Resource name chip */}
-      <td className="px-3 py-4">
-        <div className="bg-bg-neutral-tertiary flex h-8 w-28 items-center gap-2 rounded-lg px-2">
-          <Skeleton className="size-4 rounded" />
-          <Skeleton className="h-3.5 w-16 rounded" />
-          <Skeleton className="ml-auto size-3.5 rounded" />
-        </div>
-      </td>
       {/* Severity */}
       <td className="px-3 py-4">
         <div className="flex items-center gap-2">
@@ -39,20 +35,16 @@ const SkeletonTableRow = () => {
           <Skeleton className="h-4 w-12 rounded" />
         </div>
       </td>
-      {/* Provider icon */}
+      {/* Provider icons */}
       <td className="px-3 py-4">
-        <Skeleton className="size-9 rounded-lg" />
-      </td>
-      {/* Service */}
-      <td className="px-3 py-4">
-        <Skeleton className="h-4 w-20 rounded" />
-      </td>
-      {/* Time */}
-      <td className="px-3 py-4">
-        <div className="space-y-1">
-          <Skeleton className="h-4 w-24 rounded" />
-          <Skeleton className="h-3 w-20 rounded" />
+        <div className="flex items-center gap-1">
+          <Skeleton className="size-7 rounded-md" />
+          <Skeleton className="size-7 rounded-md" />
         </div>
+      </td>
+      {/* Resources badge */}
+      <td className="px-3 py-4">
+        <Skeleton className="h-6 w-16 rounded-md" />
       </td>
       {/* Actions */}
       <td className="px-2 py-4">
@@ -81,6 +73,8 @@ export const SkeletonTableFindings = () => {
           <tr className="border-border-neutral-secondary border-b">
             {/* Notification - empty header */}
             <th className="w-6 py-3" />
+            {/* Expand - empty header */}
+            <th className="w-8 py-3" />
             {/* Checkbox */}
             <th className="w-10 px-2 py-3">
               <div className="bg-bg-input-primary border-border-input-primary size-6 rounded-sm border shadow-[0_1px_2px_0_rgba(0,0,0,0.1)]" />
@@ -93,25 +87,17 @@ export const SkeletonTableFindings = () => {
             <th className="w-[300px] px-3 py-3 text-left">
               <Skeleton className="h-4 w-14 rounded" />
             </th>
-            {/* Resource name */}
-            <th className="px-3 py-3 text-left">
-              <Skeleton className="h-4 w-24 rounded" />
-            </th>
             {/* Severity */}
             <th className="px-3 py-3 text-left">
               <Skeleton className="h-4 w-14 rounded" />
             </th>
-            {/* Provider */}
+            {/* Providers */}
             <th className="px-3 py-3 text-left">
-              <Skeleton className="h-4 w-14 rounded" />
+              <Skeleton className="h-4 w-16 rounded" />
             </th>
-            {/* Service */}
+            {/* Resources */}
             <th className="px-3 py-3 text-left">
-              <Skeleton className="h-4 w-12 rounded" />
-            </th>
-            {/* Time */}
-            <th className="px-3 py-3 text-left">
-              <Skeleton className="h-4 w-10 rounded" />
+              <Skeleton className="h-4 w-16 rounded" />
             </th>
             {/* Actions - empty header */}
             <th className="w-10 py-3" />

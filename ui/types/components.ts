@@ -21,6 +21,8 @@ export type SubmenuProps = {
   active?: boolean;
   icon: IconComponent;
   disabled?: boolean;
+  highlight?: boolean;
+  cloudOnly?: boolean;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
@@ -82,6 +84,7 @@ export type PermissionState =
 export const FINDING_DELTA = {
   NEW: "new",
   CHANGED: "changed",
+  NONE: "none",
 } as const;
 export type FindingDelta =
   | (typeof FINDING_DELTA)[keyof typeof FINDING_DELTA]
@@ -94,6 +97,16 @@ export const FINDING_STATUS = {
 } as const;
 export type FindingStatus =
   (typeof FINDING_STATUS)[keyof typeof FINDING_STATUS];
+
+/**
+ * Maps raw finding status values to human-readable display strings.
+ * Follows the same pattern as SEVERITY_DISPLAY_NAMES in types/severities.ts.
+ */
+export const FINDING_STATUS_DISPLAY_NAMES: Record<FindingStatus, string> = {
+  PASS: "Pass",
+  FAIL: "Fail",
+  MANUAL: "Manual",
+};
 
 export const SEVERITY = {
   INFORMATIONAL: "informational",
@@ -304,6 +317,15 @@ export type IacCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type ImageCredentials = {
+  [ProviderCredentialFields.REGISTRY_USERNAME]?: string;
+  [ProviderCredentialFields.REGISTRY_PASSWORD]?: string;
+  [ProviderCredentialFields.REGISTRY_TOKEN]?: string;
+  [ProviderCredentialFields.IMAGE_FILTER]?: string;
+  [ProviderCredentialFields.TAG_FILTER]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type OCICredentials = {
   [ProviderCredentialFields.OCI_USER]: string;
   [ProviderCredentialFields.OCI_FINGERPRINT]: string;
@@ -355,6 +377,18 @@ export type OpenStackCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type GoogleWorkspaceCredentials = {
+  [ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID]: string;
+  [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]: string;
+  [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type VercelCredentials = {
+  [ProviderCredentialFields.VERCEL_API_TOKEN]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -363,13 +397,16 @@ export type CredentialsFormSchema =
   | GCPServiceAccountKey
   | KubernetesCredentials
   | IacCredentials
+  | ImageCredentials
   | M365Credentials
   | OCICredentials
   | MongoDBAtlasCredentials
   | AlibabaCloudCredentials
   | AlibabaCloudCredentialsRole
   | CloudflareCredentials
-  | OpenStackCredentials;
+  | OpenStackCredentials
+  | GoogleWorkspaceCredentials
+  | VercelCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
@@ -423,6 +460,7 @@ export interface InvitationProps {
         manage_providers?: boolean;
         manage_integrations?: boolean;
         manage_scans?: boolean;
+        manage_alerts?: boolean;
         permission_state?: PermissionState;
       };
     };
@@ -447,6 +485,7 @@ export interface Role {
     manage_providers: boolean;
     manage_integrations: boolean;
     manage_scans: boolean;
+    manage_alerts?: boolean;
     unlimited_visibility: boolean;
     permission_state: PermissionState;
     inserted_at: string;

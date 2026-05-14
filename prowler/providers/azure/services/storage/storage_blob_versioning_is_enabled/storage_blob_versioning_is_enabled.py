@@ -6,6 +6,9 @@ class storage_blob_versioning_is_enabled(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
+            subscription_name = storage_client.subscriptions.get(
+                subscription, subscription
+            )
             for storage_account in storage_accounts:
                 if storage_account.blob_properties:
                     report = Check_Report_Azure(
@@ -16,9 +19,9 @@ class storage_blob_versioning_is_enabled(Check):
                         storage_account.blob_properties, "versioning_enabled", False
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} has blob versioning enabled."
+                        report.status_extended = f"Storage account {storage_account.name} from subscription {subscription_name} ({subscription}) has blob versioning enabled."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"Storage account {storage_account.name} from subscription {subscription} does not have blob versioning enabled."
+                        report.status_extended = f"Storage account {storage_account.name} from subscription {subscription_name} ({subscription}) does not have blob versioning enabled."
                     findings.append(report)
         return findings

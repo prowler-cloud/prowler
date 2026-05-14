@@ -1,48 +1,45 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { X } from "lucide-react";
 
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/shadcn";
 import { ResourceProps } from "@/types";
 
-import { ResourceDetail } from "./table/resource-detail";
+import { ResourceDetailContent } from "./table/resource-detail-content";
 
 interface ResourceDetailsSheetProps {
   resource: ResourceProps;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export const ResourceDetailsSheet = ({
   resource,
+  open,
+  onOpenChange,
 }: ResourceDetailsSheetProps) => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      const params = new URLSearchParams(searchParams.toString());
-      params.delete("resourceId");
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    }
-  };
-
   return (
-    <Sheet open={true} onOpenChange={handleOpenChange}>
-      <SheetContent className="minimal-scrollbar 3xl:w-1/3 h-full w-full overflow-x-hidden overflow-y-auto p-6 pt-10 outline-none md:w-1/2 md:max-w-none">
-        <SheetHeader>
-          <SheetTitle className="sr-only">Resource Details</SheetTitle>
-          <SheetDescription className="sr-only">
-            View the resource details
-          </SheetDescription>
-        </SheetHeader>
-        <ResourceDetail resourceDetails={resource} />
-      </SheetContent>
-    </Sheet>
+    <Drawer direction="right" open={open} onOpenChange={onOpenChange}>
+      <DrawerContent className="3xl:w-1/3 h-full w-full overflow-hidden p-6 outline-none md:w-1/2 md:max-w-none md:min-w-[720px]">
+        <DrawerHeader className="sr-only">
+          <DrawerTitle>Resource Details</DrawerTitle>
+          <DrawerDescription>View the resource details</DrawerDescription>
+        </DrawerHeader>
+        <DrawerClose className="ring-offset-background focus:ring-ring absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-none">
+          <X className="size-4" />
+          <span className="sr-only">Close</span>
+        </DrawerClose>
+        {open && (
+          <ResourceDetailContent key={resource.id} resourceDetails={resource} />
+        )}
+      </DrawerContent>
+    </Drawer>
   );
 };

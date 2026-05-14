@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextAuthRequest } from "next-auth";
 
 import { auth } from "@/auth.config";
 
 const publicRoutes = [
   "/sign-in",
   "/sign-up",
+  "/invitation/accept",
   // In Cloud uncomment the following lines:
   // "/reset-password",
   // "/email-verification",
@@ -16,8 +18,9 @@ const isPublicRoute = (pathname: string): boolean => {
 };
 
 // NextAuth's auth() wrapper - renamed from middleware to proxy
-export default auth((req: NextRequest & { auth: any }) => {
+export default auth((req: NextAuthRequest) => {
   const { pathname } = req.nextUrl;
+
   const user = req.auth?.user;
   const sessionError = req.auth?.error;
 
@@ -25,13 +28,13 @@ export default auth((req: NextRequest & { auth: any }) => {
   if (sessionError && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("error", sessionError);
-    signInUrl.searchParams.set("callbackUrl", pathname);
+    signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
     return NextResponse.redirect(signInUrl);
   }
 
   if (!user && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("callbackUrl", pathname);
+    signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
     return NextResponse.redirect(signInUrl);
   }
 

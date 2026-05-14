@@ -7,9 +7,9 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "microsoft.keyvault/vaults",
+  "ResourceType": "microsoft.keyvault/vaults/keys",
   "ResourceGroup": "security",
-  "Description": "**Azure Key Vault** keys configured with a **rotation policy** that includes a `Rotate` lifetime action.\n\nThe evaluation looks for lifetime actions that schedule automatic key version creation; keys without this policy are not configured for auto-rotation.",
+  "Description": "Each **Azure Key Vault** key is assessed for a **rotation policy** that includes a `Rotate` lifetime action scheduling automatic key version creation.",
   "Risk": "Without **auto-rotation**, keys may outlive policy, increasing exposure if material is leaked and weakening **confidentiality**.\n\nExpired keys without planned rollover can break decrypt/unwrap operations, impacting **availability**. Long-lived keys hinder incident response and enable prolonged misuse of stale versions.",
   "RelatedUrl": "",
   "AdditionalURLs": [

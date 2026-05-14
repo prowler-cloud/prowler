@@ -377,6 +377,50 @@ class TestCheckMetadataValidators:
         check_metadata = CheckMetadata(**valid_metadata)
         assert check_metadata.Categories == ["encryption", "logging", "secrets"]
 
+    def test_valid_vercel_plan_categories_success(self):
+        """Test Vercel plan categories are accepted using hyphen-separated names."""
+        valid_metadata = {
+            "Provider": "vercel",
+            "CheckID": "test_check",
+            "CheckTitle": "Test Check",
+            "CheckType": [],
+            "ServiceName": "test",
+            "SubServiceName": "subtest",
+            "ResourceIdTemplate": "template",
+            "Severity": "high",
+            "ResourceType": "TestResource",
+            "Description": "Test description",
+            "Risk": "Test risk",
+            "RelatedUrl": "",
+            "Remediation": {
+                "Code": {
+                    "CLI": "test command",
+                    "NativeIaC": "test native",
+                    "Other": "test other",
+                    "Terraform": "test terraform",
+                },
+                "Recommendation": {
+                    "Text": "test recommendation",
+                    "Url": "https://hub.prowler.com/check/test_check",
+                },
+            },
+            "Categories": [
+                "vercel-hobby-plan",
+                "vercel-pro-plan",
+                "vercel-enterprise-plan",
+            ],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "Test notes",
+        }
+
+        check_metadata = CheckMetadata(**valid_metadata)
+        assert check_metadata.Categories == [
+            "vercel-hobby-plan",
+            "vercel-pro-plan",
+            "vercel-enterprise-plan",
+        ]
+
     def test_valid_category_failure_non_string(self):
         """Test valid category validation fails with non-string category"""
         invalid_metadata = {
@@ -454,7 +498,7 @@ class TestCheckMetadataValidators:
         with pytest.raises(ValidationError) as exc_info:
             CheckMetadata(**invalid_metadata)
         assert (
-            "Categories can only contain lowercase letters, numbers and hyphen"
+            "Categories can only contain lowercase letters, numbers, and hyphen '-'"
             in str(exc_info.value)
         )
 
@@ -2418,3 +2462,249 @@ class TestCheck:
         msg = str(excinfo.value)
         assert "!= class name" in msg
         assert "!= file name" in msg
+
+
+class TestExternalToolProviderValidatorBypass:
+    """Validators skip strict rules for external tool providers (image, iac, llm)."""
+
+    EXTERNAL_METADATA_BASE = {
+        "Provider": "image",
+        "CheckID": "CVE-2024-1234",
+        "CheckTitle": "OpenSSL Buffer Overflow",
+        "CheckType": ["Container Image Security"],
+        "ServiceName": "container-image",
+        "SubServiceName": "",
+        "ResourceIdTemplate": "",
+        "Severity": "high",
+        "ResourceType": "container-image",
+        "ResourceGroup": "container",
+        "Description": "A buffer overflow vulnerability.",
+        "Risk": "Remote code execution.",
+        "RelatedUrl": "",
+        "Remediation": {
+            "Code": {
+                "CLI": "",
+                "NativeIaC": "",
+                "Other": "",
+                "Terraform": "",
+            },
+            "Recommendation": {
+                "Text": "Upgrade openssl",
+                "Url": "https://avd.aquasec.com/nvd/cve-2024-1234",
+            },
+        },
+        "Categories": ["vulnerability"],
+        "DependsOn": [],
+        "RelatedTo": [],
+        "Notes": "",
+    }
+
+    def test_external_provider_allows_non_hub_recommendation_url(self):
+        metadata = CheckMetadata(**self.EXTERNAL_METADATA_BASE)
+        assert (
+            metadata.Remediation.Recommendation.Url
+            == "https://avd.aquasec.com/nvd/cve-2024-1234"
+        )
+
+    def test_native_provider_rejects_non_hub_recommendation_url(self):
+        data = {
+            **self.EXTERNAL_METADATA_BASE,
+            "Provider": "azure",
+            "CheckID": "test_check",
+            "ServiceName": "test",
+            "CheckType": [],
+            "Remediation": {
+                "Code": {
+                    "CLI": "",
+                    "NativeIaC": "",
+                    "Other": "",
+                    "Terraform": "",
+                },
+                "Recommendation": {
+                    "Text": "Fix it",
+                    "Url": "https://avd.aquasec.com/nvd/cve-2024-1234",
+                },
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**data)
+        assert "Prowler Hub" in str(exc_info.value)
+
+    def test_external_provider_allows_long_description(self):
+        data = {**self.EXTERNAL_METADATA_BASE, "Description": "A" * 500}
+        metadata = CheckMetadata(**data)
+        assert len(metadata.Description) == 500
+
+    def test_native_provider_rejects_long_description(self):
+        data = {
+            **self.EXTERNAL_METADATA_BASE,
+            "Provider": "azure",
+            "CheckID": "test_check",
+            "ServiceName": "test",
+            "CheckType": [],
+            "Categories": ["encryption"],
+            "Description": "A" * 401,
+            "Remediation": {
+                "Code": {
+                    "CLI": "",
+                    "NativeIaC": "",
+                    "Other": "",
+                    "Terraform": "",
+                },
+                "Recommendation": {
+                    "Text": "",
+                    "Url": "",
+                },
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**data)
+        assert "Description must not exceed 400 characters" in str(exc_info.value)
+
+    def test_external_provider_allows_long_risk(self):
+        data = {**self.EXTERNAL_METADATA_BASE, "Risk": "R" * 500}
+        metadata = CheckMetadata(**data)
+        assert len(metadata.Risk) == 500
+
+    def test_native_provider_rejects_long_risk(self):
+        data = {
+            **self.EXTERNAL_METADATA_BASE,
+            "Provider": "azure",
+            "CheckID": "test_check",
+            "ServiceName": "test",
+            "CheckType": [],
+            "Categories": ["encryption"],
+            "Risk": "R" * 401,
+            "Remediation": {
+                "Code": {
+                    "CLI": "",
+                    "NativeIaC": "",
+                    "Other": "",
+                    "Terraform": "",
+                },
+                "Recommendation": {
+                    "Text": "",
+                    "Url": "",
+                },
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**data)
+        assert "Risk must not exceed 400 characters" in str(exc_info.value)
+
+    def test_external_provider_allows_long_check_title(self):
+        data = {**self.EXTERNAL_METADATA_BASE, "CheckTitle": "T" * 200}
+        metadata = CheckMetadata(**data)
+        assert len(metadata.CheckTitle) == 200
+
+    def test_native_provider_rejects_long_check_title(self):
+        data = {
+            **self.EXTERNAL_METADATA_BASE,
+            "Provider": "azure",
+            "CheckID": "test_check",
+            "ServiceName": "test",
+            "CheckType": [],
+            "Categories": ["encryption"],
+            "CheckTitle": "T" * 151,
+            "Remediation": {
+                "Code": {
+                    "CLI": "",
+                    "NativeIaC": "",
+                    "Other": "",
+                    "Terraform": "",
+                },
+                "Recommendation": {
+                    "Text": "",
+                    "Url": "",
+                },
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**data)
+        assert "CheckTitle must not exceed 150 characters" in str(exc_info.value)
+
+    def test_external_provider_allows_non_standard_category(self):
+        data = {**self.EXTERNAL_METADATA_BASE, "Categories": ["vulnerability"]}
+        metadata = CheckMetadata(**data)
+        assert metadata.Categories == ["vulnerability"]
+
+    def test_native_provider_rejects_non_standard_category(self):
+        data = {
+            **self.EXTERNAL_METADATA_BASE,
+            "Provider": "azure",
+            "CheckID": "test_check",
+            "ServiceName": "test",
+            "CheckType": [],
+            "Categories": ["vulnerability"],
+            "Remediation": {
+                "Code": {
+                    "CLI": "",
+                    "NativeIaC": "",
+                    "Other": "",
+                    "Terraform": "",
+                },
+                "Recommendation": {
+                    "Text": "",
+                    "Url": "",
+                },
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**data)
+        assert "Invalid category" in str(exc_info.value)
+
+    def test_external_provider_allows_ensure_prefix_in_title(self):
+        data = {
+            **self.EXTERNAL_METADATA_BASE,
+            "CheckTitle": "Ensure containers run as non-root",
+        }
+        metadata = CheckMetadata(**data)
+        assert metadata.CheckTitle == "Ensure containers run as non-root"
+
+    def test_external_provider_allows_non_empty_related_url(self):
+        data = {
+            **self.EXTERNAL_METADATA_BASE,
+            "RelatedUrl": "https://avd.aquasec.com/nvd/cve-2024-1234",
+        }
+        metadata = CheckMetadata(**data)
+        assert metadata.RelatedUrl == "https://avd.aquasec.com/nvd/cve-2024-1234"
+
+    def test_native_provider_rejects_non_empty_related_url(self):
+        data = {
+            **self.EXTERNAL_METADATA_BASE,
+            "Provider": "azure",
+            "CheckID": "test_check",
+            "ServiceName": "test",
+            "CheckType": [],
+            "Categories": ["encryption"],
+            "RelatedUrl": "https://example.com",
+            "Remediation": {
+                "Code": {
+                    "CLI": "",
+                    "NativeIaC": "",
+                    "Other": "",
+                    "Terraform": "",
+                },
+                "Recommendation": {
+                    "Text": "",
+                    "Url": "",
+                },
+            },
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            CheckMetadata(**data)
+        assert "RelatedUrl must be empty" in str(exc_info.value)
+
+    def test_all_external_providers_bypass(self):
+        for provider in ("image", "iac", "llm"):
+            data = {
+                **self.EXTERNAL_METADATA_BASE,
+                "Provider": provider,
+                "Description": "D" * 500,
+                "Risk": "R" * 500,
+                "CheckTitle": "T" * 200,
+                "Categories": ["vulnerability"],
+                "RelatedUrl": "https://example.com/vuln",
+            }
+            metadata = CheckMetadata(**data)
+            assert metadata.Provider == provider

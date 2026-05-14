@@ -169,11 +169,21 @@ DATABASES = {
 ### Broker/Backend
 
 ```python
+VALKEY_SCHEME = env("VALKEY_SCHEME", default="redis")
+VALKEY_USERNAME = env("VALKEY_USERNAME", default="")
+VALKEY_PASSWORD = env("VALKEY_PASSWORD", default="")
 VALKEY_HOST = env("VALKEY_HOST", default="valkey")
 VALKEY_PORT = env("VALKEY_PORT", default="6379")
 VALKEY_DB = env("VALKEY_DB", default="0")
 
-CELERY_BROKER_URL = f"redis://{VALKEY_HOST}:{VALKEY_PORT}/{VALKEY_DB}"
+CELERY_BROKER_URL = _build_celery_broker_url(
+    VALKEY_SCHEME,
+    VALKEY_USERNAME,
+    VALKEY_PASSWORD,
+    VALKEY_HOST,
+    VALKEY_PORT,
+    VALKEY_DB,
+)
 CELERY_RESULT_BACKEND = "django-db"  # Store results in PostgreSQL
 CELERY_TASK_TRACK_STARTED = True
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

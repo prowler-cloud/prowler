@@ -14,6 +14,15 @@ Set up authentication for Cloudflare with the [Cloudflare Authentication](/user-
 - Grant the required read-only permissions (`Account Settings:Read`, `Zone:Read`, `Zone Settings:Read`, `DNS:Read`)
 - Identify the Cloudflare Account ID to use as the provider identifier
 
+<Note>
+**Quick Setup:** Use these pre-configured links to create a token with the required permissions already selected:
+
+- [Create User API Token](https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner) — creates a User API Token (recommended).
+- [Create Account-Owned API Token](https://dash.cloudflare.com/?to=/:account/api-tokens&permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&name=Prowler%20Security%20Scanner) — creates an [account-owned token](https://developers.cloudflare.com/fundamentals/api/how-to/account-owned-token-template/), better suited for automation and CI/CD.
+
+Both links open the Cloudflare Dashboard with the four required read-only scopes (`Account Settings`, `Zone`, `Zone Settings`, `DNS`) and the name `Prowler Security Scanner` prefilled. See [Cloudflare Authentication](/user-guide/providers/cloudflare/authentication#api-token-recommended) for the equivalent manual steps.
+</Note>
+
 <CardGroup cols={2}>
   <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
     Onboard Cloudflare using Prowler Cloud
@@ -42,13 +51,13 @@ The Account ID is a 32-character hexadecimal string (e.g., `372e67954025e0ba6aaa
 ### Step 2: Open Prowler Cloud
 
 1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app).
-2. Navigate to "Configuration" > "Cloud Providers".
+2. Navigate to "Configuration" > "Providers".
 
-    ![Cloud Providers Page](/images/prowler-app/cloud-providers-page.png)
+    ![Providers Page](/images/prowler-app/cloud-providers-page.png)
 
-3. Click "Add Cloud Provider".
+3. Click "Add Provider".
 
-    ![Add a Cloud Provider](/images/prowler-app/add-cloud-provider.png)
+    ![Add a Provider](/images/prowler-app/add-cloud-provider.png)
 
 4. Select "Cloudflare".
 

@@ -62,6 +62,9 @@ VALID_CATEGORIES = frozenset(
         "e5",
         "privilege-escalation",
         "ec2-imdsv1",
+        "vercel-hobby-plan",
+        "vercel-pro-plan",
+        "vercel-enterprise-plan",
     }
 )
 
@@ -244,16 +247,20 @@ class CheckMetadata(BaseModel):
     # store the compliance later if supplied
     Compliance: Optional[list[Any]] = Field(default_factory=list)
 
+    # TODO: Remove noqa and fix cls vulture errors
     @validator("Categories", each_item=True, pre=True, always=True)
-    def valid_category(value):
+    def valid_category(cls, value, values):  # noqa: F841
         if not isinstance(value, str):
             raise ValueError("Categories must be a list of strings")
         value_lower = value.lower()
         if not re.match("^[a-z0-9-]+$", value_lower):
             raise ValueError(
-                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers and hyphen '-'"
+                f"Invalid category: {value}. Categories can only contain lowercase letters, numbers, and hyphen '-'"
             )
-        if value_lower not in VALID_CATEGORIES:
+        if (
+            value_lower not in VALID_CATEGORIES
+            and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS
+        ):
             raise ValueError(
                 f"Invalid category: '{value_lower}'. Must be one of: {', '.join(sorted(VALID_CATEGORIES))}."
             )
@@ -276,7 +283,7 @@ class CheckMetadata(BaseModel):
         return resource_type
 
     @validator("ServiceName", pre=True, always=True)
-    def validate_service_name(cls, service_name, values):
+    def validate_service_name(cls, service_name, values):  # noqa: F841
         if not service_name:
             raise ValueError("ServiceName must be a non-empty string")
 
@@ -293,7 +300,7 @@ class CheckMetadata(BaseModel):
         return service_name
 
     @validator("CheckID", pre=True, always=True)
-    def valid_check_id(cls, check_id, values):
+    def valid_check_id(cls, check_id, values):  # noqa: F841
         if not check_id:
             raise ValueError("CheckID must be a non-empty string")
 
@@ -306,34 +313,36 @@ class CheckMetadata(BaseModel):
         return check_id
 
     @validator("CheckTitle", pre=True, always=True)
-    def validate_check_title(cls, check_title):
-        if len(check_title) > 150:
-            raise ValueError(
-                f"CheckTitle must not exceed 150 characters, got {len(check_title)} characters"
-            )
-        if check_title.startswith("Ensure"):
-            raise ValueError(
-                "CheckTitle must not start with 'Ensure'. Use a descriptive title that focuses on the security state."
-            )
+    def validate_check_title(cls, check_title, values):  # noqa: F841
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            if len(check_title) > 150:
+                raise ValueError(
+                    f"CheckTitle must not exceed 150 characters, got {len(check_title)} characters"
+                )
+            if check_title.startswith("Ensure"):
+                raise ValueError(
+                    "CheckTitle must not start with 'Ensure'. Use a descriptive title that focuses on the security state."
+                )
         return check_title
 
     @validator("RelatedUrl", pre=True, always=True)
-    def validate_related_url(cls, related_url):
-        if related_url:
+    def validate_related_url(cls, related_url, values):  # noqa: F841
+        if related_url and values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
             raise ValueError("RelatedUrl must be empty. This field is deprecated.")
         return related_url
 
     @validator("Remediation")
-    def validate_recommendation_url(remediation):
-        url = remediation.Recommendation.Url
-        if url and not url.startswith("https://hub.prowler.com/"):
-            raise ValueError(
-                f"Remediation Recommendation URL must point to Prowler Hub (https://hub.prowler.com/...), got '{url}'."
-            )
+    def validate_recommendation_url(cls, remediation, values):  # noqa: F841
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            url = remediation.Recommendation.Url
+            if url and not url.startswith("https://hub.prowler.com/"):
+                raise ValueError(
+                    f"Remediation Recommendation URL must point to Prowler Hub (https://hub.prowler.com/...), got '{url}'."
+                )
         return remediation
 
     @validator("CheckType", pre=True, always=True)
-    def validate_check_type(cls, check_type, values):
+    def validate_check_type(cls, check_type, values):  # noqa: F841
         provider = values.get("Provider", "").lower()
 
         # Non-AWS providers must have an empty CheckType list
@@ -362,23 +371,25 @@ class CheckMetadata(BaseModel):
         return check_type
 
     @validator("Description", pre=True, always=True)
-    def validate_description(cls, description):
-        if len(description) > 400:
-            raise ValueError(
-                f"Description must not exceed 400 characters, got {len(description)} characters"
-            )
+    def validate_description(cls, description, values):  # noqa: F841
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            if len(description) > 400:
+                raise ValueError(
+                    f"Description must not exceed 400 characters, got {len(description)} characters"
+                )
         return description
 
     @validator("Risk", pre=True, always=True)
-    def validate_risk(cls, risk):
-        if len(risk) > 400:
-            raise ValueError(
-                f"Risk must not exceed 400 characters, got {len(risk)} characters"
-            )
+    def validate_risk(cls, risk, values):  # noqa: F841
+        if values.get("Provider") not in EXTERNAL_TOOL_PROVIDERS:
+            if len(risk) > 400:
+                raise ValueError(
+                    f"Risk must not exceed 400 characters, got {len(risk)} characters"
+                )
         return risk
 
     @validator("ResourceGroup", pre=True, always=True)
-    def validate_resource_group(cls, resource_group):
+    def validate_resource_group(cls, resource_group):  # noqa: F841
         if resource_group and resource_group not in VALID_RESOURCE_GROUPS:
             raise ValueError(
                 f"Invalid ResourceGroup: '{resource_group}'. Must be one of: {', '.join(sorted(VALID_RESOURCE_GROUPS))} or empty string."
@@ -386,7 +397,7 @@ class CheckMetadata(BaseModel):
         return resource_group
 
     @validator("AdditionalURLs", pre=True, always=True)
-    def validate_additional_urls(cls, additional_urls):
+    def validate_additional_urls(cls, additional_urls):  # noqa: F841
         if not isinstance(additional_urls, list):
             raise ValueError("AdditionalURLs must be a list")
 
@@ -923,6 +934,41 @@ class CheckReportGithub(Check_Report):
 
 
 @dataclass
+class CheckReportOkta(Check_Report):
+    """Contains the Okta Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    org_domain: str
+    region: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        org_domain: str = None,
+        region: str = "global",
+    ) -> None:
+        """Initialize the Okta Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            org_domain: The Okta organization domain related with the finding.
+            region: Always "global" — Okta has no regional concept.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.org_domain = org_domain or getattr(resource, "org_domain", "")
+        self.region = region
+
+
+@dataclass
 class CheckReportGoogleWorkspace(Check_Report):
     """Contains the Google Workspace Check's finding information."""
 
@@ -1087,15 +1133,10 @@ class CheckReportIAC(Check_Report):
 
         self.resource = finding
         self.resource_name = file_path
-        self.resource_line_range = (
-            (
-                str(finding.get("CauseMetadata", {}).get("StartLine", ""))
-                + ":"
-                + str(finding.get("CauseMetadata", {}).get("EndLine", ""))
-            )
-            if finding.get("CauseMetadata", {}).get("StartLine", "")
-            else ""
-        )
+        cause = finding.get("CauseMetadata", {})
+        start = cause.get("StartLine") or finding.get("StartLine")
+        end = cause.get("EndLine") or finding.get("EndLine")
+        self.resource_line_range = f"{start}:{end}" if start else ""
 
 
 @dataclass
@@ -1231,6 +1272,50 @@ class CheckReportMongoDBAtlas(Check_Report):
         self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
         self.project_id = getattr(resource, "project_id", "")
         self.location = getattr(resource, "location", self.project_id)
+
+
+@dataclass
+class CheckReportVercel(Check_Report):
+    """Contains the Vercel Check's finding information.
+
+    Vercel is a global platform - team_id is the scoping context.
+    All resource-related attributes are derived from the resource object.
+    """
+
+    resource_name: str
+    resource_id: str
+    team_id: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        team_id: str = None,
+    ) -> None:
+        """Initialize the Vercel Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary
+            resource: The Vercel resource being checked
+            resource_name: Override for resource name
+            resource_id: Override for resource ID
+            team_id: Override for team ID
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+        self.team_id = team_id or getattr(resource, "team_id", "")
+
+    @property
+    def region(self) -> str:
+        """Vercel is global - return 'global'."""
+        return "global"
 
 
 # Testing Pending

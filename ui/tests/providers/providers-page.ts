@@ -59,6 +59,28 @@ export interface AlibabaCloudProviderData {
   alias?: string;
 }
 
+// Google Workspace provider data
+export interface GoogleWorkspaceProviderData {
+  customerId: string;
+  alias?: string;
+}
+
+// Google Workspace credential options
+export const GOOGLEWORKSPACE_CREDENTIAL_OPTIONS = {
+  GOOGLEWORKSPACE_SERVICE_ACCOUNT: "service_account",
+} as const;
+
+// Google Workspace credential type
+type GoogleWorkspaceCredentialType =
+  (typeof GOOGLEWORKSPACE_CREDENTIAL_OPTIONS)[keyof typeof GOOGLEWORKSPACE_CREDENTIAL_OPTIONS];
+
+// Google Workspace provider credential
+export interface GoogleWorkspaceProviderCredential {
+  type: GoogleWorkspaceCredentialType;
+  serviceAccountJson: string;
+  delegatedUser: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -210,7 +232,7 @@ export class ProvidersPage extends BasePage {
   // Alias input
   readonly aliasInput: Locator;
 
-  // Button to add a new cloud provider
+  // Button to add a new provider
   readonly addProviderButton: Locator;
   readonly providersTable: Locator;
 
@@ -223,6 +245,12 @@ export class ProvidersPage extends BasePage {
   readonly githubProviderRadio: Locator;
   readonly ociProviderRadio: Locator;
   readonly alibabacloudProviderRadio: Locator;
+  readonly googleworkspaceProviderRadio: Locator;
+
+  // Google Workspace provider form elements
+  readonly googleworkspaceCustomerIdInput: Locator;
+  readonly googleworkspaceServiceAccountJsonInput: Locator;
+  readonly googleworkspaceDelegatedUserInput: Locator;
 
   // AWS provider form elements
   readonly accountIdInput: Locator;
@@ -305,15 +333,15 @@ export class ProvidersPage extends BasePage {
       .getByRole("dialog")
       .filter({
         has: page.getByRole("heading", {
-          name: /Adding A Cloud Provider|Update Provider Credentials/i,
+          name: /Adding A Provider|Update Provider Credentials/i,
         }),
       })
       .first();
     this.wizardTitle = page.getByRole("heading", {
-      name: /Adding A Cloud Provider|Update Provider Credentials/i,
+      name: /Adding A Provider|Update Provider Credentials/i,
     });
 
-    // Button to add a new cloud provider
+    // Button to add a new provider
     this.addProviderButton = page
       .getByRole("button", {
         name: "Add Provider",
@@ -329,7 +357,7 @@ export class ProvidersPage extends BasePage {
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
 
-    // Option buttons to select the type of cloud provider (listbox with options)
+    // Option buttons to select the type of provider (listbox with options)
     this.awsProviderRadio = page.getByRole("option", {
       name: /Amazon Web Services/i,
     });
@@ -447,6 +475,20 @@ export class ProvidersPage extends BasePage {
     });
     this.alibabacloudRoleCredentialsRadio = page.getByRole("radio", {
       name: /Connect assuming RAM Role/i,
+    });
+
+    // Google Workspace
+    this.googleworkspaceProviderRadio = page.getByRole("option", {
+      name: /Google Workspace/i,
+    });
+    this.googleworkspaceCustomerIdInput = page.getByRole("textbox", {
+      name: "Customer ID",
+    });
+    this.googleworkspaceServiceAccountJsonInput = page.getByRole("textbox", {
+      name: /Service Account JSON/i,
+    });
+    this.googleworkspaceDelegatedUserInput = page.getByRole("textbox", {
+      name: /Delegated User Email/i,
     });
 
     // Alias input
@@ -902,9 +944,7 @@ export class ProvidersPage extends BasePage {
     const secretAccessKey =
       credentials.secretAccessKey || process.env.E2E_AWS_PROVIDER_SECRET_KEY;
 
-    const shouldFillStaticKeys = Boolean(
-      accessKeyId || secretAccessKey,
-    );
+    const shouldFillStaticKeys = Boolean(accessKeyId || secretAccessKey);
     if (shouldFillStaticKeys) {
       const accessKeyIsVisible = await accessKeyInputInWizard
         .isVisible()
@@ -1208,6 +1248,41 @@ export class ProvidersPage extends BasePage {
     await expect(this.alibabacloudAccessKeySecretInput).toBeVisible();
   }
 
+  async selectGoogleWorkspaceProvider(): Promise<void> {
+    await this.selectProviderRadio(this.googleworkspaceProviderRadio);
+  }
+
+  async fillGoogleWorkspaceProviderDetails(
+    data: GoogleWorkspaceProviderData,
+  ): Promise<void> {
+    await this.googleworkspaceCustomerIdInput.fill(data.customerId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillGoogleWorkspaceCredentials(
+    credentials: GoogleWorkspaceProviderCredential,
+  ): Promise<void> {
+    if (credentials.serviceAccountJson) {
+      await this.googleworkspaceServiceAccountJsonInput.fill(
+        credentials.serviceAccountJson,
+      );
+    }
+    if (credentials.delegatedUser) {
+      await this.googleworkspaceDelegatedUserInput.fill(
+        credentials.delegatedUser,
+      );
+    }
+  }
+
+  async verifyGoogleWorkspaceCredentialsPageLoaded(): Promise<void> {
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.googleworkspaceServiceAccountJsonInput).toBeVisible();
+    await expect(this.googleworkspaceDelegatedUserInput).toBeVisible();
+  }
+
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
@@ -1228,6 +1303,7 @@ export class ProvidersPage extends BasePage {
     await expect(this.kubernetesProviderRadio).toBeVisible();
     await expect(this.githubProviderRadio).toBeVisible();
     await expect(this.alibabacloudProviderRadio).toBeVisible();
+    await expect(this.googleworkspaceProviderRadio).toBeVisible();
   }
 
   async verifyCredentialsPageLoaded(): Promise<void> {

@@ -50,9 +50,9 @@ def init_parser(self):
         "--scanner",
         dest="scanners",
         nargs="+",
-        default=["vuln", "secret"],
+        default=["vuln", "secret", "misconfig"],
         choices=SCANNERS_CHOICES,
-        help="Trivy scanners to use. Default: vuln, secret. Available: vuln, secret, misconfig, license",
+        help="Trivy scanners to use. Default: vuln, secret, misconfig. Available: vuln, secret, misconfig, license",
     )
 
     scan_config_group.add_argument(

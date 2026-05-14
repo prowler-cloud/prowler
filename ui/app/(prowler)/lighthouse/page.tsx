@@ -10,7 +10,15 @@ import { ContentLayout } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
-export default async function AIChatbot() {
+export default async function AIChatbot({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const initialPrompt =
+    typeof params.prompt === "string" ? params.prompt : undefined;
+
   const hasConfig = await isLighthouseConfigured();
 
   if (!hasConfig) {
@@ -33,6 +41,7 @@ export default async function AIChatbot() {
           providers={providersConfig.providers}
           defaultProviderId={providersConfig.defaultProviderId}
           defaultModelId={providersConfig.defaultModelId}
+          initialPrompt={initialPrompt}
         />
       </div>
     </ContentLayout>

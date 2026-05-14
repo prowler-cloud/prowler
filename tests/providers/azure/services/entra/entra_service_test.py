@@ -147,6 +147,7 @@ class Test_Entra_Service:
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].id == "id-1"
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].name == "User 1"
         assert entra_client.users[DOMAIN]["user-1@tenant1.es"].is_mfa_capable is False
+        assert entra_client.users[DOMAIN]["user-1@tenant1.es"].account_enabled is True
 
     def test_get_authorization_policy(self):
         entra_client = Entra(set_mocked_azure_provider())
@@ -229,8 +230,8 @@ def test_azure_entra__get_users_handles_pagination():
     entra_service = Entra.__new__(Entra)
 
     users_page_one = [
-        SimpleNamespace(id="user-1", display_name="User 1"),
-        SimpleNamespace(id="user-2", display_name="User 2"),
+        SimpleNamespace(id="user-1", display_name="User 1", account_enabled=False),
+        SimpleNamespace(id="user-2", display_name="User 2", account_enabled=True),
     ]
     users_page_two = [
         SimpleNamespace(id="user-3", display_name="User 3"),
@@ -288,9 +289,18 @@ def test_azure_entra__get_users_handles_pagination():
 
     assert len(users["tenant-1"]) == 3
     assert users_builder.get.await_count == 1
+    request_configuration = users_builder.get.await_args.kwargs["request_configuration"]
+    assert request_configuration.query_parameters.select == [
+        "id",
+        "displayName",
+        "accountEnabled",
+    ]
     with_url_mock.assert_called_once_with("next-link")
     registration_details_builder.get.assert_awaited()
     registration_details_builder.with_url.assert_not_called()
     assert users["tenant-1"]["user-1"].is_mfa_capable is True
+    assert users["tenant-1"]["user-1"].account_enabled is False
     assert users["tenant-1"]["user-2"].is_mfa_capable is True
+    assert users["tenant-1"]["user-2"].account_enabled is True
     assert users["tenant-1"]["user-3"].is_mfa_capable is False
+    assert users["tenant-1"]["user-3"].account_enabled is True

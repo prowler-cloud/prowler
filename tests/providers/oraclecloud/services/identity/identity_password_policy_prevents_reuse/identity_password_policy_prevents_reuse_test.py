@@ -1,5 +1,10 @@
+from datetime import datetime, timezone
 from unittest import mock
 
+from prowler.providers.oraclecloud.services.identity.identity_service import (
+    DomainPasswordPolicy,
+    IdentityDomain,
+)
 from tests.providers.oraclecloud.oci_fixtures import (
     OCI_COMPARTMENT_ID,
     OCI_REGION,
@@ -7,36 +12,34 @@ from tests.providers.oraclecloud.oci_fixtures import (
     set_mocked_oraclecloud_provider,
 )
 
+DOMAIN_ID = "ocid1.domain.oc1..aaaaaaaexample"
+DOMAIN_NAME = "Default"
+DOMAIN_URL = "https://idcs-example.identity.oraclecloud.com"
+POLICY_ID = "ocid1.passwordpolicy.oc1..aaaaaaaexample"
+POLICY_NAME = "CustomPasswordPolicy"
+
+
+def _make_domain(password_policies=None):
+    return IdentityDomain(
+        id=DOMAIN_ID,
+        display_name=DOMAIN_NAME,
+        description="Default identity domain",
+        url=DOMAIN_URL,
+        home_region=OCI_REGION,
+        compartment_id=OCI_COMPARTMENT_ID,
+        lifecycle_state="ACTIVE",
+        time_created=datetime.now(timezone.utc),
+        region=OCI_REGION,
+        password_policies=password_policies or [],
+    )
+
 
 class Test_identity_password_policy_prevents_reuse:
-    def test_no_resources(self):
-        """identity_password_policy_prevents_reuse: No resources to check"""
+    def test_no_domains(self):
+        """No Identity Domains → MANUAL finding."""
         identity_client = mock.MagicMock()
-        identity_client.audited_compartments = {OCI_COMPARTMENT_ID: mock.MagicMock()}
         identity_client.audited_tenancy = OCI_TENANCY_ID
-
-        # Mock empty collections
-        identity_client.rules = []
-        identity_client.topics = []
-        identity_client.subscriptions = []
-        identity_client.users = []
-        identity_client.groups = []
-        identity_client.policies = []
-        identity_client.compartments = []
-        identity_client.instances = []
-        identity_client.volumes = []
-        identity_client.boot_volumes = []
-        identity_client.buckets = []
-        identity_client.keys = []
-        identity_client.file_systems = []
-        identity_client.databases = []
-        identity_client.security_lists = []
-        identity_client.security_groups = []
-        identity_client.subnets = []
-        identity_client.vcns = []
-        identity_client.configuration = None
-        identity_client.active_non_root_compartments = []
-        identity_client.password_policy = None
+        identity_client.domains = []
 
         with (
             mock.patch(
@@ -55,134 +58,29 @@ class Test_identity_password_policy_prevents_reuse:
             check = identity_password_policy_prevents_reuse()
             result = check.execute()
 
-            # Verify result is a list (empty or with findings)
-            assert isinstance(result, list)
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
 
-    def test_resource_compliant(self):
-        """identity_password_policy_prevents_reuse: Resource passes the check (PASS)"""
+    def test_policy_prevents_reuse_24(self):
+        """Password history >= 24 → PASS."""
         identity_client = mock.MagicMock()
-        identity_client.audited_compartments = {OCI_COMPARTMENT_ID: mock.MagicMock()}
         identity_client.audited_tenancy = OCI_TENANCY_ID
-
-        # Mock a compliant resource
-        resource = mock.MagicMock()
-        resource.id = "ocid1.resource.oc1.iad.aaaaaaaexample"
-        resource.name = "compliant-resource"
-        resource.region = OCI_REGION
-        resource.compartment_id = OCI_COMPARTMENT_ID
-        resource.lifecycle_state = "ACTIVE"
-        resource.tags = {"Environment": "Production"}
-
-        # Set attributes that make the resource compliant
-        resource.versioning = "Enabled"
-        resource.is_auto_rotation_enabled = True
-        resource.rotation_interval_in_days = 90
-        resource.public_access_type = "NoPublicAccess"
-        resource.logging_enabled = True
-        resource.kms_key_id = "ocid1.key.oc1.iad.aaaaaaaexample"
-        resource.in_transit_encryption = "ENABLED"
-        resource.is_secure_boot_enabled = True
-        resource.legacy_endpoint_disabled = True
-        resource.is_legacy_imds_endpoint_disabled = True
-
-        # Mock client with compliant resource
-        identity_client.buckets = [resource]
-        identity_client.keys = [resource]
-        identity_client.volumes = [resource]
-        identity_client.boot_volumes = [resource]
-        identity_client.instances = [resource]
-        identity_client.file_systems = [resource]
-        identity_client.databases = [resource]
-        identity_client.security_lists = []
-        identity_client.security_groups = []
-        identity_client.rules = []
-        identity_client.configuration = resource
-        identity_client.users = []
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_oraclecloud_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.oraclecloud.services.identity.identity_password_policy_prevents_reuse.identity_password_policy_prevents_reuse.identity_client",
-                new=identity_client,
-            ),
-        ):
-            from prowler.providers.oraclecloud.services.identity.identity_password_policy_prevents_reuse.identity_password_policy_prevents_reuse import (
-                identity_password_policy_prevents_reuse,
-            )
-
-            check = identity_password_policy_prevents_reuse()
-            result = check.execute()
-
-            assert isinstance(result, list)
-
-            # If results exist, verify PASS findings
-            if len(result) > 0:
-                # Find PASS results
-                pass_results = [r for r in result if r.status == "PASS"]
-
-                if pass_results:
-                    # Detailed assertions on first PASS result
-                    assert pass_results[0].status == "PASS"
-                    assert pass_results[0].status_extended is not None
-                    assert len(pass_results[0].status_extended) > 0
-
-                    # Verify resource identification
-                    assert pass_results[0].resource_id is not None
-                    assert pass_results[0].resource_name is not None
-                    assert pass_results[0].region is not None
-                    assert pass_results[0].compartment_id is not None
-
-                    # Verify metadata
-                    assert pass_results[0].check_metadata.Provider == "oraclecloud"
-                    assert (
-                        pass_results[0].check_metadata.CheckID
-                        == "identity_password_policy_prevents_reuse"
+        identity_client.domains = [
+            _make_domain(
+                [
+                    DomainPasswordPolicy(
+                        id=POLICY_ID,
+                        name=POLICY_NAME,
+                        description="Custom policy",
+                        min_length=14,
+                        password_expires_after=90,
+                        num_passwords_in_history=24,
+                        password_expire_warning=7,
+                        min_password_age=1,
                     )
-                    assert pass_results[0].check_metadata.ServiceName == "identity"
-
-    def test_resource_non_compliant(self):
-        """identity_password_policy_prevents_reuse: Resource fails the check (FAIL)"""
-        identity_client = mock.MagicMock()
-        identity_client.audited_compartments = {OCI_COMPARTMENT_ID: mock.MagicMock()}
-        identity_client.audited_tenancy = OCI_TENANCY_ID
-
-        # Mock a non-compliant resource
-        resource = mock.MagicMock()
-        resource.id = "ocid1.resource.oc1.iad.bbbbbbbexample"
-        resource.name = "non-compliant-resource"
-        resource.region = OCI_REGION
-        resource.compartment_id = OCI_COMPARTMENT_ID
-        resource.lifecycle_state = "ACTIVE"
-        resource.tags = {"Environment": "Development"}
-
-        # Set attributes that make the resource non-compliant
-        resource.versioning = "Disabled"
-        resource.is_auto_rotation_enabled = False
-        resource.rotation_interval_in_days = None
-        resource.public_access_type = "ObjectRead"
-        resource.logging_enabled = False
-        resource.kms_key_id = None
-        resource.in_transit_encryption = "DISABLED"
-        resource.is_secure_boot_enabled = False
-        resource.legacy_endpoint_disabled = False
-        resource.is_legacy_imds_endpoint_disabled = False
-
-        # Mock client with non-compliant resource
-        identity_client.buckets = [resource]
-        identity_client.keys = [resource]
-        identity_client.volumes = [resource]
-        identity_client.boot_volumes = [resource]
-        identity_client.instances = [resource]
-        identity_client.file_systems = [resource]
-        identity_client.databases = [resource]
-        identity_client.security_lists = []
-        identity_client.security_groups = []
-        identity_client.rules = []
-        identity_client.configuration = resource
-        identity_client.users = []
+                ]
+            )
+        ]
 
         with (
             mock.patch(
@@ -201,29 +99,165 @@ class Test_identity_password_policy_prevents_reuse:
             check = identity_password_policy_prevents_reuse()
             result = check.execute()
 
-            assert isinstance(result, list)
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "24 passwords" in result[0].status_extended
+            assert result[0].resource_id == POLICY_ID
 
-            # Verify FAIL findings exist
-            if len(result) > 0:
-                # Find FAIL results
-                fail_results = [r for r in result if r.status == "FAIL"]
-
-                if fail_results:
-                    # Detailed assertions on first FAIL result
-                    assert fail_results[0].status == "FAIL"
-                    assert fail_results[0].status_extended is not None
-                    assert len(fail_results[0].status_extended) > 0
-
-                    # Verify resource identification
-                    assert fail_results[0].resource_id is not None
-                    assert fail_results[0].resource_name is not None
-                    assert fail_results[0].region is not None
-                    assert fail_results[0].compartment_id is not None
-
-                    # Verify metadata
-                    assert fail_results[0].check_metadata.Provider == "oraclecloud"
-                    assert (
-                        fail_results[0].check_metadata.CheckID
-                        == "identity_password_policy_prevents_reuse"
+    def test_policy_insufficient_history(self):
+        """Password history < 24 → FAIL."""
+        identity_client = mock.MagicMock()
+        identity_client.audited_tenancy = OCI_TENANCY_ID
+        identity_client.domains = [
+            _make_domain(
+                [
+                    DomainPasswordPolicy(
+                        id=POLICY_ID,
+                        name=POLICY_NAME,
+                        description="Custom policy",
+                        min_length=14,
+                        password_expires_after=90,
+                        num_passwords_in_history=5,
+                        password_expire_warning=7,
+                        min_password_age=1,
                     )
-                    assert fail_results[0].check_metadata.ServiceName == "identity"
+                ]
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_oraclecloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.oraclecloud.services.identity.identity_password_policy_prevents_reuse.identity_password_policy_prevents_reuse.identity_client",
+                new=identity_client,
+            ),
+        ):
+            from prowler.providers.oraclecloud.services.identity.identity_password_policy_prevents_reuse.identity_password_policy_prevents_reuse import (
+                identity_password_policy_prevents_reuse,
+            )
+
+            check = identity_password_policy_prevents_reuse()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "5 passwords" in result[0].status_extended
+
+    def test_policy_no_history_configured(self):
+        """No password history configured → FAIL."""
+        identity_client = mock.MagicMock()
+        identity_client.audited_tenancy = OCI_TENANCY_ID
+        identity_client.domains = [
+            _make_domain(
+                [
+                    DomainPasswordPolicy(
+                        id=POLICY_ID,
+                        name=POLICY_NAME,
+                        description="Custom policy",
+                        min_length=14,
+                        password_expires_after=90,
+                        num_passwords_in_history=None,
+                        password_expire_warning=7,
+                        min_password_age=1,
+                    )
+                ]
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_oraclecloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.oraclecloud.services.identity.identity_password_policy_prevents_reuse.identity_password_policy_prevents_reuse.identity_client",
+                new=identity_client,
+            ),
+        ):
+            from prowler.providers.oraclecloud.services.identity.identity_password_policy_prevents_reuse.identity_password_policy_prevents_reuse import (
+                identity_password_policy_prevents_reuse,
+            )
+
+            check = identity_password_policy_prevents_reuse()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "does not have password history" in result[0].status_extended
+
+    def test_domain_no_policies(self):
+        """Domain with no password policies → FAIL."""
+        identity_client = mock.MagicMock()
+        identity_client.audited_tenancy = OCI_TENANCY_ID
+        identity_client.domains = [_make_domain([])]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_oraclecloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.oraclecloud.services.identity.identity_password_policy_prevents_reuse.identity_password_policy_prevents_reuse.identity_client",
+                new=identity_client,
+            ),
+        ):
+            from prowler.providers.oraclecloud.services.identity.identity_password_policy_prevents_reuse.identity_password_policy_prevents_reuse import (
+                identity_password_policy_prevents_reuse,
+            )
+
+            check = identity_password_policy_prevents_reuse()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "no password policy configured" in result[0].status_extended
+
+    def test_system_managed_policies_excluded(self):
+        """System-managed policies should not appear in domain.password_policies.
+
+        This is a regression test: SimplePasswordPolicy and StandardPasswordPolicy
+        are filtered at the service layer, so checks never see them.
+        """
+        identity_client = mock.MagicMock()
+        identity_client.audited_tenancy = OCI_TENANCY_ID
+        identity_client.domains = [
+            _make_domain(
+                [
+                    DomainPasswordPolicy(
+                        id=POLICY_ID,
+                        name=POLICY_NAME,
+                        description="Custom policy",
+                        min_length=14,
+                        password_expires_after=90,
+                        num_passwords_in_history=24,
+                        password_expire_warning=7,
+                        min_password_age=1,
+                    )
+                ]
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_oraclecloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.oraclecloud.services.identity.identity_password_policy_prevents_reuse.identity_password_policy_prevents_reuse.identity_client",
+                new=identity_client,
+            ),
+        ):
+            from prowler.providers.oraclecloud.services.identity.identity_password_policy_prevents_reuse.identity_password_policy_prevents_reuse import (
+                identity_password_policy_prevents_reuse,
+            )
+
+            check = identity_password_policy_prevents_reuse()
+            result = check.execute()
+
+            # Only 1 finding for the custom policy, none for system-managed
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].resource_id == POLICY_ID

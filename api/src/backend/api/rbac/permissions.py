@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Optional
 
 from django.db.models import QuerySet
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission
 
 from api.db_router import MainRouter
@@ -29,8 +29,17 @@ class HasPermissions(BasePermission):
         if not required_permissions:
             return True
 
+        tenant_id = getattr(request, "tenant_id", None)
+        if not tenant_id:
+            tenant_id = request.auth.get("tenant_id") if request.auth else None
+        if not tenant_id:
+            return False
+
         user_roles = (
-            User.objects.using(MainRouter.admin_db).get(id=request.user.id).roles.all()
+            User.objects.using(MainRouter.admin_db)
+            .get(id=request.user.id)
+            .roles.using(MainRouter.admin_db)
+            .filter(tenant_id=tenant_id)
         )
         if not user_roles:
             return False
@@ -42,14 +51,17 @@ class HasPermissions(BasePermission):
         return True
 
 
-def get_role(user: User) -> Optional[Role]:
+def get_role(user: User, tenant_id: str) -> Role:
     """
-    Retrieve the first role assigned to the given user.
+    Retrieve the role assigned to the given user in the specified tenant.
 
-    Returns:
-        The user's first Role instance if the user has any roles, otherwise None.
+    Raises:
+        PermissionDenied: If the user has no role in the given tenant.
     """
-    return user.roles.first()
+    role = user.roles.using(MainRouter.admin_db).filter(tenant_id=tenant_id).first()
+    if role is None:
+        raise PermissionDenied("User has no role in this tenant.")
+    return role
 
 
 def get_providers(role: Role) -> QuerySet[Provider]:

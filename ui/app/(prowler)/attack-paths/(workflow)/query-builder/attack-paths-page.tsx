@@ -1,29 +1,32 @@
 "use client";
 
-import { ArrowLeft, Info, Maximize2, X } from "lucide-react";
+import { ArrowLeft, Info, Maximize2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
 import {
+  buildAttackPathQueries,
+  executeCustomQuery,
   executeQuery,
   getAttackPathScans,
   getAvailableQueries,
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
+import { FindingDetailDrawer } from "@/components/findings/table";
+import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
   Button,
-  Card,
-  CardContent,
 } from "@/components/shadcn";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -35,6 +38,7 @@ import type {
   AttackPathScan,
   GraphNode,
 } from "@/types/attack-paths";
+import { ATTACK_PATH_QUERY_IDS, SCAN_STATES } from "@/types/attack-paths";
 
 import {
   AttackPathGraph,
@@ -42,15 +46,16 @@ import {
   GraphControls,
   GraphLegend,
   GraphLoading,
-  NodeDetailContent,
+  QueryDescription,
+  QueryExecutionError,
   QueryParametersForm,
   QuerySelector,
   ScanListTable,
 } from "./_components";
-import type { AttackPathGraphRef } from "./_components/graph/attack-path-graph";
+import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsSVG, formatNodeLabel } from "./_lib";
+import { exportGraphAsPNG } from "./_lib";
 
 /**
  * Attack Paths
@@ -60,6 +65,7 @@ export default function AttackPathsPage() {
   const searchParams = useSearchParams();
   const scanId = searchParams.get("scanId");
   const graphState = useGraphState();
+  const finding = useFindingDetails();
   const { toast } = useToast();
 
   const [scansLoading, setScansLoading] = useState(true);
@@ -67,10 +73,10 @@ export default function AttackPathsPage() {
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-  const graphRef = useRef<AttackPathGraphRef>(null);
-  const fullscreenGraphRef = useRef<AttackPathGraphRef>(null);
+  const graphRef = useRef<GraphHandle>(null);
+  const fullscreenGraphRef = useRef<GraphHandle>(null);
+  const findingNavigationInFlightRef = useRef(false);
   const hasResetRef = useRef(false);
-  const nodeDetailsRef = useRef<HTMLDivElement>(null);
   const graphContainerRef = useRef<HTMLDivElement>(null);
 
   const [queries, setQueries] = useState<AttackPathQuery[]>([]);
@@ -85,6 +91,11 @@ export default function AttackPathsPage() {
       graphState.resetGraph();
     }
   }, [graphState]);
+
+  // Reset graph state when scan changes
+  useEffect(() => {
+    graphState.resetGraph();
+  }, [scanId]); // eslint-disable-line react-hooks/exhaustive-deps -- reset on scanId change only
 
   // Load available scans on mount
   useEffect(() => {
@@ -111,9 +122,16 @@ export default function AttackPathsPage() {
   // Check if there's an executing scan for auto-refresh
   const hasExecutingScan = scans.some(
     (scan) =>
-      scan.attributes.state === "executing" ||
-      scan.attributes.state === "scheduled",
+      scan.attributes.state === SCAN_STATES.EXECUTING ||
+      scan.attributes.state === SCAN_STATES.SCHEDULED,
   );
+
+  // Detect if the selected scan is showing data from a previous cycle
+  const selectedScan = scans.find((scan) => scan.id === scanId);
+  const isViewingPreviousCycleData =
+    selectedScan &&
+    selectedScan.attributes.graph_data_ready &&
+    selectedScan.attributes.state !== SCAN_STATES.COMPLETED;
 
   // Callback to refresh scans (used by AutoRefresh component)
   const refreshScans = async () => {
@@ -139,10 +157,16 @@ export default function AttackPathsPage() {
       setQueriesLoading(true);
       try {
         const queriesData = await getAvailableQueries(scanId);
-        if (queriesData?.data) {
-          setQueries(queriesData.data);
+
+        const availableQueries = buildAttackPathQueries(
+          queriesData?.data ?? [],
+        );
+
+        if (availableQueries.length > 0) {
+          setQueries(availableQueries);
           setQueriesError(null);
         } else {
+          setQueries([]);
           setQueriesError("Failed to load available queries");
           toast({
             title: "Error",
@@ -166,10 +190,6 @@ export default function AttackPathsPage() {
 
     loadQueries();
   }, [scanId, toast]);
-
-  const handleQueryChange = (queryId: string) => {
-    queryBuilder.handleQueryChange(queryId);
-  };
 
   const showErrorToast = (title: string, description: string) => {
     toast({
@@ -199,15 +219,12 @@ export default function AttackPathsPage() {
     graphState.setError(null);
 
     try {
-      const parameters = queryBuilder.getQueryParameters() as Record<
-        string,
-        string | number | boolean
-      >;
-      const result = await executeQuery(
-        scanId,
-        queryBuilder.selectedQuery,
-        parameters,
-      );
+      const parameters = queryBuilder.getQueryParameters();
+      const isCustomQuery =
+        queryBuilder.selectedQuery === ATTACK_PATH_QUERY_IDS.CUSTOM;
+      const result = isCustomQuery
+        ? await executeCustomQuery(scanId, String(parameters?.query ?? ""))
+        : await executeQuery(scanId, queryBuilder.selectedQuery, parameters);
 
       if (result && "error" in result) {
         const apiError = result as AttackPathQueryError;
@@ -270,21 +287,39 @@ export default function AttackPathsPage() {
   };
 
   const handleNodeClick = (node: GraphNode) => {
-    // Enter filtered view showing only paths containing this node
-    graphState.enterFilteredView(node.id);
-
-    // For findings, also scroll to the details section
     const isFinding = node.labels.some((label) =>
       label.toLowerCase().includes("finding"),
     );
 
     if (isFinding) {
-      setTimeout(() => {
-        nodeDetailsRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }, 100);
+      if (findingNavigationInFlightRef.current) {
+        return;
+      }
+
+      findingNavigationInFlightRef.current = true;
+      // Findings skip the intermediate node-details modal. The finding drawer
+      // is the useful destination, so open it directly from the graph click.
+      graphState.enterFilteredView(node.id);
+      // enterFilteredView stores the filtered node as selected so the graph can
+      // highlight it. Clear the selection right after for findings so the node
+      // details modal does not open before the finding drawer.
+      graphState.selectNode(null);
+      void handleViewFinding(String(node.properties?.id || node.id));
+      return;
+    }
+
+    const sourceData = graphState.fullData || graphState.data;
+    const hasFindings = sourceData?.edges?.some((edge) => {
+      if (edge.source !== node.id && edge.target !== node.id) return false;
+      const otherId = edge.source === node.id ? edge.target : edge.source;
+      const otherNode = sourceData.nodes?.find(({ id }) => id === otherId);
+      return otherNode?.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+    });
+
+    if (hasFindings) {
+      graphState.toggleExpandedResource(node.id);
     }
   };
 
@@ -292,29 +327,42 @@ export default function AttackPathsPage() {
     graphState.exitFilteredView();
   };
 
-  const handleCloseDetails = () => {
-    graphState.selectNode(null);
+  const handleViewFinding = async (findingId: string) => {
+    if (!findingId) return;
+
+    try {
+      await finding.navigateToFinding(findingId);
+    } finally {
+      findingNavigationInFlightRef.current = false;
+    }
   };
 
-  const handleGraphExport = (svgElement: SVGSVGElement | null) => {
+  const handleGraphExport = async (target: "main" | "fullscreen") => {
+    const ref = target === "fullscreen" ? fullscreenGraphRef : graphRef;
+    const handle = ref.current;
+    if (!handle) return;
+
     try {
-      if (svgElement) {
-        exportGraphAsSVG(svgElement, "attack-path-graph.svg");
-        toast({
-          title: "Success",
-          description: "Graph exported as SVG",
-          variant: "default",
-        });
-      } else {
-        throw new Error("Could not find graph element");
-      }
-    } catch (error) {
+      await exportGraphAsPNG(
+        handle.getContainerElement(),
+        handle.getNodesBounds(),
+        "attack-path-graph.png",
+        graphState.data,
+        {
+          expandedResources: graphState.expandedResources,
+          isFilteredView: graphState.isFilteredView,
+          selectedNodeId: graphState.selectedNodeId,
+        },
+      );
       toast({
-        title: "Error",
-        description:
-          error instanceof Error ? error.message : "Failed to export graph",
-        variant: "destructive",
+        title: "Success",
+        description: "Graph exported",
+        variant: "default",
       });
+    } catch (error) {
+      const description =
+        error instanceof Error ? error.message : "Failed to export graph";
+      showErrorToast("Export failed", description);
     }
   };
 
@@ -326,16 +374,13 @@ export default function AttackPathsPage() {
         onRefresh={refreshScans}
       />
 
-      {/* Header */}
+      {/* Page introduction */}
       <div>
-        <h2 className="dark:text-prowler-theme-pale/90 text-xl font-semibold">
-          Attack Paths
-        </h2>
-        <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-2 text-sm">
+        <p className="text-text-neutral-secondary text-sm">
           Select a scan, build a query, and visualize Attack Paths in your
           infrastructure.
         </p>
-        <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-1 text-xs">
+        <p className="text-text-neutral-secondary mt-1 text-xs">
           Scans can be selected when data is available. A new scan does not
           interrupt access to existing data.
         </p>
@@ -365,59 +410,44 @@ export default function AttackPathsPage() {
             <ScanListTable scans={scans} />
           </Suspense>
 
+          {/* Banner: viewing data from a previous scan cycle */}
+          {isViewingPreviousCycleData && (
+            <Alert variant="info">
+              <Info className="size-4" />
+              <AlertTitle>Viewing data from a previous scan</AlertTitle>
+              <AlertDescription>
+                This scan is currently{" "}
+                {selectedScan.attributes.state === SCAN_STATES.EXECUTING
+                  ? `running (${selectedScan.attributes.progress}%)`
+                  : selectedScan.attributes.state}
+                . The graph data shown is from the last completed cycle.
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Query Builder Section - shown only after selecting a scan */}
           {scanId && (
             <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
               {queriesLoading ? (
                 <p className="text-sm">Loading queries...</p>
               ) : queriesError ? (
-                <p className="text-text-danger dark:text-text-danger text-sm">
-                  {queriesError}
-                </p>
+                <QueryExecutionError
+                  title="Failed to load queries"
+                  error={queriesError}
+                />
               ) : (
                 <>
                   <FormProvider {...queryBuilder.form}>
                     <QuerySelector
                       queries={queries}
                       selectedQueryId={queryBuilder.selectedQuery}
-                      onQueryChange={handleQueryChange}
+                      onQueryChange={queryBuilder.handleQueryChange}
                     />
 
                     {queryBuilder.selectedQueryData && (
-                      <div className="bg-bg-neutral-tertiary text-text-neutral-secondary dark:text-text-neutral-secondary rounded-md px-3 py-2 text-sm">
-                        <div className="flex items-start gap-2">
-                          <Info
-                            className="mt-0.5 size-4 shrink-0"
-                            style={{ color: "var(--bg-data-info)" }}
-                          />
-                          <p className="whitespace-pre-line">
-                            {
-                              queryBuilder.selectedQueryData.attributes
-                                .description
-                            }
-                          </p>
-                        </div>
-                        {queryBuilder.selectedQueryData.attributes
-                          .attribution && (
-                          <p className="mt-2 text-xs">
-                            Source:{" "}
-                            <a
-                              href={
-                                queryBuilder.selectedQueryData.attributes
-                                  .attribution.link
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="underline"
-                            >
-                              {
-                                queryBuilder.selectedQueryData.attributes
-                                  .attribution.text
-                              }
-                            </a>
-                          </p>
-                        )}
-                      </div>
+                      <QueryDescription
+                        query={queryBuilder.selectedQueryData}
+                      />
                     )}
 
                     {queryBuilder.selectedQuery && (
@@ -430,15 +460,16 @@ export default function AttackPathsPage() {
                   <div className="flex justify-end gap-3">
                     <ExecuteButton
                       isLoading={graphState.loading}
-                      isDisabled={!queryBuilder.selectedQuery}
+                      isDisabled={
+                        !queryBuilder.selectedQuery ||
+                        queryBuilder.isExecutionBlocked
+                      }
                       onExecute={handleExecuteQuery}
                     />
                   </div>
 
                   {graphState.error && (
-                    <div className="bg-bg-danger-secondary text-text-danger dark:bg-bg-danger-secondary dark:text-text-danger rounded p-3 text-sm">
-                      {graphState.error}
-                    </div>
+                    <QueryExecutionError error={graphState.error} />
                   )}
                 </>
               )}
@@ -499,8 +530,9 @@ export default function AttackPathsPage() {
                           💡
                         </span>
                         <span className="flex-1">
-                          Click on any node to filter and view its connected
-                          paths
+                          Click a finding to focus its connected path, or click
+                          a resource with findings to show or hide its related
+                          findings
                         </span>
                       </div>
                     )}
@@ -511,11 +543,7 @@ export default function AttackPathsPage() {
                         onZoomIn={() => graphRef.current?.zoomIn()}
                         onZoomOut={() => graphRef.current?.zoomOut()}
                         onFitToScreen={() => graphRef.current?.resetZoom()}
-                        onExport={() =>
-                          handleGraphExport(
-                            graphRef.current?.getSVGElement() || null,
-                          )
-                        }
+                        onExport={() => handleGraphExport("main")}
                       />
 
                       {/* Fullscreen button */}
@@ -537,6 +565,10 @@ export default function AttackPathsPage() {
                           <DialogContent className="flex h-full max-h-screen w-full max-w-full flex-col gap-0 rounded-none border-0 p-0 sm:max-w-full">
                             <DialogHeader className="sr-only">
                               <DialogTitle>Fullscreen graph view</DialogTitle>
+                              <DialogDescription>
+                                Explore the attack path graph at full size. Use
+                                the toolbar to zoom, fit, or export the graph.
+                              </DialogDescription>
                             </DialogHeader>
                             <div className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
                               <GraphControls
@@ -549,15 +581,10 @@ export default function AttackPathsPage() {
                                 onFitToScreen={() =>
                                   fullscreenGraphRef.current?.resetZoom()
                                 }
-                                onExport={() =>
-                                  handleGraphExport(
-                                    fullscreenGraphRef.current?.getSVGElement() ||
-                                      null,
-                                  )
-                                }
+                                onExport={() => handleGraphExport("fullscreen")}
                               />
                             </div>
-                            <div className="flex flex-1 gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6">
+                            <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6 lg:flex-row">
                               <div className="flex flex-1 items-center justify-center">
                                 <AttackPathGraph
                                   ref={fullscreenGraphRef}
@@ -565,64 +592,11 @@ export default function AttackPathsPage() {
                                   onNodeClick={handleNodeClick}
                                   selectedNodeId={graphState.selectedNodeId}
                                   isFilteredView={graphState.isFilteredView}
+                                  expandedResources={
+                                    graphState.expandedResources
+                                  }
                                 />
                               </div>
-                              {/* Node Detail Panel - Side by side */}
-                              {graphState.selectedNode && (
-                                <section aria-labelledby="node-details-heading">
-                                  <Card className="w-96 overflow-y-auto">
-                                    <CardContent className="p-4">
-                                      <div className="mb-4 flex items-center justify-between">
-                                        <h3
-                                          id="node-details-heading"
-                                          className="text-sm font-semibold"
-                                        >
-                                          Node Details
-                                        </h3>
-                                        <Button
-                                          onClick={handleCloseDetails}
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-6 w-6 p-0"
-                                          aria-label="Close node details"
-                                        >
-                                          <X size={16} />
-                                        </Button>
-                                      </div>
-                                      <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mb-4 text-xs">
-                                        {graphState.selectedNode?.labels.some(
-                                          (label) =>
-                                            label
-                                              .toLowerCase()
-                                              .includes("finding"),
-                                        )
-                                          ? graphState.selectedNode?.properties
-                                              ?.check_title ||
-                                            graphState.selectedNode?.properties
-                                              ?.id ||
-                                            "Unknown Finding"
-                                          : graphState.selectedNode?.properties
-                                              ?.name ||
-                                            graphState.selectedNode?.properties
-                                              ?.id ||
-                                            "Unknown Resource"}
-                                      </p>
-                                      <div className="flex flex-col gap-4">
-                                        <div>
-                                          <h4 className="mb-2 text-xs font-semibold">
-                                            Type
-                                          </h4>
-                                          <p className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
-                                            {graphState.selectedNode?.labels
-                                              .map(formatNodeLabel)
-                                              .join(", ")}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </CardContent>
-                                  </Card>
-                                </section>
-                              )}
                             </div>
                           </DialogContent>
                         </Dialog>
@@ -641,73 +615,32 @@ export default function AttackPathsPage() {
                       onNodeClick={handleNodeClick}
                       selectedNodeId={graphState.selectedNodeId}
                       isFilteredView={graphState.isFilteredView}
+                      expandedResources={graphState.expandedResources}
                     />
                   </div>
 
                   {/* Legend below */}
-                  <div className="hidden justify-center lg:flex">
-                    <GraphLegend data={graphState.data} />
+                  <div className="flex justify-center overflow-x-auto">
+                    <GraphLegend
+                      data={graphState.data}
+                      expandedResources={graphState.expandedResources}
+                      isFilteredView={graphState.isFilteredView}
+                    />
                   </div>
                 </>
               ) : null}
             </div>
           )}
 
-          {/* Node Detail Panel - Below Graph */}
-          {graphState.selectedNode && graphState.data && (
-            <div
-              ref={nodeDetailsRef}
-              className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold">Node Details</h3>
-                  <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-1 text-sm">
-                    {String(
-                      graphState.selectedNode.labels.some((label) =>
-                        label.toLowerCase().includes("finding"),
-                      )
-                        ? graphState.selectedNode.properties?.check_title ||
-                            graphState.selectedNode.properties?.id ||
-                            "Unknown Finding"
-                        : graphState.selectedNode.properties?.name ||
-                            graphState.selectedNode.properties?.id ||
-                            "Unknown Resource",
-                    )}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {graphState.selectedNode.labels.some((label) =>
-                    label.toLowerCase().includes("finding"),
-                  ) && (
-                    <Button asChild variant="default" size="sm">
-                      <a
-                        href={`/findings?id=${String(graphState.selectedNode.properties?.id || graphState.selectedNode.id)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`View finding ${String(graphState.selectedNode.properties?.id || graphState.selectedNode.id)}`}
-                      >
-                        View Finding →
-                      </a>
-                    </Button>
-                  )}
-                  <Button
-                    onClick={handleCloseDetails}
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    aria-label="Close node details"
-                  >
-                    <X size={16} />
-                  </Button>
-                </div>
-              </div>
-
-              <NodeDetailContent
-                node={graphState.selectedNode}
-                allNodes={graphState.data.nodes}
-              />
-            </div>
+          {finding.findingDetails && (
+            <FindingDetailDrawer
+              key={finding.findingDetails.id}
+              finding={finding.findingDetails}
+              defaultOpen
+              onOpenChange={(open) => {
+                if (!open) finding.resetFindingDetails();
+              }}
+            />
           )}
         </>
       )}

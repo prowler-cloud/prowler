@@ -12,6 +12,24 @@
     "dark": "/images/prowler-logo-white.png",
     "light": "/images/prowler-logo-black.png"
   },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      {
+        "title": "Request a feature",
+        "description": "Open a feature request on GitHub",
+        "icon": "plus",
+        "href": "https://github.com/prowler-cloud/prowler/issues/new?template=feature-request.yml"
+      },
+      {
+        "title": "Report an issue",
+        "description": "Open a bug report on GitHub",
+        "icon": "bug",
+        "href": "https://github.com/prowler-cloud/prowler/issues/new?template=bug_report.yml"
+      }
+    ]
+  },
   "navigation": {
     "tabs": [
       {
@@ -98,8 +116,10 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
+              "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-import-findings",
+              "user-guide/tutorials/prowler-app-alerts",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -132,11 +152,13 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-attack-paths",
+              "user-guide/tutorials/prowler-app-finding-groups",
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
+                  "user-guide/tutorials/prowler-app-sso-google-workspace",
                   "user-guide/tutorials/bulk-provider-provisioning",
                   "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
@@ -144,11 +166,17 @@
             ]
           },
           {
+            "group": "CI/CD",
+            "pages": [
+              "user-guide/tutorials/prowler-app-github-action",
+              "user-guide/cookbooks/cicd-pipeline"
+            ]
+          },
+          {
             "group": "CLI",
             "pages": [
               "user-guide/cli/tutorials/misc",
               "user-guide/cli/tutorials/reporting",
-              "user-guide/cli/tutorials/compliance",
               "user-guide/cli/tutorials/dashboard",
               "user-guide/cli/tutorials/configuration_file",
               "user-guide/cli/tutorials/logging",
@@ -274,7 +302,8 @@
               {
                 "group": "Image",
                 "pages": [
-                  "user-guide/providers/image/getting-started-image"
+                  "user-guide/providers/image/getting-started-image",
+                  "user-guide/providers/image/authentication"
                 ]
               },
               {
@@ -296,13 +325,35 @@
                   "user-guide/providers/openstack/getting-started-openstack",
                   "user-guide/providers/openstack/authentication"
                 ]
+              },
+              {
+                "group": "Vercel",
+                "pages": [
+                  "user-guide/providers/vercel/getting-started-vercel",
+                  "user-guide/providers/vercel/authentication"
+                ]
+              },
+              {
+                "group": "Okta",
+                "pages": [
+                  "user-guide/providers/okta/getting-started-okta",
+                  "user-guide/providers/okta/authentication"
+                ]
               }
             ]
           },
           {
             "group": "Compliance",
             "pages": [
+              "user-guide/compliance/tutorials/compliance",
               "user-guide/compliance/tutorials/threatscore"
+            ]
+          },
+          {
+            "group": "Cookbooks",
+            "pages": [
+              "user-guide/cookbooks/kubernetes-in-cluster",
+              "user-guide/cookbooks/cicd-pipeline"
             ]
           }
         ]
@@ -322,7 +373,8 @@
               "developer-guide/security-compliance-framework",
               "developer-guide/lighthouse-architecture",
               "developer-guide/mcp-server",
-              "developer-guide/ai-skills"
+              "developer-guide/ai-skills",
+              "developer-guide/prowler-studio"
             ]
           },
           {
@@ -459,6 +511,10 @@
     }
   },
   "redirects": [
+    {
+      "source": "/user-guide/cli/tutorials/compliance",
+      "destination": "/user-guide/compliance/tutorials/compliance"
+    },
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-lighthouse",
       "destination": "/user-guide/tutorials/prowler-app-lighthouse"

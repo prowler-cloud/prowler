@@ -4,10 +4,14 @@ import asyncio
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict
+from urllib.parse import urlparse
 
 import httpx
+from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
 from prowler_mcp_server.prowler_app.utils.auth import ProwlerAppAuth
+
+ALLOWED_EXTERNAL_DOMAINS: frozenset[str] = frozenset({"raw.githubusercontent.com"})
 
 
 class HTTPMethod(str, Enum):
@@ -186,6 +190,47 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             Exception: If API request fails
         """
         return await self._make_request(HTTPMethod.DELETE, path, params=params)
+
+    async def fetch_external_url(self, url: str) -> str:
+        """Fetch content from an allowed external URL (unauthenticated).
+
+        Uses the existing singleton httpx client with a domain allowlist
+        to prevent SSRF attacks.
+
+        Args:
+            url: The external URL to fetch content from
+
+        Returns:
+            Raw text content from the URL
+
+        Raises:
+            ValueError: If the URL domain is not in the allowlist
+            Exception: If the HTTP request fails
+        """
+        parsed = urlparse(url)
+        if parsed.scheme != "https":
+            raise ValueError(f"Only HTTPS URLs are allowed, got '{parsed.scheme}'")
+        if parsed.hostname not in ALLOWED_EXTERNAL_DOMAINS:
+            raise ValueError(
+                f"Domain '{parsed.hostname}' is not allowed. "
+                f"Allowed domains: {', '.join(sorted(ALLOWED_EXTERNAL_DOMAINS))}"
+            )
+
+        try:
+            response = await self.client.get(
+                url,
+                headers={"User-Agent": f"prowler-mcp-server/{__version__}"},
+            )
+            response.raise_for_status()
+            return response.text
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error fetching external URL {url}: {e}")
+            raise Exception(
+                f"Failed to fetch external URL: {e.response.status_code}"
+            ) from e
+        except Exception as e:
+            logger.error(f"Error fetching external URL {url}: {e}")
+            raise
 
     async def poll_task_until_complete(
         self,

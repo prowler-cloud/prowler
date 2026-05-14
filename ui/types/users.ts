@@ -63,12 +63,21 @@ export type PermissionKey =
   | "manage_scans"
   | "manage_integrations"
   | "manage_billing"
+  | "manage_alerts"
   | "unlimited_visibility";
 
 export type RolePermissionAttributes = Pick<
   RoleDetail["attributes"],
   PermissionKey
 >;
+
+export const TENANT_MEMBERSHIP_ROLE = {
+  Owner: "owner",
+  Member: "member",
+} as const;
+
+export type TenantMembershipRole =
+  (typeof TENANT_MEMBERSHIP_ROLE)[keyof typeof TENANT_MEMBERSHIP_ROLE];
 
 export interface RoleDetail {
   id: string;
@@ -81,6 +90,7 @@ export interface RoleDetail {
     manage_scans: boolean;
     manage_integrations: boolean;
     manage_billing?: boolean;
+    manage_alerts?: boolean;
     unlimited_visibility: boolean;
     permission_state?: string;
     inserted_at?: string;
@@ -148,6 +158,11 @@ export interface TenantDetailData {
       }>;
     };
   };
+}
+
+export interface TenantOption {
+  id: string;
+  name: string;
 }
 
 export type IncludedItem = RoleDetail | MembershipDetailData | TenantDetailData;

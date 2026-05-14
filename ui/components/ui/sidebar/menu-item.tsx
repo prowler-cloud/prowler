@@ -9,6 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { MenuFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { cn } from "@/lib/utils";
 import { IconComponent } from "@/types";
 
@@ -61,9 +62,12 @@ export const MenuItem = ({
                 <p className="flex max-w-[200px] items-center truncate">
                   <span>{label}</span>
                   {highlight && (
-                    <span className="ml-2 rounded-sm bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                      NEW
-                    </span>
+                    <MenuFeatureBadge
+                      label="New"
+                      variant="new"
+                      size="sm"
+                      className="ml-2"
+                    />
                   )}
                 </p>
               )}

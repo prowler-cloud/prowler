@@ -17,6 +17,9 @@ class databricks_workspace_cmk_encryption_enabled(Check):
     def execute(self):
         findings = []
         for subscription, workspaces in databricks_client.workspaces.items():
+            subscription_name = databricks_client.subscriptions.get(
+                subscription, subscription
+            )
             for workspace in workspaces.values():
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=workspace
@@ -25,9 +28,9 @@ class databricks_workspace_cmk_encryption_enabled(Check):
                 enc = workspace.managed_disk_encryption
                 if enc:
                     report.status = "PASS"
-                    report.status_extended = f"Databricks workspace {workspace.name} in subscription {subscription} has customer-managed key (CMK) encryption enabled with key {enc.key_vault_uri}/{enc.key_name}/{enc.key_version}."
+                    report.status_extended = f"Databricks workspace {workspace.name} in subscription {subscription_name} ({subscription}) has customer-managed key (CMK) encryption enabled with key {enc.key_vault_uri}/{enc.key_name}/{enc.key_version}."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"Databricks workspace {workspace.name} in subscription {subscription} does not have customer-managed key (CMK) encryption enabled."
+                    report.status_extended = f"Databricks workspace {workspace.name} in subscription {subscription_name} ({subscription}) does not have customer-managed key (CMK) encryption enabled."
                 findings.append(report)
         return findings

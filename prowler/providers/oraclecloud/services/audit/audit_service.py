@@ -19,7 +19,7 @@ class Audit(OCIService):
     def __get_configuration__(self):
         """Get Audit configuration."""
         try:
-            home_region = self.provider.identity.home_region
+            home_region = self.provider.home_region
             audit_client = self._create_oci_client(
                 oci.audit.AuditClient,
                 config_overrides={"region": home_region},

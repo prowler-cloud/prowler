@@ -56,6 +56,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `elb_is_in_multiple_az`                                       | `elb_min_azs`                                    | Integer         |
 | `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
 | `guardduty_is_enabled`                                        | `mute_non_default_regions`                       | Boolean         |
+| `iam_user_access_not_stale_to_sagemaker`                      | `max_unused_sagemaker_access_days`               | Integer         |
 | `iam_user_accesskey_unused`                                   | `max_unused_access_keys_days`                    | Integer         |
 | `iam_user_console_access_unused`                              | `max_console_access_days`                        | Integer         |
 | `organizations_delegated_administrators`                      | `organizations_trusted_delegated_administrators` | List of Strings |
@@ -141,6 +142,31 @@ The following list includes all the GitHub checks with configurable variables th
 |--------------------------------------------|---------------------------------------------|---------|
 | `repository_inactive_not_archived`         | `inactive_not_archived_days_threshold`        | Integer |
 
+## Vercel
+
+### Configurable Checks
+The following list includes all the Vercel checks with configurable variables that can be changed in the configuration YAML file:
+
+| Check Name                                          | Value                              | Type            |
+|-----------------------------------------------------|------------------------------------|-----------------|
+| `authentication_no_stale_tokens`                    | `stale_token_threshold_days`       | Integer         |
+| `authentication_token_not_expired`                  | `days_to_expire_threshold`         | Integer         |
+| `deployment_production_uses_stable_target`          | `stable_branches`                  | List of Strings |
+| `domain_ssl_certificate_valid`                      | `days_to_expire_threshold`         | Integer         |
+| `project_environment_no_secrets_in_plain_type`      | `secret_suffixes`                  | List of Strings |
+| `team_member_role_least_privilege`                   | `max_owner_percentage`             | Integer         |
+| `team_member_role_least_privilege`                   | `max_owners`                       | Integer         |
+| `team_no_stale_invitations`                         | `stale_invitation_threshold_days`  | Integer         |
+
+## Okta
+
+### Configurable Checks
+The following list includes all the Okta checks with configurable variables that can be changed in the configuration YAML file:
+
+| Check Name                                                    | Value                              | Type    |
+|---------------------------------------------------------------|------------------------------------|---------|
+| `signon_global_session_idle_timeout_15min`                    | `okta_max_session_idle_minutes`    | Integer |
+
 ## Config YAML File Structure
 
 <Note>
@@ -170,6 +196,8 @@ aws:
   max_unused_access_keys_days: 45
   # aws.iam_user_console_access_unused --> CIS recommends 45 days
   max_console_access_days: 45
+  # aws.iam_user_access_not_stale_to_sagemaker --> default 90 days
+  max_unused_sagemaker_access_days: 90
 
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
@@ -623,6 +651,30 @@ m365:
 github:
   # github.repository_inactive_not_archived
   inactive_not_archived_days_threshold: 180
+
+# Vercel Configuration
+vercel:
+  # vercel.deployment_production_uses_stable_target
+  stable_branches:
+    - "main"
+    - "master"
+  # vercel.authentication_token_not_expired & vercel.domain_ssl_certificate_valid
+  days_to_expire_threshold: 7
+  # vercel.authentication_no_stale_tokens
+  stale_token_threshold_days: 90
+  # vercel.team_no_stale_invitations
+  stale_invitation_threshold_days: 30
+  # vercel.team_member_role_least_privilege
+  max_owner_percentage: 20
+  max_owners: 3
+  # vercel.project_environment_no_secrets_in_plain_type
+  secret_suffixes:
+    - "_KEY"
+    - "_SECRET"
+    - "_TOKEN"
+    - "_PASSWORD"
+    - "_API_KEY"
+    - "_PRIVATE_KEY"
 
 
 ```

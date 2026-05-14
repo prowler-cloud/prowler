@@ -119,6 +119,7 @@
       ],
       "Checks": [
         "apigateway_restapi_logging_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -418,6 +419,8 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "ec2_instance_profile_attached",
         "iam_policy_attached_only_to_group_or_roles",
         "iam_aws_attached_policy_no_administrative_privileges",

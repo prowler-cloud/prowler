@@ -14,6 +14,8 @@ env:
   PYTHON_VERSION: "3.12"
   WORKING_DIRECTORY: ./mcp_server
 
+permissions: {}
+
 jobs:
   validate-release:
     if: github.repository == 'prowler-cloud/prowler'
@@ -26,6 +28,11 @@ jobs:
       major_version: ${{ steps.parse-version.outputs.major }}
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Parse and validate version
         id: parse-version
         run: |
@@ -59,13 +66,18 @@ jobs:
       url: https://pypi.org/project/prowler-mcp/
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
         with:
           enable-cache: false
 
@@ -74,11 +86,32 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      # The MCP server version (mcp_server/pyproject.toml) is decoupled from the Prowler release
+      # version: it only changes when MCP code changes. mcp-bump-version.yml normally keeps it in
+      # sync with mcp_server/CHANGELOG.md, but this publish workflow still runs on every release.
+      # Pre-flight PyPI check covers the legitimate "no MCP changes for this release" case (and any
+      # workflow_dispatch re-runs) without failing with HTTP 400 (version exists).
+      - name: Check if prowler-mcp version already exists on PyPI
+        id: pypi-check
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          MCP_VERSION=$(grep '^version' pyproject.toml | head -1 | sed -E 's/^version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
+          echo "mcp_version=${MCP_VERSION}" >> "$GITHUB_OUTPUT"
+          if curl -fsS "https://pypi.org/pypi/prowler-mcp/${MCP_VERSION}/json" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Skipping prowler-mcp publish::Version ${MCP_VERSION} already exists on PyPI; bump mcp_server/pyproject.toml to publish a new release."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Publishing prowler-mcp::Version ${MCP_VERSION} not on PyPI yet; proceeding."
+          fi
+
       - name: Build prowler-mcp package
+        if: steps.pypi-check.outputs.skip != 'true'
         working-directory: ${{ env.WORKING_DIRECTORY }}
         run: uv build
 
       - name: Publish prowler-mcp package to PyPI
+        if: steps.pypi-check.outputs.skip != 'true'
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
           packages-dir: ${{ env.WORKING_DIRECTORY }}/dist/

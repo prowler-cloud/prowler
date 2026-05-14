@@ -6,6 +6,7 @@ import {
   GCPProviderBadge,
   GitHubProviderBadge,
   IacProviderBadge,
+  ImageProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
@@ -81,6 +82,15 @@ export const CustomProviderInputIac = () => {
     <div className="flex items-center gap-x-2">
       <IacProviderBadge width={25} height={25} />
       <p className="text-sm">Infrastructure as Code</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputImage = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <ImageProviderBadge width={25} height={25} />
+      <p className="text-sm">Container Registry</p>
     </div>
   );
 };

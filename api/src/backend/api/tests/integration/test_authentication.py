@@ -215,6 +215,21 @@ class TestTokenSwitchTenant:
         tenant_id = tenants_fixture[0].id
         user_instance = User.objects.get(email=test_user)
         Membership.objects.create(user=user_instance, tenant_id=tenant_id)
+        # Assign an admin role in the target tenant so the user can access resources
+        target_role = Role.objects.create(
+            name="admin",
+            tenant_id=tenant_id,
+            manage_users=True,
+            manage_account=True,
+            manage_billing=True,
+            manage_providers=True,
+            manage_integrations=True,
+            manage_scans=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=user_instance, role=target_role, tenant_id=tenant_id
+        )
 
         # Check that using our new user's credentials we can authenticate and get the providers
         access_token, _ = get_api_tokens(client, test_user, test_password)
@@ -301,7 +316,7 @@ class TestTokenSwitchTenant:
         assert invalid_tenant_response.status_code == 400
         assert invalid_tenant_response.json()["errors"][0]["code"] == "invalid"
         assert invalid_tenant_response.json()["errors"][0]["detail"] == (
-            "Tenant does not exist or user is not a " "member."
+            "Tenant does not exist or user is not a member."
         )
 
 
@@ -912,10 +927,9 @@ class TestAPIKeyLifecycle:
         auth_response = client.get(reverse("provider-list"), headers=api_key_headers)
 
         # Must return 401 Unauthorized, not 500 Internal Server Error
-        assert auth_response.status_code == 401, (
-            f"Expected 401 but got {auth_response.status_code}: "
-            f"{auth_response.json()}"
-        )
+        assert (
+            auth_response.status_code == 401
+        ), f"Expected 401 but got {auth_response.status_code}: {auth_response.json()}"
 
         # Verify error message is present
         response_json = auth_response.json()

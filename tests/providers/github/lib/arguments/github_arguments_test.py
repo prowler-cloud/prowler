@@ -12,6 +12,7 @@ class Test_GitHubArguments:
         self.mock_github_parser = MagicMock()
         self.mock_auth_group = MagicMock()
         self.mock_scoping_group = MagicMock()
+        self.mock_actions_group = MagicMock()
 
         # Setup the mock chain
         self.mock_parser.add_subparsers.return_value = self.mock_subparsers
@@ -19,6 +20,7 @@ class Test_GitHubArguments:
         self.mock_github_parser.add_argument_group.side_effect = [
             self.mock_auth_group,
             self.mock_scoping_group,
+            self.mock_actions_group,
         ]
 
     def test_init_parser_creates_subparser(self):
@@ -47,10 +49,11 @@ class Test_GitHubArguments:
         arguments.init_parser(mock_github_args)
 
         # Verify argument groups were created
-        assert self.mock_github_parser.add_argument_group.call_count == 2
+        assert self.mock_github_parser.add_argument_group.call_count == 3
         calls = self.mock_github_parser.add_argument_group.call_args_list
         assert calls[0][0][0] == "Authentication Modes"
         assert calls[1][0][0] == "Scan Scoping"
+        assert calls[2][0][0] == "GitHub Actions Scanning"
 
     def test_init_parser_adds_authentication_arguments(self):
         """Test that init_parser adds all authentication arguments"""
@@ -82,13 +85,14 @@ class Test_GitHubArguments:
         arguments.init_parser(mock_github_args)
 
         # Verify scoping arguments were added
-        assert self.mock_scoping_group.add_argument.call_count == 2
+        assert self.mock_scoping_group.add_argument.call_count == 3
 
         # Check that all scoping arguments are present
         calls = self.mock_scoping_group.add_argument.call_args_list
         scoping_args = [call[0][0] for call in calls]
 
         assert "--repository" in scoping_args
+        assert "--repo-list-file" in scoping_args
         assert "--organization" in scoping_args
 
     def test_repository_argument_configuration(self):
@@ -276,6 +280,33 @@ class Test_GitHubArguments_Integration:
         assert args.personal_access_token == "test-token"
         assert args.repository == ["owner1/repo1"]
         assert args.organization == ["org1"]
+
+    def test_real_argument_parsing_with_repo_list_file(self):
+        """Test parsing arguments with repo-list-file scoping"""
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers()
+        common_parser = argparse.ArgumentParser(add_help=False)
+
+        mock_github_args = MagicMock()
+        mock_github_args.subparsers = subparsers
+        mock_github_args.common_providers_parser = common_parser
+
+        arguments.init_parser(mock_github_args)
+
+        # Parse arguments with repo-list-file
+        args = parser.parse_args(
+            [
+                "github",
+                "--personal-access-token",
+                "test-token",
+                "--repo-list-file",
+                "/path/to/repos.txt",
+            ]
+        )
+
+        assert args.personal_access_token == "test-token"
+        assert args.repo_list_file == "/path/to/repos.txt"
+        assert args.repository is None
 
     def test_real_argument_parsing_empty_scoping(self):
         """Test parsing arguments with empty scoping values"""

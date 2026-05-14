@@ -4,6 +4,7 @@ from io import StringIO
 from mock import MagicMock, patch
 
 from prowler.config.config import prowler_version, timestamp
+from prowler.lib.cli.redact import redact_argv
 from prowler.lib.logger import logger
 from prowler.lib.outputs.html.html import HTML
 from prowler.providers.github.models import GithubAppIdentityInfo
@@ -473,7 +474,7 @@ def get_aws_html_header(args: list) -> str:
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(args)}
+                <b>Parameters used:</b> {redact_argv(args)}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}

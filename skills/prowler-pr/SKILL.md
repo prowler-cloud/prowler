@@ -132,6 +132,18 @@ Follow conventional commits:
 4. ✅ Branch is up to date with main
 5. ✅ Commits are clean and descriptive
 
+## Before Re-Requesting Review (REQUIRED)
+
+Resolve or respond to **every** open inline review thread before re-requesting review:
+
+1. **Agreed + fixed**: Commit the change. Reply with the commit hash so the reviewer can verify quickly:
+   > Fixed in `abc1234`.
+2. **Agreed but deferred**: Explain why it's out of scope for this PR and where it's tracked.
+3. **Disagreed**: Reply with clear technical reasoning. Do not leave threads silently open.
+4. **Re-request review** only after all threads are in a clean state — either resolved or explicitly responded to.
+
+> **Rule of thumb**: A reviewer should never have to wonder "did they see my comment?" when they re-open the PR.
+
 ## Resources
 
 - **Documentation**: See [references/](references/) for links to local developer guide

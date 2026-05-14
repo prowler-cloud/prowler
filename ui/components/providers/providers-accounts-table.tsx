@@ -3,6 +3,10 @@
 import { RowSelectionState } from "@tanstack/react-table";
 import { useEffect, useState } from "react";
 
+import type {
+  OrgWizardInitialData,
+  ProviderWizardInitialData,
+} from "@/components/providers/wizard/types";
 import { DataTable } from "@/components/ui/table";
 import { MetaDataProps } from "@/types";
 import {
@@ -16,6 +20,8 @@ interface ProvidersAccountsTableProps {
   isCloud: boolean;
   metadata?: MetaDataProps;
   rows: ProvidersTableRow[];
+  onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
+  onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
 }
 
 function computeTestableProviderIds(
@@ -48,6 +54,8 @@ export function ProvidersAccountsTable({
   isCloud,
   metadata,
   rows,
+  onOpenProviderWizard,
+  onOpenOrganizationWizard,
 }: ProvidersAccountsTableProps) {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
@@ -65,6 +73,8 @@ export function ProvidersAccountsTable({
     rowSelection,
     testableProviderIds,
     clearSelection,
+    onOpenProviderWizard,
+    onOpenOrganizationWizard,
   );
 
   return (

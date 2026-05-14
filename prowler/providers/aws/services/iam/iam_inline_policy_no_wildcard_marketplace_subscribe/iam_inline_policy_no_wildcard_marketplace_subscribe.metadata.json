@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_inline_policy_no_wildcard_marketplace_subscribe",
+  "CheckTitle": "Inline IAM policy does not allow 'aws-marketplace:Subscribe' on all resources",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
+  "Description": "**IAM inline policies** are analyzed to identify statements that grant `aws-marketplace:Subscribe` on all resources (`*`). This action controls the ability to subscribe to AWS Marketplace products, including **Amazon Bedrock foundation models**, and should be scoped to specific product ARNs to enforce least privilege.",
+  "Risk": "Granting `aws-marketplace:Subscribe` on all resources via inline policies allows subscribing to any Marketplace product, including expensive Bedrock foundation models, leading to uncontrolled costs, shadow AI usage, and compliance violations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/security-iam.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n  ExampleRole:\n    Type: AWS::IAM::Role\n    Properties:\n      Policies:\n        - PolicyName: scoped-marketplace-subscribe\n          PolicyDocument:\n            Version: '2012-10-17'\n            Statement:\n              - Effect: Allow\n                Action:\n                  - aws-marketplace:Subscribe  # FIX: scope to specific product ARNs\n                Resource:\n                  - arn:aws:aws-marketplace::123456789012:product/approved-product-id\n```",
+      "Other": "1. In the AWS Console, open IAM and go to Users, Roles, or Groups where the inline policy is attached\n2. Select the entity, go to the Permissions tab, and open the inline policy\n3. Click Edit policy and switch to the JSON editor\n4. Replace \"Resource\": \"*\" with specific, approved AWS Marketplace product ARNs\n5. Save changes and re-run the check to confirm it passes",
+      "Terraform": "```hcl\nresource \"aws_iam_role_policy\" \"scoped_marketplace_subscribe\" {\n  name = \"scoped-marketplace-subscribe\"\n  role = aws_iam_role.example.id\n\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = [\"aws-marketplace:Subscribe\"]\n      Resource = [\"arn:aws:aws-marketplace::123456789012:product/approved-product-id\"]  # FIX: scope to specific products\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Replace `Resource: \"*\"` with specific, approved AWS Marketplace product ARNs. Prefer managed policies over inline and apply the principle of least privilege to `aws-marketplace:Subscribe` permissions to prevent unauthorized subscriptions to costly Bedrock models and other Marketplace products.",
+      "Url": "https://hub.prowler.com/check/iam_inline_policy_no_wildcard_marketplace_subscribe"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "iam_policy_no_wildcard_marketplace_subscribe"
+  ],
+  "Notes": "This check only evaluates IAM inline policies. See iam_policy_no_wildcard_marketplace_subscribe for the customer-managed policy variant."
+}

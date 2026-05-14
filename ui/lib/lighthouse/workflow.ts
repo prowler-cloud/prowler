@@ -12,10 +12,13 @@ import {
   initializeMCPClient,
   isMCPAvailable,
 } from "@/lib/lighthouse/mcp-client";
+import { getAllSkillMetadata } from "@/lib/lighthouse/skills/index";
 import {
+  generateSkillCatalog,
   generateUserDataSection,
   LIGHTHOUSE_SYSTEM_PROMPT_TEMPLATE,
 } from "@/lib/lighthouse/system-prompt";
+import { loadSkill } from "@/lib/lighthouse/tools/load-skill";
 import { describeTool, executeTool } from "@/lib/lighthouse/tools/meta-tool";
 import { getModelParams } from "@/lib/lighthouse/utils";
 
@@ -64,6 +67,10 @@ const ALLOWED_TOOLS = new Set([
   "prowler_app_search_security_findings",
   "prowler_app_get_finding_details",
   "prowler_app_get_findings_overview",
+  // Finding Groups
+  "prowler_app_list_finding_groups",
+  "prowler_app_get_finding_group_details",
+  "prowler_app_list_finding_group_resources",
   // Providers
   "prowler_app_search_providers",
   // Scans
@@ -79,11 +86,13 @@ const ALLOWED_TOOLS = new Set([
   // Resources
   "prowler_app_list_resources",
   "prowler_app_get_resource",
+  "prowler_app_get_resource_events",
   "prowler_app_get_resources_overview",
   // Attack Paths
   "prowler_app_list_attack_paths_queries",
   "prowler_app_list_attack_paths_scans",
   "prowler_app_run_attack_paths_query",
+  "prowler_app_get_attack_paths_cartography_schema",
 ]);
 
 /**
@@ -136,6 +145,10 @@ export async function initLighthouseWorkflow(runtimeConfig?: RuntimeConfig) {
     toolListing,
   );
 
+  // Generate and inject skill catalog
+  const skillCatalog = generateSkillCatalog(getAllSkillMetadata());
+  systemPrompt = systemPrompt.replace("{{SKILL_CATALOG}}", skillCatalog);
+
   // Add user-provided data section if available
   const userDataSection = generateUserDataSection(
     runtimeConfig?.businessContext,
@@ -177,7 +190,7 @@ export async function initLighthouseWorkflow(runtimeConfig?: RuntimeConfig) {
 
   const agent = createAgent({
     model: llm,
-    tools: [describeTool, executeTool],
+    tools: [describeTool, executeTool, loadSkill],
     systemPrompt,
   });
 

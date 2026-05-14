@@ -10,11 +10,11 @@ from django.conf import settings
 import api
 import api.apps as api_apps_module
 from api.apps import (
-    ApiConfig,
     PRIVATE_KEY_FILE,
     PUBLIC_KEY_FILE,
     SIGNING_KEY_ENV,
     VERIFYING_KEY_ENV,
+    ApiConfig,
 )
 
 
@@ -187,9 +187,10 @@ def test_ready_initializes_driver_for_api_process(monkeypatch):
     _set_argv(monkeypatch, ["gunicorn"])
     _set_testing(monkeypatch, False)
 
-    with patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None), patch(
-        "api.attack_paths.database.init_driver"
-    ) as init_driver:
+    with (
+        patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
+        patch("api.attack_paths.database.init_driver") as init_driver,
+    ):
         config.ready()
 
     init_driver.assert_called_once()
@@ -200,9 +201,10 @@ def test_ready_skips_driver_for_celery(monkeypatch):
     _set_argv(monkeypatch, ["celery", "-A", "api"])
     _set_testing(monkeypatch, False)
 
-    with patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None), patch(
-        "api.attack_paths.database.init_driver"
-    ) as init_driver:
+    with (
+        patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
+        patch("api.attack_paths.database.init_driver") as init_driver,
+    ):
         config.ready()
 
     init_driver.assert_not_called()
@@ -213,9 +215,10 @@ def test_ready_skips_driver_for_manage_py_skip_command(monkeypatch):
     _set_argv(monkeypatch, ["manage.py", "migrate"])
     _set_testing(monkeypatch, False)
 
-    with patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None), patch(
-        "api.attack_paths.database.init_driver"
-    ) as init_driver:
+    with (
+        patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
+        patch("api.attack_paths.database.init_driver") as init_driver,
+    ):
         config.ready()
 
     init_driver.assert_not_called()
@@ -226,9 +229,10 @@ def test_ready_skips_driver_when_testing(monkeypatch):
     _set_argv(monkeypatch, ["gunicorn"])
     _set_testing(monkeypatch, True)
 
-    with patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None), patch(
-        "api.attack_paths.database.init_driver"
-    ) as init_driver:
+    with (
+        patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
+        patch("api.attack_paths.database.init_driver") as init_driver,
+    ):
         config.ready()
 
     init_driver.assert_not_called()

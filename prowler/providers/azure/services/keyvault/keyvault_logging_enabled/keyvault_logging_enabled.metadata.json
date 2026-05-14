@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_logging_enabled",
-  "CheckTitle": "Key Vault has a diagnostic setting capturing audit logs",
+  "CheckTitle": "Key Vault has at least one diagnostic setting with audit logging enabled",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",

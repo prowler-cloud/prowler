@@ -9,7 +9,18 @@ import {
   PROVIDER_WIZARD_STEP,
 } from "@/types/provider-wizard";
 
+import type { ProviderWizardInitialData } from "../types";
 import { useProviderWizardController } from "./use-provider-wizard-controller";
+
+const { refreshMock } = vi.hoisted(() => ({
+  refreshMock: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: refreshMock,
+  }),
+}));
 
 vi.mock("next-auth/react", () => ({
   useSession: () => ({
@@ -21,10 +32,31 @@ vi.mock("next-auth/react", () => ({
 describe("useProviderWizardController", () => {
   beforeEach(() => {
     vi.useRealTimers();
+    vi.clearAllMocks();
     sessionStorage.clear();
     localStorage.clear();
     useProviderWizardStore.getState().reset();
     useOrgSetupStore.getState().reset();
+  });
+
+  it("refreshes providers data when the wizard closes", () => {
+    // Given
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+      }),
+    );
+
+    // When
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // Then
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(refreshMock).toHaveBeenCalledTimes(1);
   });
 
   it("hydrates update mode when initial data is provided", async () => {
@@ -121,7 +153,7 @@ describe("useProviderWizardController", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it("closes the modal after a successful connection test in update mode", async () => {
+  it("closes the wizard after a successful connection test in update mode", async () => {
     // Given
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
@@ -149,8 +181,10 @@ describe("useProviderWizardController", () => {
       result.current.handleTestSuccess();
     });
 
-    // Then — update mode should close the modal, not advance to launch
+    // Then: credential rotation never surfaces the launch/schedule step
     expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(result.current.currentStep).not.toBe(PROVIDER_WIZARD_STEP.LAUNCH);
   });
 
   it("does not override launch footer config in the controller", () => {
@@ -215,14 +249,7 @@ describe("useProviderWizardController", () => {
         initialData,
       }: {
         open: boolean;
-        initialData?: {
-          providerId: string;
-          providerType: "gcp";
-          providerUid: string;
-          providerAlias: string;
-          secretId: string | null;
-          mode: "add" | "update";
-        };
+        initialData?: ProviderWizardInitialData;
       }) =>
         useProviderWizardController({
           open,

@@ -243,6 +243,39 @@ class TestSAMLConfigurationModel:
         assert "Invalid XML" in errors["metadata_xml"][0]
         assert "not well-formed" in errors["metadata_xml"][0]
 
+    def test_xml_bomb_rejected(self, tenants_fixture):
+        """
+        Regression test: a 'billion laughs' XML bomb in the SAML metadata field
+        must be rejected and not allowed to exhaust server memory / CPU.
+
+        Before the fix, xml.etree.ElementTree was used directly, which does not
+        protect against entity-expansion attacks.  The fix switches to defusedxml
+        which raises an exception for any XML containing entity definitions.
+        """
+        tenant = tenants_fixture[0]
+        xml_bomb = (
+            "<?xml version='1.0'?>"
+            "<!DOCTYPE bomb ["
+            "  <!ENTITY a 'aaaaaaaaaa'>"
+            "  <!ENTITY b '&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;'>"
+            "  <!ENTITY c '&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;'>"
+            "  <!ENTITY d '&c;&c;&c;&c;&c;&c;&c;&c;&c;&c;'>"
+            "]>"
+            "<md:EntityDescriptor entityID='&d;' "
+            "xmlns:md='urn:oasis:names:tc:SAML:2.0:metadata'/>"
+        )
+        config = SAMLConfiguration(
+            email_domain="xmlbomb.com",
+            metadata_xml=xml_bomb,
+            tenant=tenant,
+        )
+
+        with pytest.raises(ValidationError) as exc_info:
+            config._parse_metadata()
+
+        errors = exc_info.value.message_dict
+        assert "metadata_xml" in errors
+
     def test_metadata_missing_sso_fails(self, tenants_fixture):
         tenant = tenants_fixture[0]
         xml = """<md:EntityDescriptor entityID="x" xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata">

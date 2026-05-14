@@ -79,8 +79,8 @@ Remember, our community is here to help! If you need guidance, do not hesitate t
 Before proceeding, ensure the following:
 
 - Git is installed.
-- Python 3.9 or higher is installed.
-- `poetry` is installed to manage dependencies.
+- Python 3.10 or higher is installed.
+- `uv` is installed to manage dependencies.
 
 ### Forking the Prowler Repository
 
@@ -97,49 +97,62 @@ cd prowler
 
 ### Dependency Management and Environment Isolation
 
-To prevent conflicts between environments, we recommend using `poetry`, a Python dependency management solution. Install it by following the [instructions](https://python-poetry.org/docs/#installation).
+To prevent conflicts between environments, we recommend using [`uv`](https://docs.astral.sh/uv/), a fast Python package and project manager. Install it by following the [official instructions](https://docs.astral.sh/uv/getting-started/installation/).
 
 ### Installing Dependencies
 
 To install all required dependencies, including those needed for development, run:
 
 ```
-poetry install --with dev
-eval $(poetry env activate)
+uv sync
+source .venv/bin/activate
 ```
-
-<Warning>
-Starting from Poetry v2.0.0, `poetry shell` has been deprecated in favor of `poetry env activate`.
-If your poetry version is below 2.0.0 you must keep using `poetry shell` to activate your environment.
-In case you have any doubts, consult the [Poetry environment activation guide](https://python-poetry.org/docs/managing-environments/#activating-the-environment).
-
-</Warning>
 
 
 ### Pre-Commit Hooks
 
-This repository uses Git pre-commit hooks managed by the [pre-commit](https://pre-commit.com/) tool, it is installed with `poetry install --with dev`. Next, run the following command in the root of this repository:
+This repository uses Git pre-commit hooks managed by the [prek](https://prek.j178.dev/) tool, it is installed with `uv sync`. Next, run the following command in the root of this repository:
 
 ```shell
-pre-commit install
+prek install
 ```
 
 Successful installation should produce the following output:
 
 ```shell
-pre-commit installed at .git/hooks/pre-commit
+prek installed at `.git/hooks/pre-commit`
 ```
+
+<Warning>
+If pre-commit hooks were previously installed, run `prek install --overwrite` to replace the existing hook. Otherwise, both tools will run on each commit.
+</Warning>
+
+#### Enable TruffleHog as a Pre-Push Hook
+
+By default, only `pre-commit` hooks are installed. To enable [`TruffleHog`](https://github.com/trufflesecurity/trufflehog) secret scanning on every push, install the `pre-push` hook type explicitly:
+
+```shell
+prek install --hook-type pre-push
+```
+
+Successful installation should produce the following output:
+
+```shell
+prek installed at `.git/hooks/pre-push`
+```
+
+Once installed, TruffleHog runs before each push and blocks the operation when verified secrets are detected.
 
 ### Code Quality and Security Checks
 
 Before merging pull requests, several automated checks and utilities ensure code security and updated dependencies:
 
 <Note>
-These should have been already installed if `poetry install --with dev` was already run.
+These should have been already installed if `uv sync` was already run.
 
 </Note>
 - [`bandit`](https://pypi.org/project/bandit/) for code security review.
-- [`safety`](https://pypi.org/project/safety/) and [`dependabot`](https://github.com/features/security) for dependencies.
+- [`osv-scanner`](https://github.com/google/osv-scanner) and [`dependabot`](https://github.com/features/security) for dependencies.
 - [`hadolint`](https://github.com/hadolint/hadolint) and [`dockle`](https://github.com/goodwithtech/dockle) for container security.
 - [`Snyk`](https://docs.snyk.io/integrations/snyk-container-integrations/container-security-with-docker-hub-integration) for container security in Docker Hub.
 - [`clair`](https://github.com/quay/clair) for container security in Amazon ECR.
@@ -162,6 +175,8 @@ These resources help ensure that AI-assisted contributions maintain consistency 
 ### Dependency Management
 
 All dependencies are listed in the `pyproject.toml` file.
+
+The SDK keeps direct dependencies pinned to exact versions, while `uv.lock` records the full resolved dependency tree and the artifact hashes for every package. Use `uv sync` from the lock file instead of ad-hoc `pip` installs when you need a reproducible environment.
 
 For proper code documentation, refer to the following and follow the code documentation practices presented there: [Google Python Style Guide - Comments and Docstrings](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings).
 
@@ -187,8 +202,8 @@ prowler/
 ├── contrib/           # Community-contributed scripts or modules
 ├── kubernetes/        # Kubernetes deployment files
 ├── .github/           # GitHub-related files (workflows, issue templates, etc.)
-├── pyproject.toml     # Python project configuration (Poetry)
-├── poetry.lock        # Poetry lock file
+├── pyproject.toml     # Python project configuration (uv)
+├── uv.lock            # uv lock file
 ├── README.md          # Project overview and getting started
 ├── Makefile           # Common development commands
 ├── Dockerfile         # SDK Docker container

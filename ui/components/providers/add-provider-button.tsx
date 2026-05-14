@@ -5,13 +5,28 @@ import { useState } from "react";
 import { ProviderWizardModal } from "@/components/providers/wizard";
 import { Button } from "@/components/shadcn";
 
-export const AddProviderButton = () => {
+interface AddProviderButtonProps {
+  onOpenWizard?: () => void;
+}
+
+export const AddProviderButton = ({ onOpenWizard }: AddProviderButtonProps) => {
   const [open, setOpen] = useState(false);
+
+  const handleOpen = () => {
+    if (onOpenWizard) {
+      onOpenWizard();
+      return;
+    }
+
+    setOpen(true);
+  };
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>Add Provider</Button>
-      <ProviderWizardModal open={open} onOpenChange={setOpen} />
+      <Button onClick={handleOpen}>Add Provider</Button>
+      {!onOpenWizard && (
+        <ProviderWizardModal open={open} onOpenChange={setOpen} />
+      )}
     </>
   );
 };

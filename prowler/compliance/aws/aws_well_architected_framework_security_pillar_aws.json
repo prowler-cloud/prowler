@@ -344,6 +344,9 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
+        "bedrock_full_access_policy_attached",
         "ec2_instance_profile_attached",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
@@ -547,6 +550,7 @@
         "apigatewayv2_api_access_logging_enabled",
         "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
         "cloudfront_distributions_logging_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_logs_s3_bucket_access_logging_enabled",
         "directoryservice_directory_log_forwarding_enabled",
@@ -671,6 +675,7 @@
         "sagemaker_notebook_instance_vpc_settings_configured",
         "sagemaker_training_jobs_network_isolation_enabled",
         "sagemaker_training_jobs_vpc_settings_configured",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_services_allowed_principals_trust_boundaries"
       ]

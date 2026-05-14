@@ -709,17 +709,17 @@
     },
     {
       "Id": "3.1.8",
-      "Description": "Ensure that Network Security Group Flow logs are captured and sent to Log Analytics",
+      "Description": "Ensure that Network Watcher flow logs are captured and sent to Log Analytics",
       "Checks": [
         "network_flow_log_captured_sent"
       ],
       "Attributes": [
         {
-          "Title": "Network Security Group Flow logs are captured and sent to Log Analytics",
+          "Title": "Network Watcher flow logs are captured and sent to Log Analytics",
           "Section": "3. Logging and Monitoring",
           "SubSection": "3.1 Logging",
-          "AttributeDescription": "Ensure that network flow logs are collected and sent to a central Log Analytics workspace for monitoring and analysis.",
-          "AdditionalInformation": "Capturing network flow logs provides visibility into traffic patterns across your network, helping detect anomalies, potential lateral movement, and security threats. These logs integrate with Azure Monitor and Azure Sentinel, enabling advanced analytics and visualization for improved network security and incident response.",
+          "AttributeDescription": "Ensure that Network Watcher flow logs for supported targets, such as virtual networks and network security groups, are collected and sent to a central Log Analytics workspace for monitoring and analysis.",
+          "AdditionalInformation": "Capturing Network Watcher flow logs provides visibility into traffic patterns across your network, helping detect anomalies, potential lateral movement, and security threats. These logs integrate with Azure Monitor and Azure Sentinel, enabling advanced analytics and visualization for improved network security and incident response. For new deployments, prefer virtual network flow logs because NSG flow logs are on the retirement path.",
           "LevelOfRisk": 4,
           "Weight": 100
         }
@@ -763,17 +763,17 @@
     },
     {
       "Id": "3.2.1",
-      "Description": "Ensure that Network Security Group Flow Log retention period is 'greater than 90 days'",
+      "Description": "Ensure that Network Watcher flow log retention period is '0 or at least 90 days'",
       "Checks": [
         "network_flow_log_more_than_90_days"
       ],
       "Attributes": [
         {
-          "Title": "Network Security Group Flow Log retention period is 'greater than 90 days'",
+          "Title": "Network Watcher flow log retention period is '0 or at least 90 days'",
           "Section": "3. Logging and Monitoring",
           "SubSection": "3.2 Retention",
-          "AttributeDescription": "Enable Network Security Group (NSG) Flow Logs and configure the retention period to at least 90 days to capture and store IP traffic data for security monitoring and analysis.",
-          "AdditionalInformation": "NSG Flow Logs provide visibility into network traffic, helping detect anomalies, unauthorized access, and potential security breaches. Retaining logs for at least 90 days ensures that historical data is available for incident investigation, compliance, and forensic analysis, strengthening overall network security monitoring.",
+          "AttributeDescription": "Enable Network Watcher flow logs for supported targets, such as virtual networks and network security groups, and configure the retention period to 0 for unlimited retention or at least 90 days to capture and store IP traffic data for security monitoring and analysis.",
+          "AdditionalInformation": "Network Watcher flow logs provide visibility into network traffic, helping detect anomalies, unauthorized access, and potential security breaches. Retaining logs for 0 days (unlimited) or at least 90 days ensures that historical data is available for incident investigation, compliance, and forensic analysis, strengthening overall network security monitoring. For new deployments, prefer virtual network flow logs because NSG flow logs are on the retirement path.",
           "LevelOfRisk": 3,
           "Weight": 10
         }

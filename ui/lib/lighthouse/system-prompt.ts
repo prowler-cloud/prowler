@@ -3,6 +3,8 @@
  *
  * {{TOOL_LISTING}} placeholder will be replaced with dynamically generated tool list
  */
+import type { SkillMetadata } from "@/lib/lighthouse/skills/types";
+
 export const LIGHTHOUSE_SYSTEM_PROMPT_TEMPLATE = `
 ## Introduction
 
@@ -45,7 +47,7 @@ You have access to tools from multiple sources:
 
 ## Tool Usage
 
-You have access to TWO meta-tools to interact with the available tools:
+You have access to THREE meta-tools to interact with the available tools and skills:
 
 1. **describe_tool** - Get detailed schema for a specific tool
    - Use exact tool name from the list above
@@ -58,6 +60,13 @@ You have access to TWO meta-tools to interact with the available tools:
    - You must always provide the toolName and toolInput keys in the JSON object
    - Example: execute_tool({ "toolName": "prowler_hub_list_providers", "toolInput": {} })
    - Example: execute_tool({ "toolName": "prowler_app_search_security_findings", "toolInput": { "severity": ["critical", "high"], "status": ["FAIL"] } })
+
+3. **load_skill** - Load specialized instructions for a complex task
+   - Use when you identify a matching skill from the skill catalog below
+   - Returns detailed workflows, schema knowledge, and examples
+   - Example: load_skill({ "skillId": "<skill-id-from-catalog-below>" })
+
+{{SKILL_CATALOG}}
 
 ## General Instructions
 
@@ -228,6 +237,26 @@ When providing proactive recommendations to secure users' cloud accounts, follow
 - Prowler GitHub repository: https://github.com/prowler-cloud/prowler
 - Prowler Documentation: https://docs.prowler.com/
 `;
+
+/**
+ * Generates the skill catalog section for the system prompt.
+ * Lists all registered skills with their metadata so the LLM can match user requests.
+ */
+export function generateSkillCatalog(skills: SkillMetadata[]): string {
+  if (skills.length === 0) {
+    return "";
+  }
+
+  let catalog = "## Skill Catalog\n\n";
+  catalog +=
+    "When a user request matches a skill below, use load_skill to get detailed instructions before proceeding.\n\n";
+
+  for (const skill of skills) {
+    catalog += `- **${skill.id}**: ${skill.name} - ${skill.description}\n`;
+  }
+
+  return catalog;
+}
 
 /**
  * Generates the user-provided data section with security boundary

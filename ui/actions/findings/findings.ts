@@ -141,7 +141,15 @@ export const getLatestMetadataInfo = async ({
   }
 };
 
-export const getFindingById = async (findingId: string, include = "") => {
+interface GetFindingByIdOptions {
+  source?: "resource-detail-drawer";
+}
+
+export const getFindingById = async (
+  findingId: string,
+  include = "",
+  _options?: GetFindingByIdOptions,
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/findings/${findingId}`);

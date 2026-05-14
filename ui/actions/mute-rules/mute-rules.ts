@@ -144,22 +144,36 @@ export const createMuteRule = async (
         },
       },
     };
+    const requestBody = JSON.stringify(bodyData);
 
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,
-      body: JSON.stringify(bodyData),
+      body: requestBody,
     });
 
     if (!response.ok) {
       let errorMessage = `Failed to create mute rule: ${response.statusText}`;
+      const responseContentType = response.headers.get("content-type");
       try {
-        const errorData = await response.json();
-        errorMessage =
-          errorData?.errors?.[0]?.detail || errorData?.message || errorMessage;
+        if (responseContentType?.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage =
+            (
+              errorData as {
+                errors?: Array<{ detail?: string }>;
+                message?: string;
+              }
+            )?.errors?.[0]?.detail ||
+            (errorData as { message?: string })?.message ||
+            errorMessage;
+        } else {
+          await response.text();
+        }
       } catch {
         // JSON parsing failed, use default error message
       }
+
       throw new Error(errorMessage);
     }
 
@@ -182,6 +196,9 @@ export const createMuteRule = async (
   }
 };
 
+// Note: Adding findings to existing mute rules is not supported by the API.
+// The MuteRuleUpdateSerializer only allows updating name, reason, and enabled fields.
+// finding_ids can only be specified when creating a new mute rule.
 export const updateMuteRule = async (
   _prevState: MuteRuleActionState,
   formData: FormData,
@@ -373,10 +390,6 @@ export const deleteMuteRule = async (
     };
   }
 };
-
-// Note: Adding findings to existing mute rules is not supported by the API.
-// The MuteRuleUpdateSerializer only allows updating name, reason, and enabled fields.
-// finding_ids can only be specified when creating a new mute rule.
 
 // Note: Unmute functionality is not currently supported by the API.
 // The FindingViewSet only allows GET operations, and deleting a mute rule

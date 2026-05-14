@@ -1,0 +1,35 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "drive_desktop_access_disabled",
+  "CheckTitle": "Google Drive for desktop is disabled",
+  "CheckType": [],
+  "ServiceName": "drive",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The domain-wide default **disables Google Drive for desktop** for the organization. The Drive for desktop client synchronizes Drive content to local devices and uses its own \"offline\" mechanism that does not respect the central offline-access device policy, so disabling it closes a synchronization channel that would otherwise place organizational content on potentially unmanaged endpoints.",
+  "Risk": "When Drive for desktop is enabled, organizational files are **synchronized to local devices** and remain accessible if the device is lost, stolen, or compromised. Because Drive for desktop bypasses the central offline-access controls, this channel is a frequently overlooked path for sensitive data to leave organization-managed environments.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/7491144",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Click **Features and Applications** > **Google Drive for desktop**\n4. **Uncheck** *Allow Google Drive for desktop in your organization*\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable Google Drive for desktop to prevent local synchronization of organizational content. This reduces the risk of data loss when devices are lost or stolen and closes a channel that bypasses central offline-access controls.",
+      "Url": "https://hub.prowler.com/check/drive_desktop_access_disabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

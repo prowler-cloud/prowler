@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "drive_shared_drive_members_only_access",
+  "CheckTitle": "Shared drive file access is restricted to members only",
+  "CheckType": [],
+  "ServiceName": "drive",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The domain-wide default restricts shared drive file access to **explicit members** only. Non-members cannot be added to individual files inside the drive, preserving the shared drive's membership boundary as the authoritative access control surface.",
+  "Risk": "If non-members can be added to files inside a shared drive, the **drive's membership becomes meaningless** as a security control. Sensitive content scoped to a specific team can be silently extended to users who were never granted access to the drive itself, leading to unintended information disclosure.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.google.com/a/answer/7662202",
+    "https://cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Click **Sharing settings** > **Shared drive creation**\n4. **Uncheck** *Allow people who aren't shared drive members to be added to files*\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict shared drive file access to explicit shared drive members. This preserves the drive membership as the authoritative access boundary and prevents silent expansion of access to non-members.",
+      "Url": "https://hub.prowler.com/check/drive_shared_drive_members_only_access"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [
+    "drive_shared_drive_creation_allowed",
+    "drive_shared_drive_managers_cannot_override",
+    "drive_shared_drive_disable_download_print_copy"
+  ],
+  "Notes": ""
+}

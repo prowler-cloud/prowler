@@ -15,10 +15,16 @@ import { getProviderLogo } from "./get-provider-logo";
 interface EntityInfoProps {
   cloudProvider?: ProviderType;
   icon?: ReactNode;
+  /** Small icon rendered inline before the entity alias text */
+  nameIcon?: ReactNode;
   entityAlias?: string;
   entityId?: string;
   badge?: string;
+  /** Label before the ID value. Defaults to "UID" */
+  idLabel?: string;
   showCopyAction?: boolean;
+  /** Inline element rendered after the entity ID (e.g. action link). */
+  idAction?: ReactNode;
   /** @deprecated No longer used — layout handles overflow naturally */
   maxWidth?: string;
   /** @deprecated No longer used */
@@ -30,10 +36,13 @@ interface EntityInfoProps {
 export const EntityInfo = ({
   cloudProvider,
   icon,
+  nameIcon,
   entityAlias,
   entityId,
   badge,
+  idLabel = "UID",
   showCopyAction = true,
+  idAction,
 }: EntityInfoProps) => {
   const canCopy = Boolean(entityId && showCopyAction);
   const renderedIcon =
@@ -45,6 +54,11 @@ export const EntityInfo = ({
         {renderedIcon && <div className="shrink-0">{renderedIcon}</div>}
         <div className="flex min-w-0 flex-col gap-0.5">
           <div className="flex min-w-0 items-center gap-1.5">
+            {nameIcon && (
+              <span className="text-text-neutral-tertiary shrink-0">
+                {nameIcon}
+              </span>
+            )}
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="truncate font-medium">
@@ -62,15 +76,16 @@ export const EntityInfo = ({
             )}
           </div>
           {entityId && (
-            <div className="flex min-w-0 items-center gap-1">
+            <div className="flex min-w-0 items-center gap-2">
               <span className="text-text-neutral-tertiary shrink-0 text-xs font-medium">
-                UID:
+                {idLabel}:
               </span>
               <CodeSnippet
                 value={entityId}
                 className="max-w-[160px]"
                 hideCopyButton={!canCopy}
               />
+              {idAction && <span className="shrink-0">{idAction}</span>}
             </div>
           )}
         </div>

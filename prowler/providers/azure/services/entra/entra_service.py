@@ -3,7 +3,9 @@ from asyncio import gather
 from typing import List, Optional
 from uuid import UUID
 
+from kiota_abstractions.base_request_configuration import RequestConfiguration
 from msgraph import GraphServiceClient
+from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -65,9 +67,16 @@ class Entra(AzureService):
         logger.info("Entra - Getting users...")
         users = {}
         try:
+            request_configuration = RequestConfiguration(
+                query_parameters=UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
+                    select=["id", "displayName", "accountEnabled"]
+                )
+            )
             for tenant, client in self.clients.items():
                 users.update({tenant: {}})
-                users_response = await client.users.get()
+                users_response = await client.users.get(
+                    request_configuration=request_configuration
+                )
                 registration_details = await self._get_user_registration_details(client)
 
                 try:
@@ -80,6 +89,9 @@ class Entra(AzureService):
                                         name=user.display_name,
                                         is_mfa_capable=registration_details.get(
                                             user.id, False
+                                        ),
+                                        account_enabled=getattr(
+                                            user, "account_enabled", True
                                         ),
                                     )
                                 }
@@ -409,6 +421,7 @@ class User(BaseModel):
     id: str
     name: str
     is_mfa_capable: bool = False
+    account_enabled: bool = True
 
 
 class DefaultUserRolePermissions(BaseModel):

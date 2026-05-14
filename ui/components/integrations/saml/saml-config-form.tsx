@@ -253,9 +253,10 @@ export const SamlConfigForm = ({
     reader.readAsText(file);
   };
 
-  const acsUrl = emailDomain
-    ? `${apiBaseUrl}/accounts/saml/${emailDomain}/acs/`
-    : `${apiBaseUrl}/accounts/saml/your-domain.com/acs/`;
+  const trimmedEmailDomain = emailDomain.trim();
+  const acsUrl = trimmedEmailDomain
+    ? `${apiBaseUrl}/accounts/saml/${trimmedEmailDomain}/acs/`
+    : "";
 
   return (
     <form
@@ -308,11 +309,17 @@ export const SamlConfigForm = ({
               <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 ACS URL:
               </span>
-              <CodeSnippet
-                value={acsUrl}
-                ariaLabel="Copy ACS URL"
-                className="h-10 w-full"
-              />
+              {acsUrl ? (
+                <CodeSnippet
+                  value={acsUrl}
+                  ariaLabel="Copy ACS URL"
+                  className="h-10 w-full"
+                />
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Enter your email domain above to generate the ACS URL.
+                </p>
+              )}
             </div>
 
             <div>

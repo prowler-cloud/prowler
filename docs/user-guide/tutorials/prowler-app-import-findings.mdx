@@ -365,6 +365,10 @@ Prowler must be installed in the CI/CD environment before running scans. Refer t
 
 ### GitHub Actions
 
+<Info>
+For new projects, use the official [Prowler GitHub Action](/user-guide/tutorials/prowler-app-github-action) — a Docker-based reusable action that runs scans, optionally pushes findings to Prowler Cloud, and uploads SARIF results to GitHub Code Scanning. The example below documents the legacy pip-based flow.
+</Info>
+
 ```yaml
 - name: Install Prowler
   run: pip install prowler

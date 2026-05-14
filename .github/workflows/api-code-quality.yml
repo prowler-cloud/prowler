@@ -17,6 +17,8 @@ concurrency:
 env:
   API_WORKING_DIR: ./api
 
+permissions: {}
+
 jobs:
   api-code-quality:
     runs-on: ubuntu-latest
@@ -32,6 +34,17 @@ jobs:
         working-directory: ./api
 
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
+            api.github.com:443
+            raw.githubusercontent.com:443
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -40,7 +53,7 @@ jobs:
 
       - name: Check for API changes
         id: check-changes
-        uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
             api/**
@@ -51,25 +64,25 @@ jobs:
             api/CHANGELOG.md
             api/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./api
 
-      - name: Poetry check
+      - name: uv lock check
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry check --lock
+        run: uv lock --check
 
       - name: Ruff lint
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run ruff check . --exclude contrib
+        run: uv run ruff check . --exclude contrib
 
       - name: Ruff format
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run ruff format --check . --exclude contrib
+        run: uv run ruff format --check . --exclude contrib
 
       - name: Pylint
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run pylint --disable=W,C,R,E -j 0 -rn -sn src/
+        run: uv run pylint --disable=W,C,R,E -j 0 -rn -sn src/

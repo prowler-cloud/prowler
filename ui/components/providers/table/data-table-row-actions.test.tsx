@@ -3,9 +3,11 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import {
   PROVIDERS_GROUP_KIND,
   PROVIDERS_ROW_TYPE,
+  ProvidersTableRow,
 } from "@/types/providers-table";
 
 const checkConnectionProviderMock = vi.hoisted(() => vi.fn());
@@ -16,10 +18,6 @@ vi.mock("@/actions/organizations/organizations", () => ({
 
 vi.mock("@/actions/providers/providers", () => ({
   checkConnectionProvider: checkConnectionProviderMock,
-}));
-
-vi.mock("@/components/providers/wizard", () => ({
-  ProviderWizardModal: () => null,
 }));
 
 vi.mock("../forms/delete-form", () => ({
@@ -44,7 +42,7 @@ vi.mock("@/lib/provider-helpers", () => ({
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
-const createRow = () =>
+const createRow = (hasSecret = false) =>
   ({
     original: {
       id: "provider-1",
@@ -74,7 +72,7 @@ const createRow = () =>
       },
       relationships: {
         secret: {
-          data: null,
+          data: hasSecret ? { id: "secret-1", type: "secrets" } : null,
         },
         provider_groups: {
           meta: {
@@ -85,7 +83,7 @@ const createRow = () =>
       },
       groupNames: [],
     },
-  }) as Row<any>;
+  }) as unknown as Row<ProvidersTableRow>;
 
 const createOrgRow = () =>
   ({
@@ -117,7 +115,7 @@ const createOrgRow = () =>
         },
       ],
     },
-  }) as Row<any>;
+  }) as unknown as Row<ProvidersTableRow>;
 
 const createOuRow = () =>
   ({
@@ -142,19 +140,21 @@ const createOuRow = () =>
         },
       ],
     },
-  }) as Row<any>;
+  }) as unknown as Row<ProvidersTableRow>;
 
 describe("DataTableRowActions", () => {
-  it("renders the exact phase 1 menu actions for provider rows", async () => {
+  it("renders Add Credentials for provider rows without credentials", async () => {
     // Given
     const user = userEvent.setup();
     render(
       <DataTableRowActions
-        row={createRow()}
+        row={createRow(false)}
         hasSelection={false}
         isRowSelected={false}
         testableProviderIds={[]}
         onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
       />,
     );
 
@@ -163,9 +163,32 @@ describe("DataTableRowActions", () => {
 
     // Then
     expect(screen.getByText("Edit Provider Alias")).toBeInTheDocument();
-    expect(screen.getByText("Update Credentials")).toBeInTheDocument();
+    expect(screen.getByText("Add Credentials")).toBeInTheDocument();
     expect(screen.getByText("Test Connection")).toBeInTheDocument();
     expect(screen.getByText("Delete Provider")).toBeInTheDocument();
+    expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
+  });
+
+  it("renders Update Credentials for provider rows with credentials", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then
+    expect(screen.getByText("Update Credentials")).toBeInTheDocument();
     expect(screen.queryByText("Add Credentials")).not.toBeInTheDocument();
   });
 
@@ -178,6 +201,8 @@ describe("DataTableRowActions", () => {
         isRowSelected={false}
         testableProviderIds={[]}
         onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
       />,
     );
 
@@ -199,6 +224,8 @@ describe("DataTableRowActions", () => {
         isRowSelected={false}
         testableProviderIds={[]}
         onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
       />,
     );
 
@@ -220,6 +247,8 @@ describe("DataTableRowActions", () => {
         isRowSelected={false}
         testableProviderIds={[]}
         onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
       />,
     );
 
@@ -238,6 +267,8 @@ describe("DataTableRowActions", () => {
         isRowSelected={false}
         testableProviderIds={["provider-child-1", "provider-standalone"]}
         onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
       />,
     );
 
@@ -257,6 +288,8 @@ describe("DataTableRowActions", () => {
         isRowSelected={false}
         testableProviderIds={["provider-ou-child-1", "provider-standalone"]}
         onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
       />,
     );
 
@@ -276,6 +309,8 @@ describe("DataTableRowActions", () => {
         isRowSelected={false}
         testableProviderIds={[]}
         onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
       />,
     );
 
@@ -285,5 +320,69 @@ describe("DataTableRowActions", () => {
       screen.queryByText("Edit Organization Name"),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
+  });
+
+  it("opens the shared provider wizard when provider credentials action is selected", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenProviderWizard = vi.fn();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={onOpenProviderWizard}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Update Credentials"));
+
+    // Then
+    expect(onOpenProviderWizard).toHaveBeenCalledWith({
+      providerId: "provider-1",
+      providerType: "aws",
+      providerUid: "111111111111",
+      providerAlias: "AWS App Account",
+      secretId: "secret-1",
+      mode: "update",
+    });
+  });
+
+  it("opens the shared organization wizard when org credentials action is selected", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenOrganizationWizard = vi.fn();
+
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={onOpenOrganizationWizard}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Update Credentials"));
+
+    // Then
+    expect(onOpenOrganizationWizard).toHaveBeenCalledWith({
+      organizationId: "org-1",
+      organizationName: "My AWS Organization",
+      externalId: "o-abc123def4",
+      targetStep: ORG_WIZARD_STEP.SETUP,
+      targetPhase: ORG_SETUP_PHASE.ACCESS,
+      intent: "edit-credentials",
+    });
   });
 });

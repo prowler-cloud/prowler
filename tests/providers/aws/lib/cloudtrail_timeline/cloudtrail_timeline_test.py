@@ -100,7 +100,7 @@ class TestCloudTrailTimeline:
 
         assert len(result) == 1
         assert result[0]["event_name"] == "RunInstances"
-        assert result[0]["actor"] == "admin"
+        assert result[0]["actor"] == "user/admin"
         assert result[0]["source_ip_address"] == "203.0.113.1"
 
     def test_get_resource_timeline_with_resource_uid(
@@ -120,7 +120,7 @@ class TestCloudTrailTimeline:
         assert result[0]["event_name"] == "RunInstances"
 
     def test_get_resource_timeline_prefers_uid_over_id(self, mock_session):
-        """When both resource_id and resource_uid are provided, UID should be used."""
+        """When both resource_id and resource_uid are provided, UID is tried first."""
         mock_client = MagicMock()
         mock_client.lookup_events.return_value = {"Events": []}
         mock_session.client.return_value = mock_client
@@ -132,9 +132,9 @@ class TestCloudTrailTimeline:
             resource_uid="arn:aws:ec2:us-east-1:123:instance/i-1234",
         )
 
-        # Verify UID was used in the lookup
-        call_args = mock_client.lookup_events.call_args
-        lookup_attrs = call_args.kwargs["LookupAttributes"]
+        # Verify UID was used on the first lookup call
+        first_call = mock_client.lookup_events.call_args_list[0]
+        lookup_attrs = first_call.kwargs["LookupAttributes"]
         assert (
             lookup_attrs[0]["AttributeValue"]
             == "arn:aws:ec2:us-east-1:123:instance/i-1234"
@@ -304,14 +304,28 @@ class TestExtractActor:
             "arn": "arn:aws:iam::123456789012:user/alice",
             "userName": "alice",
         }
-        assert CloudTrailTimeline._extract_actor(user_identity) == "alice"
+        assert CloudTrailTimeline._extract_actor(user_identity) == "user/alice"
 
     def test_extract_actor_assumed_role(self):
         user_identity = {
             "type": "AssumedRole",
             "arn": "arn:aws:sts::123456789012:assumed-role/MyRole/session-name",
         }
-        assert CloudTrailTimeline._extract_actor(user_identity) == "MyRole"
+        assert (
+            CloudTrailTimeline._extract_actor(user_identity)
+            == "assumed-role/MyRole/session-name"
+        )
+
+    def test_extract_actor_assumed_role_sso(self):
+        """SSO sessions store the user identity in the session name."""
+        user_identity = {
+            "type": "AssumedRole",
+            "arn": "arn:aws:sts::123456789012:assumed-role/AWSReservedSSO_AdministratorAccess_abcdef1234567890/user@example.com",
+        }
+        assert (
+            CloudTrailTimeline._extract_actor(user_identity)
+            == "assumed-role/AWSReservedSSO_AdministratorAccess_abcdef1234567890/user@example.com"
+        )
 
     def test_extract_actor_root(self):
         user_identity = {"type": "Root", "arn": "arn:aws:iam::123456789012:root"}
@@ -327,21 +341,33 @@ class TestExtractActor:
             == "elasticloadbalancing.amazonaws.com"
         )
 
-    def test_extract_actor_fallback_to_principal_id(self):
-        user_identity = {"type": "Unknown", "principalId": "AROAEXAMPLEID:session"}
-        assert (
-            CloudTrailTimeline._extract_actor(user_identity) == "AROAEXAMPLEID:session"
-        )
-
     def test_extract_actor_unknown(self):
         assert CloudTrailTimeline._extract_actor({}) == "Unknown"
+
+    def test_extract_actor_username_only_returns_unknown(self):
+        """When userIdentity carries only userName/principalId (no arn or
+        invokedBy), we deliberately return "Unknown" — we rely on the ARN
+        from the upstream service for the actor."""
+        assert (
+            CloudTrailTimeline._extract_actor({"type": "IAMUser", "userName": "alice"})
+            == "Unknown"
+        )
+        assert (
+            CloudTrailTimeline._extract_actor(
+                {"type": "Unknown", "principalId": "AROAEXAMPLEID:session"}
+            )
+            == "Unknown"
+        )
 
     def test_extract_actor_federated_user(self):
         user_identity = {
             "type": "FederatedUser",
             "arn": "arn:aws:sts::123456789012:federated-user/developer",
         }
-        assert CloudTrailTimeline._extract_actor(user_identity) == "developer"
+        assert (
+            CloudTrailTimeline._extract_actor(user_identity)
+            == "federated-user/developer"
+        )
 
 
 class TestParseEvent:
@@ -380,7 +406,7 @@ class TestParseEvent:
         assert result is not None
         assert result["event_name"] == "RunInstances"
         assert result["event_source"] == "ec2.amazonaws.com"
-        assert result["actor"] == "admin"
+        assert result["actor"] == "user/admin"
         assert result["actor_uid"] == "arn:aws:iam::123456789012:user/admin"
         assert result["actor_type"] == "IAMUser"
 
@@ -424,7 +450,10 @@ class TestParseEvent:
             "EventName": "RunInstances",
             "EventSource": "ec2.amazonaws.com",
             "CloudTrailEvent": {
-                "userIdentity": {"type": "IAMUser", "userName": "admin"},
+                "userIdentity": {
+                    "type": "IAMUser",
+                    "arn": "arn:aws:iam::123456789012:user/admin",
+                },
             },
         }
         timeline = CloudTrailTimeline(session=mock_session)
@@ -432,7 +461,7 @@ class TestParseEvent:
 
         assert result is not None
         assert result["event_name"] == "RunInstances"
-        assert result["actor"] == "admin"
+        assert result["actor"] == "user/admin"
 
     def test_parse_event_missing_event_id(self, mock_session):
         """Test parsing event without EventId returns None (event_id is required)."""
@@ -506,7 +535,7 @@ class TestParseEvent:
 
         assert result is not None
         assert result["event_name"] == "RunInstances"
-        assert result["actor"] == "admin"
+        assert result["actor"] == "user/admin"
         # actor_type should be None when not present in userIdentity
         assert result["actor_type"] is None
 
@@ -606,3 +635,159 @@ class TestIsReadOnlyEvent:
         """Verify write events are not marked as read-only."""
         timeline = CloudTrailTimeline(session=mock_session)
         assert timeline._is_read_only_event(event_name) is False
+
+
+class TestExtractShortName:
+    """Tests for _extract_short_name static method."""
+
+    @pytest.mark.parametrize(
+        "identifier,expected",
+        [
+            ("arn:aws:s3:::my-bucket", "my-bucket"),
+            ("arn:aws:iam::123456789012:user/alice", "alice"),
+            ("arn:aws:iam::123456789012:role/MyRole", "MyRole"),
+            (
+                "arn:aws:ec2:us-east-1:123456789012:instance/i-0abc1234",
+                "i-0abc1234",
+            ),
+            (
+                "arn:aws:lambda:us-east-1:123456789012:function:my-func",
+                "my-func",
+            ),
+            ("arn:aws:rds:us-east-1:123456789012:db:mydb", "mydb"),
+            ("arn:aws:dynamodb:us-east-1:123456789012:table/MyTable", "MyTable"),
+            (
+                "arn:aws:kms:us-east-1:123456789012:key/abcd-efgh",
+                "abcd-efgh",
+            ),
+            ("i-0abc1234", "i-0abc1234"),
+            ("my-bucket", "my-bucket"),
+            ("", ""),
+        ],
+    )
+    def test_extract_short_name(self, identifier, expected):
+        assert CloudTrailTimeline._extract_short_name(identifier) == expected
+
+
+class TestLookupEventsFallback:
+    """Tests for the ARN-to-short-name fallback in _lookup_events."""
+
+    @pytest.fixture
+    def mock_session(self):
+        return MagicMock()
+
+    @pytest.fixture
+    def sample_event(self):
+        return {
+            "EventId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "EventTime": datetime(2024, 1, 15, 10, 30, 0, tzinfo=timezone.utc),
+            "EventName": "CreateBucket",
+            "EventSource": "s3.amazonaws.com",
+            "CloudTrailEvent": json.dumps(
+                {
+                    "userIdentity": {
+                        "type": "IAMUser",
+                        "arn": "arn:aws:iam::123456789012:user/admin",
+                        "userName": "admin",
+                    }
+                }
+            ),
+        }
+
+    def test_no_fallback_when_arn_returns_events(self, mock_session, sample_event):
+        """When the ARN lookup returns events, we do not retry with the short name."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": [sample_event]}
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1",
+            resource_uid="arn:aws:kms:us-east-1:123456789012:key/abcd-efgh",
+        )
+
+        assert len(result) == 1
+        assert mock_client.lookup_events.call_count == 1
+        call = mock_client.lookup_events.call_args
+        assert (
+            call.kwargs["LookupAttributes"][0]["AttributeValue"]
+            == "arn:aws:kms:us-east-1:123456789012:key/abcd-efgh"
+        )
+
+    def test_fallback_to_short_name_when_arn_returns_empty(
+        self, mock_session, sample_event
+    ):
+        """When the ARN lookup returns nothing, we retry with the short name."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.side_effect = [
+            {"Events": []},
+            {"Events": [sample_event]},
+        ]
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1", resource_uid="arn:aws:s3:::my-bucket"
+        )
+
+        assert len(result) == 1
+        assert mock_client.lookup_events.call_count == 2
+        first_call, second_call = mock_client.lookup_events.call_args_list
+        assert (
+            first_call.kwargs["LookupAttributes"][0]["AttributeValue"]
+            == "arn:aws:s3:::my-bucket"
+        )
+        assert (
+            second_call.kwargs["LookupAttributes"][0]["AttributeValue"] == "my-bucket"
+        )
+
+    def test_no_fallback_when_identifier_has_no_short_name(self, mock_session):
+        """A non-ARN identifier collapses to itself; no retry should fire."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": []}
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1", resource_id="i-0abc1234"
+        )
+
+        assert result == []
+        assert mock_client.lookup_events.call_count == 1
+
+    def test_no_fallback_when_identifier_is_not_arn(self, mock_session):
+        """A non-ARN identifier with / or : must not trigger the retry."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": []}
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1", resource_id="some-prefix/weird:value"
+        )
+
+        assert result == []
+        assert mock_client.lookup_events.call_count == 1
+
+    def test_both_lookups_empty_returns_empty_list(self, mock_session):
+        """If both the ARN and short-name lookups return empty, we return []."""
+        mock_client = MagicMock()
+        mock_client.lookup_events.return_value = {"Events": []}
+        mock_session.client.return_value = mock_client
+
+        timeline = CloudTrailTimeline(session=mock_session)
+        result = timeline.get_resource_timeline(
+            region="us-east-1",
+            resource_uid="arn:aws:ec2:us-east-1:123456789012:instance/i-0abc1234",
+        )
+
+        assert result == []
+        assert mock_client.lookup_events.call_count == 2
+        first_call, second_call = mock_client.lookup_events.call_args_list
+        assert (
+            first_call.kwargs["LookupAttributes"][0]["AttributeValue"]
+            == "arn:aws:ec2:us-east-1:123456789012:instance/i-0abc1234"
+        )
+        assert (
+            second_call.kwargs["LookupAttributes"][0]["AttributeValue"] == "i-0abc1234"
+        )

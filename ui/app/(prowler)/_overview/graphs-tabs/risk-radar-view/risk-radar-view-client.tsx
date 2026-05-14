@@ -7,6 +7,7 @@ import { HorizontalBarChart } from "@/components/graphs/horizontal-bar-chart";
 import { RadarChart } from "@/components/graphs/radar-chart";
 import type { BarDataPoint, RadarDataPoint } from "@/components/graphs/types";
 import { Card } from "@/components/shadcn/card/card";
+import { applyFailNonMutedFilters } from "@/lib";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
 import { CategorySelector } from "./category-selector";
@@ -50,11 +51,7 @@ export function RiskRadarViewClient({ data }: RiskRadarViewClientProps) {
     // Add category filter for the selected point
     params.set("filter[category__in]", selectedPoint.categoryId);
 
-    // Add exclude muted findings filter
-    params.set("filter[muted]", "false");
-
-    // Filter by FAIL findings
-    params.set("filter[status__in]", "FAIL");
+    applyFailNonMutedFilters(params);
 
     // Navigate to findings page
     router.push(`/findings?${params.toString()}`);

@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip",
+  "CheckTitle": "Security group does not have any port open to a specific public IP address",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Initial Access"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2SecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "EC2 security groups with inbound rules allowing traffic from specific globally routable IP addresses to any port or protocol. Wildcard CIDRs (0.0.0.0/0 and ::/0) are excluded as they are covered by the related checks. This targets cases where developers add personal or third-party IPs directly to security groups.",
+  "Risk": "Ingress rules with specific public IPs can become stale when personnel change or access requirements expire. An attacker with compromised AWS credentials could also add narrow IP rules to gain access on any port, bypassing checks that only look for 0.0.0.0/0 or ::/0.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: security group without public IP ingress\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: \"SG without public IP ingress\"\n      VpcId: \"<example_resource_id>\"\n      SecurityGroupIngress: []  # No inbound rules with public IPs\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Security Groups\n2. Select the affected security group\n3. Open the Inbound rules tab and click Edit inbound rules\n4. Remove or restrict any rule with a Source that is a public IP address\n5. Click Save rules",
+      "Terraform": "```hcl\n# Security group with no public IP ingress\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  vpc_id = \"<example_resource_id>\"\n  # No ingress blocks with public IP CIDRs\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Review all security group rules with specific public IP sources. Remove stale entries for former employees or expired access. Use VPN, AWS Systems Manager Session Manager, or AWS Client VPN instead of direct IP-based access. For third-party integrations, use VPC endpoints or AWS PrivateLink where possible.",
+      "Url": "https://hub.prowler.com/check/ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+    "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+  ],
+  "Notes": ""
+}

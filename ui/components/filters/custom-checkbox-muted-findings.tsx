@@ -2,16 +2,40 @@
 
 import { useSearchParams } from "next/navigation";
 
+import { MutedIcon } from "@/components/icons";
 import { Checkbox } from "@/components/shadcn";
 import { useUrlFilters } from "@/hooks/use-url-filters";
+import { MUTED_FILTER } from "@/lib";
 
-// Constants for muted filter URL values
-const MUTED_FILTER_VALUES = {
-  EXCLUDE: "false",
-  INCLUDE: "include",
-} as const;
+/** Batch mode: caller controls both the checked state and the notification callback (all-or-nothing). */
+interface CustomCheckboxMutedFindingsBatchProps {
+  /**
+   * Called instead of navigating directly.
+   * Receives the filter key ("muted") and the string value ("include" or "false").
+   */
+  onBatchChange: (filterKey: string, value: string) => void;
+  /**
+   * Controlled checked state from the parent (pending state).
+   * `true` = include muted, `false` = exclude muted.
+   * `undefined` defers to URL state while pending state is not yet set.
+   */
+  checked: boolean | undefined;
+}
 
-export const CustomCheckboxMutedFindings = () => {
+/** Instant mode: URL-driven — neither callback nor controlled value. */
+interface CustomCheckboxMutedFindingsInstantProps {
+  onBatchChange?: never;
+  checked?: never;
+}
+
+type CustomCheckboxMutedFindingsProps =
+  | CustomCheckboxMutedFindingsBatchProps
+  | CustomCheckboxMutedFindingsInstantProps;
+
+export const CustomCheckboxMutedFindings = ({
+  onBatchChange,
+  checked: checkedProp,
+}: CustomCheckboxMutedFindingsProps = {}) => {
   const searchParams = useSearchParams();
   const { navigateWithParams } = useUrlFilters();
 
@@ -21,18 +45,32 @@ export const CustomCheckboxMutedFindings = () => {
   // URL states:
   // - filter[muted]=false → Exclude muted (checkbox UNCHECKED)
   // - filter[muted]=include → Include muted (checkbox CHECKED)
-  const includeMuted = mutedFilterValue === MUTED_FILTER_VALUES.INCLUDE;
+  // When a controlled `checked` prop is provided (batch mode), use it; otherwise fall back to URL.
+  const includeMuted =
+    checkedProp !== undefined
+      ? checkedProp
+      : mutedFilterValue === MUTED_FILTER.INCLUDE;
 
   const handleMutedChange = (checked: boolean | "indeterminate") => {
     const isChecked = checked === true;
 
+    if (onBatchChange) {
+      // Batch mode: notify caller instead of navigating
+      onBatchChange(
+        "muted",
+        isChecked ? MUTED_FILTER.INCLUDE : MUTED_FILTER.EXCLUDE,
+      );
+      return;
+    }
+
+    // Instant mode (default): navigate immediately
     navigateWithParams((params) => {
       if (isChecked) {
         // Include muted: set special value (API will ignore invalid value and show all)
-        params.set("filter[muted]", MUTED_FILTER_VALUES.INCLUDE);
+        params.set("filter[muted]", MUTED_FILTER.INCLUDE);
       } else {
         // Exclude muted: apply filter to show only non-muted
-        params.set("filter[muted]", MUTED_FILTER_VALUES.EXCLUDE);
+        params.set("filter[muted]", MUTED_FILTER.EXCLUDE);
       }
     });
   };
@@ -45,6 +83,7 @@ export const CustomCheckboxMutedFindings = () => {
         onCheckedChange={handleMutedChange}
         aria-label="Include muted findings"
       />
+      <MutedIcon className="text-bg-data-muted size-3 shrink-0" />
       <label
         htmlFor="include-muted"
         className="cursor-pointer text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"

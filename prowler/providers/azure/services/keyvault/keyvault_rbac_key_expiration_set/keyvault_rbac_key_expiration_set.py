@@ -6,21 +6,23 @@ class keyvault_rbac_key_expiration_set(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, key_vaults in keyvault_client.key_vaults.items():
+            subscription_name = keyvault_client.subscriptions.get(
+                subscription, subscription
+            )
             for keyvault in key_vaults:
-                if keyvault.properties.enable_rbac_authorization and keyvault.keys:
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource=keyvault
-                    )
-                    report.subscription = subscription
-                    report.status = "PASS"
-                    report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has all the keys with expiration date set."
-                    has_key_without_expiration = False
-                    for key in keyvault.keys:
-                        if not key.attributes.expires and key.enabled:
+                if keyvault.properties.enable_rbac_authorization:
+                    for key in keyvault.keys or []:
+                        if not key.enabled:
+                            continue
+                        report = Check_Report_Azure(
+                            metadata=self.metadata(), resource=key
+                        )
+                        report.subscription = subscription
+                        if not key.attributes.expires:
                             report.status = "FAIL"
-                            report.status_extended = f"Keyvault {keyvault.name} from subscription {subscription} has the key {key.name} without expiration date set."
-                            has_key_without_expiration = True
-                            findings.append(report)
-                    if not has_key_without_expiration:
+                            report.status_extended = f"Key {key.name} in Key Vault {keyvault.name} from subscription {subscription_name} ({subscription}) does not have an expiration date set."
+                        else:
+                            report.status = "PASS"
+                            report.status_extended = f"Key {key.name} in Key Vault {keyvault.name} from subscription {subscription_name} ({subscription}) has an expiration date set."
                         findings.append(report)
         return findings

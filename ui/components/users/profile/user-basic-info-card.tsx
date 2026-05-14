@@ -4,8 +4,9 @@ import { Divider } from "@heroui/divider";
 
 import { ProwlerShort } from "@/components/icons";
 import { Card, CardContent } from "@/components/shadcn";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime, InfoField } from "@/components/ui/entities";
+import { DateWithTime } from "@/components/ui/entities";
 import { UserDataWithRoles } from "@/types/users";
 
 const TenantIdCopy = ({ id }: { id: string }) => {

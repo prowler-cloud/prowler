@@ -135,3 +135,48 @@ class ResourcesMetadataResponse(BaseModel):
             regions=attributes.get("regions"),
             types=attributes.get("types"),
         )
+
+
+class ResourceEvent(MinimalSerializerMixin, BaseModel):
+    """A cloud API action performed on a resource.
+
+    Sourced from cloud provider audit logs (AWS CloudTrail, Azure Activity Logs,
+    GCP Audit Logs, etc.).
+    """
+
+    id: str
+    event_time: str
+    event_name: str
+    event_source: str
+    actor: str
+    actor_uid: str | None = None
+    actor_type: str | None = None
+    source_ip_address: str | None = None
+    user_agent: str | None = None
+    request_data: dict | None = None
+    response_data: dict | None = None
+    error_code: str | None = None
+    error_message: str | None = None
+
+    @classmethod
+    def from_api_response(cls, data: dict) -> "ResourceEvent":
+        """Transform JSON:API resource event response."""
+        return cls(id=data["id"], **data.get("attributes", {}))
+
+
+class ResourceEventsResponse(BaseModel):
+    """Response wrapper for resource events list."""
+
+    events: list[ResourceEvent]
+    total_events: int
+
+    @classmethod
+    def from_api_response(cls, response: dict) -> "ResourceEventsResponse":
+        """Transform JSON:API response to events list."""
+        data = response.get("data", [])
+        events = [ResourceEvent.from_api_response(item) for item in data]
+
+        return cls(
+            events=events,
+            total_events=len(events),
+        )

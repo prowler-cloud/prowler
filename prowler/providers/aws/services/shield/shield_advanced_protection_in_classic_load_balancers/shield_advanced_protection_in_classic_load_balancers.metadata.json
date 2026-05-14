@@ -31,7 +31,8 @@
     }
   },
   "Categories": [
-    "resilience"
+    "resilience",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

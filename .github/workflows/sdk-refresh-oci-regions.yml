@@ -12,6 +12,8 @@ concurrency:
 env:
   PYTHON_VERSION: '3.12'
 
+permissions: {}
+
 jobs:
   refresh-oci-regions:
     if: github.repository == 'prowler-cloud/prowler'
@@ -22,6 +24,11 @@ jobs:
       contents: write
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -72,12 +79,13 @@ jobs:
             This PR updates the `OCI_COMMERCIAL_REGIONS` dictionary in `prowler/providers/oraclecloud/config.py` with the latest regions fetched from the OCI Identity API (`list_regions()`).
 
             - Government regions (`OCI_GOVERNMENT_REGIONS`) are preserved unchanged
+            - DOD regions (`OCI_US_DOD_REGIONS`) are preserved unchanged
             - Region display names are mapped from Oracle's official documentation
 
             ### Checklist
 
             - [x] This is an automated update from OCI official sources
-            - [x] Government regions (us-langley-1, us-luke-1) preserved
+            - [x] Government regions (us-langley-1, us-luke-1) and DOD regions (us-gov-ashburn-1, us-gov-phoenix-1, us-gov-chicago-1) are preserved
             - [x] No manual review of region data required
 
             ### License

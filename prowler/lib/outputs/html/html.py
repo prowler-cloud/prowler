@@ -9,6 +9,7 @@ from prowler.config.config import (
     square_logo_img,
     timestamp,
 )
+from prowler.lib.cli.redact import redact_argv
 from prowler.lib.logger import logger
 from prowler.lib.outputs.output import Finding, Output
 from prowler.lib.outputs.utils import parse_html_string, unroll_dict
@@ -196,7 +197,7 @@ class HTML(Output):
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(sys.argv[1:]) if from_cli else ""}
+                <b>Parameters used:</b> {redact_argv(sys.argv[1:]) if from_cli else ""}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}
@@ -491,8 +492,11 @@ class HTML(Output):
         """
         try:
             printed_subscriptions = []
-            for key, value in provider.identity.subscriptions.items():
-                intermediate = f"{key} : {value}"
+            for (
+                subscription_id,
+                display_name,
+            ) in provider.identity.subscriptions.items():
+                intermediate = f"{display_name} : {subscription_id}"
                 printed_subscriptions.append(intermediate)
 
             # check if identity is str(coming from SP) or dict(coming from browser or)
@@ -1322,6 +1326,121 @@ class HTML(Output):
                             <li class="list-group-item">
                                 <b>Authentication Method:</b> Service Account with Domain-Wide Delegation
                             </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_vercel_assessment_summary(provider: Provider) -> str:
+        """
+        get_vercel_assessment_summary gets the HTML assessment summary for the Vercel provider
+
+        Args:
+            provider (Provider): the Vercel provider object
+
+        Returns:
+            str: HTML assessment summary for the Vercel provider
+        """
+        try:
+            assessment_items = ""
+
+            team = getattr(provider.identity, "team", None)
+            if team:
+                assessment_items += f"""
+                            <li class="list-group-item">
+                                <b>Team:</b> {team.name} ({team.id})
+                            </li>"""
+
+            credentials_items = """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+
+            email = getattr(provider.identity, "email", None)
+            if email:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>"""
+
+            username = getattr(provider.identity, "username", None)
+            if username:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Username:</b> {username}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Vercel Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Vercel Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_okta_assessment_summary(provider: Provider) -> str:
+        """
+        get_okta_assessment_summary gets the HTML assessment summary for the Okta provider
+
+        Args:
+            provider (Provider): the Okta provider object
+
+        Returns:
+            str: HTML assessment summary for the Okta provider
+        """
+        try:
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Okta Domain:</b> {provider.identity.org_domain}
+                            </li>"""
+
+            credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>Authentication:</b> {provider.auth_method}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Client ID:</b> {provider.identity.client_id}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Okta Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Okta Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
                         </ul>
                     </div>
                 </div>"""

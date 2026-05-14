@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/shadcn";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import type { GraphNode } from "@/types/attack-paths";
 
@@ -16,13 +18,20 @@ type Severity = (typeof SEVERITY_LEVELS)[keyof typeof SEVERITY_LEVELS];
 interface NodeFindingsProps {
   node: GraphNode;
   allNodes?: GraphNode[];
+  onViewFinding?: (findingId: string) => void;
+  viewFindingLoading?: boolean;
 }
 
 /**
  * Node findings section showing related findings for the selected node
  * Displays findings that are connected to the node via HAS_FINDING edges
  */
-export const NodeFindings = ({ node, allNodes = [] }: NodeFindingsProps) => {
+export const NodeFindings = ({
+  node,
+  allNodes = [],
+  onViewFinding,
+  viewFindingLoading = false,
+}: NodeFindingsProps) => {
   // Get finding IDs from the node's findings array (populated by adapter)
   const findingIds = node.findings || [];
 
@@ -79,15 +88,20 @@ export const NodeFindings = ({ node, allNodes = [] }: NodeFindingsProps) => {
                   ID: {findingId}
                 </p>
               </div>
-              <a
-                href={`/findings?id=${findingId}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => onViewFinding?.(findingId)}
+                disabled={viewFindingLoading}
                 aria-label={`View full finding for ${findingName}`}
                 className="text-text-info dark:text-text-info h-auto shrink-0 p-0 text-xs font-medium hover:underline"
               >
-                View Full Finding →
-              </a>
+                {viewFindingLoading ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  "View Full Finding →"
+                )}
+              </Button>
             </div>
             {finding.properties?.description && (
               <div className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-2 text-xs">

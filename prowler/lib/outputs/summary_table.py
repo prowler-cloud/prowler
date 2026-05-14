@@ -9,6 +9,7 @@ from prowler.config.config import (
     json_asff_file_suffix,
     json_ocsf_file_suffix,
     orange_color,
+    sarif_file_suffix,
 )
 from prowler.lib.logger import logger
 from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
@@ -99,6 +100,17 @@ def display_summary_table(
         elif provider.type == "image":
             entity_type = "Image"
             audited_entities = ", ".join(provider.images)
+        elif provider.type == "vercel":
+            entity_type = "Team"
+            if provider.identity.team:
+                audited_entities = (
+                    f"{provider.identity.team.name} ({provider.identity.team.slug})"
+                )
+            else:
+                audited_entities = provider.identity.username or "Personal Account"
+        elif provider.type == "okta":
+            entity_type = "Okta Org"
+            audited_entities = provider.identity.org_domain
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):
@@ -176,9 +188,13 @@ def display_summary_table(
             print(
                 f"\n{entity_type} {Fore.YELLOW}{audited_entities}{Style.RESET_ALL} Scan Results (severity columns are for fails only):"
             )
-            if provider == "azure":
+            if provider.type == "azure":
+                scanned_subscriptions = ", ".join(
+                    f"{display_name} ({subscription_id})"
+                    for subscription_id, display_name in provider.identity.subscriptions.items()
+                )
                 print(
-                    f"\nSubscriptions scanned: {Fore.YELLOW}{' '.join(provider.identity.subscriptions.keys())}{Style.RESET_ALL}"
+                    f"\nSubscriptions scanned: {Fore.YELLOW}{scanned_subscriptions}{Style.RESET_ALL}"
                 )
             print(tabulate(findings_table, headers="keys", tablefmt="rounded_grid"))
             print(
@@ -198,6 +214,10 @@ def display_summary_table(
             if "html" in output_options.output_modes:
                 print(
                     f" - HTML: {output_directory}/{output_filename}{html_file_suffix}"
+                )
+            if "sarif" in output_options.output_modes:
+                print(
+                    f" - SARIF: {output_directory}/{output_filename}{sarif_file_suffix}"
                 )
 
         else:

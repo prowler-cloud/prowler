@@ -1,28 +1,56 @@
 "use client";
 
+import { useState } from "react";
+
+import { ResourceDetailsSheet } from "@/components/resources/resource-details-sheet";
 import { DataTable } from "@/components/ui/table";
 import { MetaDataProps, ResourceProps } from "@/types";
 
-import { ColumnResources } from "./column-resources";
+import { getColumnResources } from "./column-resources";
 
 interface ResourcesTableWithSelectionProps {
   data: ResourceProps[];
   metadata?: MetaDataProps;
+  initialResource?: ResourceProps | null;
 }
 
 export function ResourcesTableWithSelection({
   data,
   metadata,
+  initialResource = null,
 }: ResourcesTableWithSelectionProps) {
-  // Ensure data is always an array for safe operations
   const safeData = data ?? [];
 
+  const [selectedResource, setSelectedResource] =
+    useState<ResourceProps | null>(initialResource);
+  const [drawerOpen, setDrawerOpen] = useState(Boolean(initialResource));
+
+  const openDrawer = (resource: ResourceProps) => {
+    setSelectedResource(resource);
+    setDrawerOpen(true);
+  };
+
+  const columns = getColumnResources({ onViewDetails: openDrawer });
+
   return (
-    <DataTable
-      columns={ColumnResources}
-      data={safeData}
-      metadata={metadata}
-      showSearch
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={safeData}
+        metadata={metadata}
+        showSearch
+        onRowClick={(row) => openDrawer(row.original)}
+      />
+      {selectedResource && (
+        <ResourceDetailsSheet
+          resource={selectedResource}
+          open={drawerOpen}
+          onOpenChange={(open) => {
+            setDrawerOpen(open);
+            if (!open) setSelectedResource(null);
+          }}
+        />
+      )}
+    </>
   );
 }

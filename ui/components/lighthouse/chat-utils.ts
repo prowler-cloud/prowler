@@ -9,6 +9,7 @@ import {
   MESSAGE_ROLES,
   MESSAGE_STATUS,
   META_TOOLS,
+  SKILL_PREFIX,
 } from "@/lib/lighthouse/constants";
 import type { ChainOfThoughtData, Message } from "@/lib/lighthouse/types";
 
@@ -70,17 +71,28 @@ export function getChainOfThoughtStepLabel(
     return `Executing ${tool}`;
   }
 
+  if (metaTool === META_TOOLS.LOAD_SKILL && tool) {
+    const skillId = tool.startsWith(SKILL_PREFIX)
+      ? tool.slice(SKILL_PREFIX.length)
+      : tool;
+    return `Loading ${skillId} skill`;
+  }
+
   return tool || "Completed";
 }
 
 /**
- * Determines if a meta-tool is a wrapper tool (describe_tool or execute_tool)
+ * Determines if a tool name is a meta-tool (describe_tool, execute_tool, or load_skill)
  *
  * @param metaTool - The meta-tool name to check
  * @returns True if it's a meta-tool, false otherwise
  */
 export function isMetaTool(metaTool: string): boolean {
-  return metaTool === META_TOOLS.DESCRIBE || metaTool === META_TOOLS.EXECUTE;
+  return (
+    metaTool === META_TOOLS.DESCRIBE ||
+    metaTool === META_TOOLS.EXECUTE ||
+    metaTool === META_TOOLS.LOAD_SKILL
+  );
 }
 
 /**

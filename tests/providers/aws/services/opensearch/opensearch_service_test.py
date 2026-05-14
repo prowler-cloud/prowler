@@ -104,26 +104,26 @@ def mock_generate_regional_clients(provider, service):
 class TestOpenSearchServiceService:
     # Test OpenSearchService Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider([])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         opensearch = OpenSearchService(aws_provider)
         assert opensearch.service == "opensearch"
 
     # Test OpenSearchService_ client
     def test_client(self):
-        aws_provider = set_mocked_aws_provider([])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         opensearch = OpenSearchService(aws_provider)
         for reg_client in opensearch.regional_clients.values():
             assert reg_client.__class__.__name__ == "OpenSearchService"
 
     # Test OpenSearchService session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider([])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         opensearch = OpenSearchService(aws_provider)
         assert opensearch.session.__class__.__name__ == "Session"
 
     # Test OpenSearchService list domains names
     def test_list_domain_names(self):
-        aws_provider = set_mocked_aws_provider([])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         opensearch = OpenSearchService(aws_provider)
         assert len(opensearch.opensearch_domains) == 1
         assert opensearch.opensearch_domains[domain_arn].name == test_domain_name
@@ -132,7 +132,7 @@ class TestOpenSearchServiceService:
     # Test OpenSearchService describe domain
     @mock_aws
     def test_describe_domain(self):
-        aws_provider = set_mocked_aws_provider([])
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         opensearch = OpenSearchService(aws_provider)
         assert len(opensearch.opensearch_domains) == 1
         assert opensearch.opensearch_domains[domain_arn].name == test_domain_name
@@ -237,7 +237,7 @@ class TestOpenSearchServiceService:
             "botocore.client.BaseClient._make_api_call",
             new=mock_make_api_call_missing_fields,
         ):
-            aws_provider = set_mocked_aws_provider([])
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
             opensearch = OpenSearchService(aws_provider)
 
             # Should not crash even with missing optional fields
