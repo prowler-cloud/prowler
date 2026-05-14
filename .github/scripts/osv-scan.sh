@@ -97,7 +97,7 @@ FINDINGS="$(printf '%s' "${OUTPUT}" | jq --argjson sevs "${SEVERITY_JSON}" '
         version: $pkg.package.version,
         ecosystem: $pkg.package.ecosystem
       }
-    | select(($sevs | index(.severity)) != null)
+    | select(.severity as $s | $sevs | any(. == $s))
   ]
 ')"
 
