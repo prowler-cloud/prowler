@@ -89,11 +89,15 @@ export function DataTableRowActions<T extends FindingRowData>({
 
   // Get selection context - if there are other selected rows, include them
   const selectionContext = useContext(FindingsSelectionContext);
-  const { selectedFindingIds, clearSelection, resolveMuteIds } =
-    selectionContext || {
-      selectedFindingIds: [],
-      clearSelection: () => {},
-    };
+  const {
+    selectedFindingIds,
+    clearSelection,
+    resolveMuteIds,
+    onMuteComplete: contextOnMuteComplete,
+  } = selectionContext || {
+    selectedFindingIds: [],
+    clearSelection: () => {},
+  };
 
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
@@ -175,8 +179,10 @@ export function DataTableRowActions<T extends FindingRowData>({
     // the wrong findings would appear selected
     clearSelection();
     setResolvedIds([]);
-    if (onMuteComplete) {
-      onMuteComplete(getDisplayIds());
+    const ids = getDisplayIds();
+    const handler = onMuteComplete ?? contextOnMuteComplete;
+    if (handler) {
+      handler(ids);
       return;
     }
 

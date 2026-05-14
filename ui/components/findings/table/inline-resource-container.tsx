@@ -40,6 +40,10 @@ interface InlineResourceContainerProps {
   columnCount: number;
   /** Called with selected finding IDs (real UUIDs) for parent-level mute */
   onResourceSelectionChange: (findingIds: string[]) => void;
+  /** Called after a resource-row mute completes inside the drill-down with
+   * the count of finding UUIDs that were just muted. The parent uses it to
+   * decide whether the surrounding finding group should also be hidden. */
+  onResourceMuteCompleted?: (mutedCount: number) => void;
   ref?: React.Ref<InlineResourceContainerHandle>;
 }
 
@@ -126,6 +130,7 @@ export function InlineResourceContainer({
   resourceSearch,
   columnCount,
   onResourceSelectionChange,
+  onResourceMuteCompleted,
   ref,
 }: InlineResourceContainerProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -210,7 +215,10 @@ export function InlineResourceContainer({
         clearSelection,
         isSelected,
         resolveMuteIds: resolveSelectedFindingIds,
-        onMuteComplete: handleMuteComplete,
+        onMuteComplete: (mutedIds?: string[]) => {
+          handleMuteComplete();
+          onResourceMuteCompleted?.(mutedIds?.length ?? 0);
+        },
       }}
     >
       <tr>

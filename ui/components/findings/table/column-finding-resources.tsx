@@ -87,9 +87,10 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   };
 
   const handleMuteComplete = () => {
+    const mutedIds = getDisplayIds();
     clearSelection();
     setResolvedIds([]);
-    onMuteComplete?.();
+    onMuteComplete?.(mutedIds);
   };
 
   return (
