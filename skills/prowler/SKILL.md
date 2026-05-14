@@ -30,8 +30,8 @@ poetry run python prowler-cli.py aws --check check_name
 poetry run pytest tests/
 
 # API
-cd api && poetry run python src/backend/manage.py runserver
-cd api && poetry run pytest
+cd api && uv run python src/backend/manage.py runserver
+cd api && uv run pytest
 
 # UI
 cd ui && pnpm run dev

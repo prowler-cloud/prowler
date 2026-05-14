@@ -18,7 +18,10 @@ class gmail_enhanced_pre_delivery_scanning_enabled(Check):
         if gmail_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=gmail_client.provider.domain_resource,
+                resource=gmail_client.policies,
+                resource_id="gmailPolicies",
+                resource_name="Gmail Policies",
+                customer_id=gmail_client.provider.identity.customer_id,
             )
 
             scanning_enabled = (

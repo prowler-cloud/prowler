@@ -10,6 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `iam_user_access_not_stale_to_sagemaker` check for AWS provider with configurable `max_unused_sagemaker_access_days` (default 90) [(#11000)](https://github.com/prowler-cloud/prowler/pull/11000)
 - `cloudtrail_bedrock_logging_enabled` check for AWS provider [(#10858)](https://github.com/prowler-cloud/prowler/pull/10858)
 - Okta provider with OAuth 2.0 authentication and `signon_global_session_idle_timeout_15min` check [(#11079)](https://github.com/prowler-cloud/prowler/pull/11079)
+- `sagemaker_domain_sso_configured` check for AWS provider [(#11094)](https://github.com/prowler-cloud/prowler/pull/11094)
 
 ### 🔄 Changed
 
@@ -18,7 +19,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
+<<<<<<< PROWLER-822-high-cloudflare-zone-waf-enabled-check-false-positive
 - `zone_waf_enabled` check for Cloudflare provider now appends a plan-aware hint to the FAIL `status_extended`: a possible-false-positive note on paid plans (Pro, Business, Enterprise) where the legacy `waf` zone setting can read `off` even though WAF managed rulesets are deployed via the dashboard, and a "not available on the Cloudflare Free plan" note on Free zones [(#9896)](https://github.com/prowler-cloud/prowler/pull/9896)
+=======
+- Google Workspace Gmail checks sharing a single resource row, causing the service field to be overwritten by the last check executed [(#11169)](https://github.com/prowler-cloud/prowler/pull/11169)
+>>>>>>> master
 
 ---
 
