@@ -82,10 +82,10 @@
   {
     "section": "dependencies",
     "name": "@langchain/core",
-    "from": "1.1.15",
-    "to": "1.1.46",
+    "from": "1.1.46",
+    "to": "1.1.45",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-05-14T10:22:47.378Z"
   },
   {
     "section": "dependencies",
@@ -778,26 +778,26 @@
   {
     "section": "devDependencies",
     "name": "@vitest/browser",
-    "from": "4.0.18",
-    "to": "4.1.6",
+    "from": "4.1.6",
+    "to": "4.0.18",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-05-14T10:22:47.378Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/browser-playwright",
-    "from": "4.0.18",
-    "to": "4.1.6",
+    "from": "4.1.6",
+    "to": "4.0.18",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-05-14T10:22:47.378Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/coverage-v8",
-    "from": "4.0.18",
-    "to": "4.1.6",
+    "from": "4.1.6",
+    "to": "4.0.18",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-05-14T10:22:47.378Z"
   },
   {
     "section": "devDependencies",
@@ -970,17 +970,17 @@
   {
     "section": "devDependencies",
     "name": "vitest",
-    "from": "4.0.18",
-    "to": "4.1.6",
+    "from": "4.1.6",
+    "to": "4.0.18",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-05-14T10:22:47.378Z"
   },
   {
     "section": "devDependencies",
     "name": "vitest-browser-react",
-    "from": "2.0.4",
-    "to": "2.2.0",
+    "from": "2.2.0",
+    "to": "2.0.4",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-05-14T10:22:47.378Z"
   }
 ]
