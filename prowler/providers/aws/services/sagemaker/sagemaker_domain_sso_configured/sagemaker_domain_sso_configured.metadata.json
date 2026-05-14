@@ -11,15 +11,15 @@
   "Severity": "medium",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
-  "Description": "**SageMaker Domain** configured with **IAM Identity Center (SSO) authentication**. The check validates whether each SageMaker Domain uses SSO mode (`AuthMode: SSO`) rather than IAM mode, ensuring user access is centrally managed through AWS IAM Identity Center.",
-  "Risk": "IAM-mode domains create per-user IAM users or roles managed locally to SageMaker, drifting from the organization's identity provider and weakening lifecycle controls such as offboarding, MFA enforcement, and session policies. Compromise of a local IAM identity bypasses centralized access governance.",
+  "Description": "**SageMaker Domain** configured with **IAM Identity Center (SSO) authentication**. The check validates that each SageMaker Domain uses SSO mode (`AuthMode: SSO`) and is associated with an IAM Identity Center instance (`SingleSignOnManagedApplicationInstanceId` or `SingleSignOnApplicationArn` present), ensuring user access is centrally managed through AWS IAM Identity Center.",
+  "Risk": "IAM-mode domains create per-user IAM users or roles managed locally to SageMaker, drifting from the organization's identity provider and weakening lifecycle controls such as offboarding, MFA enforcement, and session policies. SSO-mode domains without an IAM Identity Center association leave authentication in an inconsistent state and bypass centralized access governance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/sagemaker/latest/dg/onboard-sso-users.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws sagemaker describe-domain --domain-id <domain_id> --query 'AuthMode'",
+      "CLI": "aws sagemaker describe-domain --domain-id <domain_id> --query '{AuthMode:AuthMode,SingleSignOnManagedApplicationInstanceId:SingleSignOnManagedApplicationInstanceId,SingleSignOnApplicationArn:SingleSignOnApplicationArn}'",
       "NativeIaC": "```yaml\n# CloudFormation: Create a SageMaker Domain with SSO authentication\nResources:\n  SageMakerDomain:\n    Type: AWS::SageMaker::Domain\n    Properties:\n      DomainName: <example_domain_name>\n      AuthMode: SSO  # Critical: enables IAM Identity Center authentication\n      DefaultUserSettings:\n        ExecutionRole: <example_role_arn>\n      VpcId: <example_vpc_id>\n      SubnetIds:\n        - <example_subnet_id>\n```",
       "Other": "SageMaker Domains cannot be switched from IAM to SSO mode after creation. To remediate, create a new Domain with AuthMode set to SSO and migrate user profiles.",
       "Terraform": "```hcl\n# Terraform: Create a SageMaker Domain with SSO authentication\nresource \"aws_sagemaker_domain\" \"example\" {\n  domain_name = \"<example_domain_name>\"\n  auth_mode   = \"SSO\"  # Critical: enables IAM Identity Center authentication\n  vpc_id      = \"<example_vpc_id>\"\n  subnet_ids  = [\"<example_subnet_id>\"]\n\n  default_user_settings {\n    execution_role = \"<example_role_arn>\"\n  }\n}\n```"
