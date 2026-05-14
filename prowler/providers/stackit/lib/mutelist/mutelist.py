@@ -15,7 +15,7 @@ class StackITMutelist(Mutelist):
             bool: True if the finding is muted, False otherwise
         """
         return self.is_muted(
-            finding.resource_id,
+            finding.project_id,
             finding.check_metadata.CheckID,
             finding.location,
             finding.resource_name,
