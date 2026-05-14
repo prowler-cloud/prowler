@@ -18,7 +18,10 @@ class chat_external_spaces_restricted(Check):
         if chat_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=chat_client.provider.domain_resource,
+                resource=chat_client.policies,
+                resource_id="chatPolicies",
+                resource_name="Chat Policies",
+                customer_id=chat_client.provider.identity.customer_id,
             )
 
             spaces_enabled = chat_client.policies.external_spaces_enabled

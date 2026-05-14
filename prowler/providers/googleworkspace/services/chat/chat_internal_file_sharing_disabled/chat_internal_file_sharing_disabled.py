@@ -18,7 +18,10 @@ class chat_internal_file_sharing_disabled(Check):
         if chat_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=chat_client.provider.domain_resource,
+                resource=chat_client.policies,
+                resource_id="chatPolicies",
+                resource_name="Chat Policies",
+                customer_id=chat_client.provider.identity.customer_id,
             )
 
             internal_sharing = chat_client.policies.internal_file_sharing
