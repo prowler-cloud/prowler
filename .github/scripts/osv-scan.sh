@@ -25,9 +25,9 @@
 # Usage:
 #   osv-scan.sh [osv-scanner pass-through args...]
 # Examples:
-#   osv-scan.sh --lockfile=poetry.lock
+#   osv-scan.sh --lockfile=uv.lock
 #   osv-scan.sh --recursive .
-#   OSV_SEVERITY_LEVELS=CRITICAL osv-scan.sh --lockfile=poetry.lock
+#   OSV_SEVERITY_LEVELS=CRITICAL osv-scan.sh --lockfile=uv.lock
 
 set -euo pipefail
 

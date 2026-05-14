@@ -4,7 +4,7 @@ author: 'Prowler'
 
 inputs:
   lockfile:
-    description: 'Path to the lockfile to scan, relative to the repository root (e.g. poetry.lock, api/uv.lock, ui/pnpm-lock.yaml).'
+    description: 'Path to the lockfile to scan, relative to the repository root (e.g. uv.lock, api/uv.lock, ui/pnpm-lock.yaml).'
     required: true
   severity-levels:
     description: 'Comma-separated severity levels that fail the scan. Default: HIGH,CRITICAL,UNKNOWN.'
