@@ -19,11 +19,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-<<<<<<< PROWLER-822-high-cloudflare-zone-waf-enabled-check-false-positive
 - `zone_waf_enabled` check for Cloudflare provider now appends a plan-aware hint to the FAIL `status_extended`: a possible-false-positive note on paid plans (Pro, Business, Enterprise) where the legacy `waf` zone setting can read `off` even though WAF managed rulesets are deployed via the dashboard, and a "not available on the Cloudflare Free plan" note on Free zones [(#9896)](https://github.com/prowler-cloud/prowler/pull/9896)
-=======
 - Google Workspace Gmail checks sharing a single resource row, causing the service field to be overwritten by the last check executed [(#11169)](https://github.com/prowler-cloud/prowler/pull/11169)
->>>>>>> master
 
 ---
 
