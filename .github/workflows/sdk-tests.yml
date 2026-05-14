@@ -92,9 +92,9 @@ jobs:
             contrib/**
             **/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -107,7 +107,7 @@ jobs:
           files: |
             ./prowler/**/aws/**
             ./tests/**/aws/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Resolve AWS services under test
         if: steps.changed-aws.outputs.any_changed == 'true'
@@ -209,11 +209,11 @@ jobs:
           echo "AWS service_paths='${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}'"
 
           if [ "${STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL}" = "true" ]; then
-            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
+            uv run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
           elif [ -z "${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}" ]; then
             echo "No AWS service paths detected; skipping AWS tests."
           else
-            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}
+            uv run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${STEPS_AWS_SERVICES_OUTPUTS_SERVICE_PATHS}
           fi
         env:
           STEPS_AWS_SERVICES_OUTPUTS_RUN_ALL: ${{ steps.aws-services.outputs.run_all }}
@@ -237,11 +237,11 @@ jobs:
           files: |
             ./prowler/**/azure/**
             ./tests/**/azure/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run Azure tests
         if: steps.changed-azure.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/azure --cov-report=xml:azure_coverage.xml tests/providers/azure
+        run: uv run pytest -n auto --cov=./prowler/providers/azure --cov-report=xml:azure_coverage.xml tests/providers/azure
 
       - name: Upload Azure coverage to Codecov
         if: steps.changed-azure.outputs.any_changed == 'true'
@@ -261,11 +261,11 @@ jobs:
           files: |
             ./prowler/**/gcp/**
             ./tests/**/gcp/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run GCP tests
         if: steps.changed-gcp.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/gcp --cov-report=xml:gcp_coverage.xml tests/providers/gcp
+        run: uv run pytest -n auto --cov=./prowler/providers/gcp --cov-report=xml:gcp_coverage.xml tests/providers/gcp
 
       - name: Upload GCP coverage to Codecov
         if: steps.changed-gcp.outputs.any_changed == 'true'
@@ -285,11 +285,11 @@ jobs:
           files: |
             ./prowler/**/kubernetes/**
             ./tests/**/kubernetes/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run Kubernetes tests
         if: steps.changed-kubernetes.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/kubernetes --cov-report=xml:kubernetes_coverage.xml tests/providers/kubernetes
+        run: uv run pytest -n auto --cov=./prowler/providers/kubernetes --cov-report=xml:kubernetes_coverage.xml tests/providers/kubernetes
 
       - name: Upload Kubernetes coverage to Codecov
         if: steps.changed-kubernetes.outputs.any_changed == 'true'
@@ -309,11 +309,11 @@ jobs:
           files: |
             ./prowler/**/github/**
             ./tests/**/github/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run GitHub tests
         if: steps.changed-github.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/github --cov-report=xml:github_coverage.xml tests/providers/github
+        run: uv run pytest -n auto --cov=./prowler/providers/github --cov-report=xml:github_coverage.xml tests/providers/github
 
       - name: Upload GitHub coverage to Codecov
         if: steps.changed-github.outputs.any_changed == 'true'
@@ -333,11 +333,11 @@ jobs:
           files: |
             ./prowler/**/okta/**
             ./tests/**/okta/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run Okta tests
         if: steps.changed-okta.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/okta --cov-report=xml:okta_coverage.xml tests/providers/okta
+        run: uv run pytest -n auto --cov=./prowler/providers/okta --cov-report=xml:okta_coverage.xml tests/providers/okta
 
       - name: Upload Okta coverage to Codecov
         if: steps.changed-okta.outputs.any_changed == 'true'
@@ -357,11 +357,11 @@ jobs:
           files: |
             ./prowler/**/nhn/**
             ./tests/**/nhn/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run NHN tests
         if: steps.changed-nhn.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/nhn --cov-report=xml:nhn_coverage.xml tests/providers/nhn
+        run: uv run pytest -n auto --cov=./prowler/providers/nhn --cov-report=xml:nhn_coverage.xml tests/providers/nhn
 
       - name: Upload NHN coverage to Codecov
         if: steps.changed-nhn.outputs.any_changed == 'true'
@@ -381,11 +381,11 @@ jobs:
           files: |
             ./prowler/**/m365/**
             ./tests/**/m365/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run M365 tests
         if: steps.changed-m365.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/m365 --cov-report=xml:m365_coverage.xml tests/providers/m365
+        run: uv run pytest -n auto --cov=./prowler/providers/m365 --cov-report=xml:m365_coverage.xml tests/providers/m365
 
       - name: Upload M365 coverage to Codecov
         if: steps.changed-m365.outputs.any_changed == 'true'
@@ -405,11 +405,11 @@ jobs:
           files: |
             ./prowler/**/iac/**
             ./tests/**/iac/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run IaC tests
         if: steps.changed-iac.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/iac --cov-report=xml:iac_coverage.xml tests/providers/iac
+        run: uv run pytest -n auto --cov=./prowler/providers/iac --cov-report=xml:iac_coverage.xml tests/providers/iac
 
       - name: Upload IaC coverage to Codecov
         if: steps.changed-iac.outputs.any_changed == 'true'
@@ -429,11 +429,11 @@ jobs:
           files: |
             ./prowler/**/mongodbatlas/**
             ./tests/**/mongodbatlas/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run MongoDB Atlas tests
         if: steps.changed-mongodbatlas.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/mongodbatlas --cov-report=xml:mongodbatlas_coverage.xml tests/providers/mongodbatlas
+        run: uv run pytest -n auto --cov=./prowler/providers/mongodbatlas --cov-report=xml:mongodbatlas_coverage.xml tests/providers/mongodbatlas
 
       - name: Upload MongoDB Atlas coverage to Codecov
         if: steps.changed-mongodbatlas.outputs.any_changed == 'true'
@@ -453,11 +453,11 @@ jobs:
           files: |
             ./prowler/**/oraclecloud/**
             ./tests/**/oraclecloud/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run OCI tests
         if: steps.changed-oraclecloud.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/oraclecloud --cov-report=xml:oraclecloud_coverage.xml tests/providers/oraclecloud
+        run: uv run pytest -n auto --cov=./prowler/providers/oraclecloud --cov-report=xml:oraclecloud_coverage.xml tests/providers/oraclecloud
 
       - name: Upload OCI coverage to Codecov
         if: steps.changed-oraclecloud.outputs.any_changed == 'true'
@@ -477,11 +477,11 @@ jobs:
           files: |
             ./prowler/**/openstack/**
             ./tests/**/openstack/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run OpenStack tests
         if: steps.changed-openstack.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/openstack --cov-report=xml:openstack_coverage.xml tests/providers/openstack
+        run: uv run pytest -n auto --cov=./prowler/providers/openstack --cov-report=xml:openstack_coverage.xml tests/providers/openstack
 
       - name: Upload OpenStack coverage to Codecov
         if: steps.changed-openstack.outputs.any_changed == 'true'
@@ -501,11 +501,11 @@ jobs:
           files: |
             ./prowler/**/googleworkspace/**
             ./tests/**/googleworkspace/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run Google Workspace tests
         if: steps.changed-googleworkspace.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/googleworkspace --cov-report=xml:googleworkspace_coverage.xml tests/providers/googleworkspace
+        run: uv run pytest -n auto --cov=./prowler/providers/googleworkspace --cov-report=xml:googleworkspace_coverage.xml tests/providers/googleworkspace
 
       - name: Upload Google Workspace coverage to Codecov
         if: steps.changed-googleworkspace.outputs.any_changed == 'true'
@@ -525,11 +525,11 @@ jobs:
           files: |
             ./prowler/**/vercel/**
             ./tests/**/vercel/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run Vercel tests
         if: steps.changed-vercel.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/vercel --cov-report=xml:vercel_coverage.xml tests/providers/vercel
+        run: uv run pytest -n auto --cov=./prowler/providers/vercel --cov-report=xml:vercel_coverage.xml tests/providers/vercel
 
       - name: Upload Vercel coverage to Codecov
         if: steps.changed-vercel.outputs.any_changed == 'true'
@@ -549,11 +549,11 @@ jobs:
           files: |
             ./prowler/lib/**
             ./tests/lib/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run Lib tests
         if: steps.changed-lib.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/lib --cov-report=xml:lib_coverage.xml tests/lib
+        run: uv run pytest -n auto --cov=./prowler/lib --cov-report=xml:lib_coverage.xml tests/lib
 
       - name: Upload Lib coverage to Codecov
         if: steps.changed-lib.outputs.any_changed == 'true'
@@ -573,11 +573,11 @@ jobs:
           files: |
             ./prowler/config/**
             ./tests/config/**
-            ./poetry.lock
+            ./uv.lock
 
       - name: Run Config tests
         if: steps.changed-config.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/config --cov-report=xml:config_coverage.xml tests/config
+        run: uv run pytest -n auto --cov=./prowler/config --cov-report=xml:config_coverage.xml tests/config
 
       - name: Upload Config coverage to Codecov
         if: steps.changed-config.outputs.any_changed == 'true'

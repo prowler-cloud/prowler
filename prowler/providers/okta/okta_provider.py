@@ -33,10 +33,16 @@ from prowler.providers.okta.models import OktaIdentityInfo, OktaSession
 DEFAULT_SCOPES = ["okta.policies.read"]
 # Accept only Okta-managed domains. Custom (vanity) domains are rejected on
 # purpose — they're a recurring source of typos and silent misconfig and
-# Prowler's audience overwhelmingly uses Okta-managed hosts. If a customer
-# with a custom domain shows up, lift this guard behind an explicit opt-in.
+# Prowler's audience overwhelmingly uses Okta-managed hosts. The TLDs below
+# match the set the Okta SDK whitelists in `okta.config.config_validator`,
+# which includes the commercial, preview, EMEA and US gov/mil environments.
+# If a customer with a custom domain shows up, lift this guard behind an
+# explicit opt-in.
 ORG_DOMAIN_RE = re.compile(
-    r"^[a-z0-9][a-z0-9-]*\.(okta\.com|oktapreview\.com|okta-emea\.com|okta-gov\.com)$"
+    r"^[a-z0-9][a-z0-9-]*\.("
+    r"okta\.com|oktapreview\.com|okta-emea\.com|"
+    r"okta-gov\.com|okta\.mil|okta-miltest\.com|trex-govcloud\.com"
+    r")$"
 )
 
 
@@ -215,7 +221,8 @@ class OktaProvider(Provider):
                         f"Invalid Okta org domain: '{org_domain}'. Expected "
                         "an Okta-managed domain such as <org>.okta.com "
                         "(or .oktapreview.com / .okta-emea.com / "
-                        ".okta-gov.com), with no scheme and no path."
+                        ".okta-gov.com / .okta.mil / .okta-miltest.com / "
+                        ".trex-govcloud.com), with no scheme and no path."
                     ),
                 )
 

@@ -81,9 +81,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
       {requirement.remediation_procedure &&
         typeof requirement.remediation_procedure === "string" && (
           <ComplianceDetailSection title="Remediation Procedure">
-            {/* Prettier -> "plugins": ["prettier-plugin-tailwindcss"] is not ready yet to "prose": */}
-            {/* eslint-disable-next-line */}
-            <div className="prose prose-sm max-w-none dark:prose-invert">
+            <div className="prose prose-sm dark:prose-invert max-w-none">
               <ReactMarkdown>{requirement.remediation_procedure}</ReactMarkdown>
             </div>
           </ComplianceDetailSection>
@@ -92,8 +90,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
       {requirement.audit_procedure &&
         typeof requirement.audit_procedure === "string" && (
           <ComplianceDetailSection title="Audit Procedure">
-            {/* eslint-disable-next-line */}
-            <div className="prose prose-sm max-w-none dark:prose-invert">
+            <div className="prose prose-sm dark:prose-invert max-w-none">
               <ReactMarkdown>{requirement.audit_procedure}</ReactMarkdown>
             </div>
           </ComplianceDetailSection>

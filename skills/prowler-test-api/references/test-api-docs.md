@@ -171,28 +171,28 @@ from conftest import (
 
 ```bash
 # Full test suite
-cd api && poetry run pytest
+cd api && uv run pytest
 
 # Fast fail on first error
-cd api && poetry run pytest -x
+cd api && uv run pytest -x
 
 # Short traceback
-cd api && poetry run pytest --tb=short
+cd api && uv run pytest --tb=short
 
 # Specific file
-cd api && poetry run pytest api/src/backend/api/tests/test_views.py
+cd api && uv run pytest api/src/backend/api/tests/test_views.py
 
 # Pattern match
-cd api && poetry run pytest -k "Provider"
+cd api && uv run pytest -k "Provider"
 
 # Verbose with print output
-cd api && poetry run pytest -v -s
+cd api && uv run pytest -v -s
 
 # With coverage
-cd api && poetry run pytest --cov=api --cov-report=html
+cd api && uv run pytest --cov=api --cov-report=html
 
 # Parallel execution
-cd api && poetry run pytest -n auto
+cd api && uv run pytest -n auto
 ```
 
 ---

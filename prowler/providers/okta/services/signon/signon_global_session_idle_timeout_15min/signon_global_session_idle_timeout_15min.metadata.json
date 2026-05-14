@@ -7,13 +7,13 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OktaPolicy",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The DISA STIG procedure for OKTA-APP-000020 requires the **Default Global Session Policy** to have a **Priority 1** rule that is **not** the built-in `Default Rule`, and that rule must set **Maximum Okta global session idle time** to 15 minutes or less. The threshold defaults to 15 minutes per STIG and is overridable via the `okta_max_session_idle_minutes` key in the audit config.",
+  "Description": "The **Default Global Session Policy** must have a **Priority 1** rule that is **not** the built-in `Default Rule`, and that rule must set **Maximum Okta global session idle time** to 15 minutes or less. The threshold defaults to 15 minutes and is overridable via the `okta_max_session_idle_minutes` key in the audit config.",
   "Risk": "Without a 15-minute idle timeout, an unattended workstation leaves an authenticated Okta session open indefinitely, allowing an attacker physical or remote access to take over the user's identity and pivot into every downstream application that trusts Okta SSO.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-global-session-policies.htm",
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm",
     "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/"
   ],
   "Remediation": {
@@ -24,7 +24,7 @@
       "Terraform": "resource \"okta_policy_rule_signon\" \"prowler_idle_timeout_15min\" {\n  policy_id           = okta_policy_signon.default.id\n  name                = \"Prowler-enforced idle timeout\"\n  status              = \"ACTIVE\"\n  session_idle        = 15\n  session_persistent  = false\n}\n"
     },
     "Recommendation": {
-      "Text": "Configure the Default Global Session Policy so its Priority 1 non-default rule sets the Maximum Okta global session idle time to 15 minutes or less, in line with DISA STIG OKTA-APP-000020 (V-273186).",
+      "Text": "Configure the Default Global Session Policy so its Priority 1 non-default rule sets the Maximum Okta global session idle time to 15 minutes or less.",
       "Url": "https://hub.prowler.com/check/signon_global_session_idle_timeout_15min"
     }
   },
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "STIG V-273186 / OKTA-APP-000020"
+  "Notes": ""
 }

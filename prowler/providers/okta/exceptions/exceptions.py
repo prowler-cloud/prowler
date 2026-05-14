@@ -24,7 +24,7 @@ class OktaBaseException(ProwlerException):
         },
         (14004, "OktaInvalidOrgDomainError"): {
             "message": "Okta organization domain is not valid",
-            "remediation": "Provide an Okta-managed domain such as <org>.okta.com (or .oktapreview.com / .okta-emea.com / .okta-gov.com), with no scheme and no trailing slash.",
+            "remediation": "Provide an Okta-managed domain such as <org>.okta.com (or .oktapreview.com / .okta-emea.com / .okta-gov.com / .okta.mil / .okta-miltest.com / .trex-govcloud.com), with no scheme and no trailing slash.",
         },
         (14005, "OktaPrivateKeyFileError"): {
             "message": "Okta private key file could not be read",
@@ -43,7 +43,13 @@ class OktaBaseException(ProwlerException):
     def __init__(self, code, file=None, original_exception=None, message=None):
         provider = "Okta"
         error_info = self.OKTA_ERROR_CODES.get((code, self.__class__.__name__))
-        if message:
+        if error_info is None:
+            error_info = {
+                "message": message or "Unknown Okta error.",
+                "remediation": "Check the Okta API documentation for more details.",
+            }
+        elif message:
+            error_info = error_info.copy()
             error_info["message"] = message
         super().__init__(
             code=code,

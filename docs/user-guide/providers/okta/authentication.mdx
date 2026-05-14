@@ -133,7 +133,7 @@ export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 # Optional — defaults to "okta.policies.read"
 export OKTA_SCOPES="okta.policies.read"
 
-poetry run python prowler-cli.py okta
+uv run python prowler-cli.py okta
 ```
 
 ### Non-Secret CLI Flags
@@ -149,14 +149,14 @@ Non-secret values are also available as CLI flags for ergonomic overrides:
 Run a single check directly:
 
 ```bash
-poetry run python prowler-cli.py okta --check signon_global_session_idle_timeout_15min
+uv run python prowler-cli.py okta --check signon_global_session_idle_timeout_15min
 ```
 
 ## Troubleshooting
 
 ### `OktaInvalidOrgDomainError`
 
-The org domain must be `<org>.okta.com` (or `.oktapreview.com` / `.okta-emea.com` / `.okta-gov.com`). Pass the bare hostname only — no `https://` scheme, no path, no trailing slash. Custom (vanity) domains are not currently accepted.
+The org domain must be `<org>.okta.com` (or `.oktapreview.com` / `.okta-emea.com` / `.okta-gov.com` / `.okta.mil` / `.okta-miltest.com` / `.trex-govcloud.com`). Pass the bare hostname only — no `https://` scheme, no path, no trailing slash. Custom (vanity) domains are not currently accepted.
 
 ### `OktaPrivateKeyFileError`
 
@@ -164,9 +164,14 @@ The file at `OKTA_PRIVATE_KEY_FILE` is missing, unreadable, or empty. Confirm th
 
 ### `OktaInvalidCredentialsError` at provider init
 
-Prowler validates credentials at startup by listing one sign-on policy. A failure here is usually:
+Prowler validates credentials at startup by listing one sign-on policy. This error indicates the credential material itself was rejected:
 
 - **`invalid_client`** — the public key registered in Okta does not match the private key on disk. Generate a fresh keypair and try again.
+
+### `OktaInsufficientPermissionsError` at provider init
+
+Raised when the credential probe succeeds at the OAuth layer but the request is rejected because the service app lacks the required scope or admin role:
+
 - **`invalid_scope`** — the `okta.policies.read` scope is not granted on the service app. Grant it from **Okta API Scopes**.
 - **`Forbidden` / `not authorized`** — the **Read-Only Administrator** role is not assigned to the service app. Assign it from **Admin roles**.
 
