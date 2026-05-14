@@ -21,12 +21,12 @@ The setup requires the following components:
 
 The template ships with predefined mappings for the following CIS Benchmark versions. Exports must match these versions for the dashboard to populate correctly:
 
-| Compliance Framework                           | Version |
-| ---------------------------------------------- | ------- |
-| CIS Amazon Web Services Foundations Benchmark  | v4.0.1  |
-| CIS Google Cloud Platform Foundation Benchmark | v3.0.0  |
-| CIS Microsoft Azure Foundations Benchmark      | v3.0.0  |
-| CIS Kubernetes Benchmark                       | v1.10.0 |
+| Compliance Framework                           | Version  |
+| ---------------------------------------------- | -------- |
+| CIS Amazon Web Services Foundations Benchmark  | v6.0     |
+| CIS Microsoft Azure Foundations Benchmark      | v5.0     |
+| CIS Google Cloud Platform Foundation Benchmark | v4.0     |
+| CIS Kubernetes Benchmark                       | v1.12.0  |
 
 <Warning>
 Other CIS Benchmark versions are not recognized by the template. Confirm the framework version before running the scan or downloading the export.
@@ -47,10 +47,10 @@ Compliance CSV exports can be generated through Prowler CLI or downloaded from P
 Run a scan with the `--compliance` flag pointing to the appropriate CIS framework, for example:
 
 ```sh
-prowler aws --compliance cis_4.0.1_aws
-prowler azure --compliance cis_3.0.0_azure
-prowler gcp --compliance cis_3.0.0_gcp
-prowler kubernetes --compliance cis_1.10.0_kubernetes
+prowler aws --compliance cis_6.0_aws
+prowler azure --compliance cis_5.0_azure
+prowler gcp --compliance cis_4.0_gcp
+prowler kubernetes --compliance cis_1.12_kubernetes
 ```
 
 The compliance CSV exports are written to `output/compliance/` by default.
