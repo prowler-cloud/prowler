@@ -330,7 +330,7 @@ constraint-dependencies = [
   "pagerduty==6.1.0",
   "pandas==2.2.3",
   "pbr==7.0.3",
-  "pillow==12.1.1",
+  "pillow==12.2.0",
   "pkginfo==1.12.1.2",
   "platformdirs==4.5.1",
   "plotly==6.5.2",
