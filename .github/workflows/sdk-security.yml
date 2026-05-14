@@ -13,6 +13,8 @@ on:
       - '.github/workflows/sdk-tests.yml'
       - '.github/workflows/sdk-security.yml'
       - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/osv-scanner/**'
+      - '.github/scripts/osv-scan.sh'
   pull_request:
     branches:
       - 'master'
@@ -25,6 +27,8 @@ on:
       - '.github/workflows/sdk-tests.yml'
       - '.github/workflows/sdk-security.yml'
       - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/osv-scanner/**'
+      - '.github/scripts/osv-scan.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -49,10 +53,12 @@ jobs:
             pypi.org:443
             files.pythonhosted.org:443
             github.com:443
-            auth.safetycli.com:443
-            pyup.io:443
-            data.safetycli.com:443
             api.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            api.osv.dev:443
+            api.deps.dev:443
+            osv-vulnerabilities.storage.googleapis.com:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -97,10 +103,11 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true'
         run: poetry run bandit -q -lll -x '*_test.py,./contrib/,./api/,./ui' -r .
 
-      - name: Security scan with Safety
+      - name: Dependency vulnerability scan with osv-scanner
         if: steps.check-changes.outputs.any_changed == 'true'
-        # Accepted CVEs, severity threshold, and ignore expirations live in .safety-policy.yml
-        run: poetry run safety check -r pyproject.toml --policy-file .safety-policy.yml
+        uses: ./.github/actions/osv-scanner
+        with:
+          lockfile: poetry.lock
 
       - name: Dead code detection with Vulture
         if: steps.check-changes.outputs.any_changed == 'true'

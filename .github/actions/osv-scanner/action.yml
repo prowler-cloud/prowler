@@ -1,0 +1,49 @@
+name: 'OSV-Scanner'
+description: 'Install osv-scanner and scan a lockfile, failing on HIGH/CRITICAL/UNKNOWN severity findings.'
+author: 'Prowler'
+
+inputs:
+  lockfile:
+    description: 'Path to the lockfile to scan, relative to the repository root (e.g. poetry.lock, api/poetry.lock, ui/pnpm-lock.yaml).'
+    required: true
+  severity-levels:
+    description: 'Comma-separated severity levels that fail the scan. Default: HIGH,CRITICAL,UNKNOWN.'
+    required: false
+    default: 'HIGH,CRITICAL,UNKNOWN'
+  version:
+    description: 'osv-scanner release tag to install.'
+    required: false
+    default: 'v2.3.8'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install osv-scanner
+      shell: bash
+      env:
+        OSV_SCANNER_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        if command -v osv-scanner >/dev/null 2>&1; then
+          INSTALLED="$(osv-scanner --version 2>&1 | awk '/scanner version/ {print $NF; exit}')"
+          if [ "v${INSTALLED}" = "${OSV_SCANNER_VERSION}" ]; then
+            echo "osv-scanner ${OSV_SCANNER_VERSION} already installed."
+            exit 0
+          fi
+        fi
+        curl -fSL --retry 3 \
+          "https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64" \
+          -o "${RUNNER_TEMP}/osv-scanner"
+        chmod +x "${RUNNER_TEMP}/osv-scanner"
+        sudo mv "${RUNNER_TEMP}/osv-scanner" /usr/local/bin/osv-scanner
+        osv-scanner --version
+
+    - name: Run osv-scanner
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        OSV_LOCKFILE: ${{ inputs.lockfile }}
+        OSV_SEVERITY_LEVELS: ${{ inputs.severity-levels }}
+      # Per-vulnerability ignores (reason + expiry) live in osv-scanner.toml at the repo root, if present.
+      # Severity filter is enforced in the wrapper via OSV_SEVERITY_LEVELS.
+      run: ./.github/scripts/osv-scan.sh --lockfile="${OSV_LOCKFILE}"

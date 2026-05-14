@@ -1,26 +1,24 @@
-name: "API: Security"
+name: 'UI: Security'
 
 on:
   push:
     branches:
-      - "master"
-      - "v5.*"
+      - 'master'
+      - 'v5.*'
     paths:
-      - 'api/**'
-      - '.github/workflows/api-tests.yml'
-      - '.github/workflows/api-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - 'ui/package.json'
+      - 'ui/pnpm-lock.yaml'
+      - '.github/workflows/ui-security.yml'
       - '.github/actions/osv-scanner/**'
       - '.github/scripts/osv-scan.sh'
   pull_request:
     branches:
-      - "master"
-      - "v5.*"
+      - 'master'
+      - 'v5.*'
     paths:
-      - 'api/**'
-      - '.github/workflows/api-tests.yml'
-      - '.github/workflows/api-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - 'ui/package.json'
+      - 'ui/pnpm-lock.yaml'
+      - '.github/workflows/ui-security.yml'
       - '.github/actions/osv-scanner/**'
       - '.github/scripts/osv-scan.sh'
 
@@ -28,24 +26,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  API_WORKING_DIR: ./api
-
 permissions: {}
 
 jobs:
-  api-security-scans:
+  ui-security-scans:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
-    strategy:
-      matrix:
-        python-version:
-          - "3.12"
-    defaults:
-      run:
-        working-directory: ./api
 
     steps:
       - name: Harden Runner
@@ -53,8 +42,6 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            pypi.org:443
-            files.pythonhosted.org:443
             github.com:443
             api.github.com:443
             objects.githubusercontent.com:443
@@ -69,39 +56,19 @@ jobs:
           # zizmor: ignore[artipacked]
           persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
-      - name: Check for API changes
+      - name: Check for UI dependency changes
         id: check-changes
         uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files: |
-            api/**
-            .github/workflows/api-security.yml
+            ui/package.json
+            ui/pnpm-lock.yaml
+            .github/workflows/ui-security.yml
             .github/actions/osv-scanner/**
             .github/scripts/osv-scan.sh
-          files_ignore: |
-            api/docs/**
-            api/README.md
-            api/CHANGELOG.md
-            api/AGENTS.md
-
-      - name: Setup Python with Poetry
-        if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
-        with:
-          python-version: ${{ matrix.python-version }}
-          working-directory: ./api
-          update-lock: 'true'
-
-      - name: Bandit
-        if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
 
       - name: Dependency vulnerability scan with osv-scanner
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: ./.github/actions/osv-scanner
         with:
-          lockfile: api/poetry.lock
-
-      - name: Vulture
-        if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
+          lockfile: ui/pnpm-lock.yaml

@@ -32,7 +32,7 @@ fi
 
 echo ""
 
-# Full setup requires Poetry for system hooks (pylint, bandit, safety, vulture, trufflehog)
+# Full setup requires Poetry for system hooks (pylint, bandit, vulture, trufflehog)
 # These are installed as Python dev dependencies and used by local hooks in .pre-commit-config.yaml
 if command -v poetry &>/dev/null && [ -f "pyproject.toml" ]; then
   if poetry run prek --version &>/dev/null 2>&1; then
@@ -50,7 +50,7 @@ elif command -v prek &>/dev/null; then
   prek install --overwrite
   echo ""
   echo -e "${YELLOW}⚠️  Warning: Some hooks require Python tools installed via Poetry:${NC}"
-  echo -e "   pylint, bandit, safety, vulture, trufflehog"
+  echo -e "   pylint, bandit, vulture, trufflehog"
   echo -e "   These hooks will be skipped unless you install them or run:"
   echo -e "   ${GREEN}poetry install --with dev${NC}"
 else
