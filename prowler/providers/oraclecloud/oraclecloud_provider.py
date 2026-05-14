@@ -496,6 +496,7 @@ class OraclecloudProvider(Provider):
         logger.info(f"OCI Region: {region}")
 
         home_region = region
+        region_subscriptions = []
         try:
             region_subscriptions = identity_client.list_region_subscriptions(
                 tenancy_id
@@ -506,10 +507,21 @@ class OraclecloudProvider(Provider):
                     for region_subscription in region_subscriptions
                     if getattr(region_subscription, "is_home_region", False)
                 ),
-                region,
+                None,
             )
-        except Exception as error:
-            logger.warning(f"Could not determine tenancy home region: {error}")
+            if not home_region:
+                home_region = region
+                logger.warning(
+                    "Could not determine tenancy home region from OCI region "
+                    "subscriptions. Audit configuration checks may use the "
+                    f"configured region ({region}) and return 404."
+                )
+        except (oci.exceptions.ServiceError, oci.exceptions.ClientError) as error:
+            logger.warning(
+                "Could not determine tenancy home region from OCI region "
+                "subscriptions. Audit configuration checks may use the "
+                f"configured region ({region}) and return 404: {error}"
+            )
 
         logger.info(f"OCI Home Region: {home_region}")
 
@@ -519,6 +531,7 @@ class OraclecloudProvider(Provider):
             user_id=user_id,
             region=region,
             home_region=home_region,
+            region_subscriptions=region_subscriptions,
             profile=session.profile,
             audited_regions=set([region]) if region else set(),
             audited_compartments=compartment_ids if compartment_ids else [],
@@ -577,18 +590,20 @@ class OraclecloudProvider(Provider):
         else:
             # Audit all subscribed regions
             try:
-                # Create identity client with proper authentication handling
-                if self._session.signer:
-                    identity_client = oci.identity.IdentityClient(
-                        config=self._session.config, signer=self._session.signer
-                    )
-                else:
-                    identity_client = oci.identity.IdentityClient(
-                        config=self._session.config
-                    )
-                region_subscriptions = identity_client.list_region_subscriptions(
-                    self._identity.tenancy_id
-                ).data
+                region_subscriptions = self._identity.region_subscriptions
+                if not region_subscriptions:
+                    # Create identity client with proper authentication handling
+                    if self._session.signer:
+                        identity_client = oci.identity.IdentityClient(
+                            config=self._session.config, signer=self._session.signer
+                        )
+                    else:
+                        identity_client = oci.identity.IdentityClient(
+                            config=self._session.config
+                        )
+                    region_subscriptions = identity_client.list_region_subscriptions(
+                        self._identity.tenancy_id
+                    ).data
 
                 for region_sub in region_subscriptions:
                     regions.append(
@@ -603,7 +618,7 @@ class OraclecloudProvider(Provider):
 
                 logger.info(f"Found {len(regions)} subscribed regions")
 
-            except Exception as error:
+            except (oci.exceptions.ServiceError, oci.exceptions.ClientError) as error:
                 logger.warning(
                     f"Could not retrieve region subscriptions: {error}. Using configured region."
                 )

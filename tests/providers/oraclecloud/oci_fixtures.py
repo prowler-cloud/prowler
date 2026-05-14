@@ -46,6 +46,7 @@ def set_mocked_oraclecloud_provider(
         user_id=user_id,
         region=region,
         home_region=home_region,
+        region_subscriptions=[],
         profile="DEFAULT",
         audited_regions={region},
         audited_compartments=[OCI_COMPARTMENT_ID],

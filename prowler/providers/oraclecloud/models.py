@@ -28,6 +28,7 @@ class OCIIdentityInfo:
     user_id: str
     region: str
     home_region: str
+    region_subscriptions: list
     profile: Optional[str]
     audited_regions: set
     audited_compartments: list
