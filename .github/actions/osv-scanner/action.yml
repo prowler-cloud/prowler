@@ -11,9 +11,13 @@ inputs:
     required: false
     default: 'HIGH,CRITICAL,UNKNOWN'
   version:
-    description: 'osv-scanner release tag to install.'
+    description: 'osv-scanner release tag to install. When overriding, you MUST also override binary-sha256.'
     required: false
     default: 'v2.3.8'
+  binary-sha256:
+    description: 'Expected SHA256 of osv-scanner_linux_amd64 for the given version. Default tracks v2.3.8. See https://github.com/google/osv-scanner/releases/download/<version>/osv-scanner_SHA256SUMS.'
+    required: false
+    default: 'bc98e15319ed0d515e3f9235287ba53cdc5535d576d24fd573978ecfe9ab92dc'
   post-pr-comment:
     description: 'Post or update a PR comment with the scan report. Only effective on pull_request events. Requires pull-requests: write permission on the caller job.'
     required: false
