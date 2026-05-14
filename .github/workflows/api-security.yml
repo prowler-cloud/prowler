@@ -54,6 +54,7 @@ jobs:
             github.com:443
             auth.safetycli.com:443
             pyup.io:443
+            raw.githubusercontent.com:443
             data.safetycli.com:443
             api.github.com:443
 
