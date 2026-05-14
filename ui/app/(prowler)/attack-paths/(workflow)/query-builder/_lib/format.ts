@@ -23,3 +23,7 @@ export function formatNodeLabel(label: string): string {
 export function formatNodeLabels(labels: string[]): string {
   return labels.map(formatNodeLabel).join(", ");
 }
+
+export function truncateLabel(text: string, maxChars: number): string {
+  return text.length > maxChars ? `${text.substring(0, maxChars)}...` : text;
+}

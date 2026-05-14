@@ -14,15 +14,19 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Adding a compliance output formatter (per-provider class + table dispatcher) | `prowler-compliance` |
 | Adding new providers | `prowler-provider` |
 | Adding services to existing providers | `prowler-provider` |
+| Auditing check-to-requirement mappings as a cloud auditor | `prowler-compliance` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Creating new checks | `prowler-sdk-check` |
 | Creating/updating compliance frameworks | `prowler-compliance` |
+| Fixing compliance JSON bugs (duplicate IDs, empty Section, stale refs) | `prowler-compliance` |
 | Mapping checks to compliance controls | `prowler-compliance` |
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
+| Syncing compliance framework with upstream catalog | `prowler-compliance` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
 | Updating existing checks and metadata | `prowler-sdk-check` |
 | Writing Prowler SDK tests | `prowler-test-sdk` |

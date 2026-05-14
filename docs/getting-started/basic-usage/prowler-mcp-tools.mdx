@@ -10,7 +10,7 @@ Complete reference guide for all tools available in the Prowler MCP Server. Tool
 |----------|------------|------------------------|
 | Prowler Hub | 10 tools | No |
 | Prowler Documentation | 2 tools | No |
-| Prowler Cloud/App | 29 tools | Yes |
+| Prowler Cloud/App | 32 tools | Yes |
 
 ## Tool Naming Convention
 
@@ -35,6 +35,14 @@ Tools for searching, viewing, and analyzing security findings across all cloud p
 - **`prowler_app_search_security_findings`** - Search and filter security findings with advanced filtering options (severity, status, provider, region, service, check ID, date range, muted status)
 - **`prowler_app_get_finding_details`** - Get comprehensive details about a specific finding including remediation guidance, check metadata, and resource relationships
 - **`prowler_app_get_findings_overview`** - Get aggregate statistics and trends about security findings as a markdown report
+
+### Finding Groups Management
+
+Tools for listing finding groups aggregated by check ID, viewing complete group counters, and drilling down into affected resources.
+
+- **`prowler_app_list_finding_groups`** - List latest or historical finding groups with filters for provider, region, service, resource, category, check, severity, status, muted state, delta, date range, and sorting
+- **`prowler_app_get_finding_group_details`** - Get complete details for a specific finding group including counters, description, timestamps, and impacted providers
+- **`prowler_app_list_finding_group_resources`** - List actionable unmuted resources affected by a finding group by default, including nested resource and provider data plus the `finding_id` for remediation details. Set `include_muted` to include suppressed resources
 
 ### Provider Management
 
