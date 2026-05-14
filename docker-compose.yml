@@ -47,8 +47,6 @@ services:
     env_file:
       - path: .env
         required: false
-    environment:
-      - PROWLER_API_HEALTH_URL=${PROWLER_API_HEALTH_URL:-http://api:8080/health/ready}
     ports:
       - ${UI_PORT:-3000}:${UI_PORT:-3000}
     depends_on:
