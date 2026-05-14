@@ -10,6 +10,8 @@ on:
       - '.github/workflows/api-tests.yml'
       - '.github/workflows/api-security.yml'
       - '.github/actions/setup-python-uv/**'
+      - '.github/actions/osv-scanner/**'
+      - '.github/scripts/osv-scan.sh'
   pull_request:
     branches:
       - "master"
@@ -19,6 +21,8 @@ on:
       - '.github/workflows/api-tests.yml'
       - '.github/workflows/api-security.yml'
       - '.github/actions/setup-python-uv/**'
+      - '.github/actions/osv-scanner/**'
+      - '.github/scripts/osv-scan.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -35,6 +39,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      pull-requests: write # osv-scanner action posts/updates a PR comment with findings
     strategy:
       matrix:
         python-version:
@@ -52,11 +57,12 @@ jobs:
             pypi.org:443
             files.pythonhosted.org:443
             github.com:443
-            auth.safetycli.com:443
-            pyup.io:443
-            raw.githubusercontent.com:443
-            data.safetycli.com:443
             api.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            api.osv.dev:443
+            api.deps.dev:443
+            osv-vulnerabilities.storage.googleapis.com:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -71,7 +77,8 @@ jobs:
           files: |
             api/**
             .github/workflows/api-security.yml
-            .safety-policy.yml
+            .github/actions/osv-scanner/**
+            .github/scripts/osv-scan.sh
           files_ignore: |
             api/docs/**
             api/README.md
@@ -91,11 +98,13 @@ jobs:
         # bandit would recurse into installed third-party packages.
         run: uv run bandit -q -lll -x '*_test.py,./contrib/,./.venv/' -r .
 
-      - name: Safety
+      - name: Dependency vulnerability scan with osv-scanner
         if: steps.check-changes.outputs.any_changed == 'true'
-        # Accepted CVEs, severity threshold, and ignore expirations live in ../.safety-policy.yml
-        run: uv run safety check --policy-file ../.safety-policy.yml
+        uses: ./.github/actions/osv-scanner
+        with:
+          lockfile: api/uv.lock
 
       - name: Vulture
-        if: steps.check-changes.outputs.any_changed == 'true'
+        # Run even when osv-scanner reports findings so dead-code signal isn't masked by SCA failures.
+        if: ${{ !cancelled() && steps.check-changes.outputs.any_changed == 'true' }}
         run: uv run vulture --exclude "contrib,tests,conftest.py,.venv" --min-confidence 100 .
