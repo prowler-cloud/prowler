@@ -1,5 +1,5 @@
 name: 'OSV-Scanner'
-description: 'Install osv-scanner and scan a lockfile, failing on HIGH/CRITICAL/UNKNOWN severity findings.'
+description: 'Install osv-scanner and scan a lockfile, failing on HIGH/CRITICAL/UNKNOWN severity findings. Posts/updates a PR comment with findings on pull_request events (requires pull-requests: write).'
 author: 'Prowler'
 
 inputs:
@@ -14,6 +14,10 @@ inputs:
     description: 'osv-scanner release tag to install.'
     required: false
     default: 'v2.3.8'
+  post-pr-comment:
+    description: 'Post or update a PR comment with the scan report. Only effective on pull_request events. Requires pull-requests: write permission on the caller job.'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
@@ -44,11 +48,118 @@ runs:
         osv-scanner --version
 
     - name: Run osv-scanner
+      id: scan
       shell: bash
       working-directory: ${{ github.workspace }}
       env:
         OSV_LOCKFILE: ${{ inputs.lockfile }}
         OSV_SEVERITY_LEVELS: ${{ inputs.severity-levels }}
+        OSV_REPORT_FILE: ${{ runner.temp }}/osv-scanner-findings.json
       # Per-vulnerability ignores (reason + expiry) live in osv-scanner.toml at the repo root, if present.
       # Severity filter is enforced in the wrapper via OSV_SEVERITY_LEVELS.
+      # `continue-on-error: true` lets the PR-comment step run even when findings exist;
+      # the gate step below re-fails the job from the wrapper exit code.
+      continue-on-error: true
       run: ./.github/scripts/osv-scan.sh --lockfile="${OSV_LOCKFILE}"
+
+    - name: Post osv-scanner report on PR
+      if: >-
+        always()
+        && inputs.post-pr-comment == 'true'
+        && github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      env:
+        OSV_REPORT_FILE: ${{ runner.temp }}/osv-scanner-findings.json
+        OSV_LOCKFILE: ${{ inputs.lockfile }}
+        OSV_SEVERITY_LEVELS: ${{ inputs.severity-levels }}
+      with:
+        script: |
+          const fs = require('fs');
+          const lockfile = process.env.OSV_LOCKFILE;
+          const severityLevels = process.env.OSV_SEVERITY_LEVELS;
+          const reportFile = process.env.OSV_REPORT_FILE;
+          const marker = `<!-- osv-scanner-report:${lockfile} -->`;
+          const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+          let findings = [];
+          if (fs.existsSync(reportFile)) {
+            try {
+              findings = JSON.parse(fs.readFileSync(reportFile, 'utf8'));
+            } catch (err) {
+              core.warning(`Could not parse ${reportFile}: ${err.message}`);
+              return;
+            }
+          }
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          const existing = comments.find(c => c.body?.includes(marker));
+
+          if (findings.length === 0) {
+            if (existing) {
+              await github.rest.issues.deleteComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+              });
+              core.info(`Deleted stale osv-scanner comment for ${lockfile}.`);
+            } else {
+              core.info(`No findings and no stale comment for ${lockfile}.`);
+            }
+            return;
+          }
+
+          const sevIcon = (s) => ({
+            CRITICAL: '🔴', HIGH: '🟠', MEDIUM: '🟡', LOW: '🟢', UNKNOWN: '⚪',
+          }[s] || '⚪');
+          const escape = (s) => String(s ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+          const rows = findings.map(f =>
+            `| ${sevIcon(f.severity)} ${f.severity}${f.score ? ` (${f.score})` : ''} | \`${escape(f.id)}\` | \`${escape(f.ecosystem)}/${escape(f.package)}\` | \`${escape(f.version)}\` | ${escape(f.summary || '(no summary)')} |`
+          );
+
+          const body = [
+            marker,
+            `## 🔒 osv-scanner: ${findings.length} finding(s) in \`${lockfile}\``,
+            '',
+            `Severity gate: \`${severityLevels}\``,
+            '',
+            '| Severity | ID | Package | Version | Summary |',
+            '|----------|----|---------|---------|---------|',
+            ...rows,
+            '',
+            `To accept a finding, add an \`[[IgnoredVulns]]\` entry to \`osv-scanner.toml\` at the repo root with a reason and \`ignoreUntil\`.`,
+            '',
+            `<sub>[View run](${runUrl})</sub>`,
+          ].join('\n');
+
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existing.id,
+              body,
+            });
+            core.info(`Updated osv-scanner comment for ${lockfile}.`);
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+            core.info(`Posted new osv-scanner comment for ${lockfile}.`);
+          }
+
+    - name: Enforce osv-scanner severity gate
+      shell: bash
+      env:
+        SCAN_OUTCOME: ${{ steps.scan.outcome }}
+      run: |
+        if [ "${SCAN_OUTCOME}" != "success" ]; then
+          echo "osv-scanner gate: scan reported findings (outcome=${SCAN_OUTCOME})" >&2
+          exit 1
+        fi

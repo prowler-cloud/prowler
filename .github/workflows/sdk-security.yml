@@ -43,6 +43,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      pull-requests: write # osv-scanner action posts/updates a PR comment with findings
 
     steps:
       - name: Harden Runner
