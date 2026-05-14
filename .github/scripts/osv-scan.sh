@@ -9,8 +9,15 @@
 # Default: HIGH,CRITICAL,UNKNOWN — preserves prior .safety-policy.yml policy
 #   (ignore-cvss-severity-below: 7 + ignore-cvss-unknown-severity: False).
 # osv-scanner has no native CVSS threshold (google/osv-scanner#1400, closed
-# not-planned). Severity is read from database_specific.severity, the GitHub
-# Advisory categorical label present on GHSA-prefixed records.
+# not-planned). Severity is derived from $group.max_severity (numeric CVSS
+# score string) which osv-scanner emits per group.
+#
+# CVSS v3 score → categorical label:
+#   CRITICAL  >= 9.0
+#   HIGH      >= 7.0
+#   MEDIUM    >= 4.0
+#   LOW       >  0.0
+#   UNKNOWN   no score available
 #
 # Per-vulnerability ignores (with reason + expiry) live in osv-scanner.toml at
 # the repo root, if it exists. Without that file, osv-scanner uses defaults.
@@ -64,17 +71,33 @@ SEVERITY_JSON="$(printf '%s' "${SEVERITY_LEVELS}" | jq -Rc '
   split(",") | map(ascii_upcase | sub("^\\s+"; "") | sub("\\s+$"; ""))
 ')"
 
+# Walk each vulnerability, look up its group's max_severity (numeric CVSS),
+# map to a categorical label, then filter by OSV_SEVERITY_LEVELS.
 FINDINGS="$(printf '%s' "${OUTPUT}" | jq --argjson sevs "${SEVERITY_JSON}" '
   [ .results[]?.packages[]?
     | . as $pkg
-    | .vulnerabilities[]?
-    | { id,
-        summary,
-        severity: ((.database_specific.severity? // "UNKNOWN") | ascii_upcase),
+    | ($pkg.groups // []) as $groups
+    | ($pkg.vulnerabilities // [])[]
+    | . as $vuln
+    | ([ $groups[] | select((.ids // []) | index($vuln.id)) ][0] // {}) as $group
+    | (($group.max_severity // "") | tonumber? // null) as $score
+    | (if   $score == null then "UNKNOWN"
+       elif $score >= 9.0 then "CRITICAL"
+       elif $score >= 7.0 then "HIGH"
+       elif $score >= 4.0 then "MEDIUM"
+       elif $score >  0   then "LOW"
+       else                    "UNKNOWN"
+       end) as $label
+    | {
+        id: $vuln.id,
+        severity: $label,
+        score: $score,
+        summary: ($vuln.summary // null),
         package: $pkg.package.name,
         version: $pkg.package.version,
-        ecosystem: $pkg.package.ecosystem }
-    | select($sevs | index(.severity))
+        ecosystem: $pkg.package.ecosystem
+      }
+    | select(($sevs | index(.severity)) != null)
   ]
 ')"
 
@@ -83,7 +106,7 @@ COUNT="$(printf '%s' "${FINDINGS}" | jq 'length')"
 if [ "${COUNT}" -gt 0 ]; then
   echo "osv-scanner: ${COUNT} finding(s) at severity ${SEVERITY_LEVELS}"
   printf '%s' "${FINDINGS}" | jq -r '
-    .[] | "  [\(.severity)] \(.id) \(.ecosystem)/\(.package)@\(.version) — \(.summary // "(no summary)")"
+    .[] | "  [\(.severity)\(if .score then " \(.score)" else "" end)] \(.id) \(.ecosystem)/\(.package)@\(.version) — \(.summary // "(no summary)")"
   '
   echo
   echo "To accept a finding, create osv-scanner.toml at the repo root with a reason and ignoreUntil."

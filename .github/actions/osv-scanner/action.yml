@@ -22,6 +22,8 @@ runs:
       shell: bash
       env:
         OSV_SCANNER_VERSION: ${{ inputs.version }}
+      # Download the binary AND the published SHA256SUMS file, then verify the
+      # binary checksum against the upstream-signed manifest. Aborts on mismatch.
       run: |
         set -euo pipefail
         if command -v osv-scanner >/dev/null 2>&1; then
@@ -31,11 +33,14 @@ runs:
             exit 0
           fi
         fi
-        curl -fSL --retry 3 \
-          "https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}/osv-scanner_linux_amd64" \
-          -o "${RUNNER_TEMP}/osv-scanner"
-        chmod +x "${RUNNER_TEMP}/osv-scanner"
-        sudo mv "${RUNNER_TEMP}/osv-scanner" /usr/local/bin/osv-scanner
+        BASE="https://github.com/google/osv-scanner/releases/download/${OSV_SCANNER_VERSION}"
+        BIN_NAME="osv-scanner_linux_amd64"
+        curl -fSL --retry 3 "${BASE}/${BIN_NAME}" -o "${RUNNER_TEMP}/${BIN_NAME}"
+        curl -fSL --retry 3 "${BASE}/osv-scanner_SHA256SUMS" -o "${RUNNER_TEMP}/osv-scanner_SHA256SUMS"
+        (cd "${RUNNER_TEMP}" && sha256sum --check --ignore-missing osv-scanner_SHA256SUMS)
+        chmod +x "${RUNNER_TEMP}/${BIN_NAME}"
+        sudo mv "${RUNNER_TEMP}/${BIN_NAME}" /usr/local/bin/osv-scanner
+        rm -f "${RUNNER_TEMP}/osv-scanner_SHA256SUMS"
         osv-scanner --version
 
     - name: Run osv-scanner
