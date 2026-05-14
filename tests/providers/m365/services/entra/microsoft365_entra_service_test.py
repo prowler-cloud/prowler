@@ -665,10 +665,11 @@ class Test_Entra_Service:
             )
         )
 
-        registration_details = asyncio.run(
+        registration_details, error_message = asyncio.run(
             entra_service._get_user_registration_details()
         )
 
+        assert error_message is None
         assert registration_details == {
             "user-1": {
                 "is_mfa_capable": True,
@@ -685,6 +686,37 @@ class Test_Entra_Service:
         registration_builder.get.assert_awaited()
         registration_builder.with_url.assert_called_once_with("next-link")
         registration_builder_next.get.assert_awaited()
+
+    def test__get_user_registration_details_returns_error_on_permission_denied(self):
+        """Test that 403 Authorization_RequestDenied returns an empty dict and
+        a descriptive error message naming the missing AuditLog.Read.All permission.
+        """
+        from msgraph.generated.models.o_data_errors.main_error import MainError
+        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+
+        odata_error = ODataError()
+        odata_error.error = MainError()
+        odata_error.error.code = "Authorization_RequestDenied"
+
+        registration_builder = SimpleNamespace(get=AsyncMock(side_effect=odata_error))
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            reports=SimpleNamespace(
+                authentication_methods=SimpleNamespace(
+                    user_registration_details=registration_builder
+                )
+            )
+        )
+
+        registration_details, error_message = asyncio.run(
+            entra_service._get_user_registration_details()
+        )
+
+        assert registration_details == {}
+        assert error_message is not None
+        assert "AuditLog.Read.All" in error_message
+        assert "user registration details" in error_message
 
     def test__get_service_principals_filters_third_party_owners(self):
         """Service principals owned by another tenant must not be returned."""

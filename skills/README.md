@@ -50,7 +50,7 @@ Reusable patterns for common technologies:
 |-------|-------------|
 | `typescript` | Const types, flat interfaces, utility types |
 | `react-19` | React 19 patterns, React Compiler |
-| `nextjs-15` | App Router, Server Actions, streaming |
+| `nextjs-16` | App Router, Server Actions, proxy.ts, streaming |
 | `tailwind-4` | cn() utility, Tailwind 4 patterns |
 | `playwright` | Page Object Model, selectors |
 | `vitest` | Unit testing, React Testing Library |

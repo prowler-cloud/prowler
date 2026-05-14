@@ -108,6 +108,9 @@ def display_summary_table(
                 )
             else:
                 audited_entities = provider.identity.username or "Personal Account"
+        elif provider.type == "okta":
+            entity_type = "Okta Org"
+            audited_entities = provider.identity.org_domain
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):
