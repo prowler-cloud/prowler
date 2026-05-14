@@ -75,7 +75,7 @@ pnpm test:coverage -- components/feature/
 fd "*_test.py" tests/providers/aws/services/ec2/
 
 # 2. Run specific test
-poetry run pytest tests/providers/aws/services/ec2/ec2_ami_public/ -v
+uv run pytest tests/providers/aws/services/ec2/ec2_ami_public/ -v
 
 # 3. Read existing tests
 ```
@@ -356,16 +356,16 @@ pnpm test ComponentName             # Filter by name
 ### SDK (`prowler/`)
 
 ```bash
-poetry run pytest tests/path/ -v              # Run specific tests
-poetry run pytest tests/path/ -v -k "test_name"  # Filter by name
-poetry run pytest -n auto tests/              # Parallel run
-poetry run pytest --cov=./prowler tests/      # Coverage
+uv run pytest tests/path/ -v              # Run specific tests
+uv run pytest tests/path/ -v -k "test_name"  # Filter by name
+uv run pytest -n auto tests/              # Parallel run
+uv run pytest --cov=./prowler tests/      # Coverage
 ```
 
 ### API (`api/`)
 
 ```bash
-poetry run pytest -x --tb=short                           # Run all (stop on first fail)
+uv run pytest -x --tb=short                           # Run all (stop on first fail)
 uv run pytest api/src/backend/api/tests/test_file.py     # Specific file
-poetry run pytest -k "test_name" -v                       # Filter by name
+uv run pytest -k "test_name" -v                       # Filter by name
 ```

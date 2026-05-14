@@ -228,7 +228,7 @@ Each requirement links to the Prowler checks that, together, produce a PASS or F
 To discover available checks, run:
 
 ```bash
-poetry run python prowler-cli.py <provider> --list-checks
+uv run python prowler-cli.py <provider> --list-checks
 ```
 
 ## Supporting Multiple Providers
@@ -295,7 +295,7 @@ Follow the steps below before opening a pull request.
 ### 1. Run the Compliance Model Validator
 
 ```bash
-poetry run python prowler-cli.py <provider> --list-compliance
+uv run python prowler-cli.py <provider> --list-compliance
 ```
 
 The framework must appear in the output. A validation error indicates a schema mismatch between the JSON file and the attribute model.
@@ -303,7 +303,7 @@ The framework must appear in the output. A validation error indicates a schema m
 ### 2. Run a Scan Filtered by the Framework
 
 ```bash
-poetry run python prowler-cli.py <provider> \
+uv run python prowler-cli.py <provider> \
   --compliance <framework>_<version>_<provider> \
   --log-level ERROR
 ```
@@ -336,7 +336,7 @@ Compliance contributions require two layers of tests.
 Run the suite with:
 
 ```bash
-poetry run pytest -n auto tests/lib/check/universal_compliance_models_test.py \
+uv run pytest -n auto tests/lib/check/universal_compliance_models_test.py \
   tests/lib/outputs/compliance/
 ```
 
@@ -348,8 +348,8 @@ Before opening the pull request:
 
 1. Run the complete QA pipeline:
     ```bash
-    poetry run pre-commit run --all-files
-    poetry run pytest -n auto
+    uv run pre-commit run --all-files
+    uv run pytest -n auto
     ```
 2. Add a changelog entry under the `### 🚀 Added` section of `prowler/CHANGELOG.md`, describing the new framework and the providers it covers.
 3. Follow the [Pull Request Template](https://github.com/prowler-cloud/prowler/blob/master/.github/pull_request_template.md) and set the PR title using Conventional Commits, for example `feat(compliance): add My Framework 1.0 for AWS`.

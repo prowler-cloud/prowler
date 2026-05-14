@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Setup Git Hooks for Prowler
-# This script installs prek hooks using the project's Poetry environment
+# This script installs prek hooks using the project's uv-managed environment
 # or a system-wide prek installation
 
 set -e
@@ -32,27 +32,27 @@ fi
 
 echo ""
 
-# Full setup requires Poetry for system hooks (pylint, bandit, vulture, trufflehog)
+# Full setup requires uv for system hooks (pylint, bandit, vulture, trufflehog)
 # These are installed as Python dev dependencies and used by local hooks in .pre-commit-config.yaml
-if command -v poetry &>/dev/null && [ -f "pyproject.toml" ]; then
-  if poetry run prek --version &>/dev/null 2>&1; then
-    echo -e "${GREEN}✓${NC} prek and dependencies found via Poetry"
+if command -v uv &>/dev/null && [ -f "pyproject.toml" ]; then
+  if uv run prek --version &>/dev/null 2>&1; then
+    echo -e "${GREEN}✓${NC} prek and dependencies found via uv"
   else
     echo -e "${YELLOW}📦 Installing project dependencies (including prek)...${NC}"
-    poetry install --with dev
+    uv sync
   fi
   echo -e "${YELLOW}🔗 Installing prek hooks...${NC}"
-  poetry run prek install --overwrite
+  uv run prek install --overwrite
 elif command -v prek &>/dev/null; then
-  # prek is available system-wide but without Poetry dev deps
+  # prek is available system-wide but without uv dev deps
   echo -e "${GREEN}✓${NC} prek found in PATH"
   echo -e "${YELLOW}🔗 Installing prek hooks...${NC}"
   prek install --overwrite
   echo ""
-  echo -e "${YELLOW}⚠️  Warning: Some hooks require Python tools installed via Poetry:${NC}"
+  echo -e "${YELLOW}⚠️  Warning: Some hooks require Python tools installed via uv:${NC}"
   echo -e "   pylint, bandit, vulture, trufflehog"
   echo -e "   These hooks will be skipped unless you install them or run:"
-  echo -e "   ${GREEN}poetry install --with dev${NC}"
+  echo -e "   ${GREEN}uv sync${NC}"
 else
   echo -e "${RED}❌ prek is not installed${NC}"
   echo -e "${YELLOW}   Install prek using one of these methods:${NC}"

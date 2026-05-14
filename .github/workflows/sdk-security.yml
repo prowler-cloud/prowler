@@ -9,10 +9,10 @@ on:
       - 'prowler/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - '.github/workflows/sdk-tests.yml'
       - '.github/workflows/sdk-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
       - '.github/actions/osv-scanner/**'
       - '.github/scripts/osv-scan.sh'
   pull_request:
@@ -23,10 +23,10 @@ on:
       - 'prowler/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - '.github/workflows/sdk-tests.yml'
       - '.github/workflows/sdk-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
       - '.github/actions/osv-scanner/**'
       - '.github/scripts/osv-scan.sh'
 
@@ -94,22 +94,22 @@ jobs:
             contrib/**
             **/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: '3.12'
 
       - name: Security scan with Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run bandit -q -lll -x '*_test.py,./contrib/,./api/,./ui' -r .
+        run: uv run bandit -q -lll -x '*_test.py,./.venv/,./contrib/,./api/,./ui' -r .
 
       - name: Dependency vulnerability scan with osv-scanner
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: ./.github/actions/osv-scanner
         with:
-          lockfile: poetry.lock
+          lockfile: uv.lock
 
       - name: Dead code detection with Vulture
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run vulture --exclude "contrib,api,ui" --min-confidence 100 .
+        run: uv run vulture --exclude ".venv,contrib,api,ui" --min-confidence 100 .

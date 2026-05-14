@@ -20,6 +20,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Mute Findings modal now enforces the 100-character limit on the rule name input with a live counter and inline error, matching the existing reason field behaviour [(#11158)](https://github.com/prowler-cloud/prowler/pull/11158)
 
+### 🔐 Security
+
+- UI npm dependencies updated to patched versions for Next.js, Vite, LangChain, XML parsing, lodash, and related transitive packages [(#11171)](https://github.com/prowler-cloud/prowler/pull/11171)
+
 ---
 
 ## [1.26.2] (Prowler 5.26.2)

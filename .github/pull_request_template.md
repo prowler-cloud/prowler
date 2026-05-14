@@ -49,7 +49,7 @@ Please add a detailed description of how to review this PR.
 - [ ] Performance test results (if applicable)
 - [ ] Any other relevant evidence of the implementation (if applicable)
 - [ ] Verify if API specs need to be regenerated.
-- [ ] Check if version updates are required (e.g., specs, Poetry, etc.).
+- [ ] Check if version updates are required (e.g., specs, uv, etc.).
 - [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/api/CHANGELOG.md), if applicable.
 
 ### License

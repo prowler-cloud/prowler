@@ -107,7 +107,7 @@ repos:
         files: { glob: ["{api,mcp_server}/**/*.py"] }
         priority: 20
 
-  ## PYTHON — uv (API)
+  ## PYTHON — uv (API + SDK)
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.11.14
     hooks:
@@ -118,21 +118,10 @@ repos:
         pass_filenames: false
         priority: 50
 
-  ## PYTHON — Poetry (SDK)
-  - repo: https://github.com/python-poetry/poetry
-    rev: 2.3.4
-    hooks:
-      - id: poetry-check
-        name: SDK - poetry-check
-        args: ["--directory=./"]
-        files: { glob: ["{pyproject.toml,poetry.lock}"] }
-        pass_filenames: false
-        priority: 50
-
-      - id: poetry-lock
-        name: SDK - poetry-lock
-        args: ["--directory=./"]
-        files: { glob: ["{pyproject.toml,poetry.lock}"] }
+      - id: uv-lock
+        name: SDK - uv-lock
+        args: ["--check", "--project=./"]
+        files: { glob: ["{pyproject.toml,uv.lock}"] }
         pass_filenames: false
         priority: 50
 
