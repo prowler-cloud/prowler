@@ -54,45 +54,38 @@ logger = get_task_logger(__name__)
 
 
 @contextmanager
-def _log_phase(phase: str, *, scan_id: str, framework: str):
-    """Log start/end timing and RSS deltas around a report-building section.
+def _log_phase(phase: str, **tags: Any):
+    """Log start/end timing and RSS deltas around a long-running task section.
 
-    Emits structured key=value logs so Grafana/Datadog/CloudWatch queries
-    can pivot by ``phase``, ``framework`` and ``scan_id`` to find the
-    slow/heavy section on any given scan. ``getrusage`` returns KB on
-    Linux and bytes on macOS; the values are still useful in relative
-    terms even though units differ across platforms.
+    Generic helper: callers pass arbitrary ``key=value`` tags
+    (e.g. ``scan_id``, ``framework``, ``provider_id``) and they are
+    emitted as part of the structured log line, so Grafana/Datadog/
+    CloudWatch queries can pivot by whichever dimension is relevant to
+    the task. ``getrusage`` returns KB on Linux and bytes on macOS;
+    the values are still useful in relative terms even though units
+    differ across platforms.
     """
+    tag_str = " ".join(f"{key}={value}" for key, value in tags.items())
+    suffix = f" {tag_str}" if tag_str else ""
+
     start = time.perf_counter()
     rss_before = _resource_module.getrusage(_resource_module.RUSAGE_SELF).ru_maxrss
-    logger.info(
-        "phase_start phase=%s scan_id=%s framework=%s rss_kb=%d",
-        phase,
-        scan_id,
-        framework,
-        rss_before,
-    )
+    logger.info("phase_start phase=%s%s rss_kb=%d", phase, suffix, rss_before)
     try:
         yield
     except Exception:
         elapsed = time.perf_counter() - start
         logger.exception(
-            "phase_failed phase=%s scan_id=%s framework=%s elapsed_s=%.2f",
-            phase,
-            scan_id,
-            framework,
-            elapsed,
+            "phase_failed phase=%s%s elapsed_s=%.2f", phase, suffix, elapsed
         )
         raise
     else:
         elapsed = time.perf_counter() - start
         rss_after = _resource_module.getrusage(_resource_module.RUSAGE_SELF).ru_maxrss
         logger.info(
-            "phase_end phase=%s scan_id=%s framework=%s elapsed_s=%.2f "
-            "rss_kb=%d delta_rss_kb=%d",
+            "phase_end phase=%s%s elapsed_s=%.2f rss_kb=%d delta_rss_kb=%d",
             phase,
-            scan_id,
-            framework,
+            suffix,
             elapsed,
             rss_after,
             rss_after - rss_before,
@@ -780,7 +773,7 @@ class BaseComplianceReportGenerator(ABC):
                             Paragraph(
                                 f"<b>&#9888; Showing first {loaded:,} of "
                                 f"{total:,} {kind} for this check.</b> "
-                                f"Use the CSV or JSON export for the full "
+                                f"Use the CSV or JSON-OCSF export for the full "
                                 f"list. The PDF caps detail rows to keep "
                                 f"the report readable and bounded in size.",
                                 self.styles["normal"],

@@ -276,9 +276,27 @@ def _load_findings_for_requirement_checks(
             # prefetch_related runs once per iterator chunk (Django >=4.1) and
             # collapses that into a constant 2 extra queries per chunk.
             if checks_over_cap:
-                # Top-N per check via a window function: PostgreSQL only
-                # materialises ``cap * |checks_over_cap| + sum(uncapped)``
-                # rows, vs the full table scan the previous path did.
+                # Two-step query so we can both cap rows per check AND attach
+                # prefetch_related on the streamed results:
+                #
+                #   1) ``ranked`` annotates every matching finding with a
+                #      per-check row number via a window function. The
+                #      partition keeps numbering independent per check, and
+                #      ordering by ``uid`` makes the "first N" selection
+                #      deterministic across runs (same scan → same rows).
+                #
+                #   2) The outer ``Finding.all_objects.filter(id__in=...)``
+                #      keeps only IDs whose row number is within the cap and
+                #      re-opens a plain queryset on it. Django cannot combine
+                #      ``Window`` annotations with ``prefetch_related`` on the
+                #      same queryset (the window is evaluated post-aggregation
+                #      and the prefetch loader fights with it), so the inner
+                #      SELECT becomes a subquery and the outer queryset is
+                #      free to prefetch resources/tags as usual.
+                #
+                # PostgreSQL only materialises
+                # ``cap * |checks_over_cap| + sum(uncapped)`` rows for the
+                # window step, vs the full table scan the previous path did.
                 ranked = base_qs.annotate(
                     rn=Window(
                         expression=RowNumber(),
