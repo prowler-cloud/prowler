@@ -18,6 +18,7 @@ class SageMaker(AWSService):
         self.sagemaker_domains = []
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
+        self.sagemaker_monitoring_schedules = []
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
@@ -26,6 +27,7 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_endpoint_configs)
         self.__threading_call__(self._list_domains)
         self.__threading_call__(self._list_model_package_groups)
+        self.__threading_call__(self._list_monitoring_schedules)
 
         # Describe resources concurrently
         self.__threading_call__(self._describe_model, self.sagemaker_models)
@@ -377,6 +379,46 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_monitoring_schedules(self, regional_client):
+        logger.info("SageMaker - listing monitoring schedules...")
+        try:
+            list_monitoring_schedules_paginator = regional_client.get_paginator(
+                "list_monitoring_schedules"
+            )
+            schedule_counter = 0
+            for page in list_monitoring_schedules_paginator.paginate():
+                for schedule in page["MonitoringScheduleSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            schedule["MonitoringScheduleArn"], self.audit_resources
+                        )
+                    ):
+                        schedule_counter += 1
+                        self.sagemaker_monitoring_schedules.append(
+                            MonitoringSchedule(
+                                name=schedule["MonitoringScheduleName"],
+                                region=regional_client.region,
+                                arn=schedule["MonitoringScheduleArn"],
+                                schedule_status=schedule["MonitoringScheduleStatus"],
+                            )
+                        )
+            if schedule_counter == 0:
+                self.sagemaker_monitoring_schedules.append(
+                    MonitoringSchedule(
+                        name="monitoring_schedule/unknown",
+                        region=regional_client.region,
+                        arn=self.get_unknown_arn(
+                            region=regional_client.region,
+                            resource_type="monitoring_schedule",
+                        ),
+                        schedule_status="NOT_AVAILABLE",
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class NotebookInstance(BaseModel):
     name: str
@@ -432,7 +474,6 @@ class EndpointConfig(BaseModel):
     production_variants: list[ProductionVariant] = []
     tags: Optional[list] = []
 
-
 class ModelRegistry(BaseModel):
     """Represents the SageMaker Model Registry state for a specific region."""
 
@@ -441,3 +482,9 @@ class ModelRegistry(BaseModel):
     region: str
     has_groups: bool = False
     has_approved_packages: bool = False
+
+class MonitoringSchedule(BaseModel):
+    name: str
+    region: str
+    arn: str
+    schedule_status: str
