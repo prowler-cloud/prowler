@@ -432,7 +432,7 @@ def process_finding(tenant_id, finding_uid, data):
 Run before every production deployment:
 
 ```bash
-cd api && poetry run python src/backend/manage.py check --deploy
+cd api && uv run python src/backend/manage.py check --deploy
 ```
 
 ### Critical Settings
@@ -454,18 +454,18 @@ cd api && poetry run python src/backend/manage.py check --deploy
 
 ```bash
 # Development
-cd api && poetry run python src/backend/manage.py runserver
-cd api && poetry run python src/backend/manage.py shell
+cd api && uv run python src/backend/manage.py runserver
+cd api && uv run python src/backend/manage.py shell
 
 # Celery
-cd api && poetry run celery -A config.celery worker -l info -Q scans,overview
-cd api && poetry run celery -A config.celery beat -l info
+cd api && uv run celery -A config.celery worker -l info -Q scans,overview
+cd api && uv run celery -A config.celery beat -l info
 
 # Testing
-cd api && poetry run pytest -x --tb=short
+cd api && uv run pytest -x --tb=short
 
 # Production checks
-cd api && poetry run python src/backend/manage.py check --deploy
+cd api && uv run python src/backend/manage.py check --deploy
 ```
 
 ---
