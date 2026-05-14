@@ -43,7 +43,6 @@ constraints = [
     { name = "alibabacloud-tea-xml", specifier = "==0.0.3" },
     { name = "alibabacloud-vpc20160428", specifier = "==6.13.0" },
     { name = "aliyun-log-fastpb", specifier = "==0.3.0" },
-    { name = "annotated-doc", specifier = "==0.0.4" },
     { name = "annotated-types", specifier = "==0.7.0" },
     { name = "antlr4-python3-runtime", specifier = "==4.13.2" },
     { name = "anyio", specifier = "==4.13.0" },
@@ -51,13 +50,11 @@ constraints = [
     { name = "astroid", specifier = "==3.3.11" },
     { name = "async-timeout", specifier = "==5.0.1" },
     { name = "attrs", specifier = "==26.1.0" },
-    { name = "authlib", specifier = "==1.7.2" },
     { name = "aws-sam-translator", specifier = "==1.109.0" },
     { name = "aws-xray-sdk", specifier = "==2.15.0" },
     { name = "azure-common", specifier = "==1.1.28" },
     { name = "azure-core", specifier = "==1.41.0" },
     { name = "azure-mgmt-core", specifier = "==1.6.0" },
-    { name = "backports-datetime-fromisoformat", specifier = "==2.0.3" },
     { name = "bandit", specifier = "==1.8.3" },
     { name = "black", specifier = "==25.1.0" },
     { name = "blinker", specifier = "==1.9.0" },
@@ -77,7 +74,6 @@ constraints = [
     { name = "dnspython", specifier = "==2.8.0" },
     { name = "docker", specifier = "==7.1.0" },
     { name = "dogpile-cache", specifier = "==1.5.0" },
-    { name = "dparse", specifier = "==0.6.4" },
     { name = "durationpy", specifier = "==0.10" },
     { name = "email-validator", specifier = "==2.2.0" },
     { name = "exceptiongroup", specifier = "==1.3.1" },
@@ -108,7 +104,6 @@ constraints = [
     { name = "itsdangerous", specifier = "==2.2.0" },
     { name = "jinja2", specifier = "==3.1.6" },
     { name = "jmespath", specifier = "==1.1.0" },
-    { name = "joblib", specifier = "==1.5.3" },
     { name = "joserfc", specifier = "==1.6.5" },
     { name = "jsonpatch", specifier = "==1.33" },
     { name = "jsonpath-ng", specifier = "==1.8.0" },
@@ -121,7 +116,6 @@ constraints = [
     { name = "lz4", specifier = "==4.4.5" },
     { name = "markdown-it-py", specifier = "==4.2.0" },
     { name = "markupsafe", specifier = "==3.0.3" },
-    { name = "marshmallow", specifier = "==4.3.0" },
     { name = "mccabe", specifier = "==0.7.0" },
     { name = "mdurl", specifier = "==0.1.2" },
     { name = "microsoft-kiota-authentication-azure", specifier = "==1.9.2" },
@@ -143,7 +137,6 @@ constraints = [
     { name = "narwhals", specifier = "==2.21.0" },
     { name = "nest-asyncio", specifier = "==1.6.0" },
     { name = "networkx", specifier = "==3.4.2" },
-    { name = "nltk", specifier = "==3.9.4" },
     { name = "oauthlib", specifier = "==3.3.1" },
     { name = "openapi-schema-validator", specifier = "==0.6.3" },
     { name = "openapi-spec-validator", specifier = "==0.7.1" },
@@ -196,23 +189,16 @@ constraints = [
     { name = "rfc3339-validator", specifier = "==0.1.4" },
     { name = "rich", specifier = "==15.0.0" },
     { name = "rpds-py", specifier = "==0.30.0" },
-    { name = "ruamel-yaml", specifier = "==0.19.1" },
     { name = "s3transfer", specifier = "==0.14.0" },
-    { name = "safety", specifier = "==3.7.0" },
-    { name = "safety-schemas", specifier = "==0.0.16" },
     { name = "setuptools", specifier = "==82.0.1" },
-    { name = "shellingham", specifier = "==1.5.4" },
     { name = "six", specifier = "==1.17.0" },
     { name = "sniffio", specifier = "==1.3.1" },
     { name = "std-uritemplate", specifier = "==2.0.8" },
     { name = "stevedore", specifier = "==5.7.0" },
     { name = "sympy", specifier = "==1.14.0" },
-    { name = "tenacity", specifier = "==9.1.4" },
     { name = "tldextract", specifier = "==5.3.1" },
     { name = "tomli", specifier = "==2.4.1" },
     { name = "tomlkit", specifier = "==0.15.0" },
-    { name = "tqdm", specifier = "==4.67.3" },
-    { name = "typer", specifier = "==0.25.1" },
     { name = "typing-extensions", specifier = "==4.15.0" },
     { name = "typing-inspection", specifier = "==0.4.2" },
     { name = "tzdata", specifier = "==2026.2" },
@@ -2841,34 +2827,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/fd/1d/06475e1cd5264c0b870ea2cc6fdb3e37177c1e565c43f56ff17a10e3937f/networkx-3.4.2.tar.gz", hash = "sha256:307c3669428c5362aab27c8a1260aa8f47c4e91d3891f48be0141738d8d053e1", size = 2151368, upload-time = "2024-10-21T12:39:38.695Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b9/54/dd730b32ea14ea797530a4479b2ed46a6fb250f682a9cfb997e968bf0261/networkx-3.4.2-py3-none-any.whl", hash = "sha256:df5d4365b724cf81b8c6a7312509d0c22386097011ad1abe274afd5e9d3bbc5f", size = 1723263, upload-time = "2024-10-21T12:39:36.247Z" },
-]
-
-[[package]]
-<<<<<<< chore/sdk-pin-transitive-deps
-name = "nltk"
-version = "3.9.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "click" },
-    { name = "joblib" },
-    { name = "regex" },
-    { name = "tqdm" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/74/a1/b3b4adf15585a5bc4c357adde150c01ebeeb642173ded4d871e89468767c/nltk-3.9.4.tar.gz", hash = "sha256:ed03bc098a40481310320808b2db712d95d13ca65b27372f8a403949c8b523d0", size = 2946864, upload-time = "2026-03-24T06:13:40.641Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9d/91/04e965f8e717ba0ab4bdca5c112deeab11c9e750d94c4d4602f050295d39/nltk-3.9.4-py3-none-any.whl", hash = "sha256:f2fa301c3a12718ce4a0e9305c5675299da5ad9e26068218b69d692fda84828f", size = 1552087, upload-time = "2026-03-24T06:13:38.47Z" },
-=======
-name = "networkx"
-version = "3.6.1"
-source = { registry = "https://pypi.org/simple" }
-resolution-markers = [
-    "python_full_version >= '3.12'",
-    "python_full_version == '3.11.*'",
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6a/51/63fe664f3908c97be9d2e4f1158eb633317598cfa6e1fc14af5383f17512/networkx-3.6.1.tar.gz", hash = "sha256:26b7c357accc0c8cde558ad486283728b65b6a95d85ee1cd66bafab4c8168509", size = 2517025, upload-time = "2025-12-08T17:02:39.908Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9e/c9/b2622292ea83fbb4ec318f5b9ab867d0a28ab43c5717bb85b0a5f6b3b0a4/networkx-3.6.1-py3-none-any.whl", hash = "sha256:d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762", size = 2068504, upload-time = "2025-12-08T17:02:38.159Z" },
->>>>>>> master
 ]
 
 [[package]]
