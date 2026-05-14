@@ -56,6 +56,18 @@ Prowler scans only attached security groups to report vulnerabilities in activel
 
     - `ec2_networkacl_allow_ingress_X_port`
 
+#### AWS Identity and Access Management (IAM)
+
+Customer-managed IAM policies that are not attached to any user, group, or role grant no effective permissions until a principal is bound to them. Prowler treats such policies as dormant by default and skips the content-evaluation checks below when `--scan-unused-services` is not set. Enable the flag to surface findings on unattached policies as well.
+
+- `iam_policy_allows_privilege_escalation`
+- `iam_policy_no_full_access_to_cloudtrail`
+- `iam_policy_no_full_access_to_kms`
+- `iam_policy_no_wildcard_marketplace_subscribe`
+- `iam_no_custom_policy_permissive_role_assumption`
+
+The dedicated `iam_customer_unattached_policy_no_administrative_privileges` check still inspects unattached policies regardless of the flag, since its purpose is to highlight dormant administrator privileges.
+
 #### AWS Glue
 
 AWS Glue best practices recommend encrypting metadata and connection passwords in Data Catalogs.
