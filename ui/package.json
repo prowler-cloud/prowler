@@ -28,6 +28,8 @@
     "test:e2e:headed": "playwright test --project=auth --project=sign-up --project=providers --project=invitations --project=scans --headed",
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install",
+    "audit": "pnpm audit --audit-level critical",
+    "audit:high": "pnpm audit --audit-level high",
     "audit:fix": "pnpm audit fix"
   },
   "dependencies": {
