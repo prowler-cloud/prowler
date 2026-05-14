@@ -26,6 +26,13 @@ kms_key_id = str(uuid4())
 endpoint_config_name = "endpoint-config-test"
 endpoint_config_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:endpoint-config/{endpoint_config_name}"
 prod_variant_name = "Variant1"
+test_domain_name = "test-domain"
+test_domain_id = "d-testdomain123"
+test_domain_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:domain/{test_domain_id}"
+test_sso_instance_id = "app-test-instance-id"
+test_sso_application_arn = (
+    f"arn:aws:sso::{AWS_ACCOUNT_NUMBER}:application/sagemaker/apl-test"
+)
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -114,6 +121,25 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "InitialInstanceCount": 2,
                 },
             ]
+        }
+    if operation_name == "ListDomains":
+        return {
+            "Domains": [
+                {
+                    "DomainId": test_domain_id,
+                    "DomainName": test_domain_name,
+                    "DomainArn": test_domain_arn,
+                },
+            ],
+        }
+    if operation_name == "DescribeDomain":
+        return {
+            "DomainId": test_domain_id,
+            "DomainName": test_domain_name,
+            "DomainArn": test_domain_arn,
+            "AuthMode": "SSO",
+            "SingleSignOnManagedApplicationInstanceId": test_sso_instance_id,
+            "SingleSignOnApplicationArn": test_sso_application_arn,
         }
 
     return make_api_call(self, operation_name, kwarg)
@@ -248,6 +274,33 @@ class Test_SageMaker_Service:
                 assert prod_variant.initial_instance_count == 5
             else:
                 assert prod_variant.initial_instance_count == 2
+
+    # Test SageMaker list domains
+    def test_list_domains(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.sagemaker_domains) == 1
+        assert sagemaker.sagemaker_domains[0].domain_id == test_domain_id
+        assert sagemaker.sagemaker_domains[0].name == test_domain_name
+        assert sagemaker.sagemaker_domains[0].arn == test_domain_arn
+        assert sagemaker.sagemaker_domains[0].region == AWS_REGION_EU_WEST_1
+
+    # Test SageMaker describe domain
+    def test_describe_domain(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.sagemaker_domains) == 1
+        assert sagemaker.sagemaker_domains[0].auth_mode == "SSO"
+        assert (
+            sagemaker.sagemaker_domains[
+                0
+            ].single_sign_on_managed_application_instance_id
+            == test_sso_instance_id
+        )
+        assert (
+            sagemaker.sagemaker_domains[0].single_sign_on_application_arn
+            == test_sso_application_arn
+        )
 
     # Test SageMaker _list_tags_for_resource
     def test_list_tags_for_resource_calls_client(self):

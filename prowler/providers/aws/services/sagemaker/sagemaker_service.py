@@ -36,9 +36,7 @@ class SageMaker(AWSService):
         self.__threading_call__(
             self._describe_endpoint_config, list(self.endpoint_configs.values())
         )
-        self.__threading_call__(
-            self._describe_domain, self.sagemaker_domains
-        )
+        self.__threading_call__(self._describe_domain, self.sagemaker_domains)
 
         # List tags concurrently for each resource collection
         # This replaces the previous sequential sequential execution to improve performance
@@ -52,9 +50,7 @@ class SageMaker(AWSService):
         self.__threading_call__(
             self._list_tags_for_resource, list(self.endpoint_configs.values())
         )
-        self.__threading_call__(
-            self._list_tags_for_resource, self.sagemaker_domains
-        )
+        self.__threading_call__(self._list_tags_for_resource, self.sagemaker_domains)
 
     def _list_notebook_instances(self, regional_client):
         logger.info("SageMaker - listing notebook instances...")
@@ -233,9 +229,7 @@ class SageMaker(AWSService):
             for page in list_domains_paginator.paginate():
                 for domain in page["Domains"]:
                     if not self.audit_resources or (
-                        is_resource_filtered(
-                            domain["DomainArn"], self.audit_resources
-                        )
+                        is_resource_filtered(domain["DomainArn"], self.audit_resources)
                     ):
                         self.sagemaker_domains.append(
                             Domain(
@@ -254,14 +248,18 @@ class SageMaker(AWSService):
         logger.info("SageMaker - describing domain...")
         try:
             regional_client = self.regional_clients[domain.region]
-            describe_domain = regional_client.describe_domain(
-                DomainId=domain.domain_id
-            )
+            describe_domain = regional_client.describe_domain(DomainId=domain.domain_id)
             if "AuthMode" in describe_domain:
                 domain.auth_mode = describe_domain["AuthMode"]
+            domain.single_sign_on_managed_application_instance_id = describe_domain.get(
+                "SingleSignOnManagedApplicationInstanceId"
+            )
+            domain.single_sign_on_application_arn = describe_domain.get(
+                "SingleSignOnApplicationArn"
+            )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{domain.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _list_endpoint_configs(self, regional_client):
@@ -355,6 +353,8 @@ class Domain(BaseModel):
     region: str
     arn: str
     auth_mode: Optional[str] = None
+    single_sign_on_managed_application_instance_id: Optional[str] = None
+    single_sign_on_application_arn: Optional[str] = None
     tags: Optional[list] = []
 
 
