@@ -16,6 +16,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `entra_emergency_access_exclusion` check for M365 provider now scopes the exclusion requirement to enabled Conditional Access policies with a `Block` grant control instead of every enabled policy, focusing on the lockout-relevant policy set [(#10849)](https://github.com/prowler-cloud/prowler/pull/10849)
 - AWS IAM customer-managed policy checks no longer emit `FAIL` on unattached policies unless `--scan-unused-services` is enabled [(#11150)](https://github.com/prowler-cloud/prowler/pull/11150)
+- `OktaProvider.test_connection` accepts an optional `provider_id` (org domain) and raises `OktaInvalidProviderIdError` (14007) when it doesn't match the authenticated org — guards against stored UID drifting from the credentials' org [(#11079)](https://github.com/prowler-cloud/prowler/pull/11079)
 
 ### 🐞 Fixed
 
