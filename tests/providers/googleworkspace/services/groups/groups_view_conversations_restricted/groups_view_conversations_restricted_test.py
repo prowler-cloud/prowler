@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from prowler.providers.googleworkspace.services.groups.groups_service import (
-    GroupsForBusinessPolicies,
+    GroupsPolicies,
 )
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
@@ -29,7 +29,7 @@ class TestGroupsViewConversationsRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
+            mock_client.policies = GroupsPolicies(
                 view_topics_default_access_level="GROUP_MEMBERS"
             )
 
@@ -44,7 +44,7 @@ class TestGroupsViewConversationsRestricted:
             assert findings[0].customer_id == CUSTOMER_ID
             assert (
                 findings[0].resource
-                == GroupsForBusinessPolicies(
+                == GroupsPolicies(
                     view_topics_default_access_level="GROUP_MEMBERS"
                 ).dict()
             )
@@ -68,7 +68,7 @@ class TestGroupsViewConversationsRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
+            mock_client.policies = GroupsPolicies(
                 view_topics_default_access_level="DOMAIN_USERS"
             )
 
@@ -98,7 +98,7 @@ class TestGroupsViewConversationsRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
+            mock_client.policies = GroupsPolicies(
                 view_topics_default_access_level="ANYONE_CAN_VIEW_TOPICS"
             )
 
@@ -128,9 +128,7 @@ class TestGroupsViewConversationsRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
-                view_topics_default_access_level=None
-            )
+            mock_client.policies = GroupsPolicies(view_topics_default_access_level=None)
 
             check = groups_view_conversations_restricted()
             findings = check.execute()
@@ -159,7 +157,7 @@ class TestGroupsViewConversationsRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = False
-            mock_client.policies = GroupsForBusinessPolicies()
+            mock_client.policies = GroupsPolicies()
 
             check = groups_view_conversations_restricted()
             findings = check.execute()

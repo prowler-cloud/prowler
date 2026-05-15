@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from prowler.providers.googleworkspace.services.groups.groups_service import (
-    GroupsForBusinessPolicies,
+    GroupsPolicies,
 )
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
@@ -29,7 +29,7 @@ class TestGroupsExternalAccessRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
+            mock_client.policies = GroupsPolicies(
                 collaboration_capability="DOMAIN_USERS_ONLY"
             )
 
@@ -44,9 +44,7 @@ class TestGroupsExternalAccessRestricted:
             assert findings[0].customer_id == CUSTOMER_ID
             assert (
                 findings[0].resource
-                == GroupsForBusinessPolicies(
-                    collaboration_capability="DOMAIN_USERS_ONLY"
-                ).dict()
+                == GroupsPolicies(collaboration_capability="DOMAIN_USERS_ONLY").dict()
             )
 
     def test_fail_anyone_can_access(self):
@@ -68,7 +66,7 @@ class TestGroupsExternalAccessRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
+            mock_client.policies = GroupsPolicies(
                 collaboration_capability="ANYONE_CAN_ACCESS"
             )
 
@@ -98,9 +96,7 @@ class TestGroupsExternalAccessRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
-                collaboration_capability=None
-            )
+            mock_client.policies = GroupsPolicies(collaboration_capability=None)
 
             check = groups_external_access_restricted()
             findings = check.execute()
@@ -128,7 +124,7 @@ class TestGroupsExternalAccessRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = False
-            mock_client.policies = GroupsForBusinessPolicies()
+            mock_client.policies = GroupsPolicies()
 
             check = groups_external_access_restricted()
             findings = check.execute()

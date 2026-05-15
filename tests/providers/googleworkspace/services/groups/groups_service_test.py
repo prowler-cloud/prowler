@@ -50,10 +50,10 @@ class TestGroupsService:
             ),
         ):
             from prowler.providers.googleworkspace.services.groups.groups_service import (
-                GroupsForBusiness,
+                Groups,
             )
 
-            groups = GroupsForBusiness(mock_provider)
+            groups = Groups(mock_provider)
 
             assert groups.policies_fetched is True
             assert groups.policies.collaboration_capability == "DOMAIN_USERS_ONLY"
@@ -90,10 +90,10 @@ class TestGroupsService:
             ),
         ):
             from prowler.providers.googleworkspace.services.groups.groups_service import (
-                GroupsForBusiness,
+                Groups,
             )
 
-            groups = GroupsForBusiness(mock_provider)
+            groups = Groups(mock_provider)
 
             assert groups.policies_fetched is True
             assert groups.policies.collaboration_capability is None
@@ -125,10 +125,10 @@ class TestGroupsService:
             ),
         ):
             from prowler.providers.googleworkspace.services.groups.groups_service import (
-                GroupsForBusiness,
+                Groups,
             )
 
-            groups = GroupsForBusiness(mock_provider)
+            groups = Groups(mock_provider)
 
             assert groups.policies_fetched is False
             assert groups.policies.collaboration_capability is None
@@ -153,10 +153,10 @@ class TestGroupsService:
             ),
         ):
             from prowler.providers.googleworkspace.services.groups.groups_service import (
-                GroupsForBusiness,
+                Groups,
             )
 
-            groups = GroupsForBusiness(mock_provider)
+            groups = Groups(mock_provider)
 
             assert groups.policies_fetched is False
             assert groups.policies.collaboration_capability is None
@@ -186,10 +186,10 @@ class TestGroupsService:
             ),
         ):
             from prowler.providers.googleworkspace.services.groups.groups_service import (
-                GroupsForBusiness,
+                Groups,
             )
 
-            groups = GroupsForBusiness(mock_provider)
+            groups = Groups(mock_provider)
 
             assert groups.policies_fetched is False
             assert groups.policies.collaboration_capability is None
@@ -253,22 +253,22 @@ class TestGroupsService:
             ),
         ):
             from prowler.providers.googleworkspace.services.groups.groups_service import (
-                GroupsForBusiness,
+                Groups,
             )
 
-            groups = GroupsForBusiness(mock_provider)
+            groups = Groups(mock_provider)
 
             assert groups.policies_fetched is True
             assert groups.policies.collaboration_capability == "DOMAIN_USERS_ONLY"
             assert groups.policies.create_groups_access_level == "ADMIN_ONLY"
 
     def test_policies_model(self):
-        """Test GroupsForBusinessPolicies Pydantic model"""
+        """Test GroupsPolicies Pydantic model"""
         from prowler.providers.googleworkspace.services.groups.groups_service import (
-            GroupsForBusinessPolicies,
+            GroupsPolicies,
         )
 
-        policies = GroupsForBusinessPolicies(
+        policies = GroupsPolicies(
             collaboration_capability="DOMAIN_USERS_ONLY",
             create_groups_access_level="ADMIN_ONLY",
             owners_can_allow_external_members=False,

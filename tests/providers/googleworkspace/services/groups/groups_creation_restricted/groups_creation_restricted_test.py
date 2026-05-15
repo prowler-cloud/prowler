@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from prowler.providers.googleworkspace.services.groups.groups_service import (
-    GroupsForBusinessPolicies,
+    GroupsPolicies,
 )
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
@@ -29,7 +29,7 @@ class TestGroupsCreationRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
+            mock_client.policies = GroupsPolicies(
                 create_groups_access_level="ADMIN_ONLY",
                 owners_can_allow_external_members=False,
                 owners_can_allow_incoming_mail_from_public=False,
@@ -46,7 +46,7 @@ class TestGroupsCreationRestricted:
             assert findings[0].customer_id == CUSTOMER_ID
             assert (
                 findings[0].resource
-                == GroupsForBusinessPolicies(
+                == GroupsPolicies(
                     create_groups_access_level="ADMIN_ONLY",
                     owners_can_allow_external_members=False,
                     owners_can_allow_incoming_mail_from_public=False,
@@ -72,7 +72,7 @@ class TestGroupsCreationRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
+            mock_client.policies = GroupsPolicies(
                 create_groups_access_level="USERS_IN_DOMAIN",
                 owners_can_allow_external_members=False,
                 owners_can_allow_incoming_mail_from_public=False,
@@ -104,7 +104,7 @@ class TestGroupsCreationRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
+            mock_client.policies = GroupsPolicies(
                 create_groups_access_level="ADMIN_ONLY",
                 owners_can_allow_external_members=True,
                 owners_can_allow_incoming_mail_from_public=False,
@@ -136,7 +136,7 @@ class TestGroupsCreationRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
+            mock_client.policies = GroupsPolicies(
                 create_groups_access_level="ADMIN_ONLY",
                 owners_can_allow_external_members=False,
                 owners_can_allow_incoming_mail_from_public=True,
@@ -168,7 +168,7 @@ class TestGroupsCreationRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies()
+            mock_client.policies = GroupsPolicies()
 
             check = groups_creation_restricted()
             findings = check.execute()
@@ -198,7 +198,7 @@ class TestGroupsCreationRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
-            mock_client.policies = GroupsForBusinessPolicies(
+            mock_client.policies = GroupsPolicies(
                 create_groups_access_level="ANYONE_CAN_CREATE",
                 owners_can_allow_external_members=True,
                 owners_can_allow_incoming_mail_from_public=True,
@@ -232,7 +232,7 @@ class TestGroupsCreationRestricted:
 
             mock_client.provider = mock_provider
             mock_client.policies_fetched = False
-            mock_client.policies = GroupsForBusinessPolicies()
+            mock_client.policies = GroupsPolicies()
 
             check = groups_creation_restricted()
             findings = check.execute()

@@ -1,6 +1,6 @@
 from prowler.providers.common.provider import Provider
 from prowler.providers.googleworkspace.services.groups.groups_service import (
-    GroupsForBusiness,
+    Groups,
 )
 
-groups_client = GroupsForBusiness(Provider.get_global_provider())
+groups_client = Groups(Provider.get_global_provider())

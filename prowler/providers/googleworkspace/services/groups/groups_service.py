@@ -6,7 +6,7 @@ from prowler.lib.logger import logger
 from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
 
 
-class GroupsForBusiness(GoogleWorkspaceService):
+class Groups(GoogleWorkspaceService):
     """Google Workspace Groups for Business service for auditing domain-level group policies.
 
     Uses the Cloud Identity Policy API v1 to read group sharing, creation,
@@ -15,7 +15,7 @@ class GroupsForBusiness(GoogleWorkspaceService):
 
     def __init__(self, provider):
         super().__init__(provider)
-        self.policies = GroupsForBusinessPolicies()
+        self.policies = GroupsPolicies()
         self.policies_fetched = False
         self._fetch_groups_for_business_policies()
 
@@ -105,7 +105,7 @@ class GroupsForBusiness(GoogleWorkspaceService):
             self.policies_fetched = False
 
 
-class GroupsForBusinessPolicies(BaseModel):
+class GroupsPolicies(BaseModel):
     """Model for domain-level Groups for Business policy settings."""
 
     # groups_for_business.groups_sharing
