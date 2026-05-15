@@ -274,6 +274,17 @@ def perform_scan_task(
     Returns:
         dict: The result of the scan execution, typically including the status and results of the performed checks.
     """
+    with rls_transaction(tenant_id):
+        if not Provider.objects.filter(pk=provider_id).exists():
+            logger.warning(
+                "scan-perform skipped: provider %s no longer exists "
+                "(tenant=%s, scan=%s)",
+                provider_id,
+                tenant_id,
+                scan_id,
+            )
+            return None
+
     result = perform_prowler_scan(
         tenant_id=tenant_id,
         scan_id=scan_id,
@@ -310,6 +321,15 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     task_id = self.request.id
 
     with rls_transaction(tenant_id):
+        if not Provider.objects.filter(pk=provider_id).exists():
+            logger.warning(
+                "scheduled scan-perform skipped: provider %s no longer exists "
+                "(tenant=%s)",
+                provider_id,
+                tenant_id,
+            )
+            return None
+
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
