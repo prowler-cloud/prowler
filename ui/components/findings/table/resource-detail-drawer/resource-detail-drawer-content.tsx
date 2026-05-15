@@ -838,7 +838,9 @@ export function ResourceDetailDrawerContent({
             <TabsList>
               <TabsTrigger value="overview">Finding Overview</TabsTrigger>
               <TabsTrigger value="remediation">Remediation</TabsTrigger>
-              <TabsTrigger value="metadata">Metadata</TabsTrigger>
+              <TabsTrigger value="metadata">
+                Resource Metadata / Evidence
+              </TabsTrigger>
               <TabsTrigger value="other-findings">
                 Findings for this resource
               </TabsTrigger>

@@ -1775,7 +1775,7 @@ describe("ResourceDetailDrawerContent — Metadata tab", () => {
 
     // Then
     expect(
-      screen.getByRole("button", { name: "Metadata" }),
+      screen.getByRole("button", { name: "Resource Metadata / Evidence" }),
     ).toBeInTheDocument();
   });
 
