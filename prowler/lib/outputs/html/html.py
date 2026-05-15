@@ -73,7 +73,8 @@ class HTML(Output):
                 elif finding.status == "FAIL":
                     row_class = "table-danger"
 
-                self._data.append(f"""
+                self._data.append(
+                    f"""
                         <tr class="{row_class}">
                             <td>{finding_status}</td>
                             <td>{finding.metadata.Severity.value}</td>
@@ -88,7 +89,8 @@ class HTML(Output):
                             <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
                         </tr>
-                        """)
+                        """
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -141,7 +143,8 @@ class HTML(Output):
             from_cli (bool): whether the request is from the CLI or not
         """
         try:
-            file_descriptor.write(f"""<!DOCTYPE html>
+            file_descriptor.write(
+                f"""<!DOCTYPE html>
     <html lang="en">
     <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -250,7 +253,8 @@ class HTML(Output):
                     <th scope="col">Compliance</th>
                 </tr>
             </thead>
-            <tbody>""")
+            <tbody>"""
+            )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -265,7 +269,8 @@ class HTML(Output):
             file_descriptor (file): the file descriptor to write the footer
         """
         try:
-            file_descriptor.write("""
+            file_descriptor.write(
+                """
             </tbody>
             </table>
         </div>
@@ -404,7 +409,8 @@ class HTML(Output):
 </body>
 
 </html>
-""")
+"""
+            )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
