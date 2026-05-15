@@ -309,16 +309,16 @@ assert result[0].project_id == GCP_PROJECT_ID    # GCP
 
 ```bash
 # All SDK tests
-poetry run pytest -n auto -vvv tests/
+uv run pytest -n auto -vvv tests/
 
 # Specific provider
-poetry run pytest tests/providers/{provider}/ -v
+uv run pytest tests/providers/{provider}/ -v
 
 # Specific check
-poetry run pytest tests/providers/{provider}/services/{service}/{check_name}/ -v
+uv run pytest tests/providers/{provider}/services/{service}/{check_name}/ -v
 
 # Stop on first failure
-poetry run pytest -x tests/
+uv run pytest -x tests/
 ```
 
 ## Resources

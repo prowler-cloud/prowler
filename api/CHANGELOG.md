@@ -11,11 +11,20 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🔄 Changed
 
+- Replace `poetry` with `uv` (`0.11.14`) as the API package manager; migrate `pyproject.toml` to `[dependency-groups]` and regenerate as `uv.lock` [(#10775)](https://github.com/prowler-cloud/prowler/pull/10775)
 - Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
 
 ### 🐞 Fixed
 
 - Universal compliance CSV and OCSF outputs (DORA, CSA CCM) were truncated to the first batch on multi-batch scans; they now stream every finding [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+
+---
+
+## [1.27.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: BEDROCK-001 and BEDROCK-002 now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
 
 ---
 
