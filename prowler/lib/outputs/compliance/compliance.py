@@ -71,9 +71,7 @@ def process_universal_compliance_frameworks(
 
     def _flush(writer, framework, label, is_new):
         if not is_new:
-            writer._transform(
-                finding_outputs, framework, label, include_manual=False
-            )
+            writer._transform(finding_outputs, framework, label, include_manual=False)
         writer.close_file = is_last
         writer.batch_write_data_to_file()
         writer._data.clear()
