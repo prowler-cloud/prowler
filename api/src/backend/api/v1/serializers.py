@@ -1692,16 +1692,8 @@ class GoogleWorkspaceProviderSecret(serializers.Serializer):
 
 class OktaProviderSecret(serializers.Serializer):
     okta_client_id = serializers.CharField()
-    okta_private_key = serializers.CharField(required=False)
-    okta_private_key_file = serializers.CharField(required=False)
+    okta_private_key = serializers.CharField()
     okta_scopes = serializers.ListField(child=serializers.CharField(), required=False)
-
-    def validate(self, attrs):
-        if not attrs.get("okta_private_key") and not attrs.get("okta_private_key_file"):
-            raise serializers.ValidationError(
-                "You must provide either okta_private_key or okta_private_key_file."
-            )
-        return super().validate(attrs)
 
     class Meta:
         resource_name = "provider-secrets"
