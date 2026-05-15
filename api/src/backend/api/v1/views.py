@@ -115,6 +115,7 @@ from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
+    get_prowler_provider_compliance,
 )
 from api.constants import SEVERITY_ORDER
 from api.db_router import MainRouter
@@ -1848,7 +1849,42 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             200: OpenApiResponse(
                 description="CSV file containing the compliance report"
             ),
-            404: OpenApiResponse(description="Compliance report not found"),
+            202: OpenApiResponse(description="The task is in progress"),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="Compliance report not found, or the scan has no reports yet"
+            ),
+        },
+        request=None,
+    ),
+    compliance_ocsf=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve compliance report as OCSF JSON",
+        description=(
+            "Download a specific compliance report as an OCSF JSON file. "
+            "Only universal frameworks that declare an output configuration "
+            "produce this artifact (currently 'dora' and 'csa_ccm_4.0'); any "
+            "other framework returns 404."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                type=str,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description="The compliance report name, like 'dora'",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="OCSF JSON file containing the compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="Compliance report not found, the framework does "
+                "not provide an OCSF export, or the scan has no reports yet"
+            ),
         },
         request=None,
     ),
@@ -2002,6 +2038,10 @@ class ScanViewSet(BaseRLSViewSet):
                 return self.response_serializer_class
             return ScanReportSerializer
         elif self.action == "compliance":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+            return ScanComplianceReportSerializer
+        elif self.action == "compliance_ocsf":
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
             return ScanComplianceReportSerializer
@@ -2256,20 +2296,16 @@ class ScanViewSet(BaseRLSViewSet):
         content, filename = loader
         return self._serve_file(content, filename, "application/x-zip-compressed")
 
-    @action(
-        detail=True,
-        methods=["get"],
-        url_path="compliance/(?P<name>[^/]+)",
-        url_name="compliance",
-    )
-    def compliance(self, request, pk=None, name=None):
-        scan = self.get_object()
-        if name not in get_compliance_frameworks(scan.provider.provider):
-            return Response(
-                {"detail": f"Compliance '{name}' not found."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+    def _serve_compliance_artifact(self, scan, name, file_extension, content_type):
+        """Resolve and serve a per-framework compliance artifact from disk/S3.
 
+        Shared by the CSV and OCSF compliance download actions. Both are
+        path-based (no query params) on purpose: ``get_object`` runs
+        ``filter_queryset``, which triggers JSON:API's
+        ``QueryParameterValidationFilter`` and 400s on any non-JSON:API
+        query param, so a ``?format=`` / ``?type=`` selector is not viable
+        here — the format is encoded in the route instead.
+        """
         running_resp = self._get_task_status(scan)
         if running_resp:
             return running_resp
@@ -2286,25 +2322,66 @@ class ScanViewSet(BaseRLSViewSet):
             bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
             key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
             prefix = os.path.join(
-                os.path.dirname(key_prefix), "compliance", f"{name}.csv"
+                os.path.dirname(key_prefix), "compliance", f"{name}.{file_extension}"
             )
             loader = self._load_file(
                 prefix,
                 s3=True,
                 bucket=bucket,
                 list_objects=True,
-                content_type="text/csv",
+                content_type=content_type,
             )
         else:
             base = os.path.dirname(scan.output_location)
-            pattern = os.path.join(base, "compliance", f"*_{name}.csv")
+            pattern = os.path.join(base, "compliance", f"*_{name}.{file_extension}")
             loader = self._load_file(pattern, s3=False)
 
         if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
-        return self._serve_file(content, filename, "text/csv")
+        return self._serve_file(content, filename, content_type)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="compliance/(?P<name>[^/]+)",
+        url_name="compliance",
+    )
+    def compliance(self, request, pk=None, name=None):
+        scan = self.get_object()
+        if name not in get_compliance_frameworks(scan.provider.provider):
+            return Response(
+                {"detail": f"Compliance '{name}' not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return self._serve_compliance_artifact(scan, name, "csv", "text/csv")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="compliance/(?P<name>[^/]+)/ocsf",
+        url_name="compliance-ocsf",
+    )
+    def compliance_ocsf(self, request, pk=None, name=None):
+        scan = self.get_object()
+        if name not in get_compliance_frameworks(scan.provider.provider):
+            return Response(
+                {"detail": f"Compliance '{name}' not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        universal_bulk = get_prowler_provider_compliance(scan.provider.provider)
+        framework_obj = universal_bulk.get(name)
+        if not (framework_obj and getattr(framework_obj, "outputs", None)):
+            return Response(
+                {"detail": f"Compliance '{name}' does not provide an OCSF export."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return self._serve_compliance_artifact(
+            scan, name, "ocsf.json", "application/json"
+        )
 
     @action(
         detail=True,

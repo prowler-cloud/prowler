@@ -7,10 +7,15 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+- `GET /api/v1/scans/{id}/compliance/{name}/ocsf` endpoint to download the per-framework OCSF JSON export for universal compliance frameworks (DORA, CSA CCM) [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 
 ### 🔄 Changed
 
 - Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+
+### 🐞 Fixed
+
+- Universal compliance CSV and OCSF outputs (DORA, CSA CCM) were truncated to the first batch on multi-batch scans; they now stream every finding [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
 
 ---
 

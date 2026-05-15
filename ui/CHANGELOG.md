@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.27.0] (Prowler UNRELEASED)
 
+### 🚀 Added
+
+- OCSF JSON download for universal compliance frameworks (DORA, CSA CCM), alongside the existing CSV and PDF actions [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+
 ### 🔄 Changed
 
 - Trimmed unused npm dependencies [(#11115)](https://github.com/prowler-cloud/prowler/pull/11115)
