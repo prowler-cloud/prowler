@@ -15,7 +15,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🐞 Fixed
 
-- `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. Prevents queued messages for deleted providers from being recorded as `FAILURE` and, in one-shot scan-worker deployments, from burning a fresh container per redelivery [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
+- `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. `perform_scheduled_scan_task` also removes any orphan `PeriodicTask` it finds so beat stops re-firing scans for deleted providers. Prevents queued messages for deleted providers from being recorded as `FAILURE` and, in one-shot scan-worker deployments, from burning a fresh container per redelivery [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
 
 ---
 

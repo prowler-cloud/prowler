@@ -1434,9 +1434,9 @@ class TestCheckIntegrationsTask:
             )
 
             # Verify ASFF was NOT created for non-AWS provider
-            assert (
-                "asff" not in created_writers
-            ), "ASFF writer should NOT be created for non-AWS providers"
+            assert "asff" not in created_writers, (
+                "ASFF writer should NOT be created for non-AWS providers"
+            )
             assert "csv" in created_writers, "CSV writer should be created"
             assert "ocsf" in created_writers, "OCSF writer should be created"
 
@@ -2461,6 +2461,10 @@ class TestPerformScheduledScanTask:
         missing_provider_id = str(uuid.uuid4())
         task_id = str(uuid.uuid4())
         self._create_task_result(tenant.id, task_id)
+        # Orphan PeriodicTask left behind from a previous lifecycle.
+        self._create_periodic_task(missing_provider_id, tenant.id)
+        orphan_name = f"scan-perform-scheduled-{missing_provider_id}"
+        assert PeriodicTask.objects.filter(name=orphan_name).exists()
 
         with (
             patch("tasks.tasks.perform_prowler_scan") as mock_scan,
@@ -2474,6 +2478,8 @@ class TestPerformScheduledScanTask:
         assert result is None
         mock_scan.assert_not_called()
         mock_complete_tasks.assert_not_called()
+        # Orphan PeriodicTask is cleaned up so beat stops re-firing it.
+        assert not PeriodicTask.objects.filter(name=orphan_name).exists()
 
 
 @pytest.mark.django_db

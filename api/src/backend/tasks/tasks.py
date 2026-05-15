@@ -69,7 +69,7 @@ from tasks.utils import (
 
 from api.compliance import get_compliance_frameworks
 from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
+from api.db_utils import delete_related_daily_task, rls_transaction
 from api.decorators import handle_provider_deletion, set_tenant
 from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
@@ -328,6 +328,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
                 provider_id,
                 tenant_id,
             )
+            delete_related_daily_task(provider_id)
             return None
 
         periodic_task_instance = PeriodicTask.objects.get(
