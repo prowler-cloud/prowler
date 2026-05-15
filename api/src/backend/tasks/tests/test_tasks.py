@@ -21,6 +21,7 @@ from tasks.tasks import (
     check_lighthouse_provider_connection_task,
     generate_outputs_task,
     perform_attack_paths_scan_task,
+    perform_scan_task,
     perform_scheduled_scan_task,
     reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
@@ -1433,9 +1434,9 @@ class TestCheckIntegrationsTask:
             )
 
             # Verify ASFF was NOT created for non-AWS provider
-            assert (
-                "asff" not in created_writers
-            ), "ASFF writer should NOT be created for non-AWS providers"
+            assert "asff" not in created_writers, (
+                "ASFF writer should NOT be created for non-AWS providers"
+            )
             assert "csv" in created_writers, "CSV writer should be created"
             assert "ocsf" in created_writers, "OCSF writer should be created"
 
@@ -2453,6 +2454,51 @@ class TestPerformScheduledScanTask:
             ).count()
             == 1
         )
+
+    def test_no_op_when_provider_does_not_exist(self, tenants_fixture):
+        """Return None without raising when the provider was already deleted."""
+        tenant = tenants_fixture[0]
+        missing_provider_id = str(uuid.uuid4())
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=missing_provider_id
+            )
+
+        assert result is None
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+
+
+@pytest.mark.django_db
+class TestPerformScanTask:
+    """Unit tests for perform_scan_task."""
+
+    def test_no_op_when_provider_does_not_exist(self, tenants_fixture):
+        """Return None without raising when the provider was already deleted."""
+        tenant = tenants_fixture[0]
+        missing_provider_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+        ):
+            result = perform_scan_task.run(
+                tenant_id=str(tenant.id),
+                scan_id=scan_id,
+                provider_id=missing_provider_id,
+            )
+
+        assert result is None
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
 
 
 @pytest.mark.django_db

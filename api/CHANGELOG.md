@@ -13,6 +13,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Replace `poetry` with `uv` (`0.11.14`) as the API package manager; migrate `pyproject.toml` to `[dependency-groups]` and regenerate as `uv.lock` [(#10775)](https://github.com/prowler-cloud/prowler/pull/10775)
 - Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
 
+### 🐞 Fixed
+
+- `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. Prevents queued messages for deleted providers from being recorded as `FAILURE` and, in one-shot scan-worker deployments, from burning a fresh container per redelivery [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
+
 ---
 
 ## [1.27.2] (Prowler UNRELEASED)
