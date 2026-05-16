@@ -1254,6 +1254,47 @@ OAuthAppInfo
                 role_assignments_response = await self.client.role_management.directory.role_assignments.with_url(
                     next_link
                 ).get()
+            for sp_id, sp in service_principals.items():
+                if not sp.directory_role_template_ids:
+                    continue
+                try:
+                    sp_owners_response = await self.client.service_principals.by_service_principal_id(
+                        sp_id
+                    ).owners.get()
+                    sp.sp_owner_ids = [
+                        owner.id
+                        for owner in getattr(sp_owners_response, "value", []) or []
+                        if getattr(owner, "id", None)
+                    ]
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                if sp.app_id:
+                    try:
+                        app_response2 = await self.client.applications.get()
+                        while app_response2:
+                            for app in getattr(app_response2, "value", []) or []:
+                                if getattr(app, "app_id", None) != sp.app_id:
+                                    continue
+                                app_owners_response = await self.client.applications.by_application_id(
+                                    app.id
+                                ).owners.get()
+                                sp.app_owner_ids = [
+                                    owner.id
+                                    for owner in getattr(app_owners_response, "value", []) or []
+                                    if getattr(owner, "id", None)
+                                ]
+                                break
+                            next_link = getattr(app_response2, "odata_next_link", None)
+                            if not next_link:
+                                break
+                            app_response2 = await self.client.applications.with_url(next_link).get()
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                           )
+
 
         except Exception as error:
             logger.error(
@@ -1774,6 +1815,8 @@ class ServicePrincipal(BaseModel):
         key_credentials: List of key credentials (certificates).
         directory_role_template_ids: List of directory role template IDs permanently
             assigned to this service principal.
+        sp_owner_ids: List of owner principal IDs on the service principal. 
+        app_owner_ids: List of owner principal IDs on the parent app registration.
     """
 
     id: str
@@ -1783,3 +1826,5 @@ class ServicePrincipal(BaseModel):
     password_credentials: List[PasswordCredential] = []
     key_credentials: List[KeyCredential] = []
     directory_role_template_ids: List[str] = []
+    sp_owner_ids: List[str] = []
+    app_owner_ids: List[str] = []
