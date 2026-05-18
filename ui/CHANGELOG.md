@@ -6,6 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
+- UI health endpoint at `GET /api/health` for Docker Compose liveness checks [(#11145)](https://github.com/prowler-cloud/prowler/pull/11145)
 - AWS findings and resource details now expose a "View in AWS Console" link that opens the resource directly in the AWS Console via the universal `/go/view` ARN resolver. The per-provider external link is rendered by a new shared `ExternalResourceLink` component, which also covers the existing IaC repository link [(#9172)](https://github.com/prowler-cloud/prowler/pull/9172)
 
 ### 🔄 Changed
@@ -21,6 +22,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Muting a finding group on `/findings` now hides the row immediately without waiting for a manual reload; muted `check_id`s are tracked client-side under `prowler:optimistic-muted-groups` in `sessionStorage` with a 90s TTL so a fast reload still honors the optimistic hide while the background reaggregation catches up [(#11170)](https://github.com/prowler-cloud/prowler/pull/11170)
 - Mute Findings modal now enforces the 100-character limit on the rule name input with a live counter and inline error, matching the existing reason field behaviour [(#11158)](https://github.com/prowler-cloud/prowler/pull/11158)
 
+### 🔐 Security
+
+- UI npm dependencies updated to patched versions for Next.js, Vite, LangChain, XML parsing, lodash, and related transitive packages [(#11171)](https://github.com/prowler-cloud/prowler/pull/11171)
+
 ---
 
 ## [1.26.2] (Prowler 5.26.2)
@@ -28,6 +33,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Finding drawer no longer renders literal backticks around inline code in Risk, Description and Remediation sections [(#11142)](https://github.com/prowler-cloud/prowler/pull/11142)
+
+### 🐞 Fixed
+
+- Launch Scan first-provider wizard continues after provider creation instead of resetting the Scans page [(#11136)](https://github.com/prowler-cloud/prowler/pull/11136)
 
 ---
 

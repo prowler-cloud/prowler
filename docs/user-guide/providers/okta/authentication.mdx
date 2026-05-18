@@ -133,7 +133,7 @@ export OKTA_PRIVATE_KEY="$(cat /secure/path/to/prowler-okta.pem)"
 # Optional — defaults to "okta.policies.read"
 export OKTA_SCOPES="okta.policies.read"
 
-poetry run python prowler-cli.py okta
+uv run python prowler-cli.py okta
 ```
 
 ### Non-Secret CLI Flags
@@ -149,7 +149,7 @@ Non-secret values are also available as CLI flags for ergonomic overrides:
 Run a single check directly:
 
 ```bash
-poetry run python prowler-cli.py okta --check signon_global_session_idle_timeout_15min
+uv run python prowler-cli.py okta --check signon_global_session_idle_timeout_15min
 ```
 
 ## Troubleshooting
