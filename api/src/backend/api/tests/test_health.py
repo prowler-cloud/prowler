@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 from config import version as config_version
+from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -16,6 +17,21 @@ from api import health
 
 
 HEALTH_MEDIA_TYPE = "application/health+json"
+
+
+@pytest.fixture(autouse=True)
+def _reset_health_state():
+    """Per-test isolation: clear throttle counters and the readiness cache.
+
+    DRF's ScopedRateThrottle persists state in Django's cache; without
+    clearing it the throttle budget would be shared across tests and trip
+    midway through the suite.
+    """
+    cache.clear()
+    health._readiness_cache = None
+    yield
+    cache.clear()
+    health._readiness_cache = None
 
 
 @pytest.fixture
@@ -124,7 +140,8 @@ class TestReadinessEndpoint:
         assert body["status"] == "fail"
         pg_entry = body["checks"]["postgres:responseTime"][0]
         assert pg_entry["status"] == "fail"
-        assert pg_entry["output"] == "connection refused"
+        # Exception detail is never echoed in the response, only logged.
+        assert "output" not in pg_entry
         assert body["checks"]["valkey:responseTime"][0]["status"] == "pass"
         assert body["checks"]["neo4j:responseTime"][0]["status"] == "pass"
 
@@ -141,7 +158,7 @@ class TestReadinessEndpoint:
         assert body["status"] == "fail"
         vk_entry = body["checks"]["valkey:responseTime"][0]
         assert vk_entry["status"] == "fail"
-        assert vk_entry["output"] == "timeout"
+        assert "output" not in vk_entry
 
     def test_returns_503_and_fail_when_neo4j_is_down(self, api_client):
         with (
@@ -159,7 +176,7 @@ class TestReadinessEndpoint:
         assert body["status"] == "fail"
         neo_entry = body["checks"]["neo4j:responseTime"][0]
         assert neo_entry["status"] == "fail"
-        assert neo_entry["output"] == "ServiceUnavailable"
+        assert "output" not in neo_entry
 
     def test_reports_all_failures_simultaneously(self, api_client):
         with (
@@ -172,20 +189,43 @@ class TestReadinessEndpoint:
         assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
         body = response.json()
         assert body["status"] == "fail"
-        assert body["checks"]["postgres:responseTime"][0]["output"] == "pg down"
-        assert body["checks"]["valkey:responseTime"][0]["output"] == "vk down"
-        assert body["checks"]["neo4j:responseTime"][0]["output"] == "neo down"
+        for key in (
+            "postgres:responseTime",
+            "valkey:responseTime",
+            "neo4j:responseTime",
+        ):
+            entry = body["checks"][key][0]
+            assert entry["status"] == "fail"
+            # No dependency-specific error string leaks into the payload.
+            assert "output" not in entry
 
-    def test_falls_back_to_exception_class_name_when_message_is_empty(self, api_client):
+    def test_does_not_leak_exception_detail_on_failure(self, api_client):
+        # Sanity check: an exception message resembling infra detail
+        # (host, port, credentials) must not surface in the response under
+        # any field.
+        sensitive = (
+            "connection to server at "
+            '"postgres-rw.prod.svc.cluster.local" (10.0.0.5), port 5432 '
+            'failed: FATAL: password authentication failed for user "prowler_user"'
+        )
         with (
-            patch("api.health._probe_postgres", side_effect=RuntimeError("")),
+            patch("api.health._probe_postgres", side_effect=RuntimeError(sensitive)),
             patch("api.health._probe_valkey"),
             patch("api.health._probe_neo4j"),
         ):
             response = api_client.get(reverse("health-ready"))
 
         body = response.json()
-        assert body["checks"]["postgres:responseTime"][0]["output"] == "RuntimeError"
+        assert "output" not in body["checks"]["postgres:responseTime"][0]
+        payload_text = response.content.decode()
+        for token in (
+            "postgres-rw",
+            "10.0.0.5",
+            "5432",
+            "prowler_user",
+            "password authentication failed",
+        ):
+            assert token not in payload_text
 
     def test_does_not_require_authentication(self, api_client):
         with (
@@ -197,6 +237,100 @@ class TestReadinessEndpoint:
             response = api_client.get(reverse("health-ready"))
 
         assert response.status_code == status.HTTP_200_OK
+
+
+class TestReadinessCache:
+    """In-process cache caps the rate at which real probes hit the deps."""
+
+    def test_result_is_cached_for_ttl_seconds(self, api_client):
+        with (
+            patch("api.health._probe_postgres") as pg,
+            patch("api.health._probe_valkey") as vk,
+            patch("api.health._probe_neo4j") as neo,
+        ):
+            r1 = api_client.get(reverse("health-ready"))
+            r2 = api_client.get(reverse("health-ready"))
+
+        assert r1.status_code == status.HTTP_200_OK
+        assert r2.status_code == status.HTTP_200_OK
+        # Second request must not trigger fresh dep checks within the TTL.
+        assert pg.call_count == 1
+        assert vk.call_count == 1
+        assert neo.call_count == 1
+        # The cached payload is returned verbatim (same timestamps too).
+        assert r1.json() == r2.json()
+
+    def test_re_probes_after_cache_ttl_expires(self, api_client):
+        with (
+            patch("api.health._probe_postgres") as pg,
+            patch("api.health._probe_valkey"),
+            patch("api.health._probe_neo4j"),
+        ):
+            api_client.get(reverse("health-ready"))
+            assert pg.call_count == 1
+
+            # Rewind the cached timestamp past the TTL so the next request
+            # is forced to recompute.
+            cached_ts, payload, http_status_code = health._readiness_cache
+            health._readiness_cache = (
+                cached_ts - health.READINESS_CACHE_TTL_SECONDS - 0.1,
+                payload,
+                http_status_code,
+            )
+            api_client.get(reverse("health-ready"))
+
+        assert pg.call_count == 2
+
+    def test_cache_persists_a_failing_result(self, api_client):
+        # A failing readiness result is cached too; this is intentional so
+        # an attacker spamming the endpoint during an outage cannot amplify
+        # the dependency load.
+        with (
+            patch("api.health._probe_postgres", side_effect=RuntimeError("down")) as pg,
+            patch("api.health._probe_valkey"),
+            patch("api.health._probe_neo4j"),
+        ):
+            r1 = api_client.get(reverse("health-ready"))
+            r2 = api_client.get(reverse("health-ready"))
+
+        assert r1.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert r2.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert pg.call_count == 1
+
+
+class TestRateLimiting:
+    """The endpoints are unauthenticated and exposed; per-IP throttle caps
+    naive single-source floods."""
+
+    def test_live_blocks_after_budget_exhausted(self, api_client):
+        # Shrink the budget to 3 req per window so the test stays fast and
+        # deterministic. parse_rate runs once per throttle instance and
+        # each request gets a fresh instance, so this patch propagates.
+        from rest_framework.throttling import ScopedRateThrottle
+
+        with patch.object(ScopedRateThrottle, "parse_rate", return_value=(3, 60)):
+            statuses = [
+                api_client.get(reverse("health-live")).status_code for _ in range(4)
+            ]
+
+        assert statuses[:3] == [status.HTTP_200_OK] * 3
+        assert statuses[3] == status.HTTP_429_TOO_MANY_REQUESTS
+
+    def test_ready_blocks_after_budget_exhausted(self, api_client):
+        from rest_framework.throttling import ScopedRateThrottle
+
+        with (
+            patch("api.health._probe_postgres"),
+            patch("api.health._probe_valkey"),
+            patch("api.health._probe_neo4j"),
+            patch.object(ScopedRateThrottle, "parse_rate", return_value=(2, 60)),
+        ):
+            statuses = [
+                api_client.get(reverse("health-ready")).status_code for _ in range(3)
+            ]
+
+        assert statuses[:2] == [status.HTTP_200_OK] * 2
+        assert statuses[2] == status.HTTP_429_TOO_MANY_REQUESTS
 
 
 class TestProbeImplementations:

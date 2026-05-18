@@ -8,6 +8,8 @@ of them is unreachable.
 
 from __future__ import annotations
 
+import logging
+import threading
 import time
 from contextlib import suppress
 from datetime import datetime, timezone
@@ -21,7 +23,10 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+
+logger = logging.getLogger(__name__)
 
 SERVICE_ID = "prowler-api"
 SERVICE_DESCRIPTION = "Prowler API"
@@ -39,6 +44,15 @@ VALKEY_PROBE_TIMEOUT_SECONDS = 2
 # do not stampede the actual dependency checks.
 CACHE_CONTROL_HEADER = "max-age=3, must-revalidate"
 
+# In-process readiness cache. Caps real dependency hits to roughly
+# (gunicorn workers / TTL) per second regardless of incoming RPS or the
+# source-IP distribution. Kept in sync with the Cache-Control max-age.
+# Access is guarded by a lock so concurrent readers do not race on the
+# read-decide-write cycle of the double-checked locking pattern below.
+READINESS_CACHE_TTL_SECONDS = 3.0
+_readiness_cache: tuple[float, dict[str, Any], int] | None = None
+_readiness_cache_lock = threading.Lock()
+
 
 class HealthJSONRenderer(JSONRenderer):
     """Emits responses with the ``application/health+json`` content type."""
@@ -55,20 +69,22 @@ def _now_iso() -> str:
     )
 
 
-def _measure(check_fn) -> tuple[dict[str, Any], float]:
+def _measure(name: str, check_fn) -> tuple[dict[str, Any], float]:
     """Time ``check_fn`` and return ``(result, elapsed_ms)``.
 
-    ``check_fn`` returns ``None`` on success or raises on failure.
+    ``check_fn`` returns ``None`` on success or raises on failure. The full
+    exception is logged for operator diagnostics under ``name``; the
+    response payload intentionally omits the error detail to avoid leaking
+    infrastructure information (DNS names, ports, credentials, certificate
+    chains) to anonymous clients.
     """
     started = time.perf_counter()
     try:
         check_fn()
-    except Exception as exc:
+    except Exception:
         elapsed_ms = (time.perf_counter() - started) * 1000
-        return (
-            {"status": STATUS_FAIL, "output": str(exc) or exc.__class__.__name__},
-            elapsed_ms,
-        )
+        logger.warning("Health probe '%s' failed", name, exc_info=True)
+        return ({"status": STATUS_FAIL}, elapsed_ms)
     elapsed_ms = (time.perf_counter() - started) * 1000
     return ({"status": STATUS_PASS}, elapsed_ms)
 
@@ -143,30 +159,52 @@ def _base_payload(overall_status: str) -> dict[str, Any]:
 
 
 def _readiness_payload() -> tuple[dict[str, Any], int]:
-    postgres_result, postgres_ms = _measure(_probe_postgres)
-    valkey_result, valkey_ms = _measure(_probe_valkey)
-    neo4j_result, neo4j_ms = _measure(_probe_neo4j)
+    global _readiness_cache
 
-    entries = [
-        _build_check_entry("postgres", "datastore", postgres_result, postgres_ms),
-        _build_check_entry("valkey", "datastore", valkey_result, valkey_ms),
-        _build_check_entry("neo4j", "datastore", neo4j_result, neo4j_ms),
-    ]
-    overall = _aggregate_status(entries)
+    # Lock-free fast path: a stale snapshot still satisfies the freshness
+    # check correctly because we re-check after acquiring the lock below.
+    snapshot = _readiness_cache
+    if (
+        snapshot is not None
+        and time.monotonic() - snapshot[0] < READINESS_CACHE_TTL_SECONDS
+    ):
+        return snapshot[1], snapshot[2]
 
-    payload = _base_payload(overall)
-    payload["checks"] = {
-        "postgres:responseTime": [entries[0]],
-        "valkey:responseTime": [entries[1]],
-        "neo4j:responseTime": [entries[2]],
-    }
+    with _readiness_cache_lock:
+        # Double-checked locking: another thread may have refreshed while
+        # we were waiting on the lock.
+        snapshot = _readiness_cache
+        if (
+            snapshot is not None
+            and time.monotonic() - snapshot[0] < READINESS_CACHE_TTL_SECONDS
+        ):
+            return snapshot[1], snapshot[2]
 
-    http_status = (
-        status.HTTP_503_SERVICE_UNAVAILABLE
-        if overall == STATUS_FAIL
-        else status.HTTP_200_OK
-    )
-    return payload, http_status
+        postgres_result, postgres_ms = _measure("postgres", _probe_postgres)
+        valkey_result, valkey_ms = _measure("valkey", _probe_valkey)
+        neo4j_result, neo4j_ms = _measure("neo4j", _probe_neo4j)
+
+        entries = [
+            _build_check_entry("postgres", "datastore", postgres_result, postgres_ms),
+            _build_check_entry("valkey", "datastore", valkey_result, valkey_ms),
+            _build_check_entry("neo4j", "datastore", neo4j_result, neo4j_ms),
+        ]
+        overall = _aggregate_status(entries)
+
+        payload = _base_payload(overall)
+        payload["checks"] = {
+            "postgres:responseTime": [entries[0]],
+            "valkey:responseTime": [entries[1]],
+            "neo4j:responseTime": [entries[2]],
+        }
+
+        http_status = (
+            status.HTTP_503_SERVICE_UNAVAILABLE
+            if overall == STATUS_FAIL
+            else status.HTTP_200_OK
+        )
+        _readiness_cache = (time.monotonic(), payload, http_status)
+        return payload, http_status
 
 
 def _health_response(payload: dict[str, Any], http_status: int) -> Response:
@@ -181,12 +219,15 @@ class LivenessView(APIView):
 
     Dependencies are intentionally not consulted: a failing liveness probe
     triggers a container restart, which must not happen for transient
-    dependency outages.
+    dependency outages. Throttled per-IP so the endpoint cannot be used as
+    a cheap availability oracle for the process.
     """
 
     authentication_classes: list = []
     permission_classes: list = []
     renderer_classes = [HealthJSONRenderer]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "health-live"
 
     def get(self, _request, *_args, **_kwargs):
         return _health_response(_base_payload(STATUS_PASS), status.HTTP_200_OK)
@@ -197,12 +238,16 @@ class ReadinessView(APIView):
     """Readiness probe.
 
     Returns 200 when PostgreSQL, Valkey and Neo4j all respond, or 503 with
-    per-dependency detail when any of them is unreachable.
+    per-dependency detail when any of them is unreachable. Per-IP throttle
+    plus the short in-process result cache cap the real dependency hits
+    regardless of inbound traffic shape.
     """
 
     authentication_classes: list = []
     permission_classes: list = []
     renderer_classes = [HealthJSONRenderer]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "health-ready"
 
     def get(self, _request, *_args, **_kwargs):
         payload, http_status = _readiness_payload()
