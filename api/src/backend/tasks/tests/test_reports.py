@@ -1266,7 +1266,7 @@ class TestGenerateComplianceReportsOptimized:
             "shared" in observed_state["cache_keys_when_ens_runs"]
         ), "shared must remain in cache because ENS still needs it"
 
-    @patch("api.utils.initialize_prowler_provider")
+    @patch("tasks.jobs.report.initialize_prowler_provider")
     @patch("tasks.jobs.report.rmtree")
     @patch("tasks.jobs.report._upload_to_s3")
     @patch("tasks.jobs.report.generate_cis_report")
