@@ -118,17 +118,6 @@ REST_FRAMEWORK = {
         "attack-paths-custom-query": env(
             "DJANGO_THROTTLE_ATTACK_PATHS_CUSTOM_QUERY", default="10/min"
         ),
-        # Health probes are unauthenticated and exposed; per-IP caps stop
-        # naive floods. Legit probes (K8s/ALB) hit at most a few req/min.
-        #
-        # NOTE: Django uses the default LocMemCache backend in this project
-        # so each gunicorn worker holds its own throttle counters. The
-        # effective rate is therefore approximately (rate x workers) per IP.
-        # Distributed (multi-IP) abuse is bounded instead by the in-process
-        # readiness cache and the X-Forwarded-For-aware ingress, not by
-        # these counters. Migrating CACHES to a shared backend (e.g. Valkey
-        # via django-redis) would make these limits accurate cluster-wide,
-        # but is out of scope for the health-probe change.
         "health-live": env("DJANGO_THROTTLE_HEALTH_LIVE", default="120/min"),
         "health-ready": env("DJANGO_THROTTLE_HEALTH_READY", default="60/min"),
     },
