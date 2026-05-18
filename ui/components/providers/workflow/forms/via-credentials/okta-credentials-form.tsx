@@ -39,9 +39,7 @@ export const OktaCredentialsForm = ({
         name={ProviderCredentialFields.OKTA_PRIVATE_KEY}
         label="Private Key"
         labelPlacement="inside"
-        placeholder={
-          "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
-        }
+        placeholder="Paste your Okta app private key here"
         variant="bordered"
         isRequired
       />

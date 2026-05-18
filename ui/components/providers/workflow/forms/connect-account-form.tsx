@@ -124,7 +124,7 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
     case "okta":
       return {
         label: "Org Domain",
-        placeholder: "e.g. acme.okta.com",
+        placeholder: "e.g. your-org.okta.com",
       };
     default:
       return {
