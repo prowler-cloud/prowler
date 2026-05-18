@@ -475,6 +475,9 @@ class StackitProvider(Provider):
             except Exception as test_error:
                 try:
                     StackitProvider.handle_api_error(test_error)
+                    if raise_on_exception:
+                        raise test_error
+                    return Connection(error=test_error)
                 except StackITInvalidTokenError as auth_error:
                     if raise_on_exception:
                         raise auth_error
