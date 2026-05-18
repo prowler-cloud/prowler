@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "ScalewayAPIKey",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "**Scaleway API keys** are checked to ensure none is bound to the **account root user**. The account root user is the original Scaleway account owner; its credentials bypass IAM policies and grant unrestricted access to the entire organization.",
   "Risk": "API keys owned by the **account root user** cannot be scoped down with IAM policies. Leaking one of these keys yields immediate full control over every project, resource and billing setting in the organization, and rotating them disrupts every automation depending on root credentials.",
