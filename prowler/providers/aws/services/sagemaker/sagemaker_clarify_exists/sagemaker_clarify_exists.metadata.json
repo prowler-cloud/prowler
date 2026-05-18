@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_clarify_exists",
+  "CheckTitle": "SageMaker Clarify processing jobs exist in the audited region",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**SageMaker Clarify** provides bias detection and model explainability for ML workloads.\n\nThis check verifies that at least one SageMaker processing job using the AWS-managed Clarify container image exists in each successfully scanned region. The absence of Clarify jobs indicates that responsible-AI controls such as bias detection and explainability are not in place.",
+  "Risk": "Without **SageMaker Clarify** processing jobs, ML models may be deployed without bias analysis or explainability reports. This can lead to:\n- **Regulatory non-compliance** with AI governance frameworks\n- **Undetected bias** in model predictions affecting protected groups\n- **Lack of accountability** for ML model decisions in production",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/clarify-configure-processing-jobs.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/dg-ecr-paths/sagemaker-algo-docker-registry-paths.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sagemaker create-processing-job --processing-job-name clarify-bias-check --app-specification ImageUri=<clarify-image-uri> --role-arn <role-arn> --processing-resources 'ClusterConfig={InstanceCount=1,InstanceType=ml.m5.xlarge,VolumeSizeInGB=20}'",
+      "NativeIaC": "",
+      "Other": "1. Open the AWS Console and go to Amazon SageMaker\n2. Navigate to Processing > Processing jobs\n3. Click Create processing job\n4. Select the SageMaker Clarify container image for your region\n5. Configure input/output paths and the analysis configuration\n6. Click Create processing job",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create SageMaker Clarify processing jobs to evaluate models for bias and explainability before deployment. Integrate Clarify into your ML pipeline to ensure responsible AI practices.",
+      "Url": "https://hub.prowler.com/check/sagemaker_clarify_exists"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check validates Clarify processing job existence per successfully scanned region by checking that at least one processing job uses the AWS-managed Clarify container image."
+}

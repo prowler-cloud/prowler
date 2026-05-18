@@ -15,6 +15,8 @@ class SageMaker(AWSService):
         self.sagemaker_notebook_instances = []
         self.sagemaker_models = []
         self.sagemaker_training_jobs = []
+        self.sagemaker_processing_jobs = []
+        self.processing_jobs_scanned_regions = set()
         self.sagemaker_domains = []
         self.endpoint_configs = {}
 
@@ -22,6 +24,7 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_notebook_instances)
         self.__threading_call__(self._list_models)
         self.__threading_call__(self._list_training_jobs)
+        self.__threading_call__(self._list_processing_jobs)
         self.__threading_call__(self._list_endpoint_configs)
         self.__threading_call__(self._list_domains)
 
@@ -32,6 +35,9 @@ class SageMaker(AWSService):
         )
         self.__threading_call__(
             self._describe_training_job, self.sagemaker_training_jobs
+        )
+        self.__threading_call__(
+            self._describe_processing_job, self.sagemaker_processing_jobs
         )
         self.__threading_call__(
             self._describe_endpoint_config, list(self.endpoint_configs.values())
@@ -46,6 +52,9 @@ class SageMaker(AWSService):
         )
         self.__threading_call__(
             self._list_tags_for_resource, self.sagemaker_training_jobs
+        )
+        self.__threading_call__(
+            self._list_tags_for_resource, self.sagemaker_processing_jobs
         )
         self.__threading_call__(
             self._list_tags_for_resource, list(self.endpoint_configs.values())
@@ -122,6 +131,46 @@ class SageMaker(AWSService):
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_processing_jobs(self, regional_client):
+        logger.info("SageMaker - listing processing jobs...")
+        try:
+            list_processing_jobs_paginator = regional_client.get_paginator(
+                "list_processing_jobs"
+            )
+            for page in list_processing_jobs_paginator.paginate():
+                for processing_job in page["ProcessingJobSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            processing_job["ProcessingJobArn"], self.audit_resources
+                        )
+                    ):
+                        self.sagemaker_processing_jobs.append(
+                            ProcessingJob(
+                                name=processing_job["ProcessingJobName"],
+                                region=regional_client.region,
+                                arn=processing_job["ProcessingJobArn"],
+                            )
+                        )
+            self.processing_jobs_scanned_regions.add(regional_client.region)
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_processing_job(self, processing_job):
+        logger.info("SageMaker - describing processing job...")
+        try:
+            regional_client = self.regional_clients[processing_job.region]
+            describe_processing_job = regional_client.describe_processing_job(
+                ProcessingJobName=processing_job.name
+            )
+            app_spec = describe_processing_job.get("AppSpecification", {})
+            processing_job.image_uri = app_spec.get("ImageUri")
+        except Exception as error:
+            logger.error(
+                f"{processing_job.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _describe_notebook_instance(self, notebook_instance):
@@ -339,6 +388,14 @@ class TrainingJob(BaseModel):
     volume_kms_key_id: str = None
     network_isolation: bool = None
     vpc_config_subnets: list[str] = []
+    tags: Optional[list] = []
+
+
+class ProcessingJob(BaseModel):
+    name: str
+    region: str
+    arn: str
+    image_uri: Optional[str] = None
     tags: Optional[list] = []
 
 
