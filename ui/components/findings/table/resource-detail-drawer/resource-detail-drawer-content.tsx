@@ -441,8 +441,7 @@ export function ResourceDetailDrawerContent({
     findingUid: f?.uid,
     region: resourceRegion,
   });
-  const hasIdAction =
-    Boolean(resourceDetailHref) || Boolean(externalResourceTarget);
+  const hasIdAction = Boolean(externalResourceTarget);
   const findingRecommendationUrl = f?.remediation.recommendation.url;
   const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
   const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
@@ -712,32 +711,41 @@ export function ResourceDetailDrawerContent({
                       entityAlias={resourceName}
                       entityId={resourceUid}
                       idLabel="UID"
-                      idAction={
-                        hasIdAction ? (
-                          <span className="inline-flex items-center gap-2">
-                            {resourceDetailHref && (
+                      nameAction={
+                        resourceDetailHref ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
                               <Button variant="link" size="link-sm" asChild>
                                 <Link
                                   href={resourceDetailHref}
                                   target="_blank"
                                   rel="noopener noreferrer"
+                                  prefetch={false}
                                 >
-                                  View Resource
-                                  <ExternalLink className="size-3" />
+                                  <span className="sr-only">View Resource</span>
+                                  <ExternalLink
+                                    className="size-3"
+                                    aria-hidden="true"
+                                  />
                                 </Link>
                               </Button>
-                            )}
-                            {externalResourceTarget && (
-                              <ExternalResourceLink
-                                providerType={providerType}
-                                resourceUid={resourceUid}
-                                providerUid={providerUid}
-                                resourceName={resourceName}
-                                findingUid={f?.uid}
-                                region={resourceRegion}
-                              />
-                            )}
-                          </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              View Resource
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : undefined
+                      }
+                      idAction={
+                        hasIdAction ? (
+                          <ExternalResourceLink
+                            providerType={providerType}
+                            resourceUid={resourceUid}
+                            providerUid={providerUid}
+                            resourceName={resourceName}
+                            findingUid={f?.uid}
+                            region={resourceRegion}
+                          />
                         ) : undefined
                       }
                     />
