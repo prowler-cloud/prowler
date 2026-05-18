@@ -29,6 +29,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Google Workspace Drive and Calendar services missing server-side policy filters [(#11195)](https://github.com/prowler-cloud/prowler/pull/11195)
 - `entra_users_mfa_capable` and `entra_break_glass_account_fido2_security_key_registered` report a preventive FAIL per affected user (with the missing permission named) when the M365 service principal lacks `AuditLog.Read.All`, instead of mass false positives [(#10907)](https://github.com/prowler-cloud/prowler/pull/10907)
 - Duplicated GCP CIS requirements IDs [(#11180)](https://github.com/prowler-cloud/prowler/pull/11180)
+- `VercelSession.token` is now excluded from serialization and representation to prevent the Vercel API token from leaking through `.dict()`, `.json()` or logs [(#11198)](https://github.com/prowler-cloud/prowler/pull/11198)
 
 ---
 
