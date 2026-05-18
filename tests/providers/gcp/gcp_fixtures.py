@@ -41,7 +41,7 @@ def set_mocked_gcp_provider(
     return provider
 
 
-def mock_api_client(GCPService, service, api_version, _):
+def mock_api_client(_GCPService, service, _api_version, _):
     client = MagicMock()
 
     mock_api_projects_calls(client)
@@ -704,7 +704,7 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                     "region": "us-central1",
                     "ipAddresses": [{"type": "PRIMARY", "ipAddress": "66.66.66.66"}],
                     "diskEncryptionConfiguration": {
-                        "kmsKeyName": "projects/123/locations/global/keyRings/keyring1/cryptoKeys/key1"
+                        "kmsKeyName": "projects/123/locations/us-central1/keyRings/keyring1/cryptoKeys/key1"
                     },
                     "settings": {
                         "ipConfiguration": {
@@ -714,7 +714,6 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                         },
                         "backupConfiguration": {"enabled": True},
                         "databaseFlags": [],
-                        "availabilityType": "REGIONAL",
                     },
                 },
                 {
@@ -730,7 +729,6 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                         },
                         "backupConfiguration": {"enabled": False},
                         "databaseFlags": [],
-                        "availabilityType": "ZONAL",
                     },
                 },
             ]
@@ -1328,6 +1326,7 @@ def mock_api_images_calls(client: MagicMock):
     client.images().list_next.return_value = None
 
     def mock_get_image_iam_policy(project, resource):
+        del project
         return_value = MagicMock()
         if resource == "test-image-1":
             return_value.execute.return_value = {

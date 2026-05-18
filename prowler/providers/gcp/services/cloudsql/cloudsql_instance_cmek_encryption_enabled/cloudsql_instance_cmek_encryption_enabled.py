@@ -6,6 +6,8 @@ class cloudsql_instance_cmek_encryption_enabled(Check):
     def execute(self) -> Check_Report_GCP:
         findings = []
         for instance in cloudsql_client.instances:
+            if instance.instance_type != "CLOUD_SQL_INSTANCE":
+                continue
             report = Check_Report_GCP(metadata=self.metadata(), resource=instance)
             if instance.cmek_key_name:
                 report.status = "PASS"
