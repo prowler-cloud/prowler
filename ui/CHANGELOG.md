@@ -20,6 +20,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Mute Findings modal now enforces the 100-character limit on the rule name input with a live counter and inline error, matching the existing reason field behaviour [(#11158)](https://github.com/prowler-cloud/prowler/pull/11158)
+- Attack Paths graph nodes now wrap long resource and finding labels, indicate truncated values with `…`, and show the full value in an immediate tooltip [(#11197)](https://github.com/prowler-cloud/prowler/pull/11197)
 
 ### 🔐 Security
 

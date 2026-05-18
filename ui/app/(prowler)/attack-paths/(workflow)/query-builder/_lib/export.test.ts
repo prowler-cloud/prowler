@@ -126,6 +126,50 @@ describe("exportGraphAsPNG", () => {
     expect(link?.href).toBe("data:image/png;base64,AAAA");
   });
 
+  it("renders exported long resource labels with the same wrapping as graph nodes", async () => {
+    const container = buildContainerWithViewport();
+    const longLabelGraphData: AttackPathGraphData = {
+      nodes: [
+        {
+          id: "role-1",
+          labels: ["AWSRole"],
+          properties: { name: "AWSReservedSSO_AdministratorAccessExtra" },
+        },
+      ],
+    };
+
+    await exportGraphAsPNG(container, bounds, "graph.png", longLabelGraphData);
+
+    const context = vi.mocked(HTMLCanvasElement.prototype.getContext).mock
+      .results[0]?.value as CanvasRenderingContext2D;
+    const fillText = vi.mocked(context.fillText);
+
+    expect(fillText).toHaveBeenCalledWith(
+      "AWSReservedSSO_A",
+      expect.any(Number),
+      expect.any(Number),
+      150,
+    );
+    expect(fillText).toHaveBeenCalledWith(
+      "dministratorAcce",
+      expect.any(Number),
+      expect.any(Number),
+      150,
+    );
+    expect(fillText).toHaveBeenCalledWith(
+      "ssExtra",
+      expect.any(Number),
+      expect.any(Number),
+      150,
+    );
+    expect(fillText).toHaveBeenCalledWith(
+      "AWS Role",
+      expect.any(Number),
+      expect.any(Number),
+      150,
+    );
+  });
+
   it("re-throws a generic export error when canvas is unavailable", async () => {
     const container = buildContainerWithViewport();
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);

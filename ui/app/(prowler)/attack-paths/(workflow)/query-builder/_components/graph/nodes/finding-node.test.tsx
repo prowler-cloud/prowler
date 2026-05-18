@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { type NodeProps, Position } from "@xyflow/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -90,6 +91,27 @@ describe("FindingNode", () => {
       expect(screen.getByText("Bucket lacks")).toBeInTheDocument();
       expect(screen.getByText("logging")).toBeInTheDocument();
       expect(screen.getByText("medium")).toBeInTheDocument();
+    });
+
+    it("should expose the full finding title as an immediate tooltip when truncated", async () => {
+      // Given
+      const title =
+        "Ensure administrator access policies are rotated regularly";
+      const props = buildNodeProps(buildFindingNode("high", title));
+
+      // When
+      render(<FindingNode {...props} />);
+
+      // Then
+      expect(screen.getByText("Ensure")).toBeInTheDocument();
+      expect(screen.getByText("administrator")).toBeInTheDocument();
+      expect(screen.getByText("access policies")).toBeInTheDocument();
+      expect(screen.getByText("are rotated…")).toBeInTheDocument();
+      expect(screen.getByText("high")).toBeInTheDocument();
+
+      await userEvent.hover(screen.getByText("Ensure").closest("svg")!);
+
+      expect(await screen.findAllByText(title)).not.toHaveLength(0);
     });
   });
 });
