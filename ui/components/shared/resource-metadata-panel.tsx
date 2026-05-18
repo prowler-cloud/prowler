@@ -29,6 +29,10 @@ export function ResourceMetadataPanel({
   const hasMetadata =
     parsedMetadata !== null && Object.keys(parsedMetadata).length > 0;
   const hasDetails = Boolean(details?.trim());
+  const formattedMetadata =
+    hasMetadata && parsedMetadata
+      ? JSON.stringify(parsedMetadata, null, 2)
+      : null;
 
   return (
     <>
@@ -45,13 +49,13 @@ export function ResourceMetadataPanel({
         </Card>
       )}
 
-      {hasMetadata && parsedMetadata && (
+      {formattedMetadata && (
         <QueryCodeEditor
           ariaLabel="Resource metadata"
           visibleLabel={null}
           language={QUERY_EDITOR_LANGUAGE.JSON}
-          value={JSON.stringify(parsedMetadata, null, 2)}
-          copyValue={JSON.stringify(parsedMetadata, null, 2)}
+          value={formattedMetadata}
+          copyValue={formattedMetadata}
           editable={false}
           minHeight={220}
           showCopyButton

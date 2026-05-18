@@ -25,6 +25,18 @@ describe("parseMetadata", () => {
     expect(parseMetadata('"plain string"')).toBeNull();
   });
 
+  it("should return null when the JSON string is an array", () => {
+    expect(parseMetadata("[1,2,3]")).toBeNull();
+    expect(parseMetadata("[]")).toBeNull();
+    expect(parseMetadata('[{"PkgName":"requests"}]')).toBeNull();
+  });
+
+  it("should return null when the value is already an array", () => {
+    expect(
+      parseMetadata([1, 2, 3] as unknown as Record<string, unknown>),
+    ).toBeNull();
+  });
+
   it("should return the object as-is when already an object", () => {
     const metadata = { VulnerabilityID: "CVE-2026-0001" };
     expect(parseMetadata(metadata)).toBe(metadata);
