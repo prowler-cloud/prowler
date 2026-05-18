@@ -46,10 +46,12 @@ vi.mock("next/link", () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     ...props
   }: AnchorHTMLAttributes<HTMLAnchorElement> & {
     children: ReactNode;
     href: string;
+    prefetch?: boolean;
   }) => (
     <a href={href} {...props}>
       {children}
@@ -470,9 +472,12 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
     );
     expect(viewResourceLink).toHaveAttribute("target", "_blank");
     expect(viewResourceLink).toHaveAttribute("rel", "noopener noreferrer");
-    // Icon-only: accessible name comes from aria-label, no visible label text
-    expect(viewResourceLink).toHaveAttribute("aria-label", "View Resource");
-    expect(viewResourceLink).not.toHaveTextContent("View Resource");
+    // Icon-only: accessible name comes from an sr-only span, not from an
+    // aria-label attribute, so the text lives in the DOM (more semantic).
+    expect(viewResourceLink).toHaveAccessibleName("View Resource");
+    expect(viewResourceLink).not.toHaveAttribute("aria-label");
+    const srOnlyLabel = viewResourceLink.querySelector(".sr-only");
+    expect(srOnlyLabel).toHaveTextContent("View Resource");
   });
 });
 const mockResourceRow: FindingResourceRow = {

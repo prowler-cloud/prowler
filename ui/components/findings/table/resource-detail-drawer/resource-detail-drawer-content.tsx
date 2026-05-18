@@ -708,6 +708,9 @@ export function ResourceDetailDrawerContent({
                     </span>
                     <EntityInfo
                       nameIcon={<Container className="size-4" />}
+                      entityAlias={resourceName}
+                      entityId={resourceUid}
+                      idLabel="UID"
                       nameAction={
                         resourceDetailHref ? (
                           <Tooltip>
@@ -717,19 +720,22 @@ export function ResourceDetailDrawerContent({
                                   href={resourceDetailHref}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  aria-label="View Resource"
+                                  prefetch={false}
                                 >
-                                  <ExternalLink className="size-3" />
+                                  <span className="sr-only">View Resource</span>
+                                  <ExternalLink
+                                    className="size-3"
+                                    aria-hidden="true"
+                                  />
                                 </Link>
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>View Resource</TooltipContent>
+                            <TooltipContent side="top">
+                              View Resource
+                            </TooltipContent>
                           </Tooltip>
                         ) : undefined
                       }
-                      entityAlias={resourceName}
-                      entityId={resourceUid}
-                      idLabel="UID"
                       idAction={
                         hasIdAction ? (
                           <ExternalResourceLink
