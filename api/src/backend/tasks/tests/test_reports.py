@@ -539,12 +539,12 @@ class TestLoadFindingsForChecks:
                 total_counts_out=totals,
             )
 
-        assert len(result[check_id]) == 5, (
-            f"cap=5 should yield exactly 5 loaded findings, got {len(result[check_id])}"
-        )
-        assert totals[check_id] == 12, (
-            f"total_counts_out should report the pre-cap total (12), got {totals[check_id]}"
-        )
+        assert (
+            len(result[check_id]) == 5
+        ), f"cap=5 should yield exactly 5 loaded findings, got {len(result[check_id])}"
+        assert (
+            totals[check_id] == 12
+        ), f"total_counts_out should report the pre-cap total (12), got {totals[check_id]}"
 
     def test_only_failed_findings_pushes_down_to_sql(
         self, tenants_fixture, scans_fixture
@@ -616,13 +616,13 @@ class TestLoadFindingsForChecks:
         loaded = result[check_id]
         assert len(loaded) == 3, f"expected 3 FAIL findings, got {len(loaded)}"
         statuses = {getattr(f, "status", None) for f in loaded}
-        assert statuses == {StatusChoices.FAIL}, (
-            f"expected all loaded findings to be FAIL; got statuses {statuses}"
-        )
+        assert statuses == {
+            StatusChoices.FAIL
+        }, f"expected all loaded findings to be FAIL; got statuses {statuses}"
         # total_counts must reflect the FAIL-only total, not the global total.
-        assert totals[check_id] == 3, (
-            f"total_counts should be FAIL-only (3), got {totals[check_id]}"
-        )
+        assert (
+            totals[check_id] == 3
+        ), f"total_counts should be FAIL-only (3), got {totals[check_id]}"
 
     def test_max_findings_per_check_disabled(self, tenants_fixture, scans_fixture):
         """``MAX_FINDINGS_PER_CHECK=0`` disables the cap; load all rows."""
@@ -1259,12 +1259,12 @@ class TestGenerateComplianceReportsOptimized:
 
         # ``tsc_only`` was exclusive to ThreatScore → evicted before ENS ran.
         # ``shared`` is still pending for ENS → must remain.
-        assert "tsc_only" not in observed_state["cache_keys_when_ens_runs"], (
-            "tsc_only should have been evicted before ENS ran"
-        )
-        assert "shared" in observed_state["cache_keys_when_ens_runs"], (
-            "shared must remain in cache because ENS still needs it"
-        )
+        assert (
+            "tsc_only" not in observed_state["cache_keys_when_ens_runs"]
+        ), "tsc_only should have been evicted before ENS ran"
+        assert (
+            "shared" in observed_state["cache_keys_when_ens_runs"]
+        ), "shared must remain in cache because ENS still needs it"
 
     @patch("api.utils.initialize_prowler_provider")
     @patch("tasks.jobs.report.rmtree")
