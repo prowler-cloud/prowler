@@ -299,6 +299,17 @@ jobs:
         fi
         echo "✓ api/pyproject.toml prowler dependency: $CURRENT_PROWLER_REF"
 
+    - name: Verify API version in api/src/backend/api/v1/views.py
+      if: ${{ env.HAS_API_CHANGES == 'true' }}
+      run: |
+        CURRENT_API_VERSION=$(grep 'spectacular_settings.VERSION = ' api/src/backend/api/v1/views.py | sed -E 's/.*spectacular_settings.VERSION = "([^"]+)".*/\1/' | tr -d '[:space:]')
+        API_VERSION_TRIMMED=$(echo "$API_VERSION" | tr -d '[:space:]')
+        if [ "$CURRENT_API_VERSION" != "$API_VERSION_TRIMMED" ]; then
+          echo "ERROR: API version mismatch in views.py (expected: '$API_VERSION_TRIMMED', found: '$CURRENT_API_VERSION')"
+          exit 1
+        fi
+        echo "✓ api/src/backend/api/v1/views.py version: $CURRENT_API_VERSION"
+
     - name: Verify API version in api/src/backend/api/specs/v1.yaml
       if: ${{ env.HAS_API_CHANGES == 'true' }}
       run: |
