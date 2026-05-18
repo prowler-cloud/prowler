@@ -329,7 +329,8 @@
               {
                 "group": "Scaleway",
                 "pages": [
-                  "user-guide/providers/scaleway/getting-started-scaleway"
+                  "user-guide/providers/scaleway/getting-started-scaleway",
+                  "user-guide/providers/scaleway/authentication"
                 ]
               },
               {

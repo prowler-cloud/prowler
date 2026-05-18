@@ -2,9 +2,12 @@ from typing import List
 
 from prowler.lib.check.models import Check, CheckReportScaleway
 from prowler.providers.scaleway.services.iam.iam_client import iam_client
+from prowler.providers.scaleway.services.iam.iam_service import (
+    ScalewayIAMDataUnavailable,
+)
 
 
-class iam_no_root_api_keys(Check):
+class iam_api_keys_no_root_owned(Check):
     """Ensure no Scaleway IAM API key is owned by the account root user.
 
     The account root user is the original Scaleway account owner. API keys
@@ -34,7 +37,7 @@ class iam_no_root_api_keys(Check):
         # bearer is, so every API key would falsely PASS. Surface MANUAL
         # explicitly so the operator investigates.
         if not iam_client.users_loaded or not iam_client.api_keys_loaded:
-            placeholder = _IAMDataUnavailableResource(
+            placeholder = ScalewayIAMDataUnavailable(
                 organization_id=iam_client.organization_id
             )
             report = CheckReportScaleway(metadata=self.metadata(), resource=placeholder)
@@ -69,19 +72,3 @@ class iam_no_root_api_keys(Check):
             findings.append(report)
 
         return findings
-
-
-class _IAMDataUnavailableResource:
-    """Minimal stand-in resource used when the IAM service failed to load.
-
-    ``CheckReportScaleway`` derives ``resource_name``/``resource_id``/
-    ``region``/``organization_id`` from the resource via ``getattr`` with
-    defaults, so this lightweight object is enough to materialize a
-    MANUAL finding without polluting the real domain models.
-    """
-
-    def __init__(self, organization_id: str):
-        self.name = "iam-data-unavailable"
-        self.id = "iam-data-unavailable"
-        self.organization_id = organization_id
-        self.region = "global"

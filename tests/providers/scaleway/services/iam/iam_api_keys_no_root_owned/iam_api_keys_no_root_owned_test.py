@@ -21,13 +21,13 @@ def _patch_clients(iam_client_mock):
             return_value=set_mocked_scaleway_provider(),
         ),
         mock.patch(
-            "prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys.iam_client",
+            "prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned.iam_client",
             new=iam_client_mock,
         ),
     ]
 
 
-class Test_iam_no_root_api_keys:
+class Test_iam_api_keys_no_root_owned:
     def test_no_api_keys_returns_empty_findings(self):
         iam_client = mock.MagicMock()
         iam_client.users_loaded = True
@@ -42,15 +42,15 @@ class Test_iam_no_root_api_keys:
                 return_value=set_mocked_scaleway_provider(),
             ),
             mock.patch(
-                "prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys.iam_client",
+                "prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned.iam_client",
                 new=iam_client,
             ),
         ):
-            from prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys import (
-                iam_no_root_api_keys,
+            from prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned import (
+                iam_api_keys_no_root_owned,
             )
 
-            result = iam_no_root_api_keys().execute()
+            result = iam_api_keys_no_root_owned().execute()
             assert result == []
 
     def test_root_api_key_fails(self):
@@ -69,15 +69,15 @@ class Test_iam_no_root_api_keys:
                 return_value=set_mocked_scaleway_provider(),
             ),
             mock.patch(
-                "prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys.iam_client",
+                "prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned.iam_client",
                 new=iam_client,
             ),
         ):
-            from prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys import (
-                iam_no_root_api_keys,
+            from prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned import (
+                iam_api_keys_no_root_owned,
             )
 
-            result = iam_no_root_api_keys().execute()
+            result = iam_api_keys_no_root_owned().execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == ROOT_API_KEY
@@ -99,15 +99,15 @@ class Test_iam_no_root_api_keys:
                 return_value=set_mocked_scaleway_provider(),
             ),
             mock.patch(
-                "prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys.iam_client",
+                "prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned.iam_client",
                 new=iam_client,
             ),
         ):
-            from prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys import (
-                iam_no_root_api_keys,
+            from prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned import (
+                iam_api_keys_no_root_owned,
             )
 
-            result = iam_no_root_api_keys().execute()
+            result = iam_api_keys_no_root_owned().execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_id == USER_API_KEY
@@ -130,15 +130,15 @@ class Test_iam_no_root_api_keys:
                 return_value=set_mocked_scaleway_provider(),
             ),
             mock.patch(
-                "prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys.iam_client",
+                "prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned.iam_client",
                 new=iam_client,
             ),
         ):
-            from prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys import (
-                iam_no_root_api_keys,
+            from prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned import (
+                iam_api_keys_no_root_owned,
             )
 
-            result = iam_no_root_api_keys().execute()
+            result = iam_api_keys_no_root_owned().execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
 
@@ -158,15 +158,15 @@ class Test_iam_no_root_api_keys:
                 return_value=set_mocked_scaleway_provider(),
             ),
             mock.patch(
-                "prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys.iam_client",
+                "prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned.iam_client",
                 new=iam_client,
             ),
         ):
-            from prowler.providers.scaleway.services.iam.iam_no_root_api_keys.iam_no_root_api_keys import (
-                iam_no_root_api_keys,
+            from prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned import (
+                iam_api_keys_no_root_owned,
             )
 
-            result = iam_no_root_api_keys().execute()
+            result = iam_api_keys_no_root_owned().execute()
             assert len(result) == 1
             assert result[0].status == "MANUAL"
             assert "Could not retrieve" in result[0].status_extended

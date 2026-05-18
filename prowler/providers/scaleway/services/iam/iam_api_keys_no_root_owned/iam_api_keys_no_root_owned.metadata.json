@@ -1,6 +1,6 @@
 {
   "Provider": "scaleway",
-  "CheckID": "iam_no_root_api_keys",
+  "CheckID": "iam_api_keys_no_root_owned",
   "CheckTitle": "Scaleway IAM API keys must not be owned by the account root user",
   "CheckType": [],
   "ServiceName": "iam",
@@ -14,8 +14,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.scaleway.com/en/docs/identity-and-access-management/iam/concepts/#root-account",
-    "https://www.scaleway.com/en/docs/identity-and-access-management/iam/how-to/create-api-keys/",
-    "https://www.scaleway.com/en/docs/identity-and-access-management/iam/reference-content/users-and-applications/"
+    "https://www.scaleway.com/en/docs/identity-and-access-management/iam/how-to/create-api-keys/"
   ],
   "Remediation": {
     "Code": {
@@ -25,8 +24,8 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Never use API keys owned by the account root user for automation. Create scoped IAM users or applications, attach the least-privilege policies, and rotate any existing root API keys to that new bearer.",
-      "Url": "https://hub.prowler.com/check/iam_no_root_api_keys"
+      "Text": "Never use API keys owned by the **account root user** for automation. Create scoped **IAM users** or **applications**, attach **least-privilege policies**, and rotate any existing root API keys to that new bearer.",
+      "Url": "https://hub.prowler.com/check/iam_api_keys_no_root_owned"
     }
   },
   "Categories": [

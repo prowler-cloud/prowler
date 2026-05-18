@@ -24,7 +24,13 @@ class IAM(ScalewayService):
         # Cached state — populated eagerly during construction
         self.users: list[ScalewayUser] = []
         self.api_keys: list[ScalewayAPIKey] = []
-        self.account_root_user_id: Optional[str] = None
+
+        # Resolved once at authentication time from the audit identity.
+        # Deriving it from the user list instead would silently PASS root
+        # API keys whenever the user listing comes back empty.
+        self.account_root_user_id: Optional[str] = (
+            provider.identity.account_root_user_id
+        )
 
         # Load status flags — checks consult these to surface MANUAL when
         # the underlying API call failed rather than reporting empty lists
@@ -56,10 +62,6 @@ class IAM(ScalewayService):
                         ),
                     )
                 )
-
-            # All users in the same org share the same account_root_user_id.
-            if self.users and self.users[0].account_root_user_id:
-                self.account_root_user_id = self.users[0].account_root_user_id
 
             self.users_loaded = True
 
@@ -140,3 +142,18 @@ class ScalewayAPIKey(BaseModel):
         super().__init__(**data)
         self.id = self.access_key
         self.name = self.description or self.access_key
+
+
+class ScalewayIAMDataUnavailable(BaseModel):
+    """Stand-in resource used when the IAM service failed to load.
+
+    Lets checks materialize a ``MANUAL`` finding (instead of a silent
+    ``PASS``) when users or API keys could not be retrieved.
+    ``CheckReportScaleway`` reads ``name``/``id``/``organization_id``/
+    ``region`` off the resource, so exposing those is enough.
+    """
+
+    organization_id: str
+    name: str = "iam-data-unavailable"
+    id: str = "iam-data-unavailable"
+    region: str = "global"

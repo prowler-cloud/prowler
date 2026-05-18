@@ -1318,6 +1318,7 @@ class CheckReportVercel(Check_Report):
         return "global"
 
 
+@dataclass
 class CheckReportScaleway(Check_Report):
     """Contains the Scaleway Check's finding information.
 

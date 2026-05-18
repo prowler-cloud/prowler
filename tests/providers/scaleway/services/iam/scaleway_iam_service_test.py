@@ -81,4 +81,6 @@ class Test_IAM_service:
 
         assert iam.users_loaded is False
         assert iam.api_keys_loaded is True
-        assert iam.account_root_user_id is None
+        # account_root_user_id comes from the audit identity, not the user
+        # list, so a failed user listing must not blind the root-key check.
+        assert iam.account_root_user_id == ROOT_USER_ID
