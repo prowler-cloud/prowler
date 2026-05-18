@@ -24,6 +24,9 @@ class directory_super_admin_count(Check):
         report = CheckReportGoogleWorkspace(
             metadata=self.metadata(),
             resource=directory_client.provider.domain_resource,
+            resource_id="directoryUsers",
+            resource_name="Directory Users",
+            customer_id=directory_client.provider.identity.customer_id,
         )
 
         if 2 <= admin_count <= 4:

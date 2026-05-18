@@ -332,6 +332,13 @@
                   "user-guide/providers/vercel/getting-started-vercel",
                   "user-guide/providers/vercel/authentication"
                 ]
+              },
+              {
+                "group": "Okta",
+                "pages": [
+                  "user-guide/providers/okta/getting-started-okta",
+                  "user-guide/providers/okta/authentication"
+                ]
               }
             ]
           },
@@ -346,7 +353,8 @@
             "group": "Cookbooks",
             "pages": [
               "user-guide/cookbooks/kubernetes-in-cluster",
-              "user-guide/cookbooks/cicd-pipeline"
+              "user-guide/cookbooks/cicd-pipeline",
+              "user-guide/cookbooks/powerbi-cis-benchmarks"
             ]
           }
         ]

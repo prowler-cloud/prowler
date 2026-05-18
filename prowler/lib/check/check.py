@@ -745,6 +745,10 @@ def execute(
                 is_finding_muted_args["tenancy_id"] = (
                     global_provider.identity.tenancy_id
                 )
+            elif global_provider.type == "okta":
+                is_finding_muted_args["org_domain"] = (
+                    global_provider.identity.org_domain
+                )
             for finding in check_findings:
                 if global_provider.type == "cloudflare":
                     is_finding_muted_args["account_id"] = finding.account_id

@@ -28,7 +28,7 @@
   --bg-input-primary: var(--color-white);
   --border-input-primary: var(--color-slate-400);
   --border-input-primary-press: var(--color-slate-700);
-  --border-input-primary-pressed: #A7F3D0;
+  --border-input-primary-pressed: #a7f3d0;
   --border-input-primary-fill: var(--color-slate-500);
 
   /* Text Colors */
@@ -83,7 +83,7 @@
     0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
 
   /* Lighthouse AI */
-  --gradient-lighthouse: linear-gradient(96deg, #2EE59B 3.55%, #62DFF0 98.85%);
+  --gradient-lighthouse: linear-gradient(96deg, #2ee59b 3.55%, #62dff0 98.85%);
 }
 
 /* ===== DARK THEME ===== */
@@ -106,7 +106,7 @@
   --bg-input-primary: var(--color-neutral-900);
   --border-input-primary: var(--color-neutral-800);
   --border-input-primary-press: var(--color-neutral-800);
-  --border-input-primary-pressed: #A7F3D0;
+  --border-input-primary-pressed: #a7f3d0;
   --border-input-primary-fill: var(--color-neutral-300);
 
   /* Text Colors */

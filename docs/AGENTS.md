@@ -467,7 +467,7 @@ Effective headers and section titles enhance document readability and structure,
 
     * **Example:**
         * How to Clone and Install Prowler from GitHub (header: Title case)
-            * How to install poetry dependencies (subheading: Sentence case)
+            * How to install uv dependencies (subheading: Sentence case)
 5.  **Using Keywords in Headers**
     Headers should include relevant keywords to improve document searchability:
     * **Good:** Scanning AWS Accounts in Parallel
