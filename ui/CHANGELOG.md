@@ -20,6 +20,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Mute Findings modal now enforces the 100-character limit on the rule name input with a live counter and inline error, matching the existing reason field behaviour [(#11158)](https://github.com/prowler-cloud/prowler/pull/11158)
+- "View Resource" action in the finding resource detail drawer is now an icon-only link rendered next to the resource name (instead of a text button in the UID row), keeping the "View in AWS Console" link unchanged [(#PR)](https://github.com/prowler-cloud/prowler/pull/PR)
 
 ### 🔐 Security
 
