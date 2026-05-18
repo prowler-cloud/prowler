@@ -33,6 +33,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Finding drawer no longer renders literal backticks around inline code in Risk, Description and Remediation sections [(#11142)](https://github.com/prowler-cloud/prowler/pull/11142)
 
+### 🐞 Fixed
+
+- Launch Scan first-provider wizard continues after provider creation instead of resetting the Scans page [(#11136)](https://github.com/prowler-cloud/prowler/pull/11136)
+
 ---
 
 ## [1.26.1] (Prowler 5.26.1)

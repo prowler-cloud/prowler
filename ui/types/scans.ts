@@ -45,10 +45,18 @@ export interface ScanRelationships {
   task: RelationshipWrapper;
 }
 
-export interface ScanProviderInfo {
+export interface ScanResultProviderInfo {
   provider: ProviderType;
   uid: string;
   alias: string;
+}
+
+export interface ScanProviderInfo {
+  providerId: string;
+  alias: string;
+  providerType: string;
+  uid: string;
+  connected: boolean;
 }
 
 export interface ScanProps {
@@ -56,7 +64,7 @@ export interface ScanProps {
   id: string;
   attributes: ScanAttributes;
   relationships: ScanRelationships;
-  providerInfo?: ScanProviderInfo;
+  providerInfo?: ScanResultProviderInfo;
 }
 
 export interface ScanEntityProviderInfo {
@@ -77,7 +85,7 @@ export interface ScanEntity {
 }
 
 export interface ExpandedScanData extends ScanProps {
-  providerInfo: ScanProviderInfo;
+  providerInfo: ScanResultProviderInfo;
 }
 
 export interface IncludedResource {
