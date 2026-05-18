@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_models_monitor_enabled",
+  "CheckTitle": "Amazon SageMaker has a monitoring schedule scheduled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**SageMaker Models Monitor** detects data drift, model quality issues, and bias drift in production.",
+  "Risk": "Without active monitoring, model degradation goes undetected and downstream decisions (fraud, access, pricing) silently degrade.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/model-monitor.html",
+    "https://github.com/aws-samples/sample-aiml-security-assessment"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure that model monitoring is active and you have at least one monitor scheduled to check.",
+      "Url": "TO BE FILLED"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
