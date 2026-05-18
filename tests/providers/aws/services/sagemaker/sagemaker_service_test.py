@@ -13,6 +13,11 @@ from tests.providers.aws.utils import (
     set_mocked_aws_provider,
 )
 
+test_model_package_group_name = "test-model-package-group"
+test_model_package_group_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:model-package-group/{test_model_package_group_name}"
+test_model_package_name = "test-model-package"
+test_model_package_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:model-package/{test_model_package_name}/1"
+
 test_notebook_instance = "test-notebook-instance"
 notebook_instance_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:notebook-instance/{test_notebook_instance}"
 test_model = "test-model"
@@ -93,6 +98,25 @@ def mock_make_api_call(self, operation_name, kwarg):
             },
             "EnableNetworkIsolation": True,
             "EnableInterContainerTrafficEncryption": True,
+        }
+    if operation_name == "ListModelPackageGroups":
+        return {
+            "ModelPackageGroupSummaryList": [
+                {
+                    "ModelPackageGroupName": test_model_package_group_name,
+                    "ModelPackageGroupArn": test_model_package_group_arn,
+                },
+            ]
+        }
+    if operation_name == "ListModelPackages":
+        return {
+            "ModelPackageSummaryList": [
+                {
+                    "ModelPackageName": test_model_package_name,
+                    "ModelPackageArn": test_model_package_arn,
+                    "ModelApprovalStatus": "Approved",
+                },
+            ]
         }
     if operation_name == "ListTags":
         return {
@@ -379,3 +403,13 @@ class Test_SageMaker_Service:
                     if c[0][0] == sagemaker_service._list_tags_for_resource
                 ]
                 assert len(tag_calls) == 5
+
+    # Test SageMaker list model package groups
+    def test_list_model_package_groups(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.sagemaker_model_registries) == 1
+        registry = sagemaker.sagemaker_model_registries[0]
+        assert registry.region == AWS_REGION_EU_WEST_1
+        assert registry.has_groups is True
+        assert registry.has_approved_packages is True
