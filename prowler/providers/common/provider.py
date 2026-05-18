@@ -258,7 +258,6 @@ class Provider(ABC):
                     )
                 elif "stackit" in provider_class_name.lower():
                     provider_class(
-                        api_token=arguments.stackit_api_token,
                         project_id=arguments.stackit_project_id,
                         regions=(
                             set(arguments.stackit_region)

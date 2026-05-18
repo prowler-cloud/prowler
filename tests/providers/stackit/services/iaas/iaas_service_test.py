@@ -1,5 +1,8 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
+import pytest
+
+from prowler.providers.stackit.exceptions.exceptions import StackITInvalidTokenError
 from prowler.providers.stackit.services.iaas.iaas_service import (
     IaaSService,
     SecurityGroupRule,
@@ -59,6 +62,50 @@ class Test_IaaS_Service:
         iaas_service = IaaSService(set_mocked_stackit_provider())
         assert hasattr(iaas_service, "in_use_sg_ids")
         assert isinstance(iaas_service.in_use_sg_ids, set)
+
+    @pytest.mark.parametrize(
+        "method_name,client_method_name",
+        [
+            ("_list_public_ips", "list_public_ips"),
+            ("_list_server_nics", "list_project_nics"),
+            ("_list_security_groups", "list_security_groups"),
+            ("_list_security_group_rules", "list_security_group_rules"),
+        ],
+    )
+    def test_list_methods_propagate_api_errors(self, method_name, client_method_name):
+        """API/auth failures must fail the scan instead of returning empty data."""
+        iaas_service = IaaSService(set_mocked_stackit_provider())
+        client = MagicMock()
+        getattr(client, client_method_name).side_effect = StackITInvalidTokenError(
+            message="Invalid token"
+        )
+
+        with pytest.raises(StackITInvalidTokenError):
+            if method_name == "_list_security_group_rules":
+                getattr(iaas_service, method_name)(client, "eu01", "sg-1")
+            else:
+                getattr(iaas_service, method_name)(client, "eu01")
+
+    def test_security_group_parsing_errors_are_skipped_locally(self):
+        """Malformed resources are skipped while valid resources are retained."""
+
+        class MalformedSecurityGroup:
+            @property
+            def id(self):
+                raise ValueError("malformed security group")
+
+        iaas_service = IaaSService(set_mocked_stackit_provider())
+        client = MagicMock()
+        client.list_security_groups.return_value = [
+            MalformedSecurityGroup(),
+            {"id": "sg-1", "name": "valid-sg"},
+        ]
+        client.list_security_group_rules.return_value = []
+
+        iaas_service._list_security_groups(client, "eu01")
+
+        assert len(iaas_service.security_groups) == 1
+        assert iaas_service.security_groups[0].id == "sg-1"
 
 
 # Test SecurityGroupRule helper methods

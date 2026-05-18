@@ -10,12 +10,6 @@ def init_parser(self):
     # Authentication
     stackit_auth_subparser = stackit_parser.add_argument_group("Authentication")
     stackit_auth_subparser.add_argument(
-        "--stackit-api-token",
-        nargs="?",
-        default=None,
-        help="StackIT API Token for authentication (alternatively set via STACKIT_API_TOKEN environment variable)",
-    )
-    stackit_auth_subparser.add_argument(
         "--stackit-project-id",
         nargs="?",
         default=None,

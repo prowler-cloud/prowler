@@ -1,8 +1,16 @@
 """Tests for StackIT Provider input validation."""
 
+import sys
+import types
+from argparse import Namespace
+from unittest.mock import patch
+
 import pytest
 
+import prowler.providers.common.provider as common_provider
+from prowler.providers.common.models import Connection
 from prowler.providers.stackit.exceptions.exceptions import (
+    StackITAPIError,
     StackITInvalidProjectIdError,
     StackITNonExistentTokenError,
 )
@@ -153,3 +161,113 @@ class TestStackITProviderValidation:
         # Should fail on token first (checked first in the method)
         with pytest.raises(StackITNonExistentTokenError):
             StackitProvider.validate_arguments(None, None)
+
+
+class TestStackITProviderInitialization:
+    def test_init_global_provider_uses_environment_token(self, monkeypatch):
+        """StackIT API tokens are env-only and not read from CLI arguments."""
+        captured_kwargs = {}
+
+        class FakeStackitProvider:
+            def __init__(self, **kwargs):
+                captured_kwargs.update(kwargs)
+
+        fake_module = types.SimpleNamespace(StackitProvider=FakeStackitProvider)
+        arguments = Namespace(
+            provider="stackit",
+            stackit_project_id="12345678-1234-1234-1234-123456789abc",
+            stackit_region=None,
+            config_file="config.yaml",
+            mutelist_file=None,
+            fixer_config="fixer_config.yaml",
+        )
+
+        monkeypatch.setenv("STACKIT_API_TOKEN", "env-token")
+        monkeypatch.setattr(common_provider.Provider, "_global", None)
+
+        with (
+            patch.object(common_provider, "import_module", return_value=fake_module),
+            patch.object(
+                common_provider, "load_and_validate_config_file", return_value={}
+            ),
+        ):
+            common_provider.Provider.init_global_provider(arguments)
+
+        assert "api_token" not in captured_kwargs
+        assert captured_kwargs["project_id"] == arguments.stackit_project_id
+
+
+class TestStackITProviderTestConnection:
+    @pytest.fixture
+    def fake_stackit_resourcemanager(self, monkeypatch):
+        configuration_module = types.ModuleType("stackit.core.configuration")
+        resourcemanager_module = types.ModuleType("stackit.resourcemanager")
+
+        class FakeConfiguration:
+            def __init__(self, service_account_token):
+                self.service_account_token = service_account_token
+
+        class FakeDefaultApi:
+            error = None
+            calls = []
+
+            def __init__(self, config):
+                self.config = config
+
+            def get_project(self, id):
+                self.__class__.calls.append((self.config.service_account_token, id))
+                if self.__class__.error:
+                    raise self.__class__.error
+                return {"name": "Test Project"}
+
+        configuration_module.Configuration = FakeConfiguration
+        resourcemanager_module.DefaultApi = FakeDefaultApi
+
+        monkeypatch.setitem(
+            sys.modules, "stackit.core.configuration", configuration_module
+        )
+        monkeypatch.setitem(
+            sys.modules, "stackit.resourcemanager", resourcemanager_module
+        )
+        return FakeDefaultApi
+
+    def test_connection_success_uses_resource_manager_lookup(
+        self, fake_stackit_resourcemanager
+    ):
+        connection = StackitProvider.test_connection(
+            api_token="token",
+            project_id="12345678-1234-1234-1234-123456789abc",
+        )
+
+        assert connection == Connection(is_connected=True)
+        assert fake_stackit_resourcemanager.calls == [
+            ("token", "12345678-1234-1234-1234-123456789abc")
+        ]
+
+    def test_connection_returns_error_when_raise_on_exception_is_false(
+        self, fake_stackit_resourcemanager
+    ):
+        fake_stackit_resourcemanager.error = RuntimeError("denied")
+
+        connection = StackitProvider.test_connection(
+            api_token="token",
+            project_id="12345678-1234-1234-1234-123456789abc",
+            raise_on_exception=False,
+        )
+
+        assert isinstance(connection.error, StackITAPIError)
+        assert "Failed to connect to StackIT using Resource Manager" in str(
+            connection.error
+        )
+
+    def test_connection_raises_when_raise_on_exception_is_true(
+        self, fake_stackit_resourcemanager
+    ):
+        fake_stackit_resourcemanager.error = RuntimeError("denied")
+
+        with pytest.raises(StackITAPIError):
+            StackitProvider.test_connection(
+                api_token="token",
+                project_id="12345678-1234-1234-1234-123456789abc",
+                raise_on_exception=True,
+            )

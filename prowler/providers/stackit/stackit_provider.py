@@ -112,7 +112,7 @@ class StackitProvider(Provider):
             self.validate_arguments(self._api_token, self._project_id)
         except StackITNonExistentTokenError:
             logger.critical(
-                "StackIT API token is required. Provide it via --stackit-api-token or STACKIT_API_TOKEN environment variable."
+                "StackIT API token is required. Provide it via the STACKIT_API_TOKEN environment variable."
             )
             raise
         except StackITInvalidProjectIdError:
@@ -442,59 +442,55 @@ class StackitProvider(Provider):
                 otherwise Connection(error=Exception or custom error).
         """
         try:
-            # 1) Validate arguments
-            if not api_token or not project_id:
-                error_msg = (
-                    "StackIT test_connection error: missing api_token or project_id"
-                )
-                logger.error(error_msg)
+            # 1) Validate arguments using the same static checks as provider init.
+            try:
+                StackitProvider.validate_arguments(api_token, project_id)
+            except Exception as validation_error:
+                logger.error(f"StackIT test_connection error: {validation_error}")
                 if raise_on_exception:
-                    raise ValueError(error_msg)
-                return Connection(error=ValueError(error_msg))
+                    raise validation_error
+                return Connection(error=validation_error)
 
-            # 2) Test connection by attempting to use the StackIT SDK
+            # 2) Test connection with the same Resource Manager lookup used
+            # during provider identity initialization.
             try:
                 from stackit.core.configuration import Configuration
-                from stackit.objectstorage import DefaultApi
+                from stackit.resourcemanager import DefaultApi
 
-                # Pass the API token directly to Configuration (thread-safe approach)
-                # This avoids manipulating global environment variables
-                # Note: project_id is passed to API methods, not to Configuration
                 with suppress_stderr():
                     config = Configuration(service_account_token=api_token)
-
-                    # Create DefaultApi client directly with Configuration
-                    # DefaultApi takes Configuration directly, not ApiClient
                     client = DefaultApi(config)
-
-                    # Test with a simple API call (list buckets)
-                    # StackIT SDK limitation: Only eu01 region is currently supported in the SDK
-                    # eu02 (Austria West) exists but is not yet available in the Python SDK
-                    # When SDK adds eu02 support, this test should verify connectivity to all regions
-                    client.list_buckets(project_id=project_id, region="eu01")
+                    client.get_project(id=project_id)
 
                 logger.info(
-                    "StackIT test_connection: Successfully connected using StackIT SDK."
+                    "StackIT test_connection: Successfully connected using StackIT Resource Manager."
                 )
                 return Connection(is_connected=True)
             except ImportError as e:
-                error_msg = f"StackIT SDK not available: {e}. Please ensure stackit-core and stackit-iaas are installed."
+                error_msg = f"StackIT SDK not available: {e}. Please ensure stackit-core and stackit-resourcemanager are installed."
                 logger.error(error_msg)
                 if raise_on_exception:
                     raise ImportError(error_msg)
                 return Connection(error=ImportError(error_msg))
             except Exception as test_error:
-                error_msg = f"Failed to connect to StackIT using SDK: {str(test_error)}"
-                logger.error(error_msg)
-                if raise_on_exception:
-                    raise StackITAPIError(
-                        original_exception=test_error, message=error_msg
+                try:
+                    StackitProvider.handle_api_error(test_error)
+                except StackITInvalidTokenError as auth_error:
+                    if raise_on_exception:
+                        raise auth_error
+                    return Connection(error=auth_error)
+                except Exception as api_error:
+                    error_msg = (
+                        "Failed to connect to StackIT using Resource Manager: "
+                        f"{str(api_error)}"
                     )
-                return Connection(
-                    error=StackITAPIError(
-                        original_exception=test_error, message=error_msg
+                    logger.error(error_msg)
+                    connection_error = StackITAPIError(
+                        original_exception=api_error, message=error_msg
                     )
-                )
+                    if raise_on_exception:
+                        raise connection_error
+                    return Connection(error=connection_error)
 
         except Exception as e:
             logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")

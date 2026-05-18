@@ -69,6 +69,7 @@ class IaaSService:
         except Exception as e:
             # Use centralized error handler from provider
             self.provider.handle_api_error(e)
+            raise
 
     def _list_security_groups(self, client, region: str):
         """
@@ -77,71 +78,67 @@ class IaaSService:
         This method populates the self.security_groups list with SecurityGroup
         objects containing information about each security group and its rules.
         """
-        try:
-            if not client:
-                logger.warning(
-                    f"Cannot list security groups in {region}: StackIT IaaS client not available"
-                )
-                return
-
-            # Call the list security groups API with centralized error handling
-            response = self._handle_api_call(
-                client.list_security_groups, project_id=self.project_id, region=region
+        if not client:
+            logger.warning(
+                f"Cannot list security groups in {region}: StackIT IaaS client not available"
             )
+            return
 
-            # Extract security groups from response
-            if hasattr(response, "items"):
-                security_groups_list = response.items
-            elif isinstance(response, dict):
-                security_groups_list = response.get("items", [])
-            elif isinstance(response, list):
-                security_groups_list = response
-            else:
-                logger.warning(
-                    f"Unexpected response type from list_security_groups: {type(response)}"
-                )
-                security_groups_list = []
+        # Call the list security groups API with centralized error handling
+        response = self._handle_api_call(
+            client.list_security_groups, project_id=self.project_id, region=region
+        )
 
-            # Process each security group
-            for sg_data in security_groups_list:
-                try:
-                    # Extract security group information
-                    if hasattr(sg_data, "id"):
-                        sg_id = sg_data.id
-                        sg_name = getattr(sg_data, "name", sg_id)
-                    elif isinstance(sg_data, dict):
-                        sg_id = sg_data.get("id", "")
-                        sg_name = sg_data.get("name", sg_id)
-                    else:
-                        logger.warning(
-                            f"Unexpected security group data type: {type(sg_data)}"
-                        )
-                        continue
+        # Extract security groups from response
+        if hasattr(response, "items"):
+            security_groups_list = response.items
+        elif isinstance(response, dict):
+            security_groups_list = response.get("items", [])
+        elif isinstance(response, list):
+            security_groups_list = response
+        else:
+            logger.warning(
+                f"Unexpected response type from list_security_groups: {type(response)}"
+            )
+            security_groups_list = []
 
-                    # Get security group rules
-                    rules = self._list_security_group_rules(client, region, sg_id)
-
-                    # Create SecurityGroup object
-                    security_group = SecurityGroup(
-                        id=sg_id,
-                        name=sg_name,
-                        project_id=self.project_id,
-                        region=region,
-                        rules=rules,
-                        in_use=sg_id in self.in_use_sg_ids,
+        # Process each security group
+        for sg_data in security_groups_list:
+            try:
+                # Extract security group information
+                if hasattr(sg_data, "id"):
+                    sg_id = sg_data.id
+                    sg_name = getattr(sg_data, "name", sg_id)
+                elif isinstance(sg_data, dict):
+                    sg_id = sg_data.get("id", "")
+                    sg_name = sg_data.get("name", sg_id)
+                else:
+                    logger.warning(
+                        f"Unexpected security group data type: {type(sg_data)}"
                     )
-                    self.security_groups.append(security_group)
-
-                except Exception as e:
-                    logger.error(f"Error processing security group: {e}")
                     continue
 
-            logger.info(
-                f"Successfully listed {len(security_groups_list)} security groups in {region}"
-            )
+            except Exception as e:
+                logger.error(f"Error processing security group: {e}")
+                continue
 
-        except Exception as e:
-            logger.error(f"Error listing StackIT IaaS security groups in {region}: {e}")
+            # Get security group rules after local parsing succeeds so API errors
+            # from the rules endpoint propagate instead of being downgraded.
+            rules = self._list_security_group_rules(client, region, sg_id)
+
+            security_group = SecurityGroup(
+                id=sg_id,
+                name=sg_name,
+                project_id=self.project_id,
+                region=region,
+                rules=rules,
+                in_use=sg_id in self.in_use_sg_ids,
+            )
+            self.security_groups.append(security_group)
+
+        logger.info(
+            f"Successfully listed {len(security_groups_list)} security groups in {region}"
+        )
 
     def _list_security_group_rules(
         self, client, region: str, security_group_id: str
@@ -158,104 +155,98 @@ class IaaSService:
             list: List of SecurityGroupRule objects
         """
         rules = []
-        try:
-            # Get security group rules via SDK
-            response = self._handle_api_call(
-                client.list_security_group_rules,
-                project_id=self.project_id,
-                region=region,
-                security_group_id=security_group_id,
-            )
+        # Get security group rules via SDK
+        response = self._handle_api_call(
+            client.list_security_group_rules,
+            project_id=self.project_id,
+            region=region,
+            security_group_id=security_group_id,
+        )
 
-            # Extract rules from response
-            if hasattr(response, "items"):
-                rules_list = response.items
-            elif isinstance(response, dict):
-                rules_list = response.get("items", [])
-            elif isinstance(response, list):
-                rules_list = response
-            else:
-                rules_list = []
+        # Extract rules from response
+        if hasattr(response, "items"):
+            rules_list = response.items
+        elif isinstance(response, dict):
+            rules_list = response.get("items", [])
+        elif isinstance(response, list):
+            rules_list = response
+        else:
+            rules_list = []
 
-            # Process each rule
-            for rule_data in rules_list:
-                try:
-                    if hasattr(rule_data, "id"):
-                        # Extract protocol name from Protocol object
-                        protocol_obj = getattr(rule_data, "protocol", None)
-                        protocol_name = None
-                        if protocol_obj and hasattr(protocol_obj, "name"):
-                            protocol_name = protocol_obj.name
+        # Process each rule
+        for rule_data in rules_list:
+            try:
+                if hasattr(rule_data, "id"):
+                    # Extract protocol name from Protocol object
+                    protocol_obj = getattr(rule_data, "protocol", None)
+                    protocol_name = None
+                    if protocol_obj and hasattr(protocol_obj, "name"):
+                        protocol_name = protocol_obj.name
 
-                        # Extract port range from PortRange object
-                        port_range_obj = getattr(rule_data, "port_range", None)
-                        port_min = None
-                        port_max = None
-                        if port_range_obj:
-                            if hasattr(port_range_obj, "min"):
-                                port_min = port_range_obj.min
-                            if hasattr(port_range_obj, "max"):
-                                port_max = port_range_obj.max
+                    # Extract port range from PortRange object
+                    port_range_obj = getattr(rule_data, "port_range", None)
+                    port_min = None
+                    port_max = None
+                    if port_range_obj:
+                        if hasattr(port_range_obj, "min"):
+                            port_min = port_range_obj.min
+                        if hasattr(port_range_obj, "max"):
+                            port_max = port_range_obj.max
 
-                        rule = SecurityGroupRule(
-                            id=getattr(rule_data, "id", ""),
-                            direction=getattr(rule_data, "direction", ""),
-                            protocol=protocol_name,
-                            ip_range=getattr(rule_data, "ip_range", None),
-                            port_range_min=port_min,
-                            port_range_max=port_max,
-                            description=getattr(rule_data, "description", None),
-                            remote_security_group_id=getattr(
-                                rule_data, "remote_security_group_id", None
-                            ),
-                        )
-                    elif isinstance(rule_data, dict):
-                        # Handle dict response (if API returns dict instead of objects)
-                        protocol_data = rule_data.get("protocol")
-                        protocol_name = None
-                        if isinstance(protocol_data, dict):
-                            protocol_name = protocol_data.get("name")
-                        elif isinstance(protocol_data, str):
-                            protocol_name = protocol_data
-
-                        port_range_data = rule_data.get("port_range")
-                        port_min = None
-                        port_max = None
-                        if isinstance(port_range_data, dict):
-                            port_min = port_range_data.get("min")
-                            port_max = port_range_data.get("max")
-
-                        rule = SecurityGroupRule(
-                            id=rule_data.get("id", ""),
-                            direction=rule_data.get("direction", ""),
-                            protocol=protocol_name,
-                            ip_range=rule_data.get("ip_range"),
-                            port_range_min=port_min,
-                            port_range_max=port_max,
-                            description=rule_data.get("description"),
-                            remote_security_group_id=rule_data.get(
-                                "remote_security_group_id"
-                            ),
-                        )
-                    else:
-                        continue
-
-                    rules.append(rule)
-                    logger.debug(
-                        f"Parsed rule: id={rule.id}, direction={rule.direction}, "
-                        f"protocol={rule.protocol}, ip_range={rule.ip_range}, "
-                        f"ports={rule.port_range_min}-{rule.port_range_max}, "
-                        f"remote_sg={rule.remote_security_group_id}"
+                    rule = SecurityGroupRule(
+                        id=getattr(rule_data, "id", ""),
+                        direction=getattr(rule_data, "direction", ""),
+                        protocol=protocol_name,
+                        ip_range=getattr(rule_data, "ip_range", None),
+                        port_range_min=port_min,
+                        port_range_max=port_max,
+                        description=getattr(rule_data, "description", None),
+                        remote_security_group_id=getattr(
+                            rule_data, "remote_security_group_id", None
+                        ),
                     )
+                elif isinstance(rule_data, dict):
+                    # Handle dict response (if API returns dict instead of objects)
+                    protocol_data = rule_data.get("protocol")
+                    protocol_name = None
+                    if isinstance(protocol_data, dict):
+                        protocol_name = protocol_data.get("name")
+                    elif isinstance(protocol_data, str):
+                        protocol_name = protocol_data
 
-                except Exception as e:
-                    logger.debug(f"Error processing rule: {e}")
+                    port_range_data = rule_data.get("port_range")
+                    port_min = None
+                    port_max = None
+                    if isinstance(port_range_data, dict):
+                        port_min = port_range_data.get("min")
+                        port_max = port_range_data.get("max")
+
+                    rule = SecurityGroupRule(
+                        id=rule_data.get("id", ""),
+                        direction=rule_data.get("direction", ""),
+                        protocol=protocol_name,
+                        ip_range=rule_data.get("ip_range"),
+                        port_range_min=port_min,
+                        port_range_max=port_max,
+                        description=rule_data.get("description"),
+                        remote_security_group_id=rule_data.get(
+                            "remote_security_group_id"
+                        ),
+                    )
+                else:
                     continue
 
-        except Exception as e:
-            logger.debug(
-                f"Error listing rules for security group {security_group_id} in {region}: {e}"
-            )
+                rules.append(rule)
+                logger.debug(
+                    f"Parsed rule: id={rule.id}, direction={rule.direction}, "
+                    f"protocol={rule.protocol}, ip_range={rule.ip_range}, "
+                    f"ports={rule.port_range_min}-{rule.port_range_max}, "
+                    f"remote_sg={rule.remote_security_group_id}"
+                )
+
+            except Exception as e:
+                logger.debug(f"Error processing rule: {e}")
+                continue
 
         return rules
 
@@ -267,56 +258,52 @@ class IaaSService:
         This method populates self.public_nic_ids with the NIC IDs that are
         publicly accessible via public IP addresses.
         """
-        try:
-            if not client:
-                logger.warning(
-                    f"Cannot list public IPs in {region}: StackIT IaaS client not available"
-                )
-                return
-
-            # Call the list public IPs API with centralized error handling
-            response = self._handle_api_call(
-                client.list_public_ips, project_id=self.project_id, region=region
+        if not client:
+            logger.warning(
+                f"Cannot list public IPs in {region}: StackIT IaaS client not available"
             )
+            return
 
-            # Extract public IPs from response
-            if hasattr(response, "items"):
-                public_ips_list = response.items
-            elif isinstance(response, dict):
-                public_ips_list = response.get("items", [])
-            elif isinstance(response, list):
-                public_ips_list = response
-            else:
-                logger.warning(
-                    f"Unexpected response type from list_public_ips: {type(response)}"
-                )
-                public_ips_list = []
+        # Call the list public IPs API with centralized error handling
+        response = self._handle_api_call(
+            client.list_public_ips, project_id=self.project_id, region=region
+        )
 
-            # Extract NIC IDs that have public IPs
-            for public_ip in public_ips_list:
-                try:
-                    if hasattr(public_ip, "network_interface"):
-                        nic_id = public_ip.network_interface
-                    elif isinstance(public_ip, dict):
-                        nic_id = public_ip.get("network_interface") or public_ip.get(
-                            "networkInterface"
-                        )
-                    else:
-                        continue
+        # Extract public IPs from response
+        if hasattr(response, "items"):
+            public_ips_list = response.items
+        elif isinstance(response, dict):
+            public_ips_list = response.get("items", [])
+        elif isinstance(response, list):
+            public_ips_list = response
+        else:
+            logger.warning(
+                f"Unexpected response type from list_public_ips: {type(response)}"
+            )
+            public_ips_list = []
 
-                    if nic_id:
-                        self.public_nic_ids.add(nic_id)
-
-                except Exception as e:
-                    logger.debug(f"Error extracting NIC ID from public IP: {e}")
+        # Extract NIC IDs that have public IPs
+        for public_ip in public_ips_list:
+            try:
+                if hasattr(public_ip, "network_interface"):
+                    nic_id = public_ip.network_interface
+                elif isinstance(public_ip, dict):
+                    nic_id = public_ip.get("network_interface") or public_ip.get(
+                        "networkInterface"
+                    )
+                else:
                     continue
 
-            logger.info(
-                f"Successfully listed {len(public_ips_list)} public IPs in {region}."
-            )
+                if nic_id:
+                    self.public_nic_ids.add(nic_id)
 
-        except Exception as e:
-            logger.error(f"Error listing StackIT public IPs in {region}: {e}")
+            except Exception as e:
+                logger.debug(f"Error extracting NIC ID from public IP: {e}")
+                continue
+
+        logger.info(
+            f"Successfully listed {len(public_ips_list)} public IPs in {region}."
+        )
 
     def _list_server_nics(self, client, region: str):
         """
@@ -325,55 +312,51 @@ class IaaSService:
         This method fetches all NICs and determines which security groups are
         actively in use by checking which security groups are attached to NICs.
         """
-        try:
-            if not client:
-                logger.warning(
-                    f"Cannot list server NICs in {region}: StackIT IaaS client not available"
-                )
-                return
-
-            # Call the list project NICs API with centralized error handling
-            response = self._handle_api_call(
-                client.list_project_nics, project_id=self.project_id, region=region
+        if not client:
+            logger.warning(
+                f"Cannot list server NICs in {region}: StackIT IaaS client not available"
             )
+            return
 
-            # Extract NICs from response
-            if hasattr(response, "items"):
-                nics_list = response.items
-            elif isinstance(response, dict):
-                nics_list = response.get("items", [])
-            elif isinstance(response, list):
-                nics_list = response
-            else:
-                logger.warning(
-                    f"Unexpected response type from list_project_nics: {type(response)}"
-                )
-                nics_list = []
+        # Call the list project NICs API with centralized error handling
+        response = self._handle_api_call(
+            client.list_project_nics, project_id=self.project_id, region=region
+        )
 
-            self.server_nics.extend(nics_list)
-
-            # Extract security group IDs that are in use (on public NICs only)
-            used_sg_ids = self._get_used_security_group_ids(nics_list)
-            self.in_use_sg_ids.update(used_sg_ids)
-
-            # Count NICs with public IPs for logging
-            public_nic_count = sum(
-                1
-                for nic in nics_list
-                if (
-                    (hasattr(nic, "id") and nic.id in self.public_nic_ids)
-                    or (isinstance(nic, dict) and nic.get("id") in self.public_nic_ids)
-                )
+        # Extract NICs from response
+        if hasattr(response, "items"):
+            nics_list = response.items
+        elif isinstance(response, dict):
+            nics_list = response.get("items", [])
+        elif isinstance(response, list):
+            nics_list = response
+        else:
+            logger.warning(
+                f"Unexpected response type from list_project_nics: {type(response)}"
             )
+            nics_list = []
 
-            logger.info(
-                f"Successfully listed {len(nics_list)} NICs in {region} "
-                f"({public_nic_count} with public IPs). "
-                f"Found {len(used_sg_ids)} security groups attached to public NICs."
+        self.server_nics.extend(nics_list)
+
+        # Extract security group IDs that are in use (on public NICs only)
+        used_sg_ids = self._get_used_security_group_ids(nics_list)
+        self.in_use_sg_ids.update(used_sg_ids)
+
+        # Count NICs with public IPs for logging
+        public_nic_count = sum(
+            1
+            for nic in nics_list
+            if (
+                (hasattr(nic, "id") and nic.id in self.public_nic_ids)
+                or (isinstance(nic, dict) and nic.get("id") in self.public_nic_ids)
             )
+        )
 
-        except Exception as e:
-            logger.error(f"Error listing StackIT server NICs in {region}: {e}")
+        logger.info(
+            f"Successfully listed {len(nics_list)} NICs in {region} "
+            f"({public_nic_count} with public IPs). "
+            f"Found {len(used_sg_ids)} security groups attached to public NICs."
+        )
 
     def _get_used_security_group_ids(self, nics_list) -> set[str]:
         """

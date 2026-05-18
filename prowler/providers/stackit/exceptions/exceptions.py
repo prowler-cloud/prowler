@@ -12,7 +12,7 @@ class StackITBaseException(ProwlerException):
         },
         (10001, "StackITNonExistentTokenError"): {
             "message": "A StackIT API token is required to authenticate against StackIT",
-            "remediation": "Check the StackIT API token and ensure it is properly set up. Use --stackit-api-token or set STACKIT_API_TOKEN environment variable.",
+            "remediation": "Check the StackIT API token and ensure it is properly set in the STACKIT_API_TOKEN environment variable.",
         },
         (10002, "StackITInvalidTokenError"): {
             "message": "StackIT API token provided is not valid",

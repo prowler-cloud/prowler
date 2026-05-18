@@ -142,18 +142,10 @@ This will output a temporary access token that you can use with Prowler.
 ##### Option 1: Environment Variables
 
 ```bash
-export STACKIT_SERVICE_ACCOUNT_TOKEN="<access-token-from-step-2>"
+export STACKIT_API_TOKEN="<access-token-from-step-2>"
 export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
 
 prowler stackit
-```
-
-##### Option 2: Command-Line Arguments
-
-```bash
-prowler stackit \
-  --stackit-api-token "<access-token-from-step-2>" \
-  --stackit-project-id "12345678-1234-1234-1234-123456789abc"
 ```
 
 **Note**: Access tokens are short-lived. If your scan fails with authentication errors, regenerate a new access token using the CLI command above.
@@ -162,14 +154,13 @@ prowler stackit \
 
 Prowler searches for credentials in the following order:
 
-1. **Command-line arguments**:
-   - `--stackit-api-token`
-   - `--stackit-project-id`
-2. **Environment variables**:
-   - `STACKIT_SERVICE_ACCOUNT_TOKEN`
+1. **Environment variables**:
+   - `STACKIT_API_TOKEN`
    - `STACKIT_PROJECT_ID`
+2. **Command-line arguments**:
+   - `--stackit-project-id`
 
-**Note**: Command-line arguments take precedence over environment variables.
+**Note**: The StackIT API token is only read from the environment.
 
 ## Configuration
 
@@ -179,7 +170,6 @@ StackIT-specific command-line arguments:
 
 | Argument | Description | Required | Default |
 |----------|-------------|----------|---------|
-| `--stackit-api-token` | StackIT service account API token | Yes* | `$STACKIT_SERVICE_ACCOUNT_TOKEN` |
 | `--stackit-project-id` | StackIT project ID (UUID format) | Yes* | `$STACKIT_PROJECT_ID` |
 | `--stackit-region` | StackIT region(s) to scan | No | All available regions |
 
@@ -367,8 +357,9 @@ As StackIT adds more regions, they can be easily added to Prowler by updating th
 Scan only the `eu01` region:
 
 ```bash
+export STACKIT_API_TOKEN="your-token"
+
 prowler stackit \
-  --stackit-api-token "your-token" \
   --stackit-project-id "your-project-id" \
   --stackit-region eu01
 ```
@@ -376,8 +367,9 @@ prowler stackit \
 Scan multiple regions:
 
 ```bash
+export STACKIT_API_TOKEN="your-token"
+
 prowler stackit \
-  --stackit-api-token "your-token" \
   --stackit-project-id "your-project-id" \
   --stackit-region eu01 eu02
 ```
@@ -387,8 +379,9 @@ prowler stackit \
 Run only SSH unrestricted check:
 
 ```bash
+export STACKIT_API_TOKEN="your-token"
+
 prowler stackit \
-  --stackit-api-token "your-token" \
   --stackit-project-id "your-project-id" \
   --checks iaas_security_group_ssh_unrestricted
 ```
@@ -396,8 +389,9 @@ prowler stackit \
 ### Scan All Security Group Checks
 
 ```bash
+export STACKIT_API_TOKEN="your-token"
+
 prowler stackit \
-  --stackit-api-token "your-token" \
   --stackit-project-id "your-project-id" \
   --services iaas
 ```
@@ -407,8 +401,9 @@ prowler stackit \
 Generate JSON output:
 
 ```bash
+export STACKIT_API_TOKEN="your-token"
+
 prowler stackit \
-  --stackit-api-token "your-token" \
   --stackit-project-id "your-project-id" \
   --output-formats json
 ```
@@ -416,8 +411,9 @@ prowler stackit \
 Generate HTML report:
 
 ```bash
+export STACKIT_API_TOKEN="your-token"
+
 prowler stackit \
-  --stackit-api-token "your-token" \
   --stackit-project-id "your-project-id" \
   --output-formats html
 ```
@@ -506,8 +502,9 @@ prowler stackit \
 Enable debug logging for detailed troubleshooting:
 
 ```bash
+export STACKIT_API_TOKEN="your-token"
+
 prowler stackit \
-  --stackit-api-token "your-token" \
   --stackit-project-id "your-project-id" \
   --log-level DEBUG
 ```
@@ -725,7 +722,7 @@ If you'd like to contribute to the StackIT provider:
 ### Quick Start for Contributors
 
 1. **Install dependencies**: `poetry install` (includes stackit-core and stackit-iaas)
-2. **Set credentials**: Export `STACKIT_SERVICE_ACCOUNT_TOKEN` and `STACKIT_PROJECT_ID`
+2. **Set credentials**: Export `STACKIT_API_TOKEN` and `STACKIT_PROJECT_ID`
 3. **Run checks**: `prowler stackit`
 4. **View code**: Start in `prowler/providers/stackit/`
 5. **Add checks**: Create new check directories under `services/iaas/`
