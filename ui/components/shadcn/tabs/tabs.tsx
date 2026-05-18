@@ -44,9 +44,16 @@ function buildTriggerClassName(): string {
 
 /**
  * Build list className
+ *
+ * The tab bar is its own horizontal scroll container: when the triggers don't
+ * fit (e.g. narrow mobile widths) they scroll within the list instead of
+ * forcing the surrounding drawer/page content to overflow horizontally.
+ * Triggers keep their intrinsic size (`shrink-0`) and stay on a single line
+ * (`whitespace-nowrap`) so a partially-visible tab plus the thin scrollbar
+ * make it obvious that more tabs are reachable by scrolling.
  */
 function buildListClassName(): string {
-  return "inline-flex w-full items-center border-[#E9E9F0] dark:border-[#171D30]";
+  return "minimal-scrollbar inline-flex w-full max-w-full min-w-0 items-center overflow-x-auto overflow-y-hidden border-[#E9E9F0] dark:border-[#171D30] [&>button]:shrink-0 [&>button]:whitespace-nowrap";
 }
 
 function Tabs({

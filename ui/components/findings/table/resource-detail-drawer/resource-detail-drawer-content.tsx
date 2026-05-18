@@ -681,7 +681,7 @@ export function ResourceDetailDrawerContent({
       </div>
 
       {/* Resource card */}
-      <div className="border-border-neutral-secondary bg-bg-neutral-secondary minimal-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto rounded-lg border p-4">
+      <div className="border-border-neutral-secondary bg-bg-neutral-secondary minimal-scrollbar flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto rounded-lg border p-4">
         {/* Resource info — shows loading when currentFinding is not yet available */}
         {!currentResource && !f ? (
           <ResourceDetailSkeleton />
@@ -833,7 +833,7 @@ export function ResourceDetailDrawerContent({
           defaultValue="overview"
           className="mt-2 flex min-h-fit w-full flex-1 flex-col md:min-h-0"
         >
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex min-w-0 items-center justify-between">
             <TabsList>
               <TabsTrigger value="overview">Finding Overview</TabsTrigger>
               <TabsTrigger value="remediation">Remediation</TabsTrigger>

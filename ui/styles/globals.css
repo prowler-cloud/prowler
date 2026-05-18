@@ -345,6 +345,7 @@
   /* Webkit browsers (Chrome, Safari, Edge) */
   .minimal-scrollbar::-webkit-scrollbar {
     width: 6px;
+    height: 6px; /* visible thumb for horizontal scroll containers (e.g. tab bars) */
   }
 
   .minimal-scrollbar::-webkit-scrollbar-track {
