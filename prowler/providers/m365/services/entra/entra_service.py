@@ -90,6 +90,7 @@ class Entra(M365Service):
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
                 self._get_service_principals(),
+                self._get_app_registrations(),
             )
         )
 
@@ -106,6 +107,7 @@ class Entra(M365Service):
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
         self.service_principals: Dict[str, "ServicePrincipal"] = attributes[10]
+        self.app_registrations: Dict[str, "AppRegistration"] = attributes[11]
         self.user_accounts_status = {}
 
         if created_loop:
@@ -1261,6 +1263,48 @@ OAuthAppInfo
             )
         return service_principals
 
+    async def _get_app_registrations(self) -> Dict[str, "AppRegistration"]:
+        logger.info("Entra - Getting app registrations...")
+        app_registrations: Dict[str, AppRegistration] = {}
+        try:
+            app_response = await self.client.applications.get()
+            while app_response:
+                for app in getattr(app_response, "value", []) or []:
+                    app_id = getattr(app, "app_id", None)
+                    obj_id = getattr(app, "id", None)
+                    if not app_id or not obj_id:
+                        continue
+
+                    password_credentials = []
+                    for cred in getattr(app, "password_credentials", []) or []:
+                        password_credentials.append(
+                            PasswordCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                                end_date_time=getattr(cred, "end_date_time", None),
+                            )
+                        )
+
+                    app_registrations[obj_id] = AppRegistration(
+                        id=obj_id,
+                        app_id=app_id,
+                        name=getattr(app, "display_name", "") or "",
+                        password_credentials=password_credentials,
+                    )
+
+                next_link = getattr(app_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                app_response = await self.client.applications.with_url(
+                    next_link
+                ).get()
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return app_registrations
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -1783,3 +1827,19 @@ class ServicePrincipal(BaseModel):
     password_credentials: List[PasswordCredential] = []
     key_credentials: List[KeyCredential] = []
     directory_role_template_ids: List[str] = []
+
+
+class AppRegistration(BaseModel):
+    """Model representing a Microsoft Entra ID application registration.
+
+    Attributes:
+        id: The application object's unique identifier.
+        app_id: The application (client) ID.
+        name: The application's display name.
+        password_credentials: List of password credentials (client secrets).
+    """
+
+    id: str
+    app_id: str
+    name: str
+    password_credentials: List[PasswordCredential] = []
