@@ -1269,6 +1269,48 @@ class TestComponentEdgeCases:
         # Should be a LongTable for large datasets
         assert isinstance(table, LongTable)
 
+    def test_zebra_uses_rowbackgrounds_not_per_row_background(self, monkeypatch):
+        """The styles list must contain exactly one ROWBACKGROUNDS entry
+        regardless of row count, never N per-row BACKGROUND entries.
+        """
+        captured: dict = {}
+
+        # Capture the list passed to TableStyle. create_data_table builds a
+        # list of style tuples and wraps it in a TableStyle exactly once;
+        # by patching TableStyle we intercept that list.
+        import tasks.jobs.reports.components as comp_mod
+
+        original_table_style = comp_mod.TableStyle
+
+        def _capture_table_style(style_list):
+            captured["styles"] = list(style_list)
+            return original_table_style(style_list)
+
+        monkeypatch.setattr(comp_mod, "TableStyle", _capture_table_style)
+
+        data = [{"name": f"Item {i}"} for i in range(60)]
+        columns = [ColumnConfig("Name", 2 * inch, "name")]
+        comp_mod.create_data_table(data, columns, alternate_rows=True)
+
+        styles = captured["styles"]
+        # Count by command name.
+        names = [s[0] for s in styles if isinstance(s, tuple) and s]
+        # Exactly one ROWBACKGROUNDS entry.
+        assert names.count("ROWBACKGROUNDS") == 1
+        # Zero per-row BACKGROUND entries on data rows. (The header row
+        # BACKGROUND command is intentional and lives at coords (0,0)/(-1,0).)
+        data_row_bg = [
+            s
+            for s in styles
+            if isinstance(s, tuple)
+            and s[0] == "BACKGROUND"
+            and not (s[1] == (0, 0) and s[2] == (-1, 0))
+        ]
+        assert data_row_bg == [], (
+            f"expected no per-row BACKGROUND entries on data rows; "
+            f"got {len(data_row_bg)}"
+        )
+
     def test_create_risk_component_zero_values(self):
         """Test risk component with zero values."""
         component = create_risk_component(risk_level=0, weight=0, score=0)
@@ -1344,3 +1386,194 @@ class TestFrameworkConfigEdgeCases:
         assert get_framework_config("my_custom_threatscore_compliance") is not None
         assert get_framework_config("ens_something_else") is not None
         assert get_framework_config("nis2_gcp") is not None
+
+
+# =============================================================================
+# Findings Table Chunking Tests (PROWLER-1733)
+# =============================================================================
+#
+# These tests guard the OOM-prevention behaviour added in PROWLER-1733:
+# ``_create_findings_tables`` must split a list of findings into multiple
+# small sub-tables instead of producing one giant Table, which would force
+# ReportLab to resolve layout for all rows at once and OOM the worker on
+# scans with thousands of findings per check.
+
+
+class _DummyMetadata:
+    """Lightweight stand-in for FindingOutput.metadata used in chunking tests."""
+
+    def __init__(self, check_title: str = "Title", severity: str = "high"):
+        self.CheckTitle = check_title
+        self.Severity = severity
+
+
+class _DummyFinding:
+    """Lightweight stand-in for FindingOutput used in chunking tests.
+
+    The chunking code only reads a small set of attributes via ``getattr``,
+    so a duck-typed object is enough and lets the tests run without touching
+    the DB or pydantic deserialisation.
+    """
+
+    def __init__(
+        self,
+        check_id: str = "aws_check",
+        resource_name: str = "res-1",
+        resource_uid: str = "",
+        status: str = "FAIL",
+        region: str = "us-east-1",
+        with_metadata: bool = True,
+    ):
+        self.check_id = check_id
+        self.resource_name = resource_name
+        self.resource_uid = resource_uid
+        self.status = status
+        self.region = region
+        if with_metadata:
+            self.metadata = _DummyMetadata()
+        else:
+            self.metadata = None
+
+
+def _make_concrete_generator():
+    """Return a minimal concrete subclass of BaseComplianceReportGenerator."""
+
+    class _Concrete(BaseComplianceReportGenerator):
+        def create_executive_summary(self, data):
+            return []
+
+        def create_charts_section(self, data):
+            return []
+
+        def create_requirements_index(self, data):
+            return []
+
+    return _Concrete(FrameworkConfig(name="test", display_name="Test"))
+
+
+class TestFindingsTableChunking:
+    """Tests for ``_create_findings_tables`` (PROWLER-1733)."""
+
+    def test_chunking_produces_expected_number_of_subtables(self):
+        """5000 findings @ chunk_size=300 → 17 sub-tables + 16 spacers."""
+        generator = _make_concrete_generator()
+        findings = [_DummyFinding(check_id="c1") for _ in range(5000)]
+
+        flowables = generator._create_findings_tables(findings, chunk_size=300)
+
+        tables = [f for f in flowables if isinstance(f, (Table, LongTable))]
+        spacers = [f for f in flowables if isinstance(f, Spacer)]
+        # ceil(5000 / 300) == 17
+        assert len(tables) == 17
+        # Spacer between every pair of contiguous tables, not after the last
+        assert len(spacers) == 16
+
+    def test_chunk_size_param_overrides_default(self):
+        """250 findings @ chunk_size=100 → 3 sub-tables."""
+        generator = _make_concrete_generator()
+        findings = [_DummyFinding(check_id="c2") for _ in range(250)]
+
+        flowables = generator._create_findings_tables(findings, chunk_size=100)
+        tables = [f for f in flowables if isinstance(f, (Table, LongTable))]
+        assert len(tables) == 3
+
+    def test_empty_findings_returns_empty_list(self):
+        """No findings → no flowables. Callers can extend(...) safely."""
+        generator = _make_concrete_generator()
+        assert generator._create_findings_tables([]) == []
+
+    def test_single_chunk_has_no_spacer(self):
+        """A single sub-table must not emit a trailing spacer."""
+        generator = _make_concrete_generator()
+        findings = [_DummyFinding(check_id="c3") for _ in range(10)]
+
+        flowables = generator._create_findings_tables(findings, chunk_size=300)
+        assert len(flowables) == 1
+        assert isinstance(flowables[0], (Table, LongTable))
+
+    def test_malformed_finding_is_skipped(self):
+        """A broken finding must not abort the report; it is logged and skipped."""
+        generator = _make_concrete_generator()
+
+        class _Broken:
+            # No attributes at all; getattr() defaults will mostly cope, but
+            # we force an explicit error by making the metadata attribute
+            # itself raise on access.
+            @property
+            def metadata(self):
+                raise RuntimeError("boom")
+
+            check_id = "broken"
+
+        findings = [
+            _DummyFinding(check_id="c4"),
+            _Broken(),
+            _DummyFinding(check_id="c4"),
+        ]
+        flowables = generator._create_findings_tables(findings, chunk_size=300)
+        # Two good rows → one sub-table containing them; the broken one is
+        # logged and dropped, not propagated.
+        tables = [f for f in flowables if isinstance(f, (Table, LongTable))]
+        assert len(tables) == 1
+
+    def test_create_findings_table_alias_returns_first_chunk(self):
+        """The deprecated alias must keep returning a single Table flowable."""
+        generator = _make_concrete_generator()
+        findings = [_DummyFinding(check_id="c5") for _ in range(700)]
+
+        first = generator._create_findings_table(findings)
+        assert isinstance(first, (Table, LongTable))
+
+    def test_create_findings_table_alias_empty(self):
+        """Alias on empty input returns an empty (header-only) Table, not None."""
+        generator = _make_concrete_generator()
+        result = generator._create_findings_table([])
+        # The legacy alias never returned None; an empty header-only table
+        # is a strict superset of that contract.
+        assert isinstance(result, (Table, LongTable))
+
+
+# =============================================================================
+# Logging Context Manager Tests (PROWLER-1733)
+# =============================================================================
+
+
+class TestLogPhaseContextManager:
+    """Tests for ``_log_phase`` (PROWLER-1733).
+
+    The context manager emits structured ``phase_start`` / ``phase_end``
+    logs with ``scan_id``, ``framework`` and ``elapsed_s``, so Datadog/
+    CloudWatch queries can pivot by scan and find the slow section.
+    """
+
+    def test_emits_start_and_end_with_elapsed_and_rss(self, caplog):
+        from tasks.jobs.reports.base import _log_phase
+
+        caplog.set_level("INFO", logger="tasks.jobs.reports.base")
+        with _log_phase("unit_test_phase", scan_id="s-1", framework="Test FW"):
+            pass
+
+        messages = [r.getMessage() for r in caplog.records]
+        starts = [m for m in messages if "phase_start" in m]
+        ends = [m for m in messages if "phase_end" in m]
+
+        assert len(starts) == 1 and len(ends) == 1
+        assert "phase=unit_test_phase" in starts[0]
+        assert "scan_id=s-1" in starts[0]
+        assert "framework=Test FW" in starts[0]
+        assert "elapsed_s=" in ends[0]
+        assert "rss_kb=" in ends[0]
+        assert "delta_rss_kb=" in ends[0]
+
+    def test_failure_logs_phase_failed_and_reraises(self, caplog):
+        from tasks.jobs.reports.base import _log_phase
+
+        caplog.set_level("INFO", logger="tasks.jobs.reports.base")
+        with pytest.raises(RuntimeError, match="boom"):
+            with _log_phase("failing_phase", scan_id="s-2", framework="FW"):
+                raise RuntimeError("boom")
+
+        messages = [r.getMessage() for r in caplog.records]
+        assert any("phase_failed" in m and "failing_phase" in m for m in messages)
+        # No phase_end on the failure path.
+        assert not any("phase_end" in m for m in messages)
