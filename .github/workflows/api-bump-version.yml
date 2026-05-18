@@ -123,6 +123,7 @@ jobs:
           set -e
 
           sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${NEXT_API_VERSION}\"|" api/pyproject.toml
+          sed -i "s|spectacular_settings.VERSION = \"${CURRENT_API_VERSION}\"|spectacular_settings.VERSION = \"${NEXT_API_VERSION}\"|" api/src/backend/api/v1/views.py
           sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${NEXT_API_VERSION}|" api/src/backend/api/specs/v1.yaml
 
           echo "Files modified:"
@@ -181,6 +182,7 @@ jobs:
           set -e
 
           sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${FIRST_API_PATCH_VERSION}\"|" api/pyproject.toml
+          sed -i "s|spectacular_settings.VERSION = \"${CURRENT_API_VERSION}\"|spectacular_settings.VERSION = \"${FIRST_API_PATCH_VERSION}\"|" api/src/backend/api/v1/views.py
           sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${FIRST_API_PATCH_VERSION}|" api/src/backend/api/specs/v1.yaml
 
           echo "Files modified:"
@@ -263,6 +265,7 @@ jobs:
           set -e
 
           sed -i "s|version = \"${CURRENT_API_VERSION}\"|version = \"${NEXT_API_PATCH_VERSION}\"|" api/pyproject.toml
+          sed -i "s|spectacular_settings.VERSION = \"${CURRENT_API_VERSION}\"|spectacular_settings.VERSION = \"${NEXT_API_PATCH_VERSION}\"|" api/src/backend/api/v1/views.py
           sed -i "s|  version: ${CURRENT_API_VERSION}|  version: ${NEXT_API_PATCH_VERSION}|" api/src/backend/api/specs/v1.yaml
 
           echo "Files modified:"
