@@ -15,12 +15,12 @@ class sagemaker_models_registry_in_use(Check):
         findings = []
         for registry in sagemaker_client.sagemaker_model_registries:
             report = Check_Report_AWS(metadata=self.metadata(), resource=registry)
-            if registry.has_approved_packages:
-                report.status = "PASS"
-                report.status_extended = f"SageMaker Model Registry in region {registry.region} has at least one approved model package."
-            elif not registry.has_groups:
+            if not registry.has_groups:
                 report.status = "FAIL"
                 report.status_extended = f"SageMaker Model Registry in region {registry.region} has no Model Package Groups."
+            elif registry.has_approved_packages:
+                report.status = "PASS"
+                report.status_extended = f"SageMaker Model Registry in region {registry.region} has at least one approved model package."
             else:
                 report.status = "FAIL"
                 report.status_extended = f"SageMaker Model Registry in region {registry.region} has Model Package Groups but no approved model packages."
