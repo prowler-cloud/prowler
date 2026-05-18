@@ -9,6 +9,7 @@ of them is unreachable.
 from __future__ import annotations
 
 import time
+from contextlib import suppress
 from datetime import datetime, timezone
 from typing import Any
 
@@ -88,10 +89,12 @@ def _probe_valkey() -> None:
         if not client.ping():
             raise RuntimeError("PING did not return PONG")
     finally:
-        try:
+        # Best-effort cleanup: a failure releasing the socket (e.g. broken
+        # connection, half-closed by the server) must not mask the probe
+        # result. Narrowed to the exception types redis-py and the stdlib
+        # socket layer can raise on close.
+        with suppress(redis.RedisError, OSError):
             client.close()
-        except Exception:
-            pass
 
 
 def _probe_neo4j() -> None:
