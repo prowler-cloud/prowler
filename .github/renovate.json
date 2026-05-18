@@ -40,7 +40,7 @@
       ]
     },
     {
-      "description": "Minors: 8th of every 2 months, Madrid overnight window - staggered one week from patches",
+      "description": "Minors: 8th of every 2 months, Madrid overnight window",
       "matchUpdateTypes": [
         "minor"
       ],
@@ -49,7 +49,7 @@
       ]
     },
     {
-      "description": "Majors: 15th of every 3 months, Madrid overnight window - staggered two weeks from patches",
+      "description": "Majors: 15th of every 3 months, Madrid overnight window",
       "matchUpdateTypes": [
         "major"
       ],
@@ -132,15 +132,6 @@
         "util/prowler-bulk-provisioning/**"
       ],
       "semanticCommitScope": "sdk"
-    },
-    {
-      "description": "Lockfile maintenance - no changelog (scope inherits from component rules above)",
-      "matchUpdateTypes": [
-        "lockFileMaintenance"
-      ],
-      "addLabels": [
-        "no-changelog"
-      ]
     },
     {
       "description": "UI devDependencies - no changelog",
