@@ -22,7 +22,7 @@ def pyproject_data():
             data = tomllib.load(f)
         if data.get("project", {}).get("name") == "prowler-api":
             return data
-    pytest.fail("api/pyproject.toml not reachable from the test runner")
+    raise AssertionError("api/pyproject.toml not reachable from the test runner")
 
 
 def test_release_id_matches_pyproject(pyproject_data):

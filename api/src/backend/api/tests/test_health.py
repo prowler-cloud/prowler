@@ -244,6 +244,44 @@ class TestProbeImplementations:
             with pytest.raises(ConnectionError, match="nope"):
                 health._probe_valkey()
 
+    def test_valkey_probe_suppresses_redis_error_on_close(self):
+        # A redis-py-level failure releasing the socket must not mask a
+        # successful PING (best-effort cleanup contract).
+        import redis as redis_pkg
+
+        with patch("api.health.redis.Redis.from_url") as mock_from_url:
+            client = mock_from_url.return_value
+            client.ping.return_value = True
+            client.close.side_effect = redis_pkg.RedisError("connection reset")
+
+            assert health._probe_valkey() is None
+
+        client.close.assert_called_once_with()
+
+    def test_valkey_probe_suppresses_oserror_on_close(self):
+        # Socket-layer failures (OSError family) on close are also part of
+        # the swallowed scope.
+        with patch("api.health.redis.Redis.from_url") as mock_from_url:
+            client = mock_from_url.return_value
+            client.ping.return_value = True
+            client.close.side_effect = OSError("EBADF")
+
+            assert health._probe_valkey() is None
+
+        client.close.assert_called_once_with()
+
+    def test_valkey_probe_lets_unexpected_close_errors_propagate(self):
+        # The suppress() is deliberately narrow: anything outside
+        # (redis.RedisError, OSError) must surface so it is not silently
+        # hidden.
+        with patch("api.health.redis.Redis.from_url") as mock_from_url:
+            client = mock_from_url.return_value
+            client.ping.return_value = True
+            client.close.side_effect = RuntimeError("bug")
+
+            with pytest.raises(RuntimeError, match="bug"):
+                health._probe_valkey()
+
     def test_neo4j_probe_calls_verify_connectivity(self):
         with patch("api.attack_paths.database.get_driver") as mock_get_driver:
             mock_get_driver.return_value.verify_connectivity.return_value = None
