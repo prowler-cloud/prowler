@@ -10,9 +10,9 @@ import type { GraphEdge, GraphNode } from "@/types/attack-paths";
 
 // Node dimensions matching the rendered React Flow custom nodes.
 const RESOURCE_NODE_WIDTH = 136;
-const RESOURCE_NODE_HEIGHT = 112;
+const RESOURCE_NODE_HEIGHT = 124;
 const FINDING_NODE_WIDTH = 150;
-const FINDING_NODE_HEIGHT = 112;
+const FINDING_NODE_HEIGHT = 124;
 const INTERNET_DIAMETER = 80; // NODE_HEIGHT * 0.8 * 2
 
 // Container relationships that get reversed for proper hierarchy
