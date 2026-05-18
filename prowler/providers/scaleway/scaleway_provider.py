@@ -225,6 +225,11 @@ class ScalewayProvider(Provider):
                     "Scaleway application-scoped API key without "
                     "SCW_DEFAULT_ORGANIZATION_ID. Resource discovery may fail."
                 )
+            # NOTE: application-scoped keys never resolve account_root_user_id
+            # here (the IAM API does not expose it for an application bearer).
+            # The IAM service falls back to the org's user list to recover it;
+            # if that is unavailable, iam_api_keys_no_root_owned degrades to
+            # MANUAL rather than silently PASSing root-owned keys.
 
             if not organization_id:
                 raise ScalewayIdentityError(

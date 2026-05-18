@@ -170,3 +170,35 @@ class Test_iam_api_keys_no_root_owned:
             assert len(result) == 1
             assert result[0].status == "MANUAL"
             assert "Could not retrieve" in result[0].status_extended
+
+    def test_root_user_unresolved_returns_manual(self):
+        # Data loaded fine but account_root_user_id could not be resolved
+        # (e.g. application-scoped key). A root-owned key must NOT slip
+        # through as PASS — the check degrades to MANUAL instead.
+        iam_client = mock.MagicMock()
+        iam_client.users_loaded = True
+        iam_client.api_keys_loaded = True
+        iam_client.account_root_user_id = None
+        iam_client.api_keys = [
+            make_api_key(access_key=ROOT_API_KEY, user_id=ROOT_USER_ID)
+        ]
+        iam_client.organization_id = ORGANIZATION_ID
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_scaleway_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned.iam_client",
+                new=iam_client,
+            ),
+        ):
+            from prowler.providers.scaleway.services.iam.iam_api_keys_no_root_owned.iam_api_keys_no_root_owned import (
+                iam_api_keys_no_root_owned,
+            )
+
+            result = iam_api_keys_no_root_owned().execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "account root user" in result[0].status_extended

@@ -16,7 +16,9 @@ class ScalewaySession(BaseModel):
     """
 
     access_key: str
-    secret_key: str
+    # Excluded from serialization and repr: the whole authentication relies
+    # on this secret, so it must never leak through .dict()/.json()/logs.
+    secret_key: str = Field(exclude=True, repr=False)
     organization_id: Optional[str] = None
     default_project_id: Optional[str] = None
     default_region: Optional[str] = None

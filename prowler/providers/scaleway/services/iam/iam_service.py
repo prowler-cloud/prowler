@@ -25,13 +25,6 @@ class IAM(ScalewayService):
         self.users: list[ScalewayUser] = []
         self.api_keys: list[ScalewayAPIKey] = []
 
-        # Resolved once at authentication time from the audit identity.
-        # Deriving it from the user list instead would silently PASS root
-        # API keys whenever the user listing comes back empty.
-        self.account_root_user_id: Optional[str] = (
-            provider.identity.account_root_user_id
-        )
-
         # Load status flags — checks consult these to surface MANUAL when
         # the underlying API call failed rather than reporting empty lists
         # as a clean PASS.
@@ -40,6 +33,20 @@ class IAM(ScalewayService):
 
         self._load_users()
         self._load_api_keys()
+
+        # Prefer the root user id resolved at authentication time from the
+        # audit identity. Application-scoped API keys do not expose it on
+        # the identity, so fall back to the loaded user list (every user
+        # record carries the org's account_root_user_id). When neither is
+        # available the root-key check degrades to MANUAL instead of
+        # silently PASSing root-owned keys.
+        self.account_root_user_id: Optional[str] = (
+            provider.identity.account_root_user_id
+            or next(
+                (u.account_root_user_id for u in self.users if u.account_root_user_id),
+                None,
+            )
+        )
 
     def _load_users(self) -> None:
         """List every IAM user in the audited organization."""

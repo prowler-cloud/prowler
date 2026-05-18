@@ -52,10 +52,30 @@ class iam_api_keys_no_root_owned(Check):
 
         root_user_id = iam_client.account_root_user_id
 
+        # The account root user could not be resolved (typically an
+        # application-scoped API key with no IAM users visible). Without it
+        # every key would fall through to PASS, masking root-owned keys, so
+        # surface MANUAL instead of a silent clean result.
+        if not root_user_id:
+            placeholder = ScalewayIAMDataUnavailable(
+                organization_id=iam_client.organization_id
+            )
+            report = CheckReportScaleway(metadata=self.metadata(), resource=placeholder)
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Could not determine the Scaleway account root user for "
+                f"organization {iam_client.organization_id}. This typically "
+                "happens with application-scoped API keys when no IAM users "
+                "are visible. Verify the API key has the IAMReadOnly policy "
+                "and rerun."
+            )
+            findings.append(report)
+            return findings
+
         for api_key in iam_client.api_keys:
             report = CheckReportScaleway(metadata=self.metadata(), resource=api_key)
 
-            if root_user_id and api_key.user_id == root_user_id:
+            if api_key.user_id == root_user_id:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Scaleway API key {api_key.access_key} is owned by the "
