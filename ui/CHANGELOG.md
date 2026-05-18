@@ -20,6 +20,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🐞 Fixed
 
 - Mute Findings modal now enforces the 100-character limit on the rule name input with a live counter and inline error, matching the existing reason field behaviour [(#11158)](https://github.com/prowler-cloud/prowler/pull/11158)
+- Finding detail drawer no longer scrolls horizontally on mobile; the section tab bar is now its own horizontal scroll container with a visible thin scrollbar, so the drawer body stays put while the tabs scroll [(#11199)](https://github.com/prowler-cloud/prowler/pull/11199)
 
 ### 🔐 Security
 
