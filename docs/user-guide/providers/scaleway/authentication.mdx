@@ -12,7 +12,7 @@ Prowler authenticates to Scaleway using a **Scaleway API key** (access key + sec
 
 ## Authentication Method
 
-Prowler reads credentials from the standard Scaleway environment variables:
+Prowler reads credentials **exclusively** from the standard Scaleway environment variables. There are no credential CLI flags, so secrets are never exposed in shell history or process listings.
 
 | Variable | Purpose |
 |---|---|
@@ -22,7 +22,7 @@ Prowler reads credentials from the standard Scaleway environment variables:
 | `SCW_DEFAULT_PROJECT_ID` | Optional, default project for project-scoped resources |
 | `SCW_DEFAULT_REGION` | Optional, defaults to `fr-par` |
 
-Alternatively, pass them as CLI flags (`--access-key`, `--secret-key`, `--organization-id`, `--project-id`, `--region`). The CLI emits a warning when secrets are passed via the command line; environment variables are preferred.
+The scope variables can also be passed as CLI flags (`--organization-id`, `--project-id`, `--region`), which override the corresponding environment variables.
 
 ```bash
 export SCW_ACCESS_KEY="SCW..."

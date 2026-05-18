@@ -76,7 +76,9 @@ class SimplifiedFindingGroup(MinimalSerializerMixin):
     )
     muted_count: int = Field(description="Total muted findings in this group", ge=0)
     new_count: int = Field(description="Number of new non-muted findings", ge=0)
-    changed_count: int = Field(description="Number of changed non-muted findings", ge=0)
+    changed_count: int = Field(
+        description="Number of changed non-muted findings", ge=0
+    )
     first_seen_at: str | None = Field(
         default=None, description="First time this group was detected"
     )
@@ -107,12 +109,18 @@ class DetailedFindingGroup(SimplifiedFindingGroup):
     new_pass_count: int = Field(description="New non-muted PASS findings", ge=0)
     new_pass_muted_count: int = Field(description="New muted PASS findings", ge=0)
     new_manual_count: int = Field(description="New non-muted MANUAL findings", ge=0)
-    new_manual_muted_count: int = Field(description="New muted MANUAL findings", ge=0)
-    changed_fail_count: int = Field(description="Changed non-muted FAIL findings", ge=0)
+    new_manual_muted_count: int = Field(
+        description="New muted MANUAL findings", ge=0
+    )
+    changed_fail_count: int = Field(
+        description="Changed non-muted FAIL findings", ge=0
+    )
     changed_fail_muted_count: int = Field(
         description="Changed muted FAIL findings", ge=0
     )
-    changed_pass_count: int = Field(description="Changed non-muted PASS findings", ge=0)
+    changed_pass_count: int = Field(
+        description="Changed non-muted PASS findings", ge=0
+    )
     changed_pass_muted_count: int = Field(
         description="Changed muted PASS findings", ge=0
     )

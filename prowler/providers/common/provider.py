@@ -417,9 +417,10 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                     )
                 elif "scaleway" in provider_class_name.lower():
+                    # Credentials are read from the SCW_ACCESS_KEY /
+                    # SCW_SECRET_KEY env vars by the provider itself; there
+                    # are no credential CLI flags to avoid leaking secrets.
                     provider_class(
-                        access_key=getattr(arguments, "access_key", None),
-                        secret_key=getattr(arguments, "secret_key", None),
                         organization_id=getattr(arguments, "organization_id", None),
                         project_id=getattr(arguments, "project_id", None),
                         region=getattr(arguments, "region", None),
