@@ -1,5 +1,10 @@
 import { Locator, Page, expect, request } from "@playwright/test";
-import { AWSProviderCredential, AWSProviderData, AWS_CREDENTIAL_OPTIONS, ProvidersPage } from "./providers/providers-page";
+import {
+  AWSProviderCredential,
+  AWSProviderData,
+  AWS_CREDENTIAL_OPTIONS,
+  ProvidersPage,
+} from "./providers/providers-page";
 import { ScansPage } from "./scans/scans-page";
 
 export const ERROR_MESSAGES = {
@@ -70,7 +75,6 @@ export async function verifySessionValid(page: Page) {
   return session;
 }
 
-
 export async function addAWSProvider(
   page: Page,
   accountId: string,
@@ -128,7 +132,10 @@ export async function addAWSProvider(
   await scansPage.verifyPageLoaded();
 }
 
-export async function deleteProviderIfExists(page: ProvidersPage, providerUID: string): Promise<void> {
+export async function deleteProviderIfExists(
+  page: ProvidersPage,
+  providerUID: string,
+): Promise<void> {
   // Delete the provider if it exists
 
   // Navigate to providers page
@@ -178,11 +185,7 @@ export async function deleteProviderIfExists(page: ProvidersPage, providerUID: s
   }
 
   // Find and click the action button (last cell = actions column)
-  const actionButton = targetRow
-    .locator("td")
-    .last()
-    .locator("button")
-    .first();
+  const actionButton = targetRow.locator("td").last().locator("button").first();
 
   // Ensure the button is in view before clicking (handles horizontal scroll)
   await actionButton.scrollIntoViewIfNeeded();

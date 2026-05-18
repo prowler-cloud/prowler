@@ -149,6 +149,14 @@ Prowler Cloud and App expose two formats:
 * **CSV report:** Every requirement, every check, and every finding for the selected scan and filters. Available for all supported frameworks.
 * **PDF report:** Curated executive-style report. Currently supported for Prowler ThreatScore, ENS RD2022, NIS2, and CSA CCM. Additional PDF reports are added in subsequent Prowler releases.
 
+<Note>
+**PDF detail section is capped at the first 100 failed findings per check.** The PDF is intended as an executive/auditor document, not a raw data dump: when a check produces more than 100 failed findings the report renders the first 100 and shows a banner pointing the reader to the CSV or JSON-OCSF export for the complete list. The compliance CSV and the scan outputs are never truncated.
+
+The cap is configurable per deployment via the `DJANGO_PDF_MAX_FINDINGS_PER_CHECK` environment variable on the Prowler API workers; set it to `0` to disable truncation entirely. The default value of `100` keeps the PDF readable and bounded in size on enterprise-scale scans (hundreds of thousands of findings) without affecting smaller scans, where the cap is rarely reached.
+
+Only **failed** findings are rendered in the detail section. PASS findings for the same check are excluded at query time. The PDF surfaces what needs attention, and the CSV/JSON exports surface everything for forensic review.
+</Note>
+
 #### Downloading From the Detail Page
 
 Inside any framework detail page, the **CSV** and **PDF** buttons in the header trigger the same downloads as the overview dropdown. The PDF button only appears for frameworks that support it.

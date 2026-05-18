@@ -178,7 +178,7 @@ You can find more information in the [Troubleshooting](./docs/troubleshooting.md
 **Requirements**
 
 * `git` installed.
-* `poetry` v2 installed: [poetry installation](https://python-poetry.org/docs/#installation).
+* `uv` installed: [uv installation](https://docs.astral.sh/uv/getting-started/installation/).
 * `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
 * `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
@@ -187,8 +187,8 @@ You can find more information in the [Troubleshooting](./docs/troubleshooting.md
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/api
-poetry install
-eval $(poetry env activate)
+uv sync
+source .venv/bin/activate
 set -a
 source .env
 docker compose up postgres valkey -d
@@ -196,11 +196,6 @@ cd src/backend
 python manage.py migrate --database admin
 gunicorn -c config/guniconf.py config.wsgi:application
 ```
-> [!IMPORTANT]
-> As of Poetry v2.0.0, the `poetry shell` command has been deprecated. Use `poetry env activate` instead for environment activation.
->
-> If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment.
-> For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
 
 > After completing the setup, access the API documentation at http://localhost:8080/api/v1/docs.
 
@@ -209,8 +204,8 @@ gunicorn -c config/guniconf.py config.wsgi:application
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/api
-poetry install
-eval $(poetry env activate)
+uv sync
+source .venv/bin/activate
 set -a
 source .env
 cd src/backend
@@ -222,8 +217,8 @@ python -m celery -A config.celery worker -l info -E
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/api
-poetry install
-eval $(poetry env activate)
+uv sync
+source .venv/bin/activate
 set -a
 source .env
 cd src/backend
@@ -284,23 +279,17 @@ The container images are available here:
 
 ### From GitHub
 
-Python >=3.10, <3.13 is required with pip and Poetry:
+Python >=3.10, <3.13 is required with [uv](https://docs.astral.sh/uv/):
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler
-eval $(poetry env activate)
-poetry install
+uv sync
+source .venv/bin/activate
 python prowler-cli.py -v
 ```
 > [!IMPORTANT]
 > To clone Prowler on Windows, configure Git to support long file paths by running the following command: `git config core.longpaths true`.
-
-> [!IMPORTANT]
-> As of Poetry v2.0.0, the `poetry shell` command has been deprecated. Use `poetry env activate` instead for environment activation.
->
-> If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment.
-> For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
 
 # 🛡️ GitHub Action
 

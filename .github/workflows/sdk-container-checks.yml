@@ -9,7 +9,7 @@ on:
       - 'prowler/**'
       - 'Dockerfile*'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - '.github/workflows/sdk-container-checks.yml'
   pull_request:
     branches:
@@ -19,7 +19,7 @@ on:
       - 'prowler/**'
       - 'Dockerfile*'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - '.github/workflows/sdk-container-checks.yml'
 
 concurrency:

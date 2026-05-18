@@ -5,9 +5,9 @@ apply_migrations() {
   echo "Applying database migrations..."
 
   # Fix Inconsistent migration history after adding sites app
-  poetry run python manage.py check_and_fix_socialaccount_sites_migration --database admin
+  uv run python manage.py check_and_fix_socialaccount_sites_migration --database admin
 
-  poetry run python manage.py migrate --database admin
+  uv run python manage.py migrate --database admin
 }
 
 apply_fixtures() {
@@ -15,19 +15,19 @@ apply_fixtures() {
   for fixture in api/fixtures/dev/*.json; do
     if [ -f "$fixture" ]; then
       echo "Loading $fixture"
-      poetry run python manage.py loaddata "$fixture" --database admin
+      uv run python manage.py loaddata "$fixture" --database admin
     fi
   done
 }
 
 start_dev_server() {
   echo "Starting the development server..."
-  poetry run python manage.py runserver 0.0.0.0:"${DJANGO_PORT:-8080}"
+  uv run python manage.py runserver 0.0.0.0:"${DJANGO_PORT:-8080}"
 }
 
 start_prod_server() {
   echo "Starting the Gunicorn server..."
-  poetry run gunicorn -c config/guniconf.py config.wsgi:application
+  uv run gunicorn -c config/guniconf.py config.wsgi:application
 }
 
 resolve_worker_hostname() {
@@ -47,7 +47,7 @@ resolve_worker_hostname() {
 
 start_worker() {
   echo "Starting the worker..."
-  poetry run python -m celery -A config.celery worker \
+  uv run python -m celery -A config.celery worker \
     -n "$(resolve_worker_hostname)" \
     -l "${DJANGO_LOGGING_LEVEL:-info}" \
     -Q celery,scans,scan-reports,deletion,backfill,overview,integrations,compliance,attack-paths-scans \
@@ -56,7 +56,7 @@ start_worker() {
 
 start_worker_beat() {
   echo "Starting the worker-beat..."
-  poetry run python -m celery -A config.celery beat -l "${DJANGO_LOGGING_LEVEL:-info}" --scheduler django_celery_beat.schedulers:DatabaseScheduler
+  uv run python -m celery -A config.celery beat -l "${DJANGO_LOGGING_LEVEL:-info}" --scheduler django_celery_beat.schedulers:DatabaseScheduler
 }
 
 manage_db_partitions() {
@@ -64,7 +64,7 @@ manage_db_partitions() {
     echo "Managing DB partitions..."
     # For now we skip the deletion of partitions until we define the data retention policy
     # --yes auto approves the operation without the need of an interactive terminal
-    poetry run python manage.py pgpartition --using admin --skip-delete --yes
+    uv run python manage.py pgpartition --using admin --skip-delete --yes
   fi
 }
 

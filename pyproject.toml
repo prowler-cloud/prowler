@@ -1,6 +1,29 @@
 [build-system]
-build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core>=2.0"]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[dependency-groups]
+dev = [
+  "bandit==1.8.3",
+  "black==25.1.0",
+  "coverage==7.6.12",
+  "docker==7.1.0",
+  "filelock==3.20.3",
+  "flake8==7.1.2",
+  "freezegun==1.5.1",
+  "mock==5.2.0",
+  "moto[all]==5.1.11",
+  "openapi-schema-validator==0.6.3",
+  "openapi-spec-validator==0.7.1",
+  "prek==0.3.9",
+  "pylint==3.3.4",
+  "pytest==8.3.5",
+  "pytest-cov==6.0.0",
+  "pytest-env==1.1.5",
+  "pytest-randomly==3.16.0",
+  "pytest-xdist==3.6.1",
+  "vulture==2.14"
+]
 
 # https://peps.python.org/pep-0621/
 [project]
@@ -108,41 +131,11 @@ prowler = "prowler.__main__:prowler"
 "Homepage" = "https://github.com/prowler-cloud/prowler"
 "Issue tracker" = "https://github.com/prowler-cloud/prowler/issues"
 
-[tool.poetry]
-packages = [
-  {include = "prowler"},
-  {include = "dashboard"}
-]
-requires-poetry = ">=2.0"
+[tool.hatch.build.targets.sdist]
+include = ["prowler", "dashboard"]
 
-[tool.poetry.group.dev.dependencies]
-bandit = "1.8.3"
-black = "25.1.0"
-coverage = "7.6.12"
-docker = "7.1.0"
-filelock = "3.20.3"
-flake8 = "7.1.2"
-freezegun = "1.5.1"
-mock = "5.2.0"
-moto = {extras = ["all"], version = "5.1.11"}
-openapi-schema-validator = "0.6.3"
-openapi-spec-validator = "0.7.1"
-prek = "0.3.9"
-pylint = "3.3.4"
-pytest = "8.3.5"
-pytest-cov = "6.0.0"
-pytest-env = "1.1.5"
-pytest-randomly = "3.16.0"
-pytest-xdist = "3.6.1"
-safety = "3.7.0"
-vulture = "2.14"
-
-[tool.poetry-version-plugin]
-source = "init"
-
-[tool.poetry_bumpversion.file."prowler/config/config.py"]
-replace = 'prowler_version = "{new_version}"'
-search = 'prowler_version = "{current_version}"'
+[tool.hatch.build.targets.wheel]
+packages = ["prowler", "dashboard"]
 
 [tool.pytest.ini_options]
 pythonpath = [
@@ -156,3 +149,214 @@ AWS_DEFAULT_REGION = 'us-east-1'
 AWS_SECRET_ACCESS_KEY = 'testing'
 AWS_SECURITY_TOKEN = 'testing'
 AWS_SESSION_TOKEN = 'testing'
+
+[tool.uv]
+# Transitive pins matching the current lock to prevent silent drift on `uv lock`
+# (e.g. supply chain hijacks via newer releases). Bump deliberately.
+constraint-dependencies = [
+  "about-time==4.2.1",
+  "aenum==3.1.17",
+  "aiofiles==24.1.0",
+  "aiohappyeyeballs==2.6.1",
+  "aiohttp==3.13.5",
+  "aiosignal==1.4.0",
+  "alibabacloud-actiontrail20200706==2.4.1",
+  "alibabacloud-credentials==1.0.3",
+  "alibabacloud-credentials-api==1.0.0",
+  "alibabacloud-cs20151215==6.1.0",
+  "alibabacloud-darabonba-array==0.1.0",
+  "alibabacloud-darabonba-encode-util==0.0.2",
+  "alibabacloud-darabonba-map==0.0.1",
+  "alibabacloud-darabonba-signature-util==0.0.4",
+  "alibabacloud-darabonba-string==0.0.4",
+  "alibabacloud-darabonba-time==0.0.1",
+  "alibabacloud-ecs20140526==7.2.5",
+  "alibabacloud-endpoint-util==0.0.4",
+  "alibabacloud-gateway-oss==0.0.17",
+  "alibabacloud-gateway-sls==0.4.2",
+  "alibabacloud-gateway-sls-util==0.4.1",
+  "alibabacloud-gateway-spi==0.0.3",
+  "alibabacloud-openapi-util==0.2.4",
+  "alibabacloud-oss-util==0.0.6",
+  "alibabacloud-oss20190517==1.0.6",
+  "alibabacloud-ram20150501==1.2.0",
+  "alibabacloud-sas20181203==6.1.0",
+  "alibabacloud-sts20150401==1.1.6",
+  "alibabacloud-tea==0.4.3",
+  "alibabacloud-tea-openapi==0.4.4",
+  "alibabacloud-tea-util==0.3.14",
+  "alibabacloud-tea-xml==0.0.3",
+  "alibabacloud-vpc20160428==6.13.0",
+  "aliyun-log-fastpb==0.3.0",
+  "annotated-types==0.7.0",
+  "antlr4-python3-runtime==4.13.2",
+  "anyio==4.13.0",
+  "apscheduler==3.11.2",
+  "astroid==3.3.11",
+  "async-timeout==5.0.1",
+  "attrs==26.1.0",
+  "aws-sam-translator==1.109.0",
+  "aws-xray-sdk==2.15.0",
+  "azure-common==1.1.28",
+  "azure-core==1.41.0",
+  "azure-mgmt-core==1.6.0",
+  "bandit==1.8.3",
+  "black==25.1.0",
+  "blinker==1.9.0",
+  "certifi==2026.4.22",
+  "cffi==2.0.0",
+  "cfn-lint==1.51.0",
+  "charset-normalizer==3.4.7",
+  "circuitbreaker==2.1.3",
+  "click==8.3.3",
+  "click-plugins==1.1.1.2",
+  "contextlib2==21.6.0",
+  "coverage==7.6.12",
+  "darabonba-core==1.0.5",
+  "decorator==5.2.1",
+  "dill==0.4.1",
+  "distro==1.9.0",
+  "dnspython==2.8.0",
+  "docker==7.1.0",
+  "dogpile-cache==1.5.0",
+  "durationpy==0.10",
+  "email-validator==2.2.0",
+  "exceptiongroup==1.3.1",
+  "execnet==2.1.2",
+  "filelock==3.20.3",
+  "flake8==7.1.2",
+  "flask==3.1.3",
+  "freezegun==1.5.1",
+  "frozenlist==1.8.0",
+  "google-api-core==2.30.3",
+  "google-auth==2.52.0",
+  "googleapis-common-protos==1.75.0",
+  "graphemeu==0.7.2",
+  "graphql-core==3.2.8",
+  "h11==0.16.0",
+  "hpack==4.1.0",
+  "httpcore==1.0.9",
+  "httplib2==0.31.2",
+  "httpx==0.28.1",
+  "hyperframe==6.1.0",
+  "iamdata==0.1.202605131",
+  "idna==3.15",
+  "importlib-metadata==8.7.1",
+  "iniconfig==2.3.0",
+  "iso8601==2.1.0",
+  "isodate==0.7.2",
+  "isort==6.1.0",
+  "itsdangerous==2.2.0",
+  "jinja2==3.1.6",
+  "jmespath==1.1.0",
+  "joserfc==1.6.5",
+  "jsonpatch==1.33",
+  "jsonpath-ng==1.8.0",
+  "jsonpointer==3.1.1",
+  "jsonschema-path==0.3.4",
+  "jsonschema-specifications==2025.9.1",
+  "jwcrypto==1.5.7",
+  "keystoneauth1==5.14.0",
+  "lazy-object-proxy==1.12.0",
+  "lz4==4.4.5",
+  "markdown-it-py==4.2.0",
+  "markupsafe==3.0.3",
+  "mccabe==0.7.0",
+  "mdurl==0.1.2",
+  "microsoft-kiota-authentication-azure==1.9.2",
+  "microsoft-kiota-http==1.9.2",
+  "microsoft-kiota-serialization-form==1.9.2",
+  "microsoft-kiota-serialization-json==1.9.2",
+  "microsoft-kiota-serialization-multipart==1.9.2",
+  "microsoft-kiota-serialization-text==1.9.2",
+  "mock==5.2.0",
+  "moto==5.1.11",
+  "mpmath==1.3.0",
+  "msal==1.36.0",
+  "msal-extensions==1.3.1",
+  "msgraph-core==1.3.8",
+  "msrest==0.7.1",
+  "multidict==6.7.1",
+  "multipart==1.3.1",
+  "mypy-extensions==1.1.0",
+  "narwhals==2.21.0",
+  "nest-asyncio==1.6.0",
+  "networkx==3.4.2",
+  "oauthlib==3.3.1",
+  "openapi-schema-validator==0.6.3",
+  "openapi-spec-validator==0.7.1",
+  "opentelemetry-api==1.41.1",
+  "opentelemetry-sdk==1.41.1",
+  "opentelemetry-semantic-conventions==0.62b1",
+  "os-service-types==1.8.2",
+  "packaging==26.2",
+  "pathable==0.4.4",
+  "pathspec==1.1.1",
+  "pbr==7.0.3",
+  "platformdirs==4.9.6",
+  "plotly==6.7.0",
+  "pluggy==1.6.0",
+  "prek==0.3.9",
+  "propcache==0.5.2",
+  "proto-plus==1.28.0",
+  "protobuf==7.34.1",
+  "psutil==7.2.2",
+  "py-partiql-parser==0.6.1",
+  "pyasn1==0.6.3",
+  "pyasn1-modules==0.4.2",
+  "pycodestyle==2.12.1",
+  "pycparser==3.0",
+  "pycryptodomex==3.23.0",
+  "pydantic-core==2.41.5",
+  "pydash==8.0.6",
+  "pyflakes==3.2.0",
+  "pygments==2.20.0",
+  "pyjwt==2.12.1",
+  "pylint==3.3.4",
+  "pynacl==1.6.2",
+  "pyopenssl==26.2.0",
+  "pyparsing==3.3.2",
+  "pytest==8.3.5",
+  "pytest-cov==6.0.0",
+  "pytest-env==1.1.5",
+  "pytest-randomly==3.16.0",
+  "pytest-xdist==3.6.1",
+  "pywin32==311",
+  "pyyaml==6.0.3",
+  "referencing==0.36.2",
+  "regex==2026.5.9",
+  "requests==2.34.0",
+  "requests-file==3.0.1",
+  "requests-oauthlib==2.0.0",
+  "requestsexceptions==1.4.0",
+  "responses==0.26.0",
+  "retrying==1.4.2",
+  "rfc3339-validator==0.1.4",
+  "rich==15.0.0",
+  "rpds-py==0.30.0",
+  "s3transfer==0.14.0",
+  "setuptools==82.0.1",
+  "six==1.17.0",
+  "sniffio==1.3.1",
+  "std-uritemplate==2.0.8",
+  "stevedore==5.7.0",
+  "sympy==1.14.0",
+  "tldextract==5.3.1",
+  "tomli==2.4.1",
+  "tomlkit==0.15.0",
+  "typing-extensions==4.15.0",
+  "typing-inspection==0.4.2",
+  "tzdata==2026.2",
+  "uritemplate==4.2.0",
+  "urllib3==2.7.0",
+  "vulture==2.14",
+  "websocket-client==1.9.0",
+  "werkzeug==3.1.8",
+  "wrapt==2.1.2",
+  "xlsxwriter==3.2.9",
+  "xmltodict==1.0.4",
+  "yarl==1.23.0",
+  "zipp==3.23.1",
+  "zstd==1.5.7.3"
+]
+override-dependencies = ["okta==3.4.2"]
