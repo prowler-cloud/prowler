@@ -9,7 +9,6 @@ import type { Rect } from "@xyflow/react";
 
 import type { AttackPathGraphData, GraphEdge } from "@/types/attack-paths";
 
-import { getNodeLabelLines } from "../_components/graph/nodes/node-label-lines";
 import { truncateLabel } from "./format";
 import {
   getNodeBorderColor,
@@ -18,6 +17,11 @@ import {
   GRAPH_EDGE_COLOR_DARK,
 } from "./graph-colors";
 import { layoutWithDagre } from "./layout";
+import {
+  FINDING_NODE_DIMENSIONS,
+  RESOURCE_NODE_DIMENSIONS,
+} from "./node-dimensions";
+import { getNodeLabelDisplay } from "./node-label-lines";
 import { resolveNodeVisual } from "./node-visuals";
 
 interface ExportGraphOptions {
@@ -42,9 +46,6 @@ const GLOW_RADIUS = 30;
 const LABEL_Y = 66;
 const LABEL_LINE_HEIGHT = 13;
 const TYPE_Y = 118;
-const RESOURCE_NAME_MAX_CHARS = 16;
-const FINDING_TITLE_MAX_CHARS = 18;
-const NODE_LABEL_MAX_LINES = 4;
 
 const downloadBlob = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
@@ -439,20 +440,21 @@ const drawNode = (
   context.textAlign = "center";
   context.textBaseline = "middle";
   context.font = "600 11px sans-serif";
-  const labelMaxChars = isFinding
-    ? FINDING_TITLE_MAX_CHARS
-    : RESOURCE_NAME_MAX_CHARS;
+  const dimensions = isFinding
+    ? FINDING_NODE_DIMENSIONS
+    : RESOURCE_NODE_DIMENSIONS;
+  const labelMaxWidth = dimensions.WIDTH;
 
-  getNodeLabelLines(
+  getNodeLabelDisplay(
     visual.displayName,
-    labelMaxChars,
-    NODE_LABEL_MAX_LINES,
-  ).forEach((line, index) => {
+    dimensions.LABEL_MAX_CHARS,
+    dimensions.LABEL_MAX_LINES,
+  ).lines.forEach((line, index) => {
     context.fillText(
       line,
       center.x,
       center.y + (LABEL_Y - BADGE_CENTER_Y) + index * LABEL_LINE_HEIGHT,
-      150,
+      labelMaxWidth,
     );
   });
 
@@ -462,7 +464,7 @@ const drawNode = (
     typeLabel,
     center.x,
     center.y + (TYPE_Y - BADGE_CENTER_Y),
-    150,
+    labelMaxWidth,
   );
 };
 

@@ -10,8 +10,9 @@ import {
 import type { GraphNode } from "@/types/attack-paths";
 
 import { resolveNodeColors, resolveNodeVisual } from "../../../_lib";
+import { RESOURCE_NODE_DIMENSIONS } from "../../../_lib/node-dimensions";
+import { getNodeLabelDisplay } from "../../../_lib/node-label-lines";
 import { HiddenHandles } from "./hidden-handles";
-import { getNodeLabelDisplay } from "./node-label-lines";
 
 interface ResourceNodeData {
   graphNode: GraphNode;
@@ -19,10 +20,10 @@ interface ResourceNodeData {
   [key: string]: unknown;
 }
 
-const NODE_WIDTH = 136;
-const NODE_HEIGHT = 124;
-const NAME_MAX_CHARS = 16;
-const NAME_MAX_LINES = 4;
+const NODE_WIDTH = RESOURCE_NODE_DIMENSIONS.WIDTH;
+const NODE_HEIGHT = RESOURCE_NODE_DIMENSIONS.HEIGHT;
+const NAME_MAX_CHARS = RESOURCE_NODE_DIMENSIONS.LABEL_MAX_CHARS;
+const NAME_MAX_LINES = RESOURCE_NODE_DIMENSIONS.LABEL_MAX_LINES;
 const BADGE_SIZE = 44;
 const BADGE_RADIUS = BADGE_SIZE / 2;
 const BADGE_CENTER_X = NODE_WIDTH / 2;
@@ -70,6 +71,7 @@ export const ResourceNode = ({ data, selected }: NodeProps) => {
       height={NODE_HEIGHT}
       className="overflow-visible"
       tabIndex={displayName.isTruncated ? 0 : undefined}
+      data-testid="attack-path-resource-node"
     >
       {glowRadius > 0 && (
         <circle

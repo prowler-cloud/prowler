@@ -62,9 +62,3 @@ export const getNodeLabelDisplay = (
 
   return { lines: visibleLines, isTruncated };
 };
-
-export const getNodeLabelLines = (
-  text: string,
-  maxChars: number,
-  maxLines: number,
-): string[] => getNodeLabelDisplay(text, maxChars, maxLines).lines;

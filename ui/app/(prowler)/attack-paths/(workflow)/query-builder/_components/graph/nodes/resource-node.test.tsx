@@ -117,9 +117,7 @@ describe("ResourceNode", () => {
       expect(screen.getByText("057895221:role/O")).toBeInTheDocument();
       expect(screen.getByText("ntAccessRole/in…")).toBeInTheDocument();
 
-      await userEvent.hover(
-        screen.getByText("arn:aws:iam::998").closest("svg")!,
-      );
+      await userEvent.hover(screen.getByTestId("attack-path-resource-node"));
 
       expect(await screen.findAllByText(name)).not.toHaveLength(0);
     });

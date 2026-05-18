@@ -109,7 +109,7 @@ describe("FindingNode", () => {
       expect(screen.getByText("are rotated…")).toBeInTheDocument();
       expect(screen.getByText("high")).toBeInTheDocument();
 
-      await userEvent.hover(screen.getByText("Ensure").closest("svg")!);
+      await userEvent.hover(screen.getByTestId("attack-path-finding-node"));
 
       expect(await screen.findAllByText(title)).not.toHaveLength(0);
     });

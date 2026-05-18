@@ -10,18 +10,19 @@ import {
 import type { GraphNode } from "@/types/attack-paths";
 
 import { resolveNodeColors, resolveNodeVisual } from "../../../_lib";
+import { FINDING_NODE_DIMENSIONS } from "../../../_lib/node-dimensions";
+import { getNodeLabelDisplay } from "../../../_lib/node-label-lines";
 import { HiddenHandles } from "./hidden-handles";
-import { getNodeLabelDisplay } from "./node-label-lines";
 
 interface FindingNodeData {
   graphNode: GraphNode;
   [key: string]: unknown;
 }
 
-const NODE_WIDTH = 150;
-const NODE_HEIGHT = 124;
-const TITLE_MAX_CHARS = 18;
-const TITLE_MAX_LINES = 4;
+const NODE_WIDTH = FINDING_NODE_DIMENSIONS.WIDTH;
+const NODE_HEIGHT = FINDING_NODE_DIMENSIONS.HEIGHT;
+const TITLE_MAX_CHARS = FINDING_NODE_DIMENSIONS.LABEL_MAX_CHARS;
+const TITLE_MAX_LINES = FINDING_NODE_DIMENSIONS.LABEL_MAX_LINES;
 const BADGE_SIZE = 44;
 const BADGE_RADIUS = BADGE_SIZE / 2;
 const BADGE_CENTER_X = NODE_WIDTH / 2;
@@ -83,6 +84,7 @@ export const FindingNode = ({ data, selected }: NodeProps) => {
       height={NODE_HEIGHT}
       className="overflow-visible"
       tabIndex={displayTitle.isTruncated ? 0 : undefined}
+      data-testid="attack-path-finding-node"
     >
       <circle
         cx={BADGE_CENTER_X}

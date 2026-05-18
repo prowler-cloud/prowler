@@ -148,25 +148,25 @@ describe("exportGraphAsPNG", () => {
       "AWSReservedSSO_A",
       expect.any(Number),
       expect.any(Number),
-      150,
+      136,
     );
     expect(fillText).toHaveBeenCalledWith(
       "dministratorAcce",
       expect.any(Number),
       expect.any(Number),
-      150,
+      136,
     );
     expect(fillText).toHaveBeenCalledWith(
       "ssExtra",
       expect.any(Number),
       expect.any(Number),
-      150,
+      136,
     );
     expect(fillText).toHaveBeenCalledWith(
       "AWS Role",
       expect.any(Number),
       expect.any(Number),
-      150,
+      136,
     );
   });
 

@@ -1,19 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { getNodeLabelDisplay, getNodeLabelLines } from "./node-label-lines";
+import { getNodeLabelDisplay } from "./node-label-lines";
 
-describe("getNodeLabelLines", () => {
+describe("getNodeLabelDisplay", () => {
   it("adds an ellipsis within the max width when wrapped label text exceeds the visible line budget", () => {
     expect(
-      getNodeLabelLines("AWSReservedSSO_AdministratorAccess", 16, 2),
+      getNodeLabelDisplay("AWSReservedSSO_AdministratorAccess", 16, 2).lines,
     ).toEqual(["AWSReservedSSO_A", "dministratorAcc…"]);
   });
 
   it("splits long tokens so unbroken identifiers do not overflow node labels", () => {
-    expect(getNodeLabelLines("OrganizationAccountAccessRole", 16, 4)).toEqual([
-      "OrganizationAcco",
-      "untAccessRole",
-    ]);
+    expect(
+      getNodeLabelDisplay("OrganizationAccountAccessRole", 16, 4).lines,
+    ).toEqual(["OrganizationAcco", "untAccessRole"]);
   });
 
   it("reports whether the visible label was truncated", () => {
