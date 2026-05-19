@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The **Default Global Session Policy** must have a **Priority 1** rule that is **not** the built-in `Default Rule`, and that rule must set **Maximum Okta global session lifetime** to 18 hours or less (DISA STIG V-273203 / OKTA-APP-001665). The threshold defaults to 1080 minutes and is overridable via the `okta_max_session_lifetime_minutes` key in the audit config.",
+  "Description": "Every active Global Session Policy must have a **Priority 1** rule that is **not** the built-in `Default Rule`, setting **Maximum Okta global session lifetime** to 18 hours or less (DISA STIG V-273203 / OKTA-APP-001665). Okta evaluates policies by group assignment, so a permissive custom policy can govern users. Override the threshold via `okta_max_session_lifetime_minutes`.",
   "Risk": "Without an enforced session lifetime, an authenticated Okta session can be reused indefinitely without reauthentication. Stolen session material continues to grant access long after the original sign-in event, and authorization changes (role revocation, group removal) take effect only on the next forced reauth.",
   "RelatedUrl": "",
   "AdditionalURLs": [

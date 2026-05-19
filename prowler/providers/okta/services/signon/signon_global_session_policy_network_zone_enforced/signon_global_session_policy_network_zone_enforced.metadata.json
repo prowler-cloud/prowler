@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The **Default Global Session Policy** must use the **IF User's IP is** condition, mapped to a Network Zone, on at least one active non-default rule (DISA STIG V-279691 / OKTA-APP-003242). The condition lets Okta allow or deny access according to the organization's Access Control Policy rather than relying solely on credential possession.",
+  "Description": "Every active Global Session Policy must use the **IF User's IP is** condition, mapped to a Network Zone, on its **Priority 1 active rule** (DISA STIG V-279691 / OKTA-APP-003242). Okta evaluates rules in priority order, and policies by group assignment, so the zone condition must sit on the rule that fires first for each policy that governs users.",
   "Risk": "When the Global Session Policy does not restrict access by Network Zone, every authenticated entity is granted session establishment regardless of source IP. Authorization that does not factor in network location lets stolen credentials or out-of-band sessions reach the Okta dashboard from any internet-routable address, undermining the organization's Access Control Policy.",
   "RelatedUrl": "",
   "AdditionalURLs": [

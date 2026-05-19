@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The **Default Global Session Policy** must have a **Priority 1** rule that is **not** the built-in `Default Rule`, and that rule must set **Okta global session cookies persist across browser sessions** to `Disabled` (DISA STIG V-273206 / OKTA-APP-001710).",
+  "Description": "Every active Global Session Policy must have a **Priority 1** rule that is **not** the built-in `Default Rule`, setting **Okta global session cookies persist across browser sessions** to `Disabled` (DISA STIG V-273206 / OKTA-APP-001710). Okta evaluates policies by group assignment, so a permissive custom policy can govern users even when the Default Policy is strict.",
   "Risk": "Persistent global session cookies keep an authenticated Okta session alive across browser restarts. Cached authentication that survives the original browsing context can grant continued access long after a user closes the browser, and any cached authorization decisions outlive the session window the user expected.",
   "RelatedUrl": "",
   "AdditionalURLs": [

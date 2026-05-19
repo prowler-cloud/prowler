@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The **Default Global Session Policy** must have a **Priority 1** rule that is **not** the built-in `Default Rule`, and that rule must set **Maximum Okta global session idle time** to 15 minutes or less. The threshold defaults to 15 minutes and is overridable via the `okta_max_session_idle_minutes` key in the audit config.",
+  "Description": "Every active Global Session Policy must have a **Priority 1** rule that is **not** the built-in `Default Rule`, setting **Maximum Okta global session idle time** to 15 minutes or less. Okta evaluates policies by group assignment, so a permissive custom policy can govern users even when the Default Policy is strict. Override the threshold via `okta_max_session_idle_minutes`.",
   "Risk": "Without a 15-minute idle timeout, an unattended workstation leaves an authenticated Okta session open indefinitely, allowing an attacker physical or remote access to take over the user's identity and pivot into every downstream application that trusts Okta SSO.",
   "RelatedUrl": "",
   "AdditionalURLs": [

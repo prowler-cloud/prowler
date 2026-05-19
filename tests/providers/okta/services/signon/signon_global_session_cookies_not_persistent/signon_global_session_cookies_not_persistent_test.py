@@ -20,24 +20,27 @@ CHECK_PATH = (
 )
 
 
+def _run_check(signon_client):
+    with (
+        mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_okta_provider(),
+        ),
+        mock.patch(CHECK_PATH, new=signon_client),
+    ):
+        from prowler.providers.okta.services.signon.signon_global_session_cookies_not_persistent.signon_global_session_cookies_not_persistent import (
+            signon_global_session_cookies_not_persistent,
+        )
+
+        return signon_global_session_cookies_not_persistent().execute()
+
+
 class Test_signon_global_session_cookies_not_persistent:
     def test_no_policies(self):
-        signon_client = build_signon_client({})
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_okta_provider(),
-            ),
-            mock.patch(CHECK_PATH, new=signon_client),
-        ):
-            from prowler.providers.okta.services.signon.signon_global_session_cookies_not_persistent.signon_global_session_cookies_not_persistent import (
-                signon_global_session_cookies_not_persistent,
-            )
-
-            findings = signon_global_session_cookies_not_persistent().execute()
-            assert len(findings) == 1
-            assert findings[0].status == "FAIL"
-            assert "was not found" in findings[0].status_extended
+        findings = _run_check(build_signon_client({}))
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "No active Okta Global Session Policies" in findings[0].status_extended
 
     def test_pass_when_priority_one_rule_disables_persistent_cookies(self):
         policy = default_policy(
@@ -50,24 +53,13 @@ class Test_signon_global_session_cookies_not_persistent:
                 default_rule(priority=2),
             ]
         )
-        signon_client = build_signon_client({"pol-default": policy})
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_okta_provider(),
-            ),
-            mock.patch(CHECK_PATH, new=signon_client),
-        ):
-            from prowler.providers.okta.services.signon.signon_global_session_cookies_not_persistent.signon_global_session_cookies_not_persistent import (
-                signon_global_session_cookies_not_persistent,
-            )
-
-            findings = signon_global_session_cookies_not_persistent().execute()
-            assert len(findings) == 1
-            assert findings[0].status == "PASS"
-            assert "disables persistent global session cookies" in (
-                findings[0].status_extended
-            )
+        findings = _run_check(build_signon_client({"pol-default": policy}))
+        assert len(findings) == 1
+        assert findings[0].status == "PASS"
+        assert "disables persistent global session cookies" in (
+            findings[0].status_extended
+        )
+        assert "priority 99, default" in findings[0].status_extended
 
     def test_fail_when_priority_one_rule_uses_persistent_cookies(self):
         policy = default_policy(
@@ -80,24 +72,12 @@ class Test_signon_global_session_cookies_not_persistent:
                 default_rule(priority=2),
             ]
         )
-        signon_client = build_signon_client({"pol-default": policy})
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_okta_provider(),
-            ),
-            mock.patch(CHECK_PATH, new=signon_client),
-        ):
-            from prowler.providers.okta.services.signon.signon_global_session_cookies_not_persistent.signon_global_session_cookies_not_persistent import (
-                signon_global_session_cookies_not_persistent,
-            )
-
-            findings = signon_global_session_cookies_not_persistent().execute()
-            assert len(findings) == 1
-            assert findings[0].status == "FAIL"
-            assert "allows persistent global session cookies" in (
-                findings[0].status_extended
-            )
+        findings = _run_check(build_signon_client({"pol-default": policy}))
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "allows persistent global session cookies" in (
+            findings[0].status_extended
+        )
 
     def test_fail_when_priority_one_rule_does_not_assert_setting(self):
         policy = default_policy(
@@ -113,58 +93,23 @@ class Test_signon_global_session_cookies_not_persistent:
                 default_rule(priority=2),
             ]
         )
-        signon_client = build_signon_client({"pol-default": policy})
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_okta_provider(),
-            ),
-            mock.patch(CHECK_PATH, new=signon_client),
-        ):
-            from prowler.providers.okta.services.signon.signon_global_session_cookies_not_persistent.signon_global_session_cookies_not_persistent import (
-                signon_global_session_cookies_not_persistent,
-            )
+        findings = _run_check(build_signon_client({"pol-default": policy}))
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "does not assert" in findings[0].status_extended
 
-            findings = signon_global_session_cookies_not_persistent().execute()
-            assert len(findings) == 1
-            assert findings[0].status == "FAIL"
-            assert "does not" in findings[0].status_extended
-            assert "assert" in findings[0].status_extended
-
-    def test_fail_when_default_policy_is_inactive(self):
-        policy = GlobalSessionPolicy(
-            id="pol-default",
-            name="Default Policy",
-            priority=99,
-            status="INACTIVE",
-            is_default=True,
-            rules=[
+    def test_emits_one_finding_per_policy(self):
+        admins_policy = custom_policy(
+            [
                 non_default_rule(
-                    "Compliant",
-                    use_persistent_cookie=False,
+                    "Sticky admin",
+                    use_persistent_cookie=True,
                     priority=1,
                 )
             ],
+            name="Admins Policy",
         )
-        signon_client = build_signon_client({"pol-default": policy})
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_okta_provider(),
-            ),
-            mock.patch(CHECK_PATH, new=signon_client),
-        ):
-            from prowler.providers.okta.services.signon.signon_global_session_cookies_not_persistent.signon_global_session_cookies_not_persistent import (
-                signon_global_session_cookies_not_persistent,
-            )
-
-            findings = signon_global_session_cookies_not_persistent().execute()
-            assert len(findings) == 1
-            assert findings[0].status == "FAIL"
-            assert "status 'INACTIVE'" in findings[0].status_extended
-
-    def test_ignores_other_custom_policies(self):
-        compliant_default = default_policy(
+        strict_default = default_policy(
             [
                 non_default_rule(
                     "Non-persistent",
@@ -174,30 +119,57 @@ class Test_signon_global_session_cookies_not_persistent:
                 default_rule(priority=2),
             ]
         )
-        permissive_custom = custom_policy(
+        findings = _run_check(
+            build_signon_client(
+                {"pol-custom": admins_policy, "pol-default": strict_default}
+            )
+        )
+        assert len(findings) == 2
+        by_name = {f.resource_name: f for f in findings}
+        assert by_name["Admins Policy"].status == "FAIL"
+        assert "priority 1, custom" in by_name["Admins Policy"].status_extended
+        assert by_name["Default Policy"].status == "PASS"
+
+    def test_inactive_policy_is_skipped(self):
+        inactive = GlobalSessionPolicy(
+            id="pol-inactive",
+            name="Disabled Policy",
+            priority=1,
+            status="INACTIVE",
+            is_default=False,
+            rules=[non_default_rule("Sticky", use_persistent_cookie=True, priority=1)],
+        )
+        active_default = default_policy(
             [
                 non_default_rule(
-                    "Sticky admin",
-                    use_persistent_cookie=True,
+                    "Non-persistent",
+                    use_persistent_cookie=False,
                     priority=1,
-                )
+                ),
+                default_rule(priority=2),
             ]
         )
-        signon_client = build_signon_client(
-            {"pol-custom": permissive_custom, "pol-default": compliant_default}
-        )
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_okta_provider(),
-            ),
-            mock.patch(CHECK_PATH, new=signon_client),
-        ):
-            from prowler.providers.okta.services.signon.signon_global_session_cookies_not_persistent.signon_global_session_cookies_not_persistent import (
-                signon_global_session_cookies_not_persistent,
+        findings = _run_check(
+            build_signon_client(
+                {"pol-inactive": inactive, "pol-default": active_default}
             )
+        )
+        assert len(findings) == 1
+        assert findings[0].resource_name == "Default Policy"
+        assert findings[0].status == "PASS"
 
-            findings = signon_global_session_cookies_not_persistent().execute()
-            assert len(findings) == 1
-            assert findings[0].status == "PASS"
-            assert findings[0].resource_name == "Default Policy"
+    def test_fail_when_all_policies_inactive(self):
+        only_inactive = GlobalSessionPolicy(
+            id="pol-default",
+            name="Default Policy",
+            priority=99,
+            status="INACTIVE",
+            is_default=True,
+            rules=[
+                non_default_rule("Compliant", use_persistent_cookie=False, priority=1)
+            ],
+        )
+        findings = _run_check(build_signon_client({"pol-default": only_inactive}))
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "No active Okta Global Session Policies" in findings[0].status_extended
