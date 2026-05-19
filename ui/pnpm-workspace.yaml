@@ -1,29 +1,20 @@
-# Canonical home for pnpm 11+ configuration. In pnpm 11 .npmrc accepts only
-# auth/registry keys and package.json no longer reads its `pnpm` field — every
-# other setting lives here (or in ~/.config/pnpm/config.yaml at the global level).
-#
+# pnpm 11+ workspace config. .npmrc is auth/registry only; everything else lives here.
 # Reference: https://pnpm.io/supply-chain-security
 
 packages: []
 
-# --- Engine enforcement ---
 # Refuse to install on Node/pnpm outside the `engines` block in package.json.
-# Replaces engine-strict=true (a pnpm 10 .npmrc key; .npmrc-only is auth/registry in v11).
 engineStrict: true
 
-# --- npm-style ergonomics (migrated from .npmrc) ---
-# Hoist NextUI / HeroUI families to root node_modules so legacy peer-dep
-# patterns continue to resolve.
+# Hoist NextUI / HeroUI families so legacy peer-dep patterns resolve.
 publicHoistPattern:
   - "*@nextui-org/*"
   - "*@heroui/*"
 
-# Default `pnpm add` to exact versions — matches the convention used across
-# package.json today (no carets/tildes).
+# Default `pnpm add` to exact versions — matches package.json convention.
 saveExact: true
 
-# --- Dependency overrides (migrated from package.json#pnpm.overrides) ---
-# pnpm 11 no longer reads the `pnpm` field in package.json; same versions, same ordering.
+# --- Dependency overrides ---
 overrides:
   "@react-types/shared": "3.26.0"
   "@internationalized/date": "3.10.0"
@@ -45,15 +36,13 @@ overrides:
   "ajv@<7": "6.14.0"
   "ajv@>=8": "8.18.0"
   "qs": "6.14.2"
-  # express-rate-limit 8.2.2 was a one-off release that dropped provenance
-  # attestation; 8.3.1+ restored it (continuous through latest 8.5.2). Force the
-  # transitive resolution to a version that satisfies `trustPolicy: no-downgrade`.
-  "express-rate-limit": ">=8.3.1"
+  # 8.2.2 dropped provenance attestation; 8.3.1+ restored it. Pinned to skip 8.2.2
+  # under `trustPolicy: no-downgrade`.
+  "express-rate-limit": "8.5.1"
 
 # --- Level 1: Minimum Release Age ---
 # Packages must be published for at least 1 day before they can be installed.
 # Prevents installing compromised packages during the detection window.
-# (pnpm 11 default: 1440. Explicit value kept as defense-in-depth + documentation.)
 minimumReleaseAge: 1440
 
 # Bypasses the minimum release age for specific packages.
@@ -64,7 +53,6 @@ minimumReleaseAge: 1440
 # --- Level 2: Explicit Build Script Allow-list ---
 # Only these packages may run install/postinstall lifecycle scripts.
 # Any unlisted package with lifecycle scripts fails the install.
-# (pnpm 11 default: strictDepBuilds=true. Explicit value kept as defense-in-depth.)
 strictDepBuilds: true
 allowBuilds:
   # sharp: Native image processing (libvips). Installs platform-specific pre-built binary or compiles from source.
@@ -82,29 +70,16 @@ allowBuilds:
 
 # --- Level 3: Trust Policy + Exotic Subdeps ---
 # Fail when a package's trust evidence is downgraded (e.g., new publisher).
-# Intentionally stricter than the upstream default (`off`) — keep as-is.
 trustPolicy: no-downgrade
-# Documented exceptions for packages where the "trust downgrade" pnpm 11 reports
-# is a false positive — i.e. the project simply doesn't use provenance for its
-# real releases, so there's no actual regression. Each entry must be justified.
-# Review periodically: when a package starts publishing with provenance again,
-# remove the entry.
+# False positives — packages that don't publish provenance for real releases.
+# Pin to the version range that lacks provenance so a bump fails until reviewed.
 trustPolicyExclude:
-  # next-auth: 725 versions published, only `0.0.0-manual.2824fa11` (a one-off
-  # manual test release) has provenance. None of the real beta or stable
-  # releases use provenance — there is nothing to downgrade *from*. Tracked
-  # upstream as a long-standing publishing-pipeline gap, not a takeover.
-  - "next-auth"
-  # langium: provenance is published intermittently across majors (1.2, 1.3,
-  # 2.0, 2.1, 3.0, 4.2+ have it; 3.1–3.x do not). Our pin sits in the
-  # provenance-less 3.x band; the package is a transitive dep, not direct.
-  - "langium"
-  # semver: legacy major 6.x never had provenance (provenance attestations
-  # started in semver 7.5.1+). Pulled transitively via
-  # @vitejs/plugin-react -> @babel/core -> @babel/helper-compilation-targets.
-  # Upgrading the chain to a version using semver 7+ is not in our control.
-  - "semver"
+  # next-auth: only one one-off manual test release (`0.0.0-manual.2824fa11`) has
+  # provenance; real beta/stable releases don't. Scoped to current beta line.
+  - "next-auth@5.0.0-beta.30"
+  # semver: legacy major 6.x never had provenance (added in 7.5.1+). Pinned
+  # to the exact 6.x version pulled transitively (via @babel/helper-compilation-targets).
+  - "semver@6.3.1"
 
 # Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
-# (pnpm 11 default: blockExoticSubdeps=true. Explicit value kept as defense-in-depth.)
 blockExoticSubdeps: true
