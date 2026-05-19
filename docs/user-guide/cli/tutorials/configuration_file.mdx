@@ -77,6 +77,23 @@ The following list includes all the AWS checks with configurable variables that 
 | `opensearch_service_domains_not_publicly_accessible`          | `trusted_ips`                                    | List of Strings |
 
 
+### Resource Scan Limit
+
+Some AWS services accumulate large numbers of resources (EBS snapshots, backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages). Scanning every resource increases scan time, cost, and API throttling, and produces noisy findings. Prowler limits the number of resources scanned per service, defaulting to the latest 100, and always prioritizes `FAIL` findings so non-compliant resources are never hidden before compliant ones up to the limit. Where the AWS API supports server-side ordering, the most recent resources are scanned first; otherwise the order is best-effort.
+
+The global default applies to every supported service and is overridable per service. Set a value to `0` (or a negative number) to disable the limit and scan every resource.
+
+| Value                              | Scope                                                   | Type    |
+|------------------------------------|---------------------------------------------------------|---------|
+| `max_scanned_resources_per_service`| Global default for all supported services (default 100) | Integer |
+| `max_ebs_snapshots`                | EBS snapshots (`ec2_ebs_*` checks)                      | Integer |
+| `max_backup_recovery_points`       | Backup recovery points (`backup_recovery_point_*`)      | Integer |
+| `max_cloudwatch_log_groups`        | CloudWatch log groups (`cloudwatch_log_group_*`)        | Integer |
+| `max_lambda_functions`             | Lambda functions (`awslambda_function_*`)               | Integer |
+| `max_ecs_task_definitions`         | ECS task definitions (`ecs_task_definitions_*`)         | Integer |
+| `max_codeartifact_packages`        | CodeArtifact packages (`codeartifact_packages_*`)       | Integer |
+
+
 ## Azure
 
 ### Configurable Checks
@@ -181,6 +198,19 @@ aws:
   # AWS Global Configuration
   # aws.mute_non_default_regions --> Set to True to muted failed findings in non-default regions for AccessAnalyzer, GuardDuty, SecurityHub, DRS and Config
   mute_non_default_regions: False
+
+  # AWS Resource Scan Limit Configuration
+  # Limits the number of resources scanned per service, prioritizing FAIL
+  # findings. Set to 0 (or a negative value) to disable the limit.
+  # aws.max_scanned_resources_per_service --> global default for all services below
+  max_scanned_resources_per_service: 100
+  # Per-service overrides. Leave as null to fall back to the global default.
+  max_ebs_snapshots: null
+  max_backup_recovery_points: null
+  max_cloudwatch_log_groups: null
+  max_lambda_functions: null
+  max_ecs_task_definitions: null
+  max_codeartifact_packages: null
   # If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
   # Mutelist:
   #  Accounts:
