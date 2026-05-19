@@ -80,6 +80,7 @@ jobs:
             registry-1.docker.io:443
             auth.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             registry.npmjs.org:443
             dl-cdn.alpinelinux.org:443
             fonts.googleapis.com:443

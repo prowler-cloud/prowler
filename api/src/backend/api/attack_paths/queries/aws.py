@@ -473,8 +473,8 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
                 OR action = '*'
             | action]) > 0
 
-        // Find roles that trust Bedrock service (can be passed to Bedrock)
-        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'bedrock.amazonaws.com'}})
+        // Find roles that trust the Bedrock AgentCore service (can be passed to a code interpreter)
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'bedrock-agentcore.amazonaws.com'}})
         WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
             resource = '*'
             OR target_role.arn CONTAINS resource
@@ -523,8 +523,8 @@ AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER = AttackPathsQueryDefinition(
                 OR action = '*'
             | action]) > 0
 
-        // Find roles that trust Bedrock service (already attached to existing code interpreters)
-        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'bedrock.amazonaws.com'}})
+        // Find roles that trust the Bedrock AgentCore service (already attached to existing code interpreters)
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'bedrock-agentcore.amazonaws.com'}})
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p

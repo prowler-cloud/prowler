@@ -45,6 +45,10 @@ import {
 } from "@/components/shadcn/tooltip";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import {
+  ExternalResourceLink,
+  resolveExternalTarget,
+} from "@/components/shared/external-resource-link";
+import {
   QUERY_EDITOR_LANGUAGE,
   QueryCodeEditor,
   type QueryEditorLanguage,
@@ -429,6 +433,15 @@ export function ResourceDetailDrawerContent({
   const resourceDetailHref = f?.resourceId
     ? buildResourceDetailHref(f.resourceId)
     : null;
+  const externalResourceTarget = resolveExternalTarget({
+    providerType,
+    resourceUid,
+    providerUid,
+    resourceName,
+    findingUid: f?.uid,
+    region: resourceRegion,
+  });
+  const hasIdAction = Boolean(externalResourceTarget);
   const findingRecommendationUrl = f?.remediation.recommendation.url;
   const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
   const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
@@ -698,18 +711,41 @@ export function ResourceDetailDrawerContent({
                       entityAlias={resourceName}
                       entityId={resourceUid}
                       idLabel="UID"
-                      idAction={
+                      nameAction={
                         resourceDetailHref ? (
-                          <Button variant="link" size="link-sm" asChild>
-                            <Link
-                              href={resourceDetailHref}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="link" size="link-sm" asChild>
+                                <Link
+                                  href={resourceDetailHref}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  prefetch={false}
+                                >
+                                  <span className="sr-only">View Resource</span>
+                                  <ExternalLink
+                                    className="size-3"
+                                    aria-hidden="true"
+                                  />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
                               View Resource
-                              <ExternalLink className="size-3" />
-                            </Link>
-                          </Button>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : undefined
+                      }
+                      idAction={
+                        hasIdAction ? (
+                          <ExternalResourceLink
+                            providerType={providerType}
+                            resourceUid={resourceUid}
+                            providerUid={providerUid}
+                            resourceName={resourceName}
+                            findingUid={f?.uid}
+                            region={resourceRegion}
+                          />
                         ) : undefined
                       }
                     />

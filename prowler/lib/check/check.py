@@ -741,9 +741,17 @@ def execute(
                 is_finding_muted_args["team_id"] = (
                     team.id if team else global_provider.identity.user_id
                 )
+            elif global_provider.type == "scaleway":
+                is_finding_muted_args["organization_id"] = (
+                    global_provider.identity.organization_id
+                )
             elif global_provider.type == "oraclecloud":
                 is_finding_muted_args["tenancy_id"] = (
                     global_provider.identity.tenancy_id
+                )
+            elif global_provider.type == "okta":
+                is_finding_muted_args["org_domain"] = (
+                    global_provider.identity.org_domain
                 )
             for finding in check_findings:
                 if global_provider.type == "cloudflare":

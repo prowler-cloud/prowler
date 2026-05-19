@@ -3,7 +3,6 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.gmail.gmail_service import GmailPolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
-    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -35,10 +34,13 @@ class TestGmailAutoForwardingDisabled:
             assert len(findings) == 1
             assert findings[0].status == "PASS"
             assert "disabled" in findings[0].status_extended
-            assert findings[0].resource_name == DOMAIN
-            assert findings[0].resource_id == CUSTOMER_ID
+            assert findings[0].resource_name == "Gmail Policies"
+            assert findings[0].resource_id == "gmailPolicies"
             assert findings[0].customer_id == CUSTOMER_ID
-            assert findings[0].resource == mock_provider.domain_resource.dict()
+            assert (
+                findings[0].resource
+                == GmailPolicies(enable_auto_forwarding=False).dict()
+            )
 
     def test_fail_disabled(self):
         mock_provider = set_mocked_googleworkspace_provider()

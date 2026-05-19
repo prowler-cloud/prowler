@@ -79,6 +79,7 @@ jobs:
             registry-1.docker.io:443
             auth.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             ghcr.io:443
             pkg-containers.githubusercontent.com:443
             files.pythonhosted.org:443

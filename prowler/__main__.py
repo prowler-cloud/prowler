@@ -154,8 +154,10 @@ from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
+from prowler.providers.okta.models import OktaOutputOptions
 from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
+from prowler.providers.scaleway.models import ScalewayOutputOptions
 from prowler.providers.vercel.models import VercelOutputOptions
 
 
@@ -424,6 +426,14 @@ def prowler():
         )
     elif provider == "vercel":
         output_options = VercelOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "okta":
+        output_options = OktaOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "scaleway":
+        output_options = ScalewayOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 

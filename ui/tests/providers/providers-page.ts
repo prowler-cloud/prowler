@@ -944,9 +944,7 @@ export class ProvidersPage extends BasePage {
     const secretAccessKey =
       credentials.secretAccessKey || process.env.E2E_AWS_PROVIDER_SECRET_KEY;
 
-    const shouldFillStaticKeys = Boolean(
-      accessKeyId || secretAccessKey,
-    );
+    const shouldFillStaticKeys = Boolean(accessKeyId || secretAccessKey);
     if (shouldFillStaticKeys) {
       const accessKeyIsVisible = await accessKeyInputInWizard
         .isVisible()

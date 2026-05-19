@@ -5,7 +5,6 @@ from prowler.providers.googleworkspace.services.calendar.calendar_service import
 )
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
-    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -40,7 +39,7 @@ class TestCalendarExternalInvitationsWarning:
             assert len(findings) == 1
             assert findings[0].status == "PASS"
             assert "enabled" in findings[0].status_extended
-            assert findings[0].resource_name == DOMAIN
+            assert findings[0].resource_name == "Calendar Policies"
             assert findings[0].customer_id == CUSTOMER_ID
 
     def test_fail_warnings_disabled(self):

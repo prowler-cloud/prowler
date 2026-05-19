@@ -78,7 +78,7 @@ WORKDIR /home/prowler
 # Copy necessary files
 COPY prowler/  /home/prowler/prowler/
 COPY dashboard/ /home/prowler/dashboard/
-COPY pyproject.toml /home/prowler
+COPY pyproject.toml uv.lock /home/prowler/
 COPY README.md /home/prowler/
 COPY prowler/providers/m365/lib/powershell/m365_powershell.py /home/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py
 
@@ -87,17 +87,17 @@ ENV HOME='/home/prowler'
 ENV PATH="${HOME}/.local/bin:${PATH}"
 #hadolint ignore=DL3013
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir poetry==2.3.4
+    pip install --no-cache-dir uv==0.11.14
 
-RUN poetry install --compile && \
-    rm -rf ~/.cache/pip
+RUN uv sync --compile-bytecode && \
+    rm -rf ~/.cache/uv
 
 # Install PowerShell modules
-RUN poetry run python prowler/providers/m365/lib/powershell/m365_powershell.py
+RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py
 
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
 
 USER prowler
-ENTRYPOINT ["poetry", "run", "prowler"]
+ENTRYPOINT [".venv/bin/prowler"]
