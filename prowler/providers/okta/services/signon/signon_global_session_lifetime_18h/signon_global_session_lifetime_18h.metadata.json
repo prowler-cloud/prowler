@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "signon_global_session_lifetime_18h",
+  "CheckTitle": "Default Global Session Policy has a Priority 1 non-default rule limiting session lifetime to 18 hours",
+  "CheckType": [],
+  "ServiceName": "signon",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "The **Default Global Session Policy** must have a **Priority 1** rule that is **not** the built-in `Default Rule`, and that rule must set **Maximum Okta global session lifetime** to 18 hours or less (DISA STIG V-273203 / OKTA-APP-001665). The threshold defaults to 1080 minutes and is overridable via the `okta_max_session_lifetime_minutes` key in the audit config.",
+  "Risk": "Without an enforced session lifetime, an authenticated Okta session can be reused indefinitely without reauthentication. Stolen session material continues to grant access long after the original sign-in event, and authorization changes (role revocation, group removal) take effect only on the next forced reauth.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Okta Admin Console as a Super Admin\n2. Go to Security > Global Session Policy\n3. Open the Default Policy\n4. Add or edit a non-default rule\n5. Move that rule to Priority 1 so it is evaluated before the built-in Default Rule\n6. Set 'Maximum Okta global session lifetime' to 18 hours or less\n7. Save the rule",
+      "Terraform": "resource \"okta_policy_rule_signon\" \"prowler_session_lifetime_18h\" {\n  policy_id           = okta_policy_signon.default.id\n  name                = \"Prowler-enforced session lifetime\"\n  status              = \"ACTIVE\"\n  session_lifetime    = 1080\n  session_persistent  = false\n}\n"
+    },
+    "Recommendation": {
+      "Text": "Configure the Default Global Session Policy so its Priority 1 non-default rule sets the Maximum Okta global session lifetime to 18 hours or less.",
+      "Url": "https://hub.prowler.com/check/signon_global_session_lifetime_18h"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
