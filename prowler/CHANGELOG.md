@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.27.0] (Prowler UNRELEASED)
+## [5.27.0] (Prowler v5.27.0)
 
 ### 🚀 Added
 
@@ -18,6 +18,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `entra_emergency_access_exclusion` check for M365 provider now scopes the exclusion requirement to enabled Conditional Access policies with a `Block` grant control instead of every enabled policy, focusing on the lockout-relevant policy set [(#10849)](https://github.com/prowler-cloud/prowler/pull/10849)
 - AWS IAM customer-managed policy checks no longer emit `FAIL` on unattached policies unless `--scan-unused-services` is enabled [(#11150)](https://github.com/prowler-cloud/prowler/pull/11150)
+- Replace `poetry` with `uv` as package manager [(#11162)](https://github.com/prowler-cloud/prowler/pull/11162)
+- Replace `safety` with `osv-scanner` for dependency vulnerability scanning in SDK CI and pre-commit [(#11167)](https://github.com/prowler-cloud/prowler/pull/11167)
 
 ### 🐞 Fixed
 
@@ -26,16 +28,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `zone_waf_enabled` check for Cloudflare provider now appends a plan-aware hint to the FAIL `status_extended`: a possible-false-positive note on paid plans (Pro, Business, Enterprise) where the legacy `waf` zone setting can read `off` even though WAF managed rulesets are deployed via the dashboard, and a "not available on the Cloudflare Free plan" note on Free zones [(#9896)](https://github.com/prowler-cloud/prowler/pull/9896)
 - Google Workspace Gmail checks sharing a single resource row, causing the service field to be overwritten by the last check executed [(#11169)](https://github.com/prowler-cloud/prowler/pull/11169)
 - Google Workspace Drive and Calendar services missing server-side policy filters [(#11195)](https://github.com/prowler-cloud/prowler/pull/11195)
-- `VercelSession.token` is now excluded from serialization and representation to prevent the Vercel API token from leaking through `.dict()`, `.json()` or logs [(#11198)](https://github.com/prowler-cloud/prowler/pull/11198)
-
----
-
-## [5.26.2] (Prowler UNRELEASED)
-
-### 🐞 Fixed
-
 - `entra_users_mfa_capable` and `entra_break_glass_account_fido2_security_key_registered` report a preventive FAIL per affected user (with the missing permission named) when the M365 service principal lacks `AuditLog.Read.All`, instead of mass false positives [(#10907)](https://github.com/prowler-cloud/prowler/pull/10907)
-- Update duplicated GCP CIS requirements IDs [(#11180)](https://github.com/prowler-cloud/prowler/pull/11180)
+- Duplicated GCP CIS requirements IDs [(#11180)](https://github.com/prowler-cloud/prowler/pull/11180)
+- `VercelSession.token` is now excluded from serialization and representation to prevent the Vercel API token from leaking through `.dict()`, `.json()` or logs [(#11198)](https://github.com/prowler-cloud/prowler/pull/11198)
 
 ---
 
