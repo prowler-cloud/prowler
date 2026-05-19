@@ -1,4 +1,3 @@
-import io
 import zipfile
 from unittest import mock
 
@@ -68,12 +67,18 @@ LAMBDA_DEPS_JSON_WITH_SECRET = """
 
 
 def get_lambda_code_from_files(files: dict) -> LambdaCode:
-    zip_output = io.BytesIO()
-    with zipfile.ZipFile(zip_output, "w", zipfile.ZIP_DEFLATED) as zip_file:
+    # The check only calls code_zip.extractall(dir); mock it to drop the
+    # given files into the temporary directory the check creates, so no
+    # real archive needs to be built.
+    code_zip = mock.MagicMock()
+
+    def _extractall(path):
         for name, content in files.items():
-            zip_file.writestr(name, content)
-    zip_output.seek(0)
-    return LambdaCode(location="", code_zip=zipfile.ZipFile(zip_output))
+            with open(f"{path}/{name}", "w") as fd:
+                fd.write(content)
+
+    code_zip.extractall.side_effect = _extractall
+    return LambdaCode(location="", code_zip=code_zip)
 
 
 def mock_get_function_code_with_deps_json_secret():
