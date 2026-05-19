@@ -2,6 +2,15 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.27.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `s3_bucket_shadow_resource_vulnerability` no longer emits a tautological `PASS` finding for every bucket; a finding is now produced only when the bucket name matches one of the predictable service patterns (Glue, SageMaker, EMR, CodeStar) [(#11220)](https://github.com/prowler-cloud/prowler/pull/11220)
+- `sqlserver_tde_encrypted_with_cmk` check for Azure provider no longer reports a false `FAIL` for SQL Servers whose user databases are correctly encrypted with a customer-managed key, by excluding the system `master` database (always reports TDE `Disabled` and is not customer-controllable) from the TDE evaluation [(#11233)](https://github.com/prowler-cloud/prowler/pull/11233)
+
+---
+
 ## [5.27.0] (Prowler v5.27.0)
 
 ### 🚀 Added
