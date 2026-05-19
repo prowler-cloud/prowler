@@ -6,7 +6,7 @@ from prowler.providers.oraclecloud.exceptions.exceptions import (
     OCIAuthenticationError,
     OCIInvalidConfigError,
 )
-from prowler.providers.oraclecloud.models import OCISession
+from prowler.providers.oraclecloud.models import OCIIdentityInfo, OCIRegion, OCISession
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
 
@@ -199,3 +199,59 @@ MIIEpQIBAAKCAQEA0Z3VS5JJcds3xfn/ygWyF8n0sMcD/QHWCJ7yGSEtLN2T
             )
 
             assert connection.is_connected is True
+
+
+class TestOraclecloudProviderInit:
+    """Tests for OraclecloudProvider initialization"""
+
+    def test_init_with_region_set_populates_provider_state(self):
+        mock_session = OCISession(
+            config={"region": "us-ashburn-1"}, signer=None, profile="DEFAULT"
+        )
+        mock_identity = OCIIdentityInfo(
+            tenancy_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            tenancy_name="test-tenancy",
+            user_id="ocid1.user.oc1..aaaaaaaexample",
+            region="us-ashburn-1",
+            profile="DEFAULT",
+            audited_regions=set(),
+            audited_compartments=[],
+        )
+        mock_regions = [
+            OCIRegion(key="us-phoenix-1", name="us-phoenix-1", is_home_region=False),
+            OCIRegion(key="us-ashburn-1", name="us-ashburn-1", is_home_region=True),
+        ]
+        mock_compartments = ["ocid1.compartment.oc1..aaaaaaaexample"]
+        with (
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.setup_session",
+                return_value=mock_session,
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.set_identity",
+                return_value=mock_identity,
+            ),
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.get_regions_to_audit",
+                return_value=mock_regions,
+            ),
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.get_compartments_to_audit",
+                return_value=mock_compartments,
+            ),
+            patch(
+                "prowler.providers.common.provider.Provider.set_global_provider"
+            ) as mock_set_global,
+        ):
+            provider = OraclecloudProvider(
+                region={"us-ashburn-1"},
+                config_content={"dummy": True},
+                mutelist_content={"Accounts": {}},
+            )
+        assert mock_setup_session.call_args.kwargs["region"] == "us-ashburn-1"
+        assert provider.session == mock_session
+        assert provider.identity == mock_identity
+        assert provider.regions == mock_regions
+        assert provider.compartments == mock_compartments
+        assert provider.home_region == "us-ashburn-1"
+        mock_set_global.assert_called_once_with(provider)

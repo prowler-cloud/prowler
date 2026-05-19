@@ -1,6 +1,9 @@
 import gc
 import os
+import resource as _resource_module
+import time
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -41,12 +44,53 @@ from .config import (
     COLOR_LIGHT_BLUE,
     COLOR_LIGHTER_BLUE,
     COLOR_PROWLER_DARK_GREEN,
+    FINDINGS_TABLE_CHUNK_SIZE,
     PADDING_LARGE,
     PADDING_SMALL,
     FrameworkConfig,
 )
 
 logger = get_task_logger(__name__)
+
+
+@contextmanager
+def _log_phase(phase: str, **tags: Any):
+    """Log start/end timing and RSS deltas around a long-running task section.
+
+    Generic helper: callers pass arbitrary ``key=value`` tags
+    (e.g. ``scan_id``, ``framework``, ``provider_id``) and they are
+    emitted as part of the structured log line, so Grafana/Datadog/
+    CloudWatch queries can pivot by whichever dimension is relevant to
+    the task. ``getrusage`` returns KB on Linux and bytes on macOS;
+    the values are still useful in relative terms even though units
+    differ across platforms.
+    """
+    tag_str = " ".join(f"{key}={value}" for key, value in tags.items())
+    suffix = f" {tag_str}" if tag_str else ""
+
+    start = time.perf_counter()
+    rss_before = _resource_module.getrusage(_resource_module.RUSAGE_SELF).ru_maxrss
+    logger.info("phase_start phase=%s%s rss_kb=%d", phase, suffix, rss_before)
+    try:
+        yield
+    except Exception:
+        elapsed = time.perf_counter() - start
+        logger.exception(
+            "phase_failed phase=%s%s elapsed_s=%.2f", phase, suffix, elapsed
+        )
+        raise
+    else:
+        elapsed = time.perf_counter() - start
+        rss_after = _resource_module.getrusage(_resource_module.RUSAGE_SELF).ru_maxrss
+        logger.info(
+            "phase_end phase=%s%s elapsed_s=%.2f rss_kb=%d delta_rss_kb=%d",
+            phase,
+            suffix,
+            elapsed,
+            rss_after,
+            rss_after - rss_before,
+        )
+
 
 # Register fonts (done once at module load)
 _fonts_registered: bool = False
@@ -335,6 +379,7 @@ class BaseComplianceReportGenerator(ABC):
         provider_obj: Provider | None = None,
         requirement_statistics: dict[str, dict[str, int]] | None = None,
         findings_cache: dict[str, list[FindingOutput]] | None = None,
+        prowler_provider: Any | None = None,
         **kwargs,
     ) -> None:
         """Generate the PDF compliance report.
@@ -351,23 +396,35 @@ class BaseComplianceReportGenerator(ABC):
             provider_obj: Optional pre-fetched Provider object
             requirement_statistics: Optional pre-aggregated statistics
             findings_cache: Optional pre-loaded findings cache
+            prowler_provider: Optional pre-initialized Prowler provider. When
+                generating multiple reports for the same scan the master
+                function initializes this once and passes it in to avoid
+                re-running boto3/Azure-SDK setup per framework.
             **kwargs: Additional framework-specific arguments
         """
+        framework = self.config.display_name
         logger.info(
-            "Generating %s report for scan %s", self.config.display_name, scan_id
+            "report_generation_start framework=%s scan_id=%s compliance_id=%s",
+            framework,
+            scan_id,
+            compliance_id,
         )
 
         try:
             # 1. Load compliance data
-            data = self._load_compliance_data(
-                tenant_id=tenant_id,
-                scan_id=scan_id,
-                compliance_id=compliance_id,
-                provider_id=provider_id,
-                provider_obj=provider_obj,
-                requirement_statistics=requirement_statistics,
-                findings_cache=findings_cache,
-            )
+            with _log_phase(
+                "load_compliance_data", scan_id=scan_id, framework=framework
+            ):
+                data = self._load_compliance_data(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    compliance_id=compliance_id,
+                    provider_id=provider_id,
+                    provider_obj=provider_obj,
+                    requirement_statistics=requirement_statistics,
+                    findings_cache=findings_cache,
+                    prowler_provider=prowler_provider,
+                )
 
             # 2. Create PDF document
             doc = self._create_document(output_path, data)
@@ -377,37 +434,54 @@ class BaseComplianceReportGenerator(ABC):
             elements = []
 
             # Cover page (lightweight)
-            elements.extend(self.create_cover_page(data))
-            elements.append(PageBreak())
+            with _log_phase("cover_page", scan_id=scan_id, framework=framework):
+                elements.extend(self.create_cover_page(data))
+                elements.append(PageBreak())
 
             # Executive summary (framework-specific)
-            elements.extend(self.create_executive_summary(data))
+            with _log_phase("executive_summary", scan_id=scan_id, framework=framework):
+                elements.extend(self.create_executive_summary(data))
 
             # Body sections (charts + requirements index)
             # Override _build_body_sections() in subclasses to change section order
-            elements.extend(self._build_body_sections(data))
+            with _log_phase("body_sections", scan_id=scan_id, framework=framework):
+                elements.extend(self._build_body_sections(data))
 
             # Detailed findings - heaviest section, loads findings on-demand
-            logger.info("Building detailed findings section...")
-            elements.extend(self.create_detailed_findings(data, **kwargs))
-            gc.collect()  # Free findings data after processing
+            with _log_phase("detailed_findings", scan_id=scan_id, framework=framework):
+                elements.extend(self.create_detailed_findings(data, **kwargs))
+                gc.collect()  # Free findings data after processing
 
             # 4. Build the PDF
-            logger.info("Building PDF document with %d elements...", len(elements))
-            self._build_pdf(doc, elements, data)
+            logger.info(
+                "doc_build_about_to_run framework=%s scan_id=%s elements=%d",
+                framework,
+                scan_id,
+                len(elements),
+            )
+            with _log_phase("doc_build", scan_id=scan_id, framework=framework):
+                self._build_pdf(doc, elements, data)
 
             # Final cleanup
             del elements
             gc.collect()
 
-            logger.info("Successfully generated report at %s", output_path)
+            logger.info(
+                "report_generation_end framework=%s scan_id=%s output_path=%s",
+                framework,
+                scan_id,
+                output_path,
+            )
 
-        except Exception as e:
-            import traceback
-
-            tb_lineno = e.__traceback__.tb_lineno if e.__traceback__ else "unknown"
-            logger.error("Error generating report, line %s -- %s", tb_lineno, e)
-            logger.error("Full traceback:\n%s", traceback.format_exc())
+        except Exception:
+            # logger.exception captures the full traceback; the contextual
+            # keys keep production search-by-scan-id viable.
+            logger.exception(
+                "report_generation_failed framework=%s scan_id=%s compliance_id=%s",
+                framework,
+                scan_id,
+                compliance_id,
+            )
             raise
 
     def _build_body_sections(self, data: ComplianceData) -> list:
@@ -638,15 +712,25 @@ class BaseComplianceReportGenerator(ABC):
         for req in requirements:
             check_ids_to_load.extend(req.checks)
 
-        # Load findings on-demand only for the checks that will be displayed
-        # Uses the shared findings cache to avoid duplicate queries across reports
+        # Load findings on-demand only for the checks that will be displayed.
+        # When ``only_failed`` is active at requirement level, also push the
+        # FAIL filter down to the finding level: a requirement marked FAIL
+        # because 1/1000 findings failed must not render a table dominated by
+        # 999 PASS rows. That hides the actual failure under noise and
+        # makes the per-check cap truncate the wrong rows.
+        # ``total_counts`` is populated with the pre-cap total per check_id
+        # (FAIL-only when only_failed is active) so the "Showing first N of
+        # M" banner uses the same denominator the reader cares about.
         logger.info("Loading findings on-demand for %d requirements", len(requirements))
+        total_counts: dict[str, int] = {}
         findings_by_check_id = _load_findings_for_requirement_checks(
             data.tenant_id,
             data.scan_id,
             check_ids_to_load,
             data.prowler_provider,
             data.findings_by_check_id,  # Pass the cache to update it
+            total_counts_out=total_counts,
+            only_failed_findings=only_failed,
         )
 
         for req in requirements:
@@ -678,9 +762,31 @@ class BaseComplianceReportGenerator(ABC):
                         )
                     )
                 else:
-                    # Create findings table
-                    findings_table = self._create_findings_table(findings)
-                    elements.append(findings_table)
+                    # Surface truncation BEFORE the tables so readers see it
+                    # at the same scroll position as the data itself, not
+                    # after thousands of rendered rows.
+                    loaded = len(findings)
+                    total = total_counts.get(check_id, loaded)
+                    if total > loaded:
+                        kind = "failed findings" if only_failed else "findings"
+                        elements.append(
+                            Paragraph(
+                                f"<b>&#9888; Showing first {loaded:,} of "
+                                f"{total:,} {kind} for this check.</b> "
+                                f"Use the CSV or JSON-OCSF export for the full "
+                                f"list. The PDF caps detail rows to keep "
+                                f"the report readable and bounded in size.",
+                                self.styles["normal"],
+                            )
+                        )
+                        elements.append(Spacer(1, 0.05 * inch))
+
+                    # Create chunked findings tables to prevent OOM when a
+                    # single check has thousands of findings (ReportLab
+                    # resolves layout per Flowable, so many small tables
+                    # render contiguously with a bounded memory peak).
+                    findings_tables = self._create_findings_tables(findings)
+                    elements.extend(findings_tables)
 
                 elements.append(Spacer(1, 0.1 * inch))
 
@@ -735,6 +841,7 @@ class BaseComplianceReportGenerator(ABC):
         provider_obj: Provider | None,
         requirement_statistics: dict | None,
         findings_cache: dict | None,
+        prowler_provider: Any | None = None,
     ) -> ComplianceData:
         """Load and aggregate compliance data from the database.
 
@@ -746,6 +853,9 @@ class BaseComplianceReportGenerator(ABC):
             provider_obj: Optional pre-fetched Provider
             requirement_statistics: Optional pre-aggregated statistics
             findings_cache: Optional pre-loaded findings
+            prowler_provider: Optional pre-initialized Prowler provider. When
+                the master function initializes it once and passes it in,
+                we skip the per-report ``initialize_prowler_provider`` call.
 
         Returns:
             Aggregated ComplianceData object
@@ -755,7 +865,8 @@ class BaseComplianceReportGenerator(ABC):
             if provider_obj is None:
                 provider_obj = Provider.objects.get(id=provider_id)
 
-            prowler_provider = initialize_prowler_provider(provider_obj)
+            if prowler_provider is None:
+                prowler_provider = initialize_prowler_provider(provider_obj)
             provider_type = provider_obj.provider
 
             # Load compliance framework
@@ -823,13 +934,32 @@ class BaseComplianceReportGenerator(ABC):
     ) -> SimpleDocTemplate:
         """Create the PDF document template.
 
+        Validates that ``output_path`` is a filesystem path string with an
+        existing parent directory. SimpleDocTemplate technically accepts a
+        BytesIO too, but we want every report to land on disk so the
+        Celery worker doesn't hold the full PDF in memory while uploading
+        to S3.
+
         Args:
             output_path: Path for the output PDF
             data: Compliance data for metadata
 
         Returns:
             Configured SimpleDocTemplate
+
+        Raises:
+            TypeError: ``output_path`` is not a string.
+            FileNotFoundError: The parent directory does not exist.
         """
+        if not isinstance(output_path, str):
+            raise TypeError(
+                "output_path must be a filesystem path string; "
+                f"got {type(output_path).__name__}"
+            )
+        parent_dir = os.path.dirname(output_path)
+        if parent_dir and not os.path.isdir(parent_dir):
+            raise FileNotFoundError(f"Output directory does not exist: {parent_dir}")
+
         return SimpleDocTemplate(
             output_path,
             pagesize=letter,
@@ -876,47 +1006,10 @@ class BaseComplianceReportGenerator(ABC):
             onLaterPages=add_footer,
         )
 
-    def _create_findings_table(self, findings: list[FindingOutput]) -> Any:
-        """Create a findings table.
-
-        Args:
-            findings: List of finding objects
-
-        Returns:
-            ReportLab Table element
-        """
-
-        def get_finding_title(f):
-            metadata = getattr(f, "metadata", None)
-            if metadata:
-                return getattr(metadata, "CheckTitle", getattr(f, "check_id", ""))
-            return getattr(f, "check_id", "")
-
-        def get_resource_name(f):
-            name = getattr(f, "resource_name", "")
-            if not name:
-                name = getattr(f, "resource_uid", "")
-            return name
-
-        def get_severity(f):
-            metadata = getattr(f, "metadata", None)
-            if metadata:
-                return getattr(metadata, "Severity", "").capitalize()
-            return ""
-
-        # Convert findings to dicts for the table
-        data = []
-        for f in findings:
-            item = {
-                "title": get_finding_title(f),
-                "resource_name": get_resource_name(f),
-                "severity": get_severity(f),
-                "status": getattr(f, "status", "").upper(),
-                "region": getattr(f, "region", "global"),
-            }
-            data.append(item)
-
-        columns = [
+    # Column layout shared by all findings sub-tables. Defined as a method so
+    # subclasses can override it without re-implementing the chunking logic.
+    def _findings_table_columns(self) -> list[ColumnConfig]:
+        return [
             ColumnConfig("Finding", 2.5 * inch, "title"),
             ColumnConfig("Resource", 3 * inch, "resource_name"),
             ColumnConfig("Severity", 0.9 * inch, "severity"),
@@ -924,9 +1017,122 @@ class BaseComplianceReportGenerator(ABC):
             ColumnConfig("Region", 0.9 * inch, "region"),
         ]
 
+    @staticmethod
+    def _finding_to_row(f: FindingOutput) -> dict[str, str]:
+        """Project a FindingOutput onto the row dict the table expects.
+
+        Kept defensive: missing metadata or attributes return empty strings
+        rather than raising, so a single malformed finding never breaks the
+        whole report.
+        """
+        metadata = getattr(f, "metadata", None)
+        title = (
+            getattr(metadata, "CheckTitle", getattr(f, "check_id", ""))
+            if metadata
+            else getattr(f, "check_id", "")
+        )
+        resource_name = getattr(f, "resource_name", "") or getattr(
+            f, "resource_uid", ""
+        )
+        severity = getattr(metadata, "Severity", "").capitalize() if metadata else ""
+        return {
+            "title": title,
+            "resource_name": resource_name,
+            "severity": severity,
+            "status": getattr(f, "status", "").upper(),
+            "region": getattr(f, "region", "global"),
+        }
+
+    def _create_findings_tables(
+        self,
+        findings: list[FindingOutput],
+        chunk_size: int | None = None,
+    ) -> list[Any]:
+        """Build a list of small findings tables to keep ``doc.build()`` memory bounded.
+
+        ReportLab resolves layout (column widths, row heights, page-breaks)
+        per Flowable. A single ``LongTable`` of 15k rows forces all of that
+        to be computed at once and reliably OOMs the worker on large scans.
+        Splitting into chunks of ``chunk_size`` rows produces an equivalent-
+        looking PDF (LongTable repeats headers; chunks render contiguously)
+        with a bounded memory peak per chunk.
+
+        Args:
+            findings: List of finding objects for a single check.
+            chunk_size: Rows per sub-table. ``None`` uses
+                ``FINDINGS_TABLE_CHUNK_SIZE`` from config.
+
+        Returns:
+            List of ReportLab flowables (interleaved ``Table``/``LongTable``
+            and small ``Spacer`` between chunks). Empty list when there are
+            no findings.
+        """
+        if not findings:
+            return []
+
+        chunk_size = chunk_size or FINDINGS_TABLE_CHUNK_SIZE
+
+        # Build all rows first so we can chunk without re-walking the
+        # FindingOutput list. Malformed findings are skipped with a logged
+        # exception, never enough to abort the entire report.
+        rows: list[dict[str, str]] = []
+        for f in findings:
+            try:
+                rows.append(self._finding_to_row(f))
+            except Exception:
+                logger.exception(
+                    "Skipping malformed finding while building table for check %s",
+                    getattr(f, "check_id", "unknown"),
+                )
+
+        if not rows:
+            return []
+
+        columns = self._findings_table_columns()
+
+        flowables: list = []
+        total = len(rows)
+        for start in range(0, total, chunk_size):
+            chunk = rows[start : start + chunk_size]
+            flowables.append(
+                create_data_table(
+                    data=chunk,
+                    columns=columns,
+                    header_color=self.config.primary_color,
+                    normal_style=self.styles["normal_center"],
+                )
+            )
+            # A tiny spacer between chunks keeps them visually contiguous
+            # without forcing a page-break (KeepTogether would negate the
+            # memory benefit of chunking).
+            if start + chunk_size < total:
+                flowables.append(Spacer(1, 0.05 * inch))
+
+        if total > chunk_size:
+            logger.debug(
+                "Built %d findings sub-tables (chunk_size=%d, total_findings=%d)",
+                (total + chunk_size - 1) // chunk_size,
+                chunk_size,
+                total,
+            )
+
+        return flowables
+
+    def _create_findings_table(self, findings: list[FindingOutput]) -> Any:
+        """Deprecated alias kept for backwards compatibility.
+
+        Returns the first chunk produced by ``_create_findings_tables``.
+        New callers MUST use ``_create_findings_tables``, which returns a
+        list of flowables and is what ``create_detailed_findings`` invokes.
+        """
+        flowables = self._create_findings_tables(findings)
+        if flowables:
+            return flowables[0]
+        # Empty input → return an empty (header-only) table so callers that
+        # used to receive a Table never get None.
         return create_data_table(
-            data=data,
-            columns=columns,
+            data=[],
+            columns=self._findings_table_columns(),
             header_color=self.config.primary_color,
             normal_style=self.styles["normal_center"],
         )

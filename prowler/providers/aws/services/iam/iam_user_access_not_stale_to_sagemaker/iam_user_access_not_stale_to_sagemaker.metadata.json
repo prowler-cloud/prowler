@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_user_access_not_stale_to_sagemaker",
+  "CheckTitle": "Regular SageMaker access ensures IAM users retain only actively used permissions",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsIamUser",
+  "ResourceGroup": "IAM",
+  "Description": "IAM users granted **SageMaker** permissions are evaluated for recent service usage.\n\nUsers whose last SageMaker access exceeds the configured threshold (default **90 days**) or that have **never** accessed SageMaker are flagged, indicating stale permissions that should be reviewed.",
+  "Risk": "Stale SageMaker permissions widen the **blast radius** of a credential compromise.\n\nAn attacker who gains access to a user with unused SageMaker permissions can access ML training data, models, endpoints, and notebooks — all without triggering expected usage patterns. Removing or scoping down stale permissions enforces least privilege and limits blast radius.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/security-iam.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#remove-credentials"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the IAM console and select the user\n2. Review the **Access Advisor** tab to confirm SageMaker has not been accessed recently\n3. Remove or detach any policies granting SageMaker permissions that are no longer needed\n4. If the user still requires SageMaker access, verify usage and reduce scope to least privilege",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Apply the **principle of least privilege** by regularly reviewing IAM Access Advisor data and revoking SageMaker permissions that are no longer actively used.\n\nEstablish a periodic access review process and automate alerts for stale permissions to maintain a minimal attack surface.",
+      "Url": "https://hub.prowler.com/check/iam_user_access_not_stale_to_sagemaker"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "iam_user_access_not_stale_to_bedrock"
+  ],
+  "Notes": "The staleness threshold is configurable via the `max_unused_sagemaker_access_days` audit config key (default: 90 days)."
+}

@@ -45,6 +45,10 @@ import {
 } from "@/components/shadcn/tooltip";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import {
+  ExternalResourceLink,
+  resolveExternalTarget,
+} from "@/components/shared/external-resource-link";
+import {
   QUERY_EDITOR_LANGUAGE,
   QueryCodeEditor,
   type QueryEditorLanguage,
@@ -69,7 +73,7 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { getRegionFlag } from "@/lib/region-flags";
-import { cn } from "@/lib/utils";
+import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
 
@@ -85,6 +89,10 @@ function stripCodeFences(code: string): string {
     .replace(/^```\w*\n?/, "")
     .replace(/\n?```\s*$/, "")
     .trim();
+}
+
+function isNonEmptyString(value: string | null | undefined): value is string {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function resolveNativeIacConfig(providerType: string | undefined): {
@@ -120,11 +128,13 @@ function renderRemediationCodeBlock({
   value,
   copyValue,
   language = QUERY_EDITOR_LANGUAGE.PLAIN_TEXT,
+  showLineNumbers = true,
 }: {
   label: string;
   value: string;
   copyValue?: string;
   language?: QueryEditorLanguage;
+  showLineNumbers?: boolean;
 }) {
   return (
     <QueryCodeEditor
@@ -135,6 +145,7 @@ function renderRemediationCodeBlock({
       editable={false}
       minHeight={96}
       showCopyButton
+      showLineNumbers={showLineNumbers}
       onChange={() => {}}
     />
   );
@@ -402,8 +413,6 @@ export function ResourceDetailDrawerContent({
   const resourceUid = currentResource?.resourceUid ?? f?.resourceUid;
   const resourceService = currentResource?.service ?? f?.resourceService;
   const resourceRegion = currentResource?.region ?? f?.resourceRegion;
-  const resourceGroup = currentResource?.resourceGroup ?? f?.resourceGroup;
-  const resourceType = currentResource?.resourceType ?? f?.resourceType;
   const resourceRegionLabel = resourceRegion || "-";
   const firstSeenAt = currentResource?.firstSeenAt ?? f?.firstSeenAt ?? null;
   const lastSeenAt = currentResource?.lastSeenAt ?? f?.updatedAt ?? null;
@@ -421,11 +430,33 @@ export function ResourceDetailDrawerContent({
   const regionFilter = searchParams.get("filter[region__in]");
   const nativeIacConfig = resolveNativeIacConfig(providerType);
   const showOverviewCheckMetaContent = showCheckMetaContent;
-  const showOverviewFindingContent = Boolean(f);
   const resourceDetailHref = f?.resourceId
     ? buildResourceDetailHref(f.resourceId)
     : null;
-  const overviewStatusExtended = f?.statusExtended;
+  const externalResourceTarget = resolveExternalTarget({
+    providerType,
+    resourceUid,
+    providerUid,
+    resourceName,
+    findingUid: f?.uid,
+    region: resourceRegion,
+  });
+  const hasIdAction = Boolean(externalResourceTarget);
+  const findingRecommendationUrl = f?.remediation.recommendation.url;
+  const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
+  const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
+    ? findingRecommendationUrl
+    : isNonEmptyString(checkRecommendationUrl)
+      ? checkRecommendationUrl
+      : null;
+  const recommendationLink = recommendationUrl
+    ? {
+        href: recommendationUrl,
+        label: getRecommendationLinkLabel(recommendationUrl),
+      }
+    : null;
+  const overviewStatusExtended =
+    currentResource?.statusExtended || f?.statusExtended;
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
 
   const handleOpenCompliance = async (framework: string) => {
@@ -657,83 +688,95 @@ export function ResourceDetailDrawerContent({
           <>
             <div className="flex items-start gap-4">
               {/* Resource info grid — 4 data columns */}
-              <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
-                {/* Row 1: Account, Resource, Service, Region */}
-                <EntityInfo
-                  cloudProvider={providerType}
-                  nameIcon={<Box className="size-4" />}
-                  entityAlias={providerAlias}
-                  entityId={providerUid}
-                />
-                <EntityInfo
-                  nameIcon={<Container className="size-4" />}
-                  entityAlias={resourceName}
-                  entityId={resourceUid}
-                  idLabel="UID"
-                />
-                <InfoField label="Service" variant="compact">
-                  {resourceService}
-                </InfoField>
-                <InfoField label="Region" variant="compact">
-                  <span className="flex items-center gap-1.5">
-                    {getRegionFlag(resourceRegionLabel) && (
-                      <span className="translate-y-px text-base leading-none">
-                        {getRegionFlag(resourceRegionLabel)}
-                      </span>
-                    )}
-                    {resourceRegionLabel}
-                  </span>
-                </InfoField>
-
-                {/* Row 2: Dates */}
-                <InfoField label="Last detected" variant="compact">
-                  <DateWithTime inline dateTime={lastSeenAt || "-"} />
-                </InfoField>
-                <InfoField label="First seen" variant="compact">
-                  <DateWithTime inline dateTime={firstSeenAt || "-"} />
-                </InfoField>
-                <InfoField label="Failing for" variant="compact">
-                  {getFailingForLabel(firstSeenAt) || "-"}
-                </InfoField>
-                <InfoField label="Group" variant="compact">
-                  {resourceGroup || "-"}
-                </InfoField>
-
-                {/* Row 3: IDs */}
-                <InfoField label="Check ID" variant="compact">
-                  <CodeSnippet
-                    value={currentResource?.checkId ?? checkMeta.checkId}
-                    transparent
-                    className="max-w-full text-sm"
-                  />
-                </InfoField>
-                <InfoField label="Finding ID" variant="compact">
-                  {currentResource?.findingId || f?.id ? (
-                    <CodeSnippet
-                      value={currentResource?.findingId ?? f?.id ?? "-"}
-                      transparent
-                      className="max-w-full text-sm"
+              <div className="@container flex min-w-0 flex-1 flex-col gap-4">
+                {/* Row 1: Provider (cols 1-2), Resource (cols 3-5) */}
+                <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-5 @md:gap-x-8">
+                  <div className="flex min-w-0 flex-col gap-1 @md:col-span-2">
+                    <span className="text-text-neutral-secondary text-[10px] whitespace-nowrap">
+                      Provider
+                    </span>
+                    <EntityInfo
+                      cloudProvider={providerType}
+                      nameIcon={<Box className="size-4" />}
+                      entityAlias={providerAlias}
+                      entityId={providerUid}
                     />
-                  ) : (
-                    <Skeleton className="h-5 w-28 rounded" />
-                  )}
-                </InfoField>
-                <InfoField label="Finding UID" variant="compact">
-                  {f?.uid ? (
-                    <CodeSnippet
-                      value={f.uid}
-                      transparent
-                      className="max-w-full text-sm"
+                  </div>
+                  <div className="flex min-w-0 flex-col gap-1 @md:col-span-3">
+                    <span className="text-text-neutral-secondary text-[10px] whitespace-nowrap">
+                      Resource
+                    </span>
+                    <EntityInfo
+                      nameIcon={<Container className="size-4" />}
+                      entityAlias={resourceName}
+                      entityId={resourceUid}
+                      idLabel="UID"
+                      nameAction={
+                        resourceDetailHref ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="link" size="link-sm" asChild>
+                                <Link
+                                  href={resourceDetailHref}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  prefetch={false}
+                                >
+                                  <span className="sr-only">View Resource</span>
+                                  <ExternalLink
+                                    className="size-3"
+                                    aria-hidden="true"
+                                  />
+                                </Link>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              View Resource
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : undefined
+                      }
+                      idAction={
+                        hasIdAction ? (
+                          <ExternalResourceLink
+                            providerType={providerType}
+                            resourceUid={resourceUid}
+                            providerUid={providerUid}
+                            resourceName={resourceName}
+                            findingUid={f?.uid}
+                            region={resourceRegion}
+                          />
+                        ) : undefined
+                      }
                     />
-                  ) : (
-                    <Skeleton className="h-5 w-36 rounded" />
-                  )}
-                </InfoField>
+                  </div>
+                </div>
 
-                {/* Row 4: Resource metadata */}
-                <InfoField label="Resource type" variant="compact">
-                  {resourceType || "-"}
-                </InfoField>
+                {/* Row 2: Last detected, First seen, Failing for, Service, Region */}
+                <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-5 @md:gap-x-8">
+                  <InfoField label="Last detected" variant="compact">
+                    <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                  </InfoField>
+                  <InfoField label="First seen" variant="compact">
+                    <DateWithTime inline dateTime={firstSeenAt || "-"} />
+                  </InfoField>
+                  <InfoField label="Failing for" variant="compact">
+                    {getFailingForLabel(firstSeenAt) || "-"}
+                  </InfoField>
+                  <InfoField label="Service" variant="compact">
+                    {resourceService}
+                  </InfoField>
+                  <InfoField label="Region" variant="compact">
+                    <span className="flex items-center gap-1.5">
+                      {getRegionFlag(resourceRegionLabel) && (
+                        <span className="translate-y-px text-base leading-none">
+                          {getRegionFlag(resourceRegionLabel)}
+                        </span>
+                      )}
+                      {resourceRegionLabel}
+                    </span>
+                  </InfoField>
+                </div>
               </div>
 
               {/* Actions button — fixed size, aligned with row 1 */}
@@ -767,19 +810,28 @@ export function ResourceDetailDrawerContent({
               </div>
             </div>
 
-            {resourceDetailHref && (
-              <div className="border-border-neutral-secondary flex justify-end border-t pt-3">
-                <Button variant="link" size="link-sm" asChild>
-                  <Link
-                    href={resourceDetailHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View Resource
-                    <ExternalLink className="size-3" />
-                  </Link>
-                </Button>
-              </div>
+            {/* Status Extended — context below the resource */}
+            {showOverviewStatusExtended && (
+              <Card
+                variant={
+                  findingStatus === "PASS"
+                    ? "success"
+                    : findingStatus === "MANUAL"
+                      ? "warning"
+                      : "danger"
+                }
+                className={
+                  findingStatus === "MUTED"
+                    ? "border-border-neutral-tertiary bg-bg-neutral-tertiary"
+                    : findingStatus === "MANUAL"
+                      ? "bg-orange-100 dark:bg-[color-mix(in_oklch,var(--bg-warning-secondary)_90%,white)]"
+                      : undefined
+                }
+              >
+                <p className="text-text-neutral-primary text-sm leading-relaxed break-words">
+                  {overviewStatusExtended}
+                </p>
+              </Card>
             )}
           </>
         )}
@@ -792,8 +844,9 @@ export function ResourceDetailDrawerContent({
           <div className="mb-4 flex items-center justify-between">
             <TabsList>
               <TabsTrigger value="overview">Finding Overview</TabsTrigger>
+              <TabsTrigger value="remediation">Remediation</TabsTrigger>
               <TabsTrigger value="other-findings">
-                Other Findings For This Resource
+                Findings for this resource
               </TabsTrigger>
               <TabsTrigger value="scans">Scans</TabsTrigger>
               <TabsTrigger value="events">Events</TabsTrigger>
@@ -807,127 +860,26 @@ export function ResourceDetailDrawerContent({
           >
             {showOverviewCheckMetaContent ? (
               <>
-                {/* Card 1: Risk + Description + Status Extended */}
-                {(checkMeta.risk ||
-                  checkMeta.description ||
-                  showOverviewFindingContent) && (
-                  <Card variant="inner">
-                    {checkMeta.risk && (
-                      <Card variant="danger">
-                        <span className="text-text-neutral-secondary text-sm font-semibold">
-                          Risk:
-                        </span>
-                        <MarkdownContainer>{checkMeta.risk}</MarkdownContainer>
-                      </Card>
-                    )}
-                    {checkMeta.description && (
-                      <div
-                        className={cn(
-                          "flex flex-col gap-1",
-                          showOverviewStatusExtended &&
-                            "border-default-200 border-b pb-4",
-                        )}
-                      >
-                        <span className="text-text-neutral-secondary text-sm font-semibold">
-                          Description:
-                        </span>
-                        <MarkdownContainer>
-                          {checkMeta.description}
-                        </MarkdownContainer>
-                      </div>
-                    )}
-                    {showOverviewFindingContent &&
-                      showOverviewStatusExtended && (
-                        <div className="flex flex-col gap-1">
-                          <span className="text-text-neutral-secondary text-sm font-semibold">
-                            Status Extended:
-                          </span>
-                          <p className="text-text-neutral-primary text-sm">
-                            {overviewStatusExtended}
-                          </p>
-                        </div>
-                      )}
-                  </Card>
+                {/* Risk */}
+                {checkMeta.risk && (
+                  <div className="border-border-neutral-primary flex flex-col gap-1 border-l-4 pl-3">
+                    <span className="text-text-neutral-primary text-sm font-semibold">
+                      Risk:
+                    </span>
+                    <MarkdownContainer>{checkMeta.risk}</MarkdownContainer>
+                  </div>
                 )}
 
-                {/* Card 2: Remediation + Commands */}
-                {(checkMeta.remediation.recommendation.text ||
-                  checkMeta.remediation.code.cli ||
-                  checkMeta.remediation.code.terraform ||
-                  checkMeta.remediation.code.nativeiac) && (
-                  <Card variant="inner">
-                    {checkMeta.remediation.recommendation.text && (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-text-neutral-secondary text-xs">
-                          Remediation:
-                        </span>
-                        <div className="flex items-start gap-3">
-                          <div className="text-text-neutral-primary flex-1 text-sm">
-                            <MarkdownContainer>
-                              {checkMeta.remediation.recommendation.text}
-                            </MarkdownContainer>
-                          </div>
-                          {checkMeta.remediation.recommendation.url && (
-                            <CustomLink
-                              href={checkMeta.remediation.recommendation.url}
-                              size="sm"
-                              className="shrink-0"
-                            >
-                              View in Prowler Hub
-                            </CustomLink>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {checkMeta.remediation.code.cli && (
-                      <div className="flex flex-col gap-1">
-                        {renderRemediationCodeBlock({
-                          label: "CLI Command",
-                          language: QUERY_EDITOR_LANGUAGE.SHELL,
-                          value: `$ ${stripCodeFences(checkMeta.remediation.code.cli)}`,
-                          copyValue: stripCodeFences(
-                            checkMeta.remediation.code.cli,
-                          ),
-                        })}
-                      </div>
-                    )}
-
-                    {checkMeta.remediation.code.terraform && (
-                      <div className="flex flex-col gap-1">
-                        {renderRemediationCodeBlock({
-                          label: "Terraform",
-                          language: QUERY_EDITOR_LANGUAGE.HCL,
-                          value: stripCodeFences(
-                            checkMeta.remediation.code.terraform,
-                          ),
-                        })}
-                      </div>
-                    )}
-
-                    {checkMeta.remediation.code.nativeiac && providerType && (
-                      <div className="flex flex-col gap-1">
-                        {renderRemediationCodeBlock({
-                          label: nativeIacConfig.label,
-                          language: nativeIacConfig.language,
-                          value: stripCodeFences(
-                            checkMeta.remediation.code.nativeiac,
-                          ),
-                        })}
-                      </div>
-                    )}
-
-                    {checkMeta.remediation.code.other && (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-text-neutral-secondary text-xs">
-                          Remediation Steps:
-                        </span>
-                        <MarkdownContainer>
-                          {checkMeta.remediation.code.other}
-                        </MarkdownContainer>
-                      </div>
-                    )}
-                  </Card>
+                {/* Description */}
+                {checkMeta.description && (
+                  <div className="flex flex-col gap-1 px-1">
+                    <span className="text-text-neutral-primary text-sm font-semibold">
+                      Description:
+                    </span>
+                    <MarkdownContainer>
+                      {checkMeta.description}
+                    </MarkdownContainer>
+                  </div>
                 )}
 
                 {checkMeta.additionalUrls.length > 0 && (
@@ -973,13 +925,154 @@ export function ResourceDetailDrawerContent({
                     </div>
                   </Card>
                 )}
+
+                {/* IDs */}
+                <Card variant="inner">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-x-6">
+                    <InfoField label="Check ID" variant="compact">
+                      <CodeSnippet
+                        value={currentResource?.checkId ?? checkMeta.checkId}
+                        transparent
+                        className="max-w-full text-sm"
+                      />
+                    </InfoField>
+                    <InfoField label="Finding ID" variant="compact">
+                      {currentResource?.findingId || f?.id ? (
+                        <CodeSnippet
+                          value={currentResource?.findingId ?? f?.id ?? "-"}
+                          transparent
+                          className="max-w-full text-sm"
+                        />
+                      ) : (
+                        <Skeleton className="h-5 w-28 rounded" />
+                      )}
+                    </InfoField>
+                    <InfoField label="Finding UID" variant="compact">
+                      {f?.uid ? (
+                        <CodeSnippet
+                          value={f.uid}
+                          transparent
+                          className="max-w-full text-sm"
+                        />
+                      ) : (
+                        <Skeleton className="h-5 w-36 rounded" />
+                      )}
+                    </InfoField>
+                  </div>
+                </Card>
               </>
             ) : (
               <OverviewNavigationSkeleton />
             )}
           </TabsContent>
 
-          {/* Other Findings For This Resource */}
+          {/* Remediation */}
+          <TabsContent
+            value="remediation"
+            className="minimal-scrollbar flex flex-col gap-4 overflow-y-auto"
+          >
+            {showOverviewCheckMetaContent ? (
+              checkMeta.remediation.recommendation.text ||
+              recommendationLink ||
+              checkMeta.remediation.code.cli ||
+              checkMeta.remediation.code.terraform ||
+              checkMeta.remediation.code.nativeiac ||
+              checkMeta.remediation.code.other ? (
+                <>
+                  {(checkMeta.remediation.recommendation.text ||
+                    recommendationLink) && (
+                    <div className="flex flex-col gap-1 px-1">
+                      <span className="text-text-neutral-primary text-sm font-semibold">
+                        Remediation:
+                      </span>
+                      <div className="flex items-start gap-3">
+                        {checkMeta.remediation.recommendation.text && (
+                          <div className="text-text-neutral-primary flex-1 text-sm">
+                            <MarkdownContainer>
+                              {checkMeta.remediation.recommendation.text}
+                            </MarkdownContainer>
+                          </div>
+                        )}
+                        {recommendationLink && (
+                          <CustomLink
+                            href={recommendationLink.href}
+                            size="sm"
+                            className="shrink-0"
+                          >
+                            {recommendationLink.label}
+                          </CustomLink>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {(checkMeta.remediation.code.cli ||
+                    checkMeta.remediation.code.terraform ||
+                    checkMeta.remediation.code.nativeiac ||
+                    checkMeta.remediation.code.other) && (
+                    <Card variant="inner">
+                      {checkMeta.remediation.code.cli && (
+                        <div className="flex flex-col gap-1">
+                          {renderRemediationCodeBlock({
+                            label: "CLI Command",
+                            language: QUERY_EDITOR_LANGUAGE.SHELL,
+                            value: `$ ${stripCodeFences(checkMeta.remediation.code.cli)}`,
+                            copyValue: stripCodeFences(
+                              checkMeta.remediation.code.cli,
+                            ),
+                            showLineNumbers: false,
+                          })}
+                        </div>
+                      )}
+
+                      {checkMeta.remediation.code.terraform && (
+                        <div className="flex flex-col gap-1">
+                          {renderRemediationCodeBlock({
+                            label: "Terraform",
+                            language: QUERY_EDITOR_LANGUAGE.HCL,
+                            value: stripCodeFences(
+                              checkMeta.remediation.code.terraform,
+                            ),
+                          })}
+                        </div>
+                      )}
+
+                      {checkMeta.remediation.code.nativeiac && providerType && (
+                        <div className="flex flex-col gap-1">
+                          {renderRemediationCodeBlock({
+                            label: nativeIacConfig.label,
+                            language: nativeIacConfig.language,
+                            value: stripCodeFences(
+                              checkMeta.remediation.code.nativeiac,
+                            ),
+                          })}
+                        </div>
+                      )}
+
+                      {checkMeta.remediation.code.other && (
+                        <div className="flex flex-col gap-1">
+                          <span className="text-text-neutral-secondary text-xs">
+                            Remediation Steps:
+                          </span>
+                          <MarkdownContainer>
+                            {checkMeta.remediation.code.other}
+                          </MarkdownContainer>
+                        </div>
+                      )}
+                    </Card>
+                  )}
+                </>
+              ) : (
+                <p className="text-text-neutral-tertiary text-sm">
+                  No remediation guidance available for this check.
+                </p>
+              )
+            ) : (
+              <OverviewNavigationSkeleton testId="remediation-navigation-skeleton" />
+            )}
+          </TabsContent>
+
+          {/* Findings for this resource */}
           <TabsContent
             value="other-findings"
             className="minimal-scrollbar flex flex-col gap-2 overflow-y-auto"
@@ -1112,7 +1205,7 @@ export function ResourceDetailDrawerContent({
                       : "-"}
                   </InfoField>
                 </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <InfoField label="Started At" variant="compact">
                     <DateWithTime inline dateTime={f?.scan?.startedAt || "-"} />
                   </InfoField>
@@ -1122,8 +1215,6 @@ export function ResourceDetailDrawerContent({
                       dateTime={f?.scan?.completedAt || "-"}
                     />
                   </InfoField>
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <InfoField label="Launched At" variant="compact">
                     <DateWithTime
                       inline
@@ -1176,11 +1267,11 @@ export function ResourceDetailDrawerContent({
   );
 }
 
-function OverviewNavigationSkeleton() {
+function OverviewNavigationSkeleton({ testId }: { testId?: string } = {}) {
   return (
     <div
       className="flex flex-col gap-4"
-      data-testid="overview-navigation-skeleton"
+      data-testid={testId ?? "overview-navigation-skeleton"}
     >
       <Card variant="inner">
         <OverviewCardSkeleton lineWidths={["w-24", "w-full", "w-5/6"]} />
@@ -1262,8 +1353,9 @@ function ScansNavigationSkeleton() {
         labels={["Scan Name", "Resources Scanned", "Progress"]}
       />
       <ScansInfoGridSkeleton labels={["Trigger", "State", "Duration"]} />
-      <ScansInfoGridSkeleton labels={["Started At", "Completed At"]} />
-      <ScansInfoGridSkeleton labels={["Launched At", "Scheduled At"]} />
+      <ScansInfoGridSkeleton
+        labels={["Started At", "Completed At", "Launched At"]}
+      />
     </div>
   );
 }

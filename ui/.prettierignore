@@ -1,1 +1,19 @@
+# Dependencies
 node_modules/
+
+# Build outputs
+.next/
+.now/
+build/
+coverage/
+dist/
+esm/
+
+# Generated files
+next-env.d.ts
+public/mockServiceWorker.js
+
+# Lockfiles
+package-lock.json
+pnpm-lock.yaml
+yarn.lock

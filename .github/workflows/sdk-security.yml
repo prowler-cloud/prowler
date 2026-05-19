@@ -9,10 +9,12 @@ on:
       - 'prowler/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - '.github/workflows/sdk-tests.yml'
       - '.github/workflows/sdk-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
+      - '.github/actions/osv-scanner/**'
+      - '.github/scripts/osv-scan.sh'
   pull_request:
     branches:
       - 'master'
@@ -21,10 +23,12 @@ on:
       - 'prowler/**'
       - 'tests/**'
       - 'pyproject.toml'
-      - 'poetry.lock'
+      - 'uv.lock'
       - '.github/workflows/sdk-tests.yml'
       - '.github/workflows/sdk-security.yml'
-      - '.github/actions/setup-python-poetry/**'
+      - '.github/actions/setup-python-uv/**'
+      - '.github/actions/osv-scanner/**'
+      - '.github/scripts/osv-scan.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -39,6 +43,7 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      pull-requests: write # osv-scanner action posts/updates a PR comment with findings
 
     steps:
       - name: Harden Runner
@@ -49,10 +54,12 @@ jobs:
             pypi.org:443
             files.pythonhosted.org:443
             github.com:443
-            auth.safetycli.com:443
-            pyup.io:443
-            data.safetycli.com:443
             api.github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            api.osv.dev:443
+            api.deps.dev:443
+            osv-vulnerabilities.storage.googleapis.com:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -87,21 +94,23 @@ jobs:
             contrib/**
             **/AGENTS.md
 
-      - name: Setup Python with Poetry
+      - name: Setup Python with uv
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: ./.github/actions/setup-python-poetry
+        uses: ./.github/actions/setup-python-uv
         with:
           python-version: '3.12'
 
       - name: Security scan with Bandit
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run bandit -q -lll -x '*_test.py,./contrib/,./api/,./ui' -r .
+        run: uv run bandit -q -lll -x '*_test.py,./.venv/,./contrib/,./api/,./ui' -r .
 
-      - name: Security scan with Safety
+      - name: Dependency vulnerability scan with osv-scanner
         if: steps.check-changes.outputs.any_changed == 'true'
-        # Accepted CVEs, severity threshold, and ignore expirations live in .safety-policy.yml
-        run: poetry run safety check -r pyproject.toml --policy-file .safety-policy.yml
+        uses: ./.github/actions/osv-scanner
+        with:
+          lockfile: uv.lock
 
       - name: Dead code detection with Vulture
-        if: steps.check-changes.outputs.any_changed == 'true'
-        run: poetry run vulture --exclude "contrib,api,ui" --min-confidence 100 .
+        # Run even when osv-scanner reports findings so dead-code signal isn't masked by SCA failures.
+        if: ${{ !cancelled() && steps.check-changes.outputs.any_changed == 'true' }}
+        run: uv run vulture --exclude ".venv,contrib,api,ui" --min-confidence 100 .

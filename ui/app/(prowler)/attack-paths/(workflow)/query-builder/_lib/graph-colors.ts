@@ -54,8 +54,8 @@ export const GRAPH_NODE_BORDER_COLORS = {
 // Edge colors per theme
 export const GRAPH_EDGE_COLOR_DARK = "#ffffff"; // White for dark theme
 export const GRAPH_EDGE_COLOR_LIGHT = "#1e293b"; // Slate 800 for light theme
-export const GRAPH_EDGE_HIGHLIGHT_COLOR = "#f97316"; // Orange 500 (on hover)
-export const GRAPH_EDGE_GLOW_COLOR = "#fb923c";
+export const GRAPH_EDGE_HIGHLIGHT_COLOR = "#34d399"; // Prowler green (hover/selection)
+export const GRAPH_EDGE_GLOW_COLOR = "#6ee7b7";
 export const GRAPH_SELECTION_COLOR = "#ffffff";
 export const GRAPH_BORDER_COLOR = "#374151";
 export const GRAPH_ALERT_BORDER_COLOR = "#ef4444"; // Red 500 - for resources with findings
@@ -126,6 +126,37 @@ export const getNodeBorderColor = (
     return GRAPH_NODE_BORDER_COLORS.securityGroup;
 
   return GRAPH_NODE_BORDER_COLORS.default;
+};
+
+interface ResolveNodeColorsParams {
+  labels: string[];
+  properties?: Record<string, unknown>;
+  selected?: boolean;
+  hasFindings?: boolean;
+}
+
+interface NodeColorResult {
+  fillColor: string;
+  borderColor: string;
+}
+
+/**
+ * Resolve fill and border colors for a graph node, layering selection and
+ * finding-alert state on top of the label/severity defaults.
+ */
+export const resolveNodeColors = ({
+  labels,
+  properties,
+  selected,
+  hasFindings,
+}: ResolveNodeColorsParams): NodeColorResult => {
+  const fillColor = getNodeColor(labels, properties);
+  const borderColor = selected
+    ? GRAPH_EDGE_HIGHLIGHT_COLOR
+    : hasFindings
+      ? GRAPH_ALERT_BORDER_COLOR
+      : getNodeBorderColor(labels, properties);
+  return { fillColor, borderColor };
 };
 
 /**

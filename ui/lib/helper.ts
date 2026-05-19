@@ -399,6 +399,11 @@ export const permissionFormFields: PermissionInfo[] = [
     label: "Manage Scans",
     description: "Allows launching and configuring scans security scans",
   },
+  {
+    field: "manage_alerts",
+    label: "Manage Alerts",
+    description: "Allows creating and managing custom alerts",
+  },
 
   {
     field: "manage_billing",

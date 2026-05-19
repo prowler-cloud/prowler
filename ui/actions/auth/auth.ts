@@ -172,6 +172,7 @@ export const getUserByMe = async (accessToken: string) => {
       manage_scans: userRole.attributes.manage_scans || false,
       manage_integrations: userRole.attributes.manage_integrations || false,
       manage_billing: userRole.attributes.manage_billing || false,
+      manage_alerts: userRole.attributes.manage_alerts || false,
       unlimited_visibility: userRole.attributes.unlimited_visibility || false,
     };
 

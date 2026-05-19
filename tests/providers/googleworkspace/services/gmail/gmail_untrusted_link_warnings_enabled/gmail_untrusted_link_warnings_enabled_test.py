@@ -3,7 +3,6 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.gmail.gmail_service import GmailPolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
-    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -37,7 +36,7 @@ class TestGmailUntrustedLinkWarningsEnabled:
             assert len(findings) == 1
             assert findings[0].status == "PASS"
             assert "enabled" in findings[0].status_extended
-            assert findings[0].resource_name == DOMAIN
+            assert findings[0].resource_name == "Gmail Policies"
             assert findings[0].customer_id == CUSTOMER_ID
 
     def test_fail_disabled(self):
@@ -69,7 +68,7 @@ class TestGmailUntrustedLinkWarningsEnabled:
             assert findings[0].status == "FAIL"
             assert "disabled" in findings[0].status_extended
 
-    def test_pass_using_default(self):
+    def test_fail_insecure_default(self):
         mock_provider = set_mocked_googleworkspace_provider()
 
         with (
@@ -95,8 +94,8 @@ class TestGmailUntrustedLinkWarningsEnabled:
             findings = check.execute()
 
             assert len(findings) == 1
-            assert findings[0].status == "PASS"
-            assert "secure default" in findings[0].status_extended
+            assert findings[0].status == "FAIL"
+            assert "insecure default" in findings[0].status_extended
 
     def test_no_findings_when_fetch_failed(self):
         mock_provider = set_mocked_googleworkspace_provider()

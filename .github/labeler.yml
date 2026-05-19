@@ -72,6 +72,11 @@ provider/vercel:
       - any-glob-to-any-file: "prowler/providers/vercel/**"
       - any-glob-to-any-file: "tests/providers/vercel/**"
 
+provider/okta:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/okta/**"
+      - any-glob-to-any-file: "tests/providers/okta/**"
+
 github_actions:
   - changed-files:
       - any-glob-to-any-file: ".github/workflows/*"
@@ -109,6 +114,8 @@ mutelist:
       - any-glob-to-any-file: "tests/providers/googleworkspace/lib/mutelist/**"
       - any-glob-to-any-file: "prowler/providers/vercel/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/vercel/lib/mutelist/**"
+      - any-glob-to-any-file: "prowler/providers/okta/lib/mutelist/**"
+      - any-glob-to-any-file: "tests/providers/okta/lib/mutelist/**"
 
 integration/s3:
   - changed-files:

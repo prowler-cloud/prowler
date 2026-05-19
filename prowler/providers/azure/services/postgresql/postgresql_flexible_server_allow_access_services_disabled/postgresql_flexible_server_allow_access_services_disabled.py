@@ -11,17 +11,20 @@ class postgresql_flexible_server_allow_access_services_disabled(Check):
             subscription,
             flexible_servers,
         ) in postgresql_client.flexible_servers.items():
+            subscription_name = postgresql_client.subscriptions.get(
+                subscription, subscription
+            )
             for server in flexible_servers:
                 report = Check_Report_Azure(metadata=self.metadata(), resource=server)
                 report.subscription = subscription
                 report.status = "FAIL"
-                report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has allow public access from any Azure service enabled"
+                report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription_name} ({subscription}) has allow public access from any Azure service enabled"
                 if not any(
                     rule.start_ip == "0.0.0.0" and rule.end_ip == "0.0.0.0"
                     for rule in server.firewall
                 ):
                     report.status = "PASS"
-                    report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has allow public access from any Azure service disabled"
+                    report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription_name} ({subscription}) has allow public access from any Azure service disabled"
                 findings.append(report)
 
         return findings
