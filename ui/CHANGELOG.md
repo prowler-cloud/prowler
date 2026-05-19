@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Dark mode: pure-black canvas, pure-white primary text, and brighter border / input tokens for clearer separation between cards, tables, and inputs [(#11073)](https://github.com/prowler-cloud/prowler/pull/11073)
+- CI workflows (`ui-tests.yml`, `ui-e2e-tests-v2.yml`) now read the Node version from `ui/.nvmrc` and the pnpm version from `package.json#packageManager` instead of hardcoded values [(#11225)](https://github.com/prowler-cloud/prowler/pull/11225)
 
 ### 🐞 Fixed
 
