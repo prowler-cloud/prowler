@@ -12,6 +12,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Compliance page now loads the most recent scan when opened from the sidebar instead of showing the "no compliance data available" alert [(#11374)](https://github.com/prowler-cloud/prowler/pull/11374)
 
+### 🔐 Security
+
+- `pnpm` upgraded to 11 with supply-chain defaults consolidated in `pnpm-workspace.yaml` and `trustPolicyExclude` entries pinned to exact versions [(#11225)](https://github.com/prowler-cloud/prowler/pull/11225)
+
 ---
 
 ## [1.28.1] (Prowler v5.28.1)
