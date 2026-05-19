@@ -53,4 +53,8 @@ jobs:
 
       - name: Run markdownlint
         # Pin must match .pre-commit-config.yaml so prek and CI behave identically.
-        run: pnpm dlx --ignore-scripts markdownlint-cli@0.45.0 '**/*.md'
+        # pnpm dlx doesn't accept --ignore-scripts as a flag; the env var
+        # disables postinstall scripts on transitives the same way.
+        env:
+          pnpm_config_ignore_scripts: 'true'
+        run: pnpm dlx markdownlint-cli@0.45.0 '**/*.md'
