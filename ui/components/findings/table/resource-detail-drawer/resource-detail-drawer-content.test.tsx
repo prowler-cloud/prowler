@@ -46,10 +46,12 @@ vi.mock("next/link", () => ({
   default: ({
     children,
     href,
+    prefetch: _prefetch,
     ...props
   }: AnchorHTMLAttributes<HTMLAnchorElement> & {
     children: ReactNode;
     href: string;
+    prefetch?: boolean;
   }) => (
     <a href={href} {...props}>
       {children}
@@ -288,8 +290,21 @@ vi.mock("@/components/ui/entities/date-with-time", () => ({
 }));
 
 vi.mock("@/components/ui/entities/entity-info", () => ({
-  EntityInfo: ({ idAction }: { idAction?: ReactNode }) =>
-    idAction ? <span data-testid="entity-id-action">{idAction}</span> : null,
+  EntityInfo: ({
+    nameAction,
+    idAction,
+  }: {
+    nameAction?: ReactNode;
+    idAction?: ReactNode;
+  }) =>
+    nameAction || idAction ? (
+      <span>
+        {nameAction && (
+          <span data-testid="entity-name-action">{nameAction}</span>
+        )}
+        {idAction && <span data-testid="entity-id-action">{idAction}</span>}
+      </span>
+    ) : null,
 }));
 
 vi.mock("@/components/ui/table", () => ({
@@ -428,7 +443,7 @@ const mockFinding: ResourceDrawerFinding = {
 };
 
 describe("ResourceDetailDrawerContent — resource navigation", () => {
-  it("should render a View Resource link inline next to the resource UID", () => {
+  it("should render an icon-only View Resource link next to the resource name", () => {
     // Given
     render(
       <ResourceDetailDrawerContent
@@ -457,6 +472,12 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
     );
     expect(viewResourceLink).toHaveAttribute("target", "_blank");
     expect(viewResourceLink).toHaveAttribute("rel", "noopener noreferrer");
+    // Icon-only: accessible name comes from an sr-only span, not from an
+    // aria-label attribute, so the text lives in the DOM (more semantic).
+    expect(viewResourceLink).toHaveAccessibleName("View Resource");
+    expect(viewResourceLink).not.toHaveAttribute("aria-label");
+    const srOnlyLabel = viewResourceLink.querySelector(".sr-only");
+    expect(srOnlyLabel).toHaveTextContent("View Resource");
   });
 });
 const mockResourceRow: FindingResourceRow = {

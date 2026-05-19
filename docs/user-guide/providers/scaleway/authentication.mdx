@@ -1,0 +1,37 @@
+---
+title: 'Scaleway Authentication in Prowler'
+---
+
+Prowler authenticates to Scaleway using a **Scaleway API key** (access key + secret key). The integration is read-only and only needs permission to list IAM users and API keys in the audited organization.
+
+## Prerequisites
+
+1. A Scaleway organization with IAM access.
+2. A Scaleway API key with at least the `IAMReadOnly` policy bound to a dedicated IAM user (do not use the account root user).
+3. Your organization ID (visible at the top right of the Scaleway console).
+
+## Authentication Method
+
+Prowler reads credentials **exclusively** from the standard Scaleway environment variables. There are no credential CLI flags, so secrets are never exposed in shell history or process listings.
+
+| Variable | Purpose |
+|---|---|
+| `SCW_ACCESS_KEY` | API key access key |
+| `SCW_SECRET_KEY` | API key secret key |
+| `SCW_DEFAULT_ORGANIZATION_ID` | Optional, required when the key bearer is an application |
+| `SCW_DEFAULT_PROJECT_ID` | Optional, default project for project-scoped resources |
+| `SCW_DEFAULT_REGION` | Optional, defaults to `fr-par` |
+
+The scope variables can also be passed as CLI flags (`--organization-id`, `--project-id`, `--region`), which override the corresponding environment variables.
+
+```bash
+export SCW_ACCESS_KEY="SCW..."
+export SCW_SECRET_KEY="..."
+export SCW_DEFAULT_ORGANIZATION_ID="..."
+
+prowler scaleway
+```
+
+## Required Scaleway Permissions
+
+The API key bearer needs read access to the IAM API in order to list users and API keys. The `IAMReadOnly` policy is sufficient. Refer to the [Scaleway IAM policy reference](https://www.scaleway.com/en/docs/identity-and-access-management/iam/reference-content/permission-sets/) for the full list of permissions.
