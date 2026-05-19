@@ -116,6 +116,7 @@ jobs:
           allowed-endpoints: >
             registry-1.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
             auth.docker.io:443
             registry.npmjs.org:443
             dl-cdn.alpinelinux.org:443
@@ -172,6 +173,7 @@ jobs:
             registry-1.docker.io:443
             auth.docker.io:443
             production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
 
       - name: Login to DockerHub
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
