@@ -1,11 +1,11 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
 class ecs_task_definitions_host_namespace_not_shared(Check):
     def execute(self):
-        findings = []
-        for task_definition in ecs_client.task_definitions.values():
+        def evaluate(task_definition):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )
@@ -15,5 +15,12 @@ class ecs_task_definitions_host_namespace_not_shared(Check):
             if task_definition.pid_mode == "host":
                 report.status = "FAIL"
                 report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} is configured to share a host's process namespace with its containers."
-            findings.append(report)
-        return findings
+            return report
+
+        return limited_findings(
+            ecs_client.iter_task_definitions(),
+            evaluate,
+            get_resource_scan_limit(
+                ecs_client.audit_config, "max_ecs_task_definitions"
+            ),
+        )

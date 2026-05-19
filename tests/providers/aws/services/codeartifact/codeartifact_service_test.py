@@ -158,6 +158,13 @@ class Test_CodeArtifact_Service:
             == AWS_REGION_EU_WEST_1
         )
 
+        # Packages are fetched lazily via iter_packages()
+        assert codeartifact.repositories[TEST_REPOSITORY_ARN].packages == []
+
+        pairs = list(codeartifact.iter_packages())
+        assert len(pairs) == 1
+        assert pairs[0][0].arn == TEST_REPOSITORY_ARN
+
         assert codeartifact.repositories[
             f"arn:aws:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:repository/test-repository"
         ].packages
@@ -287,6 +294,8 @@ class Test_CodeArtifact_Service_No_Namespace:
             set_mocked_aws_provider([AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1])
         )
 
+        assert codeartifact.repositories[TEST_REPOSITORY_ARN].packages == []
+        assert len(list(codeartifact.iter_packages())) == 1
         assert len(codeartifact.repositories[TEST_REPOSITORY_ARN].packages) == 1
 
         package = codeartifact.repositories[TEST_REPOSITORY_ARN].packages[0]

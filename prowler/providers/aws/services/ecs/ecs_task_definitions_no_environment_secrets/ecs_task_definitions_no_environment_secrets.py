@@ -1,17 +1,18 @@
 from json import dumps
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.lib.utils.utils import detect_secrets_scan
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
 class ecs_task_definitions_no_environment_secrets(Check):
     def execute(self):
-        findings = []
         secrets_ignore_patterns = ecs_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
-        for task_definition in ecs_client.task_definitions.values():
+
+        def evaluate(task_definition):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )
@@ -58,6 +59,12 @@ class ecs_task_definitions_no_environment_secrets(Check):
                 )
             else:
                 report.status_extended = f"No secrets found in variables of ECS task definition {task_definition.name} with revision {task_definition.revision}."
-            findings.append(report)
+            return report
 
-        return findings
+        return limited_findings(
+            ecs_client.iter_task_definitions(),
+            evaluate,
+            get_resource_scan_limit(
+                ecs_client.audit_config, "max_ecs_task_definitions"
+            ),
+        )

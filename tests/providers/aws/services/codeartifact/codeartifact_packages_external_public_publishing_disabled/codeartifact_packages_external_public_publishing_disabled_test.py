@@ -16,9 +16,20 @@ from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER
 AWS_REGION = "eu-west-1"
 
 
+def _mock_iter_packages(client):
+    """Emulate CodeArtifact.iter_packages() over hand-built repositories."""
+    for repository in client.repositories.values():
+        for package in repository.packages:
+            yield repository, package
+
+
 class Test_codeartifact_packages_external_public_publishing_disabled:
     def test_no_repositories(self):
         codeartifact_client = mock.MagicMock
+        codeartifact_client.audit_config = {}
+        codeartifact_client.iter_packages = lambda: _mock_iter_packages(
+            codeartifact_client
+        )
         codeartifact_client.repositories = {}
         with (
             mock.patch(
@@ -42,6 +53,10 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
 
     def test_repository_without_packages(self):
         codeartifact_client = mock.MagicMock
+        codeartifact_client.audit_config = {}
+        codeartifact_client.iter_packages = lambda: _mock_iter_packages(
+            codeartifact_client
+        )
         codeartifact_client.repositories = {
             "test-repository": Repository(
                 name="test-repository",
@@ -74,6 +89,10 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
 
     def test_repository_package_public_publishing_origin_internal(self):
         codeartifact_client = mock.MagicMock
+        codeartifact_client.audit_config = {}
+        codeartifact_client.iter_packages = lambda: _mock_iter_packages(
+            codeartifact_client
+        )
         package_name = "test-package"
         package_namespace = "test-namespace"
         repository_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:repository/test-repository"
@@ -140,6 +159,10 @@ class Test_codeartifact_packages_external_public_publishing_disabled:
 
     def test_repository_package_private_publishing_origin_internal(self):
         codeartifact_client = mock.MagicMock
+        codeartifact_client.audit_config = {}
+        codeartifact_client.iter_packages = lambda: _mock_iter_packages(
+            codeartifact_client
+        )
         package_name = "test-package"
         package_namespace = "test-namespace"
         repository_arn = f"arn:aws:codebuild:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:repository/test-repository"

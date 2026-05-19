@@ -1,11 +1,11 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.resource_limit import get_resource_scan_limit, limited_findings
 from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
 class ecs_task_definitions_host_networking_mode_users(Check):
     def execute(self):
-        findings = []
-        for task_definition in ecs_client.task_definitions.values():
+        def evaluate(task_definition):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )
@@ -25,5 +25,12 @@ class ecs_task_definitions_host_networking_mode_users(Check):
                     report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} has containers with host network mode and non-privileged containers running as root or with no user specified: {', '.join(failed_containers)}"
                 else:
                     report.status_extended = f"ECS task definition {task_definition.name} with revision {task_definition.revision} has host network mode but no containers running as root or with no user specified."
-            findings.append(report)
-        return findings
+            return report
+
+        return limited_findings(
+            ecs_client.iter_task_definitions(),
+            evaluate,
+            get_resource_scan_limit(
+                ecs_client.audit_config, "max_ecs_task_definitions"
+            ),
+        )

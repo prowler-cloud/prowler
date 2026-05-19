@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Iterator, Optional, Tuple
 
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
@@ -15,8 +15,10 @@ class CodeArtifact(AWSService):
         super().__init__(__class__.__name__, provider)
         # repositories is a dictionary containing all the codeartifact service information
         self.repositories = {}
+        # repository ARNs whose packages have been fully listed and memoized
+        # into repository.packages by the lazy iter_packages() generator
+        self._packages_listed = set()
         self.__threading_call__(self._list_repositories)
-        self.__threading_call__(self._list_packages)
         self._list_tags_for_resource()
 
     def _list_repositories(self, regional_client):
@@ -51,124 +53,121 @@ class CodeArtifact(AWSService):
                 f" {error}"
             )
 
-    def _list_packages(self, regional_client):
-        logger.info("CodeArtifact - Listing Packages and retrieving information...")
-        for repository in self.repositories:
-            try:
-                if self.repositories[repository].region == regional_client.region:
-                    list_packages_paginator = regional_client.get_paginator(
-                        "list_packages"
-                    )
-                    list_packages_parameters = {
-                        "domain": self.repositories[repository].domain_name,
-                        "domainOwner": self.repositories[repository].domain_owner,
-                        "repository": self.repositories[repository].name,
+    def _iter_repository_packages(self, repository) -> Iterator["Package"]:
+        """Yield packages for a single repository, hydrating each one lazily.
+
+        Each package requires an extra ``list_package_versions`` call to
+        resolve its latest version, so producing them lazily lets the consumer
+        stop early once it has enough findings.
+        """
+        regional_client = self.regional_clients[repository.region]
+        try:
+            list_packages_paginator = regional_client.get_paginator("list_packages")
+            list_packages_parameters = {
+                "domain": repository.domain_name,
+                "domainOwner": repository.domain_owner,
+                "repository": repository.name,
+            }
+            for page in list_packages_paginator.paginate(**list_packages_parameters):
+                for package in page["packages"]:
+                    # Package information
+                    package_format = package["format"]
+                    package_namespace = package.get("namespace")
+                    package_name = package["package"]
+                    package_origin_configuration_restrictions_publish = package[
+                        "originConfiguration"
+                    ]["restrictions"]["publish"]
+                    package_origin_configuration_restrictions_upstream = package[
+                        "originConfiguration"
+                    ]["restrictions"]["upstream"]
+                    # Get Latest Package Version
+                    list_package_versions_parameters = {
+                        "domain": repository.domain_name,
+                        "domainOwner": repository.domain_owner,
+                        "repository": repository.name,
+                        "format": package_format,
+                        "package": package_name,
+                        "sortBy": "PUBLISHED_TIME",
+                        "maxResults": 1,
                     }
-                    packages = []
-                    for page in list_packages_paginator.paginate(
-                        **list_packages_parameters
-                    ):
-                        for package in page["packages"]:
-                            # Package information
-                            package_format = package["format"]
-                            package_namespace = package.get("namespace")
-                            package_name = package["package"]
-                            package_origin_configuration_restrictions_publish = package[
-                                "originConfiguration"
-                            ]["restrictions"]["publish"]
-                            package_origin_configuration_restrictions_upstream = (
-                                package["originConfiguration"]["restrictions"][
-                                    "upstream"
-                                ]
-                            )
-                            # Get Latest Package Version
-                            if package_namespace:
-                                latest_version_information = (
-                                    regional_client.list_package_versions(
-                                        domain=self.repositories[
-                                            repository
-                                        ].domain_name,
-                                        domainOwner=self.repositories[
-                                            repository
-                                        ].domain_owner,
-                                        repository=self.repositories[repository].name,
-                                        format=package_format,
-                                        namespace=package_namespace,
-                                        package=package_name,
-                                        sortBy="PUBLISHED_TIME",
-                                        maxResults=1,
-                                    )
-                                )
-                            else:
-                                latest_version_information = (
-                                    regional_client.list_package_versions(
-                                        domain=self.repositories[
-                                            repository
-                                        ].domain_name,
-                                        domainOwner=self.repositories[
-                                            repository
-                                        ].domain_owner,
-                                        repository=self.repositories[repository].name,
-                                        format=package_format,
-                                        package=package_name,
-                                        sortBy="PUBLISHED_TIME",
-                                        maxResults=1,
-                                    )
-                                )
-                            latest_version = ""
-                            latest_origin_type = "UNKNOWN"
-                            latest_status = "Published"
-                            if latest_version_information.get("versions"):
-                                latest_version = latest_version_information["versions"][
-                                    0
-                                ].get("version")
-                                latest_origin_type = (
-                                    latest_version_information["versions"][0]
-                                    .get("origin", {})
-                                    .get("originType", "UNKNOWN")
-                                )
-                                latest_status = latest_version_information["versions"][
-                                    0
-                                ].get("status", "Published")
-
-                            packages.append(
-                                Package(
-                                    name=package_name,
-                                    namespace=package_namespace,
-                                    format=package_format,
-                                    origin_configuration=OriginConfiguration(
-                                        restrictions=Restrictions(
-                                            publish=package_origin_configuration_restrictions_publish,
-                                            upstream=package_origin_configuration_restrictions_upstream,
-                                        )
-                                    ),
-                                    latest_version=LatestPackageVersion(
-                                        version=latest_version,
-                                        status=latest_status,
-                                        origin=OriginInformation(
-                                            origin_type=latest_origin_type
-                                        ),
-                                    ),
-                                )
-                            )
-                    # Save all the packages information
-                    self.repositories[repository].packages = packages
-
-            except ClientError as error:
-                if error.response["Error"]["Code"] == "ResourceNotFoundException":
-                    logger.warning(
-                        f"{regional_client.region} --"
-                        f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
-                        f" {error}"
+                    if package_namespace:
+                        list_package_versions_parameters["namespace"] = (
+                            package_namespace
+                        )
+                    latest_version_information = regional_client.list_package_versions(
+                        **list_package_versions_parameters
                     )
-                    continue
+                    latest_version = ""
+                    latest_origin_type = "UNKNOWN"
+                    latest_status = "Published"
+                    if latest_version_information.get("versions"):
+                        latest_version = latest_version_information["versions"][0].get(
+                            "version"
+                        )
+                        latest_origin_type = (
+                            latest_version_information["versions"][0]
+                            .get("origin", {})
+                            .get("originType", "UNKNOWN")
+                        )
+                        latest_status = latest_version_information["versions"][0].get(
+                            "status", "Published"
+                        )
 
-            except Exception as error:
-                logger.error(
-                    f"{regional_client.region} --"
+                    yield Package(
+                        name=package_name,
+                        namespace=package_namespace,
+                        format=package_format,
+                        origin_configuration=OriginConfiguration(
+                            restrictions=Restrictions(
+                                publish=package_origin_configuration_restrictions_publish,
+                                upstream=package_origin_configuration_restrictions_upstream,
+                            )
+                        ),
+                        latest_version=LatestPackageVersion(
+                            version=latest_version,
+                            status=latest_status,
+                            origin=OriginInformation(origin_type=latest_origin_type),
+                        ),
+                    )
+
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                logger.warning(
+                    f"{repository.region} --"
                     f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                     f" {error}"
                 )
+            else:
+                logger.error(
+                    f"{repository.region} --"
+                    f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                    f" {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{repository.region} --"
+                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                f" {error}"
+            )
+
+    def iter_packages(self) -> Iterator[Tuple["Repository", "Package"]]:
+        """Yield ``(repository, package)`` pairs lazily, memoized per repository.
+
+        Packages already fetched are cached in ``repository.packages`` and
+        reused on subsequent passes (checks run sequentially, so no locking is
+        needed).
+        """
+        for repository in list(self.repositories.values()):
+            if repository.arn in self._packages_listed:
+                for package in repository.packages:
+                    yield repository, package
+                continue
+            collected = []
+            for package in self._iter_repository_packages(repository):
+                collected.append(package)
+                repository.packages = collected
+                yield repository, package
+            self._packages_listed.add(repository.arn)
 
     def _list_tags_for_resource(self):
         logger.info("CodeArtifact - List Tags...")

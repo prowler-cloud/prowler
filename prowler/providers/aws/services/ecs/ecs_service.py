@@ -1,5 +1,6 @@
+from datetime import datetime
 from re import sub
-from typing import Optional
+from typing import Iterator, Optional
 
 from pydantic.v1 import BaseModel
 
@@ -12,39 +13,69 @@ class ECS(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
+        # task_definitions is the memoization cache for the lazy
+        # iter_task_definitions() generator; it is populated on demand instead
+        # of eagerly so that scans of accounts with thousands of task
+        # definition revisions stop early once the FAIL quota is met.
         self.task_definitions = {}
+        self._task_definition_arns = None
         self.services = {}
         self.clusters = {}
         self.task_sets = {}
-        self.__threading_call__(self._list_task_definitions)
-        self.__threading_call__(
-            self._describe_task_definition, self.task_definitions.values()
-        )
         self.__threading_call__(self._list_clusters)
         self.__threading_call__(self._describe_clusters, self.clusters.values())
         self.__threading_call__(self._describe_services, self.clusters.values())
 
-    def _list_task_definitions(self, regional_client):
+    def _list_task_definition_arns(self) -> list:
+        """List task definition ARNs newest-first, memoized.
+
+        Uses the ``list_task_definitions`` server-side ``sort=DESC`` so the
+        latest revisions are scanned first across all regions.
+        """
+        if self._task_definition_arns is not None:
+            return self._task_definition_arns
         logger.info("ECS - Listing Task Definitions...")
-        try:
-            list_ecs_paginator = regional_client.get_paginator("list_task_definitions")
-            for page in list_ecs_paginator.paginate():
-                for task_definition in page["taskDefinitionArns"]:
-                    if not self.audit_resources or (
-                        is_resource_filtered(task_definition, self.audit_resources)
-                    ):
-                        self.task_definitions[task_definition] = TaskDefinition(
-                            # we want the family name without the revision
-                            name=sub(":.*", "", task_definition.split("/")[-1]),
-                            arn=task_definition,
-                            revision=task_definition.split(":")[-1],
-                            region=regional_client.region,
-                            environment_variables=[],
-                        )
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        arns = []
+        for region, regional_client in self.regional_clients.items():
+            try:
+                list_ecs_paginator = regional_client.get_paginator(
+                    "list_task_definitions"
+                )
+                for page in list_ecs_paginator.paginate(sort="DESC"):
+                    for task_definition in page["taskDefinitionArns"]:
+                        if not self.audit_resources or (
+                            is_resource_filtered(task_definition, self.audit_resources)
+                        ):
+                            arns.append((task_definition, region))
+            except Exception as error:
+                logger.error(
+                    f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        self._task_definition_arns = arns
+        return arns
+
+    def iter_task_definitions(self) -> Iterator["TaskDefinition"]:
+        """Yield task definitions lazily, describing each one on demand.
+
+        Resources already fetched are memoized in ``self.task_definitions``
+        and reused across checks (checks run sequentially, so no locking is
+        needed). The consumer can stop pulling this generator once it has
+        enough findings, which bounds the ``describe_task_definition`` calls.
+        """
+        for arn, region in self._list_task_definition_arns():
+            task_definition = self.task_definitions.get(arn)
+            if task_definition is None:
+                task_definition = TaskDefinition(
+                    # we want the family name without the revision
+                    name=sub(":.*", "", arn.split("/")[-1]),
+                    arn=arn,
+                    revision=arn.split(":")[-1],
+                    region=region,
+                    environment_variables=[],
+                )
+                self._describe_task_definition(task_definition)
+                self.task_definitions[arn] = task_definition
+            yield task_definition
 
     def _describe_task_definition(self, task_definition):
         logger.info("ECS - Describing Task Definition...")
@@ -84,6 +115,9 @@ class ECS(AWSService):
                     )
                 )
             task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
+            task_definition.registered_at = response["taskDefinition"].get(
+                "registeredAt"
+            )
             task_definition.tags = response.get("tags")
             task_definition.network_mode = response["taskDefinition"].get(
                 "networkMode", "bridge"
@@ -208,6 +242,7 @@ class TaskDefinition(BaseModel):
     region: str
     container_definitions: list[ContainerDefinition] = []
     pid_mode: Optional[str]
+    registered_at: Optional[datetime] = None
     tags: Optional[list] = []
     network_mode: Optional[str]
 
