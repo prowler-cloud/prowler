@@ -1,0 +1,99 @@
+{
+  "Framework": "Okta-STIG",
+  "Name": "Okta STIG - Global Session Policy",
+  "Version": "1.0",
+  "Provider": "Okta",
+  "Description": "DISA STIG requirements for Okta Global Session Policy configuration. These checks validate session management, cookie persistence, network zone enforcement, and DOD notice banner display.",
+  "Requirements": [
+    {
+      "Id": "V-273186",
+      "Name": "Default Global Session Policy must have a non-default rule with Maximum Okta global session idle time of 15 minutes",
+      "Description": "The Default Global Session Policy must have an active Priority 1 rule (not the built-in Default Rule) with Maximum Okta global session idle time set to 15 minutes or less.",
+      "Checks": [
+        "signon_global_session_idle_timeout_15min"
+      ],
+      "Attributes": [
+        {
+          "ItemId": "V-273186",
+          "StigId": "OKTA-APP-000020",
+          "Severity": "medium",
+          "Section": "Global Session Policy",
+          "SectionDescription": "Checks related to Okta Global Session Policy session management settings.",
+          "Service": "signon"
+        }
+      ]
+    },
+    {
+      "Id": "V-273203",
+      "Name": "Global Session Policy must limit Maximum Okta global session lifetime to 18 hours",
+      "Description": "The Global Session Policy must limit Maximum Okta global session lifetime to 18 hours (1080 minutes) to force periodic reauthentication.",
+      "Checks": [
+        "signon_global_session_lifetime_18h"
+      ],
+      "Attributes": [
+        {
+          "ItemId": "V-273203",
+          "StigId": "OKTA-APP-001665",
+          "Severity": "medium",
+          "Section": "Global Session Policy",
+          "SectionDescription": "Checks related to Okta Global Session Policy session management settings.",
+          "Service": "signon"
+        }
+      ]
+    },
+    {
+      "Id": "V-273206",
+      "Name": "Okta global session cookies persist across browser sessions must be Disabled in the Default Global Session Policy",
+      "Description": "The Default Global Session Policy must have persistent cookies disabled in all active rules to prevent session reuse across browser restarts.",
+      "Checks": [
+        "signon_global_session_cookies_not_persistent"
+      ],
+      "Attributes": [
+        {
+          "ItemId": "V-273206",
+          "StigId": "OKTA-APP-001710",
+          "Severity": "medium",
+          "Section": "Global Session Policy",
+          "SectionDescription": "Checks related to Okta Global Session Policy session management settings.",
+          "Service": "signon"
+        }
+      ]
+    },
+    {
+      "Id": "V-279691",
+      "Name": "Global Session Policy must use IF User's IP is condition mapped to a Network Zone",
+      "Description": "The Global Session Policy must use an 'IF User's IP is' condition mapped to a Network Zone for allow/deny per Access Control Policy.",
+      "Checks": [
+        "signon_global_session_policy_network_zone_enforced"
+      ],
+      "Attributes": [
+        {
+          "ItemId": "V-279691",
+          "StigId": "OKTA-APP-003242",
+          "Severity": "medium",
+          "Section": "Global Session Policy",
+          "SectionDescription": "Checks related to Okta Global Session Policy network zone enforcement.",
+          "Service": "signon"
+        }
+      ]
+    },
+    {
+      "Id": "V-273192",
+      "Name": "Sign-in widget/brand must display the Standard Mandatory DOD Notice and Consent Banner before login",
+      "Description": "The Okta sign-in widget or brand must display the Standard Mandatory DOD Notice and Consent Banner (DTM-08-060) before login. Partially auditable via API; non-determinable items reported as MANUAL.",
+      "Checks": [
+        "signon_dod_warning_banner_configured"
+      ],
+      "Attributes": [
+        {
+          "ItemId": "V-273192",
+          "StigId": "OKTA-APP-000200",
+          "Severity": "medium",
+          "Section": "Sign-In Customization",
+          "SectionDescription": "Checks related to Okta sign-in page branding and customization.",
+          "Service": "signon"
+        }
+      ]
+    }
+  ]
+}

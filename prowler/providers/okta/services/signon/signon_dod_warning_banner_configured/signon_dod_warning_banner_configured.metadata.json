@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "signon_dod_warning_banner_configured",
+  "CheckTitle": "Okta sign-in page enforces Standard Mandatory DOD Notice and Consent Banner before login",
+  "CheckType": [],
+  "ServiceName": "signon",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "The Okta sign-in widget or brand must display the **Standard Mandatory DOD Notice and Consent Banner** (DTM-08-060) before the login prompt. Not all aspects of the banner content can be verified programmatically via the Branding/Customization API, so this check returns **MANUAL** and requires visual confirmation.",
+  "Risk": "Without the DOD consent banner, users are not legally notified that their activity is monitored, which may invalidate the organization's authority to audit, inspect, and investigate user actions on DoD systems.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/oie/en-us/content/topics/settings/custom-okta-hosted-sign-in-page.htm",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Brands/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Okta Admin Console as a Super Admin\n2. Go to Customizations > Brands\n3. Select the relevant brand\n4. Edit the Sign-in page\n5. Add the Standard Mandatory DOD Notice and Consent Banner text before the login form\n6. Save the customization\n7. Visually confirm the banner appears on the login page",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Customize the Okta sign-in page to prominently display the Standard Mandatory DOD Notice and Consent Banner (DTM-08-060) before any login form elements, and periodically verify the banner is present and unmodified.",
+      "Url": "https://hub.prowler.com/check/signon_dod_warning_banner_configured"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check always returns MANUAL because the Okta API does not expose sufficient detail to programmatically verify the full DOD banner content."
+}
