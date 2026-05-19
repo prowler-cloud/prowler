@@ -11,18 +11,13 @@ import {
 } from "@/components/shadcn";
 import { EntityInfo } from "@/components/ui/entities";
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
+import { ScanProviderInfo } from "@/types";
 
 interface SelectScanProviderProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 > {
-  providers: {
-    providerId: string;
-    alias: string;
-    providerType: string;
-    uid: string;
-    connected: boolean;
-  }[];
+  providers: ScanProviderInfo[];
   control: Control<TFieldValues>;
   name: TName;
 }
