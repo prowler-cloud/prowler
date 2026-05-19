@@ -56,22 +56,16 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '20'
+          node-version-file: ui/.nvmrc
 
-      - name: Install markdownlint-cli
+      - name: Setup pnpm
         if: steps.check-changes.outputs.any_changed == 'true'
-        # Pin to the same version used in .pre-commit-config.yaml so prek and CI behave identically.
-        run: npm install --global markdownlint-cli@0.45.0
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        with:
+          package_json_file: ui/package.json
+          run_install: false
 
-      - name: Run markdownlint on changed files
+      - name: Run markdownlint
         if: steps.check-changes.outputs.any_changed == 'true'
-        env:
-          CHANGED_FILES: ${{ steps.check-changes.outputs.all_changed_files }}
-        run: |
-          # Drop config/ignore files from the list — markdownlint only lints .md.
-          mapfile -t files < <(printf '%s\n' $CHANGED_FILES | grep -E '\.md$' || true)
-          if [ "${#files[@]}" -eq 0 ]; then
-            echo "No .md files changed."
-            exit 0
-          fi
-          markdownlint "${files[@]}"
+        # Pin must match .pre-commit-config.yaml so prek and CI behave identically.
+        run: pnpm dlx --ignore-scripts markdownlint-cli@0.45.0 '**/*.md'
