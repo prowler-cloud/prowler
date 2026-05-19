@@ -1,7 +1,4 @@
-# Keep in sync with ui/.nvmrc — Docker requires a literal version in FROM.
-# pnpm is provisioned via corepack from package.json's packageManager field
-# (see RUN corepack enable / corepack install below); no pnpm version is
-# redeclared in this Dockerfile.
+# Keep in sync with ui/.nvmrc.
 FROM node:24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b181aa49e22c14383e AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
