@@ -26,7 +26,7 @@ Every GitHub Actions workflow uses runner hardening, pinned action versions, and
 ### Runner Hardening With StepSecurity
 
 - [**`step-security/harden-runner`**](https://github.com/step-security/harden-runner) runs as the first step in every workflow, pinned by commit SHA.
-- Workflows declare an egress allow-list and use `egress-policy: block` to drop network calls to anything outside the list.
+- Workflows are being migrated to explicit egress controls: some already declare an egress allow-list with `egress-policy: block`, while others still run in `egress-policy: audit` until their allowed endpoints are fully defined.
 - **Global Block Policy** (StepSecurity) blocks known-malicious domains and IP addresses across every workflow run. This protection applies even in audit mode, so workflows that have not yet moved to `block` still resist known-bad egress.
 
 ### Third-Party Action Pinning
