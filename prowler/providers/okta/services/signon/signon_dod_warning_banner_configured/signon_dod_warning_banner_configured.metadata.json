@@ -6,7 +6,7 @@
   "ServiceName": "signon",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "informational",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
   "Description": "Each Okta brand's sign-in page must present the Standard Mandatory DOD Notice and Consent Banner (DTM-08-060) before granting access (DISA STIG V-273192 / OKTA-APP-000200). The check inspects sign-in page HTML returned by the Okta Management API, using the customized page when present and otherwise falling back to the default sign-in page.",
@@ -34,5 +34,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "Applicable only to Okta tenants under U.S. Department of Defense scope (DISA Okta IDaaS STIG, control V-273192 / OKTA-APP-000200). For non-DOD organizations this check is not applicable and can be muted."
 }
