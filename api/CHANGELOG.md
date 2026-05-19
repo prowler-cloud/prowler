@@ -7,7 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
-- `GET /health/live` and `GET /health/ready` Kubernetes-style probe endpoints following the IETF Health Check Response Format (`application/health+json`). Readiness verifies PostgreSQL, Valkey and Neo4j connectivity and returns 503 with per-dependency detail when any is unreachable; both endpoints centralize the API version on `config/version.py` (read from `pyproject.toml`) and are wired into the Helm charts and the Docker Compose healthcheck [(#11200)](https://github.com/prowler-cloud/prowler/pull/11200)
+- `GET /health/live` and `GET /health/ready` Kubernetes-style probe endpoints following the IETF Health Check Response Format (`application/health+json`). Readiness verifies PostgreSQL, Valkey and Neo4j connectivity and returns 503 with per-dependency detail when any is unreachable [(#11200)](https://github.com/prowler-cloud/prowler/pull/11200)
 
 ### 🔄 Changed
 

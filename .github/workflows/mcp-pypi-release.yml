@@ -88,7 +88,8 @@ jobs:
 
       # The MCP server version (mcp_server/pyproject.toml) is decoupled from the Prowler release
       # version: it only changes when MCP code changes. mcp-bump-version.yml normally keeps it in
-      # sync with mcp_server/CHANGELOG.md, but this publish workflow still runs on every release.
+      # sync with mcp_server/CHANGELOG.md (separate from the release bump-version.yml), but this
+      # publish workflow still runs on every release.
       # Pre-flight PyPI check covers the legitimate "no MCP changes for this release" case (and any
       # workflow_dispatch re-runs) without failing with HTTP 400 (version exists).
       - name: Check if prowler-mcp version already exists on PyPI
