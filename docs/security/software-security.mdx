@@ -44,11 +44,11 @@ Every GitHub Actions workflow uses runner hardening, pinned action versions, and
 - **[zizmor](https://github.com/zizmorcore/zizmor)** audits every workflow file for known security anti-patterns. Runs via [`ci-zizmor.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ci-zizmor.yml).
 - Triggers on every push, every pull request that touches `.github/`, and on a daily schedule.
 - Results upload to the GitHub Security tab via Static Analysis Results Interchange Format (SARIF).
-- Key [audit rules](https://docs.zizmor.sh/audit-rules/) the build gates on:
-  - **[PWN Request](https://docs.zizmor.sh/audit-rules/#dangerous-triggers)** (`dangerous-triggers`): unsafe use of `pull_request_target` with checked-out PR code.
-  - **[Script Injection](https://docs.zizmor.sh/audit-rules/#template-injection)** (`template-injection`): unsanitized `${{ github.event.* }}` expressions in `run:` blocks.
-  - **[artipacked](https://docs.zizmor.sh/audit-rules/#artipacked)**: credential leakage through artifacts.
-  - **[Excessive permissions](https://docs.zizmor.sh/audit-rules/#excessive-permissions)** (`excessive-permissions`): workflows with unneeded `write` scopes.
+- Key [audit rules](https://docs.zizmor.sh/audits/) the build gates on:
+  - **[PWN Request](https://docs.zizmor.sh/audits/#dangerous-triggers)** (`dangerous-triggers`): unsafe use of `pull_request_target` with checked-out PR code.
+  - **[Script Injection](https://docs.zizmor.sh/audits/#template-injection)** (`template-injection`): unsanitized `${{ github.event.* }}` expressions in `run:` blocks.
+  - **[artipacked](https://docs.zizmor.sh/audits/#artipacked)**: credential leakage through artifacts.
+  - **[Excessive permissions](https://docs.zizmor.sh/audits/#excessive-permissions)** (`excessive-permissions`): workflows with unneeded `write` scopes.
 
 ### Branch Protection
 
