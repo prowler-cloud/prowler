@@ -138,8 +138,11 @@ AWS_IAM_STATEMENTS_ALLOW_ALL_ACTIONS = AttackPathsQueryDefinition(
     description="Find IAM policy statements that allow all actions via '*' within the selected account.",
     provider="aws",
     cypher=f"""
-        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([x IN split(stmt.action, ",") WHERE x = '*' | x]) > 0
+        MATCH path = (aws:AWSAccount {{id: $provider_uid}})-[:RESOURCE]->(principal:AWSPrincipal)-[:POLICY]->(pol:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        WHERE stmt.action = '*'
+           OR stmt.action STARTS WITH '*,'
+           OR stmt.action ENDS WITH ',*'
+           OR stmt.action CONTAINS ',*,'
 
         WITH collect(path) AS paths
         UNWIND paths AS p
@@ -147,7 +150,7 @@ AWS_IAM_STATEMENTS_ALLOW_ALL_ACTIONS = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]->(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
