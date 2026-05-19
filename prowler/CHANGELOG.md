@@ -11,7 +11,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> 0ab0e8671 (fix(azure): skip system 'master' DB in sqlserver_tde_encrypted_with_cmk (#11233))
 ## [5.27.0] (Prowler v5.27.0)
 
 ### 🚀 Added
