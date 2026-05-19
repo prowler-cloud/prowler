@@ -23,11 +23,13 @@ AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
             AND ipi.toport = 22
 
         MATCH path_role = (r:AWSRole)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE size([x IN split(stmt.resource, ",") WHERE x CONTAINS s3.name | x]) > 0
-            AND size([x IN split(stmt.action, ",") WHERE
-                toLower(x) STARTS WITH 's3:listbucket'
-                OR toLower(x) STARTS WITH 's3:getobject'
-            | x]) > 0
+        WHERE (stmt.resource CONTAINS s3.name)
+            AND (
+                toLower(stmt.action) STARTS WITH 's3:listbucket'
+                OR toLower(stmt.action) CONTAINS ',s3:listbucket'
+                OR toLower(stmt.action) STARTS WITH 's3:getobject'
+                OR toLower(stmt.action) CONTAINS ',s3:getobject'
+            )
 
         MATCH path_assume_role = (ec2)-[p:STS_ASSUMEROLE_ALLOW*1..9]-(r:AWSRole)
 
@@ -40,7 +42,7 @@ AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -78,7 +80,7 @@ AWS_RDS_INSTANCES = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -101,7 +103,7 @@ AWS_RDS_UNENCRYPTED_STORAGE = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -124,7 +126,7 @@ AWS_S3_ANONYMOUS_ACCESS_BUCKETS = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -165,7 +167,12 @@ AWS_IAM_STATEMENTS_ALLOW_DELETE_POLICY = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([x IN split(stmt.action, ",") WHERE x = "iam:DeletePolicy" | x]) > 0
+        WHERE (
+            stmt.action = 'iam:DeletePolicy'
+            OR stmt.action STARTS WITH 'iam:DeletePolicy,'
+            OR stmt.action ENDS WITH ',iam:DeletePolicy'
+            OR stmt.action CONTAINS ',iam:DeletePolicy,'
+        )
 
         WITH collect(path) AS paths
         UNWIND paths AS p
@@ -173,7 +180,7 @@ AWS_IAM_STATEMENTS_ALLOW_DELETE_POLICY = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -188,7 +195,7 @@ AWS_IAM_STATEMENTS_ALLOW_CREATE_ACTIONS = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([x IN split(stmt.action, ",") WHERE toLower(x) CONTAINS "create" | x]) > 0
+        WHERE (toLower(stmt.action) CONTAINS 'create')
 
         WITH collect(path) AS paths
         UNWIND paths AS p
@@ -196,7 +203,7 @@ AWS_IAM_STATEMENTS_ALLOW_CREATE_ACTIONS = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -224,7 +231,7 @@ AWS_EC2_INSTANCES_INTERNET_EXPOSED = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -250,7 +257,7 @@ AWS_SECURITY_GROUPS_OPEN_INTERNET_FACING = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -275,7 +282,7 @@ AWS_CLASSIC_ELB_INTERNET_EXPOSED = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -300,7 +307,7 @@ AWS_ELBV2_INTERNET_EXPOSED = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -328,7 +335,7 @@ AWS_PUBLIC_IP_RESOURCE_LOOKUP = AttackPathsQueryDefinition(
 
         WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
     """,
@@ -359,27 +366,48 @@ AWS_APPRUNNER_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find apprunner:CreateService permission
         MATCH (principal)--(apprunner_policy:AWSPolicy)--(stmt_apprunner:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_apprunner.action, ",") WHERE
-                toLower(action) = 'apprunner:createservice'
-                OR toLower(action) = 'apprunner:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_apprunner.action) = 'apprunner:createservice'
+            OR toLower(stmt_apprunner.action) STARTS WITH 'apprunner:createservice,'
+            OR toLower(stmt_apprunner.action) ENDS WITH ',apprunner:createservice'
+            OR toLower(stmt_apprunner.action) CONTAINS ',apprunner:createservice,'
+            OR toLower(stmt_apprunner.action) = 'apprunner:*'
+            OR toLower(stmt_apprunner.action) STARTS WITH 'apprunner:*,'
+            OR toLower(stmt_apprunner.action) ENDS WITH ',apprunner:*'
+            OR toLower(stmt_apprunner.action) CONTAINS ',apprunner:*,'
+            OR stmt_apprunner.action = '*'
+            OR stmt_apprunner.action STARTS WITH '*,'
+            OR stmt_apprunner.action ENDS WITH ',*'
+            OR stmt_apprunner.action CONTAINS ',*,'
+        )
 
         // Find roles that trust App Runner tasks service (can be passed to App Runner)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'tasks.apprunner.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -388,7 +416,7 @@ AWS_APPRUNNER_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -409,11 +437,20 @@ AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with apprunner:UpdateService permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(update_policy:AWSPolicy)--(stmt_update:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_update.action, ",") WHERE
-                toLower(action) = 'apprunner:updateservice'
-                OR toLower(action) = 'apprunner:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_update.action) = 'apprunner:updateservice'
+            OR toLower(stmt_update.action) STARTS WITH 'apprunner:updateservice,'
+            OR toLower(stmt_update.action) ENDS WITH ',apprunner:updateservice'
+            OR toLower(stmt_update.action) CONTAINS ',apprunner:updateservice,'
+            OR toLower(stmt_update.action) = 'apprunner:*'
+            OR toLower(stmt_update.action) STARTS WITH 'apprunner:*,'
+            OR toLower(stmt_update.action) ENDS WITH ',apprunner:*'
+            OR toLower(stmt_update.action) CONTAINS ',apprunner:*,'
+            OR stmt_update.action = '*'
+            OR stmt_update.action STARTS WITH '*,'
+            OR stmt_update.action ENDS WITH ',*'
+            OR stmt_update.action CONTAINS ',*,'
+        )
 
         // Find existing App Runner services with roles attached (potential targets)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'tasks.apprunner.amazonaws.com'}})
@@ -425,7 +462,7 @@ AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -446,43 +483,82 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find bedrock-agentcore:CreateCodeInterpreter permission
         MATCH (principal)--(bedrock_policy:AWSPolicy)--(stmt_bedrock:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_bedrock.action, ",") WHERE
-                toLower(action) = 'bedrock-agentcore:createcodeinterpreter'
-                OR toLower(action) = 'bedrock-agentcore:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_bedrock.action) = 'bedrock-agentcore:createcodeinterpreter'
+            OR toLower(stmt_bedrock.action) STARTS WITH 'bedrock-agentcore:createcodeinterpreter,'
+            OR toLower(stmt_bedrock.action) ENDS WITH ',bedrock-agentcore:createcodeinterpreter'
+            OR toLower(stmt_bedrock.action) CONTAINS ',bedrock-agentcore:createcodeinterpreter,'
+            OR toLower(stmt_bedrock.action) = 'bedrock-agentcore:*'
+            OR toLower(stmt_bedrock.action) STARTS WITH 'bedrock-agentcore:*,'
+            OR toLower(stmt_bedrock.action) ENDS WITH ',bedrock-agentcore:*'
+            OR toLower(stmt_bedrock.action) CONTAINS ',bedrock-agentcore:*,'
+            OR stmt_bedrock.action = '*'
+            OR stmt_bedrock.action STARTS WITH '*,'
+            OR stmt_bedrock.action ENDS WITH ',*'
+            OR stmt_bedrock.action CONTAINS ',*,'
+        )
 
         // Find bedrock-agentcore:StartCodeInterpreterSession permission
         MATCH (principal)--(session_policy:AWSPolicy)--(stmt_session:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_session.action, ",") WHERE
-                toLower(action) = 'bedrock-agentcore:startcodeinterpretersession'
-                OR toLower(action) = 'bedrock-agentcore:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_session.action) = 'bedrock-agentcore:startcodeinterpretersession'
+            OR toLower(stmt_session.action) STARTS WITH 'bedrock-agentcore:startcodeinterpretersession,'
+            OR toLower(stmt_session.action) ENDS WITH ',bedrock-agentcore:startcodeinterpretersession'
+            OR toLower(stmt_session.action) CONTAINS ',bedrock-agentcore:startcodeinterpretersession,'
+            OR toLower(stmt_session.action) = 'bedrock-agentcore:*'
+            OR toLower(stmt_session.action) STARTS WITH 'bedrock-agentcore:*,'
+            OR toLower(stmt_session.action) ENDS WITH ',bedrock-agentcore:*'
+            OR toLower(stmt_session.action) CONTAINS ',bedrock-agentcore:*,'
+            OR stmt_session.action = '*'
+            OR stmt_session.action STARTS WITH '*,'
+            OR stmt_session.action ENDS WITH ',*'
+            OR stmt_session.action CONTAINS ',*,'
+        )
 
         // Find bedrock-agentcore:InvokeCodeInterpreter permission
         MATCH (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_invoke.action, ",") WHERE
-                toLower(action) = 'bedrock-agentcore:invokecodeinterpreter'
-                OR toLower(action) = 'bedrock-agentcore:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_invoke.action) = 'bedrock-agentcore:invokecodeinterpreter'
+            OR toLower(stmt_invoke.action) STARTS WITH 'bedrock-agentcore:invokecodeinterpreter,'
+            OR toLower(stmt_invoke.action) ENDS WITH ',bedrock-agentcore:invokecodeinterpreter'
+            OR toLower(stmt_invoke.action) CONTAINS ',bedrock-agentcore:invokecodeinterpreter,'
+            OR toLower(stmt_invoke.action) = 'bedrock-agentcore:*'
+            OR toLower(stmt_invoke.action) STARTS WITH 'bedrock-agentcore:*,'
+            OR toLower(stmt_invoke.action) ENDS WITH ',bedrock-agentcore:*'
+            OR toLower(stmt_invoke.action) CONTAINS ',bedrock-agentcore:*,'
+            OR stmt_invoke.action = '*'
+            OR stmt_invoke.action STARTS WITH '*,'
+            OR stmt_invoke.action ENDS WITH ',*'
+            OR stmt_invoke.action CONTAINS ',*,'
+        )
 
         // Find roles that trust the Bedrock AgentCore service (can be passed to a code interpreter)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'bedrock-agentcore.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -491,7 +567,7 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -512,19 +588,37 @@ AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with bedrock-agentcore:StartCodeInterpreterSession permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(session_policy:AWSPolicy)--(stmt_session:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_session.action, ",") WHERE
-                toLower(action) = 'bedrock-agentcore:startcodeinterpretersession'
-                OR toLower(action) = 'bedrock-agentcore:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_session.action) = 'bedrock-agentcore:startcodeinterpretersession'
+            OR toLower(stmt_session.action) STARTS WITH 'bedrock-agentcore:startcodeinterpretersession,'
+            OR toLower(stmt_session.action) ENDS WITH ',bedrock-agentcore:startcodeinterpretersession'
+            OR toLower(stmt_session.action) CONTAINS ',bedrock-agentcore:startcodeinterpretersession,'
+            OR toLower(stmt_session.action) = 'bedrock-agentcore:*'
+            OR toLower(stmt_session.action) STARTS WITH 'bedrock-agentcore:*,'
+            OR toLower(stmt_session.action) ENDS WITH ',bedrock-agentcore:*'
+            OR toLower(stmt_session.action) CONTAINS ',bedrock-agentcore:*,'
+            OR stmt_session.action = '*'
+            OR stmt_session.action STARTS WITH '*,'
+            OR stmt_session.action ENDS WITH ',*'
+            OR stmt_session.action CONTAINS ',*,'
+        )
 
         // Find bedrock-agentcore:InvokeCodeInterpreter permission
         MATCH (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_invoke.action, ",") WHERE
-                toLower(action) = 'bedrock-agentcore:invokecodeinterpreter'
-                OR toLower(action) = 'bedrock-agentcore:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_invoke.action) = 'bedrock-agentcore:invokecodeinterpreter'
+            OR toLower(stmt_invoke.action) STARTS WITH 'bedrock-agentcore:invokecodeinterpreter,'
+            OR toLower(stmt_invoke.action) ENDS WITH ',bedrock-agentcore:invokecodeinterpreter'
+            OR toLower(stmt_invoke.action) CONTAINS ',bedrock-agentcore:invokecodeinterpreter,'
+            OR toLower(stmt_invoke.action) = 'bedrock-agentcore:*'
+            OR toLower(stmt_invoke.action) STARTS WITH 'bedrock-agentcore:*,'
+            OR toLower(stmt_invoke.action) ENDS WITH ',bedrock-agentcore:*'
+            OR toLower(stmt_invoke.action) CONTAINS ',bedrock-agentcore:*,'
+            OR stmt_invoke.action = '*'
+            OR stmt_invoke.action STARTS WITH '*,'
+            OR stmt_invoke.action ENDS WITH ',*'
+            OR stmt_invoke.action CONTAINS ',*,'
+        )
 
         // Find roles that trust the Bedrock AgentCore service (already attached to existing code interpreters)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'bedrock-agentcore.amazonaws.com'}})
@@ -536,7 +630,7 @@ AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -557,27 +651,48 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACK = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find cloudformation:CreateStack permission
         MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_cfn.action, ",") WHERE
-                toLower(action) = 'cloudformation:createstack'
-                OR toLower(action) = 'cloudformation:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_cfn.action) = 'cloudformation:createstack'
+            OR toLower(stmt_cfn.action) STARTS WITH 'cloudformation:createstack,'
+            OR toLower(stmt_cfn.action) ENDS WITH ',cloudformation:createstack'
+            OR toLower(stmt_cfn.action) CONTAINS ',cloudformation:createstack,'
+            OR toLower(stmt_cfn.action) = 'cloudformation:*'
+            OR toLower(stmt_cfn.action) STARTS WITH 'cloudformation:*,'
+            OR toLower(stmt_cfn.action) ENDS WITH ',cloudformation:*'
+            OR toLower(stmt_cfn.action) CONTAINS ',cloudformation:*,'
+            OR stmt_cfn.action = '*'
+            OR stmt_cfn.action STARTS WITH '*,'
+            OR stmt_cfn.action ENDS WITH ',*'
+            OR stmt_cfn.action CONTAINS ',*,'
+        )
 
         // Find roles that trust CloudFormation service (can be passed to CloudFormation)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -586,7 +701,7 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACK = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -607,11 +722,20 @@ AWS_CLOUDFORMATION_PRIVESC_UPDATE_STACK = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with cloudformation:UpdateStack permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(update_policy:AWSPolicy)--(stmt_update:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_update.action, ",") WHERE
-                toLower(action) = 'cloudformation:updatestack'
-                OR toLower(action) = 'cloudformation:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_update.action) = 'cloudformation:updatestack'
+            OR toLower(stmt_update.action) STARTS WITH 'cloudformation:updatestack,'
+            OR toLower(stmt_update.action) ENDS WITH ',cloudformation:updatestack'
+            OR toLower(stmt_update.action) CONTAINS ',cloudformation:updatestack,'
+            OR toLower(stmt_update.action) = 'cloudformation:*'
+            OR toLower(stmt_update.action) STARTS WITH 'cloudformation:*,'
+            OR toLower(stmt_update.action) ENDS WITH ',cloudformation:*'
+            OR toLower(stmt_update.action) CONTAINS ',cloudformation:*,'
+            OR stmt_update.action = '*'
+            OR stmt_update.action STARTS WITH '*,'
+            OR stmt_update.action ENDS WITH ',*'
+            OR stmt_update.action CONTAINS ',*,'
+        )
 
         // Find roles that trust CloudFormation service (already attached to existing stacks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
@@ -623,7 +747,7 @@ AWS_CLOUDFORMATION_PRIVESC_UPDATE_STACK = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -644,35 +768,65 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACKSET = AttackPathsQueryDefinition
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find cloudformation:CreateStackSet permission
         MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_cfn.action, ",") WHERE
-                toLower(action) = 'cloudformation:createstackset'
-                OR toLower(action) = 'cloudformation:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_cfn.action) = 'cloudformation:createstackset'
+            OR toLower(stmt_cfn.action) STARTS WITH 'cloudformation:createstackset,'
+            OR toLower(stmt_cfn.action) ENDS WITH ',cloudformation:createstackset'
+            OR toLower(stmt_cfn.action) CONTAINS ',cloudformation:createstackset,'
+            OR toLower(stmt_cfn.action) = 'cloudformation:*'
+            OR toLower(stmt_cfn.action) STARTS WITH 'cloudformation:*,'
+            OR toLower(stmt_cfn.action) ENDS WITH ',cloudformation:*'
+            OR toLower(stmt_cfn.action) CONTAINS ',cloudformation:*,'
+            OR stmt_cfn.action = '*'
+            OR stmt_cfn.action STARTS WITH '*,'
+            OR stmt_cfn.action ENDS WITH ',*'
+            OR stmt_cfn.action CONTAINS ',*,'
+        )
 
         // Find cloudformation:CreateStackInstances permission
         MATCH (principal)--(cfn_instances_policy:AWSPolicy)--(stmt_cfn_instances:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_cfn_instances.action, ",") WHERE
-                toLower(action) = 'cloudformation:createstackinstances'
-                OR toLower(action) = 'cloudformation:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_cfn_instances.action) = 'cloudformation:createstackinstances'
+            OR toLower(stmt_cfn_instances.action) STARTS WITH 'cloudformation:createstackinstances,'
+            OR toLower(stmt_cfn_instances.action) ENDS WITH ',cloudformation:createstackinstances'
+            OR toLower(stmt_cfn_instances.action) CONTAINS ',cloudformation:createstackinstances,'
+            OR toLower(stmt_cfn_instances.action) = 'cloudformation:*'
+            OR toLower(stmt_cfn_instances.action) STARTS WITH 'cloudformation:*,'
+            OR toLower(stmt_cfn_instances.action) ENDS WITH ',cloudformation:*'
+            OR toLower(stmt_cfn_instances.action) CONTAINS ',cloudformation:*,'
+            OR stmt_cfn_instances.action = '*'
+            OR stmt_cfn_instances.action STARTS WITH '*,'
+            OR stmt_cfn_instances.action ENDS WITH ',*'
+            OR stmt_cfn_instances.action CONTAINS ',*,'
+        )
 
         // Find roles that trust CloudFormation service (can be passed as execution role)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -681,7 +835,7 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACKSET = AttackPathsQueryDefinition
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -702,27 +856,48 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_UPDATE_STACKSET = AttackPathsQueryDefinition
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find cloudformation:UpdateStackSet permission
         MATCH (principal)--(cfn_policy:AWSPolicy)--(stmt_cfn:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_cfn.action, ",") WHERE
-                toLower(action) = 'cloudformation:updatestackset'
-                OR toLower(action) = 'cloudformation:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_cfn.action) = 'cloudformation:updatestackset'
+            OR toLower(stmt_cfn.action) STARTS WITH 'cloudformation:updatestackset,'
+            OR toLower(stmt_cfn.action) ENDS WITH ',cloudformation:updatestackset'
+            OR toLower(stmt_cfn.action) CONTAINS ',cloudformation:updatestackset,'
+            OR toLower(stmt_cfn.action) = 'cloudformation:*'
+            OR toLower(stmt_cfn.action) STARTS WITH 'cloudformation:*,'
+            OR toLower(stmt_cfn.action) ENDS WITH ',cloudformation:*'
+            OR toLower(stmt_cfn.action) CONTAINS ',cloudformation:*,'
+            OR stmt_cfn.action = '*'
+            OR stmt_cfn.action STARTS WITH '*,'
+            OR stmt_cfn.action ENDS WITH ',*'
+            OR stmt_cfn.action CONTAINS ',*,'
+        )
 
         // Find roles that trust CloudFormation service (can be passed as execution role)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -731,7 +906,7 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_UPDATE_STACKSET = AttackPathsQueryDefinition
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -752,19 +927,37 @@ AWS_CLOUDFORMATION_PRIVESC_CHANGESET = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with cloudformation:CreateChangeSet permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_create.action, ",") WHERE
-                toLower(action) = 'cloudformation:createchangeset'
-                OR toLower(action) = 'cloudformation:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_create.action) = 'cloudformation:createchangeset'
+            OR toLower(stmt_create.action) STARTS WITH 'cloudformation:createchangeset,'
+            OR toLower(stmt_create.action) ENDS WITH ',cloudformation:createchangeset'
+            OR toLower(stmt_create.action) CONTAINS ',cloudformation:createchangeset,'
+            OR toLower(stmt_create.action) = 'cloudformation:*'
+            OR toLower(stmt_create.action) STARTS WITH 'cloudformation:*,'
+            OR toLower(stmt_create.action) ENDS WITH ',cloudformation:*'
+            OR toLower(stmt_create.action) CONTAINS ',cloudformation:*,'
+            OR stmt_create.action = '*'
+            OR stmt_create.action STARTS WITH '*,'
+            OR stmt_create.action ENDS WITH ',*'
+            OR stmt_create.action CONTAINS ',*,'
+        )
 
         // Find cloudformation:ExecuteChangeSet permission
         MATCH (principal)--(exec_policy:AWSPolicy)--(stmt_exec:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_exec.action, ",") WHERE
-                toLower(action) = 'cloudformation:executechangeset'
-                OR toLower(action) = 'cloudformation:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_exec.action) = 'cloudformation:executechangeset'
+            OR toLower(stmt_exec.action) STARTS WITH 'cloudformation:executechangeset,'
+            OR toLower(stmt_exec.action) ENDS WITH ',cloudformation:executechangeset'
+            OR toLower(stmt_exec.action) CONTAINS ',cloudformation:executechangeset,'
+            OR toLower(stmt_exec.action) = 'cloudformation:*'
+            OR toLower(stmt_exec.action) STARTS WITH 'cloudformation:*,'
+            OR toLower(stmt_exec.action) ENDS WITH ',cloudformation:*'
+            OR toLower(stmt_exec.action) CONTAINS ',cloudformation:*,'
+            OR stmt_exec.action = '*'
+            OR stmt_exec.action STARTS WITH '*,'
+            OR stmt_exec.action ENDS WITH ',*'
+            OR stmt_exec.action CONTAINS ',*,'
+        )
 
         // Find roles that trust CloudFormation service (already attached to existing stacks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
@@ -776,7 +969,7 @@ AWS_CLOUDFORMATION_PRIVESC_CHANGESET = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -797,35 +990,65 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find codebuild:CreateProject permission
         MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_create.action, ",") WHERE
-                toLower(action) = 'codebuild:createproject'
-                OR toLower(action) = 'codebuild:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_create.action) = 'codebuild:createproject'
+            OR toLower(stmt_create.action) STARTS WITH 'codebuild:createproject,'
+            OR toLower(stmt_create.action) ENDS WITH ',codebuild:createproject'
+            OR toLower(stmt_create.action) CONTAINS ',codebuild:createproject,'
+            OR toLower(stmt_create.action) = 'codebuild:*'
+            OR toLower(stmt_create.action) STARTS WITH 'codebuild:*,'
+            OR toLower(stmt_create.action) ENDS WITH ',codebuild:*'
+            OR toLower(stmt_create.action) CONTAINS ',codebuild:*,'
+            OR stmt_create.action = '*'
+            OR stmt_create.action STARTS WITH '*,'
+            OR stmt_create.action ENDS WITH ',*'
+            OR stmt_create.action CONTAINS ',*,'
+        )
 
         // Find codebuild:StartBuild permission
         MATCH (principal)--(build_policy:AWSPolicy)--(stmt_build:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_build.action, ",") WHERE
-                toLower(action) = 'codebuild:startbuild'
-                OR toLower(action) = 'codebuild:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_build.action) = 'codebuild:startbuild'
+            OR toLower(stmt_build.action) STARTS WITH 'codebuild:startbuild,'
+            OR toLower(stmt_build.action) ENDS WITH ',codebuild:startbuild'
+            OR toLower(stmt_build.action) CONTAINS ',codebuild:startbuild,'
+            OR toLower(stmt_build.action) = 'codebuild:*'
+            OR toLower(stmt_build.action) STARTS WITH 'codebuild:*,'
+            OR toLower(stmt_build.action) ENDS WITH ',codebuild:*'
+            OR toLower(stmt_build.action) CONTAINS ',codebuild:*,'
+            OR stmt_build.action = '*'
+            OR stmt_build.action STARTS WITH '*,'
+            OR stmt_build.action ENDS WITH ',*'
+            OR stmt_build.action CONTAINS ',*,'
+        )
 
         // Find roles that trust CodeBuild service (can be passed to CodeBuild)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'codebuild.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -834,7 +1057,7 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -855,11 +1078,20 @@ AWS_CODEBUILD_PRIVESC_START_BUILD = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with codebuild:StartBuild permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(build_policy:AWSPolicy)--(stmt_build:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_build.action, ",") WHERE
-                toLower(action) = 'codebuild:startbuild'
-                OR toLower(action) = 'codebuild:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_build.action) = 'codebuild:startbuild'
+            OR toLower(stmt_build.action) STARTS WITH 'codebuild:startbuild,'
+            OR toLower(stmt_build.action) ENDS WITH ',codebuild:startbuild'
+            OR toLower(stmt_build.action) CONTAINS ',codebuild:startbuild,'
+            OR toLower(stmt_build.action) = 'codebuild:*'
+            OR toLower(stmt_build.action) STARTS WITH 'codebuild:*,'
+            OR toLower(stmt_build.action) ENDS WITH ',codebuild:*'
+            OR toLower(stmt_build.action) CONTAINS ',codebuild:*,'
+            OR stmt_build.action = '*'
+            OR stmt_build.action STARTS WITH '*,'
+            OR stmt_build.action ENDS WITH ',*'
+            OR stmt_build.action CONTAINS ',*,'
+        )
 
         // Find roles that trust CodeBuild service (already attached to existing projects)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'codebuild.amazonaws.com'}})
@@ -871,7 +1103,7 @@ AWS_CODEBUILD_PRIVESC_START_BUILD = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -892,11 +1124,20 @@ AWS_CODEBUILD_PRIVESC_START_BUILD_BATCH = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with codebuild:StartBuildBatch permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(build_policy:AWSPolicy)--(stmt_build:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_build.action, ",") WHERE
-                toLower(action) = 'codebuild:startbuildbatch'
-                OR toLower(action) = 'codebuild:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_build.action) = 'codebuild:startbuildbatch'
+            OR toLower(stmt_build.action) STARTS WITH 'codebuild:startbuildbatch,'
+            OR toLower(stmt_build.action) ENDS WITH ',codebuild:startbuildbatch'
+            OR toLower(stmt_build.action) CONTAINS ',codebuild:startbuildbatch,'
+            OR toLower(stmt_build.action) = 'codebuild:*'
+            OR toLower(stmt_build.action) STARTS WITH 'codebuild:*,'
+            OR toLower(stmt_build.action) ENDS WITH ',codebuild:*'
+            OR toLower(stmt_build.action) CONTAINS ',codebuild:*,'
+            OR stmt_build.action = '*'
+            OR stmt_build.action STARTS WITH '*,'
+            OR stmt_build.action ENDS WITH ',*'
+            OR stmt_build.action CONTAINS ',*,'
+        )
 
         // Find roles that trust CodeBuild service (already attached to existing projects)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'codebuild.amazonaws.com'}})
@@ -908,7 +1149,7 @@ AWS_CODEBUILD_PRIVESC_START_BUILD_BATCH = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -929,35 +1170,65 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT_BATCH = AttackPathsQueryDefinition
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find codebuild:CreateProject permission
         MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_create.action, ",") WHERE
-                toLower(action) = 'codebuild:createproject'
-                OR toLower(action) = 'codebuild:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_create.action) = 'codebuild:createproject'
+            OR toLower(stmt_create.action) STARTS WITH 'codebuild:createproject,'
+            OR toLower(stmt_create.action) ENDS WITH ',codebuild:createproject'
+            OR toLower(stmt_create.action) CONTAINS ',codebuild:createproject,'
+            OR toLower(stmt_create.action) = 'codebuild:*'
+            OR toLower(stmt_create.action) STARTS WITH 'codebuild:*,'
+            OR toLower(stmt_create.action) ENDS WITH ',codebuild:*'
+            OR toLower(stmt_create.action) CONTAINS ',codebuild:*,'
+            OR stmt_create.action = '*'
+            OR stmt_create.action STARTS WITH '*,'
+            OR stmt_create.action ENDS WITH ',*'
+            OR stmt_create.action CONTAINS ',*,'
+        )
 
         // Find codebuild:StartBuildBatch permission
         MATCH (principal)--(batch_policy:AWSPolicy)--(stmt_batch:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_batch.action, ",") WHERE
-                toLower(action) = 'codebuild:startbuildbatch'
-                OR toLower(action) = 'codebuild:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_batch.action) = 'codebuild:startbuildbatch'
+            OR toLower(stmt_batch.action) STARTS WITH 'codebuild:startbuildbatch,'
+            OR toLower(stmt_batch.action) ENDS WITH ',codebuild:startbuildbatch'
+            OR toLower(stmt_batch.action) CONTAINS ',codebuild:startbuildbatch,'
+            OR toLower(stmt_batch.action) = 'codebuild:*'
+            OR toLower(stmt_batch.action) STARTS WITH 'codebuild:*,'
+            OR toLower(stmt_batch.action) ENDS WITH ',codebuild:*'
+            OR toLower(stmt_batch.action) CONTAINS ',codebuild:*,'
+            OR stmt_batch.action = '*'
+            OR stmt_batch.action STARTS WITH '*,'
+            OR stmt_batch.action ENDS WITH ',*'
+            OR stmt_batch.action CONTAINS ',*,'
+        )
 
         // Find roles that trust CodeBuild service (can be passed to CodeBuild)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'codebuild.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -966,7 +1237,7 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT_BATCH = AttackPathsQueryDefinition
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -987,44 +1258,83 @@ AWS_DATAPIPELINE_PRIVESC_PASSROLE_CREATE_PIPELINE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find datapipeline:CreatePipeline permission
         MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_create.action, ",") WHERE
-                toLower(action) = 'datapipeline:createpipeline'
-                OR toLower(action) = 'datapipeline:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_create.action) = 'datapipeline:createpipeline'
+            OR toLower(stmt_create.action) STARTS WITH 'datapipeline:createpipeline,'
+            OR toLower(stmt_create.action) ENDS WITH ',datapipeline:createpipeline'
+            OR toLower(stmt_create.action) CONTAINS ',datapipeline:createpipeline,'
+            OR toLower(stmt_create.action) = 'datapipeline:*'
+            OR toLower(stmt_create.action) STARTS WITH 'datapipeline:*,'
+            OR toLower(stmt_create.action) ENDS WITH ',datapipeline:*'
+            OR toLower(stmt_create.action) CONTAINS ',datapipeline:*,'
+            OR stmt_create.action = '*'
+            OR stmt_create.action STARTS WITH '*,'
+            OR stmt_create.action ENDS WITH ',*'
+            OR stmt_create.action CONTAINS ',*,'
+        )
 
         // Find datapipeline:PutPipelineDefinition permission
         MATCH (principal)--(put_policy:AWSPolicy)--(stmt_put:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_put.action, ",") WHERE
-                toLower(action) = 'datapipeline:putpipelinedefinition'
-                OR toLower(action) = 'datapipeline:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_put.action) = 'datapipeline:putpipelinedefinition'
+            OR toLower(stmt_put.action) STARTS WITH 'datapipeline:putpipelinedefinition,'
+            OR toLower(stmt_put.action) ENDS WITH ',datapipeline:putpipelinedefinition'
+            OR toLower(stmt_put.action) CONTAINS ',datapipeline:putpipelinedefinition,'
+            OR toLower(stmt_put.action) = 'datapipeline:*'
+            OR toLower(stmt_put.action) STARTS WITH 'datapipeline:*,'
+            OR toLower(stmt_put.action) ENDS WITH ',datapipeline:*'
+            OR toLower(stmt_put.action) CONTAINS ',datapipeline:*,'
+            OR stmt_put.action = '*'
+            OR stmt_put.action STARTS WITH '*,'
+            OR stmt_put.action ENDS WITH ',*'
+            OR stmt_put.action CONTAINS ',*,'
+        )
 
         // Find datapipeline:ActivatePipeline permission
         MATCH (principal)--(activate_policy:AWSPolicy)--(stmt_activate:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_activate.action, ",") WHERE
-                toLower(action) = 'datapipeline:activatepipeline'
-                OR toLower(action) = 'datapipeline:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_activate.action) = 'datapipeline:activatepipeline'
+            OR toLower(stmt_activate.action) STARTS WITH 'datapipeline:activatepipeline,'
+            OR toLower(stmt_activate.action) ENDS WITH ',datapipeline:activatepipeline'
+            OR toLower(stmt_activate.action) CONTAINS ',datapipeline:activatepipeline,'
+            OR toLower(stmt_activate.action) = 'datapipeline:*'
+            OR toLower(stmt_activate.action) STARTS WITH 'datapipeline:*,'
+            OR toLower(stmt_activate.action) ENDS WITH ',datapipeline:*'
+            OR toLower(stmt_activate.action) CONTAINS ',datapipeline:*,'
+            OR stmt_activate.action = '*'
+            OR stmt_activate.action STARTS WITH '*,'
+            OR stmt_activate.action ENDS WITH ',*'
+            OR stmt_activate.action CONTAINS ',*,'
+        )
 
         // Find roles that trust Data Pipeline or EMR service (can be passed to DataPipeline)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(trusted_principal:AWSPrincipal)
         WHERE trusted_principal.arn IN ['datapipeline.amazonaws.com', 'elasticmapreduce.amazonaws.com']
-            AND size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+            AND (
+                stmt_passrole.resource = '*'
+                OR stmt_passrole.resource STARTS WITH '*,'
+                OR stmt_passrole.resource ENDS WITH ',*'
+                OR stmt_passrole.resource CONTAINS ',*,'
+                OR stmt_passrole.resource CONTAINS target_role.name
+                OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+            )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1033,7 +1343,7 @@ AWS_DATAPIPELINE_PRIVESC_PASSROLE_CREATE_PIPELINE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1054,27 +1364,48 @@ AWS_EC2_PRIVESC_PASSROLE_IAM = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find ec2:RunInstances permission
         MATCH (principal)--(ec2_policy:AWSPolicy)--(stmt_ec2:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_ec2.action, ",") WHERE
-                toLower(action) = 'ec2:runinstances'
-                OR toLower(action) = 'ec2:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_ec2.action) = 'ec2:runinstances'
+            OR toLower(stmt_ec2.action) STARTS WITH 'ec2:runinstances,'
+            OR toLower(stmt_ec2.action) ENDS WITH ',ec2:runinstances'
+            OR toLower(stmt_ec2.action) CONTAINS ',ec2:runinstances,'
+            OR toLower(stmt_ec2.action) = 'ec2:*'
+            OR toLower(stmt_ec2.action) STARTS WITH 'ec2:*,'
+            OR toLower(stmt_ec2.action) ENDS WITH ',ec2:*'
+            OR toLower(stmt_ec2.action) CONTAINS ',ec2:*,'
+            OR stmt_ec2.action = '*'
+            OR stmt_ec2.action STARTS WITH '*,'
+            OR stmt_ec2.action ENDS WITH ',*'
+            OR stmt_ec2.action CONTAINS ',*,'
+        )
 
         // Find roles that trust EC2 service (can be passed to EC2)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ec2.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1083,7 +1414,7 @@ AWS_EC2_PRIVESC_PASSROLE_IAM = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1104,27 +1435,54 @@ AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with ec2:ModifyInstanceAttribute permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(modify_policy:AWSPolicy)--(stmt_modify:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_modify.action, ",") WHERE
-                toLower(action) = 'ec2:modifyinstanceattribute'
-                OR toLower(action) = 'ec2:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_modify.action) = 'ec2:modifyinstanceattribute'
+            OR toLower(stmt_modify.action) STARTS WITH 'ec2:modifyinstanceattribute,'
+            OR toLower(stmt_modify.action) ENDS WITH ',ec2:modifyinstanceattribute'
+            OR toLower(stmt_modify.action) CONTAINS ',ec2:modifyinstanceattribute,'
+            OR toLower(stmt_modify.action) = 'ec2:*'
+            OR toLower(stmt_modify.action) STARTS WITH 'ec2:*,'
+            OR toLower(stmt_modify.action) ENDS WITH ',ec2:*'
+            OR toLower(stmt_modify.action) CONTAINS ',ec2:*,'
+            OR stmt_modify.action = '*'
+            OR stmt_modify.action STARTS WITH '*,'
+            OR stmt_modify.action ENDS WITH ',*'
+            OR stmt_modify.action CONTAINS ',*,'
+        )
 
         // Find ec2:StopInstances permission (can be same or different policy)
         MATCH (principal)--(stop_policy:AWSPolicy)--(stmt_stop:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_stop.action, ",") WHERE
-                toLower(action) = 'ec2:stopinstances'
-                OR toLower(action) = 'ec2:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_stop.action) = 'ec2:stopinstances'
+            OR toLower(stmt_stop.action) STARTS WITH 'ec2:stopinstances,'
+            OR toLower(stmt_stop.action) ENDS WITH ',ec2:stopinstances'
+            OR toLower(stmt_stop.action) CONTAINS ',ec2:stopinstances,'
+            OR toLower(stmt_stop.action) = 'ec2:*'
+            OR toLower(stmt_stop.action) STARTS WITH 'ec2:*,'
+            OR toLower(stmt_stop.action) ENDS WITH ',ec2:*'
+            OR toLower(stmt_stop.action) CONTAINS ',ec2:*,'
+            OR stmt_stop.action = '*'
+            OR stmt_stop.action STARTS WITH '*,'
+            OR stmt_stop.action ENDS WITH ',*'
+            OR stmt_stop.action CONTAINS ',*,'
+        )
 
         // Find ec2:StartInstances permission (can be same or different policy)
         MATCH (principal)--(start_policy:AWSPolicy)--(stmt_start:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_start.action, ",") WHERE
-                toLower(action) = 'ec2:startinstances'
-                OR toLower(action) = 'ec2:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_start.action) = 'ec2:startinstances'
+            OR toLower(stmt_start.action) STARTS WITH 'ec2:startinstances,'
+            OR toLower(stmt_start.action) ENDS WITH ',ec2:startinstances'
+            OR toLower(stmt_start.action) CONTAINS ',ec2:startinstances,'
+            OR toLower(stmt_start.action) = 'ec2:*'
+            OR toLower(stmt_start.action) STARTS WITH 'ec2:*,'
+            OR toLower(stmt_start.action) ENDS WITH ',ec2:*'
+            OR toLower(stmt_start.action) CONTAINS ',ec2:*,'
+            OR stmt_start.action = '*'
+            OR stmt_start.action STARTS WITH '*,'
+            OR stmt_start.action ENDS WITH ',*'
+            OR stmt_start.action CONTAINS ',*,'
+        )
 
         // Find EC2 instances with instance profiles (potential targets)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
@@ -1136,7 +1494,7 @@ AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1157,27 +1515,48 @@ AWS_EC2_PRIVESC_PASSROLE_SPOT_INSTANCES = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find ec2:RequestSpotInstances permission
         MATCH (principal)--(spot_policy:AWSPolicy)--(stmt_spot:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_spot.action, ",") WHERE
-                toLower(action) = 'ec2:requestspotinstances'
-                OR toLower(action) = 'ec2:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_spot.action) = 'ec2:requestspotinstances'
+            OR toLower(stmt_spot.action) STARTS WITH 'ec2:requestspotinstances,'
+            OR toLower(stmt_spot.action) ENDS WITH ',ec2:requestspotinstances'
+            OR toLower(stmt_spot.action) CONTAINS ',ec2:requestspotinstances,'
+            OR toLower(stmt_spot.action) = 'ec2:*'
+            OR toLower(stmt_spot.action) STARTS WITH 'ec2:*,'
+            OR toLower(stmt_spot.action) ENDS WITH ',ec2:*'
+            OR toLower(stmt_spot.action) CONTAINS ',ec2:*,'
+            OR stmt_spot.action = '*'
+            OR stmt_spot.action STARTS WITH '*,'
+            OR stmt_spot.action ENDS WITH ',*'
+            OR stmt_spot.action CONTAINS ',*,'
+        )
 
         // Find roles that trust EC2 service (can be passed to EC2 spot instances)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ec2.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1186,7 +1565,7 @@ AWS_EC2_PRIVESC_PASSROLE_SPOT_INSTANCES = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1207,19 +1586,37 @@ AWS_EC2_PRIVESC_LAUNCH_TEMPLATE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with ec2:CreateLaunchTemplateVersion permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_create.action, ",") WHERE
-                toLower(action) = 'ec2:createlaunchtemplateversion'
-                OR toLower(action) = 'ec2:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_create.action) = 'ec2:createlaunchtemplateversion'
+            OR toLower(stmt_create.action) STARTS WITH 'ec2:createlaunchtemplateversion,'
+            OR toLower(stmt_create.action) ENDS WITH ',ec2:createlaunchtemplateversion'
+            OR toLower(stmt_create.action) CONTAINS ',ec2:createlaunchtemplateversion,'
+            OR toLower(stmt_create.action) = 'ec2:*'
+            OR toLower(stmt_create.action) STARTS WITH 'ec2:*,'
+            OR toLower(stmt_create.action) ENDS WITH ',ec2:*'
+            OR toLower(stmt_create.action) CONTAINS ',ec2:*,'
+            OR stmt_create.action = '*'
+            OR stmt_create.action STARTS WITH '*,'
+            OR stmt_create.action ENDS WITH ',*'
+            OR stmt_create.action CONTAINS ',*,'
+        )
 
         // Find ec2:ModifyLaunchTemplate permission
         MATCH (principal)--(modify_policy:AWSPolicy)--(stmt_modify:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_modify.action, ",") WHERE
-                toLower(action) = 'ec2:modifylaunchtemplate'
-                OR toLower(action) = 'ec2:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_modify.action) = 'ec2:modifylaunchtemplate'
+            OR toLower(stmt_modify.action) STARTS WITH 'ec2:modifylaunchtemplate,'
+            OR toLower(stmt_modify.action) ENDS WITH ',ec2:modifylaunchtemplate'
+            OR toLower(stmt_modify.action) CONTAINS ',ec2:modifylaunchtemplate,'
+            OR toLower(stmt_modify.action) = 'ec2:*'
+            OR toLower(stmt_modify.action) STARTS WITH 'ec2:*,'
+            OR toLower(stmt_modify.action) ENDS WITH ',ec2:*'
+            OR toLower(stmt_modify.action) CONTAINS ',ec2:*,'
+            OR stmt_modify.action = '*'
+            OR stmt_modify.action STARTS WITH '*,'
+            OR stmt_modify.action ENDS WITH ',*'
+            OR stmt_modify.action CONTAINS ',*,'
+        )
 
         // Find launch templates in the account (potential targets)
         MATCH path_target = (aws)--(template:LaunchTemplate)
@@ -1231,7 +1628,7 @@ AWS_EC2_PRIVESC_LAUNCH_TEMPLATE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1252,11 +1649,20 @@ AWS_EC2INSTANCECONNECT_PRIVESC_SEND_SSH_PUBLIC_KEY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with ec2-instance-connect:SendSSHPublicKey permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(connect_policy:AWSPolicy)--(stmt_connect:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_connect.action, ",") WHERE
-                toLower(action) = 'ec2-instance-connect:sendsshpublickey'
-                OR toLower(action) = 'ec2-instance-connect:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_connect.action) = 'ec2-instance-connect:sendsshpublickey'
+            OR toLower(stmt_connect.action) STARTS WITH 'ec2-instance-connect:sendsshpublickey,'
+            OR toLower(stmt_connect.action) ENDS WITH ',ec2-instance-connect:sendsshpublickey'
+            OR toLower(stmt_connect.action) CONTAINS ',ec2-instance-connect:sendsshpublickey,'
+            OR toLower(stmt_connect.action) = 'ec2-instance-connect:*'
+            OR toLower(stmt_connect.action) STARTS WITH 'ec2-instance-connect:*,'
+            OR toLower(stmt_connect.action) ENDS WITH ',ec2-instance-connect:*'
+            OR toLower(stmt_connect.action) CONTAINS ',ec2-instance-connect:*,'
+            OR stmt_connect.action = '*'
+            OR stmt_connect.action STARTS WITH '*,'
+            OR stmt_connect.action ENDS WITH ',*'
+            OR stmt_connect.action CONTAINS ',*,'
+        )
 
         // Find EC2 instances with attached roles (targets for credential theft via IMDS)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
@@ -1268,7 +1674,7 @@ AWS_EC2INSTANCECONNECT_PRIVESC_SEND_SSH_PUBLIC_KEY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1289,43 +1695,82 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find ecs:CreateCluster permission
         MATCH (principal)--(cluster_policy:AWSPolicy)--(stmt_cluster:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_cluster.action, ",") WHERE
-                toLower(action) = 'ecs:createcluster'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_cluster.action) = 'ecs:createcluster'
+            OR toLower(stmt_cluster.action) STARTS WITH 'ecs:createcluster,'
+            OR toLower(stmt_cluster.action) ENDS WITH ',ecs:createcluster'
+            OR toLower(stmt_cluster.action) CONTAINS ',ecs:createcluster,'
+            OR toLower(stmt_cluster.action) = 'ecs:*'
+            OR toLower(stmt_cluster.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_cluster.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_cluster.action) CONTAINS ',ecs:*,'
+            OR stmt_cluster.action = '*'
+            OR stmt_cluster.action STARTS WITH '*,'
+            OR stmt_cluster.action ENDS WITH ',*'
+            OR stmt_cluster.action CONTAINS ',*,'
+        )
 
         // Find ecs:RegisterTaskDefinition permission
         MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_taskdef.action, ",") WHERE
-                toLower(action) = 'ecs:registertaskdefinition'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_taskdef.action) = 'ecs:registertaskdefinition'
+            OR toLower(stmt_taskdef.action) STARTS WITH 'ecs:registertaskdefinition,'
+            OR toLower(stmt_taskdef.action) ENDS WITH ',ecs:registertaskdefinition'
+            OR toLower(stmt_taskdef.action) CONTAINS ',ecs:registertaskdefinition,'
+            OR toLower(stmt_taskdef.action) = 'ecs:*'
+            OR toLower(stmt_taskdef.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_taskdef.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_taskdef.action) CONTAINS ',ecs:*,'
+            OR stmt_taskdef.action = '*'
+            OR stmt_taskdef.action STARTS WITH '*,'
+            OR stmt_taskdef.action ENDS WITH ',*'
+            OR stmt_taskdef.action CONTAINS ',*,'
+        )
 
         // Find ecs:CreateService permission
         MATCH (principal)--(service_policy:AWSPolicy)--(stmt_service:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_service.action, ",") WHERE
-                toLower(action) = 'ecs:createservice'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_service.action) = 'ecs:createservice'
+            OR toLower(stmt_service.action) STARTS WITH 'ecs:createservice,'
+            OR toLower(stmt_service.action) ENDS WITH ',ecs:createservice'
+            OR toLower(stmt_service.action) CONTAINS ',ecs:createservice,'
+            OR toLower(stmt_service.action) = 'ecs:*'
+            OR toLower(stmt_service.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_service.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_service.action) CONTAINS ',ecs:*,'
+            OR stmt_service.action = '*'
+            OR stmt_service.action STARTS WITH '*,'
+            OR stmt_service.action ENDS WITH ',*'
+            OR stmt_service.action CONTAINS ',*,'
+        )
 
         // Find roles that trust ECS tasks service (can be passed to ECS tasks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1334,7 +1779,7 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1355,43 +1800,82 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find ecs:CreateCluster permission
         MATCH (principal)--(cluster_policy:AWSPolicy)--(stmt_cluster:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_cluster.action, ",") WHERE
-                toLower(action) = 'ecs:createcluster'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_cluster.action) = 'ecs:createcluster'
+            OR toLower(stmt_cluster.action) STARTS WITH 'ecs:createcluster,'
+            OR toLower(stmt_cluster.action) ENDS WITH ',ecs:createcluster'
+            OR toLower(stmt_cluster.action) CONTAINS ',ecs:createcluster,'
+            OR toLower(stmt_cluster.action) = 'ecs:*'
+            OR toLower(stmt_cluster.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_cluster.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_cluster.action) CONTAINS ',ecs:*,'
+            OR stmt_cluster.action = '*'
+            OR stmt_cluster.action STARTS WITH '*,'
+            OR stmt_cluster.action ENDS WITH ',*'
+            OR stmt_cluster.action CONTAINS ',*,'
+        )
 
         // Find ecs:RegisterTaskDefinition permission
         MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_taskdef.action, ",") WHERE
-                toLower(action) = 'ecs:registertaskdefinition'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_taskdef.action) = 'ecs:registertaskdefinition'
+            OR toLower(stmt_taskdef.action) STARTS WITH 'ecs:registertaskdefinition,'
+            OR toLower(stmt_taskdef.action) ENDS WITH ',ecs:registertaskdefinition'
+            OR toLower(stmt_taskdef.action) CONTAINS ',ecs:registertaskdefinition,'
+            OR toLower(stmt_taskdef.action) = 'ecs:*'
+            OR toLower(stmt_taskdef.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_taskdef.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_taskdef.action) CONTAINS ',ecs:*,'
+            OR stmt_taskdef.action = '*'
+            OR stmt_taskdef.action STARTS WITH '*,'
+            OR stmt_taskdef.action ENDS WITH ',*'
+            OR stmt_taskdef.action CONTAINS ',*,'
+        )
 
         // Find ecs:RunTask permission
         MATCH (principal)--(runtask_policy:AWSPolicy)--(stmt_runtask:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_runtask.action, ",") WHERE
-                toLower(action) = 'ecs:runtask'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_runtask.action) = 'ecs:runtask'
+            OR toLower(stmt_runtask.action) STARTS WITH 'ecs:runtask,'
+            OR toLower(stmt_runtask.action) ENDS WITH ',ecs:runtask'
+            OR toLower(stmt_runtask.action) CONTAINS ',ecs:runtask,'
+            OR toLower(stmt_runtask.action) = 'ecs:*'
+            OR toLower(stmt_runtask.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_runtask.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_runtask.action) CONTAINS ',ecs:*,'
+            OR stmt_runtask.action = '*'
+            OR stmt_runtask.action STARTS WITH '*,'
+            OR stmt_runtask.action ENDS WITH ',*'
+            OR stmt_runtask.action CONTAINS ',*,'
+        )
 
         // Find roles that trust ECS tasks service (can be passed to ECS tasks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1400,7 +1884,7 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1421,35 +1905,65 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE_EXISTING_CLUSTER = AttackPathsQueryDefin
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find ecs:RegisterTaskDefinition permission
         MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_taskdef.action, ",") WHERE
-                toLower(action) = 'ecs:registertaskdefinition'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_taskdef.action) = 'ecs:registertaskdefinition'
+            OR toLower(stmt_taskdef.action) STARTS WITH 'ecs:registertaskdefinition,'
+            OR toLower(stmt_taskdef.action) ENDS WITH ',ecs:registertaskdefinition'
+            OR toLower(stmt_taskdef.action) CONTAINS ',ecs:registertaskdefinition,'
+            OR toLower(stmt_taskdef.action) = 'ecs:*'
+            OR toLower(stmt_taskdef.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_taskdef.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_taskdef.action) CONTAINS ',ecs:*,'
+            OR stmt_taskdef.action = '*'
+            OR stmt_taskdef.action STARTS WITH '*,'
+            OR stmt_taskdef.action ENDS WITH ',*'
+            OR stmt_taskdef.action CONTAINS ',*,'
+        )
 
         // Find ecs:CreateService permission
         MATCH (principal)--(service_policy:AWSPolicy)--(stmt_service:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_service.action, ",") WHERE
-                toLower(action) = 'ecs:createservice'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_service.action) = 'ecs:createservice'
+            OR toLower(stmt_service.action) STARTS WITH 'ecs:createservice,'
+            OR toLower(stmt_service.action) ENDS WITH ',ecs:createservice'
+            OR toLower(stmt_service.action) CONTAINS ',ecs:createservice,'
+            OR toLower(stmt_service.action) = 'ecs:*'
+            OR toLower(stmt_service.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_service.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_service.action) CONTAINS ',ecs:*,'
+            OR stmt_service.action = '*'
+            OR stmt_service.action STARTS WITH '*,'
+            OR stmt_service.action ENDS WITH ',*'
+            OR stmt_service.action CONTAINS ',*,'
+        )
 
         // Find roles that trust ECS tasks service (can be passed to ECS tasks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1458,7 +1972,7 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE_EXISTING_CLUSTER = AttackPathsQueryDefin
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1479,35 +1993,65 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find ecs:RegisterTaskDefinition permission
         MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_taskdef.action, ",") WHERE
-                toLower(action) = 'ecs:registertaskdefinition'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_taskdef.action) = 'ecs:registertaskdefinition'
+            OR toLower(stmt_taskdef.action) STARTS WITH 'ecs:registertaskdefinition,'
+            OR toLower(stmt_taskdef.action) ENDS WITH ',ecs:registertaskdefinition'
+            OR toLower(stmt_taskdef.action) CONTAINS ',ecs:registertaskdefinition,'
+            OR toLower(stmt_taskdef.action) = 'ecs:*'
+            OR toLower(stmt_taskdef.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_taskdef.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_taskdef.action) CONTAINS ',ecs:*,'
+            OR stmt_taskdef.action = '*'
+            OR stmt_taskdef.action STARTS WITH '*,'
+            OR stmt_taskdef.action ENDS WITH ',*'
+            OR stmt_taskdef.action CONTAINS ',*,'
+        )
 
         // Find ecs:RunTask permission
         MATCH (principal)--(runtask_policy:AWSPolicy)--(stmt_runtask:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_runtask.action, ",") WHERE
-                toLower(action) = 'ecs:runtask'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_runtask.action) = 'ecs:runtask'
+            OR toLower(stmt_runtask.action) STARTS WITH 'ecs:runtask,'
+            OR toLower(stmt_runtask.action) ENDS WITH ',ecs:runtask'
+            OR toLower(stmt_runtask.action) CONTAINS ',ecs:runtask,'
+            OR toLower(stmt_runtask.action) = 'ecs:*'
+            OR toLower(stmt_runtask.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_runtask.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_runtask.action) CONTAINS ',ecs:*,'
+            OR stmt_runtask.action = '*'
+            OR stmt_runtask.action STARTS WITH '*,'
+            OR stmt_runtask.action ENDS WITH ',*'
+            OR stmt_runtask.action CONTAINS ',*,'
+        )
 
         // Find roles that trust ECS tasks service (can be passed to ECS tasks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1516,7 +2060,7 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1537,35 +2081,65 @@ AWS_ECS_PRIVESC_PASSROLE_START_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinitio
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find ecs:RegisterTaskDefinition permission
         MATCH (principal)--(taskdef_policy:AWSPolicy)--(stmt_taskdef:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_taskdef.action, ",") WHERE
-                toLower(action) = 'ecs:registertaskdefinition'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_taskdef.action) = 'ecs:registertaskdefinition'
+            OR toLower(stmt_taskdef.action) STARTS WITH 'ecs:registertaskdefinition,'
+            OR toLower(stmt_taskdef.action) ENDS WITH ',ecs:registertaskdefinition'
+            OR toLower(stmt_taskdef.action) CONTAINS ',ecs:registertaskdefinition,'
+            OR toLower(stmt_taskdef.action) = 'ecs:*'
+            OR toLower(stmt_taskdef.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_taskdef.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_taskdef.action) CONTAINS ',ecs:*,'
+            OR stmt_taskdef.action = '*'
+            OR stmt_taskdef.action STARTS WITH '*,'
+            OR stmt_taskdef.action ENDS WITH ',*'
+            OR stmt_taskdef.action CONTAINS ',*,'
+        )
 
         // Find ecs:StartTask permission
         MATCH (principal)--(starttask_policy:AWSPolicy)--(stmt_starttask:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_starttask.action, ",") WHERE
-                toLower(action) = 'ecs:starttask'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_starttask.action) = 'ecs:starttask'
+            OR toLower(stmt_starttask.action) STARTS WITH 'ecs:starttask,'
+            OR toLower(stmt_starttask.action) ENDS WITH ',ecs:starttask'
+            OR toLower(stmt_starttask.action) CONTAINS ',ecs:starttask,'
+            OR toLower(stmt_starttask.action) = 'ecs:*'
+            OR toLower(stmt_starttask.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_starttask.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_starttask.action) CONTAINS ',ecs:*,'
+            OR stmt_starttask.action = '*'
+            OR stmt_starttask.action STARTS WITH '*,'
+            OR stmt_starttask.action ENDS WITH ',*'
+            OR stmt_starttask.action CONTAINS ',*,'
+        )
 
         // Find roles that trust ECS tasks service (can be passed to ECS tasks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1574,7 +2148,7 @@ AWS_ECS_PRIVESC_PASSROLE_START_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinitio
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1595,19 +2169,37 @@ AWS_ECS_PRIVESC_EXECUTE_COMMAND = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with ecs:ExecuteCommand permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(exec_policy:AWSPolicy)--(stmt_exec:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_exec.action, ",") WHERE
-                toLower(action) = 'ecs:executecommand'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_exec.action) = 'ecs:executecommand'
+            OR toLower(stmt_exec.action) STARTS WITH 'ecs:executecommand,'
+            OR toLower(stmt_exec.action) ENDS WITH ',ecs:executecommand'
+            OR toLower(stmt_exec.action) CONTAINS ',ecs:executecommand,'
+            OR toLower(stmt_exec.action) = 'ecs:*'
+            OR toLower(stmt_exec.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_exec.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_exec.action) CONTAINS ',ecs:*,'
+            OR stmt_exec.action = '*'
+            OR stmt_exec.action STARTS WITH '*,'
+            OR stmt_exec.action ENDS WITH ',*'
+            OR stmt_exec.action CONTAINS ',*,'
+        )
 
         // Find ecs:DescribeTasks permission (required by AWS CLI to get container runtime ID)
         MATCH (principal)--(describe_policy:AWSPolicy)--(stmt_describe:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_describe.action, ",") WHERE
-                toLower(action) = 'ecs:describetasks'
-                OR toLower(action) = 'ecs:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_describe.action) = 'ecs:describetasks'
+            OR toLower(stmt_describe.action) STARTS WITH 'ecs:describetasks,'
+            OR toLower(stmt_describe.action) ENDS WITH ',ecs:describetasks'
+            OR toLower(stmt_describe.action) CONTAINS ',ecs:describetasks,'
+            OR toLower(stmt_describe.action) = 'ecs:*'
+            OR toLower(stmt_describe.action) STARTS WITH 'ecs:*,'
+            OR toLower(stmt_describe.action) ENDS WITH ',ecs:*'
+            OR toLower(stmt_describe.action) CONTAINS ',ecs:*,'
+            OR stmt_describe.action = '*'
+            OR stmt_describe.action STARTS WITH '*,'
+            OR stmt_describe.action ENDS WITH ',*'
+            OR stmt_describe.action CONTAINS ',*,'
+        )
 
         // Find roles that trust ECS tasks service (already attached to running tasks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
@@ -1619,7 +2211,7 @@ AWS_ECS_PRIVESC_EXECUTE_COMMAND = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1640,27 +2232,48 @@ AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find glue:CreateDevEndpoint permission
         MATCH (principal)--(glue_policy:AWSPolicy)--(stmt_glue:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_glue.action, ",") WHERE
-                toLower(action) = 'glue:createdevendpoint'
-                OR toLower(action) = 'glue:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_glue.action) = 'glue:createdevendpoint'
+            OR toLower(stmt_glue.action) STARTS WITH 'glue:createdevendpoint,'
+            OR toLower(stmt_glue.action) ENDS WITH ',glue:createdevendpoint'
+            OR toLower(stmt_glue.action) CONTAINS ',glue:createdevendpoint,'
+            OR toLower(stmt_glue.action) = 'glue:*'
+            OR toLower(stmt_glue.action) STARTS WITH 'glue:*,'
+            OR toLower(stmt_glue.action) ENDS WITH ',glue:*'
+            OR toLower(stmt_glue.action) CONTAINS ',glue:*,'
+            OR stmt_glue.action = '*'
+            OR stmt_glue.action STARTS WITH '*,'
+            OR stmt_glue.action ENDS WITH ',*'
+            OR stmt_glue.action CONTAINS ',*,'
+        )
 
         // Find roles that trust Glue service (can be passed to Glue)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'glue.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1669,7 +2282,7 @@ AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1690,11 +2303,20 @@ AWS_GLUE_PRIVESC_UPDATE_DEV_ENDPOINT = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with glue:UpdateDevEndpoint permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'glue:updatedevendpoint'
-                OR toLower(action) = 'glue:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'glue:updatedevendpoint'
+            OR toLower(stmt.action) STARTS WITH 'glue:updatedevendpoint,'
+            OR toLower(stmt.action) ENDS WITH ',glue:updatedevendpoint'
+            OR toLower(stmt.action) CONTAINS ',glue:updatedevendpoint,'
+            OR toLower(stmt.action) = 'glue:*'
+            OR toLower(stmt.action) STARTS WITH 'glue:*,'
+            OR toLower(stmt.action) ENDS WITH ',glue:*'
+            OR toLower(stmt.action) CONTAINS ',glue:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find roles that trust Glue service (already attached to existing dev endpoints)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'glue.amazonaws.com'}})
@@ -1706,7 +2328,7 @@ AWS_GLUE_PRIVESC_UPDATE_DEV_ENDPOINT = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1727,35 +2349,65 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find glue:CreateJob permission
         MATCH (principal)--(createjob_policy:AWSPolicy)--(stmt_createjob:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_createjob.action, ",") WHERE
-                toLower(action) = 'glue:createjob'
-                OR toLower(action) = 'glue:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_createjob.action) = 'glue:createjob'
+            OR toLower(stmt_createjob.action) STARTS WITH 'glue:createjob,'
+            OR toLower(stmt_createjob.action) ENDS WITH ',glue:createjob'
+            OR toLower(stmt_createjob.action) CONTAINS ',glue:createjob,'
+            OR toLower(stmt_createjob.action) = 'glue:*'
+            OR toLower(stmt_createjob.action) STARTS WITH 'glue:*,'
+            OR toLower(stmt_createjob.action) ENDS WITH ',glue:*'
+            OR toLower(stmt_createjob.action) CONTAINS ',glue:*,'
+            OR stmt_createjob.action = '*'
+            OR stmt_createjob.action STARTS WITH '*,'
+            OR stmt_createjob.action ENDS WITH ',*'
+            OR stmt_createjob.action CONTAINS ',*,'
+        )
 
         // Find glue:StartJobRun permission
         MATCH (principal)--(startjob_policy:AWSPolicy)--(stmt_startjob:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_startjob.action, ",") WHERE
-                toLower(action) = 'glue:startjobrun'
-                OR toLower(action) = 'glue:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_startjob.action) = 'glue:startjobrun'
+            OR toLower(stmt_startjob.action) STARTS WITH 'glue:startjobrun,'
+            OR toLower(stmt_startjob.action) ENDS WITH ',glue:startjobrun'
+            OR toLower(stmt_startjob.action) CONTAINS ',glue:startjobrun,'
+            OR toLower(stmt_startjob.action) = 'glue:*'
+            OR toLower(stmt_startjob.action) STARTS WITH 'glue:*,'
+            OR toLower(stmt_startjob.action) ENDS WITH ',glue:*'
+            OR toLower(stmt_startjob.action) CONTAINS ',glue:*,'
+            OR stmt_startjob.action = '*'
+            OR stmt_startjob.action STARTS WITH '*,'
+            OR stmt_startjob.action ENDS WITH ',*'
+            OR stmt_startjob.action CONTAINS ',*,'
+        )
 
         // Find roles that trust Glue service (can be passed to Glue jobs)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'glue.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1764,7 +2416,7 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1785,35 +2437,65 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB_TRIGGER = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find glue:CreateJob permission
         MATCH (principal)--(createjob_policy:AWSPolicy)--(stmt_createjob:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_createjob.action, ",") WHERE
-                toLower(action) = 'glue:createjob'
-                OR toLower(action) = 'glue:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_createjob.action) = 'glue:createjob'
+            OR toLower(stmt_createjob.action) STARTS WITH 'glue:createjob,'
+            OR toLower(stmt_createjob.action) ENDS WITH ',glue:createjob'
+            OR toLower(stmt_createjob.action) CONTAINS ',glue:createjob,'
+            OR toLower(stmt_createjob.action) = 'glue:*'
+            OR toLower(stmt_createjob.action) STARTS WITH 'glue:*,'
+            OR toLower(stmt_createjob.action) ENDS WITH ',glue:*'
+            OR toLower(stmt_createjob.action) CONTAINS ',glue:*,'
+            OR stmt_createjob.action = '*'
+            OR stmt_createjob.action STARTS WITH '*,'
+            OR stmt_createjob.action ENDS WITH ',*'
+            OR stmt_createjob.action CONTAINS ',*,'
+        )
 
         // Find glue:CreateTrigger permission
         MATCH (principal)--(trigger_policy:AWSPolicy)--(stmt_trigger:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_trigger.action, ",") WHERE
-                toLower(action) = 'glue:createtrigger'
-                OR toLower(action) = 'glue:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_trigger.action) = 'glue:createtrigger'
+            OR toLower(stmt_trigger.action) STARTS WITH 'glue:createtrigger,'
+            OR toLower(stmt_trigger.action) ENDS WITH ',glue:createtrigger'
+            OR toLower(stmt_trigger.action) CONTAINS ',glue:createtrigger,'
+            OR toLower(stmt_trigger.action) = 'glue:*'
+            OR toLower(stmt_trigger.action) STARTS WITH 'glue:*,'
+            OR toLower(stmt_trigger.action) ENDS WITH ',glue:*'
+            OR toLower(stmt_trigger.action) CONTAINS ',glue:*,'
+            OR stmt_trigger.action = '*'
+            OR stmt_trigger.action STARTS WITH '*,'
+            OR stmt_trigger.action ENDS WITH ',*'
+            OR stmt_trigger.action CONTAINS ',*,'
+        )
 
         // Find roles that trust Glue service (can be passed to Glue jobs)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'glue.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1822,7 +2504,7 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB_TRIGGER = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1843,35 +2525,65 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find glue:UpdateJob permission
         MATCH (principal)--(updatejob_policy:AWSPolicy)--(stmt_updatejob:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_updatejob.action, ",") WHERE
-                toLower(action) = 'glue:updatejob'
-                OR toLower(action) = 'glue:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_updatejob.action) = 'glue:updatejob'
+            OR toLower(stmt_updatejob.action) STARTS WITH 'glue:updatejob,'
+            OR toLower(stmt_updatejob.action) ENDS WITH ',glue:updatejob'
+            OR toLower(stmt_updatejob.action) CONTAINS ',glue:updatejob,'
+            OR toLower(stmt_updatejob.action) = 'glue:*'
+            OR toLower(stmt_updatejob.action) STARTS WITH 'glue:*,'
+            OR toLower(stmt_updatejob.action) ENDS WITH ',glue:*'
+            OR toLower(stmt_updatejob.action) CONTAINS ',glue:*,'
+            OR stmt_updatejob.action = '*'
+            OR stmt_updatejob.action STARTS WITH '*,'
+            OR stmt_updatejob.action ENDS WITH ',*'
+            OR stmt_updatejob.action CONTAINS ',*,'
+        )
 
         // Find glue:StartJobRun permission
         MATCH (principal)--(startjob_policy:AWSPolicy)--(stmt_startjob:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_startjob.action, ",") WHERE
-                toLower(action) = 'glue:startjobrun'
-                OR toLower(action) = 'glue:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_startjob.action) = 'glue:startjobrun'
+            OR toLower(stmt_startjob.action) STARTS WITH 'glue:startjobrun,'
+            OR toLower(stmt_startjob.action) ENDS WITH ',glue:startjobrun'
+            OR toLower(stmt_startjob.action) CONTAINS ',glue:startjobrun,'
+            OR toLower(stmt_startjob.action) = 'glue:*'
+            OR toLower(stmt_startjob.action) STARTS WITH 'glue:*,'
+            OR toLower(stmt_startjob.action) ENDS WITH ',glue:*'
+            OR toLower(stmt_startjob.action) CONTAINS ',glue:*,'
+            OR stmt_startjob.action = '*'
+            OR stmt_startjob.action STARTS WITH '*,'
+            OR stmt_startjob.action ENDS WITH ',*'
+            OR stmt_startjob.action CONTAINS ',*,'
+        )
 
         // Find roles that trust Glue service (can be passed to Glue jobs)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'glue.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1880,7 +2592,7 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1901,35 +2613,65 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB_TRIGGER = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find glue:UpdateJob permission
         MATCH (principal)--(updatejob_policy:AWSPolicy)--(stmt_updatejob:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_updatejob.action, ",") WHERE
-                toLower(action) = 'glue:updatejob'
-                OR toLower(action) = 'glue:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_updatejob.action) = 'glue:updatejob'
+            OR toLower(stmt_updatejob.action) STARTS WITH 'glue:updatejob,'
+            OR toLower(stmt_updatejob.action) ENDS WITH ',glue:updatejob'
+            OR toLower(stmt_updatejob.action) CONTAINS ',glue:updatejob,'
+            OR toLower(stmt_updatejob.action) = 'glue:*'
+            OR toLower(stmt_updatejob.action) STARTS WITH 'glue:*,'
+            OR toLower(stmt_updatejob.action) ENDS WITH ',glue:*'
+            OR toLower(stmt_updatejob.action) CONTAINS ',glue:*,'
+            OR stmt_updatejob.action = '*'
+            OR stmt_updatejob.action STARTS WITH '*,'
+            OR stmt_updatejob.action ENDS WITH ',*'
+            OR stmt_updatejob.action CONTAINS ',*,'
+        )
 
         // Find glue:CreateTrigger permission
         MATCH (principal)--(trigger_policy:AWSPolicy)--(stmt_trigger:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_trigger.action, ",") WHERE
-                toLower(action) = 'glue:createtrigger'
-                OR toLower(action) = 'glue:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_trigger.action) = 'glue:createtrigger'
+            OR toLower(stmt_trigger.action) STARTS WITH 'glue:createtrigger,'
+            OR toLower(stmt_trigger.action) ENDS WITH ',glue:createtrigger'
+            OR toLower(stmt_trigger.action) CONTAINS ',glue:createtrigger,'
+            OR toLower(stmt_trigger.action) = 'glue:*'
+            OR toLower(stmt_trigger.action) STARTS WITH 'glue:*,'
+            OR toLower(stmt_trigger.action) ENDS WITH ',glue:*'
+            OR toLower(stmt_trigger.action) CONTAINS ',glue:*,'
+            OR stmt_trigger.action = '*'
+            OR stmt_trigger.action STARTS WITH '*,'
+            OR stmt_trigger.action ENDS WITH ',*'
+            OR stmt_trigger.action CONTAINS ',*,'
+        )
 
         // Find roles that trust Glue service (can be passed to Glue jobs)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'glue.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1938,7 +2680,7 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB_TRIGGER = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -1959,19 +2701,31 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:CreatePolicyVersion permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:createpolicyversion'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:createpolicyversion'
+            OR toLower(stmt.action) STARTS WITH 'iam:createpolicyversion,'
+            OR toLower(stmt.action) ENDS WITH ',iam:createpolicyversion'
+            OR toLower(stmt.action) CONTAINS ',iam:createpolicyversion,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find customer-managed policies attached to the same principal that can be overwritten
         MATCH path_target = (aws)--(target_policy:AWSPolicy)--(principal)
         WHERE target_policy.arn CONTAINS $provider_uid
-            AND size([resource IN split(stmt.resource, ",") WHERE
-                resource = '*'
-                OR target_policy.arn CONTAINS resource
-            | resource]) > 0
+            AND (
+                stmt.resource = '*'
+                OR stmt.resource STARTS WITH '*,'
+                OR stmt.resource ENDS WITH ',*'
+                OR stmt.resource CONTAINS ',*,'
+                OR size([resource IN split(stmt.resource, ",") WHERE target_policy.arn CONTAINS resource]) > 0
+            )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -1980,7 +2734,7 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2001,19 +2755,31 @@ AWS_IAM_PRIVESC_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:CreateAccessKey permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:createaccesskey'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:createaccesskey'
+            OR toLower(stmt.action) STARTS WITH 'iam:createaccesskey,'
+            OR toLower(stmt.action) ENDS WITH ',iam:createaccesskey'
+            OR toLower(stmt.action) CONTAINS ',iam:createaccesskey,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find target users that the principal can create access keys for
         MATCH path_target = (aws)--(target_user:AWSUser)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_user.arn CONTAINS resource
-            OR resource CONTAINS target_user.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_user.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_user.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2022,7 +2788,7 @@ AWS_IAM_PRIVESC_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2043,32 +2809,56 @@ AWS_IAM_PRIVESC_DELETE_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:CreateAccessKey permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:createaccesskey'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:createaccesskey'
+            OR toLower(stmt.action) STARTS WITH 'iam:createaccesskey,'
+            OR toLower(stmt.action) ENDS WITH ',iam:createaccesskey'
+            OR toLower(stmt.action) CONTAINS ',iam:createaccesskey,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find iam:DeleteAccessKey permission
         MATCH (principal)--(delete_policy:AWSPolicy)--(stmt_delete:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_delete.action, ",") WHERE
-                toLower(action) = 'iam:deleteaccesskey'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_delete.action) = 'iam:deleteaccesskey'
+            OR toLower(stmt_delete.action) STARTS WITH 'iam:deleteaccesskey,'
+            OR toLower(stmt_delete.action) ENDS WITH ',iam:deleteaccesskey'
+            OR toLower(stmt_delete.action) CONTAINS ',iam:deleteaccesskey,'
+            OR toLower(stmt_delete.action) = 'iam:*'
+            OR toLower(stmt_delete.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_delete.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_delete.action) CONTAINS ',iam:*,'
+            OR stmt_delete.action = '*'
+            OR stmt_delete.action STARTS WITH '*,'
+            OR stmt_delete.action ENDS WITH ',*'
+            OR stmt_delete.action CONTAINS ',*,'
+        )
 
         // Find target users that the principal can rotate access keys for
         MATCH path_target = (aws)--(target_user:AWSUser)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_user.arn CONTAINS resource
-            OR resource CONTAINS target_user.name
-        | resource]) > 0
-            AND size([resource IN split(stmt_delete.resource, ",") WHERE
-                resource = '*'
-                OR target_user.arn CONTAINS resource
-                OR resource CONTAINS target_user.name
-            | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_user.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_user.arn CONTAINS resource]) > 0
+        )
+            AND (
+                stmt_delete.resource = '*'
+                OR stmt_delete.resource STARTS WITH '*,'
+                OR stmt_delete.resource ENDS WITH ',*'
+                OR stmt_delete.resource CONTAINS ',*,'
+                OR stmt_delete.resource CONTAINS target_user.name
+                OR size([resource IN split(stmt_delete.resource, ",") WHERE target_user.arn CONTAINS resource]) > 0
+            )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2077,7 +2867,7 @@ AWS_IAM_PRIVESC_DELETE_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2098,19 +2888,31 @@ AWS_IAM_PRIVESC_CREATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:CreateLoginProfile permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:createloginprofile'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:createloginprofile'
+            OR toLower(stmt.action) STARTS WITH 'iam:createloginprofile,'
+            OR toLower(stmt.action) ENDS WITH ',iam:createloginprofile'
+            OR toLower(stmt.action) CONTAINS ',iam:createloginprofile,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find target users that the principal can create login profiles for
         MATCH path_target = (aws)--(target_user:AWSUser)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_user.arn CONTAINS resource
-            OR resource CONTAINS target_user.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_user.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_user.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2119,7 +2921,7 @@ AWS_IAM_PRIVESC_CREATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2140,16 +2942,28 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find roles with iam:PutRolePolicy permission scoped to themselves
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(role:AWSRole)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:putrolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
-            AND size([resource IN split(stmt.resource, ",") WHERE
-                resource = '*'
-                OR role.arn CONTAINS resource
-                OR resource CONTAINS role.name
-            | resource]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:putrolepolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:putrolepolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:putrolepolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:putrolepolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
+            AND (
+                stmt.resource = '*'
+                OR stmt.resource STARTS WITH '*,'
+                OR stmt.resource ENDS WITH ',*'
+                OR stmt.resource CONTAINS ',*,'
+                OR stmt.resource CONTAINS role.name
+                OR size([resource IN split(stmt.resource, ",") WHERE role.arn CONTAINS resource]) > 0
+            )
 
         WITH collect(path) AS paths
         UNWIND paths AS p
@@ -2158,7 +2972,7 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2179,19 +2993,31 @@ AWS_IAM_PRIVESC_UPDATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:UpdateLoginProfile permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:updateloginprofile'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:updateloginprofile'
+            OR toLower(stmt.action) STARTS WITH 'iam:updateloginprofile,'
+            OR toLower(stmt.action) ENDS WITH ',iam:updateloginprofile'
+            OR toLower(stmt.action) CONTAINS ',iam:updateloginprofile,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find target users that the principal can update login profiles for
         MATCH path_target = (aws)--(target_user:AWSUser)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_user.arn CONTAINS resource
-            OR resource CONTAINS target_user.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_user.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_user.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2200,7 +3026,7 @@ AWS_IAM_PRIVESC_UPDATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2221,16 +3047,28 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find users with iam:PutUserPolicy permission scoped to themselves
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:putuserpolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
-            AND size([resource IN split(stmt.resource, ",") WHERE
-                resource = '*'
-                OR user.arn CONTAINS resource
-                OR resource CONTAINS user.name
-            | resource]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:putuserpolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:putuserpolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:putuserpolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:putuserpolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
+            AND (
+                stmt.resource = '*'
+                OR stmt.resource STARTS WITH '*,'
+                OR stmt.resource ENDS WITH ',*'
+                OR stmt.resource CONTAINS ',*,'
+                OR stmt.resource CONTAINS user.name
+                OR size([resource IN split(stmt.resource, ",") WHERE user.arn CONTAINS resource]) > 0
+            )
 
         WITH collect(path) AS paths
         UNWIND paths AS p
@@ -2239,7 +3077,7 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2260,16 +3098,28 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find users with iam:AttachUserPolicy permission scoped to themselves
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:attachuserpolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
-            AND size([resource IN split(stmt.resource, ",") WHERE
-                resource = '*'
-                OR user.arn CONTAINS resource
-                OR resource CONTAINS user.name
-            | resource]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:attachuserpolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:attachuserpolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:attachuserpolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:attachuserpolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
+            AND (
+                stmt.resource = '*'
+                OR stmt.resource STARTS WITH '*,'
+                OR stmt.resource ENDS WITH ',*'
+                OR stmt.resource CONTAINS ',*,'
+                OR stmt.resource CONTAINS user.name
+                OR size([resource IN split(stmt.resource, ",") WHERE user.arn CONTAINS resource]) > 0
+            )
 
         WITH collect(path) AS paths
         UNWIND paths AS p
@@ -2278,7 +3128,7 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2299,16 +3149,28 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find roles with iam:AttachRolePolicy permission scoped to themselves
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(role:AWSRole)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:attachrolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
-            AND size([resource IN split(stmt.resource, ",") WHERE
-                resource = '*'
-                OR role.arn CONTAINS resource
-                OR resource CONTAINS role.name
-            | resource]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:attachrolepolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:attachrolepolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:attachrolepolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:attachrolepolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
+            AND (
+                stmt.resource = '*'
+                OR stmt.resource STARTS WITH '*,'
+                OR stmt.resource ENDS WITH ',*'
+                OR stmt.resource CONTAINS ',*,'
+                OR stmt.resource CONTAINS role.name
+                OR size([resource IN split(stmt.resource, ",") WHERE role.arn CONTAINS resource]) > 0
+            )
 
         WITH collect(path) AS paths
         UNWIND paths AS p
@@ -2317,7 +3179,7 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2338,19 +3200,31 @@ AWS_IAM_PRIVESC_ATTACH_GROUP_POLICY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find users with iam:AttachGroupPolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:attachgrouppolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:attachgrouppolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:attachgrouppolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:attachgrouppolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:attachgrouppolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find groups the user is a member of and can attach policies to
         MATCH path_target = (aws)-[:RESOURCE]->(target_group:AWSGroup)<-[:MEMBER_AWS_GROUP]-(user)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_group.arn CONTAINS resource
-            OR resource CONTAINS target_group.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_group.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_group.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2359,7 +3233,7 @@ AWS_IAM_PRIVESC_ATTACH_GROUP_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2380,19 +3254,31 @@ AWS_IAM_PRIVESC_PUT_GROUP_POLICY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find users with iam:PutGroupPolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:putgrouppolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:putgrouppolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:putgrouppolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:putgrouppolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:putgrouppolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find groups the user is a member of and can put policies on
         MATCH path_target = (aws)-[:RESOURCE]->(target_group:AWSGroup)<-[:MEMBER_AWS_GROUP]-(user)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_group.arn CONTAINS resource
-            OR resource CONTAINS target_group.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_group.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_group.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2401,7 +3287,7 @@ AWS_IAM_PRIVESC_PUT_GROUP_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2422,19 +3308,31 @@ AWS_IAM_PRIVESC_UPDATE_ASSUME_ROLE_POLICY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:UpdateAssumeRolePolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:updateassumerolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:updateassumerolepolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:updateassumerolepolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:updateassumerolepolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:updateassumerolepolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find target roles whose trust policy can be modified
         MATCH path_target = (aws)--(target_role:AWSRole)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2443,7 +3341,7 @@ AWS_IAM_PRIVESC_UPDATE_ASSUME_ROLE_POLICY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2464,19 +3362,31 @@ AWS_IAM_PRIVESC_ADD_USER_TO_GROUP = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:AddUserToGroup permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:addusertogroup'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:addusertogroup'
+            OR toLower(stmt.action) STARTS WITH 'iam:addusertogroup,'
+            OR toLower(stmt.action) ENDS WITH ',iam:addusertogroup'
+            OR toLower(stmt.action) CONTAINS ',iam:addusertogroup,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find target groups the principal can add users to
         MATCH path_target = (aws)-[:RESOURCE]->(target_group:AWSGroup)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_group.arn CONTAINS resource
-            OR resource CONTAINS target_group.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_group.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_group.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2485,7 +3395,7 @@ AWS_IAM_PRIVESC_ADD_USER_TO_GROUP = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2506,19 +3416,31 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:AttachRolePolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:attachrolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:attachrolepolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:attachrolepolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:attachrolepolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:attachrolepolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find target roles the principal can assume and attach policies to
         MATCH path_target = (aws)--(target_role:AWSRole)<-[:STS_ASSUMEROLE_ALLOW]-(principal)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2527,7 +3449,7 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2548,32 +3470,56 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinitio
     cypher=f"""
         // Find principals with iam:AttachUserPolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:attachuserpolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:attachuserpolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:attachuserpolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:attachuserpolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:attachuserpolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find iam:CreateAccessKey permission
         MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action INstmt2.action WHERE
-                toLower(action) = 'iam:createaccesskey'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt2.action) = 'iam:createaccesskey'
+            OR toLower(stmt2.action) STARTS WITH 'iam:createaccesskey,'
+            OR toLower(stmt2.action) ENDS WITH ',iam:createaccesskey'
+            OR toLower(stmt2.action) CONTAINS ',iam:createaccesskey,'
+            OR toLower(stmt2.action) = 'iam:*'
+            OR toLower(stmt2.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt2.action) ENDS WITH ',iam:*'
+            OR toLower(stmt2.action) CONTAINS ',iam:*,'
+            OR stmt2.action = '*'
+            OR stmt2.action STARTS WITH '*,'
+            OR stmt2.action ENDS WITH ',*'
+            OR stmt2.action CONTAINS ',*,'
+        )
 
         // Find target users the principal can attach policies to and create keys for
         MATCH path_target = (aws)--(target_user:AWSUser)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_user.arn CONTAINS resource
-            OR resource CONTAINS target_user.name
-        | resource]) > 0
-        AND size([resource INstmt2.resource WHERE
-            resource = '*'
-            OR target_user.arn CONTAINS resource
-            OR resource CONTAINS target_user.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_user.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_user.arn CONTAINS resource]) > 0
+        )
+        AND (
+            stmt2.resource = '*'
+            OR stmt2.resource STARTS WITH '*,'
+            OR stmt2.resource ENDS WITH ',*'
+            OR stmt2.resource CONTAINS ',*,'
+            OR stmt2.resource CONTAINS target_user.name
+            OR size([resource IN split(stmt2.resource, ",") WHERE target_user.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2582,7 +3528,7 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinitio
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2603,20 +3549,32 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_ASSUME_ROLE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:CreatePolicyVersion permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:createpolicyversion'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:createpolicyversion'
+            OR toLower(stmt.action) STARTS WITH 'iam:createpolicyversion,'
+            OR toLower(stmt.action) ENDS WITH ',iam:createpolicyversion'
+            OR toLower(stmt.action) CONTAINS ',iam:createpolicyversion,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find target roles the principal can assume that have customer-managed policies the principal can modify
         MATCH path_target = (aws)--(target_role:AWSRole)<-[:STS_ASSUMEROLE_ALLOW]-(principal)
         MATCH (target_role)--(target_policy:AWSPolicy)
         WHERE target_policy.arn CONTAINS $provider_uid
-            AND size([resource IN split(stmt.resource, ",") WHERE
-                resource = '*'
-                OR target_policy.arn CONTAINS resource
-            | resource]) > 0
+            AND (
+                stmt.resource = '*'
+                OR stmt.resource STARTS WITH '*,'
+                OR stmt.resource ENDS WITH ',*'
+                OR stmt.resource CONTAINS ',*,'
+                OR size([resource IN split(stmt.resource, ",") WHERE target_policy.arn CONTAINS resource]) > 0
+            )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2625,7 +3583,7 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_ASSUME_ROLE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2646,19 +3604,31 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PutRolePolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:putrolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:putrolepolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:putrolepolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:putrolepolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:putrolepolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find target roles the principal can assume and put inline policies on
         MATCH path_target = (aws)--(target_role:AWSRole)<-[:STS_ASSUMEROLE_ALLOW]-(principal)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2667,7 +3637,7 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2688,32 +3658,56 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PutUserPolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:putuserpolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:putuserpolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:putuserpolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:putuserpolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:putuserpolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find iam:CreateAccessKey permission
         MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action INstmt2.action WHERE
-                toLower(action) = 'iam:createaccesskey'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt2.action) = 'iam:createaccesskey'
+            OR toLower(stmt2.action) STARTS WITH 'iam:createaccesskey,'
+            OR toLower(stmt2.action) ENDS WITH ',iam:createaccesskey'
+            OR toLower(stmt2.action) CONTAINS ',iam:createaccesskey,'
+            OR toLower(stmt2.action) = 'iam:*'
+            OR toLower(stmt2.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt2.action) ENDS WITH ',iam:*'
+            OR toLower(stmt2.action) CONTAINS ',iam:*,'
+            OR stmt2.action = '*'
+            OR stmt2.action STARTS WITH '*,'
+            OR stmt2.action ENDS WITH ',*'
+            OR stmt2.action CONTAINS ',*,'
+        )
 
         // Find target users the principal can put policies on and create keys for
         MATCH path_target = (aws)--(target_user:AWSUser)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_user.arn CONTAINS resource
-            OR resource CONTAINS target_user.name
-        | resource]) > 0
-        AND size([resource INstmt2.resource WHERE
-            resource = '*'
-            OR target_user.arn CONTAINS resource
-            OR resource CONTAINS target_user.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_user.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_user.arn CONTAINS resource]) > 0
+        )
+        AND (
+            stmt2.resource = '*'
+            OR stmt2.resource STARTS WITH '*,'
+            OR stmt2.resource ENDS WITH ',*'
+            OR stmt2.resource CONTAINS ',*,'
+            OR stmt2.resource CONTAINS target_user.name
+            OR size([resource IN split(stmt2.resource, ",") WHERE target_user.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2722,7 +3716,7 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2743,32 +3737,56 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefiniti
     cypher=f"""
         // Find principals with iam:AttachRolePolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:attachrolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:attachrolepolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:attachrolepolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:attachrolepolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:attachrolepolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find iam:UpdateAssumeRolePolicy permission
         MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action INstmt2.action WHERE
-                toLower(action) = 'iam:updateassumerolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt2.action) = 'iam:updateassumerolepolicy'
+            OR toLower(stmt2.action) STARTS WITH 'iam:updateassumerolepolicy,'
+            OR toLower(stmt2.action) ENDS WITH ',iam:updateassumerolepolicy'
+            OR toLower(stmt2.action) CONTAINS ',iam:updateassumerolepolicy,'
+            OR toLower(stmt2.action) = 'iam:*'
+            OR toLower(stmt2.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt2.action) ENDS WITH ',iam:*'
+            OR toLower(stmt2.action) CONTAINS ',iam:*,'
+            OR stmt2.action = '*'
+            OR stmt2.action STARTS WITH '*,'
+            OR stmt2.action ENDS WITH ',*'
+            OR stmt2.action CONTAINS ',*,'
+        )
 
         // Find target roles the principal can attach policies to and update trust policy for
         MATCH path_target = (aws)--(target_role:AWSRole)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
-        AND size([resource INstmt2.resource WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
+        AND (
+            stmt2.resource = '*'
+            OR stmt2.resource STARTS WITH '*,'
+            OR stmt2.resource ENDS WITH ',*'
+            OR stmt2.resource CONTAINS ',*,'
+            OR stmt2.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt2.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2777,7 +3795,7 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefiniti
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2798,33 +3816,57 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_UPDATE_ASSUME_ROLE = AttackPathsQueryDefin
     cypher=f"""
         // Find principals with iam:CreatePolicyVersion permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:createpolicyversion'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:createpolicyversion'
+            OR toLower(stmt.action) STARTS WITH 'iam:createpolicyversion,'
+            OR toLower(stmt.action) ENDS WITH ',iam:createpolicyversion'
+            OR toLower(stmt.action) CONTAINS ',iam:createpolicyversion,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find iam:UpdateAssumeRolePolicy permission
         MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action INstmt2.action WHERE
-                toLower(action) = 'iam:updateassumerolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt2.action) = 'iam:updateassumerolepolicy'
+            OR toLower(stmt2.action) STARTS WITH 'iam:updateassumerolepolicy,'
+            OR toLower(stmt2.action) ENDS WITH ',iam:updateassumerolepolicy'
+            OR toLower(stmt2.action) CONTAINS ',iam:updateassumerolepolicy,'
+            OR toLower(stmt2.action) = 'iam:*'
+            OR toLower(stmt2.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt2.action) ENDS WITH ',iam:*'
+            OR toLower(stmt2.action) CONTAINS ',iam:*,'
+            OR stmt2.action = '*'
+            OR stmt2.action STARTS WITH '*,'
+            OR stmt2.action ENDS WITH ',*'
+            OR stmt2.action CONTAINS ',*,'
+        )
 
         // Find target roles with customer-managed policies the principal can modify and update trust policy for
         MATCH path_target = (aws)--(target_role:AWSRole)
-        WHERE size([resource INstmt2.resource WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt2.resource = '*'
+            OR stmt2.resource STARTS WITH '*,'
+            OR stmt2.resource ENDS WITH ',*'
+            OR stmt2.resource CONTAINS ',*,'
+            OR stmt2.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt2.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
         MATCH (target_role)--(target_policy:AWSPolicy)
         WHERE target_policy.arn CONTAINS $provider_uid
-            AND size([resource IN split(stmt.resource, ",") WHERE
-                resource = '*'
-                OR target_policy.arn CONTAINS resource
-            | resource]) > 0
+            AND (
+                stmt.resource = '*'
+                OR stmt.resource STARTS WITH '*,'
+                OR stmt.resource ENDS WITH ',*'
+                OR stmt.resource CONTAINS ',*,'
+                OR size([resource IN split(stmt.resource, ",") WHERE target_policy.arn CONTAINS resource]) > 0
+            )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2833,7 +3875,7 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_UPDATE_ASSUME_ROLE = AttackPathsQueryDefin
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2854,32 +3896,56 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PutRolePolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'iam:putrolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'iam:putrolepolicy'
+            OR toLower(stmt.action) STARTS WITH 'iam:putrolepolicy,'
+            OR toLower(stmt.action) ENDS WITH ',iam:putrolepolicy'
+            OR toLower(stmt.action) CONTAINS ',iam:putrolepolicy,'
+            OR toLower(stmt.action) = 'iam:*'
+            OR toLower(stmt.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt.action) ENDS WITH ',iam:*'
+            OR toLower(stmt.action) CONTAINS ',iam:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find iam:UpdateAssumeRolePolicy permission
         MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action INstmt2.action WHERE
-                toLower(action) = 'iam:updateassumerolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt2.action) = 'iam:updateassumerolepolicy'
+            OR toLower(stmt2.action) STARTS WITH 'iam:updateassumerolepolicy,'
+            OR toLower(stmt2.action) ENDS WITH ',iam:updateassumerolepolicy'
+            OR toLower(stmt2.action) CONTAINS ',iam:updateassumerolepolicy,'
+            OR toLower(stmt2.action) = 'iam:*'
+            OR toLower(stmt2.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt2.action) ENDS WITH ',iam:*'
+            OR toLower(stmt2.action) CONTAINS ',iam:*,'
+            OR stmt2.action = '*'
+            OR stmt2.action STARTS WITH '*,'
+            OR stmt2.action ENDS WITH ',*'
+            OR stmt2.action CONTAINS ',*,'
+        )
 
         // Find target roles the principal can put inline policies on and update trust policy for
         MATCH path_target = (aws)--(target_role:AWSRole)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
-        AND size([resource INstmt2.resource WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
+        AND (
+            stmt2.resource = '*'
+            OR stmt2.resource STARTS WITH '*,'
+            OR stmt2.resource ENDS WITH ',*'
+            OR stmt2.resource CONTAINS ',*,'
+            OR stmt2.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt2.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2888,7 +3954,7 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2909,35 +3975,65 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find lambda:CreateFunction permission
         MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_create.action, ",") WHERE
-                toLower(action) = 'lambda:createfunction'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_create.action) = 'lambda:createfunction'
+            OR toLower(stmt_create.action) STARTS WITH 'lambda:createfunction,'
+            OR toLower(stmt_create.action) ENDS WITH ',lambda:createfunction'
+            OR toLower(stmt_create.action) CONTAINS ',lambda:createfunction,'
+            OR toLower(stmt_create.action) = 'lambda:*'
+            OR toLower(stmt_create.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt_create.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt_create.action) CONTAINS ',lambda:*,'
+            OR stmt_create.action = '*'
+            OR stmt_create.action STARTS WITH '*,'
+            OR stmt_create.action ENDS WITH ',*'
+            OR stmt_create.action CONTAINS ',*,'
+        )
 
         // Find lambda:InvokeFunction permission
         MATCH (principal)--(invoke_policy:AWSPolicy)--(stmt_invoke:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_invoke.action, ",") WHERE
-                toLower(action) = 'lambda:invokefunction'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_invoke.action) = 'lambda:invokefunction'
+            OR toLower(stmt_invoke.action) STARTS WITH 'lambda:invokefunction,'
+            OR toLower(stmt_invoke.action) ENDS WITH ',lambda:invokefunction'
+            OR toLower(stmt_invoke.action) CONTAINS ',lambda:invokefunction,'
+            OR toLower(stmt_invoke.action) = 'lambda:*'
+            OR toLower(stmt_invoke.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt_invoke.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt_invoke.action) CONTAINS ',lambda:*,'
+            OR stmt_invoke.action = '*'
+            OR stmt_invoke.action STARTS WITH '*,'
+            OR stmt_invoke.action ENDS WITH ',*'
+            OR stmt_invoke.action CONTAINS ',*,'
+        )
 
         // Find roles that trust Lambda service (can be passed to Lambda)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'lambda.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -2946,7 +4042,7 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -2967,35 +4063,65 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_EVENT_SOURCE = AttackPathsQueryDefin
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find lambda:CreateFunction permission
         MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_create.action, ",") WHERE
-                toLower(action) = 'lambda:createfunction'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_create.action) = 'lambda:createfunction'
+            OR toLower(stmt_create.action) STARTS WITH 'lambda:createfunction,'
+            OR toLower(stmt_create.action) ENDS WITH ',lambda:createfunction'
+            OR toLower(stmt_create.action) CONTAINS ',lambda:createfunction,'
+            OR toLower(stmt_create.action) = 'lambda:*'
+            OR toLower(stmt_create.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt_create.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt_create.action) CONTAINS ',lambda:*,'
+            OR stmt_create.action = '*'
+            OR stmt_create.action STARTS WITH '*,'
+            OR stmt_create.action ENDS WITH ',*'
+            OR stmt_create.action CONTAINS ',*,'
+        )
 
         // Find lambda:CreateEventSourceMapping permission
         MATCH (principal)--(event_policy:AWSPolicy)--(stmt_event:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_event.action, ",") WHERE
-                toLower(action) = 'lambda:createeventsourcemapping'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_event.action) = 'lambda:createeventsourcemapping'
+            OR toLower(stmt_event.action) STARTS WITH 'lambda:createeventsourcemapping,'
+            OR toLower(stmt_event.action) ENDS WITH ',lambda:createeventsourcemapping'
+            OR toLower(stmt_event.action) CONTAINS ',lambda:createeventsourcemapping,'
+            OR toLower(stmt_event.action) = 'lambda:*'
+            OR toLower(stmt_event.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt_event.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt_event.action) CONTAINS ',lambda:*,'
+            OR stmt_event.action = '*'
+            OR stmt_event.action STARTS WITH '*,'
+            OR stmt_event.action ENDS WITH ',*'
+            OR stmt_event.action CONTAINS ',*,'
+        )
 
         // Find roles that trust Lambda service (can be passed to Lambda)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'lambda.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3004,7 +4130,7 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_EVENT_SOURCE = AttackPathsQueryDefin
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3025,19 +4151,31 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with lambda:UpdateFunctionCode permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'lambda:updatefunctioncode'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'lambda:updatefunctioncode'
+            OR toLower(stmt.action) STARTS WITH 'lambda:updatefunctioncode,'
+            OR toLower(stmt.action) ENDS WITH ',lambda:updatefunctioncode'
+            OR toLower(stmt.action) CONTAINS ',lambda:updatefunctioncode,'
+            OR toLower(stmt.action) = 'lambda:*'
+            OR toLower(stmt.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt.action) CONTAINS ',lambda:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find existing Lambda functions with execution roles
         MATCH path_target = (aws)-[:RESOURCE]->(lambda_fn:AWSLambda)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR lambda_fn.arn CONTAINS resource
-            OR resource CONTAINS lambda_fn.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS lambda_fn.name
+            OR size([resource IN split(stmt.resource, ",") WHERE lambda_fn.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3046,7 +4184,7 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3067,32 +4205,56 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_INVOKE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with lambda:UpdateFunctionCode permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'lambda:updatefunctioncode'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'lambda:updatefunctioncode'
+            OR toLower(stmt.action) STARTS WITH 'lambda:updatefunctioncode,'
+            OR toLower(stmt.action) ENDS WITH ',lambda:updatefunctioncode'
+            OR toLower(stmt.action) CONTAINS ',lambda:updatefunctioncode,'
+            OR toLower(stmt.action) = 'lambda:*'
+            OR toLower(stmt.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt.action) CONTAINS ',lambda:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find lambda:InvokeFunction permission
         MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action INstmt2.action WHERE
-                toLower(action) = 'lambda:invokefunction'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt2.action) = 'lambda:invokefunction'
+            OR toLower(stmt2.action) STARTS WITH 'lambda:invokefunction,'
+            OR toLower(stmt2.action) ENDS WITH ',lambda:invokefunction'
+            OR toLower(stmt2.action) CONTAINS ',lambda:invokefunction,'
+            OR toLower(stmt2.action) = 'lambda:*'
+            OR toLower(stmt2.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt2.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt2.action) CONTAINS ',lambda:*,'
+            OR stmt2.action = '*'
+            OR stmt2.action STARTS WITH '*,'
+            OR stmt2.action ENDS WITH ',*'
+            OR stmt2.action CONTAINS ',*,'
+        )
 
         // Find existing Lambda functions with execution roles
         MATCH path_target = (aws)-[:RESOURCE]->(lambda_fn:AWSLambda)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR lambda_fn.arn CONTAINS resource
-            OR resource CONTAINS lambda_fn.name
-        | resource]) > 0
-        AND size([resource INstmt2.resource WHERE
-            resource = '*'
-            OR lambda_fn.arn CONTAINS resource
-            OR resource CONTAINS lambda_fn.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS lambda_fn.name
+            OR size([resource IN split(stmt.resource, ",") WHERE lambda_fn.arn CONTAINS resource]) > 0
+        )
+        AND (
+            stmt2.resource = '*'
+            OR stmt2.resource STARTS WITH '*,'
+            OR stmt2.resource ENDS WITH ',*'
+            OR stmt2.resource CONTAINS ',*,'
+            OR stmt2.resource CONTAINS lambda_fn.name
+            OR size([resource IN split(stmt2.resource, ",") WHERE lambda_fn.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3101,7 +4263,7 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_INVOKE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3122,32 +4284,56 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_ADD_PERMISSION = AttackPathsQueryDefinit
     cypher=f"""
         // Find principals with lambda:UpdateFunctionCode permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'lambda:updatefunctioncode'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'lambda:updatefunctioncode'
+            OR toLower(stmt.action) STARTS WITH 'lambda:updatefunctioncode,'
+            OR toLower(stmt.action) ENDS WITH ',lambda:updatefunctioncode'
+            OR toLower(stmt.action) CONTAINS ',lambda:updatefunctioncode,'
+            OR toLower(stmt.action) = 'lambda:*'
+            OR toLower(stmt.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt.action) CONTAINS ',lambda:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find lambda:AddPermission permission
         MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action INstmt2.action WHERE
-                toLower(action) = 'lambda:addpermission'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt2.action) = 'lambda:addpermission'
+            OR toLower(stmt2.action) STARTS WITH 'lambda:addpermission,'
+            OR toLower(stmt2.action) ENDS WITH ',lambda:addpermission'
+            OR toLower(stmt2.action) CONTAINS ',lambda:addpermission,'
+            OR toLower(stmt2.action) = 'lambda:*'
+            OR toLower(stmt2.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt2.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt2.action) CONTAINS ',lambda:*,'
+            OR stmt2.action = '*'
+            OR stmt2.action STARTS WITH '*,'
+            OR stmt2.action ENDS WITH ',*'
+            OR stmt2.action CONTAINS ',*,'
+        )
 
         // Find existing Lambda functions with execution roles
         MATCH path_target = (aws)-[:RESOURCE]->(lambda_fn:AWSLambda)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR lambda_fn.arn CONTAINS resource
-            OR resource CONTAINS lambda_fn.name
-        | resource]) > 0
-        AND size([resource INstmt2.resource WHERE
-            resource = '*'
-            OR lambda_fn.arn CONTAINS resource
-            OR resource CONTAINS lambda_fn.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS lambda_fn.name
+            OR size([resource IN split(stmt.resource, ",") WHERE lambda_fn.arn CONTAINS resource]) > 0
+        )
+        AND (
+            stmt2.resource = '*'
+            OR stmt2.resource STARTS WITH '*,'
+            OR stmt2.resource ENDS WITH ',*'
+            OR stmt2.resource CONTAINS ',*,'
+            OR stmt2.resource CONTAINS lambda_fn.name
+            OR size([resource IN split(stmt2.resource, ",") WHERE lambda_fn.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3156,7 +4342,7 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_ADD_PERMISSION = AttackPathsQueryDefinit
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3177,35 +4363,65 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_ADD_PERMISSION = AttackPathsQueryDef
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find lambda:CreateFunction permission
         MATCH (principal)--(create_policy:AWSPolicy)--(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_create.action, ",") WHERE
-                toLower(action) = 'lambda:createfunction'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_create.action) = 'lambda:createfunction'
+            OR toLower(stmt_create.action) STARTS WITH 'lambda:createfunction,'
+            OR toLower(stmt_create.action) ENDS WITH ',lambda:createfunction'
+            OR toLower(stmt_create.action) CONTAINS ',lambda:createfunction,'
+            OR toLower(stmt_create.action) = 'lambda:*'
+            OR toLower(stmt_create.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt_create.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt_create.action) CONTAINS ',lambda:*,'
+            OR stmt_create.action = '*'
+            OR stmt_create.action STARTS WITH '*,'
+            OR stmt_create.action ENDS WITH ',*'
+            OR stmt_create.action CONTAINS ',*,'
+        )
 
         // Find lambda:AddPermission permission
         MATCH (principal)--(perm_policy:AWSPolicy)--(stmt_perm:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_perm.action, ",") WHERE
-                toLower(action) = 'lambda:addpermission'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_perm.action) = 'lambda:addpermission'
+            OR toLower(stmt_perm.action) STARTS WITH 'lambda:addpermission,'
+            OR toLower(stmt_perm.action) ENDS WITH ',lambda:addpermission'
+            OR toLower(stmt_perm.action) CONTAINS ',lambda:addpermission,'
+            OR toLower(stmt_perm.action) = 'lambda:*'
+            OR toLower(stmt_perm.action) STARTS WITH 'lambda:*,'
+            OR toLower(stmt_perm.action) ENDS WITH ',lambda:*'
+            OR toLower(stmt_perm.action) CONTAINS ',lambda:*,'
+            OR stmt_perm.action = '*'
+            OR stmt_perm.action STARTS WITH '*,'
+            OR stmt_perm.action ENDS WITH ',*'
+            OR stmt_perm.action CONTAINS ',*,'
+        )
 
         // Find roles that trust Lambda service (can be passed to Lambda)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'lambda.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3214,7 +4430,7 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_ADD_PERMISSION = AttackPathsQueryDef
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3235,27 +4451,48 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_NOTEBOOK = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find sagemaker:CreateNotebookInstance permission
         MATCH (principal)--(sm_policy:AWSPolicy)--(stmt_sm:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_sm.action, ",") WHERE
-                toLower(action) = 'sagemaker:createnotebookinstance'
-                OR toLower(action) = 'sagemaker:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_sm.action) = 'sagemaker:createnotebookinstance'
+            OR toLower(stmt_sm.action) STARTS WITH 'sagemaker:createnotebookinstance,'
+            OR toLower(stmt_sm.action) ENDS WITH ',sagemaker:createnotebookinstance'
+            OR toLower(stmt_sm.action) CONTAINS ',sagemaker:createnotebookinstance,'
+            OR toLower(stmt_sm.action) = 'sagemaker:*'
+            OR toLower(stmt_sm.action) STARTS WITH 'sagemaker:*,'
+            OR toLower(stmt_sm.action) ENDS WITH ',sagemaker:*'
+            OR toLower(stmt_sm.action) CONTAINS ',sagemaker:*,'
+            OR stmt_sm.action = '*'
+            OR stmt_sm.action STARTS WITH '*,'
+            OR stmt_sm.action ENDS WITH ',*'
+            OR stmt_sm.action CONTAINS ',*,'
+        )
 
         // Find roles that trust SageMaker service (can be passed to SageMaker)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'sagemaker.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3264,7 +4501,7 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_NOTEBOOK = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3285,27 +4522,48 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_TRAINING_JOB = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find sagemaker:CreateTrainingJob permission
         MATCH (principal)--(sm_policy:AWSPolicy)--(stmt_sm:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_sm.action, ",") WHERE
-                toLower(action) = 'sagemaker:createtrainingjob'
-                OR toLower(action) = 'sagemaker:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_sm.action) = 'sagemaker:createtrainingjob'
+            OR toLower(stmt_sm.action) STARTS WITH 'sagemaker:createtrainingjob,'
+            OR toLower(stmt_sm.action) ENDS WITH ',sagemaker:createtrainingjob'
+            OR toLower(stmt_sm.action) CONTAINS ',sagemaker:createtrainingjob,'
+            OR toLower(stmt_sm.action) = 'sagemaker:*'
+            OR toLower(stmt_sm.action) STARTS WITH 'sagemaker:*,'
+            OR toLower(stmt_sm.action) ENDS WITH ',sagemaker:*'
+            OR toLower(stmt_sm.action) CONTAINS ',sagemaker:*,'
+            OR stmt_sm.action = '*'
+            OR stmt_sm.action STARTS WITH '*,'
+            OR stmt_sm.action ENDS WITH ',*'
+            OR stmt_sm.action CONTAINS ',*,'
+        )
 
         // Find roles that trust SageMaker service (can be passed to SageMaker)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'sagemaker.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3314,7 +4572,7 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_TRAINING_JOB = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3335,27 +4593,48 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_PROCESSING_JOB = AttackPathsQueryDefinitio
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(passrole_policy:AWSPolicy)--(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_passrole.action, ",") WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_passrole.action) = 'iam:passrole'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:passrole,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:passrole'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:passrole,'
+            OR toLower(stmt_passrole.action) = 'iam:*'
+            OR toLower(stmt_passrole.action) STARTS WITH 'iam:*,'
+            OR toLower(stmt_passrole.action) ENDS WITH ',iam:*'
+            OR toLower(stmt_passrole.action) CONTAINS ',iam:*,'
+            OR stmt_passrole.action = '*'
+            OR stmt_passrole.action STARTS WITH '*,'
+            OR stmt_passrole.action ENDS WITH ',*'
+            OR stmt_passrole.action CONTAINS ',*,'
+        )
 
         // Find sagemaker:CreateProcessingJob permission
         MATCH (principal)--(sm_policy:AWSPolicy)--(stmt_sm:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt_sm.action, ",") WHERE
-                toLower(action) = 'sagemaker:createprocessingjob'
-                OR toLower(action) = 'sagemaker:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt_sm.action) = 'sagemaker:createprocessingjob'
+            OR toLower(stmt_sm.action) STARTS WITH 'sagemaker:createprocessingjob,'
+            OR toLower(stmt_sm.action) ENDS WITH ',sagemaker:createprocessingjob'
+            OR toLower(stmt_sm.action) CONTAINS ',sagemaker:createprocessingjob,'
+            OR toLower(stmt_sm.action) = 'sagemaker:*'
+            OR toLower(stmt_sm.action) STARTS WITH 'sagemaker:*,'
+            OR toLower(stmt_sm.action) ENDS WITH ',sagemaker:*'
+            OR toLower(stmt_sm.action) CONTAINS ',sagemaker:*,'
+            OR stmt_sm.action = '*'
+            OR stmt_sm.action STARTS WITH '*,'
+            OR stmt_sm.action ENDS WITH ',*'
+            OR stmt_sm.action CONTAINS ',*,'
+        )
 
         // Find roles that trust SageMaker service (can be passed to SageMaker)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'sagemaker.amazonaws.com'}})
-        WHERE size([resource IN split(stmt_passrole.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt_passrole.resource = '*'
+            OR stmt_passrole.resource STARTS WITH '*,'
+            OR stmt_passrole.resource ENDS WITH ',*'
+            OR stmt_passrole.resource CONTAINS ',*,'
+            OR stmt_passrole.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt_passrole.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3364,7 +4643,7 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_PROCESSING_JOB = AttackPathsQueryDefinitio
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3385,19 +4664,31 @@ AWS_SAGEMAKER_PRIVESC_PRESIGNED_NOTEBOOK_URL = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with sagemaker:CreatePresignedNotebookInstanceUrl permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'sagemaker:createpresignednotebookinstanceurl'
-                OR toLower(action) = 'sagemaker:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'sagemaker:createpresignednotebookinstanceurl'
+            OR toLower(stmt.action) STARTS WITH 'sagemaker:createpresignednotebookinstanceurl,'
+            OR toLower(stmt.action) ENDS WITH ',sagemaker:createpresignednotebookinstanceurl'
+            OR toLower(stmt.action) CONTAINS ',sagemaker:createpresignednotebookinstanceurl,'
+            OR toLower(stmt.action) = 'sagemaker:*'
+            OR toLower(stmt.action) STARTS WITH 'sagemaker:*,'
+            OR toLower(stmt.action) ENDS WITH ',sagemaker:*'
+            OR toLower(stmt.action) CONTAINS ',sagemaker:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find existing SageMaker notebook instances with execution roles
         MATCH path_target = (aws)-[:RESOURCE]->(notebook:AWSSageMakerNotebookInstance)-[:HAS_EXECUTION_ROLE]->(target_role:AWSRole)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR notebook.arn CONTAINS resource
-            OR resource CONTAINS notebook.notebook_instance_name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS notebook.notebook_instance_name
+            OR size([resource IN split(stmt.resource, ",") WHERE notebook.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3406,7 +4697,7 @@ AWS_SAGEMAKER_PRIVESC_PRESIGNED_NOTEBOOK_URL = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3427,43 +4718,82 @@ AWS_SAGEMAKER_PRIVESC_LIFECYCLE_CONFIG_NOTEBOOK = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with sagemaker:CreateNotebookInstanceLifecycleConfig permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'sagemaker:createnotebookinstancelifecycleconfig'
-                OR toLower(action) = 'sagemaker:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'sagemaker:createnotebookinstancelifecycleconfig'
+            OR toLower(stmt.action) STARTS WITH 'sagemaker:createnotebookinstancelifecycleconfig,'
+            OR toLower(stmt.action) ENDS WITH ',sagemaker:createnotebookinstancelifecycleconfig'
+            OR toLower(stmt.action) CONTAINS ',sagemaker:createnotebookinstancelifecycleconfig,'
+            OR toLower(stmt.action) = 'sagemaker:*'
+            OR toLower(stmt.action) STARTS WITH 'sagemaker:*,'
+            OR toLower(stmt.action) ENDS WITH ',sagemaker:*'
+            OR toLower(stmt.action) CONTAINS ',sagemaker:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find sagemaker:UpdateNotebookInstance permission
         MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action INstmt2.action WHERE
-                toLower(action) = 'sagemaker:updatenotebookinstance'
-                OR toLower(action) = 'sagemaker:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt2.action) = 'sagemaker:updatenotebookinstance'
+            OR toLower(stmt2.action) STARTS WITH 'sagemaker:updatenotebookinstance,'
+            OR toLower(stmt2.action) ENDS WITH ',sagemaker:updatenotebookinstance'
+            OR toLower(stmt2.action) CONTAINS ',sagemaker:updatenotebookinstance,'
+            OR toLower(stmt2.action) = 'sagemaker:*'
+            OR toLower(stmt2.action) STARTS WITH 'sagemaker:*,'
+            OR toLower(stmt2.action) ENDS WITH ',sagemaker:*'
+            OR toLower(stmt2.action) CONTAINS ',sagemaker:*,'
+            OR stmt2.action = '*'
+            OR stmt2.action STARTS WITH '*,'
+            OR stmt2.action ENDS WITH ',*'
+            OR stmt2.action CONTAINS ',*,'
+        )
 
         // Find sagemaker:StopNotebookInstance permission
         MATCH (principal)--(policy3:AWSPolicy)--(stmt3:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action INstmt3.action WHERE
-                toLower(action) = 'sagemaker:stopnotebookinstance'
-                OR toLower(action) = 'sagemaker:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt3.action) = 'sagemaker:stopnotebookinstance'
+            OR toLower(stmt3.action) STARTS WITH 'sagemaker:stopnotebookinstance,'
+            OR toLower(stmt3.action) ENDS WITH ',sagemaker:stopnotebookinstance'
+            OR toLower(stmt3.action) CONTAINS ',sagemaker:stopnotebookinstance,'
+            OR toLower(stmt3.action) = 'sagemaker:*'
+            OR toLower(stmt3.action) STARTS WITH 'sagemaker:*,'
+            OR toLower(stmt3.action) ENDS WITH ',sagemaker:*'
+            OR toLower(stmt3.action) CONTAINS ',sagemaker:*,'
+            OR stmt3.action = '*'
+            OR stmt3.action STARTS WITH '*,'
+            OR stmt3.action ENDS WITH ',*'
+            OR stmt3.action CONTAINS ',*,'
+        )
 
         // Find sagemaker:StartNotebookInstance permission
         MATCH (principal)--(policy4:AWSPolicy)--(stmt4:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action INstmt4.action WHERE
-                toLower(action) = 'sagemaker:startnotebookinstance'
-                OR toLower(action) = 'sagemaker:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt4.action) = 'sagemaker:startnotebookinstance'
+            OR toLower(stmt4.action) STARTS WITH 'sagemaker:startnotebookinstance,'
+            OR toLower(stmt4.action) ENDS WITH ',sagemaker:startnotebookinstance'
+            OR toLower(stmt4.action) CONTAINS ',sagemaker:startnotebookinstance,'
+            OR toLower(stmt4.action) = 'sagemaker:*'
+            OR toLower(stmt4.action) STARTS WITH 'sagemaker:*,'
+            OR toLower(stmt4.action) ENDS WITH ',sagemaker:*'
+            OR toLower(stmt4.action) CONTAINS ',sagemaker:*,'
+            OR stmt4.action = '*'
+            OR stmt4.action STARTS WITH '*,'
+            OR stmt4.action ENDS WITH ',*'
+            OR stmt4.action CONTAINS ',*,'
+        )
 
         // Find existing SageMaker notebook instances with execution roles
         MATCH path_target = (aws)-[:RESOURCE]->(notebook:AWSSageMakerNotebookInstance)-[:HAS_EXECUTION_ROLE]->(target_role:AWSRole)
-        WHERE size([resource INstmt2.resource WHERE
-            resource = '*'
-            OR notebook.arn CONTAINS resource
-            OR resource CONTAINS notebook.notebook_instance_name
-        | resource]) > 0
+        WHERE (
+            stmt2.resource = '*'
+            OR stmt2.resource STARTS WITH '*,'
+            OR stmt2.resource ENDS WITH ',*'
+            OR stmt2.resource CONTAINS ',*,'
+            OR stmt2.resource CONTAINS notebook.notebook_instance_name
+            OR size([resource IN split(stmt2.resource, ",") WHERE notebook.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3472,7 +4802,7 @@ AWS_SAGEMAKER_PRIVESC_LIFECYCLE_CONFIG_NOTEBOOK = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3493,11 +4823,20 @@ AWS_SSM_PRIVESC_START_SESSION = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with ssm:StartSession permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'ssm:startsession'
-                OR toLower(action) = 'ssm:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'ssm:startsession'
+            OR toLower(stmt.action) STARTS WITH 'ssm:startsession,'
+            OR toLower(stmt.action) ENDS WITH ',ssm:startsession'
+            OR toLower(stmt.action) CONTAINS ',ssm:startsession,'
+            OR toLower(stmt.action) = 'ssm:*'
+            OR toLower(stmt.action) STARTS WITH 'ssm:*,'
+            OR toLower(stmt.action) ENDS WITH ',ssm:*'
+            OR toLower(stmt.action) CONTAINS ',ssm:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find EC2 instances with attached roles (targets for credential theft via IMDS)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
@@ -3509,7 +4848,7 @@ AWS_SSM_PRIVESC_START_SESSION = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3530,11 +4869,20 @@ AWS_SSM_PRIVESC_SEND_COMMAND = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with ssm:SendCommand permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'ssm:sendcommand'
-                OR toLower(action) = 'ssm:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'ssm:sendcommand'
+            OR toLower(stmt.action) STARTS WITH 'ssm:sendcommand,'
+            OR toLower(stmt.action) ENDS WITH ',ssm:sendcommand'
+            OR toLower(stmt.action) CONTAINS ',ssm:sendcommand,'
+            OR toLower(stmt.action) = 'ssm:*'
+            OR toLower(stmt.action) STARTS WITH 'ssm:*,'
+            OR toLower(stmt.action) ENDS WITH ',ssm:*'
+            OR toLower(stmt.action) CONTAINS ',ssm:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find EC2 instances with attached roles (targets for credential theft via IMDS)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
@@ -3546,7 +4894,7 @@ AWS_SSM_PRIVESC_SEND_COMMAND = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
@@ -3567,19 +4915,31 @@ AWS_STS_PRIVESC_ASSUME_ROLE = AttackPathsQueryDefinition(
     cypher=f"""
         // Find principals with sts:AssumeRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement {{effect: 'Allow'}})
-        WHERE size([action IN split(stmt.action, ",") WHERE
-                toLower(action) = 'sts:assumerole'
-                OR toLower(action) = 'sts:*'
-                OR action = '*'
-            | action]) > 0
+        WHERE (
+            toLower(stmt.action) = 'sts:assumerole'
+            OR toLower(stmt.action) STARTS WITH 'sts:assumerole,'
+            OR toLower(stmt.action) ENDS WITH ',sts:assumerole'
+            OR toLower(stmt.action) CONTAINS ',sts:assumerole,'
+            OR toLower(stmt.action) = 'sts:*'
+            OR toLower(stmt.action) STARTS WITH 'sts:*,'
+            OR toLower(stmt.action) ENDS WITH ',sts:*'
+            OR toLower(stmt.action) CONTAINS ',sts:*,'
+            OR stmt.action = '*'
+            OR stmt.action STARTS WITH '*,'
+            OR stmt.action ENDS WITH ',*'
+            OR stmt.action CONTAINS ',*,'
+        )
 
         // Find target roles the principal can assume (bidirectional trust via Cartography)
         MATCH path_target = (aws)--(target_role:AWSRole)<-[:STS_ASSUMEROLE_ALLOW]-(principal)
-        WHERE size([resource IN split(stmt.resource, ",") WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        | resource]) > 0
+        WHERE (
+            stmt.resource = '*'
+            OR stmt.resource STARTS WITH '*,'
+            OR stmt.resource ENDS WITH ',*'
+            OR stmt.resource CONTAINS ',*,'
+            OR stmt.resource CONTAINS target_role.name
+            OR size([resource IN split(stmt.resource, ",") WHERE target_role.arn CONTAINS resource]) > 0
+        )
 
         WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
@@ -3588,7 +4948,7 @@ AWS_STS_PRIVESC_ASSUME_ROLE = AttackPathsQueryDefinition(
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
 
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,

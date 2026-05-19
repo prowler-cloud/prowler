@@ -147,7 +147,12 @@ LIMIT 25
 ```cypher
 MATCH (principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
 WHERE stmt.effect = 'Allow'
-  AND size([action IN split(stmt.action, ',') WHERE action = '*']) > 0
+  AND (
+    stmt.action = '*'
+    OR stmt.action STARTS WITH '*,'
+    OR stmt.action ENDS WITH ',*'
+    OR stmt.action CONTAINS ',*,'
+  )
 RETURN principal.arn AS principal, policy.arn AS policy,
        stmt.action AS actions, stmt.resource AS resources
 LIMIT 25
@@ -175,35 +180,36 @@ LIMIT 25
 
 ### Working with List-Typed Properties
 
-Some Cartography properties represent lists of values, such as `action`, `resource`, `notaction`, and `notresource` on `AWSPolicyStatement` nodes. In the Attack Paths graph, list-typed properties are stored as comma-delimited strings to keep the schema portable across graph backends. Read them back with `split(prop, ',')`.
+Some Cartography properties represent lists of values, such as `action`, `resource`, `notaction`, and `notresource` on `AWSPolicyStatement` nodes. The Attack Paths graph stores list-typed properties as comma-delimited strings to keep the schema portable across graph backends. Two patterns read them back: string operators applied directly to the comma-joined value, and `split(prop, ',')` for the cases that genuinely need to iterate the individual tokens.
 
-**Membership** uses the standard `IN` operator on the split result:
+**Prefer string operators for the common shapes.** `=`, `STARTS WITH`, `ENDS WITH`, and `CONTAINS` run as filters over the raw stored value without materialising a list, which keeps response times low on large graphs. The table below maps each predicate intent to a `split`-free form. Let `P` be the comma-string property and `L` the literal needle.
 
-```cypher
-MATCH (stmt:AWSPolicyStatement)
-WHERE 'iam:DeletePolicy' IN split(stmt.action, ',')
-RETURN stmt
-LIMIT 25
-```
-
-**Predicate filters** (asking whether any, all, or none of the elements satisfy a condition) are expressed with a list comprehension wrapped in `size(...)`:
-
-| Intent | Pattern |
+| Intent (per token) | Form on `P` |
 |---|---|
-| At least one element matches | `size([x IN list WHERE pred]) > 0` |
-| No element matches | `size([x IN list WHERE pred]) = 0` |
-| Every element matches | `size([x IN list WHERE pred]) = size(list)` |
+| Token equals `L` | `P = 'L' OR P STARTS WITH 'L,' OR P ENDS WITH ',L' OR P CONTAINS ',L,'` |
+| Case-insensitive equality | Wrap `P` in `toLower(P)` on all four clauses; lowercase `L` |
+| Some token starts with `'pre'` | `toLower(P) STARTS WITH 'pre' OR toLower(P) CONTAINS ',pre'` |
+| Some token contains `'sub'` | `toLower(P) CONTAINS 'sub'` |
+| Some token contains a dynamic value | `P CONTAINS <expr>` |
 
-Example, finding statements that grant any S3 action:
+Example, finding statements that grant any S3 read action:
 
 ```cypher
 MATCH (stmt:AWSPolicyStatement)
-WHERE size([action IN split(stmt.action, ',') WHERE action STARTS WITH 's3:']) > 0
+WHERE stmt.effect = 'Allow'
+  AND (
+    toLower(stmt.action) STARTS WITH 's3:get'
+    OR toLower(stmt.action) CONTAINS ',s3:get'
+    OR toLower(stmt.action) STARTS WITH 's3:list'
+    OR toLower(stmt.action) CONTAINS ',s3:list'
+  )
 RETURN stmt
 LIMIT 25
 ```
 
-The "every element matches" form repeats the `split(...)` call on both sides of the comparison. When that becomes noisy, hoist the split into a `WITH` clause first:
+**Reach for `split` only when the intent cannot be expressed with string operators.** Two shapes need it.
+
+The "every token must match" case has no string-op equivalent. Hoist the split into a `WITH` clause to avoid evaluating it twice:
 
 ```cypher
 MATCH (stmt:AWSPolicyStatement)
@@ -212,6 +218,25 @@ WHERE size([action IN actions WHERE action STARTS WITH 's3:']) = size(actions)
 RETURN stmt
 LIMIT 25
 ```
+
+The "a token of `P` is a substring of a dynamic value" case, such as "is any resource pattern in this policy a substring of this role's ARN", needs the loop variable as the needle. Put the cheap string clauses first so the `split` runs only when none of them matched:
+
+```cypher
+MATCH (role:AWSRole), (stmt:AWSPolicyStatement)
+WHERE stmt.effect = 'Allow'
+  AND (
+    stmt.resource = '*'
+    OR stmt.resource STARTS WITH '*,'
+    OR stmt.resource ENDS WITH ',*'
+    OR stmt.resource CONTAINS ',*,'
+    OR stmt.resource CONTAINS role.name
+    OR size([resource IN split(stmt.resource, ',') WHERE role.arn CONTAINS resource]) > 0
+  )
+RETURN stmt, role
+LIMIT 25
+```
+
+Cypher evaluates `OR` left to right, so the `split` subquery runs only for resources that did not match any of the cheap clauses.
 
 Returning the raw value (`RETURN stmt.action`) is also valid when the comma-delimited form is acceptable in the output.
 
@@ -238,6 +263,7 @@ When a query needs to inspect the structured members of a condition (for example
 ### Tips for Writing Queries
 
 - Start small with `LIMIT` to inspect the shape of the data before broadening the pattern.
+- Prefer string operators (`=`, `STARTS WITH`, `ENDS WITH`, `CONTAINS`) over `split(prop, ',')` when checking comma-string properties such as `action` or `resource`. See [Working with List-Typed Properties](#working-with-list-typed-properties) for the per-shape recommendations.
 - Use `RETURN` projections (`RETURN n.name, n.region`) instead of returning whole nodes to keep responses compact.
 - Combine resource nodes with `ProwlerFinding` nodes via `HAS_FINDING` to correlate misconfigurations with the affected resources.
 - When a query times out or returns no rows, simplify the pattern step by step until the first variant runs successfully, then add constraints back.
