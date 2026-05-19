@@ -8,6 +8,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - `cloudsql_instance_cmek_encryption_enabled` check for GCP provider [(#11023)](https://github.com/prowler-cloud/prowler/pull/11023)
 
+---
+
 ## [5.27.0] (Prowler v5.27.0)
 
 ### 🚀 Added
