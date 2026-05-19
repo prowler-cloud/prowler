@@ -1,3 +1,4 @@
+import fnmatch
 import os
 import tempfile
 
@@ -12,6 +13,11 @@ class awslambda_function_no_secrets_in_code(Check):
         if awslambda_client.functions:
             secrets_ignore_patterns = awslambda_client.audit_config.get(
                 "secrets_ignore_patterns", []
+            )
+            # Glob patterns of file names inside the deployment package to skip
+            # when scanning for secrets (e.g. "*.deps.json" for .NET Lambdas).
+            secrets_ignore_files = awslambda_client.audit_config.get(
+                "secrets_ignore_files", []
             )
             for function, function_code in awslambda_client._get_function_code():
                 if function_code:
@@ -29,6 +35,14 @@ class awslambda_function_no_secrets_in_code(Check):
                         files_in_zip = next(os.walk(tmp_dir_name))[2]
                         secrets_findings = []
                         for file in files_in_zip:
+                            # Skip files whose name matches an ignore pattern
+                            # so known false-positive files (e.g. .NET
+                            # *.deps.json) do not raise spurious findings.
+                            if any(
+                                fnmatch.fnmatch(file, pattern)
+                                for pattern in secrets_ignore_files
+                            ):
+                                continue
                             detect_secrets_output = detect_secrets_scan(
                                 file=f"{tmp_dir_name}/{file}",
                                 excluded_secrets=secrets_ignore_patterns,

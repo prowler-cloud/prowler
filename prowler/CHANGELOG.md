@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.28.0] (Prowler v5.28.0)
+
+### 🔄 Changed
+
+- `awslambda_function_no_secrets_in_code` now supports a `secrets_ignore_files` audit-config option to skip files inside the deployment package by glob pattern (e.g. `*.deps.json`), suppressing .NET dependency-manifest false positives without masking real secrets [(#11222)](https://github.com/prowler-cloud/prowler/pull/11222)
+
+---
+
 ## [5.27.0] (Prowler v5.27.0)
 
 ### 🚀 Added

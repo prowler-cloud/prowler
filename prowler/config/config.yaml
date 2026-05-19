@@ -390,6 +390,20 @@ aws:
   # Patterns to ignore in the secrets checks
   secrets_ignore_patterns: []
 
+  # aws.awslambda_function_no_secrets_in_code
+  # Glob patterns of file names inside the Lambda deployment package to skip
+  # when scanning for secrets. Useful to suppress known false positives such
+  # as .NET dependency manifests.
+  # Example:
+  #   secrets_ignore_files:
+  #     - "*.deps.json"
+  # WARNING: use at your own risk. Any file whose name matches one of these
+  # patterns is fully excluded from secret scanning, so a real secret placed
+  # in such a file will NOT be detected. Keep patterns as narrow and specific
+  # as possible; this is not recommended unless you have confirmed the matched
+  # files only ever contain false positives.
+  secrets_ignore_files: []
+
   # AWS Secrets Manager Configuration
   # aws.secretsmanager_secret_unused
   # Maximum number of days a secret can be unused
