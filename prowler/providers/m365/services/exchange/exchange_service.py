@@ -13,7 +13,7 @@ SYSTEM_MAILBOX_TYPES = {
     "DiscoveryMailbox",
     "ArbitrationMailbox", 
     "AuditLogMailbox",
-    "MonitoringMailbox"
+    "MonitoringMailbox",
     "AuxAuditLogMailbox",
     "SystemMailbox",
 }

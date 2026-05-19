@@ -69,7 +69,7 @@ class exchange_mailbox_primary_smtp_uses_custom_domain(Check):
                     f"Mailbox {mailbox.identity} "
                     f"({mailbox.recipient_type_details}) has primary SMTP "
                     f"address {mailbox.primary_smtp_address} using a "
-                    f"verified custom domain"
+                    f"verified custom domain."
                 )
 
             findings.append(report)
