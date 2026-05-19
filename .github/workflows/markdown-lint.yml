@@ -39,33 +39,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Check for Markdown changes
-        id: check-changes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
-        with:
-          files: |
-            **/*.md
-            .markdownlint.json
-            .markdownlintignore
-          files_ignore: |
-            **/CHANGELOG.md
-            contrib/**
-            **/node_modules/**
-
       - name: Setup Node.js
-        if: steps.check-changes.outputs.any_changed == 'true'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: ui/.nvmrc
 
       - name: Setup pnpm
-        if: steps.check-changes.outputs.any_changed == 'true'
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
         with:
           package_json_file: ui/package.json
           run_install: false
 
       - name: Run markdownlint
-        if: steps.check-changes.outputs.any_changed == 'true'
         # Pin must match .pre-commit-config.yaml so prek and CI behave identically.
         run: pnpm dlx --ignore-scripts markdownlint-cli@0.45.0 '**/*.md'
