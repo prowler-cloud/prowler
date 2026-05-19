@@ -23,6 +23,7 @@ import {
   GRAPH_NODE_COLORS,
 } from "../../_lib/graph-colors";
 import { resolveHiddenFindingIds } from "../../_lib/graph-utils";
+import { isProwlerFindingNode } from "../../_lib/node-types";
 import { NODE_CATEGORY, resolveNodeVisual } from "../../_lib/node-visuals";
 
 const LEGEND_PREVIEW = {
@@ -197,7 +198,7 @@ const edgeItems: LegendEdgeItem[] = [
 ];
 
 const isFindingNode = (node: GraphNode): boolean =>
-  node.labels.some((label) => label.toLowerCase().includes("finding"));
+  isProwlerFindingNode(node.labels);
 
 const getGraphEdges = (
   data: AttackPathGraphData,

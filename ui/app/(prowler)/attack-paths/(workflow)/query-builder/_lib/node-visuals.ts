@@ -48,6 +48,7 @@ import {
 import type { GraphNode, GraphNodePropertyValue } from "@/types/attack-paths";
 
 import { formatNodeLabel } from "./format";
+import { isProwlerFindingLabel } from "./node-types";
 
 export const NODE_CATEGORY = {
   FINDING: "finding",
@@ -390,8 +391,7 @@ const normalizeLabel = (label: string): string =>
 const isKnownNodeLabel = (label: string): label is KnownNodeLabel =>
   label in KNOWN_NODE_VISUALS;
 
-const isFindingLabel = (label: string): boolean =>
-  normalizeLabel(label).includes("finding");
+const isFindingLabel = isProwlerFindingLabel;
 
 const isInternetLabel = (label: string): boolean =>
   normalizeLabel(label) === "internet";

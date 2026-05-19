@@ -55,7 +55,7 @@ import {
 import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsPNG } from "./_lib";
+import { exportGraphAsPNG, isProwlerFindingNode } from "./_lib";
 
 /**
  * Attack Paths
@@ -287,9 +287,7 @@ export default function AttackPathsPage() {
   };
 
   const handleNodeClick = (node: GraphNode) => {
-    const isFinding = node.labels.some((label) =>
-      label.toLowerCase().includes("finding"),
-    );
+    const isFinding = isProwlerFindingNode(node.labels);
 
     if (isFinding) {
       if (findingNavigationInFlightRef.current) {
@@ -313,9 +311,7 @@ export default function AttackPathsPage() {
       if (edge.source !== node.id && edge.target !== node.id) return false;
       const otherId = edge.source === node.id ? edge.target : edge.source;
       const otherNode = sourceData.nodes?.find(({ id }) => id === otherId);
-      return otherNode?.labels.some((label) =>
-        label.toLowerCase().includes("finding"),
-      );
+      return otherNode ? isProwlerFindingNode(otherNode.labels) : false;
     });
 
     if (hasFindings) {
