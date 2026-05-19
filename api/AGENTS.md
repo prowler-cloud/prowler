@@ -124,24 +124,24 @@ api/src/backend/
 
 ```bash
 # Development
-poetry run python src/backend/manage.py runserver
-poetry run celery -A config.celery worker -l INFO
+uv run python src/backend/manage.py runserver
+uv run celery -A config.celery worker -l INFO
 
 # Database
-poetry run python src/backend/manage.py makemigrations
-poetry run python src/backend/manage.py migrate
+uv run python src/backend/manage.py makemigrations
+uv run python src/backend/manage.py migrate
 
 # Testing & Linting
-poetry run pytest -x --tb=short
-poetry run make lint
+uv run pytest -x --tb=short
+uv run make lint
 ```
 
 ---
 
 ## QA CHECKLIST
 
-- [ ] `poetry run pytest` passes
-- [ ] `poetry run make lint` passes
+- [ ] `uv run pytest` passes
+- [ ] `uv run make lint` passes
 - [ ] Migrations created if models changed
 - [ ] New endpoints have `@extend_schema` decorators
 - [ ] RLS properly applied for tenant data

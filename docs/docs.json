@@ -119,6 +119,7 @@
               "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-import-findings",
+              "user-guide/tutorials/prowler-app-alerts",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -176,7 +177,6 @@
             "pages": [
               "user-guide/cli/tutorials/misc",
               "user-guide/cli/tutorials/reporting",
-              "user-guide/cli/tutorials/compliance",
               "user-guide/cli/tutorials/dashboard",
               "user-guide/cli/tutorials/configuration_file",
               "user-guide/cli/tutorials/logging",
@@ -327,10 +327,24 @@
                 ]
               },
               {
+                "group": "Scaleway",
+                "pages": [
+                  "user-guide/providers/scaleway/getting-started-scaleway",
+                  "user-guide/providers/scaleway/authentication"
+                ]
+              },
+              {
                 "group": "Vercel",
                 "pages": [
                   "user-guide/providers/vercel/getting-started-vercel",
                   "user-guide/providers/vercel/authentication"
+                ]
+              },
+              {
+                "group": "Okta",
+                "pages": [
+                  "user-guide/providers/okta/getting-started-okta",
+                  "user-guide/providers/okta/authentication"
                 ]
               }
             ]
@@ -338,6 +352,7 @@
           {
             "group": "Compliance",
             "pages": [
+              "user-guide/compliance/tutorials/compliance",
               "user-guide/compliance/tutorials/threatscore"
             ]
           },
@@ -345,7 +360,8 @@
             "group": "Cookbooks",
             "pages": [
               "user-guide/cookbooks/kubernetes-in-cluster",
-              "user-guide/cookbooks/cicd-pipeline"
+              "user-guide/cookbooks/cicd-pipeline",
+              "user-guide/cookbooks/powerbi-cis-benchmarks"
             ]
           }
         ]
@@ -503,6 +519,10 @@
     }
   },
   "redirects": [
+    {
+      "source": "/user-guide/cli/tutorials/compliance",
+      "destination": "/user-guide/compliance/tutorials/compliance"
+    },
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-lighthouse",
       "destination": "/user-guide/tutorials/prowler-app-lighthouse"

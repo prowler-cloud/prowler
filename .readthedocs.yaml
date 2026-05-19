@@ -11,15 +11,11 @@ build:
     python: "3.11"
   jobs:
     post_create_environment:
-      # Install poetry
-      # https://python-poetry.org/docs/#installing-manually
-      - python -m pip install poetry==2.3.4
+      - python -m pip install uv==0.11.14
     post_install:
-      # Install dependencies with 'docs' dependency group
-      # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
       # VIRTUAL_ENV needs to be set manually for now.
       # See https://github.com/readthedocs/readthedocs.org/pull/11152/
-      - VIRTUAL_ENV=${READTHEDOCS_VIRTUALENV_PATH} python -m poetry install --only=docs
+      - VIRTUAL_ENV=${READTHEDOCS_VIRTUALENV_PATH} uv sync --group docs --no-install-project
 
 mkdocs:
   configuration: mkdocs.yml

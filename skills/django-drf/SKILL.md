@@ -456,16 +456,16 @@ def get_object(self):
 
 ```bash
 # Development
-cd api && poetry run python src/backend/manage.py runserver
-cd api && poetry run python src/backend/manage.py shell
+cd api && uv run python src/backend/manage.py runserver
+cd api && uv run python src/backend/manage.py shell
 
 # Database
-cd api && poetry run python src/backend/manage.py makemigrations
-cd api && poetry run python src/backend/manage.py migrate
+cd api && uv run python src/backend/manage.py makemigrations
+cd api && uv run python src/backend/manage.py migrate
 
 # Testing
-cd api && poetry run pytest -x --tb=short
-cd api && poetry run make lint
+cd api && uv run pytest -x --tb=short
+cd api && uv run make lint
 ```
 
 ---

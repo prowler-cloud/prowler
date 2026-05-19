@@ -47,6 +47,9 @@ class directory_super_admin_only_admin_roles(Check):
                 report = CheckReportGoogleWorkspace(
                     metadata=self.metadata(),
                     resource=directory_client.provider.domain_resource,
+                    resource_id="directoryUsers",
+                    resource_name="Directory Users",
+                    customer_id=directory_client.provider.identity.customer_id,
                 )
                 report.status = "PASS"
                 report.status_extended = (

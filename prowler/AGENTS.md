@@ -14,15 +14,19 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Adding a compliance output formatter (per-provider class + table dispatcher) | `prowler-compliance` |
 | Adding new providers | `prowler-provider` |
 | Adding services to existing providers | `prowler-provider` |
+| Auditing check-to-requirement mappings as a cloud auditor | `prowler-compliance` |
 | Create PR that requires changelog entry | `prowler-changelog` |
 | Creating new checks | `prowler-sdk-check` |
 | Creating/updating compliance frameworks | `prowler-compliance` |
+| Fixing compliance JSON bugs (duplicate IDs, empty Section, stale refs) | `prowler-compliance` |
 | Mapping checks to compliance controls | `prowler-compliance` |
 | Mocking AWS with moto in tests | `prowler-test-sdk` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
+| Syncing compliance framework with upstream catalog | `prowler-compliance` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
 | Updating existing checks and metadata | `prowler-sdk-check` |
 | Writing Prowler SDK tests | `prowler-test-sdk` |
@@ -81,7 +85,7 @@ class {check_name}(Check):
 
 ## TECH STACK
 
-Python 3.10+ | Poetry 2.3+ | pytest | moto (AWS mocking) | Pre-commit hooks (black, flake8, pylint, bandit)
+Python 3.10+ | uv | pytest | moto (AWS mocking) | Pre-commit hooks (black, flake8, pylint, bandit)
 
 ---
 
@@ -108,20 +112,20 @@ prowler/
 
 ```bash
 # Setup
-poetry install --with dev
-poetry run pre-commit install
+uv sync
+uv run pre-commit install
 
 # Run Prowler
-poetry run python prowler-cli.py {provider}
-poetry run python prowler-cli.py {provider} --check {check_name}
-poetry run python prowler-cli.py {provider} --list-checks
+uv run python prowler-cli.py {provider}
+uv run python prowler-cli.py {provider} --check {check_name}
+uv run python prowler-cli.py {provider} --list-checks
 
 # Testing
-poetry run pytest -n auto -vvv tests/
-poetry run pytest tests/providers/{provider}/services/{service}/ -v
+uv run pytest -n auto -vvv tests/
+uv run pytest tests/providers/{provider}/services/{service}/ -v
 
 # Code Quality
-poetry run pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
 ---
@@ -141,8 +145,8 @@ poetry run pre-commit run --all-files
 
 ## QA CHECKLIST
 
-- [ ] `poetry run pytest` passes
-- [ ] `poetry run pre-commit run --all-files` passes
+- [ ] `uv run pytest` passes
+- [ ] `uv run pre-commit run --all-files` passes
 - [ ] Check metadata JSON is valid
 - [ ] Tests cover PASS, FAIL, and empty resource scenarios
 - [ ] Docstrings follow Google style

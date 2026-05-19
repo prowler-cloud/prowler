@@ -6,6 +6,9 @@ class sqlserver_tde_encrypted_with_cmk(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
+            subscription_name = sqlserver_client.subscriptions.get(
+                subscription, subscription
+            )
             for sql_server in sql_servers:
                 databases = (
                     sql_server.databases if sql_server.databases is not None else []
@@ -25,14 +28,14 @@ class sqlserver_tde_encrypted_with_cmk(Check):
                                 break
                             if database.tde_encryption.status == "Enabled":
                                 report.status = "PASS"
-                                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has TDE enabled with CMK."
+                                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has TDE enabled with CMK."
                             else:
                                 report.status = "FAIL"
-                                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has TDE disabled with CMK."
+                                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has TDE disabled with CMK."
                                 found_disabled = True
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has TDE disabled without CMK."
+                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has TDE disabled without CMK."
                     findings.append(report)
 
         return findings

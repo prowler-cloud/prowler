@@ -507,3 +507,84 @@ class Test_iam_policy_no_wildcard_marketplace_subscribe:
                 check = iam_policy_no_wildcard_marketplace_subscribe()
                 result = check.execute()
                 assert len(result) == 0
+
+    @mock_aws
+    def test_unattached_policy_skipped_when_scan_unused_services_disabled(self):
+        """No FAIL for an unattached risky policy when --scan-unused-services is off."""
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], scan_unused_services=False
+        )
+        iam_client = client("iam")
+        policy_name = "unattached_marketplace_subscribe"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "aws-marketplace:Subscribe",
+                    "Resource": "*",
+                },
+            ],
+        }
+        iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                f"{CHECK_MODULE_PATH}.iam_client",
+                new=IAM(aws_provider),
+            ):
+                from prowler.providers.aws.services.iam.iam_policy_no_wildcard_marketplace_subscribe.iam_policy_no_wildcard_marketplace_subscribe import (
+                    iam_policy_no_wildcard_marketplace_subscribe,
+                )
+
+                check = iam_policy_no_wildcard_marketplace_subscribe()
+                result = check.execute()
+                assert result == []
+
+    @mock_aws
+    def test_attached_policy_fails_when_scan_unused_services_disabled(self):
+        """Attached risky policy still FAILs when --scan-unused-services is off."""
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], scan_unused_services=False
+        )
+        iam_client = client("iam")
+        user_name = "test_user_marketplace"
+        policy_name = "attached_marketplace_subscribe"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "aws-marketplace:Subscribe",
+                    "Resource": "*",
+                },
+            ],
+        }
+        arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+        iam_client.create_user(UserName=user_name)
+        iam_client.attach_user_policy(UserName=user_name, PolicyArn=arn)
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                f"{CHECK_MODULE_PATH}.iam_client",
+                new=IAM(aws_provider),
+            ):
+                from prowler.providers.aws.services.iam.iam_policy_no_wildcard_marketplace_subscribe.iam_policy_no_wildcard_marketplace_subscribe import (
+                    iam_policy_no_wildcard_marketplace_subscribe,
+                )
+
+                check = iam_policy_no_wildcard_marketplace_subscribe()
+                result = check.execute()
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert result[0].resource_arn == arn

@@ -6,6 +6,9 @@ class storage_ensure_file_shares_soft_delete_is_enabled(Check):
     def execute(self) -> list:
         findings = []
         for subscription, storage_accounts in storage_client.storage_accounts.items():
+            subscription_name = storage_client.subscriptions.get(
+                subscription, subscription
+            )
             for storage_account in storage_accounts:
                 if getattr(storage_account, "file_service_properties", None):
                     report = Check_Report_Azure(
@@ -20,10 +23,10 @@ class storage_ensure_file_shares_soft_delete_is_enabled(Check):
                         storage_account.file_service_properties.share_delete_retention_policy.enabled
                     ):
                         report.status = "PASS"
-                        report.status_extended = f"File share soft delete is enabled for storage account {storage_account.name} with a retention period of {storage_account.file_service_properties.share_delete_retention_policy.days} days."
+                        report.status_extended = f"File share soft delete is enabled for storage account {storage_account.name} from subscription {subscription_name} ({subscription}) with a retention period of {storage_account.file_service_properties.share_delete_retention_policy.days} days."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"File share soft delete is not enabled for storage account {storage_account.name}."
+                        report.status_extended = f"File share soft delete is not enabled for storage account {storage_account.name} from subscription {subscription_name} ({subscription})."
 
                     findings.append(report)
 

@@ -59,7 +59,7 @@ jobs:
             ui/**
             prowler/**
             mcp_server/**
-            poetry.lock
+            uv.lock
             pyproject.toml
 
       - name: Check for folder changes and changelog presence
@@ -84,9 +84,9 @@ jobs:
               fi
             done
 
-            # Check root-level dependency files (poetry.lock, pyproject.toml)
+            # Check root-level dependency files (uv.lock, pyproject.toml)
             # These are associated with the prowler folder changelog
-            root_deps_changed=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | grep -E "^(poetry\.lock|pyproject\.toml)$" || true)
+            root_deps_changed=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | grep -E "^(uv\.lock|pyproject\.toml)$" || true)
             if [ -n "$root_deps_changed" ]; then
               echo "Detected changes in root dependency files: $root_deps_changed"
               # Check if prowler/CHANGELOG.md was already updated (might have been caught above)

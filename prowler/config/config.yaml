@@ -26,6 +26,8 @@ aws:
   max_unused_access_keys_days: 45
   # aws.iam_user_console_access_unused --> CIS recommends 45 days
   max_console_access_days: 45
+  # aws.iam_user_access_not_stale_to_sagemaker --> default 90 days
+  max_unused_sagemaker_access_days: 90
 
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
@@ -647,3 +649,11 @@ vercel:
     - "_PASSWORD"
     - "_API_KEY"
     - "_PRIVATE_KEY"
+
+okta:
+  # Okta Sign-On Policies
+  # okta.signon_global_session_idle_timeout_15min
+  # Maximum acceptable Global Session idle timeout, in minutes. Defaults to
+  # 15 per DISA STIG V-273186 (OKTA-APP-000020); raise it only with an
+  # explicit risk acceptance.
+  okta_max_session_idle_minutes: 15

@@ -18,7 +18,10 @@ class gmail_comprehensive_mail_storage_enabled(Check):
         if gmail_client.policies_fetched:
             report = CheckReportGoogleWorkspace(
                 metadata=self.metadata(),
-                resource=gmail_client.provider.domain_resource,
+                resource=gmail_client.policies,
+                resource_id="gmailPolicies",
+                resource_name="Gmail Policies",
+                customer_id=gmail_client.provider.identity.customer_id,
             )
 
             storage_enabled = gmail_client.policies.comprehensive_mail_storage_enabled

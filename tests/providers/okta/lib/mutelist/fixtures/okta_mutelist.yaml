@@ -1,0 +1,9 @@
+Mutelist:
+  Accounts:
+    "acme.okta.com":
+      Checks:
+        "signon_global_session_idle_timeout_15min":
+          Regions:
+            - "*"
+          Resources:
+            - "pol-default"

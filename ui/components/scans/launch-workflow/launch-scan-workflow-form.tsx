@@ -11,23 +11,15 @@ import { Button } from "@/components/shadcn";
 import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { toast } from "@/components/ui/toast";
-import { onDemandScanFormSchema } from "@/types";
+import { onDemandScanFormSchema, ScanProviderInfo } from "@/types";
 
 import { SCAN_LAUNCHED_EVENT } from "../table/scans/scans-table-with-polling";
 import { SelectScanProvider } from "./select-scan-provider";
 
-type ProviderInfo = {
-  providerId: string;
-  alias: string;
-  providerType: string;
-  uid: string;
-  connected: boolean;
-};
-
 export const LaunchScanWorkflow = ({
   providers,
 }: {
-  providers: ProviderInfo[];
+  providers: ScanProviderInfo[];
 }) => {
   const formSchema = z.object({
     ...onDemandScanFormSchema().shape,

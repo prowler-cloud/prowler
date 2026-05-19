@@ -2,7 +2,7 @@
 name: react-19
 description: >
   React 19 patterns with React Compiler.
-  Trigger: When writing React 19 components/hooks in .tsx (React Compiler rules, hook patterns, refs as props). If using Next.js App Router/Server Actions, also use nextjs-15.
+  Trigger: When writing React 19 components/hooks in .tsx (React Compiler rules, hook patterns, refs as props). If using Next.js App Router/Server Actions, also use nextjs-16.
 license: Apache-2.0
 metadata:
   author: prowler-cloud

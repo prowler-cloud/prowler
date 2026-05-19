@@ -10,6 +10,7 @@
 
 Full access to Prowler Cloud platform and self-managed Prowler App for:
 - **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments
+- **Finding Groups Analysis**: Triage findings grouped by check ID and drill down into affected resources
 - **Provider Management**: Create, configure, and manage your configured Prowler providers (AWS, Azure, GCP, etc.)
 - **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments
 - **Resource Inventory**: Search and view detailed information about your audited resources
@@ -56,13 +57,21 @@ Prowler MCP Server can be used in three ways:
 - Managed and maintained by Prowler team
 - Always up-to-date
 
+Install a reviewed version of `mcp-remote` in a dedicated local workspace first. Avoid running `npx mcp-remote` directly because it can download and execute a new package version on each run.
+
+```bash
+mkdir -p ~/.local/share/prowler-mcp-bridge
+cd ~/.local/share/prowler-mcp-bridge
+npm init -y
+npm install --save-exact mcp-remote@0.1.38
+```
+
 ```json
 {
   "mcpServers": {
     "prowler": {
-      "command": "npx",
+      "command": "/absolute/path/to/.local/share/prowler-mcp-bridge/node_modules/.bin/mcp-remote",
       "args": [
-        "mcp-remote",
         "https://mcp.prowler.com/mcp",
         "--header",
         "Authorization: Bearer pk_YOUR_API_KEY_HERE"
