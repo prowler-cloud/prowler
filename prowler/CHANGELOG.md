@@ -31,6 +31,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_users_mfa_capable` and `entra_break_glass_account_fido2_security_key_registered` report a preventive FAIL per affected user (with the missing permission named) when the M365 service principal lacks `AuditLog.Read.All`, instead of mass false positives [(#10907)](https://github.com/prowler-cloud/prowler/pull/10907)
 - Duplicated GCP CIS requirements IDs [(#11180)](https://github.com/prowler-cloud/prowler/pull/11180)
 - `VercelSession.token` is now excluded from serialization and representation to prevent the Vercel API token from leaking through `.dict()`, `.json()` or logs [(#11198)](https://github.com/prowler-cloud/prowler/pull/11198)
+- `s3_bucket_shadow_resource_vulnerability` no longer emits a tautological `PASS` finding for every bucket; a finding is now produced only when the bucket name matches one of the predictable service patterns (Glue, SageMaker, EMR, CodeStar) [(#11220)](https://github.com/prowler-cloud/prowler/pull/11220)
 
 ---
 
