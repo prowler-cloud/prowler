@@ -28,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Ensure that model monitoring is active and you have at least one monitor scheduled to check.",
-      "Url": "TO BE FILLED"
+      "Url": "https://hub.prowler.com/check/sagemaker_models_monitor_enabled"
     }
   },
   "Categories": [
