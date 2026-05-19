@@ -2,6 +2,26 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [5.28.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `entra_app_registration_client_secret_unused` check for M365 provider [(#11232)](https://github.com/prowler-cloud/prowler/pull/11232)
+- `cloudsql_instance_cmek_encryption_enabled` check for GCP provider [(#11023)](https://github.com/prowler-cloud/prowler/pull/11023)
+
+---
+
+## [5.27.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `sqlserver_tde_encrypted_with_cmk` check for Azure provider no longer reports a false `FAIL` for SQL Servers whose user databases are correctly encrypted with a customer-managed key, by excluding the system `master` database (always reports TDE `Disabled` and is not customer-controllable) from the TDE evaluation [(#11233)](https://github.com/prowler-cloud/prowler/pull/11233)
+
+---
+
+>>>>>>> 0ab0e8671 (fix(azure): skip system 'master' DB in sqlserver_tde_encrypted_with_cmk (#11233))
 ## [5.27.0] (Prowler v5.27.0)
 
 ### 🚀 Added
