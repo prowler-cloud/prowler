@@ -44,9 +44,9 @@ export const OktaCredentialsForm = ({
         isRequired
       />
       <div className="text-default-400 text-xs">
-        The private key never leaves your browser unencrypted and is stored as a
-        secret in the backend. You can rotate or revoke the public key from the
-        Okta admin console at any time.
+        The private key is sent over TLS and stored as a secret in the backend.
+        You can rotate or revoke the public key from the Okta admin console at
+        any time.
       </div>
     </>
   );
