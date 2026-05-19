@@ -11,7 +11,12 @@ envs = "wt step copy-ignored"
 [[pre-start]]
 deps = "uv sync"
 
-# Block 3: reminder - last visible output before `wt switch` returns.
+# Block 3: prepare pnpm via corepack (matches the pinned packageManager).
+[[pre-start]]
+corepack-enable = "corepack enable"
+corepack-install = "cd ui && corepack install"
+
+# Block 4: reminder - last visible output before `wt switch` returns.
 # Hooks can't mutate the parent shell, so venv activation is manual.
 [[pre-start]]
 reminder = "echo '>> Reminder: activate the venv in this shell with: source .venv/bin/activate'"

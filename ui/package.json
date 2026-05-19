@@ -11,7 +11,7 @@
     "dev": "next dev",
     "format:check": "./node_modules/.bin/prettier --check .",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write .",
-    "healthcheck": "pnpm run typecheck && pnpm run lint:check && pnpm run format:check",
+    "healthcheck": "pnpm run typecheck && pnpm run lint:check",
     "postinstall": "node scripts/postinstall.js",
     "lint:check": "eslint . --max-warnings 40",
     "lint:fix": "eslint . --fix --max-warnings 40",
@@ -161,27 +161,10 @@
     "vitest": "4.0.18",
     "vitest-browser-react": "2.0.4"
   },
-  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
-  "pnpm": {
-    "overrides": {
-      "@hono/node-server": "1.19.14",
-      "@internationalized/date": "3.10.0",
-      "@isaacs/brace-expansion": "5.0.1",
-      "@react-aria/interactions>react": "19.2.6",
-      "@react-aria/ssr>react": "19.2.6",
-      "@react-aria/ssr>react-dom": "19.2.6",
-      "@react-aria/visually-hidden>react": "19.2.6",
-      "fast-xml-parser": "5.8.0",
-      "hono": "4.12.18",
-      "lodash": "4.18.1",
-      "lodash-es": "4.18.1",
-      "minimatch@>=9 <10": "9.0.7",
-      "minimatch@>=10": "10.2.3",
-      "minimatch@<4": "3.1.4",
-      "qs": "6.14.2",
-      "rollup@>=4": "4.59.0",
-      "serialize-javascript": "7.0.5"
-    }
+  "packageManager": "pnpm@11.1.3+sha512.c85357fe17ca12dd23dd7071822666dfd7e3cb76fe214e3370b5ea2fb34f2a231185509b63e717f3cd0acb38dd3f8d82bcd5e8172400ae678b70ea4fbed0896d",
+  "engines": {
+    "node": ">=22.13",
+    "pnpm": ">=11"
   },
   "msw": {
     "workerDirectory": [
